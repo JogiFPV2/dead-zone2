@@ -1,4 +1,5 @@
 import type {
+  CombatView,
   ActionView,
   ClockView,
   ContainerId,
@@ -52,7 +53,18 @@ export interface GameState {
   nearby: readonly NearbyContainerView[];
   /** Current timed action; absent = none. */
   action?: ActionView;
-  death?: { cause: DeathCause; day: number; minuteOfDay: number; tick: number };
+  death?: {
+    cause: DeathCause;
+    day: number;
+    minuteOfDay: number;
+    tick: number;
+    daysSurvived?: number;
+    zombiesKilled?: number;
+  };
+  /** Threat 0–100 (view.threat; 0 = safe). */
+  threat: number;
+  /** Combat state of the local player (kills, weapon, cooldown). */
+  combat?: CombatView;
   /** Suggested game speed from the sim (sleep); the host decides whether to apply it. */
   timeScaleHint: 1 | 2 | 4;
   /** Most recent events, newest last (bounded; for HUD toasts / debug). */
@@ -67,6 +79,7 @@ export const INITIAL_GAME_STATE: GameState = {
   tick: 0,
   player: { alive: true, sleeping: false, stats: {}, moodles: {}, wounds: [] },
   nearby: [],
+  threat: 0,
   timeScaleHint: 1,
   recentEvents: [],
 };
@@ -139,6 +152,8 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.clock ? { clock: view.clock } : {}),
     ...(view.inventory ? { inventory: applyInventory(s.inventory, view.inventory) } : {}),
     ...(view.nearby ? { nearby: view.nearby } : {}),
+    ...(view.threat !== undefined ? { threat: view.threat } : {}),
+    ...(view.combat ? { combat: view.combat } : {}),
     player,
   };
   next = patchNullable(next, 'container', view.container);
@@ -153,7 +168,14 @@ function applyEvents(s: GameState, events: readonly SimEvent[], tick: number): G
     if (e.type === 'died') {
       next = {
         ...next,
-        death: { cause: e.cause, day: e.day, minuteOfDay: e.minuteOfDay, tick: e.tick },
+        death: {
+          cause: e.cause,
+          day: e.day,
+          minuteOfDay: e.minuteOfDay,
+          tick: e.tick,
+          ...(e.daysSurvived !== undefined ? { daysSurvived: e.daysSurvived } : {}),
+          ...(e.zombiesKilled !== undefined ? { zombiesKilled: e.zombiesKilled } : {}),
+        },
         player: { ...next.player, alive: false, sleeping: false },
       };
     } else if (e.type === 'fellAsleep') {

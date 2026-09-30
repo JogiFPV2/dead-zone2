@@ -1,4 +1,5 @@
 import type { SimContentSource, SimSpawn } from '@deadzone/protocol';
+import { pickZombieSpawns } from '../world/zombie-spawns.js';
 import { createSimWorkerClient } from '@deadzone/sim/worker-client';
 import SimWorker from '@deadzone/sim/worker?worker';
 import type { ChunkRange, ChunkSource } from '../world/chunk.js';
@@ -12,6 +13,8 @@ export interface StartSimOptions {
   content?: SimContentSource | undefined;
   /** Enables debug commands (`debugWound`, `debugStat`). */
   dev?: boolean;
+  /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
+  zombiesAwayFrom?: { x: number; y: number } | undefined;
 }
 
 /** Starts the sim Web Worker on a map. */
@@ -23,10 +26,13 @@ export function startSimWorker(
 ): WorkerSimClient {
   const client = createSimWorkerClient(new SimWorker());
   const sim = new WorkerSimClient(client);
-  client.init(seed, chunkSourceToSimMapData(source, range), {
+  const map = chunkSourceToSimMapData(source, range);
+  const zombies = opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : [];
+  client.init(seed, map, {
     ...(opts.spawn ? { spawn: opts.spawn } : {}),
     ...(opts.content ? { content: opts.content } : {}),
     ...(opts.dev ? { dev: true } : {}),
+    ...(zombies.length ? { zombies } : {}),
   });
   return sim;
 }

@@ -23,6 +23,8 @@ export interface BootOptions {
   give: { itemId: string; count: number }[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
   stats: { stat: DebugStat; value: number }[];
+  /** `?zombies=0` disables the start zombies on content maps. */
+  zombies: boolean;
 }
 
 const DEBUG_STAT_SET: ReadonlySet<string> = new Set(DEBUG_STATS);
@@ -57,7 +59,9 @@ export function parseBootOptions(search: string): BootOptions {
   const crowd = parseCrowdParam(search);
   const spawnInside = q.get('spawn') === 'inside';
   const name = q.get('map') ?? '';
-  const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : 'test';
+  // Public build (production): test-town with containers by default; dev: generated test map.
+  const fallback: MapChoice = import.meta.env.PROD ? 'test-town' : 'test';
+  const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : fallback;
   const mock = crowd > 0;
   const time = parseTimeParam(q.get('time'));
   return {
@@ -70,5 +74,6 @@ export function parseBootOptions(search: string): BootOptions {
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
     give: parseGiveParam(q.get('give')),
     stats: parseStatParam(q.get('stat')),
+    zombies: q.get('zombies') !== '0',
   };
 }

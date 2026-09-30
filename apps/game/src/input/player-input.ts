@@ -1,4 +1,5 @@
 import type { Camera } from 'three';
+import type { Gait } from '@deadzone/protocol';
 import type { SimClient } from '../sim/sim-client.js';
 import type { CommandStamper } from '../sim/sim-client.js';
 import { worldToSimFloor } from '../sim/coords.js';
@@ -24,6 +25,7 @@ export const moveKeys = (input: InputMap): MoveKeys => ({
  */
 export class PlayerInput {
   private lastMove: MoveVector = { dx: 0, dy: 0 };
+  private lastGait: Gait = 'walk';
   private pointer: { x: number; y: number } | undefined;
   private lastAim: { x: number; y: number } | undefined;
   private lastAimMs = -Infinity;
@@ -42,9 +44,16 @@ export class PlayerInput {
 
   update(nowMs: number, cameraYaw: number, camera: Camera): void {
     const move = moveDirection(moveKeys(this.input), cameraYaw);
-    if (!sameMove(move, this.lastMove)) {
+    // Hold sprint = run, hold crouch = sneak (sim gaits: speed, noise, needs).
+    const gait: Gait = this.input.isDown('sprint')
+      ? 'run'
+      : this.input.isDown('crouch')
+        ? 'sneak'
+        : 'walk';
+    if (!sameMove(move, this.lastMove) || gait !== this.lastGait) {
       this.lastMove = move;
-      this.sim.send(this.stamper.stamp({ type: 'move', ...move }));
+      this.lastGait = gait;
+      this.sim.send(this.stamper.stamp({ type: 'move', ...move, gait }));
     }
     if (!this.pointer || nowMs - this.lastAimMs < AIM_INTERVAL_MS) return;
     const hit = ndcToFloor(camera, this.pointer.x, this.pointer.y);

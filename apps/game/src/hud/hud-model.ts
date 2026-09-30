@@ -7,6 +7,7 @@ import {
   type MoodleVM,
   type SlotItem,
   type StatsVM,
+  type ThreatLevel,
 } from '@deadzone/ui';
 import type { Bindings } from '../input/bindings.js';
 import type { GameState } from '../state/game-state.js';
@@ -199,3 +200,11 @@ export function hintItems(b: Bindings): KeyHint[] {
 
 /** Change detection for small view models: update the DOM only when this string changes. */
 export const vmKey = (v: unknown): string => JSON.stringify(v);
+
+/** Sim threat 0–100 → banner level: <25 none, <50 medium, <75 high, else critical. */
+export function threatLevel(threat: number): ThreatLevel {
+  if (threat < 25) return 'low';
+  if (threat < 50) return 'medium';
+  if (threat < 75) return 'high';
+  return 'critical';
+}

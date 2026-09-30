@@ -5,8 +5,8 @@ import { PLAYER_RADIUS } from '@deadzone/sim';
 import { CROWD_SAMPLE_STRIDE, type CrowdBuffer } from './crowd-buffer.js';
 import { writeCrowdMatrices } from './crowd-matrices.js';
 
-/** Neutral grey, slightly darker than the player (#8a9098). */
-const CROWD_GREY = '#6b7178';
+/** PLACEHOLDER zombies: grey-green, darker than the player (#8a9098). */
+const CROWD_GREY = '#5f6b5a';
 
 /**
  * All non-player entities in ONE InstancedMesh. Capacity follows CrowdBuffer (grown in chunks);
@@ -37,7 +37,13 @@ export class CrowdView {
       prev.dispose();
     }
     const n = this.buffer.sample(alpha, this.sampled);
-    writeCrowdMatrices(this.sampled, n, this.mesh.instanceMatrix.array as Float32Array);
+    writeCrowdMatrices(
+      this.sampled,
+      n,
+      this.mesh.instanceMatrix.array as Float32Array,
+      this.buffer.anim,
+      PLAYER_RADIUS,
+    );
     this.mesh.count = n;
     this.mesh.instanceMatrix.clearUpdateRanges();
     this.mesh.instanceMatrix.addUpdateRange(0, n * 16);

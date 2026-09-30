@@ -45,9 +45,17 @@ import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
-import { buildHudContentIndex } from './hud/content-index.js';
 import { interactIntent } from './hud/hud-model.js';
 import { minimapGeometry } from './hud/minimap-data.js';
+import {
+  EMPTY_HUD_CONTENT,
+  buildHudContentIndex,
+  type HudContentIndex,
+} from './hud/content-index.js';
+import { createInventoryWindow } from './hud/inventory-window.js';
+import { actionKey } from './hud/key-label.js';
+import { showDeathScreen } from './death/death-screen.js';
+import { GroundPiles } from './world/ground-piles.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -108,8 +116,11 @@ bindCameraInput(rig, input);
 const gameState = new GameStateStore();
 let sim: SimClient;
 if (boot.sim === 'worker') {
+  const spawn = boot.spawnInside ? { ...TEST_BUILDING_INSIDE, z: 0 } : startSpawn(world.zones);
   const worker = startSimWorker(world.source, world.range, SIM_SEED, {
-    spawn: boot.spawnInside ? { ...TEST_BUILDING_INSIDE, z: 0 } : startSpawn(world.zones),
+    spawn,
+    // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
+    zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
     content: await simContent,
     dev: import.meta.env.DEV,
   });
@@ -171,13 +182,44 @@ const hud = createHud({
   onInteract: interact,
   playerId: PLAYER_ID,
 });
+let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
-  void import('./content/base-pack.js').then((m) =>
-    hud.setContent(buildHudContentIndex(m.baseFiles)),
-  );
+  void import('./content/base-pack.js').then((m) => {
+    hudContent = buildHudContentIndex(m.baseFiles);
+    hud.setContent(hudContent);
+  });
 }
+// Simple inventory window (I / Esc): own inventory and the opened container.
+const inventory = createInventoryWindow({
+  root: container,
+  send: (cmd) => sim.send(stamper.stamp(cmd)),
+  state: () => gameState.get(),
+  content: () => hudContent,
+  keys: () => {
+    const b = settings.get().input.bindings;
+    return { takeAll: actionKey(b, 'reload'), putAll: actionKey(b, 'interact') };
+  },
+});
+input.on('inventory', () => inventory.toggle());
+input.on('pause', () => inventory.close());
+input.on('reload', () => {
+  if (inventory.open) inventory.takeAll();
+});
+const groundPiles = new GroundPiles();
+scene.add(groundPiles.root);
+let deathShown = false;
+gameState.subscribe((next) => {
+  if (!next.death || deathShown) return;
+  deathShown = true;
+  inventory.close();
+  showDeathScreen(container, next.death, boot.map === 'test' ? 'test' : boot.map);
+});
 /** Interact key / button: search/open the nearest container, cancel the search, or close. */
 function interact(): void {
+  if (inventory.open) {
+    inventory.putAll();
+    return;
+  }
   const p = snapshots.sample(performance.now(), TICK_MS);
   if (!p) return;
   const intent = interactIntent(gameState.get(), p.x, p.y);
@@ -187,6 +229,14 @@ function interact(): void {
   else if (intent.type === 'cancel') sim.send(stamper.stamp({ type: 'cancelAction' }));
 }
 input.on('interact', interact);
+// Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
+input.on('primaryAction', () => {
+  if (!inventory.open && !gameState.get().death) sim.send(stamper.stamp({ type: 'attack' }));
+});
+input.on('secondaryAction', () => {
+  if (!inventory.open && !gameState.get().death) sim.send(stamper.stamp({ type: 'shove' }));
+});
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 QUICKSLOTS.forEach((action, i) => input.on(action, () => hud.selectSlot(i)));
 input.on('toggleHints', () => hud.toggleHints(performance.now()));
 // F1 & co. open browser help otherwise.
@@ -271,6 +321,8 @@ renderer.setAnimationLoop((time) => {
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   lighting.update(camera, rig.target.x, rig.target.z);
   const gs = gameState.get();
+  groundPiles.update(gs.nearby);
+  inventory.update();
   if (state) {
     const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
     hud.frame({

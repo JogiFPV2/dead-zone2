@@ -1,0 +1,158 @@
+/* Death screen (mockup death.png): dimmed desaturated world, centred column. */
+.dz-death {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 12, 0.72);
+  backdrop-filter: grayscale(1) blur(2px);
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+}
+.dz-death__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  transform: scale(var(--ui-scale, 1));
+}
+.dz-death__tag {
+  font: var(--font-label-xs);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-chip);
+}
+.dz-death__title {
+  font-family: var(--font-family-mono);
+  font-size: 112px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dz-death__line {
+  width: 120px;
+  height: 3px;
+  background: var(--color-danger-base);
+}
+.dz-death__survived {
+  font-size: 34px;
+  font-weight: 600;
+}
+.dz-death__survived span {
+  color: var(--color-accent-base);
+}
+.dz-death__cause {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.dz-death__chip {
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-danger-text);
+  background: var(--color-danger-tint);
+  border: 1px solid var(--color-danger-base);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+}
+.dz-death__when {
+  font: var(--font-mono-sm);
+  color: var(--color-text-muted);
+}
+.dz-death__panel {
+  margin-top: var(--space-5);
+  min-width: 420px;
+  padding: var(--space-5);
+  background: var(--color-bg-panel);
+  box-shadow: var(--shadow-panel);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+.dz-death__panel-head {
+  font: var(--font-label-md);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-accent-base);
+  margin-bottom: var(--space-4);
+}
+.dz-death__row + .dz-death__row {
+  margin-top: var(--space-2);
+}
+.dz-death__row {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-row);
+  border-radius: var(--radius-sm);
+}
+.dz-death__row-now {
+  font: var(--font-mono-md);
+  font-weight: 700;
+  text-align: right;
+}
+.dz-death__row-rec {
+  font: var(--font-mono-md);
+  color: var(--color-text-muted);
+  text-align: right;
+}
+.dz-death__badge {
+  font: var(--font-label-xs);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-accent-base);
+  border: 1px solid var(--color-accent-base);
+  border-radius: var(--radius-sm);
+  padding: var(--space-0-5) var(--space-2);
+}
+.dz-death__buttons {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.dz-death__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 52px;
+  padding: 0 var(--space-6);
+  font: var(--font-label-md);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  background: var(--color-bg-button-secondary-default);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.dz-death__btn:hover {
+  background: var(--color-bg-button-secondary-hover);
+}
+.dz-death__btn--primary {
+  color: var(--color-text-inverse);
+  background: var(--color-accent-base);
+  border-color: var(--color-accent-hi);
+}
+.dz-death__btn--primary:hover {
+  background: var(--color-accent-hi);
+}
+.dz-death__key {
+  font: var(--font-mono-sm);
+  padding: 0 var(--space-1-5);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  opacity: 0.8;
+}
+.dz-death__note {
+  font: var(--font-body-xs);
+  color: var(--color-text-disabled);
+}

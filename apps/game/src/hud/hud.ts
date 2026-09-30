@@ -39,10 +39,11 @@ import {
   hotbarItems,
   moodleVMs,
   statsVM,
+  threatLevel,
   vmKey,
 } from './hud-model.js';
 import { actionKey } from './key-label.js';
-import { containerName, itemCountLabel, moodleName } from './labels.js';
+import { containerName, humanizeId, itemCountLabel, moodleName } from './labels.js';
 import type { MinimapGeometry } from './minimap-data.js';
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
@@ -123,8 +124,9 @@ export function createHud(opts: HudOptions): Hud {
   group('moodles', moodles.el);
   const hintsBase = createKeyHints({ items: hintItems(opts.bindings()), visible: true });
   group('hints', hintsBase.el);
-  // Threat is always low until zombies exist (Stage 4): banner hidden.
+  // Sim threat 0–100 → banner level (low hides it).
   const threat = createThreatBanner({ level: 'low' });
+  const setThreat = gated(threat);
   group('threat', threat.el);
   const clock = createClock({ day: 1, minuteOfDay: 0 });
   const clockGroup = group('clock', clock.el);
@@ -243,6 +245,7 @@ export function createHud(opts: HudOptions): Hud {
       if (s !== lastState) {
         lastState = s;
         setStats(statsVM(s));
+        setThreat({ level: threatLevel(s.threat) });
         setMoodles(moodleVMs(s.player.moodles, content, since, f.now));
         const items = hotbarItems(s, content);
         for (const slot of slots) {
@@ -274,6 +277,10 @@ export function createHud(opts: HudOptions): Hud {
         if (t) toasts.push(t);
         else if (e.type === 'actionInterrupted' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'warning', text: 'Przerwano akcję' });
+        } else if (e.type === 'weaponBroke' && e.playerId === opts.playerId) {
+          toasts.push({ kind: 'warning', text: `Zepsuła się broń: ${humanizeId(e.itemId)}` });
+        } else if (e.type === 'zombieKilled' && e.playerId === opts.playerId) {
+          toasts.push({ kind: 'info', text: 'Zabity zombie' });
         }
       }
     },
