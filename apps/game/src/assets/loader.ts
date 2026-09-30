@@ -43,9 +43,11 @@ export class AssetLoader {
   private manifest?: AssetManifest;
 
   constructor(private readonly opts: AssetLoaderOptions) {
-    this.baseUrl = opts.baseUrl ?? '/models/';
+    this.baseUrl = opts.baseUrl ?? `${import.meta.env.BASE_URL}models/`;
     this.budget = opts.budget ?? new GpuBudget();
-    this.ktx2 = new KTX2Loader().setTranscoderPath(opts.transcoderPath ?? '/basis/');
+    this.ktx2 = new KTX2Loader().setTranscoderPath(
+      opts.transcoderPath ?? `${import.meta.env.BASE_URL}basis/`,
+    );
     this.ktx2.detectSupport(opts.renderer);
     this.gltf.setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(this.ktx2);
     this.scenes = new RefCache<GLTF>((g, url) => {

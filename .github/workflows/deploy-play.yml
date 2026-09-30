@@ -1,0 +1,81 @@
+name: Publiczny build
+
+# Statyczny build apps/game publikowany w publicznym repo JogiFPV2/deadzone-play (GitHub Pages).
+# push do main -> katalog główny strony; ręczne uruchomienie z gałęzią -> preview/<gałąź>/.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-play
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: build i publikacja
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm -w turbo build --filter='@deadzone/game^...'
+
+      # Względna baza: bundel działa pod dowolną ścieżką (główna strona i podglądy).
+      - run: pnpm --filter @deadzone/game exec vite build --base ./
+
+      - name: Publikacja w deadzone-play
+        env:
+          DEPLOY_KEY: ${{ secrets.PLAY_DEPLOY_KEY }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          git config --global user.name "deadzone-bot"
+          git config --global user.email "deadzone-bot@users.noreply.github.com"
+
+          repo=git@github.com:JogiFPV2/deadzone-play.git
+          if git ls-remote --exit-code --heads "$repo" gh-pages >/dev/null; then
+            git clone --depth 1 --branch gh-pages "$repo" site
+          else
+            git init -b gh-pages site
+            git -C site remote add origin "$repo"
+          fi
+
+          if [ "$REF_NAME" = main ]; then
+            target=site
+            # Zachowaj podglądy innych gałęzi, podmień resztę.
+            find site -mindepth 1 -maxdepth 1 ! -name .git ! -name preview -exec rm -rf {} +
+          else
+            slug=$(printf '%s' "$REF_NAME" | tr -c 'a-zA-Z0-9-' '-')
+            target="site/preview/$slug"
+            rm -rf "$target"
+          fi
+          mkdir -p "$target"
+          cp -r apps/game/dist/. "$target/"
+          touch site/.nojekyll
+
+          cd site
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Brak zmian."
+            exit 0
+          fi
+          git commit -q -m "Build ${REF_NAME} @ ${GITHUB_SHA::7}"
+          git push origin gh-pages
