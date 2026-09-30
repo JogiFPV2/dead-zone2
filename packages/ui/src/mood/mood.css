@@ -1,0 +1,22 @@
+/*
+ * Light mood → HUD vignette (spec §2, §4). Dusk = night at 60% strength.
+ * Discrete keyframes here; `applyVignetteAt(root, minutes)` interpolates between them.
+ */
+:root,
+[data-hud-mood='night'] {
+  --hud-vignette: var(--color-overlay-vignette-night);
+}
+[data-hud-mood='dusk'] {
+  --hud-vignette: var(--color-overlay-vignette-dusk);
+}
+[data-hud-mood='day'] {
+  --hud-vignette: var(--color-overlay-vignette-day);
+}
+
+.dz-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-vignette);
+  background: radial-gradient(ellipse at center, transparent 45%, var(--hud-vignette) 100%);
+  pointer-events: none;
+}

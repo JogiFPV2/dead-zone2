@@ -1,0 +1,102 @@
+/* ThreatBanner (spec §3.3). Background on ::before so critical can pulse only the fill. */
+.dz-threat {
+  --_bg: var(--color-warning-banner);
+  --_fg: var(--color-text-inverse);
+  --_border: transparent;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  height: var(--size-banner);
+  padding: 0 var(--space-4);
+  border: var(--border-1) solid var(--_border);
+  border-radius: var(--radius-sm);
+  color: var(--_fg);
+  font: var(--font-mono-md);
+  letter-spacing: var(--font-tracking-banner);
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dz-threat[hidden] {
+  display: none;
+}
+.dz-threat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--_bg);
+}
+.dz-threat .dz-icon {
+  flex: none;
+}
+
+/* "!!" badge: only visible under reduced motion, instead of the critical pulse. */
+.dz-threat__alert {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-1);
+  border: var(--border-1) solid currentColor;
+  border-radius: var(--radius-sm);
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-none);
+}
+
+/* ---- levels ---- */
+.dz-threat[data-level='medium'] {
+  --_bg: var(--color-warning-banner);
+  --_fg: var(--color-text-inverse);
+  --_border: transparent;
+}
+.dz-threat[data-level='high'] {
+  --_bg: var(--color-threat-high-bg);
+  --_fg: var(--color-threat-high-text);
+  --_border: transparent;
+}
+.dz-threat[data-level='critical'] {
+  --_bg: var(--color-threat-critical-bg);
+  --_fg: var(--color-threat-critical-text);
+  --_border: var(--color-threat-critical-border);
+}
+/* critical: background opacity pulse 1 ↔ motion.pulse.threat (text stays ≥ 4.5:1 at the trough). */
+.dz-threat[data-level='critical']::before {
+  animation: dz-threat-pulse var(--motion-pulse-duration) ease-in-out infinite alternate;
+}
+@keyframes dz-threat-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: var(--motion-pulse-threat);
+  }
+}
+
+/* Enter: translateY(−8 px) → 0 + fade in motion.base; rising level: one border flash. */
+.dz-threat[data-enter] {
+  animation: dz-threat-enter var(--motion-base) var(--motion-ease-out) both;
+}
+@keyframes dz-threat-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.dz-threat[data-flash] {
+  animation: dz-threat-flash var(--motion-slow) var(--motion-ease-out);
+}
+@keyframes dz-threat-flash {
+  50% {
+    border-color: var(--color-danger-bright);
+  }
+}

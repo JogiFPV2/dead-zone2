@@ -2,20 +2,41 @@
   "name": "@deadzone/ui",
   "version": "0.0.0",
   "private": true,
+  "description": "HUD gry: tokeny (CSS vars + obiekt TS z jednego źródła) i komponenty DOM bez frameworka",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./tokens": {
+      "types": "./dist/tokens/index.d.ts",
+      "default": "./dist/tokens/index.js"
+    },
+    "./fonts.css": "./dist/fonts.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./components.css": "./dist/components.css",
+    "./hud.css": "./dist/hud.css",
+    "./fonts/*": "./dist/fonts/*"
   },
   "files": [
     "dist"
   ],
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsx scripts/build-css.ts",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:tokens": "tsx scripts/gen-tokens.ts",
+    "preview": "tsx scripts/preview.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "happy-dom": "^20.14.5",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15"
   }
 }

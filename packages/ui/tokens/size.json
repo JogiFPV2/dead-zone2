@@ -1,0 +1,14 @@
+{
+  "size": {
+    "safe": "32px",
+    "slot": "64px",
+    "key": "21px",
+    "chip": "31px",
+    "toast": "36px",
+    "button": "46px",
+    "banner": "35px",
+    "hints": "34px",
+    "stats": "40px",
+    "minimap": "200px"
+  }
+}

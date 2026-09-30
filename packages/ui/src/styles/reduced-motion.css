@@ -1,0 +1,87 @@
+/*
+ * Reduced motion (Designer, answer 9): no pulses, drain is instant, fades only (motion.reduced.fade).
+ * The critical threat banner shows a "!!" badge instead of its pulse.
+ * Active when the OS asks for it (prefers-reduced-motion) unless an ancestor has `.dz-full-motion`,
+ * or always under `.dz-reduced-motion` (in-game setting). Both blocks must stay identical.
+ * `!important` so the reductions beat the (more specific) effect selectors in component CSS.
+ */
+.dz-reduced-motion .dz-moodle::before,
+.dz-reduced-motion .dz-statbar__fill {
+  animation: none !important;
+}
+.dz-reduced-motion .dz-moodle[data-enter] {
+  animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+}
+.dz-reduced-motion .dz-moodle[data-flash] {
+  animation: none !important;
+}
+.dz-reduced-motion .dz-statbar__fill,
+.dz-reduced-motion .dz-slot,
+.dz-reduced-motion .dz-action {
+  transition: none !important;
+}
+.dz-reduced-motion .dz-statbar[data-drain] .dz-statbar__ghost {
+  display: none !important;
+}
+.dz-reduced-motion .dz-action[data-state='pressed'] {
+  transform: none !important;
+}
+
+.dz-reduced-motion .dz-threat::before {
+  animation: none !important;
+}
+.dz-reduced-motion .dz-threat[data-level='critical'] .dz-threat__alert {
+  display: inline-flex !important;
+}
+.dz-reduced-motion .dz-threat[data-enter] {
+  animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+}
+.dz-reduced-motion .dz-threat[data-flash] {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dz-moodle:not(.dz-full-motion *)::before,
+  .dz-statbar__fill:not(.dz-full-motion *) {
+    animation: none !important;
+  }
+  .dz-moodle[data-enter]:not(.dz-full-motion *) {
+    animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+  }
+  .dz-moodle[data-flash]:not(.dz-full-motion *) {
+    animation: none !important;
+  }
+  .dz-statbar__fill:not(.dz-full-motion *),
+  .dz-slot:not(.dz-full-motion *),
+  .dz-action:not(.dz-full-motion *) {
+    transition: none !important;
+  }
+  .dz-statbar[data-drain]:not(.dz-full-motion *) .dz-statbar__ghost {
+    display: none !important;
+  }
+  .dz-action[data-state='pressed']:not(.dz-full-motion *) {
+    transform: none !important;
+  }
+  .dz-threat:not(.dz-full-motion *)::before {
+    animation: none !important;
+  }
+  .dz-threat[data-level='critical']:not(.dz-full-motion *) .dz-threat__alert {
+    display: inline-flex !important;
+  }
+  .dz-threat[data-enter]:not(.dz-full-motion *) {
+    animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+  }
+  .dz-threat[data-flash]:not(.dz-full-motion *) {
+    animation: none !important;
+  }
+}
+
+/* Shared fade for reduced motion (toasts use the same: opacity only, motion.reduced.fade). */
+@keyframes dz-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

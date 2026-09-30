@@ -1,0 +1,123 @@
+/* StatBar (spec §3.7). */
+.dz-statbars {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  width: 842px;
+  height: var(--size-stats);
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+.dz-statbar {
+  --_stat: var(--color-stat-health);
+  --_track: var(--color-bg-track);
+  --_icon: var(--_stat);
+  --_value-color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dz-statbar[data-stat='health'] {
+  --_stat: var(--color-stat-health);
+}
+.dz-statbar[data-stat='thirst'] {
+  --_stat: var(--color-stat-thirst);
+}
+.dz-statbar[data-stat='hunger'] {
+  --_stat: var(--color-stat-hunger);
+}
+.dz-statbar[data-stat='energy'] {
+  --_stat: var(--color-stat-energy);
+}
+
+.dz-statbar__icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--_icon);
+}
+
+.dz-statbar__track {
+  position: relative;
+  display: block;
+  width: 120px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--_track);
+}
+.dz-statbar[data-size='panel'] .dz-statbar__track {
+  height: 6px;
+}
+
+.dz-statbar__fill,
+.dz-statbar__ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  transform-origin: left center;
+}
+.dz-statbar__fill {
+  background: var(--_stat);
+  transform: scaleX(var(--_value, 1));
+  transition: transform var(--motion-slow) var(--motion-ease-out);
+}
+
+.dz-statbar__value {
+  width: 30px;
+  color: var(--_value-color);
+  font: var(--font-label-md);
+  text-align: right;
+}
+
+/* ---- states ---- */
+.dz-statbar[data-state='normal'] {
+  --_track: var(--color-bg-track);
+  --_icon: var(--_stat);
+  --_value-color: var(--color-text-primary);
+}
+.dz-statbar[data-state='low'] {
+  --_track: var(--color-bg-track);
+  --_icon: var(--color-warning-base);
+  --_value-color: var(--color-warning-text);
+}
+.dz-statbar[data-state='critical'] {
+  --_track: var(--color-danger-tint);
+  --_icon: var(--color-danger-base);
+  --_value-color: var(--color-danger-text);
+}
+/* critical: fill opacity pulse 1 ↔ motion.pulse.stat (0.55). */
+.dz-statbar[data-state='critical'] .dz-statbar__fill {
+  animation: dz-statbar-pulse var(--motion-pulse-duration) ease-in-out infinite alternate;
+}
+@keyframes dz-statbar-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: var(--motion-pulse-stat);
+  }
+}
+
+/* drain: ghost (text.primary @ opacity.ghost) under the fill, slides from the old to the new value in motion.drain. */
+.dz-statbar__ghost {
+  display: none;
+  background: var(--color-text-primary);
+  opacity: var(--opacity-ghost);
+  transform: scaleX(var(--_from, 0));
+}
+.dz-statbar[data-drain] .dz-statbar__ghost {
+  display: block;
+  animation: dz-statbar-drain var(--motion-drain) var(--motion-ease-out) forwards;
+}
+@keyframes dz-statbar-drain {
+  from {
+    transform: scaleX(var(--_from));
+  }
+  to {
+    transform: scaleX(var(--_to));
+  }
+}

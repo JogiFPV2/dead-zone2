@@ -1,0 +1,103 @@
+/* InventorySlot (spec §3.5). Always 64×64 (border-box, also with the 2 px selected border). */
+.dz-slot {
+  --_bg: var(--color-bg-slot-empty);
+  --_border-width: var(--border-1);
+  --_border: var(--color-border-default);
+  --_fg: var(--color-text-primary);
+  --_key: var(--color-text-muted);
+  --_shadow: none;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-slot);
+  height: var(--size-slot);
+  border: var(--_border-width) solid var(--_border);
+  border-radius: var(--radius-lg);
+  background: var(--_bg);
+  box-shadow: var(--_shadow);
+  color: var(--_fg);
+  pointer-events: auto;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    opacity var(--motion-fast);
+}
+
+.dz-slot__icon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+}
+.dz-slot__key {
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  color: var(--_key);
+  font: var(--font-label-sm);
+}
+.dz-slot__count {
+  position: absolute;
+  right: 7px;
+  bottom: 4px;
+  color: var(--_fg);
+  font: var(--font-label-md);
+}
+/* Keep keybind/counter at the same spot when the border grows to 2 px. */
+.dz-slot[data-state='selected'] .dz-slot__key {
+  left: 5px;
+  top: 3px;
+}
+.dz-slot[data-state='selected'] .dz-slot__count {
+  right: 6px;
+  bottom: 3px;
+}
+
+/* ---- states (one block per row of the spec table) ---- */
+.dz-slot[data-state='empty'] {
+  --_bg: var(--color-bg-slot-empty);
+  --_border-width: var(--border-1);
+  --_border: var(--color-border-default);
+  --_key: var(--color-text-muted);
+  --_shadow: none;
+}
+.dz-slot[data-state='filled'] {
+  --_bg: var(--color-bg-slot-filled);
+  --_border-width: var(--border-1);
+  --_border: var(--color-border-default);
+  --_fg: var(--color-text-primary);
+  --_key: var(--color-text-muted);
+  --_shadow: none;
+}
+.dz-slot[data-state='selected'] {
+  --_bg: var(--color-bg-slot-selected);
+  --_border-width: var(--border-2);
+  --_border: var(--color-border-accent);
+  --_fg: var(--color-text-primary);
+  --_key: var(--color-text-muted);
+  --_shadow: var(--shadow-selected);
+}
+.dz-slot[data-state='selected'][data-empty] {
+  --_bg: var(--color-bg-slot-empty);
+}
+.dz-slot[data-state='disabled'] {
+  --_bg: var(--color-bg-slot-filled);
+  --_border-width: var(--border-1);
+  --_border: var(--color-border-default);
+  --_fg: var(--color-text-disabled);
+  --_key: var(--color-text-disabled);
+  --_shadow: none;
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+.dz-slot[data-state='hover'],
+.dz-slot[data-hoverable]:is([data-state='empty'], [data-state='filled']):hover {
+  --_bg: var(--color-bg-slot-hover);
+  --_border-width: var(--border-1);
+  --_border: var(--color-border-strong);
+  --_fg: var(--color-text-primary);
+  --_key: var(--color-text-muted);
+  --_shadow: none;
+}

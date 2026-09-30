@@ -1,0 +1,15 @@
+{
+  "z": {
+    "canvas": "0",
+    "label": "10",
+    "vignette": "20",
+    "hud": "100",
+    "tooltip": "200",
+    "toast": "300",
+    "banner": "350",
+    "modal": "500",
+    "menu": "600",
+    "dialog": "800",
+    "debug": "1000"
+  }
+}

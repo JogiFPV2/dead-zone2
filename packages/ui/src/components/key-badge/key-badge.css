@@ -1,0 +1,23 @@
+/* KeyBadge (spec §3): 21×21, border.1, radius.sm, font.label.sm, uppercase. */
+.dz-key {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-key);
+  height: var(--size-key);
+  padding: 0 var(--space-1);
+  border: var(--border-1) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-key);
+  color: var(--color-text-primary);
+  font: var(--font-label-sm);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dz-key[data-variant='inverse'] {
+  border-color: var(--color-border-inverse);
+  background: transparent;
+  color: var(--color-text-inverse);
+}

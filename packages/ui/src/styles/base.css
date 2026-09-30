@@ -1,0 +1,28 @@
+/* Shared HUD primitives (spec §3 "Wspólne", §5). */
+:root {
+  --ui-scale: 1;
+}
+
+/* Glass panel: bg.hud, border.1 border.default, radius.lg, blur.glass. */
+.dz-glass {
+  box-sizing: border-box;
+  border: var(--border-1) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-hud);
+  backdrop-filter: blur(var(--blur-glass));
+}
+/* Setting "Rozmycie HUD" off: opaque panel instead of blur. */
+[data-hud-blur='off'] .dz-glass {
+  background: var(--color-bg-panel);
+  backdrop-filter: none;
+}
+
+.dz-hud {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-hud);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+}

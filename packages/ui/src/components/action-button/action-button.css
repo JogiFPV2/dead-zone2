@@ -1,0 +1,133 @@
+/* ActionButton (spec §3.10). */
+.dz-action {
+  --_bg: var(--color-accent-base);
+  --_border: transparent;
+  --_fg: var(--color-text-inverse);
+  --_key-border: var(--color-border-inverse);
+  --_key-fg: var(--color-text-inverse);
+  --_progress-color: var(--color-text-inverse);
+  --_progress-opacity: 0.35;
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--size-button);
+  margin: 0;
+  padding: 0 var(--space-4-5);
+  overflow: hidden;
+  border: var(--border-1) solid var(--_border);
+  border-radius: var(--radius-md);
+  background: var(--_bg);
+  color: var(--_fg);
+  font: var(--font-label-md);
+  letter-spacing: var(--font-tracking-tight);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+.dz-action__icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+.dz-action .dz-key {
+  border-color: var(--_key-border);
+  color: var(--_key-fg);
+}
+.dz-action[data-variant='primary'] .dz-key {
+  background: transparent;
+}
+
+/* ---- primary ---- */
+.dz-action[data-variant='primary'] {
+  --_bg: var(--color-accent-base);
+  --_border: transparent;
+  --_fg: var(--color-text-inverse);
+  --_key-border: var(--color-border-inverse);
+  --_key-fg: var(--color-text-inverse);
+  --_progress-color: var(--color-text-inverse);
+  --_progress-opacity: 0.35;
+}
+.dz-action[data-variant='primary'][data-state='hover'],
+.dz-action[data-variant='primary'][data-state='default']:hover {
+  --_bg: var(--color-accent-hi);
+}
+.dz-action[data-variant='primary'][data-state='pressed'],
+.dz-action[data-variant='primary'][data-state='default']:active {
+  --_bg: var(--color-accent-lo);
+}
+.dz-action[data-variant='primary'][data-state='disabled'] {
+  --_bg: var(--color-bg-button-disabled);
+  --_fg: var(--color-text-disabled);
+  --_key-border: var(--color-border-strong);
+  --_key-fg: var(--color-text-disabled);
+}
+
+/* ---- secondary ---- */
+.dz-action[data-variant='secondary'] {
+  --_bg: var(--color-bg-button-secondary-default);
+  --_border: var(--color-border-default);
+  --_fg: var(--color-text-primary);
+  --_key-border: var(--color-border-strong);
+  --_key-fg: var(--color-text-primary);
+  --_progress-color: var(--color-accent-base);
+  --_progress-opacity: 1;
+  backdrop-filter: blur(var(--blur-glass));
+}
+.dz-action[data-variant='secondary'][data-state='hover'],
+.dz-action[data-variant='secondary'][data-state='default']:hover {
+  --_bg: var(--color-bg-button-secondary-hover);
+  --_border: var(--color-border-strong);
+}
+.dz-action[data-variant='secondary'][data-state='pressed'],
+.dz-action[data-variant='secondary'][data-state='default']:active {
+  --_bg: var(--color-bg-button-secondary-pressed);
+  --_border: var(--color-border-accent);
+}
+.dz-action[data-variant='secondary'][data-state='disabled'] {
+  --_bg: var(--color-bg-button-secondary-default);
+  --_border: var(--color-border-default);
+  --_fg: var(--color-text-disabled);
+  --_key-border: var(--color-border-default);
+  --_key-fg: var(--color-text-disabled);
+}
+
+/* ---- shared ---- */
+.dz-action[data-state='pressed'],
+.dz-action[data-state='default']:active {
+  transform: translateY(1px);
+}
+.dz-action[data-state='disabled'] {
+  cursor: default;
+}
+.dz-action:focus {
+  outline: none;
+}
+.dz-action:focus-visible,
+.dz-action[data-focus] {
+  outline: 2px solid var(--color-accent-hi);
+  outline-offset: 2px;
+}
+
+/* Hold-to-act progress: 3 px at the bottom. */
+.dz-action__progress {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--_progress-color);
+  opacity: var(--_progress-opacity);
+  transform: scaleX(var(--_progress, 0));
+  transform-origin: left center;
+}
+.dz-action[data-holding] .dz-action__progress {
+  display: block;
+}

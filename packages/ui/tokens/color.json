@@ -1,0 +1,196 @@
+{
+  "color": {
+    "neutral": {
+      "100": "#E4E6E3",
+      "300": "#9AA3A7",
+      "500": "#5B6469",
+      "700": "#2C3337",
+      "800": "#1E2327",
+      "900": "#15191C",
+      "950": "#0E1113"
+    },
+    "bg": {
+      "hud": "rgba(21, 25, 28, 0.82)",
+      "panel": "rgba(21, 25, 28, 0.92)",
+      "tooltip": "rgba(14, 17, 19, 0.94)",
+      "chip": "rgba(14, 17, 19, 0.70)",
+      "key": "rgba(14, 17, 19, 0.90)",
+      "row": "rgba(14, 17, 19, 0.50)",
+      "minimap": "rgba(21, 25, 28, 0.85)",
+      "track": "#2C3337",
+      "slot": {
+        "empty": "rgba(21, 25, 28, 0.60)",
+        "filled": "rgba(21, 25, 28, 0.82)",
+        "selected": "rgba(30, 35, 39, 0.90)",
+        "hover": "rgba(30, 35, 39, 0.90)"
+      },
+      "button": {
+        "secondary": {
+          "default": "rgba(21, 25, 28, 0.85)",
+          "hover": "#1E2327",
+          "pressed": "#0E1113"
+        },
+        "disabled": "#2C3337"
+      }
+    },
+    "overlay": {
+      "scrim": "rgba(13, 17, 16, 0.55)",
+      "vignette": {
+        "night": "rgba(5, 8, 12, 0.55)",
+        "dusk": "rgba(5, 8, 12, 0.33)",
+        "day": "rgba(5, 8, 12, 0.32)"
+      }
+    },
+    "border": {
+      "default": "#2C3337",
+      "strong": "#5B6469",
+      "accent": "#E0A23A",
+      "inverse": "#0E1113"
+    },
+    "text": {
+      "primary": "#E4E6E3",
+      "muted": "#9AA3A7",
+      "disabled": "#5B6469",
+      "inverse": "#0E1113",
+      "onDanger": "#FFFFFF"
+    },
+    "accent": {
+      "base": "#E0A23A",
+      "hi": "#F0C06A",
+      "lo": "#C78B2A",
+      "tint": "rgba(224, 162, 58, 0.12)",
+      "glow": "rgba(224, 162, 58, 0.35)"
+    },
+    "danger": {
+      "base": "#C8453C",
+      "text": "#E8766C",
+      "bright": "#F3B0A8",
+      "tint": "rgba(200, 69, 60, 0.12)",
+      "banner": "rgba(200, 69, 60, 0.92)"
+    },
+    "warning": {
+      "base": "#D9B64A",
+      "text": "#E8CD7A",
+      "tint": "rgba(217, 182, 74, 0.14)",
+      "banner": "rgba(217, 182, 74, 0.92)"
+    },
+    "info": {
+      "base": "#4FA8C8",
+      "text": "#86C7DE",
+      "tint": "rgba(79, 168, 200, 0.16)"
+    },
+    "success": {
+      "base": "#7F9A4E",
+      "text": "#A9C07A",
+      "tint": "rgba(127, 154, 78, 0.12)"
+    },
+    "stat": {
+      "health": "#C8453C",
+      "thirst": "#4FA8C8",
+      "hunger": "#D9B64A",
+      "energy": "#5DBE6E"
+    },
+    "moodle": {
+      "neg": {
+        "1": {
+          "border": "rgba(200, 69, 60, 0.45)",
+          "bg": {
+            "$value": "rgba(14, 17, 19, 0.70)",
+            "day": "rgba(14, 17, 19, 0.92)"
+          },
+          "text": "#E8766C",
+          "dot": "#C8453C"
+        },
+        "2": {
+          "border": "#C8453C",
+          "bg": {
+            "$value": "rgba(14, 17, 19, 0.70)",
+            "day": "rgba(14, 17, 19, 0.92)"
+          },
+          "text": "#E8766C",
+          "dot": "#C8453C"
+        },
+        "3": {
+          "border": "#C8453C",
+          "bg": {
+            "$value": "rgba(200, 69, 60, 0.22)",
+            "day": "rgba(152, 14, 17, 0.92)"
+          },
+          "text": "#F3B0A8",
+          "dot": "#E8766C"
+        },
+        "4": {
+          "border": "#E8766C",
+          "bg": {
+            "$value": "rgba(200, 69, 60, 0.92)",
+            "day": "rgba(200, 69, 60, 0.92)"
+          },
+          "text": "{color.text.onDanger}",
+          "dot": "{color.text.onDanger}"
+        }
+      },
+      "pos": {
+        "1": {
+          "border": "rgba(127, 154, 78, 0.45)",
+          "bg": {
+            "$value": "rgba(14, 17, 19, 0.70)",
+            "day": "rgba(14, 17, 19, 0.92)"
+          },
+          "text": "#A9C07A",
+          "dot": "#7F9A4E"
+        },
+        "2": {
+          "border": "#7F9A4E",
+          "bg": {
+            "$value": "rgba(14, 17, 19, 0.70)",
+            "day": "rgba(14, 17, 19, 0.92)"
+          },
+          "text": "#A9C07A",
+          "dot": "#7F9A4E"
+        },
+        "3": {
+          "border": "#7F9A4E",
+          "bg": {
+            "$value": "rgba(127, 154, 78, 0.22)",
+            "day": "rgba(71, 94, 11, 0.92)"
+          },
+          "text": "#C9DAA6",
+          "dot": "#A9C07A"
+        },
+        "4": {
+          "border": "#A9C07A",
+          "bg": {
+            "$value": "rgba(127, 154, 78, 0.92)",
+            "day": "rgba(127, 154, 78, 0.92)"
+          },
+          "text": "#0E1113",
+          "dot": "#0E1113"
+        }
+      }
+    },
+    "chip": {
+      "overflow": {
+        "border": "{color.text.muted}",
+        "bg": "{color.bg.chip}",
+        "text": "{color.text.muted}",
+        "dot": "{color.text.muted}"
+      }
+    },
+    "threat": {
+      "high": {
+        "bg": "rgba(110, 38, 33, 0.92)",
+        "text": "{color.danger.bright}"
+      },
+      "critical": {
+        "bg": "rgba(121, 21, 20, 0.92)",
+        "text": "{color.danger.bright}",
+        "border": "{color.danger.bright}"
+      }
+    },
+    "world": {
+      "player": "#E0A23A",
+      "enemy": "#8A2A24",
+      "label": "#E0A23A"
+    }
+  }
+}
