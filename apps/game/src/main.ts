@@ -1,5 +1,7 @@
 import { WebGLRenderer } from 'three';
 import { createIsometricCamera, resizeIsometricCamera } from './camera/isometric.js';
+import { CameraRig } from './camera/rig.js';
+import { bindCameraInput } from './input/camera-input.js';
 import { createScene } from './scene.js';
 
 const VIEW_HEIGHT = 24;
@@ -13,6 +15,8 @@ container.appendChild(renderer.domElement);
 
 const scene = createScene();
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
+const rig = new CameraRig(camera);
+bindCameraInput(rig, renderer.domElement);
 
 function resize(): void {
   const width = container?.clientWidth ?? window.innerWidth;
@@ -31,7 +35,8 @@ if (import.meta.env.DEV) {
   });
 }
 
-renderer.setAnimationLoop(() => {
+renderer.setAnimationLoop((time) => {
+  rig.update(time);
   renderer.render(scene, camera);
   afterRender?.(renderer);
 });

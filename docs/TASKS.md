@@ -13,7 +13,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Lista darmowych assetów CC0 + `ASSETS.md` z licencjami (Designer)
 
 ## Etap 1 — Prototyp ruchu i świata
-- [ ] Scena Three.js, kamera izometryczna, zoom, obrót (Silnik)
+- [x] Scena Three.js, kamera izometryczna, zoom, obrót (Silnik)
 - [ ] Teren z kafli + instancing (Silnik)
 - [ ] Budynek z wnętrzem, ukrywanie dachu i ścian (Silnik)
 - [ ] Pętla symulacji 20 Hz w Web Workerze + interpolacja renderu (Symulacja)
