@@ -3,7 +3,9 @@ import { createIsometricCamera, resizeIsometricCamera } from './camera/isometric
 import { CameraRig } from './camera/rig.js';
 import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
+import { InputMap } from './input/input-map.js';
 import { PlayerInput } from './input/player-input.js';
+import { createSettingsStore } from './settings/store.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
 import { simToWorld } from './sim/coords.js';
@@ -56,7 +58,14 @@ structures.loadRange(world.range);
 scene.add(structures.root);
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
-bindCameraInput(rig, renderer.domElement);
+const settings = createSettingsStore();
+const input = new InputMap(settings.get().input.bindings, {
+  window,
+  element: renderer.domElement,
+  document,
+});
+settings.subscribe((next) => input.setBindings(next.input.bindings));
+bindCameraInput(rig, input);
 
 // Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet)
 // and `?spawn=inside` (the worker `init` has no spawn option yet); it has no collisions.
@@ -70,7 +79,7 @@ const sim: SimClient =
         { count: boot.crowd, seed: SIM_SEED },
       );
 const stamper = new CommandStamper(PLAYER_ID);
-const playerInput = new PlayerInput(renderer.domElement, sim, stamper);
+const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
 const snapshots = new SnapshotBuffer();
 const crowd = new CrowdBuffer();
 let crowdArrivedMs = 0;

@@ -3,19 +3,26 @@ import type { SimClient } from '../sim/sim-client.js';
 import type { CommandStamper } from '../sim/sim-client.js';
 import { worldToSimFloor } from '../sim/coords.js';
 import { clientToNdc, ndcToFloor } from './aim.js';
-import { trackMoveKeys } from './keyboard.js';
-import { moveDirection, sameMove, type MoveVector } from './move-direction.js';
+import type { InputMap } from './input-map.js';
+import { moveDirection, sameMove, type MoveKeys, type MoveVector } from './move-direction.js';
 
 /** Minimum gap between aim commands (one per 20 Hz tick is plenty). */
 const AIM_INTERVAL_MS = 50;
 const AIM_EPS = 0.01;
 
+/** Held move actions (bindings decide which keys). */
+export const moveKeys = (input: InputMap): MoveKeys => ({
+  up: input.isDown('moveUp'),
+  down: input.isDown('moveDown'),
+  left: input.isDown('moveLeft'),
+  right: input.isDown('moveRight'),
+});
+
 /**
- * Turns WASD + mouse into sim commands. Call update() every frame: move is sent only when
+ * Turns move actions + mouse into sim commands. Call update() every frame: move is sent only when
  * the direction changes (including after a camera rotation), aim at most every AIM_INTERVAL_MS.
  */
 export class PlayerInput {
-  private readonly keyboard = trackMoveKeys();
   private lastMove: MoveVector = { dx: 0, dy: 0 };
   private pointer: { x: number; y: number } | undefined;
   private lastAim: { x: number; y: number } | undefined;
@@ -26,6 +33,7 @@ export class PlayerInput {
 
   constructor(
     private readonly element: HTMLElement,
+    private readonly input: InputMap,
     private readonly sim: SimClient,
     private readonly stamper: CommandStamper,
   ) {
@@ -33,7 +41,7 @@ export class PlayerInput {
   }
 
   update(nowMs: number, cameraYaw: number, camera: Camera): void {
-    const move = moveDirection(this.keyboard.keys, cameraYaw);
+    const move = moveDirection(moveKeys(this.input), cameraYaw);
     if (!sameMove(move, this.lastMove)) {
       this.lastMove = move;
       this.sim.send(this.stamper.stamp({ type: 'move', ...move }));
@@ -50,7 +58,6 @@ export class PlayerInput {
   }
 
   dispose(): void {
-    this.keyboard.dispose();
     this.element.removeEventListener('pointermove', this.onPointer);
   }
 }
