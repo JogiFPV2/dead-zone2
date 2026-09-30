@@ -16,6 +16,7 @@ import { copyFonts } from './build-css.js';
 import { contrastRatio } from '../src/tokens/contrast.js';
 import { tokens } from '../src/tokens/tokens.generated.js';
 import { buildNewComponents, type PreviewKit } from './preview-new.js';
+import { buildTooltipPreview, KNIFE } from './preview-tooltip.js';
 import type { Doc } from '../src/dom/h.js';
 import {
   ACTION_STATES,
@@ -29,6 +30,7 @@ import {
   createKeyBadge,
   createMinimap,
   createMoodle,
+  createItemTooltip,
   createMoodleList,
   createStatBar,
   createStatBars,
@@ -45,7 +47,7 @@ import {
   type StatBarProps,
 } from '../src/index.js';
 
-const HEIGHT = 2040;
+const HEIGHT = 2380;
 /** Height of the page with only the new components (3 mood bands). */
 const NEW_HEIGHT = 1610;
 const hm = (h: number, m = 0): number => h * 60 + m;
@@ -434,7 +436,9 @@ function buildSheet(doc: Doc, mood: HudMood): HTMLElement {
 
   const fresh = section('Nowe: Clock · Toast · wiersz skrótów · ObjectiveCard', true);
   fresh.append(buildNewComponents(doc, mood, MOOD_BG[mood], { h, cell }));
-  root.append(moodles, slots, actions, stats, maps, extra, fresh);
+  const tip = section('ItemTooltip (nowy wygląd) · StatRow', true);
+  tip.append(buildTooltipPreview(doc, MOOD_BG[mood], { h, cell }));
+  root.append(moodles, slots, actions, stats, maps, extra, fresh, tip);
 
   root.append(createVignette(doc));
   return root;
@@ -532,4 +536,43 @@ for (const mood of MOODS) {
   console.log(`wrote ${file}`);
   await window.happyDOM.close();
   if (pngNew) screenshot(file, pngNew, NEW_HEIGHT);
+}
+
+// Mockup comparison: the knife tooltip alone at 2× (like `deadzone-shots/tooltip-item.png`).
+const pngTipArg = process.argv.indexOf('--png-tooltip');
+const pngTip = pngTipArg > 0 ? process.argv[pngTipArg + 1] : undefined;
+{
+  const window = new Window();
+  const doc = window.document as unknown as Document;
+  const tip = createItemTooltip(null, doc);
+  tip.select(KNIFE);
+  const file = `${outDir}/preview-tooltip.html`;
+  await writeFile(
+    file,
+    page(
+      'ItemTooltip',
+      `<main class="pv pv-tip">${tip.el.outerHTML}</main>`,
+      `style="min-height:320px;width:400px;--pv-bg:#0d1112"`,
+    ),
+  );
+  console.log(`wrote ${file}`);
+  await window.happyDOM.close();
+  if (pngTip) {
+    execFileSync(
+      process.env.CHROME_BIN ?? 'google-chrome',
+      [
+        '--headless=new',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--hide-scrollbars',
+        '--window-size=400,320',
+        '--force-device-scale-factor=2',
+        '--virtual-time-budget=5000',
+        `--screenshot=${pngTip}`,
+        `file://${file}`,
+      ],
+      { stdio: 'ignore' },
+    );
+    console.log(`wrote ${pngTip}`);
+  }
 }

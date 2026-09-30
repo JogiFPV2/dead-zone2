@@ -25,10 +25,25 @@
         "height": "13px"
       }
     },
+    "tooltip": {
+      "width": "300px"
+    },
     "icon": {
       "sm": "16px",
       "md": "18px",
       "lg": "24px"
+    },
+    "statRow": {
+      "height": "26px",
+      "padY": "3px",
+      "unitGap": "3px",
+      "bar": {
+        "width": "56px",
+        "height": "4px"
+      }
+    },
+    "keyHint": {
+      "height": "18px"
     }
   }
 }

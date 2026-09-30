@@ -24,7 +24,7 @@ export interface PreviewKit {
 
 const c = tokens.color;
 /** Lowest text contrast of a component over a scene: [fg, surface…] pairs. */
-function minRatio(scene: string, pairs: [string, ...string[]][]): string {
+export function minRatio(scene: string, pairs: [string, ...string[]][]): string {
   const ratios = pairs.map(([fg, ...on]) => {
     const back = on.slice(0, -1).reduce((b, layer) => {
       const { r, g, b: bl } = composite(layer, b);

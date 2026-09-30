@@ -1,7 +1,10 @@
 import { defaultDoc, el, type Doc, type Mounted } from '../../dom/h.js';
 
-/** `light` = on glass panels; `inverse` = on the primary (amber) button. Spec §3 KeyBadge. */
-export type KeyBadgeVariant = 'light' | 'inverse';
+/**
+ * `light` = on glass panels; `inverse` = on the primary (amber) button (spec §3 KeyBadge);
+ * `hint` = compact muted chip in key-hint footers (ItemTooltip redesign).
+ */
+export type KeyBadgeVariant = 'light' | 'inverse' | 'hint';
 
 export interface KeyBadgeProps {
   /** Key label as stored in bindings (`e`, `J`, `Esc`); shown uppercase via CSS. */

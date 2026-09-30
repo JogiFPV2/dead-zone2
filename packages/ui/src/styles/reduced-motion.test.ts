@@ -69,3 +69,12 @@ describe('reduced motion for toasts and the objective card', () => {
     );
   });
 });
+
+describe('reduced motion for the ItemTooltip', () => {
+  it('fades in motion.reduced.fade; the durability bar jumps', () => {
+    expect(classRules['.dz-tooltip']?.transition).toBe(
+      'opacity var(--motion-reduced-fade) linear !important',
+    );
+    expect(classRules['.dz-statrow__fill']?.transition).toBe('none !important');
+  });
+});

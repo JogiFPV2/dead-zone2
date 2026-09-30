@@ -15,6 +15,7 @@ export const tokens = {
       hud: 'rgba(21, 25, 28, 0.82)',
       panel: 'rgba(21, 25, 28, 0.92)',
       tooltip: 'rgba(14, 17, 19, 0.94)',
+      itemTooltip: 'rgba(14, 17, 19, 0.96)',
       chip: 'rgba(14, 17, 19, 0.70)',
       key: 'rgba(14, 17, 19, 0.90)',
       row: 'rgba(14, 17, 19, 0.50)',
@@ -48,6 +49,7 @@ export const tokens = {
       strong: '#5B6469',
       accent: '#E0A23A',
       inverse: '#0E1113',
+      row: 'rgba(44, 51, 55, 0.60)',
     },
     text: {
       primary: '#E4E6E3',
@@ -209,11 +211,13 @@ export const tokens = {
     body: {
       md: "400 15px/1.35 'Inter', system-ui, sans-serif",
       sm: "500 14px/1.3 'Inter', system-ui, sans-serif",
+      xs: "500 12px/1.2 'Inter', system-ui, sans-serif",
     },
     label: {
       md: "700 13px/1 'JetBrains Mono', ui-monospace, monospace",
       sm: "700 11px/1 'JetBrains Mono', ui-monospace, monospace",
       xs: "700 10px/1 'JetBrains Mono', ui-monospace, monospace",
+      category: "700 11px/1.32 'JetBrains Mono', ui-monospace, monospace",
     },
     mono: {
       md: "500 13px/1.2 'JetBrains Mono', ui-monospace, monospace",
@@ -227,6 +231,11 @@ export const tokens = {
       md: '0.08em',
       wide: '0.10em',
       xwide: '0.14em',
+    },
+    stat: {
+      label: "400 13px/1.2 'Inter', system-ui, sans-serif",
+      value: "600 14px/1 'JetBrains Mono', ui-monospace, monospace",
+      unit: "500 11px/1 'JetBrains Mono', ui-monospace, monospace",
     },
   },
   space: {
@@ -283,6 +292,7 @@ export const tokens = {
     drain: '600ms',
     tooltip: {
       delay: '250ms',
+      hold: '2500ms',
     },
     reduced: {
       fade: '150ms',
@@ -348,10 +358,25 @@ export const tokens = {
         height: '13px',
       },
     },
+    tooltip: {
+      width: '300px',
+    },
     icon: {
       sm: '16px',
       md: '18px',
       lg: '24px',
+    },
+    statRow: {
+      height: '26px',
+      padY: '3px',
+      unitGap: '3px',
+      bar: {
+        width: '56px',
+        height: '4px',
+      },
+    },
+    keyHint: {
+      height: '18px',
     },
   },
 } as const;
@@ -370,6 +395,7 @@ export const tokenPaths = [
   'color.bg.hud',
   'color.bg.panel',
   'color.bg.tooltip',
+  'color.bg.itemTooltip',
   'color.bg.chip',
   'color.bg.key',
   'color.bg.row',
@@ -391,6 +417,7 @@ export const tokenPaths = [
   'color.border.strong',
   'color.border.accent',
   'color.border.inverse',
+  'color.border.row',
   'color.text.primary',
   'color.text.muted',
   'color.text.disabled',
@@ -478,9 +505,11 @@ export const tokenPaths = [
   'font.title.md',
   'font.body.md',
   'font.body.sm',
+  'font.body.xs',
   'font.label.md',
   'font.label.sm',
   'font.label.xs',
+  'font.label.category',
   'font.mono.md',
   'font.mono.sm',
   'font.mono.stat',
@@ -490,6 +519,9 @@ export const tokenPaths = [
   'font.tracking.md',
   'font.tracking.wide',
   'font.tracking.xwide',
+  'font.stat.label',
+  'font.stat.value',
+  'font.stat.unit',
   'space.1',
   'space.2',
   'space.3',
@@ -526,6 +558,7 @@ export const tokenPaths = [
   'motion.pulse.threat',
   'motion.drain',
   'motion.tooltip.delay',
+  'motion.tooltip.hold',
   'motion.reduced.fade',
   'motion.ease.out',
   'motion.ease.in',
@@ -568,9 +601,16 @@ export const tokenPaths = [
   'size.objective.progressGap',
   'size.objective.marker.width',
   'size.objective.marker.height',
+  'size.tooltip.width',
   'size.icon.sm',
   'size.icon.md',
   'size.icon.lg',
+  'size.statRow.height',
+  'size.statRow.padY',
+  'size.statRow.unitGap',
+  'size.statRow.bar.width',
+  'size.statRow.bar.height',
+  'size.keyHint.height',
 ] as const;
 
 export type TokenPath = (typeof tokenPaths)[number];

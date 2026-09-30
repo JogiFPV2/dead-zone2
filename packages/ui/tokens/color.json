@@ -13,6 +13,7 @@
       "hud": "rgba(21, 25, 28, 0.82)",
       "panel": "rgba(21, 25, 28, 0.92)",
       "tooltip": "rgba(14, 17, 19, 0.94)",
+      "itemTooltip": "rgba(14, 17, 19, 0.96)",
       "chip": "rgba(14, 17, 19, 0.70)",
       "key": "rgba(14, 17, 19, 0.90)",
       "row": "rgba(14, 17, 19, 0.50)",
@@ -45,7 +46,8 @@
       "default": "#2C3337",
       "strong": "#5B6469",
       "accent": "#E0A23A",
-      "inverse": "#0E1113"
+      "inverse": "#0E1113",
+      "row": "rgba(44, 51, 55, 0.60)"
     },
     "text": {
       "primary": "#E4E6E3",

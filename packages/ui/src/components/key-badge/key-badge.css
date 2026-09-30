@@ -21,3 +21,11 @@
   background: transparent;
   color: var(--color-text-inverse);
 }
+
+/* Compact muted chip for footers (ItemTooltip: `LPM atak`). */
+.dz-key[data-variant='hint'] {
+  min-width: 0;
+  height: var(--size-key-hint-height);
+  padding: 0 var(--space-1-5);
+  color: var(--color-text-muted);
+}

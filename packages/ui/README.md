@@ -68,6 +68,8 @@ stats.update(nextStats); // co tick HUD (spec: throttling do 10 Hz)
 | Toast               | `createToastStack`, `createToast`  | `data-kind` damage/gain/info/warning, `data-enter`, `data-exit`; maks. 4, łączenie ×N w 1 s                                                                   |
 | Wiersz skrótów      | `createKeyHints`                   | `data-hidden` (fade) → `hidden`                                                                                                                               |
 | ObjectiveCard       | `createObjectiveCard`              | `data-state` active/updated/completed/none, `data-updated` (ramka 600 ms), licznik kroków `2/3`                                                               |
+| ItemTooltip         | `createItemTooltip`                | `data-visible`; wybór: 2.5 s, hover: po 250 ms do zjechania kursorem; wiersze `StatRow`, stopka z chipami klawiszy                                            |
+| StatRow             | `createStatRow`, `createStatRows`  | `data-tone` default/danger, pasek (trwałość) opcjonalny; wspólny z tooltipem łączenia                                                                         |
 
 ## Nowe komponenty: API dla Silnika
 
@@ -81,6 +83,10 @@ import {
   hintsVisible,
   toggleHints,
   createObjectiveCard,
+  createItemTooltip,
+  tooltipPosition,
+  durabilityRow,
+  formatRange,
 } from '@deadzone/ui';
 
 // Clock: widok `clock` z sim (ClockView pasuje strukturalnie), co minutę gry.
@@ -110,11 +116,29 @@ const objective = createObjectiveCard({
   steps: 3,
 });
 objective.update(null); // brak celu → ukryta (moodle podjeżdżają na y 32: layout gry)
+
+// ItemTooltip: każdy stat to wiersz StatRow; stopka = chipy klawiszy (domyślnie LPM atak · PPM celuj · Q upuść).
+const tooltip = createItemTooltip();
+tooltip.select({
+  name: 'Nóż kuchenny',
+  category: 'Broń · Krótka ostra',
+  stats: [
+    { label: 'Obrażenia', value: formatRange(0.6, 1.2) },
+    { label: 'Zasięg', value: '0,8', unit: 'm' },
+    durabilityRow(8, 10),
+  ],
+  actions: [{ key: 'LPM', label: 'atak' }], // opcjonalnie, z aktualnego bindingu
+}); // wybór slotu: 2.5 s
+tooltip.hover(item); // kursor: po 250 ms, do unhover()
+tooltip.unhover();
+tooltip.place(tooltipPosition(hotbarRect, slotOffsetX, tooltipSize, viewport));
 ```
 
+- ItemTooltip (nowy wygląd, makieta `tooltip-item.png`): 300 px, `color.bg.itemTooltip` (0.96), ramka `border.strong`, `shadow.panel`. Wiersz `StatRow` (`createStatRow` / `createStatRows`, typ `StatRowVM { label, value, unit?, tone?, bar? }`) jest osobnym modułem, bo tooltip łączenia przedmiotów użyje tego samego wzoru (`tone: 'danger'` np. dla `Krwawienie +25%`). Liczby jak w makiecie: przecinek dziesiętny (`formatDecimal`, `formatRange`). Stopka: `renderKeyFooter` + KeyBadge `variant: 'hint'`.
+- Tokeny ItemTooltip / StatRow: `size.tooltip.width` (300), `size.statRow.{height 26, padY 3, unitGap 3, bar.width 56, bar.height 4}`, `size.keyHint.height` (18), `color.bg.itemTooltip`, `color.border.row` (separator wierszy), `font.stat.{label,value,unit}`, `font.body.xs` (etykiety stopki), `font.label.category`, `motion.tooltip.hold` (2.5 s).
 - Nowe tokeny: `size.clock.{width,height}`, `size.objective.{width,height,row,progress,progressGap,marker.width,marker.height}`, `size.icon.{sm,md,lg}`, `motion.highlight` (600 ms), `motion.objective.hold` (3 s), `motion.toast.{exit,merge,life.*}`, `motion.hints.visible` (10 min). Czasy w JS czytają `ms()` z tokenów.
-- Reduced motion: toasty tylko fade 150 ms (bez przesuwu i FLIP), pasek celu skacze bez animacji, ukończony cel znika fade 150 ms.
+- Reduced motion: ItemTooltip fade 150 ms, pasek trwałości bez animacji; toasty tylko fade 150 ms (bez przesuwu i FLIP), pasek celu skacze bez animacji, ukończony cel znika fade 150 ms.
 
 ## Podgląd
 
-`pnpm --filter @deadzone/ui preview -- --png /tmp/ui.png` renderuje wszystkie stany na jednym arkuszu do `dist/preview/preview-{night,day,dusk}.html` (statyczny HTML) i, z `--png`, do PNG przez headless Chrome (`CHROME_BIN`, domyślnie `google-chrome`): `/tmp/ui.png` (dzień), `/tmp/ui-night.png` (noc) i `/tmp/ui-dusk.png` (zmierzch). `--png-new /tmp/ui-new.png` zapisuje dodatkowo same nowe komponenty w trzech nastrojach (`dist/preview/preview-new.html`).
+`pnpm --filter @deadzone/ui preview -- --png /tmp/ui.png` renderuje wszystkie stany na jednym arkuszu do `dist/preview/preview-{night,day,dusk}.html` (statyczny HTML) i, z `--png`, do PNG przez headless Chrome (`CHROME_BIN`, domyślnie `google-chrome`): `/tmp/ui.png` (dzień), `/tmp/ui-night.png` (noc) i `/tmp/ui-dusk.png` (zmierzch). `--png-new /tmp/ui-new.png` zapisuje dodatkowo same nowe komponenty w trzech nastrojach (`dist/preview/preview-new.html`). `--png-tooltip /tmp/tip.png` renderuje sam tooltip noża w 2× do porównania z makietą.

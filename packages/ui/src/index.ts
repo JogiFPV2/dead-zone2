@@ -14,6 +14,8 @@ export * from './components/clock/index.js';
 export * from './components/toast/index.js';
 export * from './components/key-hints/index.js';
 export * from './components/objective-card/index.js';
+export * from './components/stat-row/index.js';
+export * from './components/item-tooltip/index.js';
 export * from './mood/mood.js';
 export * from './mood/vignette.js';
 export * from './layout/ui-scale.js';

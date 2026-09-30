@@ -28,3 +28,15 @@ it('light and inverse variants follow spec §3 KeyBadge', () => {
   expect(key.el.dataset.variant).toBe('light');
   expect(key.el.textContent).toBe('g');
 });
+
+it('hint variant: compact muted chip for tooltip footers', () => {
+  expect(declsFor(css, ".dz-key[data-variant='hint']")).toEqual({
+    'min-width': '0',
+    height: v('size.keyHint.height'),
+    padding: `0 ${v('space.1-5')}`,
+    color: v('color.text.muted'),
+  });
+  expect(createKeyBadge({ keyLabel: 'LPM', variant: 'hint' }, document).el.dataset.variant).toBe(
+    'hint',
+  );
+});

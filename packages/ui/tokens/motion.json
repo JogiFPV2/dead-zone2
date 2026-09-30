@@ -11,7 +11,8 @@
     },
     "drain": "600ms",
     "tooltip": {
-      "delay": "250ms"
+      "delay": "250ms",
+      "hold": "2500ms"
     },
     "reduced": {
       "fade": "150ms"

@@ -1,0 +1,55 @@
+/* ItemTooltip (approved redesign): 300×auto, padding 14/16/12, gap 10, bg.itemTooltip,
+   border.strong, radius.lg, shadow.panel. Stat rows: stat-row.css. */
+.dz-tooltip {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  width: var(--size-tooltip-width);
+  padding: var(--space-3-5) var(--space-4) var(--space-3);
+  border: var(--border-1) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-item-tooltip);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) linear;
+}
+.dz-tooltip[data-visible] {
+  opacity: 1;
+}
+.dz-tooltip__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.dz-tooltip__name {
+  color: var(--color-text-primary);
+  font: var(--font-title-md);
+}
+.dz-tooltip__category {
+  color: var(--color-accent-base);
+  font: var(--font-label-category);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+}
+
+/* Key footer: divider on top, chips + labels. */
+.dz-keyfoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3-5);
+  padding-top: var(--space-2-5);
+  border-top: var(--border-1) solid var(--color-border-default);
+}
+.dz-keyfoot[hidden] {
+  display: none;
+}
+.dz-keyfoot__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--color-text-muted);
+  font: var(--font-body-xs);
+}

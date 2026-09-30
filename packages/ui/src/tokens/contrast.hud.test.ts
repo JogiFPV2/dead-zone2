@@ -40,6 +40,13 @@ const PAIRS: Pair[] = [
   ...glass('objective step', c.text.muted),
   ...glass('objective title', c.text.primary),
   ...glass('objective J badge', c.text.primary, [c.bg.key]),
+  // ItemTooltip (bg.itemTooltip) and StatRow
+  { name: 'tooltip name', fg: c.text.primary, on: [c.bg.itemTooltip] },
+  { name: 'tooltip category', fg: c.accent.base, on: [c.bg.itemTooltip] },
+  { name: 'stat label / unit / footer', fg: c.text.muted, on: [c.bg.itemTooltip] },
+  { name: 'stat value', fg: c.accent.hi, on: [c.bg.itemTooltip] },
+  { name: 'stat value (danger)', fg: c.danger.text, on: [c.bg.itemTooltip] },
+  { name: 'footer key chip', fg: c.text.muted, on: [c.bg.itemTooltip, c.bg.key] },
 ];
 
 describe('new HUD components: text ≥ 4.5:1 in every mood', () => {

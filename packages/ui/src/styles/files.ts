@@ -21,6 +21,8 @@ export const COMPONENT_CSS = [
   'components/toast/toast.css',
   'components/key-hints/key-hints.css',
   'components/objective-card/objective-card.css',
+  'components/stat-row/stat-row.css',
+  'components/item-tooltip/item-tooltip.css',
   // Last: overrides the effects above.
   'styles/reduced-motion.css',
 ] as const;

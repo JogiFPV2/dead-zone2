@@ -2,6 +2,7 @@
  * Reduced motion (Designer, answer 9): no pulses, drain is instant, fades only (motion.reduced.fade).
  * The critical threat banner shows a "!!" badge instead of its pulse. Toasts enter and leave
  * with a fade only (motion.reduced.fade, no slide, no FLIP); objective progress jumps.
+ * ItemTooltip fades in motion.reduced.fade; the durability bar jumps.
  * Active when the OS asks for it (prefers-reduced-motion) unless an ancestor has `.dz-full-motion`,
  * or always under `.dz-reduced-motion` (in-game setting). Both blocks must stay identical.
  * `!important` so the reductions beat the (more specific) effect selectors in component CSS.
@@ -57,6 +58,13 @@
   animation: dz-fade-out var(--motion-reduced-fade) linear var(--motion-objective-hold) forwards !important;
 }
 
+.dz-reduced-motion .dz-statrow__fill {
+  transition: none !important;
+}
+.dz-reduced-motion .dz-tooltip {
+  transition: opacity var(--motion-reduced-fade) linear !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dz-moodle:not(.dz-full-motion *)::before,
   .dz-statbar__fill:not(.dz-full-motion *) {
@@ -105,6 +113,12 @@
   }
   .dz-objective[data-state='completed']:not(.dz-full-motion *) {
     animation: dz-fade-out var(--motion-reduced-fade) linear var(--motion-objective-hold) forwards !important;
+  }
+  .dz-statrow__fill:not(.dz-full-motion *) {
+    transition: none !important;
+  }
+  .dz-tooltip:not(.dz-full-motion *) {
+    transition: opacity var(--motion-reduced-fade) linear !important;
   }
 }
 

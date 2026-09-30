@@ -133,3 +133,19 @@ body {
   border-radius: var(--radius-sm);
   background: rgba(14, 17, 19, 0.7);
 }
+.pv-statbox {
+  width: 300px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-item-tooltip);
+}
+/* Mockup comparison page: tooltip alone, 50 px from the top-left. */
+.pv-tip {
+  display: block;
+  padding: 38px 50px;
+}
+body:has(.pv-tip) {
+  width: 400px;
+  min-height: 320px;
+}
