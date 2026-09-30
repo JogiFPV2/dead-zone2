@@ -1,0 +1,75 @@
+[
+  {
+    "id": "base:baseball-bat",
+    "name": "item.base.baseball-bat.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.1,
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 12, "max": 20 },
+      "rangeTiles": 1.35,
+      "attacksPerSec": 0.95,
+      "staminaCost": 4.5,
+      "knockback": 1,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 5, "volume": 0.4 },
+      "durability": { "max": 70, "lossChancePerUse": 0.12 }
+    }
+  },
+  {
+    "id": "base:nailed-bat",
+    "name": "item.base.nailed-bat.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.3,
+    "tags": ["base:weapon-crafted"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 16, "max": 25 },
+      "rangeTiles": 1.35,
+      "attacksPerSec": 0.9,
+      "staminaCost": 5,
+      "critChance": 0.08,
+      "knockback": 0.9,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 5, "volume": 0.4 },
+      "durability": { "max": 55, "lossChancePerUse": 0.15, "brokenInto": "base:baseball-bat" }
+    }
+  },
+  {
+    "id": "base:golf-club",
+    "name": "item.base.golf-club.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.5,
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 9, "max": 15 },
+      "rangeTiles": 1.3,
+      "attacksPerSec": 1.1,
+      "staminaCost": 3,
+      "knockback": 0.6,
+      "hitNoise": { "radiusTiles": 4, "volume": 0.3 },
+      "durability": { "max": 35, "lossChancePerUse": 0.2 }
+    }
+  },
+  {
+    "id": "base:metal-pipe",
+    "name": "item.base.metal-pipe.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.5,
+    "tags": ["base:metal-scrap"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 11, "max": 18 },
+      "rangeTiles": 1.2,
+      "attacksPerSec": 0.95,
+      "staminaCost": 4,
+      "knockback": 0.7,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 200, "lossChancePerUse": 0.06 }
+    }
+  }
+]

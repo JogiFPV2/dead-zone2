@@ -1,0 +1,58 @@
+[
+  {
+    "id": "base:handguns",
+    "rooms": [],
+    "containers": [],
+    "chance": 1,
+    "rolls": { "min": 1, "max": 1 },
+    "entries": [
+      { "item": "base:pistol", "weight": 5 },
+      { "item": "base:compact-pistol", "weight": 5 },
+      { "item": "base:revolver", "weight": 4 },
+      { "item": "base:heavy-pistol", "weight": 3, "rarity": "uncommon" },
+      { "item": "base:magnum-revolver", "weight": 2, "rarity": "rare" }
+    ]
+  },
+  {
+    "id": "base:long-guns",
+    "rooms": [],
+    "containers": [],
+    "chance": 1,
+    "rolls": { "min": 1, "max": 1 },
+    "entries": [
+      { "item": "base:pump-shotgun", "weight": 5 },
+      { "item": "base:double-barrel-shotgun", "weight": 5 },
+      { "item": "base:hunting-rifle", "weight": 4 },
+      { "item": "base:assault-rifle", "weight": 1, "rarity": "very_rare" }
+    ]
+  },
+  {
+    "id": "base:ammo-boxes",
+    "rooms": [],
+    "containers": [],
+    "chance": 1,
+    "rolls": { "min": 1, "max": 1 },
+    "entries": [
+      { "item": "base:ammo-box-9mm", "weight": 6 },
+      { "item": "base:ammo-box-38", "weight": 4 },
+      { "item": "base:ammo-box-shells", "weight": 5 },
+      { "item": "base:ammo-box-45", "weight": 3, "rarity": "uncommon" },
+      { "item": "base:ammo-box-308", "weight": 3, "rarity": "uncommon" },
+      { "item": "base:ammo-box-44", "weight": 2, "rarity": "rare" },
+      { "item": "base:ammo-box-556", "weight": 1, "rarity": "rare" }
+    ]
+  },
+  {
+    "id": "base:magazines",
+    "rooms": [],
+    "containers": [],
+    "chance": 1,
+    "rolls": { "min": 1, "max": 1 },
+    "entries": [
+      { "item": "base:pistol-magazine", "weight": 5 },
+      { "item": "base:compact-pistol-magazine", "weight": 4 },
+      { "item": "base:heavy-pistol-magazine", "weight": 3, "rarity": "uncommon" },
+      { "item": "base:rifle-magazine", "weight": 1, "rarity": "rare" }
+    ]
+  }
+]

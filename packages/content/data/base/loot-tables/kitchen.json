@@ -1,60 +1,35 @@
-{
-  "id": "base:kitchen",
-  "rooms": ["base:room-kitchen"],
-  "containers": ["base:kitchen-cabinet", "base:fridge"],
-  "chance": 0.75,
-  "rolls": {
-    "min": 1,
-    "max": 3
+[
+  {
+    "id": "base:kitchen",
+    "rooms": ["base:room-kitchen"],
+    "containers": ["base:kitchen-cabinet", "base:kitchen-counter"],
+    "chance": 0.75,
+    "rolls": { "min": 1, "max": 3 },
+    "entries": [
+      { "item": "base:canned-beans", "weight": 6, "count": { "min": 1, "max": 2 } },
+      { "item": "base:water-bottle", "weight": 4 },
+      { "item": "base:kitchen-knife", "weight": 4 },
+      { "item": "base:meat-cleaver", "weight": 2, "rarity": "uncommon" },
+      { "item": "base:rolling-pin", "weight": 3 },
+      { "item": "base:frying-pan", "weight": 3 },
+      { "item": "base:plastic-bag", "weight": 5, "count": { "min": 1, "max": 3 } },
+      { "item": "base:garbage-bag", "weight": 3, "count": { "min": 1, "max": 2 } },
+      { "item": "base:rag", "weight": 3, "count": { "min": 1, "max": 2 } },
+      { "item": "base:bottle", "weight": 3 },
+      { "item": "base:screwdriver", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:hammer", "weight": 1, "rarity": "uncommon" }
+    ]
   },
-  "entries": [
-    {
-      "item": "base:canned-beans",
-      "weight": 6,
-      "count": {
-        "min": 1,
-        "max": 2
-      }
-    },
-    {
-      "item": "base:water-bottle",
-      "weight": 4,
-      "count": {
-        "min": 1,
-        "max": 1
-      }
-    },
-    {
-      "item": "base:kitchen-knife",
-      "weight": 2,
-      "count": {
-        "min": 1,
-        "max": 1
-      }
-    },
-    {
-      "item": "base:plastic-bag",
-      "weight": 3,
-      "count": {
-        "min": 1,
-        "max": 3
-      }
-    },
-    {
-      "item": "base:rag",
-      "weight": 3,
-      "count": {
-        "min": 1,
-        "max": 2
-      }
-    },
-    {
-      "item": "base:bottle",
-      "weight": 2,
-      "count": {
-        "min": 1,
-        "max": 1
-      }
-    }
-  ]
-}
+  {
+    "id": "base:kitchen-fridge",
+    "rooms": ["base:room-kitchen"],
+    "containers": ["base:fridge", "base:freezer"],
+    "chance": 0.6,
+    "rolls": { "min": 1, "max": 2 },
+    "entries": [
+      { "item": "base:water-bottle", "weight": 5, "count": { "min": 1, "max": 2 } },
+      { "item": "base:canned-beans", "weight": 2 },
+      { "item": "base:bottle", "weight": 2 }
+    ]
+  }
+]

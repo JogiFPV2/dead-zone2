@@ -1,0 +1,41 @@
+[
+  {
+    "id": "base:spear",
+    "name": "item.base.spear.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.3,
+    "tags": ["base:weapon-crafted"],
+    "melee": {
+      "category": "spear",
+      "skill": "base:spear",
+      "damage": { "min": 12, "max": 20 },
+      "rangeTiles": 2,
+      "attacksPerSec": 0.9,
+      "staminaCost": 4,
+      "maxTargets": 2,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 30, "lossChancePerUse": 0.4 }
+    }
+  },
+  {
+    "id": "base:knife-spear",
+    "name": "item.base.knife-spear.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.5,
+    "tags": ["base:weapon-crafted"],
+    "melee": {
+      "category": "spear",
+      "skill": "base:spear",
+      "damage": { "min": 18, "max": 28 },
+      "rangeTiles": 2,
+      "attacksPerSec": 0.9,
+      "staminaCost": 4.5,
+      "critChance": 0.12,
+      "maxTargets": 2,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 45, "lossChancePerUse": 0.3, "brokenInto": "base:spear" }
+    }
+  }
+]

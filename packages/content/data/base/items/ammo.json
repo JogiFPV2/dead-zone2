@@ -5,9 +5,35 @@
     "kind": "ammo",
     "weightKg": 0.012,
     "maxStack": 60,
-    "ammo": {
-      "caliber": "9mm"
-    }
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": "9mm" }
+  },
+  {
+    "id": "base:ammo-45",
+    "name": "item.base.ammo-45.name",
+    "kind": "ammo",
+    "weightKg": 0.021,
+    "maxStack": 40,
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": ".45" }
+  },
+  {
+    "id": "base:ammo-38",
+    "name": "item.base.ammo-38.name",
+    "kind": "ammo",
+    "weightKg": 0.015,
+    "maxStack": 50,
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": ".38" }
+  },
+  {
+    "id": "base:ammo-44",
+    "name": "item.base.ammo-44.name",
+    "kind": "ammo",
+    "weightKg": 0.025,
+    "maxStack": 36,
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": ".44" }
   },
   {
     "id": "base:shotgun-shell",
@@ -15,8 +41,25 @@
     "kind": "ammo",
     "weightKg": 0.04,
     "maxStack": 24,
-    "ammo": {
-      "caliber": "12ga"
-    }
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": "12ga" }
+  },
+  {
+    "id": "base:ammo-308",
+    "name": "item.base.ammo-308.name",
+    "kind": "ammo",
+    "weightKg": 0.025,
+    "maxStack": 30,
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": ".308" }
+  },
+  {
+    "id": "base:ammo-556",
+    "name": "item.base.ammo-556.name",
+    "kind": "ammo",
+    "weightKg": 0.012,
+    "maxStack": 60,
+    "tags": ["base:ammo"],
+    "ammo": { "caliber": "5.56" }
   }
 ]

@@ -5,10 +5,10 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 ## Etap 0 — Fundament
 - [x] Decyzje startowe od Pawła (Szef sztabu)
 - [x] Repo, README, plan i ta lista (Szef sztabu)
-- [ ] GDD: pętla rozgrywki, lista mechanik z priorytetami na demo (Szef sztabu + Modules)
+- [x] GDD: pętla rozgrywki, lista mechanik z priorytetami na demo (Szef sztabu + Modules) — zastąpione przez PLAN.md
 - [x] Monorepo pnpm + Turborepo, TS strict, ESLint, Prettier, Vitest (Silnik)
 - [x] CI GitHub Actions: lint, typecheck, test, build (Silnik)
-- [ ] Schematy contentu (zod) i walidator: item, recipe, skill, trait, moodle, lootTable, zombieType (Modules)
+- [x] Schematy contentu (zod) i walidator: item, recipe, skill, trait, moodle, lootTable, zombieType (Modules)
 - [ ] Style guide wizualny i HUD w Figmie na bazie referencji (Designer)
 - [ ] Lista darmowych assetów CC0 + `ASSETS.md` z licencjami (Designer)
 
@@ -31,7 +31,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer)
 
 ## Etap 3 — Przedmioty i ekwipunek
-- [ ] Definicje przedmiotów w JSON (Modules)
+- [x] Definicje przedmiotów w JSON (Modules)
 - [ ] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
 - [ ] Szybkie sloty 1–5 (Silnik + Designer)
 - [ ] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)

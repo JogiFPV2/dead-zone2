@@ -1,0 +1,74 @@
+[
+  {
+    "id": "base:kitchen-knife",
+    "name": "item.base.kitchen-knife.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.25,
+    "tags": ["base:tool-knife", "base:tool-can-opener", "base:spear-blade"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": { "min": 6, "max": 11 },
+      "rangeTiles": 0.8,
+      "attacksPerSec": 1.6,
+      "staminaCost": 2,
+      "critChance": 0.1,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 40, "lossChancePerUse": 0.3 }
+    }
+  },
+  {
+    "id": "base:hunting-knife",
+    "name": "item.base.hunting-knife.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.35,
+    "tags": ["base:tool-knife", "base:spear-blade"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": { "min": 9, "max": 15 },
+      "rangeTiles": 0.85,
+      "attacksPerSec": 1.5,
+      "staminaCost": 2,
+      "critChance": 0.15,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 120, "lossChancePerUse": 0.15 }
+    }
+  },
+  {
+    "id": "base:screwdriver",
+    "name": "item.base.screwdriver.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.2,
+    "tags": ["base:tool-screwdriver"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": { "min": 5, "max": 9 },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 1.8,
+      "staminaCost": 1.5,
+      "critChance": 0.12,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 30, "lossChancePerUse": 0.3 }
+    }
+  },
+  {
+    "id": "base:meat-cleaver",
+    "name": "item.base.meat-cleaver.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.7,
+    "tags": ["base:tool-knife"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": { "min": 9, "max": 16 },
+      "rangeTiles": 0.8,
+      "attacksPerSec": 1.2,
+      "staminaCost": 3,
+      "critChance": 0.1,
+      "hitNoise": { "radiusTiles": 3, "volume": 0.3 },
+      "durability": { "max": 60, "lossChancePerUse": 0.2 }
+    }
+  }
+]

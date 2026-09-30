@@ -59,6 +59,7 @@ Dopisz obiekt w `data/base/recipes/`: `ingredients` (item albo tag), `tools` (zw
 my-mod/
   mod.json              { "id": "my-mod", "name": "…", "version": "1.0.0", "dependencies": [{ "id": "base" }] }
   world-settings.json   opcjonalnie, głęboki merge z ustawieniami bazy
+  world-settings/       opcjonalne fragmenty ustawień (np. survival-needs.json), merge po world-settings.json
   items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/ tiles/
   maps/<mapId>/         manifest.json i chunks/<cx>_<cy>_<z>.json
   overrides/            zmiany cudzych definicji
@@ -68,6 +69,25 @@ Id moda jest namespace wszystkich jego definicji (`my-mod:…`). Plik zawiera je
 Definicje innych paczek zmienia się w `overrides/`: `{ "op": "merge" | "replace" | "remove", "type": "item",
 "target": "base:axe", "data": { … } }`. Nadpisanie celu, którego nie ma, jest błędem. Kolejność wczytywania
 wynika z `dependencies`, `loadAfter`, `loadBefore` i `priority`.
+
+## Przetrwanie (`worldSettings.survival`)
+
+Stałe przetrwania dla Symulacji leżą w `data/base/world-settings/survival-*.json` (potrzeby i aktywność,
+otoczenie, psychika i sen, zdrowie, rany i infekcja); schemat w `src/schemas/survival/`. Każde pole ma
+wartość domyślną, więc mod może zmienić jedno pole, np. `{ "survival": { "needs": { "thirstPerMin": 0.05 } } }`.
+
+- Tempa to punkty statystyki (0–100) na minutę gry. Przy `dayLengthMinutes = 60` minuta gry = 2,5 s = 50 ticków.
+- `needs` to tempo w bezruchu; `activity.<idle|walking|sneaking|running|sprinting|fighting|sleeping>` je mnoży
+  (także spalanie kalorii) i podaje zmianę wytrzymałości na minutę.
+- Progi moodli głodu i pragnienia są dobrane tak, że bezczynna postać jest głodna po ~1 dobie gry,
+  a spragniona po ~pół doby (test `survival-tuning.test.ts`).
+
+## Loot
+
+Wpis tabeli ma całkowitą `weight` i `rarity` (`common` | `uncommon` | `rare` | `very_rare`);
+`worldSettings.loot.rarityWeightPct` skaluje wagi według rzadkości. Tabela pasuje do schowka, gdy jego
+pomieszczenie jest w `rooms`, a typ w `containers` (pusta lista = każdy schowek). Pudełka amunicji to rodzaj
+`ammo_box` (`ammoBox: { ammo, count }`).
 
 ## Mapy
 

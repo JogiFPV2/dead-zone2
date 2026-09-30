@@ -1,0 +1,65 @@
+[
+  {
+    "id": "base:ammo-box-9mm",
+    "name": "item.base.ammo-box-9mm.name",
+    "kind": "ammo_box",
+    "weightKg": 0.65,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-9mm", "count": 50 }
+  },
+  {
+    "id": "base:ammo-box-45",
+    "name": "item.base.ammo-box-45.name",
+    "kind": "ammo_box",
+    "weightKg": 1.1,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-45", "count": 50 }
+  },
+  {
+    "id": "base:ammo-box-38",
+    "name": "item.base.ammo-box-38.name",
+    "kind": "ammo_box",
+    "weightKg": 0.8,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-38", "count": 50 }
+  },
+  {
+    "id": "base:ammo-box-44",
+    "name": "item.base.ammo-box-44.name",
+    "kind": "ammo_box",
+    "weightKg": 1.3,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-44", "count": 50 }
+  },
+  {
+    "id": "base:ammo-box-shells",
+    "name": "item.base.ammo-box-shells.name",
+    "kind": "ammo_box",
+    "weightKg": 1.05,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:shotgun-shell", "count": 25 }
+  },
+  {
+    "id": "base:ammo-box-308",
+    "name": "item.base.ammo-box-308.name",
+    "kind": "ammo_box",
+    "weightKg": 0.55,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-308", "count": 20 }
+  },
+  {
+    "id": "base:ammo-box-556",
+    "name": "item.base.ammo-box-556.name",
+    "kind": "ammo_box",
+    "weightKg": 0.77,
+    "maxStack": 5,
+    "tags": ["base:ammo-box"],
+    "ammoBox": { "ammo": "base:ammo-556", "count": 60 }
+  }
+]

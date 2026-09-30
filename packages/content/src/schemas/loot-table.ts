@@ -9,11 +9,14 @@ import {
   TagListSchema,
   TagSchema,
 } from './common/index.js';
+import { LootRaritySchema } from './loot-rarity.js';
 
 const entryShape = {
-  /** Waga losowania względem innych wpisów. */
-  weight: z.number().positive(),
+  /** Całkowita waga losowania względem innych wpisów (`pickWeighted` w Symulacji). */
+  weight: z.number().int().positive(),
   count: IntRangeSchema.default({ min: 1, max: 1 }),
+  /** Rzadkość; `worldSettings.loot.rarityWeightPct` skaluje wagę. */
+  rarity: LootRaritySchema.default('common'),
 };
 
 /** Wpis: konkretny przedmiot albo zagnieżdżona tabela (np. `base:loot/cutlery`). */

@@ -1,0 +1,46 @@
+{
+  "survival": {
+    "panic": {
+      "radiusTiles": 14,
+      "gainPerZombiePerMin": 3.5,
+      "closeRadiusTiles": 4,
+      "closeMultiplier": 2,
+      "maxGainPerMin": 20,
+      "decayPerMin": 2.5,
+      "experienceReductionPerDay": 0.03,
+      "maxExperienceReduction": 0.5
+    },
+    "stress": {
+      "fromPanicPerMin": 0.006,
+      "fromPainPerMin": 0.004,
+      "fromNeedsPerMin": 0.01,
+      "needsThreshold": 50,
+      "decayPerMin": 0.04
+    },
+    "boredom": { "idleGainPerMin": 0.05, "outdoorsMul": 0.5, "activeDecayPerMin": 0.03 },
+    "unhappiness": {
+      "fromBoredomAbove": 55,
+      "boredomGainPerMin": 0.02,
+      "fromStressAbove": 50,
+      "stressGainPerMin": 0.01,
+      "decayPerMin": 0.004
+    },
+    "sleep": {
+      "minFatigueToSleep": 30,
+      "wakeAtFatigue": 2,
+      "maxDurationMin": 720,
+      "surfaces": {
+        "bed": { "fatigueRecoveryPerMin": 0.1 },
+        "sofa": { "fatigueRecoveryPerMin": 0.075 },
+        "floor": { "fatigueRecoveryPerMin": 0.05 }
+      },
+      "painAbove": 35,
+      "painQualityMul": 0.7,
+      "coldQualityMul": 0.7,
+      "healingMul": 1.5,
+      "wakeOnNoiseVolume": 0.3,
+      "wakeOnZombieTiles": 6,
+      "timeScaleHint": 4
+    }
+  }
+}

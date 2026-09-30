@@ -32,6 +32,7 @@ const valid: Record<string, unknown> = {
     },
   },
   ammo: { ammo: { caliber: '9mm' } },
+  ammo_box: { ammoBox: { ammo: 't:ammo', count: 50 } },
   magazine: { magazine: { ammo: 't:ammo', capacity: 10 } },
   food: { food: { nutrition: { hunger: -10 }, spoilage: { freshMin: 10, rottenMin: 20 } } },
   drink: { drink: { perUse: { thirst: -10 }, uses: 3 } },

@@ -7,13 +7,13 @@
   "levels": [
     {
       "label": "moodle.base.fatigue.level-1",
-      "enterAt": 40,
-      "exitAt": 35
+      "enterAt": 45,
+      "exitAt": 40
     },
     {
       "label": "moodle.base.fatigue.level-2",
-      "enterAt": 60,
-      "exitAt": 55,
+      "enterAt": 65,
+      "exitAt": 60,
       "modifiers": [
         {
           "stat": "aim-accuracy",

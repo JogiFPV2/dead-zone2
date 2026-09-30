@@ -5,6 +5,7 @@
     "category": "crate",
     "capacityKg": 50,
     "pickupItem": "base:wooden-crate",
-    "tags": ["base:player-built"]
+    "tags": ["base:player-built"],
+    "searchMin": 0.5
   }
 ]

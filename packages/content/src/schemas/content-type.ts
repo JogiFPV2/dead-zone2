@@ -30,5 +30,7 @@ export const CONTENT_FOLDERS: Record<ContentType, string> = {
 export const OVERRIDES_FOLDER = 'overrides';
 export const MANIFEST_FILE = 'mod.json';
 export const WORLD_SETTINGS_FILE = 'world-settings.json';
+/** Opcjonalne fragmenty ustawień świata (głęboki merge po `world-settings.json`). */
+export const WORLD_SETTINGS_DIR = 'world-settings/';
 /** Mapy: `maps/<mapId>/manifest.json` i `maps/<mapId>/chunks/*.json` (poza definicjami). */
 export const MAPS_FOLDER = 'maps';

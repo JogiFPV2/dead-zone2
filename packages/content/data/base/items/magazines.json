@@ -1,0 +1,34 @@
+[
+  {
+    "id": "base:pistol-magazine",
+    "name": "item.base.pistol-magazine.name",
+    "kind": "magazine",
+    "weightKg": 0.12,
+    "tags": ["base:magazine"],
+    "magazine": { "ammo": "base:ammo-9mm", "capacity": 13 }
+  },
+  {
+    "id": "base:compact-pistol-magazine",
+    "name": "item.base.compact-pistol-magazine.name",
+    "kind": "magazine",
+    "weightKg": 0.08,
+    "tags": ["base:magazine"],
+    "magazine": { "ammo": "base:ammo-9mm", "capacity": 7 }
+  },
+  {
+    "id": "base:heavy-pistol-magazine",
+    "name": "item.base.heavy-pistol-magazine.name",
+    "kind": "magazine",
+    "weightKg": 0.14,
+    "tags": ["base:magazine"],
+    "magazine": { "ammo": "base:ammo-45", "capacity": 8 }
+  },
+  {
+    "id": "base:rifle-magazine",
+    "name": "item.base.rifle-magazine.name",
+    "kind": "magazine",
+    "weightKg": 0.15,
+    "tags": ["base:magazine"],
+    "magazine": { "ammo": "base:ammo-556", "capacity": 30 }
+  }
+]

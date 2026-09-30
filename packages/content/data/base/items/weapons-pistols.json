@@ -1,0 +1,105 @@
+[
+  {
+    "id": "base:pistol",
+    "name": "item.base.pistol.name",
+    "kind": "weapon_ranged",
+    "weightKg": 0.9,
+    "tags": ["base:firearm-pistol"],
+    "ranged": {
+      "category": "pistol",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-9mm",
+      "feed": { "type": "magazine", "magazine": "base:pistol-magazine" },
+      "damage": { "min": 18, "max": 28 },
+      "rangeTiles": 22,
+      "accuracy": 0.55,
+      "shotsPerSec": 2.5,
+      "reloadSec": 2.2,
+      "jamChance": 0.01,
+      "shotNoise": { "radiusTiles": 45, "volume": 1 },
+      "durability": { "max": 800, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:compact-pistol",
+    "name": "item.base.compact-pistol.name",
+    "kind": "weapon_ranged",
+    "weightKg": 0.6,
+    "tags": ["base:firearm-pistol"],
+    "ranged": {
+      "category": "pistol",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-9mm",
+      "feed": { "type": "magazine", "magazine": "base:compact-pistol-magazine" },
+      "damage": { "min": 15, "max": 24 },
+      "rangeTiles": 16,
+      "accuracy": 0.5,
+      "shotsPerSec": 2.8,
+      "reloadSec": 2,
+      "jamChance": 0.02,
+      "shotNoise": { "radiusTiles": 40, "volume": 1 },
+      "durability": { "max": 500, "lossChancePerUse": 0.06 }
+    }
+  },
+  {
+    "id": "base:heavy-pistol",
+    "name": "item.base.heavy-pistol.name",
+    "kind": "weapon_ranged",
+    "weightKg": 1.1,
+    "tags": ["base:firearm-pistol"],
+    "ranged": {
+      "category": "pistol",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-45",
+      "feed": { "type": "magazine", "magazine": "base:heavy-pistol-magazine" },
+      "damage": { "min": 24, "max": 34 },
+      "rangeTiles": 22,
+      "accuracy": 0.5,
+      "shotsPerSec": 1.8,
+      "reloadSec": 2.4,
+      "jamChance": 0.012,
+      "shotNoise": { "radiusTiles": 55, "volume": 1 },
+      "durability": { "max": 700, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:revolver",
+    "name": "item.base.revolver.name",
+    "kind": "weapon_ranged",
+    "weightKg": 0.9,
+    "tags": ["base:firearm-revolver"],
+    "ranged": {
+      "category": "revolver",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-38",
+      "feed": { "type": "internal", "capacity": 6 },
+      "damage": { "min": 20, "max": 30 },
+      "rangeTiles": 20,
+      "accuracy": 0.58,
+      "shotsPerSec": 1.6,
+      "reloadSec": 4.5,
+      "shotNoise": { "radiusTiles": 50, "volume": 1 },
+      "durability": { "max": 1200, "lossChancePerUse": 0.03 }
+    }
+  },
+  {
+    "id": "base:magnum-revolver",
+    "name": "item.base.magnum-revolver.name",
+    "kind": "weapon_ranged",
+    "weightKg": 1.4,
+    "tags": ["base:firearm-revolver"],
+    "ranged": {
+      "category": "revolver",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-44",
+      "feed": { "type": "internal", "capacity": 6 },
+      "damage": { "min": 32, "max": 46 },
+      "rangeTiles": 24,
+      "accuracy": 0.5,
+      "shotsPerSec": 1,
+      "reloadSec": 5,
+      "shotNoise": { "radiusTiles": 75, "volume": 1 },
+      "durability": { "max": 1000, "lossChancePerUse": 0.04 }
+    }
+  }
+]

@@ -51,7 +51,7 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   for (const { pack, manifest } of ordered) {
     addDefinitions(pack.definitions, manifest.id, index, sink);
     applyOverrides(pack.overrides, index, sink);
-    if (pack.worldSettings) worldDocs.push(pack.worldSettings);
+    worldDocs.push(...pack.worldSettings);
   }
   const worldSettings = mergeWorldSettings(worldDocs, sink);
 

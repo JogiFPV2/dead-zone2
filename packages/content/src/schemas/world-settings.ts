@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import { CapacityKgSchema, ExtSchema } from './common/index.js';
+import { LootSettingsSchema } from './loot-rarity.js';
+import { SurvivalSettingsSchema } from './survival/index.js';
 
 /**
- * Ustawienia świata — pojedynczy obiekt (`world-settings.json` w korzeniu paczki).
- * Mody nadpisują go głębokim merge w kolejności wczytywania.
+ * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
+ * fragmentów `world-settings/*.json` (np. po kategorii przetrwania). Wszystkie pliki paczek łączy
+ * głęboki merge w kolejności wczytywania; każde pole ma wartość domyślną.
  */
 export const WorldSettingsSchema = z.strictObject({
   /** Długość doby gry w minutach rzeczywistych. */
@@ -24,6 +27,10 @@ export const WorldSettingsSchema = z.strictObject({
       hardLimitMultiplier: z.number().min(1).max(10).default(2),
     })
     .default({ baseCapacityKg: 12, overloadSlowdownPerKg: 0.03, hardLimitMultiplier: 2 }),
+  /** Stałe przetrwania dla Symulacji (Etap 2). */
+  survival: SurvivalSettingsSchema,
+  /** Skalowanie rzadkości lootu (sandbox). */
+  loot: LootSettingsSchema,
   ext: ExtSchema,
 });
 

@@ -8,6 +8,9 @@
     "food": {
       "nutrition": {
         "calories": 380,
+        "proteinG": 22,
+        "carbsG": 62,
+        "fatG": 3,
         "hunger": -30,
         "unhappiness": 2
       },

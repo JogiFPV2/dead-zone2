@@ -1,0 +1,24 @@
+{
+  "survival": {
+    "temperature": {
+      "bodyBaseC": 37,
+      "comfortMinC": 18,
+      "comfortMaxC": 25,
+      "coolingPerDegPerMin": 0.0015,
+      "heatingPerDegPerMin": 0.0012,
+      "exertionHeatingPerMin": 0.006,
+      "recoveryPerMin": 0.01,
+      "hypothermiaBelowC": 32.5,
+      "hyperthermiaAboveC": 40.5,
+      "healthLossPerMin": 0.05
+    },
+    "wetness": {
+      "rainGainPerMin": 2,
+      "wadingWetness": 60,
+      "dryIndoorsPerMin": 0.35,
+      "dryOutdoorsPerMin": 0.2,
+      "dryNearHeatPerMin": 1.2,
+      "feelsColderAtMaxC": 6
+    }
+  }
+}

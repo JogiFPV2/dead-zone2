@@ -16,6 +16,9 @@ export function collectItemRefs(item: Item, r: RefList): void {
         r.add('item', item.ranged.feed.magazine, 'ranged', 'feed', 'magazine');
       r.add('item', item.ranged.durability.brokenInto, 'ranged', 'durability', 'brokenInto');
       break;
+    case 'ammo_box':
+      r.add('item', item.ammoBox.ammo, 'ammoBox', 'ammo');
+      break;
     case 'magazine':
       r.add('item', item.magazine.ammo, 'magazine', 'ammo');
       break;

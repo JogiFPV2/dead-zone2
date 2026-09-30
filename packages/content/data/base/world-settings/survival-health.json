@@ -1,0 +1,63 @@
+{
+  "survival": {
+    "health": {
+      "regenPerMin": 0.02,
+      "regenMaxHunger": 50,
+      "regenMaxThirst": 50,
+      "starvation": { "fromStat": 90, "healthLossPerMin": 0.035 },
+      "dehydration": { "fromStat": 90, "healthLossPerMin": 0.07 }
+    },
+    "wounds": {
+      "types": {
+        "scratch": {
+          "bleeding": 10,
+          "pain": 10,
+          "healMin": 600,
+          "clotsAfterMin": 20,
+          "zombieInfectionChance": 0.1
+        },
+        "laceration": {
+          "bleeding": 30,
+          "pain": 25,
+          "healMin": 2160,
+          "clotsAfterMin": 180,
+          "zombieInfectionChance": 0.3
+        },
+        "bite": {
+          "bleeding": 45,
+          "pain": 40,
+          "healMin": 4320,
+          "clotsAfterMin": 0,
+          "zombieInfectionChance": 0.9
+        },
+        "deep": {
+          "bleeding": 60,
+          "pain": 50,
+          "healMin": 5760,
+          "clotsAfterMin": 0,
+          "zombieInfectionChance": 0
+        }
+      },
+      "healthLossPerBleedingPerMin": 0.01,
+      "bandage": {
+        "bleedingMul": 0,
+        "dirtyAfterMin": 480,
+        "dirtyBleedingMul": 0.25,
+        "healMul": 1.5
+      },
+      "dirtInfection": {
+        "unbandagedChancePerMin": 0.0005,
+        "dirtyBandageChancePerMin": 0.001,
+        "painAdd": 15,
+        "healMul": 0.5,
+        "healthLossPerMin": 0.01
+      }
+    },
+    "infection": {
+      "incubationMin": { "min": 360, "max": 900 },
+      "deathAfterMin": { "min": 2160, "max": 4320 },
+      "feverMaxC": 2.5,
+      "sicknessMul": 1
+    }
+  }
+}

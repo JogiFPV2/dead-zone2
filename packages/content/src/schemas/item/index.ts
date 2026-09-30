@@ -7,6 +7,7 @@ export * from './nutrition.js';
 export * from './weapon-melee.js';
 export * from './weapon-ranged.js';
 export * from './ammo.js';
+export * from './ammo-box.js';
 export * from './magazine.js';
 export * from './food.js';
 export * from './drink.js';

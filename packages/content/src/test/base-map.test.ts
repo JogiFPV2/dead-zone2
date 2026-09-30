@@ -20,7 +20,7 @@ describe('przykładowa mapa data/base/maps/demo-house', () => {
     const kitchen = Object.values(bundle.lootTables).filter((t) =>
       t.rooms.includes('base:room-kitchen'),
     );
-    expect(kitchen.map((t) => t.id)).toEqual(['base:kitchen']);
+    expect(kitchen.map((t) => t.id).sort()).toEqual(['base:kitchen', 'base:kitchen-fridge']);
     const lights = c.objects.filter((o) => {
       const item = bundle.items[o.contentId];
       return item?.kind === 'placeable' && item.placeable.light !== undefined;

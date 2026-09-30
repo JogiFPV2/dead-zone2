@@ -1,0 +1,114 @@
+[
+  {
+    "id": "base:hammer",
+    "name": "item.base.hammer.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.7,
+    "tags": ["base:tool-hammer"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 7, "max": 12 },
+      "rangeTiles": 0.9,
+      "attacksPerSec": 1.3,
+      "staminaCost": 2.5,
+      "knockback": 0.3,
+      "hitNoise": { "radiusTiles": 4, "volume": 0.3 },
+      "durability": { "max": 400, "lossChancePerUse": 0.1 }
+    }
+  },
+  {
+    "id": "base:crowbar",
+    "name": "item.base.crowbar.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.6,
+    "tags": ["base:tool-pry"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 14, "max": 22 },
+      "rangeTiles": 1.2,
+      "attacksPerSec": 0.9,
+      "staminaCost": 5,
+      "knockback": 0.8,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 300, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:pipe-wrench",
+    "name": "item.base.pipe-wrench.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.8,
+    "tags": ["base:tool-wrench"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 12, "max": 19 },
+      "rangeTiles": 1,
+      "attacksPerSec": 0.85,
+      "staminaCost": 4.5,
+      "knockback": 0.7,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 250, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:tire-iron",
+    "name": "item.base.tire-iron.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.2,
+    "tags": ["base:tool-wrench"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 10, "max": 16 },
+      "rangeTiles": 1,
+      "attacksPerSec": 1,
+      "staminaCost": 3.5,
+      "knockback": 0.6,
+      "hitNoise": { "radiusTiles": 5, "volume": 0.4 },
+      "durability": { "max": 220, "lossChancePerUse": 0.06 }
+    }
+  },
+  {
+    "id": "base:sledgehammer",
+    "name": "item.base.sledgehammer.name",
+    "kind": "weapon_melee",
+    "weightKg": 5.5,
+    "tags": ["base:tool-sledgehammer"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 30, "max": 50 },
+      "rangeTiles": 1.4,
+      "attacksPerSec": 0.4,
+      "staminaCost": 12,
+      "knockback": 1.5,
+      "maxTargets": 3,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 10, "volume": 0.7 },
+      "durability": { "max": 250, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:shovel",
+    "name": "item.base.shovel.name",
+    "kind": "weapon_melee",
+    "weightKg": 2,
+    "tags": ["base:tool-shovel"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 12, "max": 19 },
+      "rangeTiles": 1.6,
+      "attacksPerSec": 0.8,
+      "staminaCost": 5.5,
+      "knockback": 0.9,
+      "maxTargets": 2,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 90, "lossChancePerUse": 0.1 }
+    }
+  }
+]

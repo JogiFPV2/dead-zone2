@@ -1,0 +1,78 @@
+[
+  {
+    "id": "base:machete",
+    "name": "item.base.machete.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.9,
+    "tags": ["base:tool-knife"],
+    "melee": {
+      "category": "blade_long",
+      "skill": "base:blade-long",
+      "damage": { "min": 16, "max": 26 },
+      "rangeTiles": 1.3,
+      "attacksPerSec": 1,
+      "staminaCost": 4,
+      "critChance": 0.1,
+      "hitNoise": { "radiusTiles": 3, "volume": 0.3 },
+      "durability": { "max": 90, "lossChancePerUse": 0.15 }
+    }
+  },
+  {
+    "id": "base:hatchet",
+    "name": "item.base.hatchet.name",
+    "kind": "weapon_melee",
+    "weightKg": 1,
+    "tags": ["base:tool-axe"],
+    "melee": {
+      "category": "blade_long",
+      "skill": "base:blade-long",
+      "damage": { "min": 13, "max": 21 },
+      "rangeTiles": 1,
+      "attacksPerSec": 1.1,
+      "staminaCost": 4,
+      "critChance": 0.08,
+      "hitNoise": { "radiusTiles": 4, "volume": 0.3 },
+      "durability": { "max": 110, "lossChancePerUse": 0.12 }
+    }
+  },
+  {
+    "id": "base:axe",
+    "name": "item.base.axe.name",
+    "kind": "weapon_melee",
+    "weightKg": 2.2,
+    "tags": ["base:tool-axe"],
+    "melee": {
+      "category": "blade_long",
+      "skill": "base:blade-long",
+      "damage": { "min": 22, "max": 38 },
+      "rangeTiles": 1.4,
+      "attacksPerSec": 0.7,
+      "staminaCost": 7,
+      "knockback": 0.6,
+      "maxTargets": 2,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 5, "volume": 0.4 },
+      "durability": { "max": 120, "lossChancePerUse": 0.1 }
+    }
+  },
+  {
+    "id": "base:fire-axe",
+    "name": "item.base.fire-axe.name",
+    "kind": "weapon_melee",
+    "weightKg": 3,
+    "tags": ["base:tool-axe", "base:tool-pry"],
+    "melee": {
+      "category": "blade_long",
+      "skill": "base:blade-long",
+      "damage": { "min": 28, "max": 44 },
+      "rangeTiles": 1.5,
+      "attacksPerSec": 0.6,
+      "staminaCost": 8,
+      "knockback": 0.8,
+      "maxTargets": 2,
+      "twoHanded": true,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 180, "lossChancePerUse": 0.08 }
+    }
+  }
+]

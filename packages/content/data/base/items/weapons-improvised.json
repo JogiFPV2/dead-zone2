@@ -1,0 +1,90 @@
+[
+  {
+    "id": "base:bottle",
+    "name": "item.base.bottle.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.4,
+    "tags": ["base:glass"],
+    "throwable": {
+      "rangeTiles": 10,
+      "damage": 2,
+      "impactNoise": { "radiusTiles": 20, "volume": 0.9 },
+      "breaksOnImpact": true,
+      "brokenInto": "base:broken-bottle"
+    },
+    "melee": {
+      "category": "improvised",
+      "skill": "base:blunt",
+      "damage": { "min": 3, "max": 6 },
+      "rangeTiles": 0.8,
+      "attacksPerSec": 1.4,
+      "staminaCost": 1.5,
+      "hitNoise": { "radiusTiles": 6, "volume": 0.5 },
+      "durability": { "max": 3, "lossChancePerUse": 0.6, "brokenInto": "base:broken-bottle" }
+    }
+  },
+  {
+    "id": "base:broken-bottle",
+    "name": "item.base.broken-bottle.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.3,
+    "tags": ["base:glass"],
+    "melee": {
+      "category": "improvised",
+      "skill": "base:blade-short",
+      "damage": { "min": 4, "max": 8 },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 1.6,
+      "staminaCost": 1.2,
+      "critChance": 0.12,
+      "hitNoise": { "radiusTiles": 2, "volume": 0.2 },
+      "durability": { "max": 6, "lossChancePerUse": 0.5 }
+    }
+  },
+  {
+    "id": "base:stone",
+    "name": "item.base.stone.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.4,
+    "throwable": {
+      "rangeTiles": 12,
+      "damage": 4,
+      "impactNoise": { "radiusTiles": 14, "volume": 0.7 },
+      "breaksOnImpact": false
+    },
+    "melee": {
+      "category": "improvised",
+      "skill": "base:blunt",
+      "damage": { "min": 3, "max": 7 },
+      "rangeTiles": 0.6,
+      "attacksPerSec": 1.2,
+      "staminaCost": 1.5,
+      "hitNoise": { "radiusTiles": 3, "volume": 0.3 },
+      "durability": { "max": 200, "lossChancePerUse": 0.02 }
+    }
+  },
+  {
+    "id": "base:brick",
+    "name": "item.base.brick.name",
+    "kind": "weapon_melee",
+    "weightKg": 2,
+    "tags": ["base:masonry"],
+    "throwable": {
+      "rangeTiles": 7,
+      "damage": 7,
+      "impactNoise": { "radiusTiles": 16, "volume": 0.8 },
+      "breaksOnImpact": false
+    },
+    "melee": {
+      "category": "improvised",
+      "skill": "base:blunt",
+      "damage": { "min": 6, "max": 11 },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 0.9,
+      "staminaCost": 3,
+      "knockback": 0.3,
+      "hitNoise": { "radiusTiles": 4, "volume": 0.4 },
+      "durability": { "max": 25, "lossChancePerUse": 0.2 }
+    }
+  }
+]

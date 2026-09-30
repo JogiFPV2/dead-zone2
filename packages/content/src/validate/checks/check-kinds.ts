@@ -5,7 +5,7 @@ import { formatJsonPath } from '../json-path.js';
 
 /**
  * Referencje do przedmiotów muszą wskazywać właściwy rodzaj:
- * amunicja broni → `ammo`, magazynek → `magazine` z tą samą amunicją.
+ * amunicja broni i pudełka → `ammo`, magazynek → `magazine` z tą samą amunicją.
  */
 export function checkItemKinds(index: ContentIndex, sink: ErrorSink): void {
   const items = index.map('item');
@@ -42,5 +42,6 @@ export function checkItemKinds(index: ContentIndex, sink: ErrorSink): void {
       }
     }
     if (item.kind === 'magazine') expect(item.magazine.ammo, 'ammo', 'magazine', 'ammo');
+    if (item.kind === 'ammo_box') expect(item.ammoBox.ammo, 'ammo', 'ammoBox', 'ammo');
   }
 }

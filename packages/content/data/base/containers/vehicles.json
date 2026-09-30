@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base:car-trunk",
+    "name": "container.base.car-trunk.name",
+    "category": "trunk",
+    "capacityKg": 50,
+    "searchMin": 1.5,
+    "defaultLootTable": "base:car-trunk"
+  }
+]

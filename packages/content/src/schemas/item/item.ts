@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AmmoBoxItemSchema } from './ammo-box.js';
 import { AmmoItemSchema } from './ammo.js';
 import { ClothingItemSchema } from './clothing.js';
 import { ContainerItemSchema } from './container.js';
@@ -19,6 +20,7 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   WeaponMeleeItemSchema,
   WeaponRangedItemSchema,
   AmmoItemSchema,
+  AmmoBoxItemSchema,
   MagazineItemSchema,
   FoodItemSchema,
   DrinkItemSchema,

@@ -7,13 +7,13 @@
   "levels": [
     {
       "label": "moodle.base.infection.level-1",
-      "enterAt": 10,
-      "exitAt": 10
+      "enterAt": 20,
+      "exitAt": 20
     },
     {
       "label": "moodle.base.infection.level-2",
-      "enterAt": 40,
-      "exitAt": 40
+      "enterAt": 45,
+      "exitAt": 45
     },
     {
       "label": "moodle.base.infection.level-3",

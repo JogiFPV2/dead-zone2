@@ -3,6 +3,7 @@ import {
   MANIFEST_FILE,
   MAPS_FOLDER,
   OVERRIDES_FOLDER,
+  WORLD_SETTINGS_DIR,
   WORLD_SETTINGS_FILE,
   type ContentType,
 } from '../schemas/content-type.js';
@@ -25,7 +26,8 @@ export interface RawDocument {
 export interface LoadedPack {
   dir: string;
   manifest: RawDocument | undefined;
-  worldSettings: RawDocument | undefined;
+  /** `world-settings.json`, potem fragmenty `world-settings/*.json` w kolejności ścieżek. */
+  worldSettings: RawDocument[];
   definitions: RawDefinition[];
   overrides: RawDocument[];
   /** Pliki z `maps/` (manifesty i chunki), sprawdzane przez validateMaps. */
@@ -37,14 +39,14 @@ const FOLDER_TO_TYPE = new Map<string, ContentType>(
 );
 
 /**
- * Rozkłada pliki paczki: `mod.json`, `world-settings.json`, katalogi typów (`items/`, …)
+ * Rozkłada pliki paczki: `mod.json`, `world-settings.json` (+ `world-settings/`), katalogi typów
  * i `overrides/`. Plik w katalogu typu zawiera jedną definicję (obiekt) albo ich listę (tablicę).
  */
 export function splitPack(source: PackSource, sink: ErrorSink): LoadedPack {
   const pack: LoadedPack = {
     dir: source.dir,
     manifest: undefined,
-    worldSettings: undefined,
+    worldSettings: [],
     definitions: [],
     overrides: [],
     maps: [],
@@ -62,7 +64,11 @@ export function splitPack(source: PackSource, sink: ErrorSink): LoadedPack {
       continue;
     }
     if (file.path === WORLD_SETTINGS_FILE) {
-      pack.worldSettings = { raw: json, source: at };
+      pack.worldSettings.unshift({ raw: json, source: at });
+      continue;
+    }
+    if (file.path.startsWith(WORLD_SETTINGS_DIR)) {
+      pack.worldSettings.push({ raw: json, source: at });
       continue;
     }
     const folder = file.path.split('/')[0] ?? '';

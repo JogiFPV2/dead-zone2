@@ -1,0 +1,89 @@
+[
+  {
+    "id": "base:pump-shotgun",
+    "name": "item.base.pump-shotgun.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.4,
+    "tags": ["base:firearm-shotgun"],
+    "ranged": {
+      "category": "shotgun",
+      "skill": "base:aiming",
+      "ammo": "base:shotgun-shell",
+      "feed": { "type": "internal", "capacity": 5 },
+      "damage": { "min": 8, "max": 14 },
+      "rangeTiles": 12,
+      "accuracy": 0.7,
+      "shotsPerSec": 0.9,
+      "reloadSec": 5.5,
+      "projectiles": 8,
+      "twoHanded": true,
+      "shotNoise": { "radiusTiles": 70, "volume": 1 },
+      "durability": { "max": 600, "lossChancePerUse": 0.05 }
+    }
+  },
+  {
+    "id": "base:double-barrel-shotgun",
+    "name": "item.base.double-barrel-shotgun.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.2,
+    "tags": ["base:firearm-shotgun"],
+    "ranged": {
+      "category": "shotgun",
+      "skill": "base:aiming",
+      "ammo": "base:shotgun-shell",
+      "feed": { "type": "internal", "capacity": 2 },
+      "damage": { "min": 9, "max": 15 },
+      "rangeTiles": 10,
+      "accuracy": 0.72,
+      "shotsPerSec": 2,
+      "reloadSec": 3,
+      "projectiles": 8,
+      "twoHanded": true,
+      "shotNoise": { "radiusTiles": 75, "volume": 1 },
+      "durability": { "max": 700, "lossChancePerUse": 0.04 }
+    }
+  },
+  {
+    "id": "base:hunting-rifle",
+    "name": "item.base.hunting-rifle.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.8,
+    "tags": ["base:firearm-rifle"],
+    "ranged": {
+      "category": "rifle",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-308",
+      "feed": { "type": "internal", "capacity": 5 },
+      "damage": { "min": 45, "max": 65 },
+      "rangeTiles": 45,
+      "accuracy": 0.7,
+      "shotsPerSec": 0.7,
+      "reloadSec": 5,
+      "twoHanded": true,
+      "shotNoise": { "radiusTiles": 90, "volume": 1 },
+      "durability": { "max": 900, "lossChancePerUse": 0.04 }
+    }
+  },
+  {
+    "id": "base:assault-rifle",
+    "name": "item.base.assault-rifle.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.5,
+    "tags": ["base:firearm-rifle"],
+    "ranged": {
+      "category": "rifle",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-556",
+      "feed": { "type": "magazine", "magazine": "base:rifle-magazine" },
+      "damage": { "min": 26, "max": 36 },
+      "rangeTiles": 38,
+      "accuracy": 0.6,
+      "shotsPerSec": 6,
+      "reloadSec": 2.8,
+      "jamChance": 0.015,
+      "twoHanded": true,
+      "shotNoise": { "radiusTiles": 80, "volume": 1 },
+      "durability": { "max": 1100, "lossChancePerUse": 0.05 }
+    }
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "base:fanny-pack",
+    "name": "item.base.fanny-pack.name",
+    "kind": "container",
+    "weightKg": 0.2,
+    "tags": ["base:bag", "base:bag-worn"],
+    "bag": { "capacityKg": 2, "weightReductionPct": 20, "slots": ["belt"], "movementPenalty": 0 }
+  },
+  {
+    "id": "base:school-backpack",
+    "name": "item.base.school-backpack.name",
+    "kind": "container",
+    "weightKg": 0.6,
+    "tags": ["base:bag", "base:bag-worn"],
+    "bag": {
+      "capacityKg": 12,
+      "weightReductionPct": 35,
+      "slots": ["back"],
+      "movementPenalty": 0.03
+    }
+  },
+  {
+    "id": "base:hiking-bag",
+    "name": "item.base.hiking-bag.name",
+    "kind": "container",
+    "weightKg": 1.1,
+    "tags": ["base:bag", "base:bag-worn"],
+    "bag": {
+      "capacityKg": 20,
+      "weightReductionPct": 55,
+      "slots": ["back"],
+      "movementPenalty": 0.05
+    }
+  },
+  {
+    "id": "base:big-hiking-bag",
+    "name": "item.base.big-hiking-bag.name",
+    "kind": "container",
+    "weightKg": 1.5,
+    "tags": ["base:bag", "base:bag-worn"],
+    "bag": {
+      "capacityKg": 26,
+      "weightReductionPct": 65,
+      "slots": ["back"],
+      "movementPenalty": 0.08
+    }
+  },
+  {
+    "id": "base:military-backpack",
+    "name": "item.base.military-backpack.name",
+    "kind": "container",
+    "weightKg": 1.6,
+    "tags": ["base:bag", "base:bag-worn"],
+    "bag": {
+      "capacityKg": 30,
+      "weightReductionPct": 75,
+      "slots": ["back"],
+      "movementPenalty": 0.06
+    }
+  }
+]

@@ -7,18 +7,18 @@
   "levels": [
     {
       "label": "moodle.base.hunger.level-1",
-      "enterAt": 20,
-      "exitAt": 15
+      "enterAt": 25,
+      "exitAt": 20
     },
     {
       "label": "moodle.base.hunger.level-2",
-      "enterAt": 45,
-      "exitAt": 40
+      "enterAt": 50,
+      "exitAt": 45
     },
     {
       "label": "moodle.base.hunger.level-3",
-      "enterAt": 70,
-      "exitAt": 65,
+      "enterAt": 75,
+      "exitAt": 70,
       "modifiers": [
         {
           "stat": "endurance-regen",
@@ -36,11 +36,6 @@
           "stat": "endurance-regen",
           "op": "mul",
           "value": 0.5
-        },
-        {
-          "stat": "health",
-          "op": "add",
-          "value": -0.2
         }
       ]
     }

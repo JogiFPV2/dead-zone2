@@ -5,5 +5,8 @@
     "baseCapacityKg": 12,
     "overloadSlowdownPerKg": 0.03,
     "hardLimitMultiplier": 2
+  },
+  "loot": {
+    "rarityWeightPct": { "common": 100, "uncommon": 100, "rare": 100, "very_rare": 100 }
   }
 }

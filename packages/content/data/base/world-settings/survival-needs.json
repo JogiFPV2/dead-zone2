@@ -1,0 +1,29 @@
+{
+  "survival": {
+    "needs": { "hungerPerMin": 0.0175, "thirstPerMin": 0.035, "fatiguePerMin": 0.047 },
+    "activity": {
+      "idle": { "hunger": 1, "thirst": 1, "fatigue": 1, "endurancePerMin": 2.5 },
+      "walking": { "hunger": 1.25, "thirst": 1.3, "fatigue": 1.2, "endurancePerMin": 1.5 },
+      "sneaking": { "hunger": 1.2, "thirst": 1.2, "fatigue": 1.3, "endurancePerMin": 1 },
+      "running": { "hunger": 1.8, "thirst": 2.2, "fatigue": 2, "endurancePerMin": -2 },
+      "sprinting": { "hunger": 2.6, "thirst": 3.2, "fatigue": 3, "endurancePerMin": -6 },
+      "fighting": { "hunger": 2.2, "thirst": 2.6, "fatigue": 2.6, "endurancePerMin": 0 },
+      "sleeping": { "hunger": 0.5, "thirst": 0.6, "fatigue": 0, "endurancePerMin": 4 }
+    },
+    "nutrition": {
+      "dailyBurnKcal": 2200,
+      "kcalPerKg": 7700,
+      "startBodyWeightKg": 80,
+      "underweightKg": 65,
+      "overweightKg": 95,
+      "emaciatedKg": 50,
+      "satiety": { "perKcalWhenFull": 0.05, "decayPerMin": 0.035, "hungerRateMul": 0.75 },
+      "macros": {
+        "lowFraction": 0.3,
+        "protein": { "dailyTargetG": 70, "metMul": 1.2, "lowMul": 0.8 },
+        "carbs": { "dailyTargetG": 250, "metMul": 1.15, "lowMul": 0.85 },
+        "fat": { "dailyTargetG": 70, "metMul": 1.25, "lowMul": 0.9 }
+      }
+    }
+  }
+}

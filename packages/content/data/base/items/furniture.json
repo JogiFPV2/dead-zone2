@@ -8,5 +8,14 @@
     "placeable": {
       "light": { "radiusTiles": 6, "intensity": 0.8, "color": "#ffe8c0" }
     }
+  },
+  {
+    "id": "base:wooden-crate",
+    "name": "item.base.wooden-crate.name",
+    "kind": "placeable",
+    "weightKg": 9,
+    "placeable": {
+      "containerType": "base:wooden-crate"
+    }
   }
 ]

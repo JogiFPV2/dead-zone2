@@ -1,0 +1,48 @@
+[
+  {
+    "id": "base:wooden-chest",
+    "name": "container.base.wooden-chest.name",
+    "category": "chest",
+    "capacityKg": 60,
+    "searchMin": 2
+  },
+  {
+    "id": "base:crate",
+    "name": "container.base.crate.name",
+    "category": "crate",
+    "capacityKg": 70,
+    "searchMin": 2,
+    "defaultLootTable": "base:warehouse"
+  },
+  {
+    "id": "base:metal-shelf",
+    "name": "container.base.metal-shelf.name",
+    "category": "shelf",
+    "capacityKg": 40,
+    "searchMin": 0.5,
+    "defaultLootTable": "base:garage"
+  },
+  {
+    "id": "base:tool-chest",
+    "name": "container.base.tool-chest.name",
+    "category": "chest",
+    "capacityKg": 35,
+    "searchMin": 1.5,
+    "defaultLootTable": "base:garage"
+  },
+  {
+    "id": "base:locker",
+    "name": "container.base.locker.name",
+    "category": "cabinet",
+    "capacityKg": 15,
+    "defaultLootTable": "base:school"
+  },
+  {
+    "id": "base:gun-locker",
+    "name": "container.base.gun-locker.name",
+    "category": "cabinet",
+    "capacityKg": 40,
+    "searchMin": 2,
+    "defaultLootTable": "base:gun-store"
+  }
+]

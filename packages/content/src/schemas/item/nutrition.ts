@@ -3,6 +3,10 @@ import { z } from 'zod';
 /** Wpływ spożycia na statystyki. Ujemny `hunger` = zaspokaja głód. Wartości w punktach statystyk 0..100. */
 export const NutritionSchema = z.strictObject({
   calories: z.number().min(0).default(0),
+  /** Makroskładniki w gramach (efekty w `worldSettings.survival.nutrition.macros`). */
+  proteinG: z.number().min(0).max(1000).default(0),
+  carbsG: z.number().min(0).max(1000).default(0),
+  fatG: z.number().min(0).max(1000).default(0),
   hunger: z.number().min(-100).max(100).default(0),
   thirst: z.number().min(-100).max(100).default(0),
   boredom: z.number().min(-100).max(100).default(0),

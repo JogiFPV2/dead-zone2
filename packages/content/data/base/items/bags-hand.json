@@ -1,0 +1,54 @@
+[
+  {
+    "id": "base:plastic-bag",
+    "name": "item.base.plastic-bag.name",
+    "kind": "container",
+    "weightKg": 0.02,
+    "tags": ["base:bag", "base:bag-hand"],
+    "bag": {
+      "capacityKg": 3,
+      "weightReductionPct": 0,
+      "slots": ["hand_primary", "hand_secondary"],
+      "movementPenalty": 0.02
+    }
+  },
+  {
+    "id": "base:garbage-bag",
+    "name": "item.base.garbage-bag.name",
+    "kind": "container",
+    "weightKg": 0.05,
+    "tags": ["base:bag", "base:bag-hand"],
+    "bag": {
+      "capacityKg": 7,
+      "weightReductionPct": 5,
+      "slots": ["hand_primary", "hand_secondary"],
+      "movementPenalty": 0.04
+    }
+  },
+  {
+    "id": "base:tote-bag",
+    "name": "item.base.tote-bag.name",
+    "kind": "container",
+    "weightKg": 0.3,
+    "tags": ["base:bag", "base:bag-hand"],
+    "bag": {
+      "capacityKg": 9,
+      "weightReductionPct": 15,
+      "slots": ["hand_primary", "hand_secondary"],
+      "movementPenalty": 0.03
+    }
+  },
+  {
+    "id": "base:duffel-bag",
+    "name": "item.base.duffel-bag.name",
+    "kind": "container",
+    "weightKg": 1,
+    "tags": ["base:bag", "base:bag-hand"],
+    "bag": {
+      "capacityKg": 16,
+      "weightReductionPct": 45,
+      "slots": ["hand_primary", "hand_secondary", "back"],
+      "movementPenalty": 0.08
+    }
+  }
+]

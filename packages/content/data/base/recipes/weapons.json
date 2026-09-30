@@ -1,0 +1,25 @@
+[
+  {
+    "id": "base:craft-knife-spear",
+    "name": "recipe.base.craft-knife-spear.name",
+    "category": "weapons",
+    "ingredients": [
+      { "item": "base:spear" },
+      { "tag": "base:spear-blade" },
+      { "item": "base:rag", "count": 2 }
+    ],
+    "durationMin": 15,
+    "results": [{ "item": "base:knife-spear" }],
+    "xp": [{ "skill": "base:spear", "amount": 2 }]
+  },
+  {
+    "id": "base:craft-nailed-bat",
+    "name": "recipe.base.craft-nailed-bat.name",
+    "category": "weapons",
+    "ingredients": [{ "item": "base:baseball-bat" }, { "item": "base:nails", "count": 6 }],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "durationMin": 10,
+    "results": [{ "item": "base:nailed-bat" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 2 }]
+  }
+]
