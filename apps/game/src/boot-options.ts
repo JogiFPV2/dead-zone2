@@ -1,3 +1,4 @@
+import { DEBUG_STATS, type DebugStat } from '@deadzone/protocol';
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
 
@@ -18,6 +19,36 @@ export interface BootOptions {
   time?: number;
   /** Dev `?timescale=N` (with `?time`): game minutes per real second (0 = frozen). */
   timescale: number;
+  /** Dev `?give=base:kitchen-knife,base:canned-beans*3`: items put into the inventory at start. */
+  give: { itemId: string; count: number }[];
+  /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
+  stats: { stat: DebugStat; value: number }[];
+}
+
+const DEBUG_STAT_SET: ReadonlySet<string> = new Set(DEBUG_STATS);
+
+/** `stat:value` list, comma separated; unknown stats and non-numbers are skipped. */
+export function parseStatParam(value: string | null): { stat: DebugStat; value: number }[] {
+  if (!value) return [];
+  const out: { stat: DebugStat; value: number }[] = [];
+  for (const part of value.split(',')) {
+    const [stat = '', v = ''] = part.trim().split(':');
+    const n = Number(v);
+    if (DEBUG_STAT_SET.has(stat) && v !== '' && Number.isFinite(n)) {
+      out.push({ stat: stat as DebugStat, value: n });
+    }
+  }
+  return out;
+}
+
+/** `id[*count]` list, comma separated; invalid entries are skipped, count clamped to 1..99. */
+export function parseGiveParam(value: string | null): { itemId: string; count: number }[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((part) => /^([a-z0-9-]+:[a-z0-9-]+)(?:\*(\d+))?$/.exec(part.trim()))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => ({ itemId: m[1] ?? '', count: Math.min(99, Math.max(1, Number(m[2] ?? 1))) }));
 }
 
 /** Parses the URL query (`?map=<base map>`, e.g. `demo-house`, `?crowd=N`, `?spawn=inside`, `?zones=1`). */
@@ -37,5 +68,7 @@ export function parseBootOptions(search: string): BootOptions {
     zones: q.get('zones') === '1',
     ...(time !== undefined ? { time } : {}),
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
+    give: parseGiveParam(q.get('give')),
+    stats: parseStatParam(q.get('stat')),
   };
 }

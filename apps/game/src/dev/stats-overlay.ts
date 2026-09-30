@@ -14,7 +14,8 @@ export function createStatsOverlay(
   el.dataset.devStats = '';
   Object.assign(el.style, {
     position: 'fixed',
-    top: '8px',
+    // Bottom left: the HUD leaves that corner free (spec §2); top left has moodles and hints.
+    bottom: '8px',
     left: '8px',
     padding: '4px 8px',
     font: '12px/1.4 ui-monospace, monospace',
@@ -22,7 +23,7 @@ export function createStatsOverlay(
     background: 'rgba(0, 0, 0, 0.6)',
     borderRadius: '4px',
     pointerEvents: 'none',
-    zIndex: '10',
+    zIndex: '1000',
     whiteSpace: 'pre',
   });
   parent.appendChild(el);

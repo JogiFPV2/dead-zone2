@@ -22,6 +22,7 @@ export const ACTIONS = [
   'inventory',
   'map',
   'pause',
+  'toggleHints',
 ] as const;
 
 export type Action = (typeof ACTIONS)[number];

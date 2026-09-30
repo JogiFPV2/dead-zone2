@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { parseBootOptions } from './boot-options.js';
+import { parseBootOptions, parseGiveParam, parseStatParam } from './boot-options.js';
 
 it('uses the worker by default and the mock only for ?crowd', () => {
   expect(parseBootOptions('')).toEqual({
@@ -9,6 +9,8 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     sim: 'worker',
     zones: false,
     timescale: 0,
+    give: [],
+    stats: [],
   });
   expect(parseBootOptions('?time=06:30&timescale=30')).toMatchObject({ time: 390, timescale: 30 });
   expect(parseBootOptions('?time=25:00').time).toBeUndefined();
@@ -27,4 +29,23 @@ it('uses the worker by default and the mock only for ?crowd', () => {
   });
   expect(parseBootOptions('?map=town-2').map).toBe('town-2');
   expect(parseBootOptions('?map=../x').map).toBe('test');
+});
+
+it('parses ?give= item lists', () => {
+  expect(parseGiveParam('base:kitchen-knife,base:canned-beans*3, bad ,x:y*500')).toEqual([
+    { itemId: 'base:kitchen-knife', count: 1 },
+    { itemId: 'base:canned-beans', count: 3 },
+    { itemId: 'x:y', count: 99 },
+  ]);
+  expect(parseBootOptions('?give=base:bandage*2').give).toEqual([
+    { itemId: 'base:bandage', count: 2 },
+  ]);
+});
+
+it('parses ?stat= debug stats', () => {
+  expect(parseStatParam('hunger:60, stress:40,pain:1,thirst:x')).toEqual([
+    { stat: 'hunger', value: 60 },
+    { stat: 'stress', value: 40 },
+  ]);
+  expect(parseBootOptions('').stats).toEqual([]);
 });

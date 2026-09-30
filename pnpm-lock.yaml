@@ -208,6 +208,9 @@ importers:
       '@deadzone/sim':
         specifier: workspace:*
         version: link:../../packages/sim
+      '@deadzone/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       three:
         specifier: ^0.186.1
         version: 0.186.1

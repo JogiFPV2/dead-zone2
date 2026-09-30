@@ -15,6 +15,7 @@
     "@deadzone/content": "workspace:*",
     "@deadzone/protocol": "workspace:*",
     "@deadzone/sim": "workspace:*",
+    "@deadzone/ui": "workspace:*",
     "three": "^0.186.1"
   },
   "devDependencies": {

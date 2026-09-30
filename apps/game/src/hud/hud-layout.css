@@ -1,0 +1,86 @@
+/* HUD group anchors (spec §2, 1920×1080 reference; everything scales with --ui-scale). */
+.dz-g {
+  position: absolute;
+  --_s: var(--ui-scale, 1);
+  --_safe: calc(var(--size-safe) * var(--_s));
+}
+.dz-g--objective {
+  left: var(--_safe);
+  top: var(--_safe);
+  transform: scale(var(--_s));
+  transform-origin: top left;
+}
+.dz-g--moodles {
+  left: var(--_safe);
+  top: calc(150px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: top left;
+}
+/* No objective: moodles move up to y 32 (spec §3.1 "none"). */
+.dz-hud[data-objective='none'] .dz-g--moodles {
+  top: var(--_safe);
+}
+.dz-g--hints {
+  left: var(--_safe);
+  top: calc(262px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: top left;
+}
+.dz-g--threat {
+  left: 50%;
+  top: var(--_safe);
+  transform: translateX(-50%) scale(var(--_s));
+  transform-origin: top center;
+}
+.dz-g--clock {
+  right: var(--_safe);
+  top: var(--_safe);
+  transform: scale(var(--_s));
+  transform-origin: top right;
+}
+.dz-g--minimap {
+  right: var(--_safe);
+  top: calc(116px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: top right;
+}
+.dz-g--toasts {
+  right: var(--_safe);
+  top: calc(340px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: top right;
+}
+/* Bottom centre column: hotbar (y 834–916), gap 14, StatBars (y 930–970), 110 px free below. */
+.dz-g--hotbar {
+  left: 50%;
+  bottom: calc(164px * var(--_s));
+  transform: translateX(-50%) scale(var(--_s));
+  transform-origin: bottom center;
+}
+.dz-g--stats {
+  left: 50%;
+  bottom: calc(110px * var(--_s));
+  transform: translateX(-50%) scale(var(--_s));
+  transform-origin: bottom center;
+}
+.dz-g--actions {
+  right: var(--_safe);
+  bottom: var(--_safe);
+  display: flex;
+  gap: var(--space-3);
+  transform: scale(var(--_s));
+  transform-origin: bottom right;
+}
+.dz-hotbar {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+.dz-lowres {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--space-2) var(--space-4);
+  font: var(--font-mono-md);
+  color: var(--color-warning-text);
+}

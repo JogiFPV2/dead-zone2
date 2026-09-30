@@ -44,8 +44,13 @@ import type { LoadedMap } from './world/content-map.js';
 import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
+import { createHud } from './hud/hud.js';
+import { buildHudContentIndex } from './hud/content-index.js';
+import { interactIntent } from './hud/hud-model.js';
+import { minimapGeometry } from './hud/minimap-data.js';
 
 const VIEW_HEIGHT = 24;
+const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
 /** Singleplayer: the local player is sim player 0. */
 const PLAYER_ID = 0;
 const SIM_SEED = 1;
@@ -129,8 +134,17 @@ const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
 const snapshots = new SnapshotBuffer();
 const crowd = new CrowdBuffer();
 let crowdArrivedMs = 0;
+let firstSnapshot = true;
 sim.onSnapshot(({ tick, buf }) => {
   stamper.tick = tick;
+  if (firstSnapshot) {
+    firstSnapshot = false;
+    // Dev `?give=` / `?stat=`: starting items and stats (debug commands, need `init.dev`).
+    if (import.meta.env.DEV) {
+      for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
+      for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
+    }
+  }
   const player = readEntity(buf, 0);
   if (player) snapshots.push(player, performance.now());
   crowd.push(buf, 1);
@@ -143,6 +157,45 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 scene.add(crowdView.mesh);
 const player = new PlayerView();
 scene.add(player.root);
+
+// HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
+const hud = createHud({
+  root: container,
+  bindings: () => settings.get().input.bindings,
+  geometry: minimapGeometry(world.source, world.range),
+  pois: world.zones
+    .filter((z) => z.role === 'extraction')
+    .flatMap((z) =>
+      z.rects.map((r) => ({ x: r.x + r.w / 2, z: r.y + r.h / 2, kind: 'objective' as const })),
+    ),
+  onInteract: interact,
+  playerId: PLAYER_ID,
+});
+if (boot.sim === 'worker') {
+  void import('./content/base-pack.js').then((m) =>
+    hud.setContent(buildHudContentIndex(m.baseFiles)),
+  );
+}
+/** Interact key / button: search/open the nearest container, cancel the search, or close. */
+function interact(): void {
+  const p = snapshots.sample(performance.now(), TICK_MS);
+  if (!p) return;
+  const intent = interactIntent(gameState.get(), p.x, p.y);
+  if (intent.type === 'open')
+    sim.send(stamper.stamp({ type: 'openContainer', container: intent.container }));
+  else if (intent.type === 'close') sim.send(stamper.stamp({ type: 'closeContainer' }));
+  else if (intent.type === 'cancel') sim.send(stamper.stamp({ type: 'cancelAction' }));
+}
+input.on('interact', interact);
+QUICKSLOTS.forEach((action, i) => input.on(action, () => hud.selectSlot(i)));
+input.on('toggleHints', () => hud.toggleHints(performance.now()));
+// F1 & co. open browser help otherwise.
+window.addEventListener('keydown', (e) => {
+  if (settings.get().input.bindings.toggleHints.includes(e.code)) e.preventDefault();
+});
+gameState.subscribe((_next, _prev, action) => {
+  if (action.type === 'events') hud.events(action.events);
+});
 // Lamps: test map placeholder list. The look follows the sim clock through the day cycle
 // (night approved; dawn/day/dusk are placeholders in lighting/day-cycle-config.ts).
 const lighting = createWorldLighting(
@@ -168,6 +221,7 @@ function resize(): void {
   const height = container?.clientHeight ?? window.innerHeight;
   renderer.setSize(width, height);
   resizeIsometricCamera(camera, width / Math.max(height, 1), VIEW_HEIGHT);
+  hud.resize(width, height);
 }
 
 new ResizeObserver(resize).observe(container);
@@ -216,6 +270,25 @@ renderer.setAnimationLoop((time) => {
   lightMinute = currentMinute(performance.now());
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   lighting.update(camera, rig.target.x, rig.target.z);
+  const gs = gameState.get();
+  if (state) {
+    const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
+    hud.frame({
+      now: performance.now(),
+      state: gs,
+      px: state.x,
+      py: state.y,
+      facing: state.facing,
+      cameraYaw: rig.targetYaw,
+      tick: simTick,
+      minute: lightMinute,
+      clock:
+        timeOverride !== undefined
+          ? { day: gs.clock?.day ?? 1, minuteOfDay: lightMinute }
+          : gs.clock,
+      interactHeld: input.isDown('interact'),
+    });
+  }
   const t0 = performance.now();
   crowdView.update(tickAlpha(t0, crowdArrivedMs, TICK_MS));
   const t1 = performance.now();

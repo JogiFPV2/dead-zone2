@@ -28,6 +28,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   inventory: ['KeyI'],
   map: ['KeyM'],
   pause: ['Escape'],
+  toggleHints: ['F1'],
 };
 
 /** Reverse index: input code → actions bound to it. */
