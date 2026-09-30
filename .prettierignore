@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist/
+coverage/
+.turbo/
+# Dokumenty planu prowadzi Szef sztabu, nie formatujemy ich automatycznie.
+docs/
