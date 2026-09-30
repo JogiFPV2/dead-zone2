@@ -10,7 +10,8 @@ import {
   type Scene,
   type WebGLRenderer,
 } from 'three';
-import { LIGHTING_CONFIG, fogRange, type LightingPreset } from './preset.js';
+import { compilePreset, type CompiledPreset } from './compiled.js';
+import { LIGHTING_CONFIG, SPEC_CAMERA_DISTANCE, type LightingPreset } from './preset.js';
 import { DEFAULT_SHADOW_FIT, fitShadowFrustum, type OrthoView } from './shadow-fit.js';
 
 /** Renderer settings of the spec (4.1). PCFSoftShadowMap is gone in r186, so PCFShadowMap. */
@@ -56,22 +57,27 @@ export class SceneLighting {
 
   apply(preset: LightingPreset, renderer?: WebGLRenderer): void {
     this.preset = preset;
-    if (renderer) renderer.toneMappingExposure = preset.exposure;
-    this.background.set(preset.background);
-    const { near, far } = fogRange(preset.fog, this.cameraDistance);
-    this.fog.color.set(preset.fog.color);
-    this.fog.near = near;
-    this.fog.far = far;
-    const h = preset.hemisphere;
-    this.hemisphere.color.set(h.sky);
-    this.hemisphere.groundColor.set(h.ground);
-    this.hemisphere.intensity = h.intensity;
-    const d = preset.directional;
-    this.directional.color.set(d.color);
+    this.applyCompiled(compilePreset(preset), renderer);
+  }
+
+  /** Allocation-free apply (day cycle, every frame). */
+  applyCompiled(c: CompiledPreset, renderer?: WebGLRenderer): void {
+    if (renderer) renderer.toneMappingExposure = c.exposure;
+    this.background.copy(c.background);
+    // fogRange(): the spec fog is for a camera SPEC_CAMERA_DISTANCE away.
+    const shift = this.cameraDistance - SPEC_CAMERA_DISTANCE;
+    this.fog.color.copy(c.fog.color);
+    this.fog.near = c.fog.near + shift;
+    this.fog.far = c.fog.far + shift;
+    this.hemisphere.color.copy(c.hemisphere.sky);
+    this.hemisphere.groundColor.copy(c.hemisphere.ground);
+    this.hemisphere.intensity = c.hemisphere.intensity;
+    const d = c.directional;
+    this.directional.color.copy(d.color);
     this.directional.intensity = d.intensity;
     this.directional.shadow.radius = d.shadowRadius;
     this.directional.shadow.intensity = d.shadowIntensity;
-    this.direction.set(d.offset.x, d.offset.y, d.offset.z).normalize();
+    this.direction.copy(d.offset).normalize();
   }
 
   /** Per frame, after the camera moved: refit the shadow frustum to what is on screen. */

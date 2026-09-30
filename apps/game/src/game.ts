@@ -12,7 +12,14 @@ import { PlayerInput } from './input/player-input.js';
 import { createSettingsStore } from './settings/store.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
-import { createWorldLighting } from './lighting/index.js';
+import {
+  DAY_CYCLE,
+  DayCycle,
+  clockMinute,
+  createWorldLighting,
+  formatMinute,
+  overrideMinute,
+} from './lighting/index.js';
 import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
@@ -136,13 +143,25 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 scene.add(crowdView.mesh);
 const player = new PlayerView();
 scene.add(player.root);
-// Night is the default (and for now the only approved) look. Lamps: test map placeholder list.
+// Lamps: test map placeholder list. The look follows the sim clock through the day cycle
+// (night approved; dawn/day/dusk are placeholders in lighting/day-cycle-config.ts).
 const lighting = createWorldLighting(
   scene,
   renderer,
   boot.map === 'test' ? createTestLamps() : [],
   CAMERA_DISTANCE,
 );
+const dayCycle = new DayCycle(DAY_CYCLE);
+const timeOverride = import.meta.env.DEV ? boot.time : undefined;
+const bootMs = performance.now();
+let lightMinute = DAY_CYCLE.fallbackMinute;
+/** Minute of day for the lighting: dev override, else the sim clock between ticks. */
+function currentMinute(now: number): number {
+  if (timeOverride !== undefined) return overrideMinute(timeOverride, boot.timescale, now - bootMs);
+  const clock = gameState.get().clock;
+  if (!clock) return DAY_CYCLE.fallbackMinute;
+  return clockMinute(clock, stamper.tick + Math.min(1, (now - crowdArrivedMs) / TICK_MS));
+}
 
 function resize(): void {
   const width = container?.clientWidth ?? window.innerWidth;
@@ -167,7 +186,9 @@ if (import.meta.env.DEV) {
       };
       afterRender = createStatsOverlay(
         document.body,
-        () => `${bench.line()}\n${pos()}\n${devStateLine(gameState.get())}`,
+        () =>
+          `${bench.line()}\n${pos()}\n${devStateLine(gameState.get())}\n` +
+          `light ${formatMinute(lightMinute)} · lamps ${lighting.lamps.currentLevel.toFixed(2)}`,
       );
     },
   );
@@ -192,6 +213,8 @@ renderer.setAnimationLoop((time) => {
     structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
   }
   rig.update(time);
+  lightMinute = currentMinute(performance.now());
+  lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   lighting.update(camera, rig.target.x, rig.target.z);
   const t0 = performance.now();
   crowdView.update(tickAlpha(t0, crowdArrivedMs, TICK_MS));

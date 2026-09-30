@@ -1,4 +1,5 @@
 import type { OrthographicCamera, Scene, WebGLRenderer } from 'three';
+import type { CompiledPreset } from './compiled.js';
 import { NIGHT_PRESET, type LightingPreset } from './preset.js';
 import { SceneLighting, configureRenderer } from './scene-lighting.js';
 import { StreetLamps, type LampDef, type StreetLampsOptions } from './street-lamps.js';
@@ -6,12 +7,17 @@ import { StreetLamps, type LampDef, type StreetLampsOptions } from './street-lam
 export { NIGHT_PRESET, blendPresets, lerpPreset, type LightingPreset } from './preset.js';
 export { placeholderMaterial } from './materials.js';
 export type { LampDef } from './street-lamps.js';
+export { DayCycle } from './day-cycle.js';
+export { DAY_CYCLE } from './day-cycle-config.js';
+export { clockMinute, formatMinute, overrideMinute, parseTimeParam } from './game-clock.js';
 
 export interface WorldLighting {
   readonly sky: SceneLighting;
   readonly lamps: StreetLamps;
   /** Switch or blend the look (e.g. `blendPresets(NIGHT, DAY, t)` later). */
   apply(preset: LightingPreset): void;
+  /** Allocation-free per-frame look (day cycle): blended preset + lamp level 0..1. */
+  applyCompiled(preset: CompiledPreset, lampLevel: number): void;
   /** Per frame, after the camera rig update. `focus` = camera target (world X, Z). */
   update(camera: OrthographicCamera, focusX: number, focusZ: number): void;
 }
@@ -36,6 +42,11 @@ export function createWorldLighting(
     apply(p) {
       sky.apply(p, renderer);
       street.apply(p.lamps);
+    },
+    applyCompiled(c, level) {
+      sky.applyCompiled(c, renderer);
+      street.applyCompiled(c.lamps);
+      street.setLevel(level);
     },
     update(camera, fx, fz) {
       sky.update(camera);

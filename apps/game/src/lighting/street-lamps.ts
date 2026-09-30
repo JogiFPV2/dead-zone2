@@ -18,7 +18,8 @@ import {
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { DEFAULT_LIGHT_BUDGET, selectLamps, type LightBudget } from './light-budget.js';
 import { placeholderMaterial } from './materials.js';
-import { LIGHTING_CONFIG, type LightingPreset } from './preset.js';
+import { compilePreset, type CompiledPreset } from './compiled.js';
+import { LIGHTING_CONFIG, NIGHT_PRESET, type LightingPreset } from './preset.js';
 
 /** A street lamp object: pole at (x, z), arm pointing along (armX, armZ) (unit, floor plane). */
 export interface LampDef {
@@ -68,7 +69,8 @@ export class StreetLamps {
   private readonly glow: InstancedMesh | undefined;
   private readonly budget: LightBudget;
   private active: number[] = [];
-  private preset: LightingPreset['lamps'] | undefined;
+  private preset: CompiledPreset['lamps'] | undefined;
+  private level = 1;
 
   constructor(
     private readonly lamps: readonly LampDef[],
@@ -137,20 +139,53 @@ export class StreetLamps {
 
   /** Lamp look from a preset (a day preset would set intensity 0, glow 0, no emission). */
   apply(p: LightingPreset['lamps']): void {
+    this.applyCompiled(compilePreset({ ...NIGHT_PRESET, lamps: p }).lamps);
+  }
+
+  /** Allocation-free lamp look (day cycle, every frame); combined with `setLevel`. */
+  applyCompiled(p: CompiledPreset['lamps']): void {
     this.preset = p;
-    this.bulbMaterial.color.set(p.bulbColor);
-    this.bulbMaterial.emissive.set(p.bulbEmissive);
-    this.bulbMaterial.emissiveIntensity = p.bulbEmissiveIntensity;
-    this.glowMaterial.opacity = p.glow;
-    if (this.glow) this.glow.visible = p.glow > 0;
+    this.bulbMaterial.color.copy(p.bulbColor);
+    this.bulbMaterial.emissive.copy(p.bulbEmissive);
     for (const s of this.lights) {
-      s.color.set(p.color);
+      s.color.copy(p.color);
       s.distance = p.distance;
       s.angle = p.angle;
       s.penumbra = p.penumbra;
       s.decay = p.decay;
     }
-    this.assign();
+    this.refreshLevel();
+  }
+
+  /**
+   * Lamps on/off with fade, 0..1: scales light intensity, bulb emission and glow. Crossing 0
+   * toggles shadow updates; the light count never changes (no shader recompiles).
+   */
+  setLevel(level: number): void {
+    const next = Math.min(1, Math.max(0, level));
+    if (next === this.level) return;
+    const toggled = next === 0 || this.level === 0;
+    this.level = next;
+    if (toggled) this.assign();
+    else this.refreshLevel();
+  }
+
+  get currentLevel(): number {
+    return this.level;
+  }
+
+  private refreshLevel(): void {
+    const p = this.preset;
+    if (!p) return;
+    this.bulbMaterial.emissiveIntensity = p.bulbEmissiveIntensity * this.level;
+    this.glowMaterial.opacity = p.glow * this.level;
+    if (this.glow) this.glow.visible = p.glow * this.level > 0;
+    const on = p.intensity * this.level > 0;
+    if (!on) return this.assign();
+    for (let i = 0; i < this.lights.length; i++) {
+      const s = this.lights[i]!;
+      if (this.lamps[this.active[i] ?? -1]) s.intensity = p.intensity * this.level;
+    }
   }
 
   /** Per frame: give the light pool to the lamps nearest to the focus (camera target). */
@@ -179,7 +214,7 @@ export class StreetLamps {
   }
 
   private assign(): void {
-    const on = (this.preset?.intensity ?? 0) > 0;
+    const on = (this.preset?.intensity ?? 0) * this.level > 0;
     this.lights.forEach((s, i) => {
       const lamp = this.lamps[this.active[i] ?? -1];
       // Unused pool lights stay in the scene (same light count, no recompiles) but are dark
@@ -187,10 +222,13 @@ export class StreetLamps {
       s.shadow.autoUpdate = Boolean(lamp && on && s.castShadow);
       if (!lamp || !on) {
         s.intensity = 0;
+        // A shadow-casting light must render its map once, or the lit materials sample an
+        // unallocated shadow texture and draw nothing (lamps off from the first frame, day).
+        if (s.castShadow && !s.shadow.map) s.shadow.needsUpdate = true;
         return;
       }
       const h = lampHead(lamp);
-      s.intensity = this.preset?.intensity ?? 0;
+      s.intensity = (this.preset?.intensity ?? 0) * this.level;
       s.position.set(h.x, LIGHTING_CONFIG.lampLightHeight, h.z);
       s.target.position.set(h.x, 0, h.z);
       s.target.updateMatrixWorld();
