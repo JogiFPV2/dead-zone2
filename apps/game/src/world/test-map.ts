@@ -6,11 +6,19 @@ import {
   type ChunkRange,
   type ChunkSource,
 } from './chunk.js';
+import { TEST_EDGE_PALETTE, TEST_ROOMS, paintTestBuilding } from './test-building.js';
 
-export const TEST_MAP_PALETTE = [null, 'base:grass', 'base:asphalt', 'base:concrete'] as const;
+export const TEST_MAP_PALETTE = [
+  null,
+  'base:grass',
+  'base:asphalt',
+  'base:concrete',
+  'base:roof-flat',
+] as const;
 const GRASS = 1;
 const ASPHALT = 2;
 const CONCRETE = 3;
+const ROOF_FLAT = 4;
 
 /** 4x4 chunks (128x128 tiles) centred on the origin. */
 export const TEST_MAP_RANGE: ChunkRange = { cx0: -2, cy0: -2, cx1: 1, cy1: 1, z: 0 };
@@ -45,6 +53,7 @@ export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
 
   return {
     tilePalette: TEST_MAP_PALETTE,
+    edgePalette: TEST_EDGE_PALETTE,
     getChunk(cx, cy, z): ChunkData | undefined {
       if (!inRange(cx, cy, z)) return undefined;
       const floor = new Uint16Array(CHUNK_TILES);
@@ -53,10 +62,17 @@ export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
           floor[tileIndex(x, y)] = tileAt(cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
         }
       }
-      // No walls yet: empty edges so this source can also satisfy the sim's SimMap later.
-      const edgeN = new Uint16Array(CHUNK_TILES);
-      const edgeW = new Uint16Array(CHUNK_TILES);
-      return { coord: { cx, cy, z }, floor, edgeN, edgeW };
+      const coord = { cx, cy, z };
+      // One grey-box building in chunk (0, 0); other chunks keep empty edges (SimMap shape).
+      if (cx === 0 && cy === 0) {
+        return { coord, floor, ...paintTestBuilding(ROOF_FLAT), rooms: TEST_ROOMS };
+      }
+      return {
+        coord,
+        floor,
+        edgeN: new Uint16Array(CHUNK_TILES),
+        edgeW: new Uint16Array(CHUNK_TILES),
+      };
     },
   };
 }

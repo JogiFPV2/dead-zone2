@@ -14,6 +14,10 @@ import { CommandStamper } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
 import { Terrain } from './world/terrain.js';
+import { tileOf } from './world/building-lookup.js';
+import { cameraSide } from './world/cutaway.js';
+import { Structures } from './world/structures.js';
+import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 
 const VIEW_HEIGHT = 24;
 const PLAYER_ID = 1;
@@ -27,15 +31,22 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
 const scene = createScene();
-const terrain = new Terrain(createTestMap());
+const map = createTestMap();
+const terrain = new Terrain(map);
 terrain.loadRange(TEST_MAP_RANGE);
 scene.add(terrain.root);
+const structures = new Structures(map);
+structures.loadRange(TEST_MAP_RANGE);
+scene.add(structures.root);
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 bindCameraInput(rig, renderer.domElement);
 
 // TEMPORARY: MockSimClient until the real Worker sim (createSimWorkerClient) lands.
-const sim = new MockSimClient(rangeBounds(TEST_MAP_RANGE), { x: 6.5, y: 6.5 }, PLAYER_ID);
+// TEMPORARY debug spawn: `?spawn=inside` starts in the test building (screenshots, cutaway checks).
+const spawnInside = new URLSearchParams(window.location.search).get('spawn') === 'inside';
+const spawn = spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 };
+const sim = new MockSimClient(rangeBounds(TEST_MAP_RANGE), spawn, PLAYER_ID);
 const stamper = new CommandStamper(PLAYER_ID);
 const playerInput = new PlayerInput(renderer.domElement, sim, stamper);
 const snapshots = new SnapshotBuffer();
@@ -77,6 +88,9 @@ renderer.setAnimationLoop((time) => {
     if (!cameraSnapped) rig.target.set(goal.x, goal.y, goal.z);
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
     cameraSnapped = true;
+    const { tx, ty } = tileOf(state.x, state.y);
+    const building = structures.lookup.at(tx, ty, state.z);
+    structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
   }
   rig.update(time);
   renderer.render(scene, camera);
