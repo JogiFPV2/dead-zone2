@@ -1,4 +1,5 @@
-import { CapsuleGeometry, DynamicDrawUsage, InstancedMesh, MeshStandardMaterial } from 'three';
+import { CapsuleGeometry, DynamicDrawUsage, InstancedMesh } from 'three';
+import { placeholderMaterial } from '../lighting/materials.js';
 import { PLAYER_HEIGHT } from '../player/player-view.js';
 import { PLAYER_RADIUS } from '@deadzone/sim';
 import { CROWD_SAMPLE_STRIDE, type CrowdBuffer } from './crowd-buffer.js';
@@ -14,11 +15,7 @@ const CROWD_GREY = '#6b7178';
 export class CrowdView {
   mesh: InstancedMesh;
   private readonly geometry: CapsuleGeometry;
-  private readonly material = new MeshStandardMaterial({
-    color: CROWD_GREY,
-    roughness: 1,
-    metalness: 0,
-  });
+  private readonly material = placeholderMaterial(CROWD_GREY);
   private sampled = new Float32Array(0);
 
   constructor(
@@ -58,6 +55,8 @@ export class CrowdView {
     mesh.name = 'crowd';
     mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     mesh.count = 0;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     // Entities spread over the whole map and move every frame: skip per-frame bounds.
     mesh.frustumCulled = false;
     this.sampled = new Float32Array(capacity * CROWD_SAMPLE_STRIDE);

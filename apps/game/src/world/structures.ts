@@ -1,4 +1,5 @@
-import { BoxGeometry, Group, InstancedMesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Group, InstancedMesh, type MeshStandardMaterial } from 'three';
+import { placeholderMaterial } from '../lighting/materials.js';
 import { BuildingLookup } from './building-lookup.js';
 import type { ChunkRange, ChunkSource, EdgeKind } from './chunk.js';
 import { NO_CUTAWAY, cutawayKey, isEdgeLowered, isRoofHidden, type Cutaway } from './cutaway.js';
@@ -83,6 +84,8 @@ export class Structures {
   private add(p: Omit<Part, 'mesh'>, count: number, kind: EdgeKind | 'roof', name: string): void {
     const mesh = new InstancedMesh(this.geometry, this.material(kind), count);
     mesh.name = name;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     const part = { ...p, mesh };
     this.write(part, NO_CUTAWAY);
     mesh.computeBoundingSphere();
@@ -105,7 +108,7 @@ export class Structures {
   private material(kind: EdgeKind | 'roof'): MeshStandardMaterial {
     let m = this.materials.get(kind);
     if (!m) {
-      m = new MeshStandardMaterial({ color: GREYS[kind], roughness: 1, metalness: 0 });
+      m = placeholderMaterial(GREYS[kind]);
       this.materials.set(kind, m);
     }
     return m;

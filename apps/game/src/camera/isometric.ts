@@ -4,6 +4,9 @@ import { OrthographicCamera, Vector3 } from 'three';
 export const ISO_YAW = Math.PI / 4;
 export const ISO_PITCH = Math.atan(1 / Math.SQRT2);
 
+/** Default distance from the camera to its target. */
+export const CAMERA_DISTANCE = 100;
+
 export interface IsometricCameraOptions {
   /** Viewport width / height. */
   aspect: number;
@@ -31,7 +34,7 @@ export function orthoFrustum(aspect: number, viewHeight: number) {
 }
 
 export function createIsometricCamera(options: IsometricCameraOptions): OrthographicCamera {
-  const { aspect, viewHeight, distance = 100, target = new Vector3() } = options;
+  const { aspect, viewHeight, distance = CAMERA_DISTANCE, target = new Vector3() } = options;
   const f = orthoFrustum(aspect, viewHeight);
   const camera = new OrthographicCamera(f.left, f.right, f.top, f.bottom, 0.1, distance * 4);
   camera.position.copy(target).add(isometricOffset(distance));

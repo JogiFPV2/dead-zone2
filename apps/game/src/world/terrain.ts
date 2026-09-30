@@ -1,11 +1,5 @@
-import {
-  Group,
-  InstancedMesh,
-  MeshStandardMaterial,
-  PlaneGeometry,
-  type BufferGeometry,
-  type Material,
-} from 'three';
+import { Group, InstancedMesh, PlaneGeometry, type BufferGeometry, type Material } from 'three';
+import { placeholderMaterial } from '../lighting/materials.js';
 import type { ChunkRange, ChunkSource, TileId } from './chunk.js';
 import { buildTileInstances } from './instances.js';
 
@@ -40,6 +34,8 @@ export class Terrain {
       mesh.instanceMatrix.needsUpdate = true;
       mesh.computeBoundingSphere();
       mesh.name = this.source.tilePalette[tileId] ?? `tile:${tileId}`;
+      // Flat floor: receives shadows, never casts.
+      mesh.receiveShadow = true;
       group.add(mesh);
     }
     this.root.add(group);
@@ -56,7 +52,7 @@ export class Terrain {
     let m = this.materials.get(tileId);
     if (!m) {
       const color = PLACEHOLDER_GREYS[tileId % PLACEHOLDER_GREYS.length] ?? '#40464e';
-      m = new MeshStandardMaterial({ color, roughness: 1, metalness: 0 });
+      m = placeholderMaterial(color);
       this.materials.set(tileId, m);
     }
     return m;

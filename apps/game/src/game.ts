@@ -1,5 +1,9 @@
 import { WebGLRenderer } from 'three';
-import { createIsometricCamera, resizeIsometricCamera } from './camera/isometric.js';
+import {
+  CAMERA_DISTANCE,
+  createIsometricCamera,
+  resizeIsometricCamera,
+} from './camera/isometric.js';
 import { CameraRig } from './camera/rig.js';
 import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
@@ -8,6 +12,8 @@ import { PlayerInput } from './input/player-input.js';
 import { createSettingsStore } from './settings/store.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
+import { createWorldLighting } from './lighting/index.js';
+import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
 import { TICK_MS } from '@deadzone/sim';
@@ -130,6 +136,13 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 scene.add(crowdView.mesh);
 const player = new PlayerView();
 scene.add(player.root);
+// Night is the default (and for now the only approved) look. Lamps: test map placeholder list.
+const lighting = createWorldLighting(
+  scene,
+  renderer,
+  boot.map === 'test' ? createTestLamps() : [],
+  CAMERA_DISTANCE,
+);
 
 function resize(): void {
   const width = container?.clientWidth ?? window.innerWidth;
@@ -179,6 +192,7 @@ renderer.setAnimationLoop((time) => {
     structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
   }
   rig.update(time);
+  lighting.update(camera, rig.target.x, rig.target.z);
   const t0 = performance.now();
   crowdView.update(tickAlpha(t0, crowdArrivedMs, TICK_MS));
   const t1 = performance.now();

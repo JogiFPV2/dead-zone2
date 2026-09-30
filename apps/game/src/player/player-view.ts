@@ -1,4 +1,5 @@
-import { BoxGeometry, CapsuleGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, CapsuleGeometry, Group, Mesh, type MeshStandardMaterial } from 'three';
+import { placeholderMaterial } from '../lighting/materials.js';
 import { PLAYER_RADIUS } from '@deadzone/sim';
 import { facingToRotationY, simToWorld } from '../sim/coords.js';
 import type { EntityState } from '../sim/snapshot.js';
@@ -17,14 +18,12 @@ export class PlayerView {
     this.root.name = 'player';
     const body = new Mesh(
       new CapsuleGeometry(PLAYER_RADIUS, PLAYER_HEIGHT - 2 * PLAYER_RADIUS, 4, 12),
-      new MeshStandardMaterial({ color: BODY_GREY, roughness: 1, metalness: 0 }),
+      placeholderMaterial(BODY_GREY),
     );
     body.position.y = PLAYER_HEIGHT / 2;
-    const nose = new Mesh(
-      new BoxGeometry(0.22, 0.12, 0.14),
-      new MeshStandardMaterial({ color: INDICATOR_GREY, roughness: 1, metalness: 0 }),
-    );
+    const nose = new Mesh(new BoxGeometry(0.22, 0.12, 0.14), placeholderMaterial(INDICATOR_GREY));
     nose.position.set(PLAYER_RADIUS + 0.05, PLAYER_HEIGHT * 0.75, 0);
+    for (const m of [body, nose]) m.castShadow = m.receiveShadow = true;
     this.meshes.push(body, nose);
     this.root.add(body, nose);
   }

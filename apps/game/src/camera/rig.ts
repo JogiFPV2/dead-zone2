@@ -1,5 +1,5 @@
 import { Vector3, type OrthographicCamera } from 'three';
-import { isometricOffset } from './isometric.js';
+import { CAMERA_DISTANCE, isometricOffset } from './isometric.js';
 import { ROTATION_MS, sampleYaw, yawForStep, type YawTween } from './rotation.js';
 import { DEFAULT_ZOOM_LIMITS, zoomFromWheel, type ZoomLimits } from './zoom.js';
 
@@ -11,7 +11,7 @@ export class CameraRig {
 
   constructor(
     private readonly camera: OrthographicCamera,
-    private readonly distance = 100,
+    private readonly distance = CAMERA_DISTANCE,
     private readonly zoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS,
   ) {
     const yaw = yawForStep(0);
