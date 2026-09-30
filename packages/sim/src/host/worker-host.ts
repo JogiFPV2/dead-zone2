@@ -1,4 +1,10 @@
-import { simMapFromData, type MainToWorker, type WorkerToMain } from '@deadzone/protocol';
+import { buildContentBundle, type PackSource } from '@deadzone/content';
+import {
+  simMapFromData,
+  type MainToWorker,
+  type SimContentSource,
+  type WorkerToMain,
+} from '@deadzone/protocol';
 import { parseMainToWorker } from '@deadzone/protocol/schema';
 import { FixedStepLoop } from '../core/loop.js';
 import { createSim, type Sim } from '../sim.js';
@@ -67,14 +73,35 @@ export function startSimWorkerHost(
     if (!sim) return;
     const buf = sim.snapshot(acquire(sim.snapshotByteLength()));
     port.postMessage({ kind: 'snapshot', tick: sim.tick, buf }, [buf]);
+    const view = sim.drainView();
+    if (view) port.postMessage({ kind: 'view', tick: sim.tick, view }, []);
+    const events = sim.drainEvents();
+    if (events.length > 0) port.postMessage({ kind: 'events', tick: sim.tick, events }, []);
+  };
+
+  // Speed-up is forced back to ×1 while the sim reports a threat (Stage 4 hook).
+  const enforceSpeedLock = (): void => {
+    if (sim && loop && loop.speed > 1 && sim.fastForwardBlocked()) loop.setSpeed(1);
   };
 
   const handle = (msg: MainToWorker): void => {
     if (msg.kind === 'init') {
+      let content;
+      try {
+        content = msg.content ? buildContent(msg.content) : undefined;
+      } catch (e) {
+        port.postMessage(
+          { kind: 'error', message: e instanceof Error ? e.message : String(e) },
+          [],
+        );
+        return;
+      }
       const s = createSim({
         seed: msg.seed,
         map: simMapFromData(msg.map),
         ...(msg.spawn ? { spawn: msg.spawn } : {}),
+        content,
+        dev: msg.dev ?? false,
       });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });
@@ -104,6 +131,7 @@ export function startSimWorkerHost(
         break;
       case 'speed':
         loop.setSpeed(msg.x);
+        enforceSpeedLock();
         break;
     }
   };
@@ -119,7 +147,10 @@ export function startSimWorkerHost(
     const now = clock.now();
     const dt = now - last;
     last = now;
-    if (loop && loop.advance(dt) > 0) postSnapshot();
+    if (loop && loop.advance(dt) > 0) {
+      enforceSpeedLock();
+      postSnapshot();
+    }
   };
 
   const tickLoop = (): void => {
@@ -147,4 +178,10 @@ export function startSimWorkerHost(
       running = false;
     },
   };
+}
+
+/** Validates the packs and builds the bundle (zod runs here, in the worker, never on main). */
+function buildContent(src: SimContentSource) {
+  const packs: PackSource[] = src.packs.map((p) => ({ dir: p.dir, files: [...p.files] }));
+  return buildContentBundle(packs);
 }

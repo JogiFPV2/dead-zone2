@@ -23,11 +23,11 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Pomiar fps i draw calli w trybie dev (Silnik)
 
 ## Etap 2 — Przetrwanie
-- [ ] Statystyki: zdrowie, głód, pragnienie, zmęczenie, nuda, stres, temperatura (Symulacja)
-- [ ] Moodle i chipy statusu w HUD (Symulacja + Designer)
-- [ ] Części ciała, rany, krwawienie, bandaże (Symulacja)
-- [ ] Infekcja i gorączka (Symulacja)
-- [ ] Sen (Symulacja)
+- [x] Statystyki: zdrowie, głód, pragnienie, zmęczenie, nuda, stres, temperatura (Symulacja)
+- [~] Moodle i chipy statusu w HUD (Symulacja + Designer) — moodle w sim i widok `view` gotowe; chipy w HUD robią Designer i Silnik
+- [x] Części ciała, rany, krwawienie, bandaże (Symulacja)
+- [x] Infekcja i gorączka (Symulacja)
+- [x] Sen (Symulacja)
 - [ ] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer)
 
 ## Etap 3 — Przedmioty i ekwipunek

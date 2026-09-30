@@ -2,10 +2,13 @@ import {
   CHUNK_TILES,
   decodeSnapshot,
   type MainToWorker,
+  type SimEvent,
   type SimMapData,
+  type SimViewPatch,
   type WorkerToMain,
 } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
+import { fixturePack } from '../test/content-fixtures.js';
 import { createSimWorkerClient, type SimWorkerLike } from './client.js';
 import { startSimWorkerHost, type HostClock, type WorkerPortLike } from './worker-host.js';
 
@@ -162,5 +165,99 @@ describe('createSimWorkerClient', () => {
     client.dispose();
     client.init(1, openMap());
     expect(n).toBe(0);
+  });
+});
+
+describe('survival over the worker protocol', () => {
+  const init = (content: unknown, dev = true) => ({
+    kind: 'init',
+    seed: 1,
+    map: openMap(),
+    spawn: { x: 5.5, y: 5.5, z: 0 },
+    content,
+    dev,
+  });
+
+  it('builds the content bundle from raw packs and sends the first full view', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const views: SimViewPatch[] = [];
+    client.onView((v) => views.push(v));
+    client.init(1, openMap(), { content: { packs: [fixturePack()] } });
+    expect(h.host.sim?.getSurvival()).toBeDefined();
+    expect(views[0]?.clock).toEqual({
+      day: 1,
+      minuteOfDay: 540,
+      ticksPerGameMinute: 50,
+      minuteStartTick: 0,
+      fastForwardBlocked: false,
+    });
+    expect(views[0]?.player).toMatchObject({
+      alive: true,
+      sleeping: false,
+      stats: { health: 100, hunger: 0, 'body-temperature-c': 37 },
+      wounds: [],
+    });
+    // Nothing changed → no new view until the next game minute.
+    h.advance(1000);
+    expect(views).toHaveLength(1);
+    h.advance(2000);
+    expect(views.at(-1)?.clock?.minuteOfDay).toBe(541);
+    expect(views.at(-1)?.player?.stats).toBeDefined();
+    expect(views.at(-1)?.player?.alive).toBeUndefined();
+  });
+
+  it('forwards events and wound / moodle deltas (dev commands)', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const views: SimViewPatch[] = [];
+    const events: SimEvent[] = [];
+    client.onView((v) => views.push(v));
+    client.onEvents((e) => events.push(...e));
+    client.init(1, openMap(), { content: { packs: [fixturePack()] }, dev: true });
+    client.debugWound('hand_r', 'laceration');
+    h.advance(100);
+    client.bandage('hand_r', 'fixture:bandage');
+    h.advance(100);
+    expect(events.map((e) => e.type)).toContain('wounded');
+    const woundViews = views.flatMap((v) => (v.player?.wounds ? [v.player.wounds] : []));
+    expect(woundViews.at(-1)).toEqual([
+      expect.objectContaining({ part: 'hand_r', wound: 'laceration', bandaged: true, bleeding: 0 }),
+    ]);
+    const moodles = views.flatMap((v) => v.player?.moodles ?? []);
+    expect(moodles).toContainEqual({ id: 'fixture:bleeding', level: 1 });
+    expect(moodles.at(-1)).toEqual({ id: 'fixture:bleeding', level: 0 });
+    expect(h.host.droppedMessages).toBe(0);
+  });
+
+  it('without dev, debug commands are rejected by the sim', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const events: SimEvent[] = [];
+    client.onEvents((e) => events.push(...e));
+    client.init(1, openMap(), { content: { packs: [fixturePack()] } });
+    client.debugStat('health', 0);
+    h.advance(100);
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'commandRejected', reason: 'dev-only' }),
+    );
+  });
+
+  it('reports invalid content with an error message and does not start', () => {
+    const h = harness();
+    const errors: string[] = [];
+    const client = createSimWorkerClient(h.worker);
+    client.onError((m) => errors.push(m));
+    h.send(
+      init({
+        packs: [
+          { dir: 'bad', files: [{ path: 'world-settings.json', json: { dayLengthMinutes: -1 } }] },
+        ],
+      }),
+    );
+    expect(errors).toHaveLength(1);
+    expect(h.host.sim).toBeUndefined();
+    h.send(init({ packs: [{ dir: 'x', files: [{ path: 'a.json' }] }] }));
+    expect(h.host.droppedMessages).toBe(1);
   });
 });

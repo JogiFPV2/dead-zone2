@@ -26,6 +26,29 @@ describe('parseCommand', () => {
     expect(parseCommand({ ...base, type: 'aim', x: 10.5, y: -3 }).ok).toBe(true);
   });
 
+  it('accepts survival commands', () => {
+    for (const cmd of [
+      { ...base, type: 'sleep' },
+      { ...base, type: 'wake' },
+      { ...base, type: 'bandage', part: 'forearm_l' },
+      { ...base, type: 'bandage', part: 'head', itemId: 'base:bandage' },
+      { ...base, type: 'debugWound', part: 'foot_r', wound: 'bite', zombie: true },
+      { ...base, type: 'debugStat', stat: 'body-temperature-c', value: 36.5 },
+    ]) {
+      expect(parseCommand(cmd).ok, JSON.stringify(cmd)).toBe(true);
+    }
+  });
+
+  it.each([
+    ['unknown body part', { ...base, type: 'bandage', part: 'tail' }],
+    ['bad item id', { ...base, type: 'bandage', part: 'head', itemId: 'Bandage' }],
+    ['unknown wound kind', { ...base, type: 'debugWound', part: 'head', wound: 'burn' }],
+    ['unknown debug stat', { ...base, type: 'debugStat', stat: 'xp', value: 1 }],
+    ['sleep with payload', { ...base, type: 'sleep', hours: 8 }],
+  ])('rejects %s', (_name, input) => {
+    expect(parseCommand(input).ok).toBe(false);
+  });
+
   it.each([
     ['unknown type', { ...base, type: 'fly' }],
     ['dx out of range', { ...base, type: 'move', dx: 2, dy: 0 }],
@@ -108,6 +131,16 @@ describe('parseMainToWorker', () => {
         cmd: { tick: 0, playerId: 0, seq: 0, type: 'aim', x: 1, y: 1 },
       }).ok,
     ).toBe(true);
+  });
+
+  it('accepts init with raw content packs and dev', () => {
+    const content = {
+      packs: [{ dir: 'base', files: [{ path: 'mod.json', json: { id: 'base' } }] }],
+    };
+    const init = { kind: 'init', seed: 1, map: { chunks: [] }, content, dev: true };
+    expect(parseMainToWorker(init).ok).toBe(true);
+    const bad = { packs: [{ dir: 'base', files: [{ path: 'mod.json' }] }] };
+    expect(parseMainToWorker({ ...init, content: bad }).ok).toBe(false);
   });
 
   it('rejects invalid messages', () => {

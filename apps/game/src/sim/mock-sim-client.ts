@@ -34,7 +34,7 @@ export class MockSimClient implements SimClient {
     if (cmd.type === 'move') {
       this.input.dx = cmd.dx;
       this.input.dy = cmd.dy;
-    } else {
+    } else if (cmd.type === 'aim') {
       this.input.aim = { x: cmd.x, y: cmd.y };
     }
   }

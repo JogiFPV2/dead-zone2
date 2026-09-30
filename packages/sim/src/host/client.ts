@@ -1,5 +1,11 @@
 import type {
+  BodyPart,
   Command,
+  DebugStat,
+  SimContentSource,
+  SimEvent,
+  SimViewPatch,
+  WoundKind,
   MainToWorker,
   PlayerId,
   SimMapData,
@@ -24,18 +30,34 @@ export interface SimSnapshotMessage {
 
 export interface SimWorkerClient {
   /** `spawn` places player 0 (e.g. `?spawn=inside`); omitted = the sim's default tile. */
-  init(seed: number, map: SimMapData, opts?: { spawn?: SimSpawn }): void;
+  init(
+    seed: number,
+    map: SimMapData,
+    opts?: { spawn?: SimSpawn; content?: SimContentSource; dev?: boolean },
+  ): void;
   /** Sends a fully formed command (tick, playerId, seq chosen by the caller). */
   send(cmd: Command): void;
   /** Held movement for the local player; fills tick/playerId/seq. */
   move(dx: number, dy: number): void;
   /** Aim at a world point (tiles) for the local player. */
   aim(x: number, y: number): void;
+  sleep(): void;
+  wake(): void;
+  bandage(part: BodyPart, itemId?: string): void;
+  /** Dev only (init `dev: true`). */
+  debugWound(part: BodyPart, wound: WoundKind, zombie?: boolean): void;
+  /** Dev only (init `dev: true`). */
+  debugStat(stat: DebugStat, value: number): void;
   pause(): void;
   resume(): void;
   setSpeed(x: SimSpeed): void;
   onReady(cb: (tick: number) => void): () => void;
   onSnapshot(cb: (snapshot: SimSnapshotMessage) => void): () => void;
+  /** HUD view deltas (moodles, stats, wounds, clock); only sent when something changed. */
+  onView(cb: (view: SimViewPatch, tick: number) => void): () => void;
+  onEvents(cb: (events: SimEvent[], tick: number) => void): () => void;
+  /** Fatal init error (e.g. invalid content). */
+  onError(cb: (message: string) => void): () => void;
   /** Returns a snapshot buffer to the worker pool (transferred, so it becomes detached here). */
   release(buf: ArrayBuffer): void;
   /** Latest tick seen in a `ready` or `snapshot` message. */
@@ -50,6 +72,9 @@ export function createSimWorkerClient(
   const playerId = opts.playerId ?? 0;
   const readyCbs = new Set<(tick: number) => void>();
   const snapCbs = new Set<(s: SimSnapshotMessage) => void>();
+  const viewCbs = new Set<(view: SimViewPatch, tick: number) => void>();
+  const eventCbs = new Set<(events: SimEvent[], tick: number) => void>();
+  const errorCbs = new Set<(message: string) => void>();
   let tick = 0;
   let seq = 0;
 
@@ -64,6 +89,12 @@ export function createSimWorkerClient(
     } else if (msg.kind === 'snapshot') {
       tick = msg.tick;
       for (const cb of snapCbs) cb({ tick: msg.tick, buf: msg.buf });
+    } else if (msg.kind === 'view') {
+      for (const cb of viewCbs) cb(msg.view, msg.tick);
+    } else if (msg.kind === 'events') {
+      for (const cb of eventCbs) cb(msg.events, msg.tick);
+    } else if (msg.kind === 'error') {
+      for (const cb of errorCbs) cb(msg.message);
     }
   };
   worker.addEventListener('message', listener);
@@ -73,10 +104,31 @@ export function createSimWorkerClient(
 
   return {
     init: (seed, map, opts) =>
-      post({ kind: 'init', seed, map, ...(opts?.spawn ? { spawn: opts.spawn } : {}) }),
+      post({
+        kind: 'init',
+        seed,
+        map,
+        ...(opts?.spawn ? { spawn: opts.spawn } : {}),
+        ...(opts?.content ? { content: opts.content } : {}),
+        ...(opts?.dev ? { dev: true } : {}),
+      }),
     send: (cmd) => post({ kind: 'cmd', cmd }),
     move: (dx, dy) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'move', dx, dy } }),
     aim: (x, y) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'aim', x, y } }),
+    sleep: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'sleep' } }),
+    wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
+    bandage: (part, itemId) =>
+      post({
+        kind: 'cmd',
+        cmd: { ...nextHeader(), type: 'bandage', part, ...(itemId ? { itemId } : {}) },
+      }),
+    debugWound: (part, wound, zombie) =>
+      post({
+        kind: 'cmd',
+        cmd: { ...nextHeader(), type: 'debugWound', part, wound, ...(zombie ? { zombie } : {}) },
+      }),
+    debugStat: (stat, value) =>
+      post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'debugStat', stat, value } }),
     pause: () => post({ kind: 'pause' }),
     resume: () => post({ kind: 'resume' }),
     setSpeed: (x) => post({ kind: 'speed', x }),
@@ -88,6 +140,18 @@ export function createSimWorkerClient(
       snapCbs.add(cb);
       return () => snapCbs.delete(cb);
     },
+    onView(cb) {
+      viewCbs.add(cb);
+      return () => viewCbs.delete(cb);
+    },
+    onEvents(cb) {
+      eventCbs.add(cb);
+      return () => eventCbs.delete(cb);
+    },
+    onError(cb) {
+      errorCbs.add(cb);
+      return () => errorCbs.delete(cb);
+    },
     release(buf) {
       if (buf.byteLength > 0) post({ kind: 'release', buf }, [buf]);
     },
@@ -98,6 +162,9 @@ export function createSimWorkerClient(
       worker.removeEventListener('message', listener);
       readyCbs.clear();
       snapCbs.clear();
+      viewCbs.clear();
+      eventCbs.clear();
+      errorCbs.clear();
       worker.terminate?.();
     },
   };

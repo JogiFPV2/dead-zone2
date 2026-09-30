@@ -1,6 +1,8 @@
 import type { PlayerId, SimEvent, SimMap } from '@deadzone/protocol';
 import { addComponent, addEntity, createWorld, query, type World } from 'bitecs';
 import { CommandQueue } from '../commands/queue.js';
+import type { SurvivalWorld } from '../survival/state.js';
+import { createClock, type Clock, type ClockStart } from './clock.js';
 import { createComponents, type Components } from './components.js';
 import { createRngStreams, type RngStreams } from './rng.js';
 
@@ -18,6 +20,11 @@ export interface SimWorld {
   structureVersion: number;
   readonly players: Map<PlayerId, number>;
   readonly queue: CommandQueue;
+  readonly clock: Clock;
+  /** Survival (Stage 2); undefined when the sim was created without content. */
+  readonly survival: SurvivalWorld | undefined;
+  /** Debug commands allowed (dev builds, tests). Not part of the state. */
+  readonly dev: boolean;
   events: SimEvent[];
   readonly sortedCache: Map<string, { version: number; eids: number[] }>;
 }
@@ -27,7 +34,12 @@ export function createSimWorld(opts: {
   map: SimMap;
   capacity: number;
   commandWindowTicks: number;
+  dayLengthMinutes?: number | undefined;
+  clockStart?: ClockStart | undefined;
+  survival?: ((clock: Clock) => SurvivalWorld) | undefined;
+  dev?: boolean | undefined;
 }): SimWorld {
+  const clock = createClock(opts.dayLengthMinutes, opts.clockStart);
   return {
     ecs: createWorld(),
     c: createComponents(opts.capacity),
@@ -40,6 +52,9 @@ export function createSimWorld(opts: {
     structureVersion: 0,
     players: new Map(),
     queue: new CommandQueue(opts.commandWindowTicks),
+    clock,
+    survival: opts.survival?.(clock),
+    dev: opts.dev ?? false,
     events: [],
     sortedCache: new Map(),
   };

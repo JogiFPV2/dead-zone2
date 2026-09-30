@@ -1,4 +1,34 @@
-export { createSim, type PlayerState, type Sim, type SimOptions } from './sim.js';
+export {
+  createSim,
+  type GameTime,
+  type PlayerState,
+  type PlayerSurvival,
+  type Sim,
+  type SimOptions,
+} from './sim.js';
+export {
+  MOD_STATS,
+  compileContent,
+  type ContentIndex,
+  type SimContent,
+  type SurvivalSettings,
+} from './content/adapter.js';
+export {
+  DEFAULT_CLOCK_START,
+  DEFAULT_DAY_LENGTH_MINUTES,
+  MINUTES_PER_DAY,
+  createClock,
+  dayOf,
+  gameMinuteAt,
+  minuteOfDay,
+  minuteStartTick,
+  type Clock,
+  type ClockStart,
+} from './core/clock.js';
+export { VITAL_STATS, type VitalStat, type Wound } from './survival/state.js';
+export { inflictWound } from './survival/wounds.js';
+export { nextMoodleLevel } from './systems/moodles.js';
+export { DEFAULT_AMBIENT_C } from './systems/survival.js';
 export {
   COMMAND_WINDOW_TICKS,
   PLAYER_RADIUS,

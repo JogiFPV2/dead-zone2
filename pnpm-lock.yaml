@@ -284,6 +284,9 @@ importers:
 
   packages/sim:
     dependencies:
+      '@deadzone/content':
+        specifier: workspace:*
+        version: link:../content
       '@deadzone/protocol':
         specifier: workspace:*
         version: link:../protocol

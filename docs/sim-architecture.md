@@ -31,7 +31,7 @@ Ten dokument opisuje, jak zbudujemy symulację: strukturę kodu, kontrakty międ
 - Tick to niepodzielna jednostka czasu. Stan `N+1 = step(stan N, komendy dla ticku N)`.
 - Czas gry: `worldSettings.dayLengthMinutes = 60`, czyli jeden dzień gry trwa jedną godzinę rzeczywistą przy ×1. Przyspieszenie (×2 lub ×4) polega na **wykonaniu większej liczby ticków w tym samym czasie rzeczywistym**, nigdy na wydłużeniu `dt`. Dzięki temu ×1, ×2 i ×4 dają identyczny wynik.
 - Zegar gry (`core/clock`) przelicza ticki na minuty, godziny i dni gry zgodnie z `worldSettings.dayLengthMinutes = 60` (wartość zapisana w świecie). Licznik przeżytych dni jest pochodną numeru ticku i ticku narodzin postaci.
-- Tempa w danych (np. „głód +0,8 na godzinę gry”) Modules podaje w jednostkach czasu gry. `content`-adapter w sim przelicza je raz przy wczytaniu na wartości „na tick”.
+- Tempa w danych Modules podaje **w punktach statystyki 0–100 na minutę gry** (np. `worldSettings.survival.needs.hungerPerMin = 0.0175`). Przy `dayLengthMinutes = 60` minuta gry to 50 ticków (2,5 s). Systemy przetrwania nie przeliczają temp na tick: liczą **raz na pełną minutę gry** (`clock` zgłasza, które minuty upłynęły w ticku), więc przyrost jest duży względem precyzji f32 i nie kumuluje błędów zaokrągleń.
 
 ### 1.4 Jak unikamy rozjazdów float
 Zakładamy ten sam silnik JS po obu stronach tylko w singleplayerze. Serwer w Node (V8) i klienci w Firefox (SpiderMonkey) czy Safari (JSC) muszą dawać ten sam wynik, dlatego:
@@ -39,7 +39,7 @@ Zakładamy ten sam silnik JS po obu stronach tylko w singleplayerze. Serwer w No
 2. **Trygonometria i inne funkcje przestępne** idą przez `core/dmath`. Kąty trzymamy jako liczby całkowite w „binarnych stopniach” (`u16`, 65536 = 360°). `sin`/`cos` biorą wartości z tablicy 4096 wpisów, generowanej przy starcie wyłącznie operacjami z punktu 1 (szereg Taylora lub CORDIC) albo zapisanej na stałe w źródle. `atan2` liczymy przybliżeniem wielomianowym w tych samych operacjach.
 3. **Pozycje i prędkości** trzymamy w komponentach `Float32Array`. Każdy zapis przechodzi przez `Math.fround`, więc wartość jest zawsze poprawnie zaokrągloną liczbą f32. Obliczenia pośrednie idą w f64, a zapis do komponentu je kwantyzuje. To wystarcza, bo rozjazd powstaje tylko wtedy, gdy wynik zależy od silnika, a tu nie zależy.
 4. **Zakaz FMA i „sprytnych” optymalizacji** nie dotyczy JS (silniki nie łączą `a*b+c` w FMA), ale zakazujemy **sumowania w niezdefiniowanej kolejności**: suma po encjach zawsze w kolejności `StableId`.
-5. **Stan logiczny w liczbach całkowitych, gdzie tylko się da:** kafle, HP ścian i drzwi, ilości, XP (w setnych), zegar. Statystyki przetrwania (głód, pragnienie) trzymamy w `f32` w zakresie 0..1, z tą samą dyscypliną `fround`.
+5. **Stan logiczny w liczbach całkowitych, gdzie tylko się da:** kafle, HP ścian i drzwi, ilości, XP (w setnych), zegar. Statystyki przetrwania trzymamy w `f32` **w skali 0–100** (jak w danych; temperatura w °C, waga w kg), z tą samą dyscypliną `fround`.
 6. **Porównania z progiem** (np. moodle) robimy na wartościach po `fround`, więc wynik progu jest stabilny.
 7. **Test krzyżowy:** ten sam scenariusz uruchamiamy w Node i w przeglądarce (Vitest browser mode lub Playwright w Chromium, Firefox i WebKit) i porównujemy hash stanu (patrz 8.3).
 
@@ -203,7 +203,7 @@ Jedna lista, wykonywana w każdym ticku:
 | # | Faza | System | Uwagi |
 |---|---|---|---|
 | 1 | Wejście | `commands.apply` | komendy ticku N → intencje (`MoveIntent`, `ActionRequest`…) |
-| 2 | Czas | `clock` | czas gry, dzień, światło globalne |
+| 2 | Czas | `clock` | czas gry, dzień, które minuty gry upłynęły w ticku (systemy 12–14 liczą raz na minutę gry) |
 | 3 | Akcje | `actions` | postęp akcji czasowych, zakończenie → efekty (craft, jedzenie, bandaż, przeszukanie) |
 | 4 | Ruch | `movement` | gracz: intencja → prędkość (waga, zmęczenie, moodle), kolizje z gridem |
 | 5 | Świat | `doors` | otwieranie, zamykanie, uderzenia zombie, barykady → aktualizacja gridu |
@@ -213,11 +213,11 @@ Jedna lista, wykonywana w każdym ticku:
 | 9 | Nawigacja | `nav` | flow field i A* w limicie budżetu |
 | 10 | Ruch | `ai.locomotion` | sterowanie zombie po ścieżce lub polu, rozpychanie się, kolizje |
 | 11 | Walka | `combat` | ataki gracza i zombie, trafienia, pchnięcia, pociski, rzuty |
-| 12 | Zdrowie | `health` | rany, krwawienie, gojenie, infekcja, HP |
-| 13 | Przetrwanie | `survival` | głód, pragnienie, zmęczenie, nuda, stres, temperatura |
+| 12 | Zdrowie | `health` | rany, krwawienie, gojenie, zakażenie brudem, wirus, gorączka (przez `sickness`), HP (na minutę gry) |
+| 13 | Przetrwanie | `survival` | głód, pragnienie, zmęczenie, wytrzymałość, sytość, waga, nuda, stres, niezadowolenie, przemoczenie, temperatura (na minutę gry) |
 | 14 | Sen | `sleep` | zasypianie, regeneracja, budzenie |
 | 15 | Rozwój | `progression` | naliczenie XP z bufora, awanse, cechy dynamiczne |
-| 16 | Stan | `moodles` | przeliczenie poziomów moodli (na końcu, po wszystkich statystykach) |
+| 16 | Stan | `moodles` | przeliczenie poziomów moodli co tick (na końcu, po wszystkich statystykach) i cache modyfikatorów |
 | 17 | Porządek | `lifecycle` | śmierć, zamiana zombie w zwłoki, usuwanie encji, `StableId` |
 | 18 | Wyjście | `spatial.rebuild`, `views.diff` | odświeżenie spatial hash i widoków UI; eventy gotowe do odczytu |
 
@@ -269,7 +269,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 
 #### Przetrwanie: statystyki (`systems/survival`)
 - **Odpowiedzialność:** głód, pragnienie, zmęczenie, wytrzymałość (stamina), nuda, stres, niezadowolenie, temperatura ciała (od pory doby, odzieży, wysiłku, później pogody), waga ciała w dłuższym okresie (pod cechy otyłość i niedowaga).
-- **Komponenty:** `Stats {hunger, thirst, fatigue, endurance, boredom, stress, unhappiness, bodyTemp}` (f32, 0..1 poza temperaturą), `Nutrition {calories, weightKg}`, `Wetness` (później).
+- **Komponenty:** `vitals` (SoA f32 w `SurvivalWorld`, klucze = id statystyk z contentu: `health`, `hunger`, `thirst`, `fatigue`, `endurance`, `pain`, `stress`, `panic`, `boredom`, `unhappiness`, `sickness`, `infection`, `wetness`, `bleeding`, `satiety`, `body-temperature-c`, `body-weight-kg`; 0–100 poza °C i kg), `kcal` (bilans energii, z niego `body-weight-kg`).
 - **Wejścia:** tempa z contentu, modyfikatory z cech, wysiłek z `movement` i `combat`, efekty jedzenia i picia z handlerów `actions`, sen z `sleep`.
 - **Wyjścia:** wartości statystyk, obrażenia z głodu i odwodnienia do `health`, zdarzenia progowe przez `moodles`.
 - **Zależności:** `core`, `content`, `progression/modifiers`.
@@ -285,7 +285,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 
 #### Rany i infekcja (`systems/health`)
 - **Odpowiedzialność:** ciało podzielone na części (dłonie L/P, przedramiona, ramiona, głowa, szyja, tułów górny i dolny, pachwina, uda, golenie, stopy L/P, łącznie 17 jak w PZ), rany (zadrapanie, rana szarpana, ugryzienie, głęboka rana, złamanie w późniejszym etapie), krwawienie, opatrunki (czyste i brudne), zakażenie rany (brud) oddzielnie od **infekcji zombie** (wirus: nieuleczalny, gorączka, śmierć i przemiana), ból, HP ogólne, śmierć.
-- **Komponenty:** `BodyHealth {hp}`, `BodyParts` (SoA 17 slotów: `woundType u8`, `woundSeverity f32`, `bleeding f32`, `bandaged u8`, `bandageDirty u8`, `infectionLevel f32`), `ZombieInfection {infected u8, tickInfected u32, stage u8}`.
+- **Komponenty:** HP to `vitals.health`; rany jako lista poza ECS per `StableId` gracza (`Wound {id, part, kind, ageMin, healed f32, bandaged, bandageAgeMin, dirt}`, kilka ran na część ciała), wirus `virus/virusStart/virusIncubation/virusDeath`. Rodzaje ran (`scratch`, `laceration`, `bite`, `deep`) i ich tempa są danymi (`worldSettings.survival.wounds.types`), części ciała to `BODY_PARTS` z `protocol`.
 - **Wejścia:** trafienia z `combat` (część ciała, typ, siła), szansa ugryzienia i zadrapania od zombie (RNG `health`, tabele z contentu), akcje `bandage`, `disinfect`, głód i odwodnienie z `survival`.
 - **Wyjścia:** HP, ból i gorączka dla `moodles`, zdarzenia `wounded`, `bleeding`, `infected` (ukryte przed graczem do objawów), `died {cause}` dla `lifecycle` i ekranu śmierci.
 - **Zależności:** `core`, `content`, `survival`.
@@ -329,7 +329,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Etap:** 3.
 
 #### Kontenery i przeszukiwanie (`systems/containers`)
-- **Odpowiedzialność:** kontenery z mapy (meble z definicji chunka), **leniwe generowanie lootu** przy pierwszym otwarciu z tablic zależnych od typu pomieszczenia i kontenera (RNG pochodny od seeda i położenia), akcja „Przeszukaj” z czasem zależnym od umiejętności, zbieractwa i cech, stan „przeszukany”.
+- **Odpowiedzialność:** kontenery z mapy (meble z definicji chunka), **leniwe generowanie lootu** przy pierwszym otwarciu z tablic dobieranych **po parze pokój + pojemnik** (`lootTable.rooms` i `lootTable.containers`, np. `base:room-kitchen` + `base:kitchen-cabinet`; `chance`, `rolls`, wpisy `item` lub zagnieżdżone `table`), z wagą wpisu skalowaną rzadkością (`rarity` × `worldSettings.loot.rarityWeightPct`: `max(1, floor(weight × pct / 100))`, 0 przy pct = 0, same liczby całkowite) (RNG pochodny od seeda i położenia), akcja „Przeszukaj” z czasem zależnym od umiejętności, zbieractwa i cech, stan „przeszukany”.
 - **Komponenty:** `WorldContainer` (wspólny ze schowkami), `LootState {generated u8, searchedBy bitmask}`.
 - **Wejścia:** `interact`/`startAction(search)`, loot tables z contentu, typ pomieszczenia z gridu.
 - **Wyjścia:** instancje w `ItemStore`, zdarzenia `containerOpened {items}`, `searchComplete`, XP zbieractwa, hałas otwierania (drobny).
@@ -339,7 +339,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 #### Psucie jedzenia (`systems/spoilage`)
 - **Odpowiedzialność:** świeżość jedzenia bez tykania każdego przedmiotu. Świeżość to funkcja `(tick − createdTick) × współczynnik miejsca` z progami „świeże / czerstwe / zepsute” z definicji. Zmiana miejsca (lodówka, gotowanie) zapisuje „wiek efektywny” w `ItemInstance.extra` albo przesuwa `createdTick`.
 - **Komponenty:** brak własnych, operuje na `ItemStore`.
-- **Wejścia:** definicje (`daysFresh`, `daysRotten`), typ kontenera (lodówka ×0,25 przy zasilaniu), gotowanie z `crafting`.
+- **Wejścia:** definicje (`food.spoilage.freshMin`, `rottenMin` w minutach gry, opcjonalnie `rottenInto`), typ kontenera (`containerType.spoilageMultiplier`: lodówka ×0,3, zamrażarka ×0,05 przy zasilaniu), gotowanie z `crafting`.
 - **Wyjścia:** funkcje zapytań `freshness(item, tick)` dla `views`, efektów jedzenia (zatrucie z zepsutego) i hashu (liczone deterministycznie z ticku).
 - **Zależności:** `inventory`, `content`, `clock`.
 - **Etap:** 3.
@@ -371,7 +371,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Etap:** 4.
 
 #### Walka (`systems/combat`)
-- **Odpowiedzialność:** walka wręcz (łuk ataku i zasięg z definicji broni, czas zamachu w tickach, koszt wytrzymałości, pchnięcie powalające zombie, dobijanie leżących, szansa trafienia i krytyka ze skilla, obrażenia, trwałość broni, pęknięcie broni), broń palna (hitscan z rozrzutem zależnym od skilla, ruchu i moodli, amunicja i magazynki w `ItemInstance.uses`, przeładowanie jako akcja czasowa, hałas strzału, zacięcia przy niskiej trwałości), rzucanie przedmiotami (encja w locie, lot paraboliczny liczony w 2D + wysokość, lądowanie = hałas-wabik, obrażenia przy trafieniu), ataki zombie (zasięg, czas, szansa przebicia odzieży, ugryzienie / zadrapanie / rana szarpana w wylosowaną część ciała).
+- **Odpowiedzialność:** walka wręcz (łuk ataku i zasięg z definicji broni, czas zamachu w tickach, koszt wytrzymałości, pchnięcie powalające zombie, dobijanie leżących, szansa trafienia i krytyka ze skilla, obrażenia, trwałość broni, pęknięcie broni), broń palna (hitscan z rozrzutem zależnym od skilla, ruchu i moodli, amunicja i magazynki w `ItemInstance.uses`, pudełka amunicji jako osobny rodzaj przedmiotu `ammo_box` (`ammoBox {ammo, count}`, rozpakowanie to akcja), strzelba w danych bazowych to `base:pump-shotgun` (i `base:double-barrel-shotgun`), przeładowanie jako akcja czasowa, hałas strzału, zacięcia przy niskiej trwałości), rzucanie przedmiotami (encja w locie, lot paraboliczny liczony w 2D + wysokość, lądowanie = hałas-wabik, obrażenia przy trafieniu), ataki zombie (zasięg, czas, szansa przebicia odzieży, ugryzienie / zadrapanie / rana szarpana w wylosowaną część ciała).
 - **Komponenty:** `Attacker {cooldownUntil u32, swingStart u32, weapon ItemId}`, `Health {hp}` (zombie), `Knockdown {untilTick}`, `Projectile {vx, vy, vz, ownerId, item}`.
 - **Wejścia:** komendy `attack`, `shove`, `reload`, `throwItem`, żądania ataku z `ai`, statystyki broni z contentu, modyfikatory `progression`, `moodles`, RNG `combat`.
 - **Wyjścia:** obrażenia zombie, trafienia gracza do `health`, hałas do `noise`, XP do `progression`, zdarzenia `hit {attacker, target, part, damage}`, `shot`, `weaponBroke`, `zombieKilled` (licznik zabitych na ekranie śmierci).
@@ -536,6 +536,7 @@ type ViewPatch =
   | { v: 'inventory'; containers: ContainerView[] }        // pełny widok zmienionego pojemnika
   | { v: 'action'; kind; startTick; endTick } | { v: 'skills'; ... };
 ```
+Stan po Etapie 2: zaimplementowany jest widok gracza i zegara jako `SimViewPatch { clock?, player? }` w `protocol/views.ts` (wiadomość `{ kind: 'view', tick, view }`). Każde pole jest opcjonalne i oznacza zmianę: `stats` zawiera tylko zmienione statystyki (zaokrąglone do 0,1), `moodles` tylko zmienione poziomy (`{ id, level }`, 0 = zniknął), `wounds` pełną listę po każdej zmianie ran. Pierwszy widok po `init` jest pełny (patrz 9.5).
 
 ### 4.3 Zdarzenia (co tick, lista)
 `SimEvent` to unia dyskryminowana z `packages/protocol`: `footstep`, `noise`, `hit`, `shot`, `zombieAlerted`, `windowBroken`, `doorChanged`, `tileChanged`, `chunkChanged`, `xpGained`, `levelUp`, `moodleChanged`, `wounded`, `actionStarted/Completed/Interrupted`, `commandRejected`, `died`, `dayPassed`, `timeScaleHint`. Render używa ich do dźwięków, efektów cząsteczkowych, toastów i ekranu śmierci. Zdarzenia **nie są źródłem prawdy**: pominięcie zdarzenia nie może zepsuć stanu klienta, bo stan odtwarzamy ze snapshotu i widoków.
@@ -721,3 +722,16 @@ Zaimplementowane: `core/{loop,rng,dmath,hash,world,components,pipeline}`, `comma
 - **Snapshot** to na razie `Float32Array` bez nagłówka: rekordy `[stableId, x, y, z, facingRad]`, gracz pierwszy, liczba encji = `długość / 5` (zamiast 28-bajtowego rekordu z 4.1). Pula buforów używa ponownie tylko buforów o dokładnie pasującym rozmiarze.
 - **Kolizje:** okrąg r = 0,3 (kapsuła w rzucie 2D) z kaflami bez podłogi i krawędziami `edgeN`/`edgeW` (każde id ≠ 0 blokuje; adapter `apps/game` przepuszcza na razie krawędzie typu `door` jako otwarte, bo nie ma jeszcze stanu drzwi). Ruch rozdzielony po osiach (najpierw x, potem y) z analitycznym „sweepem”, więc nie ma przenikania przy dowolnej prędkości.
 - **Facing** liczy własny `datan2` z `core/dmath` (szereg z redukcją zakresu, tylko `+ - * /`), a nie `Math.atan2`.
+
+### 9.5 Stan po Etapie 2 (Przetrwanie) — kontrakt z danymi i odstępstwa
+Dane Modules mają pierwszeństwo przed wcześniejszymi założeniami tego dokumentu. Zaimplementowane: `content/adapter`, `core/clock`, `survival/{state,wounds,commands}`, `systems/{clock,health,survival,sleep,moodles,lifecycle}`, `snapshot/views`.
+- **Kontrakt z danymi:** statystyki 0–100 (°C i kg osobno), tempa w punktach na **minutę gry**, wszystkie wartości z `worldSettings.survival` (nazwy pól ze schematów `packages/content/src/schemas/survival`), `dayLengthMinutes = 60`. Rodzaje ran: `scratch`, `laceration`, `bite`, `deep` (złamania później). Psucie: `freshMin`/`rottenMin`, lodówka `spoilageMultiplier = 0.3`. Loot: `rarity` z `worldSettings.loot.rarityWeightPct`, tablice po parze pokój + pojemnik, pudełka amunicji `ammo_box`, strzelba `base:pump-shotgun`.
+- **Content w workerze:** `init.content = { packs: [{ dir, files: [{ path, json }] }] }` (surowe pliki JSON paczek w kolejności wczytywania). Worker waliduje je i buduje `ContentBundle` (`buildContentBundle`), więc zod zostaje w workerze. Bez `content` sim działa jak w Etapie 1 (sam ruch), a `getSurvival()` zwraca `undefined`. `createSim({ content })` przyjmuje `ContentBundle` (albo obiekt z `worldSettings`, `moodles`, `items`).
+- **Zegar:** start domyślnie dzień 1, 09:00 (jak tryb `base:survival`). `gameTime()` i widok `clock` pokazują czas ostatniego wykonanego ticku. Blokada przyspieszenia to hook `threatNearby()` (na razie zawsze `false`); worker wymusza ×1, gdy `fastForwardBlocked()`.
+- **Aktywność:** na razie tylko `idle`, `walking` (niezerowa intencja ruchu) i `sleeping`; bieg, skradanie i walka przyjdą z komendą ruchu z `run`/`sneak` i z walką. Temperatura otoczenia jest stała (20 °C, opcja `ambientTemperatureC`), a schnięcie ma tempo „na zewnątrz”, bo sim nie zna jeszcze dachów.
+- **Moodle:** progi i histereza z danych, tylko modyfikatory poziomu bieżącego (nie kumulują się). Na razie działają modyfikatory temp (`hunger-rate`, `thirst-rate`, `fatigue-rate`, `endurance-regen`, `healing-rate`, `move-speed`); pozostałe (np. `aim-accuracy`) przejmą walka i akcje. Moodle na statystykach, których sim jeszcze nie liczy (`carry-load`, `drunkenness`, `comfort`), pozostają ukryte. `injury` = 100 − `health`.
+- **Rany:** krwawienie rany = `bleeding × (1 − healed)`, 0 po `clotsAfterMin` (0 = nie krzepnie), bandaż mnoży przez `bleedingMul` (brudny po `dirtyAfterMin`: `dirtyBleedingMul`). Zakażenie brudem losowane co minutę strumieniem `health`. Wirus losowany przy ranie od zombie (`zombieInfectionChance`), `infection` rośnie liniowo do śmierci, `sickness` i gorączka po inkubacji. Bandaż jest na razie natychmiastowy i nie zużywa przedmiotu (`itemId` tylko sprawdzany w contencie); akcja czasowa i ekwipunek w Etapach 3 i 6.
+- **Sen:** komendy `sleep` / `wake`, powierzchnia na razie zawsze `floor` (łóżka z meblami później). Zdarzenia `fellAsleep`, `wokeUp {reason}` i `timeScaleHint` (host decyduje o prędkości).
+- **Protokół:** `PROTOCOL_VERSION = 3`. Nowe komendy `sleep`, `wake`, `bandage {part, itemId?}`, tylko w trybie dev (`init.dev`) `debugWound {part, wound, zombie?}` i `debugStat {stat, value}`. Worker → main: `view` (delta `SimViewPatch`: `clock`, `player {alive, sleeping, stats, moodles, wounds}`, tylko przy zmianie), `events` (lista `SimEvent`, m.in. `died`, `wounded`, `moodleChanged`, `dayPassed`) i `error`. Zamiast jednej wiadomości `frame` z 5.2 są osobne `snapshot`, `view` i `events`.
+- **Determinizm:** stan przetrwania wchodzi do `hash()` (sekcja dopisywana tylko przy contencie, więc złote hashe samego ruchu się nie zmieniły). Nowy złoty hash scenariusza przetrwania jest w `test/survival-determinism.test.ts`.
+
