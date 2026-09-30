@@ -8,7 +8,7 @@ import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
-import { MOCK_TICK_MS } from './sim/mock-step.js';
+import { TICK_MS } from '@deadzone/sim';
 import { MockSimClient } from './sim/mock-sim-client.js';
 import { CommandStamper } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
@@ -20,12 +20,17 @@ import { Structures } from './world/structures.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
-import { parseCrowdParam } from './crowd/mock-crowd.js';
+import { parseBootOptions } from './boot-options.js';
+import { startSimWorker } from './sim/start-sim.js';
+import type { SimClient } from './sim/sim-client.js';
+import type { LoadedMap } from './world/content-map.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 
 const VIEW_HEIGHT = 24;
-const PLAYER_ID = 1;
+/** Singleplayer: the local player is sim player 0. */
+const PLAYER_ID = 0;
+const SIM_SEED = 1;
 const FOLLOW_HALF_LIFE_MS = 80;
 
 const container = document.getElementById('app');
@@ -35,28 +40,34 @@ const renderer = new WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
+const boot = parseBootOptions(window.location.search);
+const world: LoadedMap =
+  boot.map === 'demo-house'
+    ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap('demo-house'))
+    : { source: createTestMap(), range: TEST_MAP_RANGE };
+
 const scene = createScene();
-const map = createTestMap();
-const terrain = new Terrain(map);
-terrain.loadRange(TEST_MAP_RANGE);
+const terrain = new Terrain(world.source);
+terrain.loadRange(world.range);
 scene.add(terrain.root);
-const structures = new Structures(map);
-structures.loadRange(TEST_MAP_RANGE);
+const structures = new Structures(world.source);
+structures.loadRange(world.range);
 scene.add(structures.root);
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 bindCameraInput(rig, renderer.domElement);
 
-// TEMPORARY: MockSimClient until the real Worker sim (createSimWorkerClient) lands.
-// TEMPORARY debug spawn: `?spawn=inside` starts in the test building (screenshots, cutaway checks).
-const spawnInside = new URLSearchParams(window.location.search).get('spawn') === 'inside';
-const spawn = spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 };
-// TEMPORARY load test: `?crowd=N` adds N wandering placeholder entities to the mock sim.
-const crowdCount = parseCrowdParam(window.location.search);
-const sim = new MockSimClient(rangeBounds(TEST_MAP_RANGE), spawn, PLAYER_ID, {
-  count: crowdCount,
-  seed: 1,
-});
+// Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet)
+// and `?spawn=inside` (the worker `init` has no spawn option yet); it has no collisions.
+const sim: SimClient =
+  boot.sim === 'worker'
+    ? startSimWorker(world.source, world.range, SIM_SEED)
+    : new MockSimClient(
+        rangeBounds(world.range),
+        boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
+        PLAYER_ID,
+        { count: boot.crowd, seed: SIM_SEED },
+      );
 const stamper = new CommandStamper(PLAYER_ID);
 const playerInput = new PlayerInput(renderer.domElement, sim, stamper);
 const snapshots = new SnapshotBuffer();
@@ -94,7 +105,11 @@ if (import.meta.env.DEV) {
     ([{ createStatsOverlay }, { createCrowdBench }]) => {
       const bench = createCrowdBench(() => crowd.count);
       recordFrame = bench.record;
-      afterRender = createStatsOverlay(document.body, bench.line);
+      const pos = () => {
+        const p = snapshots.sample(performance.now(), TICK_MS);
+        return p ? `player ${p.x.toFixed(2)}, ${p.y.toFixed(2)} · sim ${boot.sim}` : '';
+      };
+      afterRender = createStatsOverlay(document.body, () => `${bench.line()}\n${pos()}`);
     },
   );
 }
@@ -106,7 +121,7 @@ renderer.setAnimationLoop((time) => {
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;
   playerInput.update(time, rig.targetYaw, camera);
-  const state = snapshots.sample(performance.now(), MOCK_TICK_MS);
+  const state = snapshots.sample(performance.now(), TICK_MS);
   if (state) {
     player.apply(state);
     const goal = simToWorld(state.x, state.y, state.z);
@@ -119,7 +134,7 @@ renderer.setAnimationLoop((time) => {
   }
   rig.update(time);
   const t0 = performance.now();
-  crowdView.update(tickAlpha(t0, crowdArrivedMs, MOCK_TICK_MS));
+  crowdView.update(tickAlpha(t0, crowdArrivedMs, TICK_MS));
   const t1 = performance.now();
   renderer.render(scene, camera);
   frameSample.updateMs = t1 - t0;

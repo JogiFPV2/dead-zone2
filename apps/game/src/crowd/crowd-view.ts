@@ -1,6 +1,6 @@
 import { CapsuleGeometry, DynamicDrawUsage, InstancedMesh, MeshStandardMaterial } from 'three';
 import { PLAYER_HEIGHT } from '../player/player-view.js';
-import { PLAYER_RADIUS } from '../sim/protocol.js';
+import { PLAYER_RADIUS } from '@deadzone/sim';
 import { CROWD_SAMPLE_STRIDE, type CrowdBuffer } from './crowd-buffer.js';
 import { writeCrowdMatrices } from './crowd-matrices.js';
 

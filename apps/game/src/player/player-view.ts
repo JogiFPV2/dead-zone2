@@ -1,5 +1,5 @@
 import { BoxGeometry, CapsuleGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
-import { PLAYER_RADIUS } from '../sim/protocol.js';
+import { PLAYER_RADIUS } from '@deadzone/sim';
 import { facingToRotationY, simToWorld } from '../sim/coords.js';
 import type { EntityState } from '../sim/snapshot.js';
 

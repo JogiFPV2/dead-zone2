@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MOCK_TICK_MS, stepMockPlayer } from './mock-step.js';
 import { MockSimClient } from './mock-sim-client.js';
-import { ENTITY_STRIDE, PLAYER_RADIUS } from './protocol.js';
+import { SNAPSHOT_ENTITY_STRIDE } from '@deadzone/protocol';
+import { PLAYER_RADIUS } from '@deadzone/sim';
 import { CommandStamper, type SnapshotMessage } from './sim-client.js';
 import { readEntity, writeEntities } from './snapshot.js';
 
@@ -25,7 +26,7 @@ describe('mock sim (temporary stub)', () => {
 
   it('round-trips the snapshot layout', () => {
     const buf = writeEntities([{ ...p0, x: 1.5, facing: 1 }]);
-    expect(buf).toHaveLength(ENTITY_STRIDE);
+    expect(buf).toHaveLength(SNAPSHOT_ENTITY_STRIDE);
     expect(readEntity(buf, 0)).toEqual({ id: 1, x: 1.5, y: 0, z: 0, facing: 1 });
     expect(readEntity(buf, 1)).toBeUndefined();
   });
@@ -53,7 +54,7 @@ describe('mock sim (temporary stub)', () => {
     vi.advanceTimersByTime(MOCK_TICK_MS * 2);
     sim.dispose();
     const buf = got.at(-1)?.buf ?? new Float32Array();
-    expect(buf).toHaveLength(4 * ENTITY_STRIDE);
+    expect(buf).toHaveLength(4 * SNAPSHOT_ENTITY_STRIDE);
     expect(readEntity(buf, 0)?.id).toBe(1);
     expect([1, 2, 3].map((i) => readEntity(buf, i)?.id)).toEqual([1000, 1001, 1002]);
   });

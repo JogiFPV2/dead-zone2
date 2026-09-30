@@ -16,9 +16,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Scena Three.js, kamera izometryczna, zoom, obrót (Silnik)
 - [x] Teren z kafli + instancing (Silnik)
 - [x] Budynek z wnętrzem, ukrywanie dachu i ścian (Silnik)
-- [~] Pętla symulacji 20 Hz w Web Workerze + interpolacja renderu (Symulacja; część sim gotowa, interpolacja po stronie Silnika)
+- [x] Pętla symulacji 20 Hz w Web Workerze + interpolacja renderu (Symulacja + Silnik)
 - [x] ECS (bitecs), RNG z seedem, system komend (Symulacja)
-- [~] Ruch WASD, celowanie myszą, kolizje (Symulacja + Silnik)
+- [x] Ruch WASD, celowanie myszą, kolizje (Symulacja + Silnik)
 - [ ] Dzień i noc, latarnie, cienie (Silnik)
 - [x] Pomiar fps i draw calli w trybie dev (Silnik)
 

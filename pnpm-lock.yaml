@@ -199,6 +199,9 @@ importers:
 
   apps/game:
     dependencies:
+      '@deadzone/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@deadzone/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol

@@ -1,13 +1,6 @@
 // TEMPORARY: wandering placeholder entities for the render load test (`?crowd=N`).
 import type { FloorBounds } from '../sim/mock-step.js';
-import {
-  ENTITY_FACING,
-  ENTITY_ID,
-  ENTITY_STRIDE,
-  ENTITY_X,
-  ENTITY_Y,
-  ENTITY_Z,
-} from '../sim/protocol.js';
+import { SNAPSHOT_ENTITY_STRIDE, SnapshotField } from '@deadzone/protocol';
 
 export const CROWD_SPEED = 1.2;
 /** Chance per tick to pick a new heading. */
@@ -66,12 +59,12 @@ export function stepCrowd(crowd: Crowd, rng: RandomSource, dtSec: number, b: Flo
 export function writeCrowd(crowd: Crowd, out: Float32Array, offset: number): void {
   const s = crowd.state;
   for (let i = 0; i < crowd.count; i++) {
-    const o = offset + i * ENTITY_STRIDE;
-    out[o + ENTITY_ID] = CROWD_FIRST_ID + i;
-    out[o + ENTITY_X] = s[i * W] ?? 0;
-    out[o + ENTITY_Y] = s[i * W + 1] ?? 0;
-    out[o + ENTITY_Z] = 0;
-    out[o + ENTITY_FACING] = s[i * W + 2] ?? 0;
+    const o = offset + i * SNAPSHOT_ENTITY_STRIDE;
+    out[o + SnapshotField.stableId] = CROWD_FIRST_ID + i;
+    out[o + SnapshotField.x] = s[i * W] ?? 0;
+    out[o + SnapshotField.y] = s[i * W + 1] ?? 0;
+    out[o + SnapshotField.z] = 0;
+    out[o + SnapshotField.facingRad] = s[i * W + 2] ?? 0;
   }
 }
 

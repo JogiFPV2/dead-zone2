@@ -1,0 +1,23 @@
+import { parseCrowdParam } from './crowd/mock-crowd.js';
+
+export type MapChoice = 'test' | 'demo-house';
+
+export interface BootOptions {
+  map: MapChoice;
+  /** `?crowd=N` wanderers; only the mock sim has them. */
+  crowd: number;
+  /** `?spawn=inside`: start in the test building; the worker `init` has no spawn yet. */
+  spawnInside: boolean;
+  /** Mock sim only for debug options the worker cannot serve; otherwise the real sim worker. */
+  sim: 'worker' | 'mock';
+}
+
+/** Parses the URL query (`?map=demo-house`, `?crowd=N`, `?spawn=inside`, `?sim=mock`). */
+export function parseBootOptions(search: string): BootOptions {
+  const q = new URLSearchParams(search);
+  const crowd = parseCrowdParam(search);
+  const spawnInside = q.get('spawn') === 'inside';
+  const map: MapChoice = q.get('map') === 'demo-house' ? 'demo-house' : 'test';
+  const mock = crowd > 0 || (spawnInside && map === 'test') || q.get('sim') === 'mock';
+  return { map, crowd, spawnInside: spawnInside && map === 'test', sim: mock ? 'mock' : 'worker' };
+}

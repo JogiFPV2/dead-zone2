@@ -1,5 +1,5 @@
 // TEMPORARY STUB: stand-in for packages/sim movement until its API lands. No collisions.
-import { PLAYER_RADIUS } from './protocol.js';
+import { PLAYER_RADIUS } from '@deadzone/sim';
 import type { EntityState } from './snapshot.js';
 
 export const MOCK_TICK_HZ = 20;

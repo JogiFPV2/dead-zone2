@@ -3,7 +3,7 @@
 import { MOCK_TICK_MS, stepMockPlayer, type FloorBounds, type MockInput } from './mock-step.js';
 import { createRng, type Rng } from '@deadzone/sim';
 import { createCrowd, stepCrowd, writeCrowd, type Crowd } from '../crowd/mock-crowd.js';
-import { ENTITY_STRIDE, type Command, type WorkerToMain } from './protocol.js';
+import { type Command, SNAPSHOT_ENTITY_STRIDE, type WorkerToMain } from '@deadzone/protocol';
 import type { SimClient, SnapshotMessage } from './sim-client.js';
 import { writeEntities, type EntityState } from './snapshot.js';
 
@@ -54,9 +54,9 @@ export class MockSimClient implements SimClient {
     stepCrowd(this.crowd, this.rng, MOCK_TICK_MS / 1000, this.bounds);
     this.tick++;
     // Same wire shape the real worker will post (a fresh, transferable buffer per tick).
-    const buf = new Float32Array((1 + this.crowd.count) * ENTITY_STRIDE);
+    const buf = new Float32Array((1 + this.crowd.count) * SNAPSHOT_ENTITY_STRIDE);
     buf.set(writeEntities([this.player]));
-    writeCrowd(this.crowd, buf, ENTITY_STRIDE);
+    writeCrowd(this.crowd, buf, SNAPSHOT_ENTITY_STRIDE);
     const msg: Extract<WorkerToMain, { kind: 'snapshot' }> = {
       kind: 'snapshot',
       tick: this.tick,

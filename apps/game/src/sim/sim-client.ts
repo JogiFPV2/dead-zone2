@@ -1,8 +1,12 @@
-import type { Command, CommandBody } from './protocol.js';
+import type { Command, CommandHeader } from '@deadzone/protocol';
+
+/** Command without the header (tick, playerId, seq are stamped by CommandStamper). */
+type Body<C> = C extends Command ? Omit<C, keyof CommandHeader> : never;
+export type CommandBody = Body<Command>;
 
 export interface SnapshotMessage {
   tick: number;
-  /** Entity buffer, layout in protocol.ts; entity 0 = local player. */
+  /** Entity buffer, layout in @deadzone/protocol (snapshot.ts); entity 0 = local player. */
   buf: Float32Array;
 }
 

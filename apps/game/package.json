@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@deadzone/content": "workspace:*",
     "@deadzone/protocol": "workspace:*",
     "@deadzone/sim": "workspace:*",
     "three": "^0.186.1"

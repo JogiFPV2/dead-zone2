@@ -1,11 +1,4 @@
-import {
-  ENTITY_FACING,
-  ENTITY_ID,
-  ENTITY_STRIDE,
-  ENTITY_X,
-  ENTITY_Y,
-  ENTITY_Z,
-} from '../sim/protocol.js';
+import { SNAPSHOT_ENTITY_STRIDE, SnapshotField } from '@deadzone/protocol';
 import { SlotMap } from './slot-map.js';
 
 /** Floats per slot in prev/curr: x, y, z, facing. */
@@ -40,10 +33,10 @@ export class CrowdBuffer {
   /** Ingests a snapshot, skipping the first `skip` entities (the player). */
   push(buf: Float32Array, skip = 1): void {
     const gen = ++this.generation;
-    const n = Math.floor(buf.length / ENTITY_STRIDE);
+    const n = Math.floor(buf.length / SNAPSHOT_ENTITY_STRIDE);
     for (let e = skip; e < n; e++) {
-      const o = e * ENTITY_STRIDE;
-      const id = buf[o + ENTITY_ID] ?? 0;
+      const o = e * SNAPSHOT_ENTITY_STRIDE;
+      const id = buf[o + SnapshotField.stableId] ?? 0;
       const known = this.slots.get(id);
       const slot = known ?? this.slots.add(id);
       this.ensureCapacity();
@@ -89,10 +82,10 @@ export class CrowdBuffer {
   };
 
   private write(dst: Float32Array, p: number, buf: Float32Array, o: number): void {
-    dst[p] = buf[o + ENTITY_X] ?? 0;
-    dst[p + 1] = buf[o + ENTITY_Y] ?? 0;
-    dst[p + 2] = buf[o + ENTITY_Z] ?? 0;
-    dst[p + 3] = buf[o + ENTITY_FACING] ?? 0;
+    dst[p] = buf[o + SnapshotField.x] ?? 0;
+    dst[p + 1] = buf[o + SnapshotField.y] ?? 0;
+    dst[p + 2] = buf[o + SnapshotField.z] ?? 0;
+    dst[p + 3] = buf[o + SnapshotField.facingRad] ?? 0;
   }
 
   private ensureCapacity(): void {
