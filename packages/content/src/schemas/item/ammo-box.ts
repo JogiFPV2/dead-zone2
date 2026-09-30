@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ItemRefSchema } from '../common/index.js';
+import { GameMinutesSchema, ItemRefSchema } from '../common/index.js';
 import { itemBaseShape } from './base.js';
 
 /** Pudełko amunicji: po otwarciu daje `count` sztuk przedmiotu `ammo` (rodzaju `ammo`). */
@@ -9,6 +9,8 @@ export const AmmoBoxItemSchema = z.strictObject({
   ammoBox: z.strictObject({
     ammo: ItemRefSchema,
     count: z.number().int().min(1).max(500),
+    /** Czas rozpakowania (minuty gry). */
+    unpackMin: GameMinutesSchema.default(0.5),
   }),
 });
 

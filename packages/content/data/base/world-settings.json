@@ -3,7 +3,7 @@
   "startingTraitPoints": 8,
   "carry": {
     "baseCapacityKg": 12,
-    "overloadSlowdownPerKg": 0.03,
+    "overloadFatigueMul": 1.5,
     "hardLimitMultiplier": 2
   },
   "loot": {
@@ -16,5 +16,11 @@
   },
   "crafting": {
     "nearbyRadiusTiles": 3
+  },
+  "vision": {
+    "enabled": true,
+    "dayRangeTiles": 30,
+    "nightFactor": 0.4,
+    "lightBonus": 0.5
   }
 }

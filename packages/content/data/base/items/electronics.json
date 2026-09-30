@@ -36,5 +36,37 @@
     "kind": "misc",
     "weightKg": 0.4,
     "throwable": { "rangeTiles": 8, "impactNoise": { "radiusTiles": 25, "volume": 0.9 } }
+  },
+  {
+    "id": "base:flashlight",
+    "name": "item.base.flashlight.name",
+    "kind": "tool",
+    "weightKg": 0.3,
+    "tags": ["base:light", "base:flashlight"],
+    "tool": {},
+    "light": {
+      "radiusTiles": 10,
+      "intensity": 0.9,
+      "color": "#fff4dc",
+      "coneDeg": 50,
+      "batteryTag": "base:battery",
+      "batteryLifeMin": 600
+    }
+  },
+  {
+    "id": "base:camping-lantern",
+    "name": "item.base.camping-lantern.name",
+    "kind": "tool",
+    "weightKg": 0.8,
+    "tags": ["base:light"],
+    "tool": {},
+    "light": {
+      "radiusTiles": 5,
+      "intensity": 0.7,
+      "color": "#ffe0a0",
+      "coneDeg": 360,
+      "batteryTag": "base:battery",
+      "batteryLifeMin": 900
+    }
   }
 ]

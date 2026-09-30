@@ -12,7 +12,8 @@
         "hunger": -12,
         "unhappiness": -2
       },
-      "spoilage": { "freshMin": 4320, "rottenMin": 8640 }
+      "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
+      "eatMin": 1.5
     }
   },
   {
@@ -22,7 +23,8 @@
     "weightKg": 0.25,
     "food": {
       "nutrition": { "calories": 170, "proteinG": 30, "fatG": 5, "hunger": -14, "unhappiness": -4 },
-      "spoilage": { "freshMin": 2880, "rottenMin": 5760 }
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 },
+      "eatMin": 2
     }
   },
   {
@@ -41,7 +43,8 @@
         "unhappiness": -10
       },
       "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
-      "portions": 4
+      "portions": 4,
+      "eatMin": 3
     }
   },
   {
@@ -57,7 +60,8 @@
         "hunger": -10,
         "unhappiness": -3
       },
-      "spoilage": { "freshMin": 2880, "rottenMin": 5760 }
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 },
+      "eatMin": 2
     }
   },
   {
@@ -65,7 +69,7 @@
     "name": "item.base.dirty-water-bottle.name",
     "kind": "drink",
     "weightKg": 0.55,
-    "drink": { "perUse": { "thirst": -20, "sicknessChance": 0.4 }, "uses": 5 }
+    "drink": { "perUse": { "thirst": -20, "sicknessChance": 0.4 }, "uses": 5, "drinkMin": 0.5 }
   },
   {
     "id": "base:vodka",
@@ -76,42 +80,8 @@
     "drink": {
       "perUse": { "thirst": -5, "stress": -8, "unhappiness": -5 },
       "uses": 10,
+      "drinkMin": 0.3,
       "alcohol": 0.2
-    }
-  },
-  {
-    "id": "base:rabbit-stew",
-    "name": "item.base.rabbit-stew.name",
-    "kind": "food",
-    "weightKg": 1.3,
-    "food": {
-      "nutrition": {
-        "calories": 900,
-        "proteinG": 95,
-        "fatG": 22,
-        "carbsG": 40,
-        "hunger": -70,
-        "thirst": -8,
-        "unhappiness": -15
-      },
-      "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
-      "portions": 4
-    }
-  },
-  {
-    "id": "base:jarred-vegetables",
-    "name": "item.base.jarred-vegetables.name",
-    "kind": "food",
-    "weightKg": 0.9,
-    "food": {
-      "nutrition": {
-        "calories": 250,
-        "carbsG": 50,
-        "proteinG": 6,
-        "hunger": -25,
-        "unhappiness": -2
-      },
-      "portions": 2
     }
   }
 ]

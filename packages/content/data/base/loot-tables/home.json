@@ -83,6 +83,8 @@
       { "table": "base:handguns", "weight": 1, "rarity": "very_rare" },
       { "item": "base:radio", "weight": 2 },
       { "item": "base:battery", "weight": 3, "count": { "min": 1, "max": 4 } },
+      { "item": "base:flashlight", "weight": 2 },
+      { "item": "base:camping-lantern", "weight": 1, "rarity": "uncommon" },
       { "table": "base:skill-books", "weight": 2 },
       { "table": "base:recipe-magazines", "weight": 2 },
       { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" }

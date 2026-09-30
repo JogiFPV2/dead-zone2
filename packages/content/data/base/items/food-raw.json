@@ -8,7 +8,8 @@
     "food": {
       "nutrition": { "calories": 110, "carbsG": 26, "proteinG": 3, "hunger": -8, "unhappiness": 3 },
       "spoilage": { "freshMin": 28800, "rottenMin": 57600 },
-      "cooking": { "durationMin": 40, "cookedInto": "base:baked-potato" }
+      "cooking": { "durationMin": 40, "cookedInto": "base:baked-potato" },
+      "eatMin": 1
     }
   },
   {
@@ -19,7 +20,8 @@
     "tags": ["base:vegetable"],
     "food": {
       "nutrition": { "calories": 30, "carbsG": 7, "hunger": -4 },
-      "spoilage": { "freshMin": 20160, "rottenMin": 40320 }
+      "spoilage": { "freshMin": 20160, "rottenMin": 40320 },
+      "eatMin": 0.5
     }
   },
   {
@@ -37,7 +39,8 @@
         "unhappiness": 4
       },
       "spoilage": { "freshMin": 20160, "rottenMin": 43200 },
-      "portions": 4
+      "portions": 4,
+      "eatMin": 1.5
     }
   },
   {

@@ -68,6 +68,19 @@ Scena Three.js z kamerą izometryczną (zoom, lekki obrót), teren z kafli, jede
 Statystyki: zdrowie, głód, pragnienie, zmęczenie, nuda, stres, temperatura. Moodle (chipy statusu jak „Infekcja”, „Ból 2”, „Gorączka”). Ciało podzielone na części z ranami (zadrapanie, rana szarpana, ugryzienie), krwawienie, bandaże, infekcja, śmierć i ekran śmierci.
 **Gotowe, gdy:** bez jedzenia i picia postać słabnie i umiera, a rany trzeba opatrywać.
 
+Kary z ran (`worldSettings.survival.woundPenalties`, **do balansu z Symulacją**). Zadrapanie i rana szarpana są lekkie, ugryzienie i głęboka rana ciężkie. Wartości to utrata w %: ruch / atak / tempo akcji / widzenie.
+
+| Grupa | Lekka | Ciężka |
+|---|---|---|
+| Noga (udo, goleń, stopa) | 15 / 0 / 5 / 0 | 35 / 5 / 10 / 0 |
+| Ręka (ramię, przedramię, dłoń) | 0 / 15 / 10 / 0 | 5 / 35 / 25 / 0 |
+| Tułów (klatka, brzuch, krocze) | 5 / 5 / 5 / 0 | 15 / 15 / 15 / 0 |
+| Głowa (głowa, szyja) | 0 / 0 / 5 / 10 | 5 / 5 / 10 / 25 |
+
+W grupie liczy się najcięższa rana, grupy się sumują, a każda kara ma limit 60%. Opatrzona rana daje połowę kary. Widzenie zmniejszają też ból (od 50: −10%), gorączka (od 40: −15%, rozmycie 0,3) i krwawienie (od 30: −20%, rozmycie 0,2). Przeciążenie spowalnia tylko przez moodle „Ciężki ładunek” i przyspiesza zmęczenie ×1,5.
+
+Widzenie (`worldSettings.vision`) działa tak samo dla gracza i zombie: 30 kafli w dzień, w nocy ×0,4, a światło (latarka, lampa, ognisko) podnosi czynnik o 0,5 × jasność, najwyżej do pełnego zasięgu. Strefy mapy z `role: 'dark'` (piwnice, lasy nocą) liczą się jak noc także w dzień. Latarka ma stożek 50° i działa na baterii.
+
 ### Etap 3 — Przedmioty i ekwipunek
 Definicje przedmiotów, ekwipunek z wagą i obciążeniem, torby, ręce (lewa/prawa), szybkie sloty 1–5, kontenery (szafki, lodówki), akcja „Przeszukaj” z czasem trwania, podnoszenie i upuszczanie, psucie się jedzenia.
 **Gotowe, gdy:** można przeszukać dom, zabrać jedzenie, zjeść je i wyposażyć broń.

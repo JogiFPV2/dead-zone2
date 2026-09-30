@@ -1,0 +1,83 @@
+{
+  "survival": {
+    "woundPenalties": {
+      "severity": {
+        "scratch": "light",
+        "laceration": "light",
+        "bite": "heavy",
+        "deep": "heavy"
+      },
+      "light": {
+        "leg": {
+          "moveSpeed": 0.15,
+          "attackPower": 0,
+          "actionSpeed": 0.05,
+          "visionRange": 0
+        },
+        "arm": {
+          "moveSpeed": 0,
+          "attackPower": 0.15,
+          "actionSpeed": 0.1,
+          "visionRange": 0
+        },
+        "torso": {
+          "moveSpeed": 0.05,
+          "attackPower": 0.05,
+          "actionSpeed": 0.05,
+          "visionRange": 0
+        },
+        "head": {
+          "moveSpeed": 0,
+          "attackPower": 0,
+          "actionSpeed": 0.05,
+          "visionRange": 0.1
+        }
+      },
+      "heavy": {
+        "leg": {
+          "moveSpeed": 0.35,
+          "attackPower": 0.05,
+          "actionSpeed": 0.1,
+          "visionRange": 0
+        },
+        "arm": {
+          "moveSpeed": 0.05,
+          "attackPower": 0.35,
+          "actionSpeed": 0.25,
+          "visionRange": 0
+        },
+        "torso": {
+          "moveSpeed": 0.15,
+          "attackPower": 0.15,
+          "actionSpeed": 0.15,
+          "visionRange": 0
+        },
+        "head": {
+          "moveSpeed": 0.05,
+          "attackPower": 0.05,
+          "actionSpeed": 0.1,
+          "visionRange": 0.25
+        }
+      },
+      "bandagedFactor": 0.5,
+      "maxPenalty": 0.6,
+      "conditions": {
+        "pain": {
+          "from": 50,
+          "visionRange": 0.1,
+          "blur": 0
+        },
+        "fever": {
+          "from": 40,
+          "visionRange": 0.15,
+          "blur": 0.3
+        },
+        "bleeding": {
+          "from": 30,
+          "visionRange": 0.2,
+          "blur": 0.2
+        }
+      }
+    }
+  }
+}

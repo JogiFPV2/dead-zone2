@@ -73,6 +73,7 @@ describe('fragmenty world-settings/*.json', () => {
         'unhappiness',
         'wetness',
         'wounds',
+        'woundPenalties',
       ].sort(),
     );
     expect(b.worldSettings.loot.rarityWeightPct.rare).toBe(100);

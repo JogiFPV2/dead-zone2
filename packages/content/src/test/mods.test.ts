@@ -106,7 +106,7 @@ describe('mody i nadpisania', () => {
     expect(r.worldSettings.dayLengthMinutes).toBe(90);
     expect(r.worldSettings.carry).toEqual({
       baseCapacityKg: 15,
-      overloadSlowdownPerKg: 0.03,
+      overloadFatigueMul: 1.5,
       hardLimitMultiplier: 2,
     });
   });

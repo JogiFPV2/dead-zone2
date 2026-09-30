@@ -28,6 +28,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Części ciała, rany, krwawienie, bandaże (Symulacja)
 - [x] Infekcja i gorączka (Symulacja)
 - [x] Sen (Symulacja)
+- [x] Kary z ran, widzenie w dzień i w nocy, czasy jedzenia i picia jako dane (Modules)
+- [ ] Kary z ran do ruchu, ataku i widzenia w sim (Symulacja)
 - [ ] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer)
 
 ## Etap 3 — Przedmioty i ekwipunek

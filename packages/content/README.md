@@ -115,6 +115,14 @@ wartość domyślną, więc mod może zmienić jedno pole, np. `{ "survival": { 
   (także spalanie kalorii) i podaje zmianę wytrzymałości na minutę.
 - Progi moodli głodu i pragnienia są dobrane tak, że bezczynna postać jest głodna po ~1 dobie gry,
   a spragniona po ~pół doby (test `survival-tuning.test.ts`).
+- `woundPenalties`: `severity` (rodzaj rany → `light`/`heavy`), `bodyGroups` (część ciała z `BODY_PARTS` → `head`,
+  `torso`, `arm`, `leg`), tabele `light`/`heavy` × grupa z `{ moveSpeed, attackPower, actionSpeed, visionRange }` jako
+  ułamek utraty, `bandagedFactor`, `maxPenalty` oraz `conditions.<pain|fever|bleeding> { from, visionRange, blur }`.
+
+Poza przetrwaniem: `vision { enabled, dayRangeTiles, nightFactor, lightBonus }` (gracz i zombie),
+`carry.overloadFatigueMul` oraz czasy akcji w przedmiotach: `food.eatMin` (porcja, 1), `drink.drinkMin` (łyk, 0.5),
+`ammoBox.unpackMin` (0.5). Narzędzie może świecić w ręce: `tool` z `light { radiusTiles, coneDeg, batteryTag,
+batteryLifeMin }` (`base:flashlight`, `base:camping-lantern`).
 
 ## Loot
 

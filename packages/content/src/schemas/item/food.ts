@@ -13,6 +13,8 @@ export const FoodItemSchema = z.strictObject({
     spoilage: SpoilageSchema.optional(),
     /** Na ile porcji dzieli się przedmiot. */
     portions: z.number().int().min(1).default(1),
+    /** Czas zjedzenia jednej porcji (minuty gry). */
+    eatMin: GameMinutesSchema.default(1),
     /** Tag narzędzia potrzebnego do otwarcia (np. otwieracz). */
     openWith: TagSchema.optional(),
     /** Co powstaje po otwarciu (otwarta konserwa psuje się). */

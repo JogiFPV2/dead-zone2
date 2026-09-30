@@ -15,6 +15,7 @@ export * from './game-mode/index.js';
 export * from './map/index.js';
 export * from './survival/index.js';
 export * from './crafting-settings.js';
+export * from './vision-settings.js';
 export * from './world-settings.js';
 export * from './mod-manifest.js';
 export * from './mod-override.js';

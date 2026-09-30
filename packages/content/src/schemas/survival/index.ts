@@ -10,6 +10,7 @@ import { ActivitySchema, NeedsSchema } from './needs.js';
 import { NutritionSettingsSchema } from './nutrition.js';
 import { SleepSettingsSchema } from './sleep.js';
 import { TemperatureSettingsSchema, WetnessSettingsSchema } from './temperature.js';
+import { WoundPenaltiesSchema } from './wound-penalties.js';
 import { WoundSettingsSchema } from './wounds.js';
 
 export * from './needs.js';
@@ -18,6 +19,7 @@ export * from './temperature.js';
 export * from './mind.js';
 export * from './sleep.js';
 export * from './wounds.js';
+export * from './wound-penalties.js';
 export * from './health.js';
 
 /**
@@ -38,6 +40,8 @@ export const SurvivalSettingsSchema = z
     sleep: SleepSettingsSchema,
     health: HealthSettingsSchema,
     wounds: WoundSettingsSchema,
+    /** Kary z ran do ruchu, ataku, tempa akcji i widzenia (do balansu z Symulacją). */
+    woundPenalties: WoundPenaltiesSchema,
     infection: InfectionSettingsSchema,
   })
   .prefault({});

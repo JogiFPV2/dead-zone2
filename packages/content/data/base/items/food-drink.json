@@ -14,11 +14,9 @@
         "hunger": -30,
         "unhappiness": 2
       },
-      "spoilage": {
-        "freshMin": 1576800,
-        "rottenMin": 2628000
-      },
+      "spoilage": { "freshMin": 1576800, "rottenMin": 2628000 },
       "portions": 2,
+      "eatMin": 2,
       "openWith": "base:tool-can-opener"
     }
   },
@@ -28,14 +26,10 @@
     "kind": "drink",
     "weightKg": 0.55,
     "drink": {
-      "perUse": {
-        "thirst": -20
-      },
+      "perUse": { "thirst": -20 },
       "uses": 5,
-      "spoilage": {
-        "freshMin": 259200,
-        "rottenMin": 525600
-      }
+      "drinkMin": 0.5,
+      "spoilage": { "freshMin": 259200, "rottenMin": 525600 }
     }
   }
 ]
