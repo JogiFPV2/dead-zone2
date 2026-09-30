@@ -1,10 +1,12 @@
 import type { z } from 'zod';
+import { AppearancePartSchema } from './appearance-part.js';
 import { ContainerTypeSchema } from './container-type.js';
 import type { ContentType } from './content-type.js';
 import { GameModeSchema } from './game-mode/index.js';
 import { ItemSchema } from './item/index.js';
 import { LootTableSchema } from './loot-table.js';
 import { MoodleSchema } from './moodle.js';
+import { ColorPaletteSchema } from './palette.js';
 import { ProfessionSchema } from './profession.js';
 import { RecipeSchema } from './recipe/index.js';
 import { SkillSchema } from './skill.js';
@@ -27,6 +29,8 @@ export const CONTENT_SCHEMAS = {
   tile: TileSchema,
   gameMode: GameModeSchema,
   station: StationSchema,
+  appearancePart: AppearancePartSchema,
+  palette: ColorPaletteSchema,
 } as const satisfies Record<ContentType, z.ZodType>;
 
 export type ContentOf<T extends ContentType> = z.infer<(typeof CONTENT_SCHEMAS)[T]>;

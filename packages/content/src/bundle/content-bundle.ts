@@ -1,9 +1,11 @@
+import type { AppearancePart } from '../schemas/appearance-part.js';
 import type { ContainerType } from '../schemas/container-type.js';
 import type { GameMode } from '../schemas/game-mode/game-mode.js';
 import type { Item } from '../schemas/item/item.js';
 import type { LootTable } from '../schemas/loot-table.js';
 import type { ModManifest } from '../schemas/mod-manifest.js';
 import type { Moodle } from '../schemas/moodle.js';
+import type { ColorPalette } from '../schemas/palette.js';
 import type { Profession } from '../schemas/profession.js';
 import type { Recipe } from '../schemas/recipe/recipe.js';
 import type { Skill } from '../schemas/skill.js';
@@ -34,6 +36,9 @@ export type ContentBundle = DeepReadonly<{
   gameModes: Record<string, GameMode>;
   /** Stacje rzemieślnicze z poziomami 1–3. */
   stations: Record<string, Station>;
+  /** Części wyglądu do tworzenia postaci (slot, modelRef, kanały barwienia). */
+  appearanceParts: Record<string, AppearancePart>;
+  palettes: Record<string, ColorPalette>;
   worldSettings: WorldSettings;
   /** Mody w kolejności wczytywania. */
   mods: ModManifest[];

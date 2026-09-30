@@ -1,6 +1,49 @@
 {
   "dayLengthMinutes": 60,
-  "startingTraitPoints": 8,
+  "characterCreation": {
+    "startPoints": 8,
+    "maxSkillLevelAtStart": 3,
+    "skillPointCost": [1, 2, 3],
+    "name": {
+      "minLen": 2,
+      "maxLen": 24
+    },
+    "skinPalette": "base:skin",
+    "defaultAppearance": {
+      "skin": "light",
+      "parts": {
+        "face": {
+          "part": "base:face-a"
+        },
+        "hair": {
+          "part": "base:hair-short",
+          "colors": {
+            "primary": "brown"
+          }
+        },
+        "top": {
+          "part": "base:top-hoodie",
+          "colors": {
+            "primary": "slate",
+            "secondary": "charcoal"
+          }
+        },
+        "bottom": {
+          "part": "base:bottom-jeans",
+          "colors": {
+            "primary": "denim"
+          }
+        },
+        "shoes": {
+          "part": "base:shoes-sneakers",
+          "colors": {
+            "primary": "off-white",
+            "secondary": "grey"
+          }
+        }
+      }
+    }
+  },
   "carry": {
     "baseCapacityKg": 12,
     "overloadFatigueMul": 1.5,

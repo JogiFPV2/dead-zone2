@@ -13,6 +13,8 @@ export const LootTableRefSchema = ContentIdSchema.describe('ref:lootTable');
 export const ContainerTypeRefSchema = ContentIdSchema.describe('ref:containerType');
 export const MoodleRefSchema = ContentIdSchema.describe('ref:moodle');
 export const StationRefSchema = ContentIdSchema.describe('ref:station');
+export const PaletteRefSchema = ContentIdSchema.describe('ref:palette');
+export const AppearancePartRefSchema = ContentIdSchema.describe('ref:appearancePart');
 export const TileRefSchema = ContentIdSchema.describe('ref:tile');
 /** Typ pomieszczenia, np. `base:room-kitchen`; pasuje do `rooms` w loot tables. */
 export const RoomTypeSchema = ContentIdSchema.describe('ref:roomType');

@@ -61,6 +61,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)
 - [ ] Cechy zdobywane i tracone w trakcie gry (Symulacja)
 - [ ] Ekran tworzenia postaci (Designer + Silnik)
+- [x] Kreator postaci jako dane: części wyglądu, palety, pula punktów (Modules)
+- [ ] Pula punktów i wygląd w stanie postaci (Symulacja)
 - [x] Kasety VHS, telewizor i generator jako dane (Modules)
 - [ ] Oglądanie kaset na zasilanym telewizorze, prąd z generatora (Symulacja)
 - [ ] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)

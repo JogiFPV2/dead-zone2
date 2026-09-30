@@ -1,7 +1,12 @@
 import type { ContentIndex, IndexedDefinition } from '../content-index.js';
 import type { ErrorSink } from '../errors.js';
 import { formatJsonPath } from '../json-path.js';
-import { collectMoodleRefs, collectProfessionRefs, collectTraitRefs } from './refs-character.js';
+import {
+  collectAppearanceRefs,
+  collectMoodleRefs,
+  collectProfessionRefs,
+  collectTraitRefs,
+} from './refs-character.js';
 import { collectGameModeRefs } from './refs-game-mode.js';
 import { collectItemRefs } from './refs-item.js';
 import { collectRecipeRefs } from './refs-recipe.js';
@@ -47,8 +52,12 @@ export function collectRefs(def: IndexedDefinition): RefList {
     case 'station':
       collectStationRefs(d.data, r);
       break;
+    case 'appearancePart':
+      collectAppearanceRefs(d.data, r);
+      break;
     case 'skill':
     case 'tile':
+    case 'palette':
       break;
   }
   return r;

@@ -1,3 +1,4 @@
+import type { AppearancePart } from '../../schemas/appearance-part.js';
 import type { Moodle } from '../../schemas/moodle.js';
 import type { Profession } from '../../schemas/profession.js';
 import type { Trait } from '../../schemas/trait/trait.js';
@@ -22,4 +23,8 @@ export function collectProfessionRefs(p: Profession, r: RefList): void {
 
 export function collectMoodleRefs(m: Moodle, r: RefList): void {
   m.levels.forEach((l, i) => collectModifierRefs(l.modifiers, r, 'levels', i, 'modifiers'));
+}
+
+export function collectAppearanceRefs(part: AppearancePart, r: RefList): void {
+  part.tints.forEach((t, i) => r.add('palette', t.palette, 'tints', i, 'palette'));
 }

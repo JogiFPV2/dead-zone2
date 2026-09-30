@@ -1,0 +1,91 @@
+[
+  {
+    "id": "base:top-hoodie",
+    "name": "appearance.base.top-hoodie.name",
+    "slot": "top",
+    "modelRef": "char/top-hoodie",
+    "tints": [
+      { "channel": "primary", "palette": "base:cloth" },
+      { "channel": "secondary", "palette": "base:cloth" }
+    ]
+  },
+  {
+    "id": "base:top-zip-jacket",
+    "name": "appearance.base.top-zip-jacket.name",
+    "slot": "top",
+    "modelRef": "char/top-zip-jacket",
+    "tints": [
+      { "channel": "primary", "palette": "base:cloth" },
+      { "channel": "secondary", "palette": "base:cloth" }
+    ]
+  },
+  {
+    "id": "base:top-t-shirt",
+    "name": "appearance.base.top-t-shirt.name",
+    "slot": "top",
+    "modelRef": "char/top-t-shirt",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:top-flannel",
+    "name": "appearance.base.top-flannel.name",
+    "slot": "top",
+    "modelRef": "char/top-flannel",
+    "tints": [
+      { "channel": "primary", "palette": "base:cloth" },
+      { "channel": "secondary", "palette": "base:cloth" }
+    ]
+  },
+  {
+    "id": "base:top-work-jacket",
+    "name": "appearance.base.top-work-jacket.name",
+    "slot": "top",
+    "modelRef": "char/top-work-jacket",
+    "tints": [
+      { "channel": "primary", "palette": "base:cloth" },
+      { "channel": "secondary", "palette": "base:cloth" }
+    ]
+  },
+  {
+    "id": "base:top-sweater",
+    "name": "appearance.base.top-sweater.name",
+    "slot": "top",
+    "modelRef": "char/top-sweater",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:bottom-jeans",
+    "name": "appearance.base.bottom-jeans.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-jeans",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:bottom-cargo-pants",
+    "name": "appearance.base.bottom-cargo-pants.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-cargo-pants",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:bottom-work-pants",
+    "name": "appearance.base.bottom-work-pants.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-work-pants",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:bottom-sweatpants",
+    "name": "appearance.base.bottom-sweatpants.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-sweatpants",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
+    "id": "base:bottom-chinos",
+    "name": "appearance.base.bottom-chinos.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-chinos",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  }
+]

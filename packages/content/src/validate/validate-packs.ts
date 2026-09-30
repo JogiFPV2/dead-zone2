@@ -9,6 +9,8 @@ import { checkRecipeKinds } from './checks/check-recipe-kinds.js';
 import { checkRecipeLearning } from './checks/check-recipe-learning.js';
 import { checkStations } from './checks/check-stations.js';
 import { checkVhs } from './checks/check-vhs.js';
+import { checkAppearance } from './checks/check-appearance.js';
+import { checkCharacterCreation } from './checks/check-character-creation.js';
 import { checkRefs } from './checks/check-refs.js';
 import { checkTraitConflicts } from './checks/check-trait-conflicts.js';
 import { ContentIndex } from './content-index.js';
@@ -68,6 +70,16 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   checkRecipeKinds(index, sink);
   checkStations(index, sink);
   checkVhs(index, sink);
+  const ccDoc = [...worldDocs]
+    .reverse()
+    .find((d) => (d.raw as { characterCreation?: unknown })?.characterCreation);
+  const where = ccDoc?.source ?? {
+    pack: ordered[0]?.dir ?? '',
+    file: 'world-settings.json',
+    path: [],
+  };
+  checkAppearance(index, where, sink);
+  checkCharacterCreation(index, worldSettings, where, sink);
   const maps = validateMaps(ordered, index, sink);
   checkModeMaps(index, maps, sink);
 

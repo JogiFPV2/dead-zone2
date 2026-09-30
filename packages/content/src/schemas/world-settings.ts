@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CapacityKgSchema, ExtSchema } from './common/index.js';
+import { CharacterCreationSchema } from './character-creation.js';
 import { CraftingSettingsSchema } from './crafting-settings.js';
 import { LootSettingsSchema } from './loot-rarity.js';
 import { VisionSettingsSchema } from './vision-settings.js';
@@ -17,8 +18,8 @@ export const WorldSettingsSchema = z.strictObject({
     .positive()
     .max(24 * 60)
     .default(60),
-  /** Punkty na cechy przy tworzeniu postaci (przed zawodem i cechami). */
-  startingTraitPoints: z.number().int().min(0).max(100).default(0),
+  /** Tworzenie postaci: pula punktów, koszt umiejętności, imię, wygląd startowy. */
+  characterCreation: CharacterCreationSchema,
   carry: z
     .strictObject({
       /** Bazowy limit udźwigu postaci (stat `carry-capacity-kg` modyfikują cechy i siła). */

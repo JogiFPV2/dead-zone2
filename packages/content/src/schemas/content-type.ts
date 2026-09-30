@@ -12,6 +12,8 @@ export const CONTENT_TYPES = [
   'tile',
   'gameMode',
   'station',
+  'appearancePart',
+  'palette',
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -29,6 +31,8 @@ export const CONTENT_FOLDERS: Record<ContentType, string> = {
   tile: 'tiles',
   gameMode: 'game-modes',
   station: 'stations',
+  appearancePart: 'appearance-parts',
+  palette: 'palettes',
 };
 
 export const OVERRIDES_FOLDER = 'overrides';

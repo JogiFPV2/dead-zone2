@@ -29,7 +29,7 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   np. `{ "moodle": "base:panic", "minLevel": 2 }` albo `{ "skill": "base:carpentry", "minLevel": 3 }`.
 - `buildContentBundle(packs)` waliduje, łączy mody w kolejności wczytywania i zwraca głęboko zamrożony
   `ContentBundle` (Recordy po id: `items`, `recipes`, `skills`, `traits`, `professions`, `moodles`,
-  `lootTables`, `zombieTypes`, `containers`, `tiles`, `gameModes` oraz `worldSettings`). Mapy są w wyniku walidacji
+  `lootTables`, `zombieTypes`, `containers`, `tiles`, `gameModes`, `stations`, `appearanceParts`, `palettes` oraz `worldSettings`). Mapy są w wyniku walidacji
   (`validatePacks(…).maps`), nie w bundlu.
 
 ## Walidacja
@@ -92,6 +92,21 @@ tankLiters, litersPerHour, noise }` (paliwo: `base:gas-can` z tagiem `base:fuel`
   `vhs_duplicate_skill`. Loot: tabela `base:vhs-tapes` w salonie, sypialni i księgarni, wypożyczalnia `base:video-rental`
   (`base:room-video-store`).
 
+## Tworzenie postaci
+
+- Palety (`palettes/`): `{ id, name, kind: skin | hair | cloth, colors: [{ id, hex }] }` (base: `base:skin` 8, `base:hair` 10,
+  `base:cloth` 16).
+- Części wyglądu (`appearance-parts/`): `{ id, name, slot: face | hair | beard | top | bottom | shoes, modelRef, tints:
+[{ channel: primary | secondary, palette }], bodyTypes }`. `modelRef` to klucz assetu Silnika (`char/hair-short`);
+  broda jest opcjonalna, pozostałe sloty muszą mieć co najmniej 1 opcję. Twarz barwi kolor skóry.
+- `worldSettings.characterCreation`: `startPoints` (8), `maxSkillLevelAtStart` (3), `skillPointCost` ([1, 2, 3], koszt
+  poziomu N), `name { minLen, maxLen }`, `skinPalette`, `defaultAppearance`. Wygląd w stanie postaci:
+  `{ skin: colorId, parts: { <slot>: { part, colors: { primary?, secondary? } } } }` (`AppearanceSchema`).
+- Pula punktów = `startPoints` + `profession.points` − Σ `trait.cost` − koszt umiejętności. Zawód z ujemnymi punktami
+  zabiera je z puli, cecha z dodatnim kosztem kosztuje, z ujemnym daje punkty; pula nie może zejść poniżej 0.
+- Błędy: `palette_duplicate_color`, `appearance_palette_kind` (włosy/broda → hair, ubrania → cloth),
+  `appearance_slot_empty`, `creation_cost_invalid`, `creation_default_invalid` (plus `missing_ref` dla palet).
+
 ## Paczka moda
 
 ```
@@ -100,7 +115,7 @@ my-mod/
   world-settings.json   opcjonalnie, głęboki merge z ustawieniami bazy
   world-settings/       opcjonalne fragmenty ustawień (np. survival-needs.json), merge po world-settings.json
   items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/ tiles/
-  game-modes/ stations/
+  game-modes/ stations/ appearance-parts/ palettes/
   maps/<mapId>/         manifest.json i chunks/<cx>_<cy>_<z>.json
   overrides/            zmiany cudzych definicji
 ```
