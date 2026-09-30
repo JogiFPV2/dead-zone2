@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { NAMESPACE_PATTERN } from '../common/index.js';
+import { ZoneRefSchema, type ZoneRef } from './zone-ref.js';
 
-/** Lokalna nazwa strefy albo NPC w trybie, np. `villa`, `survivor` (kebab-case, bez namespace). */
+/** Lokalna nazwa NPC w trybie, np. `survivor` (kebab-case, bez namespace). */
 export const LocalNameSchema = z
   .string()
-  .regex(NAMESPACE_PATTERN, 'nazwa lokalna w kebab-case, np. `villa`');
+  .regex(NAMESPACE_PATTERN, 'nazwa lokalna w kebab-case, np. `survivor`');
 
 /**
  * Deklaratywny warunek wygranej/przegranej trybu (nigdy kod). Symulacja sprawdza go co tick
@@ -12,7 +13,7 @@ export const LocalNameSchema = z
  */
 export type ModeCondition =
   | { type: 'surviveDays'; days: number }
-  | { type: 'extractNpc'; npcId: string; targetZone: string }
+  | { type: 'extractNpc'; npcId: string; targetZone: ZoneRef }
   | { type: 'npcDead'; npcId: string }
   | { type: 'playerDead' }
   | { type: 'timeLimitDays'; days: number }
@@ -27,7 +28,7 @@ export const ModeConditionSchema: z.ZodType<ModeCondition> = z.lazy(() =>
     z.strictObject({
       type: z.literal('extractNpc'),
       npcId: LocalNameSchema,
-      targetZone: LocalNameSchema,
+      targetZone: ZoneRefSchema,
     }),
     z.strictObject({ type: z.literal('npcDead'), npcId: LocalNameSchema }),
     z.strictObject({ type: z.literal('playerDead') }),
@@ -42,16 +43,5 @@ export const ObjectiveSchema = z.strictObject({
   win: ModeConditionSchema.optional(),
   lose: z.array(ModeConditionSchema).min(1),
 });
-
-/** Wszystkie nazwy NPC i stref użyte w warunku (do sprawdzenia, że są zadeklarowane). */
-export function conditionNames(c: ModeCondition): { npcs: string[]; zones: string[] } {
-  if (c.type === 'all' || c.type === 'any') {
-    const parts = c.conditions.map(conditionNames);
-    return { npcs: parts.flatMap((p) => p.npcs), zones: parts.flatMap((p) => p.zones) };
-  }
-  if (c.type === 'extractNpc') return { npcs: [c.npcId], zones: [c.targetZone] };
-  if (c.type === 'npcDead') return { npcs: [c.npcId], zones: [] };
-  return { npcs: [], zones: [] };
-}
 
 export type Objective = z.infer<typeof ObjectiveSchema>;

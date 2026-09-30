@@ -4,4 +4,5 @@ export * from './check-kinds.js';
 export * from './check-loot-cycles.js';
 export * from './check-trait-conflicts.js';
 export * from './check-recipe-learning.js';
+export * from './check-mode-maps.js';
 export * from './refs-condition.js';

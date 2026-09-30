@@ -4,6 +4,7 @@
     "name": "game-mode.base.survival.name",
     "description": "game-mode.base.survival.desc",
     "tags": ["base:demo"],
+    "requiredZones": ["start"],
     "objective": { "lose": [{ "type": "playerDead" }] },
     "world": {
       "start": { "day": 1, "hour": 9 },
@@ -13,13 +14,12 @@
         "respawn": { "enabled": true, "perDay": 0.1, "minDistanceTiles": 60 }
       }
     },
-    "zones": [{ "id": "start", "role": "player-spawn" }],
     "player": {
       "professions": [],
       "allowTraits": true,
       "bonusPoints": 0,
       "startingKit": [],
-      "spawnZone": "start"
+      "spawnZone": { "role": "start" }
     },
     "score": { "terms": [{ "metric": "days-survived", "weight": 1 }], "headline": "days-survived" }
   }

@@ -111,8 +111,10 @@ pomieszczenie jest w `rooms`, a typ w `containers` (pusta lista = każdy schowek
 
 - Tryb (`game-modes/`, schemat `src/schemas/game-mode/`): `objective` (`win?`, `lose[]`) z warunków
   `surviveDays`, `extractNpc { npcId, targetZone }`, `npcDead`, `playerDead`, `timeLimitDays`, `all`/`any`;
-  `world` (`start`, `zombies`: `populationMultiplier`, `maxActive`, `hordes` wokół stref, `respawn`); `zones` i `npcs`
-  (nazwy lokalne, mapa wskazuje strefy znacznikami); `player` (zawody, cechy, punkty, `startingKit`); `score`
+  `world` (`start`, `zombies`: `populationMultiplier`, `maxActive`, `hordes` wokół stref, `respawn`); `npcs`;
+  `map?` i `requiredZones` (role stref, które mapa musi mieć); strefy wskazuje się jako `{ role }`
+  (rola z `requiredZones`) albo `{ zone: id }` (wymaga `map`). Błędy: `mode_map_missing`, `mode_zone_role_missing`,
+  `mode_zone_id_missing`; `player` (zawody, cechy, punkty, `startingKit`); `score`
   (suma `weight × metric`). Base: `base:survival`, `base:rescue`.
 - Wabik to rodzaj `lure`: `noise`, `durationSec` (sekundy rzeczywiste), `trigger` (`remote` z tagiem pilota i zasięgiem
   albo `timer` z przedziałem opóźnienia), `lingerSec`, `power` (tag baterii), `runner` (bieg w kierunku od gracza),
@@ -137,4 +139,8 @@ narzędziem `tools/map` (`pnpm --filter @deadzone/map map build tools/map/bluepr
   `tiles/` z `category` równym `type`.
 - `objects`: `{ contentId, x, y, rot: 0–3 (co 90°), offset? }`, `contentId` to typ schowka albo przedmiot
   `placeable`. Światłem jest obiekt z blokiem `placeable.light`.
+- `zones` (opcjonalne, w manifeście): `{ id, role, z, rects: [{ x, y, w, h }], tags? }`. `id` i `role` w kebab-case,
+  `id` unikalne w mapie, rola może się powtarzać. Prostokąty w globalnych kaflach (`x = cx * 32 + lx`), sumowane;
+  punkt = 1×1. Granice piętra `z` to prostokąt obejmujący chunki manifestu na tym piętrze. Błędy: `zone_duplicate_id`,
+  `zone_empty`, `zone_out_of_bounds`.
 - Stanu dynamicznego (otwarte, rozbite, zabite deskami, zawartość schowków) nie ma w plikach chunków.

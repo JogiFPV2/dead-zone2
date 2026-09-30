@@ -8,4 +8,5 @@ export * from './edge.js';
 export * from './map-object.js';
 export * from './room.js';
 export * from './chunk.js';
+export * from './zone.js';
 export * from './manifest.js';

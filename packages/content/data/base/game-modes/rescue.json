@@ -4,8 +4,9 @@
     "name": "game-mode.base.rescue.name",
     "description": "game-mode.base.rescue.desc",
     "tags": ["base:demo"],
+    "requiredZones": ["start", "villa", "extraction"],
     "objective": {
-      "win": { "type": "extractNpc", "npcId": "survivor", "targetZone": "extraction" },
+      "win": { "type": "extractNpc", "npcId": "survivor", "targetZone": { "role": "extraction" } },
       "lose": [{ "type": "playerDead" }, { "type": "npcDead", "npcId": "survivor" }]
     },
     "world": {
@@ -15,7 +16,7 @@
         "maxActive": 300,
         "hordes": [
           {
-            "zone": "villa",
+            "zone": { "role": "villa" },
             "count": { "min": 120, "max": 160 },
             "minRadiusTiles": 8,
             "maxRadiusTiles": 30,
@@ -26,16 +27,11 @@
         "respawn": { "enabled": false }
       }
     },
-    "zones": [
-      { "id": "start", "role": "player-spawn" },
-      { "id": "villa", "role": "npc-hold", "name": "zone.base.rescue.villa.name" },
-      { "id": "extraction", "role": "extraction", "name": "zone.base.rescue.extraction.name" }
-    ],
     "npcs": [
       {
         "id": "survivor",
         "name": "npc.base.rescue.survivor.name",
-        "zone": "villa",
+        "zone": { "role": "villa" },
         "locked": true,
         "profession": "base:doctor"
       }
@@ -49,7 +45,7 @@
         { "item": "base:lure-remote" },
         { "item": "base:battery", "count": 2 }
       ],
-      "spawnZone": "start"
+      "spawnZone": { "role": "start" }
     },
     "score": {
       "terms": [

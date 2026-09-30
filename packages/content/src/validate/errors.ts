@@ -15,7 +15,13 @@ export type ContentErrorCode =
   | 'trait_conflict'
   | 'unlearnable_recipe'
   | 'dependency'
-  | 'map';
+  | 'map'
+  | 'zone_duplicate_id'
+  | 'zone_empty'
+  | 'zone_out_of_bounds'
+  | 'mode_map_missing'
+  | 'mode_zone_role_missing'
+  | 'mode_zone_id_missing';
 
 export interface ContentError {
   code: ContentErrorCode;

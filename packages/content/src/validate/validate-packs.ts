@@ -4,6 +4,7 @@ import { addDefinitions } from './add-definitions.js';
 import { applyOverrides } from './apply-overrides.js';
 import { checkItemKinds } from './checks/check-kinds.js';
 import { checkLootCycles } from './checks/check-loot-cycles.js';
+import { checkModeMaps } from './checks/check-mode-maps.js';
 import { checkRecipeLearning } from './checks/check-recipe-learning.js';
 import { checkRefs } from './checks/check-refs.js';
 import { checkTraitConflicts } from './checks/check-trait-conflicts.js';
@@ -62,6 +63,7 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   checkTraitConflicts(index, sink);
   checkRecipeLearning(index, sink);
   const maps = validateMaps(ordered, index, sink);
+  checkModeMaps(index, maps, sink);
 
   return {
     ok: sink.errors.length === 0,

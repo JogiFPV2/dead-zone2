@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { I18nKeySchema } from '../common/index.js';
 import { ChunkAddressSchema, chunkKey } from './address.js';
 import { CHUNK_SIZE, MAP_FORMAT_VERSION } from './constants.js';
+import { MapZoneSchema } from './zone.js';
 
 /** `maps/<mapId>/manifest.json`. Id mapy to `<namespace paczki>:<mapId>`. */
 export const MapManifestSchema = z
@@ -13,6 +14,8 @@ export const MapManifestSchema = z
     floorHeight: z.number().positive().max(100),
     /** Wszystkie chunki mapy; każdy ma plik `chunks/<cx>_<cy>_<z>.json`. */
     chunks: z.array(ChunkAddressSchema).min(1),
+    /** Nazwane strefy (start, willa, ewakuacja…) dla trybów gry i Symulacji. */
+    zones: z.array(MapZoneSchema).optional(),
   })
   .superRefine((m, ctx) => {
     const seen = new Set<string>();

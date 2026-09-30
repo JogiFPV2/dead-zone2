@@ -14,20 +14,17 @@ const mode = (extra: Record<string, unknown> = {}) => ({
 });
 
 describe('tryby gry (gameMode)', () => {
-  it('schemat: minimalny tryb, warunki deklaratywne, nieznane strefy i NPC są błędem', () => {
+  it('schemat: minimalny tryb, warunki deklaratywne, role spoza requiredZones i NPC są błędem', () => {
     expect(GameModeSchema.parse(mode()).player.professions).toEqual([]);
-    const win = { type: 'extractNpc', npcId: 'npc', targetZone: 'exit' };
+    const win = { type: 'extractNpc', npcId: 'npc', targetZone: { role: 'exit' } };
     expect(GameModeSchema.safeParse(mode({ objective: { win, lose: [] } })).success).toBe(false);
     const withWin = mode({ objective: { win, lose: [{ type: 'playerDead' }] } });
     const issues = GameModeSchema.safeParse(withWin).error?.issues.map((i) => i.message);
-    expect(issues).toEqual(['nieznana strefa „exit”', 'nieznany NPC „npc”']);
+    expect(issues).toEqual(['rola „exit” nie jest w requiredZones', 'nieznany NPC „npc”']);
     const ok = {
       ...withWin,
-      zones: [
-        { id: 'exit', role: 'extraction' },
-        { id: 'home', role: 'npc-hold' },
-      ],
-      npcs: [{ id: 'npc', name: 'npc.base.npc.name', zone: 'home', locked: true }],
+      requiredZones: ['exit', 'home'],
+      npcs: [{ id: 'npc', name: 'npc.base.npc.name', zone: { role: 'home' }, locked: true }],
     };
     expect(GameModeSchema.safeParse(ok).success).toBe(true);
     const code = mode({ objective: { lose: [{ type: 'script', code: 'x()' }] } });
@@ -35,10 +32,14 @@ describe('tryby gry (gameMode)', () => {
   });
 
   it('schemat: horda z pierścieniem min ≤ max i limit zombie', () => {
-    const horde = { zone: 'z', count: { min: 1, max: 2 }, minRadiusTiles: 9, maxRadiusTiles: 3 };
-    const zones = [{ id: 'z', role: 'horde' }];
+    const horde = {
+      zone: { role: 'z' },
+      count: { min: 1, max: 2 },
+      minRadiusTiles: 9,
+      maxRadiusTiles: 3,
+    };
     const bad = mode({
-      zones,
+      requiredZones: ['z'],
       world: { start: { hour: 1 }, zombies: { maxActive: 5, hordes: [horde] } },
     });
     expect(GameModeSchema.safeParse(bad).success).toBe(false);
@@ -65,6 +66,8 @@ describe('tryby gry (gameMode)', () => {
     expect(m.score.headline).toBe('days-survived');
     expect(m.score.terms).toEqual([{ metric: 'days-survived', weight: 1 }]);
     expect(m.tags).toContain('base:demo');
+    expect(m.requiredZones).toEqual(['start']);
+    expect(m.player.spawnZone).toEqual({ role: 'start' });
   });
 
   it('base: „Ratunek” — NPC zamknięty w willi, horda pilnuje, limit 300, ewakuacja', async () => {
@@ -72,14 +75,16 @@ describe('tryby gry (gameMode)', () => {
     expect(m.objective.win).toEqual({
       type: 'extractNpc',
       npcId: 'survivor',
-      targetZone: 'extraction',
+      targetZone: { role: 'extraction' },
     });
+    expect(m.requiredZones).toEqual(['start', 'villa', 'extraction']);
+    expect(m.map).toBeUndefined();
     expect(m.objective.lose).toContainEqual({ type: 'npcDead', npcId: 'survivor' });
     expect(m.world.zombies.maxActive).toBe(300);
     const horde = m.world.zombies.hordes[0]!;
-    expect(horde).toMatchObject({ zone: 'villa', behavior: 'guard' });
+    expect(horde).toMatchObject({ zone: { role: 'villa' }, behavior: 'guard' });
     expect(horde.count.max).toBeLessThanOrEqual(m.world.zombies.maxActive);
-    expect(m.npcs[0]).toMatchObject({ id: 'survivor', zone: 'villa', locked: true });
+    expect(m.npcs[0]).toMatchObject({ id: 'survivor', zone: { role: 'villa' }, locked: true });
     expect(m.world.zombies.respawn.enabled).toBe(false);
     expect(m.player.startingKit.map((s) => s.item)).toContain('base:lure-electronic');
     expect(m.tags).toContain('base:demo');

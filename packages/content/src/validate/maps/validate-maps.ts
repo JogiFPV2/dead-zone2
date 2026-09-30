@@ -4,6 +4,7 @@ import type { ErrorSink } from '../errors.js';
 import type { LoadedPack } from '../split-pack.js';
 import { checkMapRefs } from './check-map-refs.js';
 import { checkMapRooms } from './check-map-rooms.js';
+import { checkMapZones } from './check-map-zones.js';
 import { collectMapFiles } from './collect-map-files.js';
 import type { MapData } from './map-data.js';
 import { parseMap } from './parse-map.js';
@@ -20,6 +21,7 @@ export function validateMaps(
       const map = parseMap(raw, manifest.id, sink);
       if (!map) continue;
       checkMapRooms(map, sink);
+      checkMapZones(map, sink);
       checkMapRefs(map, index, sink);
       out.push(map);
     }

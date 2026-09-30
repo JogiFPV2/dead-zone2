@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { FractionSchema, IntRangeSchema, TilesSchema } from '../common/index.js';
-import { LocalNameSchema } from './objective.js';
+import { ZoneRefSchema } from './zone-ref.js';
 
 /** Horda ustawiona na starcie wokół strefy (np. pilnująca willi). */
 export const HordePlacementSchema = z
   .strictObject({
-    zone: LocalNameSchema,
+    zone: ZoneRefSchema,
     count: IntRangeSchema,
     /** Pierścień wokół środka strefy, w kaflach. */
     minRadiusTiles: TilesSchema.default(0),

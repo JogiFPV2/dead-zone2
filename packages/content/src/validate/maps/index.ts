@@ -4,3 +4,5 @@ export * from './parse-map.js';
 export * from './check-map-refs.js';
 export * from './check-map-rooms.js';
 export * from './validate-maps.js';
+export * from './map-bounds.js';
+export * from './check-map-zones.js';
