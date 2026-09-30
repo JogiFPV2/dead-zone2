@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { GameModeSchema } from '../schemas/game-mode/game-mode.js';
+import { BASE_PACK_DIR, validatePackDirs } from '../node/index.js';
 import { validatePacks } from '../validate/validate-packs.js';
+import { formatError } from '../validate/format.js';
 import { manifest, mapPack } from './map-fixtures.js';
 
 const M = 'maps/house/manifest.json';
@@ -66,5 +68,17 @@ describe('tryb gry a strefy mapy', () => {
       ['mode_zone_id_missing', G, '$.objective.win.targetZone'],
       ['mode_zone_id_missing', G, '$.npcs[0].zone'],
     ]);
+  });
+
+  it('base: oba tryby demo na base:test-town, mapa ma wszystkie wymagane strefy', async () => {
+    const r = await validatePackDirs([BASE_PACK_DIR]);
+    expect(r.errors.map(formatError)).toEqual([]);
+    const town = r.maps.find((m) => m.id === 'base:test-town');
+    const roles = new Set(town?.manifest.zones?.map((z) => z.role));
+    for (const id of ['base:survival', 'base:rescue']) {
+      const m = r.content.get('gameMode', id)!.data;
+      expect(m.map).toBe('base:test-town');
+      for (const role of m.requiredZones) expect(roles.has(role), `${id}: ${role}`).toBe(true);
+    }
   });
 });

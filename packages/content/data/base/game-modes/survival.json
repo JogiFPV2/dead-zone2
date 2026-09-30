@@ -4,6 +4,7 @@
     "name": "game-mode.base.survival.name",
     "description": "game-mode.base.survival.desc",
     "tags": ["base:demo"],
+    "map": "base:test-town",
     "requiredZones": ["start"],
     "objective": { "lose": [{ "type": "playerDead" }] },
     "world": {

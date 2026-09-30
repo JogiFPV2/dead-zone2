@@ -4,6 +4,7 @@
     "name": "game-mode.base.rescue.name",
     "description": "game-mode.base.rescue.desc",
     "tags": ["base:demo"],
+    "map": "base:test-town",
     "requiredZones": ["start", "villa", "extraction"],
     "objective": {
       "win": { "type": "extractNpc", "npcId": "survivor", "targetZone": { "role": "extraction" } },

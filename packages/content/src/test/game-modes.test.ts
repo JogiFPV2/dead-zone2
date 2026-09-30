@@ -78,7 +78,7 @@ describe('tryby gry (gameMode)', () => {
       targetZone: { role: 'extraction' },
     });
     expect(m.requiredZones).toEqual(['start', 'villa', 'extraction']);
-    expect(m.map).toBeUndefined();
+    expect(m.map).toBe('base:test-town');
     expect(m.objective.lose).toContainEqual({ type: 'npcDead', npcId: 'survivor' });
     expect(m.world.zombies.maxActive).toBe(300);
     const horde = m.world.zombies.hordes[0]!;
