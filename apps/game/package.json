@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@deadzone/protocol": "workspace:*",
+    "@deadzone/sim": "workspace:*",
     "three": "^0.186.1"
   },
   "devDependencies": {

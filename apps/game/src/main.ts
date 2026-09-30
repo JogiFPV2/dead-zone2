@@ -18,6 +18,11 @@ import { tileOf } from './world/building-lookup.js';
 import { cameraSide } from './world/cutaway.js';
 import { Structures } from './world/structures.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
+import { CrowdBuffer } from './crowd/crowd-buffer.js';
+import { CrowdView } from './crowd/crowd-view.js';
+import { parseCrowdParam } from './crowd/mock-crowd.js';
+import { tickAlpha } from './sim/interpolate.js';
+import type { FrameSample } from './dev/frame-bench.js';
 
 const VIEW_HEIGHT = 24;
 const PLAYER_ID = 1;
@@ -46,15 +51,29 @@ bindCameraInput(rig, renderer.domElement);
 // TEMPORARY debug spawn: `?spawn=inside` starts in the test building (screenshots, cutaway checks).
 const spawnInside = new URLSearchParams(window.location.search).get('spawn') === 'inside';
 const spawn = spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 };
-const sim = new MockSimClient(rangeBounds(TEST_MAP_RANGE), spawn, PLAYER_ID);
+// TEMPORARY load test: `?crowd=N` adds N wandering placeholder entities to the mock sim.
+const crowdCount = parseCrowdParam(window.location.search);
+const sim = new MockSimClient(rangeBounds(TEST_MAP_RANGE), spawn, PLAYER_ID, {
+  count: crowdCount,
+  seed: 1,
+});
 const stamper = new CommandStamper(PLAYER_ID);
 const playerInput = new PlayerInput(renderer.domElement, sim, stamper);
 const snapshots = new SnapshotBuffer();
+const crowd = new CrowdBuffer();
+let crowdArrivedMs = 0;
 sim.onSnapshot(({ tick, buf }) => {
   stamper.tick = tick;
   const player = readEntity(buf, 0);
   if (player) snapshots.push(player, performance.now());
+  crowd.push(buf, 1);
+  crowdArrivedMs = performance.now();
 });
+const crowdView = new CrowdView(crowd, (next, prev) => {
+  scene.remove(prev);
+  scene.add(next);
+});
+scene.add(crowdView.mesh);
 const player = new PlayerView();
 scene.add(player.root);
 
@@ -69,11 +88,17 @@ new ResizeObserver(resize).observe(container);
 resize();
 
 let afterRender: ((r: WebGLRenderer) => void) | undefined;
+let recordFrame: ((s: FrameSample, r: WebGLRenderer) => void) | undefined;
 if (import.meta.env.DEV) {
-  void import('./dev/stats-overlay.js').then(({ createStatsOverlay }) => {
-    afterRender = createStatsOverlay(document.body);
-  });
+  void Promise.all([import('./dev/stats-overlay.js'), import('./dev/crowd-bench.js')]).then(
+    ([{ createStatsOverlay }, { createCrowdBench }]) => {
+      const bench = createCrowdBench(() => crowd.count);
+      recordFrame = bench.record;
+      afterRender = createStatsOverlay(document.body, bench.line);
+    },
+  );
 }
+const frameSample: FrameSample = { updateMs: 0, renderMs: 0 };
 
 let lastFrameMs: number | undefined;
 let cameraSnapped = false;
@@ -93,6 +118,12 @@ renderer.setAnimationLoop((time) => {
     structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
   }
   rig.update(time);
+  const t0 = performance.now();
+  crowdView.update(tickAlpha(t0, crowdArrivedMs, MOCK_TICK_MS));
+  const t1 = performance.now();
   renderer.render(scene, camera);
+  frameSample.updateMs = t1 - t0;
+  frameSample.renderMs = performance.now() - t1;
+  recordFrame?.(frameSample, renderer);
   afterRender?.(renderer);
 });

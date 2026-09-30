@@ -45,6 +45,19 @@ describe('mock sim (temporary stub)', () => {
     expect(last && readEntity(last.buf, 0)?.x).toBeCloseTo(4);
   });
 
+  it('appends ?crowd wanderers after the player in the same layout', () => {
+    vi.useFakeTimers();
+    const sim = new MockSimClient(bounds, { x: 0, y: 0 }, 1, { count: 3, seed: 9 });
+    const got: SnapshotMessage[] = [];
+    sim.onSnapshot((s) => got.push(s));
+    vi.advanceTimersByTime(MOCK_TICK_MS * 2);
+    sim.dispose();
+    const buf = got.at(-1)?.buf ?? new Float32Array();
+    expect(buf).toHaveLength(4 * ENTITY_STRIDE);
+    expect(readEntity(buf, 0)?.id).toBe(1);
+    expect([1, 2, 3].map((i) => readEntity(buf, i)?.id)).toEqual([1000, 1001, 1002]);
+  });
+
   it('stamps commands with tick, player and rising seq', () => {
     const s = new CommandStamper(7);
     s.tick = 3;

@@ -202,6 +202,9 @@ importers:
       '@deadzone/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+      '@deadzone/sim':
+        specifier: workspace:*
+        version: link:../../packages/sim
       three:
         specifier: ^0.186.1
         version: 0.186.1

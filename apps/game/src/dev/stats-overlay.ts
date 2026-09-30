@@ -5,7 +5,11 @@ import { formatStats } from './format.js';
 const REFRESH_MS = 250;
 
 /** Dev-only overlay. Loaded via dynamic import behind import.meta.env.DEV, so absent from prod. */
-export function createStatsOverlay(parent: HTMLElement): (renderer: WebGLRenderer) => void {
+/** `extra` adds a second line (e.g. the crowd benchmark). */
+export function createStatsOverlay(
+  parent: HTMLElement,
+  extra?: () => string | undefined,
+): (renderer: WebGLRenderer) => void {
   const el = document.createElement('div');
   el.dataset.devStats = '';
   Object.assign(el.style, {
@@ -19,6 +23,7 @@ export function createStatsOverlay(parent: HTMLElement): (renderer: WebGLRendere
     borderRadius: '4px',
     pointerEvents: 'none',
     zIndex: '10',
+    whiteSpace: 'pre',
   });
   parent.appendChild(el);
 
@@ -31,6 +36,7 @@ export function createStatsOverlay(parent: HTMLElement): (renderer: WebGLRendere
     if (now - lastRefresh < REFRESH_MS) return;
     lastRefresh = now;
     const { calls, triangles } = renderer.info.render;
-    el.textContent = formatStats({ fps, calls, triangles });
+    const line = extra?.();
+    el.textContent = formatStats({ fps, calls, triangles }) + (line ? `\n${line}` : '');
   };
 }
