@@ -1,7 +1,5 @@
-import { z } from 'zod';
-
 /** Largest value of an unsigned 32-bit integer (ticks, seq). */
-const U32_MAX = 0xffff_ffff;
+export const U32_MAX = 0xffff_ffff;
 /** Player ids are small integers assigned by the host (singleplayer: 0). */
 export const MAX_PLAYER_ID = 0xffff;
 /** Aim targets further than this from the origin (in tiles) are rejected as garbage. */
@@ -39,40 +37,4 @@ export interface AimCommand extends CommandHeader {
 export type Command = MoveCommand | AimCommand;
 export type CommandType = Command['type'];
 
-const header = {
-  tick: z.number().int().min(0).max(U32_MAX),
-  playerId: z.number().int().min(0).max(MAX_PLAYER_ID),
-  seq: z.number().int().min(0).max(U32_MAX),
-};
-
-const axis = z.number().finite().min(-1).max(1);
-const coord = z.number().finite().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
-
-export const moveCommandSchema = z.strictObject({
-  ...header,
-  type: z.literal('move'),
-  dx: axis,
-  dy: axis,
-});
-
-export const aimCommandSchema = z.strictObject({
-  ...header,
-  type: z.literal('aim'),
-  x: coord,
-  y: coord,
-});
-
-/** Structural validation at the host boundary (worker, server). Gameplay checks live in sim. */
-export const commandSchema = z.discriminatedUnion('type', [moveCommandSchema, aimCommandSchema]);
-
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };
-
-/** Validates untrusted input; never throws. */
-export function parseCommand(input: unknown): CommandParseResult {
-  const r = commandSchema.safeParse(input);
-  if (r.success) return { ok: true, command: r.data };
-  return { ok: false, error: z.prettifyError(r.error) };
-}
-
-export const isCommand = (input: unknown): input is Command =>
-  commandSchema.safeParse(input).success;

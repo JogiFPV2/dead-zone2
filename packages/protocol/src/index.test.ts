@@ -5,14 +5,13 @@ import {
   decodeSnapshot,
   encodeSnapshot,
   ensureSnapshotBuffer,
-  parseCommand,
-  parseMainToWorker,
   simMapFromData,
   simMapToData,
   snapshotByteLength,
   snapshotEntityCount,
   tileIndex,
 } from './index.js';
+import { parseCommand, parseMainToWorker } from './schema.js';
 
 it('exposes a positive integer protocol version', () => {
   expect(Number.isInteger(PROTOCOL_VERSION)).toBe(true);
@@ -101,6 +100,8 @@ describe('parseMainToWorker', () => {
     expect(parseMainToWorker({ kind: 'pause' }).ok).toBe(true);
     expect(parseMainToWorker({ kind: 'speed', x: 4 }).ok).toBe(true);
     expect(parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] } }).ok).toBe(true);
+    const spawn = { x: 5.5, y: 6.5, z: 0 };
+    expect(parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] }, spawn }).ok).toBe(true);
     expect(
       parseMainToWorker({
         kind: 'cmd',
@@ -111,6 +112,10 @@ describe('parseMainToWorker', () => {
 
   it('rejects invalid messages', () => {
     expect(parseMainToWorker({ kind: 'speed', x: 3 }).ok).toBe(false);
+    const init = { kind: 'init', seed: 1, map: { chunks: [] } };
+    expect(parseMainToWorker({ ...init, spawn: { x: 1, y: 1 } }).ok).toBe(false);
+    expect(parseMainToWorker({ ...init, spawn: { x: NaN, y: 1, z: 0 } }).ok).toBe(false);
+    expect(parseMainToWorker({ ...init, spawn: { x: 1, y: 1, z: 0.5 } }).ok).toBe(false);
     expect(parseMainToWorker({ kind: 'cmd', cmd: { type: 'move' } }).ok).toBe(false);
     expect(parseMainToWorker({ kind: 'nope' }).ok).toBe(false);
     expect(parseMainToWorker(null).ok).toBe(false);

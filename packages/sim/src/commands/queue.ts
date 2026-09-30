@@ -1,9 +1,5 @@
-import {
-  parseCommand,
-  type Command,
-  type CommandRejectReason,
-  type PlayerId,
-} from '@deadzone/protocol';
+import type { Command, CommandRejectReason, PlayerId } from '@deadzone/protocol';
+import { parseCommand } from '@deadzone/protocol/schema';
 
 export type EnqueueResult =
   { ok: true; tick: number } | { ok: false; reason: CommandRejectReason; error?: string };

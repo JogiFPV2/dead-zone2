@@ -26,7 +26,10 @@ import { TileGrid } from './world/grid.js';
 export interface SimOptions {
   seed: number;
   map: SimMap;
-  /** Player 0 spawn in tiles; default: first free tile centre of chunk (0, 0, 0). */
+  /**
+   * Player 0 spawn in tiles (worker: `init.spawn`); default: first free tile centre of chunk
+   * (0, 0, 0). Not checked against walls: the caller picks a free tile.
+   */
   spawn?: { x: number; y: number; z?: number };
   /** Default WALK_SPEED_TILES_PER_SECOND (3). */
   walkSpeedTilesPerSecond?: number;

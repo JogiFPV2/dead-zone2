@@ -1,12 +1,24 @@
-import { z } from 'zod';
-import { commandSchema, type Command } from './commands.js';
-import { CHUNK_TILES, type SimMapData } from './map.js';
+import type { Command } from './commands.js';
+import type { SimMapData } from './map.js';
 
 export type SimSpeed = 1 | 2 | 4;
 
+/** Spawn point of the local player: tiles (+x east, +y south) and floor level. */
+export interface SimSpawn {
+  x: number;
+  y: number;
+  z: number;
+}
+
 /** Main thread → sim worker. */
 export type MainToWorker =
-  | { kind: 'init'; seed: number; map: SimMapData }
+  | {
+      kind: 'init';
+      seed: number;
+      map: SimMapData;
+      /** Player 0 spawn (tile centre in tiles, z = floor); omitted = the sim's default tile. */
+      spawn?: SimSpawn | undefined;
+    }
   | { kind: 'cmd'; cmd: Command }
   | { kind: 'pause' }
   | { kind: 'resume' }
@@ -18,31 +30,4 @@ export type MainToWorker =
 export type WorkerToMain =
   { kind: 'ready'; tick: number } | { kind: 'snapshot'; tick: number; buf: ArrayBuffer };
 
-const layer = z.custom<Uint16Array>(
-  (v) => v instanceof Uint16Array && v.length === CHUNK_TILES,
-  `expected Uint16Array(${CHUNK_TILES})`,
-);
-const chunkInt = z.number().int().min(-0x8000).max(0x7fff);
-
-export const simMapDataSchema = z.object({
-  chunks: z.array(
-    z.object({ cx: chunkInt, cy: chunkInt, z: chunkInt, floor: layer, edgeN: layer, edgeW: layer }),
-  ),
-});
-
-export const mainToWorkerSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('init'), seed: z.number().int(), map: simMapDataSchema }),
-  z.object({ kind: z.literal('cmd'), cmd: commandSchema }),
-  z.object({ kind: z.literal('pause') }),
-  z.object({ kind: z.literal('resume') }),
-  z.object({ kind: z.literal('speed'), x: z.union([z.literal(1), z.literal(2), z.literal(4)]) }),
-  z.object({ kind: z.literal('release'), buf: z.instanceof(ArrayBuffer) }),
-]);
-
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
-
-/** Validates a message received by the worker; never throws. */
-export function parseMainToWorker(input: unknown): ParseResult<MainToWorker> {
-  const r = mainToWorkerSchema.safeParse(input);
-  return r.success ? { ok: true, value: r.data } : { ok: false, error: z.prettifyError(r.error) };
-}

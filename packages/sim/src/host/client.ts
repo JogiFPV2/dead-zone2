@@ -3,6 +3,7 @@ import type {
   MainToWorker,
   PlayerId,
   SimMapData,
+  SimSpawn,
   SimSpeed,
   WorkerToMain,
 } from '@deadzone/protocol';
@@ -22,7 +23,8 @@ export interface SimSnapshotMessage {
 }
 
 export interface SimWorkerClient {
-  init(seed: number, map: SimMapData): void;
+  /** `spawn` places player 0 (e.g. `?spawn=inside`); omitted = the sim's default tile. */
+  init(seed: number, map: SimMapData, opts?: { spawn?: SimSpawn }): void;
   /** Sends a fully formed command (tick, playerId, seq chosen by the caller). */
   send(cmd: Command): void;
   /** Held movement for the local player; fills tick/playerId/seq. */
@@ -70,7 +72,8 @@ export function createSimWorkerClient(
   const nextHeader = () => ({ tick, playerId, seq: seq++ });
 
   return {
-    init: (seed, map) => post({ kind: 'init', seed, map }),
+    init: (seed, map, opts) =>
+      post({ kind: 'init', seed, map, ...(opts?.spawn ? { spawn: opts.spawn } : {}) }),
     send: (cmd) => post({ kind: 'cmd', cmd }),
     move: (dx, dy) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'move', dx, dy } }),
     aim: (x, y) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'aim', x, y } }),

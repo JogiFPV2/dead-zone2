@@ -143,6 +143,17 @@ describe('createSimWorkerClient', () => {
     expect(h.host.droppedMessages).toBe(0);
   });
 
+  it('passes the init spawn to the sim', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    let first: { x: number; y: number; z: number } | undefined;
+    client.onSnapshot(({ buf }) => (first ??= decodeSnapshot(buf)[0]));
+    client.init(1, openMap(), { spawn: { x: 7.5, y: 9.5, z: 0 } });
+    expect(first).toMatchObject({ x: 7.5, y: 9.5, z: 0 });
+    expect(h.host.sim?.getPlayer()).toMatchObject({ x: 7.5, y: 9.5 });
+    expect(h.host.droppedMessages).toBe(0);
+  });
+
   it('stops listening after dispose', () => {
     const h = harness();
     const client = createSimWorkerClient(h.worker);

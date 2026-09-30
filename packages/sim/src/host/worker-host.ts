@@ -1,9 +1,5 @@
-import {
-  parseMainToWorker,
-  simMapFromData,
-  type MainToWorker,
-  type WorkerToMain,
-} from '@deadzone/protocol';
+import { simMapFromData, type MainToWorker, type WorkerToMain } from '@deadzone/protocol';
+import { parseMainToWorker } from '@deadzone/protocol/schema';
 import { FixedStepLoop } from '../core/loop.js';
 import { createSim, type Sim } from '../sim.js';
 
@@ -75,7 +71,11 @@ export function startSimWorkerHost(
 
   const handle = (msg: MainToWorker): void => {
     if (msg.kind === 'init') {
-      const s = createSim({ seed: msg.seed, map: simMapFromData(msg.map) });
+      const s = createSim({
+        seed: msg.seed,
+        map: simMapFromData(msg.map),
+        ...(msg.spawn ? { spawn: msg.spawn } : {}),
+      });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });
       last = clock.now();
