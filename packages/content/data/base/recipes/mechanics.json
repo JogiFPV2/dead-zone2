@@ -1,0 +1,20 @@
+[
+  {
+    "id": "base:craft-running-lure",
+    "name": "recipe.base.craft-running-lure.name",
+    "category": "mechanics",
+    "ingredients": [
+      { "item": "base:rabbit-carcass" },
+      { "item": "base:mechanical-part" },
+      { "item": "base:wire", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:mechanics", "level": 2 }],
+    "durationMin": 30,
+    "results": [{ "item": "base:lure-running" }],
+    "xp": [
+      { "skill": "base:mechanics", "amount": 6 },
+      { "skill": "base:electrical", "amount": 2 }
+    ]
+  }
+]

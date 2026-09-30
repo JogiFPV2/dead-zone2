@@ -10,6 +10,7 @@ export * from './loot-rarity.js';
 export * from './zombie-type.js';
 export * from './container-type.js';
 export * from './tile.js';
+export * from './game-mode/index.js';
 export * from './map/index.js';
 export * from './survival/index.js';
 export * from './world-settings.js';

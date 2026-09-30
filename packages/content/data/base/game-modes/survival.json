@@ -1,0 +1,26 @@
+[
+  {
+    "id": "base:survival",
+    "name": "game-mode.base.survival.name",
+    "description": "game-mode.base.survival.desc",
+    "tags": ["base:demo"],
+    "objective": { "lose": [{ "type": "playerDead" }] },
+    "world": {
+      "start": { "day": 1, "hour": 9 },
+      "zombies": {
+        "populationMultiplier": 1,
+        "maxActive": 400,
+        "respawn": { "enabled": true, "perDay": 0.1, "minDistanceTiles": 60 }
+      }
+    },
+    "zones": [{ "id": "start", "role": "player-spawn" }],
+    "player": {
+      "professions": [],
+      "allowTraits": true,
+      "bonusPoints": 0,
+      "startingKit": [],
+      "spawnZone": "start"
+    },
+    "score": { "terms": [{ "metric": "days-survived", "weight": 1 }], "headline": "days-survived" }
+  }
+]

@@ -7,6 +7,7 @@ import { DrinkItemSchema } from './drink.js';
 import { FoodItemSchema } from './food.js';
 import { LiteratureItemSchema } from './literature.js';
 import { MagazineItemSchema } from './magazine.js';
+import { LureItemSchema } from './lure.js';
 import { MaterialItemSchema } from './material.js';
 import { MedicalItemSchema } from './medical.js';
 import { MiscItemSchema } from './misc.js';
@@ -31,6 +32,7 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   LiteratureItemSchema,
   MaterialItemSchema,
   PlaceableItemSchema,
+  LureItemSchema,
   MiscItemSchema,
 ]);
 

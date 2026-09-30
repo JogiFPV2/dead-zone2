@@ -10,6 +10,7 @@ export const CONTENT_TYPES = [
   'zombieType',
   'containerType',
   'tile',
+  'gameMode',
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -25,6 +26,7 @@ export const CONTENT_FOLDERS: Record<ContentType, string> = {
   zombieType: 'zombie-types',
   containerType: 'containers',
   tile: 'tiles',
+  gameMode: 'game-modes',
 };
 
 export const OVERRIDES_FOLDER = 'overrides';

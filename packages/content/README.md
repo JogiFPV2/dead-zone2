@@ -29,7 +29,7 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   np. `{ "moodle": "base:panic", "minLevel": 2 }` albo `{ "skill": "base:carpentry", "minLevel": 3 }`.
 - `buildContentBundle(packs)` waliduje, łączy mody w kolejności wczytywania i zwraca głęboko zamrożony
   `ContentBundle` (Recordy po id: `items`, `recipes`, `skills`, `traits`, `professions`, `moodles`,
-  `lootTables`, `zombieTypes`, `containers`, `tiles` oraz `worldSettings`). Mapy są w wyniku walidacji
+  `lootTables`, `zombieTypes`, `containers`, `tiles`, `gameModes` oraz `worldSettings`). Mapy są w wyniku walidacji
   (`validatePacks(…).maps`), nie w bundlu.
 
 ## Walidacja
@@ -78,6 +78,7 @@ my-mod/
   world-settings.json   opcjonalnie, głęboki merge z ustawieniami bazy
   world-settings/       opcjonalne fragmenty ustawień (np. survival-needs.json), merge po world-settings.json
   items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/ tiles/
+  game-modes/
   maps/<mapId>/         manifest.json i chunks/<cx>_<cy>_<z>.json
   overrides/            zmiany cudzych definicji
 ```
@@ -105,6 +106,17 @@ Wpis tabeli ma całkowitą `weight` i `rarity` (`common` | `uncommon` | `rare` |
 `worldSettings.loot.rarityWeightPct` skaluje wagi według rzadkości. Tabela pasuje do schowka, gdy jego
 pomieszczenie jest w `rooms`, a typ w `containers` (pusta lista = każdy schowek). Pudełka amunicji to rodzaj
 `ammo_box` (`ammoBox: { ammo, count }`).
+
+## Tryby gry i wabiki
+
+- Tryb (`game-modes/`, schemat `src/schemas/game-mode/`): `objective` (`win?`, `lose[]`) z warunków
+  `surviveDays`, `extractNpc { npcId, targetZone }`, `npcDead`, `playerDead`, `timeLimitDays`, `all`/`any`;
+  `world` (`start`, `zombies`: `populationMultiplier`, `maxActive`, `hordes` wokół stref, `respawn`); `zones` i `npcs`
+  (nazwy lokalne, mapa wskazuje strefy znacznikami); `player` (zawody, cechy, punkty, `startingKit`); `score`
+  (suma `weight × metric`). Base: `base:survival`, `base:rescue`.
+- Wabik to rodzaj `lure`: `noise`, `durationSec` (sekundy rzeczywiste), `trigger` (`remote` z tagiem pilota i zasięgiem
+  albo `timer` z przedziałem opóźnienia), `lingerSec`, `power` (tag baterii), `runner` (bieg w kierunku od gracza),
+  `consumedOnUse`.
 
 ## Mapy
 

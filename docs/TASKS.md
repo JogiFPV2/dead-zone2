@@ -48,6 +48,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules)
 - [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
 - [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)
+- [x] Wabiki jako dane: elektroniczny z pilotem i baterią, biegający z craftingu (Modules)
+- [ ] Wabik elektroniczny: postawienie, pilot do 60 m, hałas 30 s na 40 m, zombie zostają 20–40 s, zużycie baterii (Symulacja)
+- [ ] Wabik biegający: opóźnienie 3–30 s i kierunek od gracza, bieg ~15 m, hałas 20 s na 30 m, jednorazowy (Symulacja)
 - [ ] Ugryzienia i szansa infekcji (Symulacja)
 - [ ] Poziom zagrożenia w HUD (Designer + Silnik)
 - [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik)
@@ -74,6 +77,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Minimapa i licznik dni (Designer + Silnik)
 - [ ] Cele i zadania (Symulacja + Designer)
 - [ ] Lokalny zapis i wczytanie gry (IndexedDB) (Symulacja)
+- [x] Tryby gry jako dane: „Przetrwaj” i „Ratunek” (Modules)
+- [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)
+- [ ] Tryb „Ratunek”: NPC zamknięty w willi, pilnująca horda (limit 300), wywabienie hordy i ewakuacja NPC (Symulacja)
 
 ## Etap 8 — Konta, serwer i landing
 - [ ] Landing page (Designer + Silnik)

@@ -44,7 +44,9 @@
       { "item": "base:log", "weight": 2 },
       { "item": "base:scrap-metal", "weight": 3, "count": { "min": 2, "max": 5 } },
       { "item": "base:wire", "weight": 2 },
-      { "item": "base:duct-tape", "weight": 2 }
+      { "item": "base:duct-tape", "weight": 2 },
+      { "item": "base:mechanical-part", "weight": 3, "count": { "min": 1, "max": 3 } },
+      { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" }
     ]
   },
   {
@@ -65,7 +67,9 @@
       { "item": "base:ammo-box-shells", "weight": 1, "rarity": "rare" },
       { "item": "base:ammo-box-308", "weight": 1, "rarity": "rare" },
       { "item": "base:pump-shotgun", "weight": 1, "rarity": "very_rare" },
-      { "item": "base:hunting-rifle", "weight": 1, "rarity": "very_rare" }
+      { "item": "base:hunting-rifle", "weight": 1, "rarity": "very_rare" },
+      { "item": "base:mechanical-part", "weight": 2 },
+      { "item": "base:wire", "weight": 1 }
     ]
   }
 ]

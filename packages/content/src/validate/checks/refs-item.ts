@@ -50,6 +50,12 @@ export function collectItemRefs(item: Item, r: RefList): void {
     case 'placeable':
       r.add('containerType', item.placeable.containerType, 'placeable', 'containerType');
       break;
+    case 'lure':
+      if (item.lure.trigger.type === 'remote')
+        r.tags.push({ tag: item.lure.trigger.remoteTag, path: ['lure', 'trigger', 'remoteTag'] });
+      if (item.lure.power)
+        r.tags.push({ tag: item.lure.power.batteryTag, path: ['lure', 'power', 'batteryTag'] });
+      break;
     case 'ammo':
     case 'container':
     case 'material':

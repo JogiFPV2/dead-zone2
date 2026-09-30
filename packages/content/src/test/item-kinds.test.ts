@@ -50,6 +50,14 @@ const valid: Record<string, unknown> = {
   },
   material: {},
   placeable: { placeable: { containerType: 't:crate' } },
+  lure: {
+    lure: {
+      noise: { radiusTiles: 10 },
+      durationSec: 5,
+      trigger: { type: 'timer', delaySec: { min: 1, max: 2 } },
+      lingerSec: { min: 1, max: 2 },
+    },
+  },
   misc: {},
 };
 

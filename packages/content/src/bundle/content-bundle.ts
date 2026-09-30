@@ -1,4 +1,5 @@
 import type { ContainerType } from '../schemas/container-type.js';
+import type { GameMode } from '../schemas/game-mode/game-mode.js';
 import type { Item } from '../schemas/item/item.js';
 import type { LootTable } from '../schemas/loot-table.js';
 import type { ModManifest } from '../schemas/mod-manifest.js';
@@ -28,6 +29,8 @@ export type ContentBundle = DeepReadonly<{
   containers: Record<string, ContainerType>;
   /** Elementy statyczne mapy (podłogi, dachy, ściany, okna, drzwi). */
   tiles: Record<string, Tile>;
+  /** Tryby gry singleplayer (cel, preset świata, zasady startu, wynik). */
+  gameModes: Record<string, GameMode>;
   worldSettings: WorldSettings;
   /** Mody w kolejności wczytywania. */
   mods: ModManifest[];

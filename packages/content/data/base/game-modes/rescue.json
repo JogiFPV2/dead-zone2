@@ -1,0 +1,63 @@
+[
+  {
+    "id": "base:rescue",
+    "name": "game-mode.base.rescue.name",
+    "description": "game-mode.base.rescue.desc",
+    "tags": ["base:demo"],
+    "objective": {
+      "win": { "type": "extractNpc", "npcId": "survivor", "targetZone": "extraction" },
+      "lose": [{ "type": "playerDead" }, { "type": "npcDead", "npcId": "survivor" }]
+    },
+    "world": {
+      "start": { "day": 1, "hour": 7 },
+      "zombies": {
+        "populationMultiplier": 0.6,
+        "maxActive": 300,
+        "hordes": [
+          {
+            "zone": "villa",
+            "count": { "min": 120, "max": 160 },
+            "minRadiusTiles": 8,
+            "maxRadiusTiles": 30,
+            "behavior": "guard",
+            "returnAfterSec": 90
+          }
+        ],
+        "respawn": { "enabled": false }
+      }
+    },
+    "zones": [
+      { "id": "start", "role": "player-spawn" },
+      { "id": "villa", "role": "npc-hold", "name": "zone.base.rescue.villa.name" },
+      { "id": "extraction", "role": "extraction", "name": "zone.base.rescue.extraction.name" }
+    ],
+    "npcs": [
+      {
+        "id": "survivor",
+        "name": "npc.base.rescue.survivor.name",
+        "zone": "villa",
+        "locked": true,
+        "profession": "base:doctor"
+      }
+    ],
+    "player": {
+      "professions": [],
+      "allowTraits": true,
+      "bonusPoints": 2,
+      "startingKit": [
+        { "item": "base:lure-electronic" },
+        { "item": "base:lure-remote" },
+        { "item": "base:battery", "count": 2 }
+      ],
+      "spawnZone": "start"
+    },
+    "score": {
+      "terms": [
+        { "metric": "npcs-extracted", "weight": 1000 },
+        { "metric": "zombies-killed", "weight": 1 },
+        { "metric": "minutes-elapsed", "weight": -1 }
+      ],
+      "headline": "npcs-extracted"
+    }
+  }
+]

@@ -18,6 +18,7 @@ export const BUNDLE_KEYS = {
   zombieType: 'zombieTypes',
   containerType: 'containers',
   tile: 'tiles',
+  gameMode: 'gameModes',
 } as const satisfies Record<ContentType, keyof ContentBundle>;
 
 export class ContentValidationError extends Error {

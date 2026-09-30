@@ -2,6 +2,7 @@ import type { ContentIndex, IndexedDefinition } from '../content-index.js';
 import type { ErrorSink } from '../errors.js';
 import { formatJsonPath } from '../json-path.js';
 import { collectMoodleRefs, collectProfessionRefs, collectTraitRefs } from './refs-character.js';
+import { collectGameModeRefs } from './refs-game-mode.js';
 import { collectItemRefs } from './refs-item.js';
 import { collectRecipeRefs } from './refs-recipe.js';
 import {
@@ -38,6 +39,9 @@ export function collectRefs(def: IndexedDefinition): RefList {
       break;
     case 'moodle':
       collectMoodleRefs(d.data, r);
+      break;
+    case 'gameMode':
+      collectGameModeRefs(d.data, r);
       break;
     case 'skill':
     case 'tile':

@@ -67,6 +67,7 @@ describe('paczka bazowa data/base', () => {
       'zombieTypes',
       'containers',
       'tiles',
+      'gameModes',
     ] as const) {
       expect(Object.keys(bundle[key]).length).toBeGreaterThan(0);
     }

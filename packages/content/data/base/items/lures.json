@@ -1,0 +1,68 @@
+[
+  {
+    "id": "base:lure-electronic",
+    "name": "item.base.lure-electronic.name",
+    "kind": "lure",
+    "weightKg": 0.9,
+    "tags": ["base:lure", "base:electronics-salvage"],
+    "lure": {
+      "noise": { "radiusTiles": 40, "volume": 1 },
+      "durationSec": 30,
+      "trigger": { "type": "remote", "remoteTag": "base:lure-remote", "rangeTiles": 60 },
+      "lingerSec": { "min": 20, "max": 40 },
+      "power": { "batteryTag": "base:battery", "activationsPerBattery": 3 },
+      "placeable": true,
+      "consumedOnUse": false
+    }
+  },
+  {
+    "id": "base:lure-running",
+    "name": "item.base.lure-running.name",
+    "kind": "lure",
+    "weightKg": 1.6,
+    "tags": ["base:lure"],
+    "lure": {
+      "noise": { "radiusTiles": 30, "volume": 0.9 },
+      "durationSec": 20,
+      "trigger": { "type": "timer", "delaySec": { "min": 3, "max": 30 } },
+      "lingerSec": { "min": 20, "max": 40 },
+      "runner": { "distanceTiles": 15, "speedTilesPerSec": 3, "direction": "player-set" },
+      "placeable": true,
+      "consumedOnUse": true
+    }
+  },
+  {
+    "id": "base:lure-remote",
+    "name": "item.base.lure-remote.name",
+    "kind": "tool",
+    "weightKg": 0.15,
+    "tags": ["base:lure-remote"],
+    "tool": {}
+  },
+  {
+    "id": "base:mechanical-part",
+    "name": "item.base.mechanical-part.name",
+    "kind": "material",
+    "weightKg": 0.3,
+    "maxStack": 10,
+    "tags": ["base:mechanical-part"]
+  },
+  {
+    "id": "base:rabbit-carcass",
+    "name": "item.base.rabbit-carcass.name",
+    "kind": "food",
+    "weightKg": 1.4,
+    "tags": ["base:carcass", "base:meat"],
+    "food": {
+      "nutrition": {
+        "calories": 700,
+        "proteinG": 110,
+        "fatG": 20,
+        "hunger": -25,
+        "unhappiness": 15,
+        "sicknessChance": 0.5
+      },
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 }
+    }
+  }
+]

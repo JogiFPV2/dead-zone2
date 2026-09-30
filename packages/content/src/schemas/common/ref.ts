@@ -7,6 +7,7 @@ import { ContentIdSchema } from './id.js';
 export const ItemRefSchema = ContentIdSchema.describe('ref:item');
 export const SkillRefSchema = ContentIdSchema.describe('ref:skill');
 export const TraitRefSchema = ContentIdSchema.describe('ref:trait');
+export const ProfessionRefSchema = ContentIdSchema.describe('ref:profession');
 export const RecipeRefSchema = ContentIdSchema.describe('ref:recipe');
 export const LootTableRefSchema = ContentIdSchema.describe('ref:lootTable');
 export const ContainerTypeRefSchema = ContentIdSchema.describe('ref:containerType');

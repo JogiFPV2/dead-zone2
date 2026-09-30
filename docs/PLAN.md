@@ -18,6 +18,15 @@
 - **Broń, pełna skala:** improwizowana (butelka, kamień, cegła, deska), krótka ostra (nóż kuchenny, nóż myśliwski, śrubokręt), długa ostra (maczeta, siekiera), tępa (kij baseballowy, łom, młotek, kij z gwoździami), długa (włócznia z craftingu), palna (pistolet, rewolwer, strzelba, karabin) z amunicją, magazynkami, hałasem i trwałością. Broń i przedmioty rzucane (butelka, kamień) odciągają zombie hałasem.
 - **Rozwój postaci na setki sposobów:** zawody i kilkadziesiąt cech (pozytywnych i negatywnych) z bilansem punktów przy tworzeniu postaci, umiejętności w kategoriach (walka: tępa, ostra, długa, krótka, palna; przetrwanie: gotowanie, pierwsza pomoc, zbieractwo, rybołówstwo, pułapki; rzemiosło: stolarka, mechanika, elektryka, krawiectwo, metalurgia; ruch: sprint, skradanie, zręczność, siła, kondycja), książki i magazyny odblokowujące receptury i mnożące XP, cechy zdobywane i tracone w trakcie gry (np. otyłość, wytrzymałość). Wszystko jako dane, więc łatwo rozbudowywać i modować.
 
+## Tryby gry singleplayer (30.09.2026)
+Tryby są danymi (`packages/content`, katalog `game-modes/`): cel wygranej i przegranej jako deklaratywne warunki, preset świata (start, populacja zombie, twardy limit zombie, hordy wokół stref, odradzanie), zasady startu (zawody, cechy, zestaw startowy) i definicja wyniku. Mody mogą więc dodawać własne tryby i scenariusze bez zmian w kodzie. Oba tryby są w demie.
+- **„Przetrwaj”:** przeżyj jak najdłużej, wynik = przeżyte dni.
+- **„Ratunek”:** NPC jest bezpiecznie zamknięty w willi otoczonej pilnującą hordą (w tym trybie limit np. 300 zombie). Gracz przebija się, odciąga hordę i wyprowadza NPC do strefy ewakuacji.
+
+**Wabiki** (przedmioty jako dane, mechanika w Symulacji):
+- **Elektroniczny:** gracz go stawia i uruchamia pilotem z odległości do 60 m. Hałas trwa 30 s i słychać go w promieniu 40 m. Zombie kręcą się w miejscu 20–40 s, potem się rozchodzą. Zużywa baterie.
+- **Biegający:** craft z tuszki królika, części mechanicznej i drutu. Gracz ustawia opóźnienie 3–30 s i kierunek. Wabik przebiega około 15 m i hałasuje przez 20 s w promieniu 30 m. Jest jednorazowy (niszczy się).
+
 ## Zasady architektury
 1. **Symulacja oddzielona od renderu.** `packages/sim` to czysty TypeScript bez DOM i bez Three.js. Działa na stałym ticku (20 Hz) i jest deterministyczny (własne RNG z seedem). Ten sam kod uruchamia przeglądarka (w Web Workerze) i później serwer, który ma ostatnie słowo w multiplayerze.
 2. **Zawartość jako dane.** Przedmioty, receptury, umiejętności, cechy, moodle, loot tables i typy zombie to pliki JSON walidowane schematem (zod). Mod to paczka takich plików plus nadpisania.

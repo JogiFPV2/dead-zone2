@@ -38,7 +38,8 @@
       { "item": "base:bottle", "weight": 2 },
       { "item": "base:carrot", "weight": 3, "count": { "min": 1, "max": 3 } },
       { "item": "base:cabbage", "weight": 2 },
-      { "item": "base:raw-fish", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:raw-fish", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:rabbit-carcass", "weight": 1, "rarity": "rare" }
     ]
   }
 ]
