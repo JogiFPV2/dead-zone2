@@ -28,12 +28,14 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Części ciała, rany, krwawienie, bandaże (Symulacja)
 - [ ] Infekcja i gorączka (Symulacja)
 - [ ] Sen (Symulacja)
-- [ ] Śmierć i ekran podsumowania (Silnik + Designer)
+- [ ] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer)
 
 ## Etap 3 — Przedmioty i ekwipunek
 - [ ] Definicje przedmiotów w JSON (Modules)
 - [ ] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
 - [ ] Szybkie sloty 1–5 (Silnik + Designer)
+- [ ] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)
+- [ ] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja)
 - [ ] Kontenery i akcja „Przeszukaj” z czasem (Symulacja)
 - [ ] Okno ekwipunku i przeciąganie przedmiotów (Silnik + Designer)
 - [ ] Psucie się jedzenia (Symulacja)
@@ -43,15 +45,19 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] System hałasu (Symulacja)
 - [ ] Pathfinding + flow field dla hord (Symulacja)
 - [ ] Walka wręcz, stamina, pchnięcie (Symulacja)
-- [ ] Broń palna, amunicja, trwałość broni (Symulacja)
+- [ ] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules)
+- [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
+- [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)
 - [ ] Ugryzienia i szansa infekcji (Symulacja)
 - [ ] Poziom zagrożenia w HUD (Designer + Silnik)
 - [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik)
 
 ## Etap 5 — Postać i umiejętności
-- [ ] Zawody i cechy jako dane (Modules)
+- [ ] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)
+- [ ] Cechy zdobywane i tracone w trakcie gry (Symulacja)
 - [ ] Ekran tworzenia postaci (Designer + Silnik)
-- [ ] Umiejętności 0–10, XP za akcje, mnożniki z książek (Symulacja)
+- [ ] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)
+- [ ] Książki i magazyny: mnożniki XP i odblokowanie receptur (Modules + Symulacja)
 - [ ] Toasty XP i obrażeń (Designer + Silnik)
 
 ## Etap 6 — Crafting

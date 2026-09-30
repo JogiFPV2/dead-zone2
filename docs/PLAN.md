@@ -11,6 +11,13 @@
 | 6 | Assety | Na start darmowe (CC0: Kenney, Quaternius, Poly Pizza CC0, freesound CC0). Każdy asset wpisany do `ASSETS.md` z licencją. |
 | 7 | Mody | Tak. Cała zawartość gry trzymana jako dane. |
 
+## Cel gry i wymagania Pawła (30.09.2026)
+- **Cel:** przeżyć jak najwięcej dni. Licznik dni jest główną miarą wyniku, a ekran śmierci pokazuje przeżyte dni i statystyki.
+- **Schowki:** skrzynie, szafki, lodówki, bagażniki. Mają pojemność, gracz może je stawiać i przenosić (skrzynia z desek z craftingu), a zawartość zapisuje się w stanie chunka.
+- **Plecaki i torby:** od reklamówki, przez torbę sportową i plecak szkolny, po duży plecak turystyczny i wojskowy. Różnią się pojemnością i redukcją wagi, zakłada się je na plecy albo nosi w ręce.
+- **Broń, pełna skala:** improwizowana (butelka, kamień, cegła, deska), krótka ostra (nóż kuchenny, nóż myśliwski, śrubokręt), długa ostra (maczeta, siekiera), tępa (kij baseballowy, łom, młotek, kij z gwoździami), długa (włócznia z craftingu), palna (pistolet, rewolwer, strzelba, karabin) z amunicją, magazynkami, hałasem i trwałością. Broń i przedmioty rzucane (butelka, kamień) odciągają zombie hałasem.
+- **Rozwój postaci na setki sposobów:** zawody i kilkadziesiąt cech (pozytywnych i negatywnych) z bilansem punktów przy tworzeniu postaci, umiejętności w kategoriach (walka: tępa, ostra, długa, krótka, palna; przetrwanie: gotowanie, pierwsza pomoc, zbieractwo, rybołówstwo, pułapki; rzemiosło: stolarka, mechanika, elektryka, krawiectwo, metalurgia; ruch: sprint, skradanie, zręczność, siła, kondycja), książki i magazyny odblokowujące receptury i mnożące XP, cechy zdobywane i tracone w trakcie gry (np. otyłość, wytrzymałość). Wszystko jako dane, więc łatwo rozbudowywać i modować.
+
 ## Zasady architektury
 1. **Symulacja oddzielona od renderu.** `packages/sim` to czysty TypeScript bez DOM i bez Three.js. Działa na stałym ticku (20 Hz) i jest deterministyczny (własne RNG z seedem). Ten sam kod uruchamia przeglądarka (w Web Workerze) i później serwer, który ma ostatnie słowo w multiplayerze.
 2. **Zawartość jako dane.** Przedmioty, receptury, umiejętności, cechy, moodle, loot tables i typy zombie to pliki JSON walidowane schematem (zod). Mod to paczka takich plików plus nadpisania.
@@ -87,4 +94,6 @@ Pojazdy i paliwo, farmienie, budowanie i baza, pogoda i pory roku, elektrycznoś
 - **Szef sztabu:** plan, kolejność, pilnowanie `TASKS.md`, decyzje z Pawłem.
 - **Designer:** styl wizualny, HUD i UI gry, landing, kierunek grafiki low-poly.
 - **Modules:** architektura modułów, schematy contentu, design system `packages/ui`.
-- **Nowi agenci, gdy zacznie się kod:** „Silnik” (klient Three.js i render), „Symulacja” (`packages/sim`, gameplay) i „Serwer” (Supabase, API, później multiplayer).
+- **Silnik:** monorepo, CI, klient Three.js, render, HUD, wydajność.
+- **Symulacja:** `packages/sim`, cały gameplay.
+- **Serwer:** Supabase, API zapisów, wdrożenie, później multiplayer.
