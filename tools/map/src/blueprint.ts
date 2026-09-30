@@ -3,7 +3,10 @@ import {
   EDGE_TYPES,
   I18nKeySchema,
   RoomTypeSchema,
+  TagSchema,
   TileRefSchema,
+  ZoneNameSchema,
+  ZoneRectSchema,
 } from '@deadzone/content';
 import { z } from 'zod';
 
@@ -46,6 +49,27 @@ export const BuildingSchema = z.strictObject({
   openings: z.array(OpeningSchema).default([]),
 });
 
+/** Named map zone (manifest `zones`): explicit world-tile rects plus tiles from `zonePlans`. */
+export const BlueprintZoneSchema = z.strictObject({
+  id: ZoneNameSchema,
+  role: ZoneNameSchema,
+  z: Int.default(0),
+  /** `[x, x + w) × [y, y + h)` in world tiles. */
+  rects: z.array(ZoneRectSchema).default([]),
+  tags: z.array(TagSchema).optional(),
+});
+
+/**
+ * ASCII zone layer: each character maps (via `legend`) to a zone id from `zones`; `.` and space
+ * are no zone. Tiles are merged into as few rects as possible and added to that zone.
+ */
+export const ZonePlanSchema = z.strictObject({
+  /** World tile of `plan[0][0]`. */
+  origin: Xy,
+  plan: z.array(z.string().min(1)).min(1),
+  legend: z.record(z.string().length(1), ZoneNameSchema),
+});
+
 /**
  * Human-editable authoring source of a map (`tools/map/blueprints/*.json`). All coordinates are
  * world tiles (+x east, +y south); later entries paint over earlier ones.
@@ -78,6 +102,8 @@ export const BlueprintSchema = z.strictObject({
       }),
     )
     .default([]),
+  zones: z.array(BlueprintZoneSchema).default([]),
+  zonePlans: z.array(ZonePlanSchema).default([]),
 });
 
 export type Blueprint = z.output<typeof BlueprintSchema>;

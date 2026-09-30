@@ -11,6 +11,8 @@ export interface BootOptions {
   spawnInside: boolean;
   /** Mock sim only for debug options the worker cannot serve; otherwise the real sim worker. */
   sim: 'worker' | 'mock';
+  /** Dev-only `?zones=1`: draw the map's zones (content maps only; the test map has none). */
+  zones: boolean;
 }
 
 /** Parses the URL query (`?map=<base map>`, e.g. `demo-house`, `?crowd=N`, `?spawn=inside`, `?sim=mock`). */
@@ -21,5 +23,11 @@ export function parseBootOptions(search: string): BootOptions {
   const name = q.get('map') ?? '';
   const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : 'test';
   const mock = crowd > 0 || (spawnInside && map === 'test') || q.get('sim') === 'mock';
-  return { map, crowd, spawnInside: spawnInside && map === 'test', sim: mock ? 'mock' : 'worker' };
+  return {
+    map,
+    crowd,
+    spawnInside: spawnInside && map === 'test',
+    sim: mock ? 'mock' : 'worker',
+    zones: q.get('zones') === '1',
+  };
 }

@@ -2,37 +2,104 @@
   "id": "demo-house",
   "name": "map.base.demo-house.name",
   "floorHeight": 3,
-  "chunks": { "cx0": 0, "cy0": 0, "cx1": 0, "cy1": 0 },
+  "chunks": {
+    "cx0": 0,
+    "cy0": 0,
+    "cx1": 0,
+    "cy1": 0
+  },
   "ground": "base:grass",
-  "areas": [{ "x": 13, "y": 16, "w": 1, "h": 16, "floor": "base:concrete" }],
+  "areas": [
+    {
+      "x": 13,
+      "y": 16,
+      "w": 1,
+      "h": 16,
+      "floor": "base:concrete"
+    }
+  ],
   "buildings": [
     {
       "id": 1,
       "origin": [10, 10],
       "plan": ["KKKKKKKK", "KKKKKKKK", "KKKKKKKK", "KKKKKKKK", "KKKKKKKK", "KKKKKKKK"],
-      "rooms": { "K": { "id": 1, "type": "base:room-kitchen", "floor": "base:kitchen-tiles" } },
+      "rooms": {
+        "K": {
+          "id": 1,
+          "type": "base:room-kitchen",
+          "floor": "base:kitchen-tiles"
+        }
+      },
       "wall": "base:brick-wall",
       "window": "base:wooden-window",
       "door": "base:wooden-door",
       "roof": "base:roof-shingles",
       "openings": [
-        { "at": [2, 0], "side": "n", "type": "window" },
-        { "at": [5, 0], "side": "n", "type": "window" },
-        { "at": [0, 2], "side": "w", "type": "window" },
-        { "at": [3, 5], "side": "s", "type": "door" }
+        {
+          "at": [2, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [5, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [0, 2],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [3, 5],
+          "side": "s",
+          "type": "door"
+        }
       ]
     }
   ],
   "objects": [
-    { "contentId": "base:fridge", "x": 10, "y": 10, "rot": 0 },
-    { "contentId": "base:kitchen-cabinet", "x": 11, "y": 10, "rot": 0 },
-    { "contentId": "base:kitchen-cabinet", "x": 17, "y": 11, "rot": 3 },
+    {
+      "contentId": "base:fridge",
+      "x": 10,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 11,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 17,
+      "y": 11,
+      "rot": 3
+    },
     {
       "contentId": "base:ceiling-lamp",
       "x": 13,
       "y": 12,
       "rot": 0,
-      "offset": { "x": 0.5, "y": 0.5 }
+      "offset": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "start",
+      "role": "start",
+      "rects": [
+        {
+          "x": 12,
+          "y": 28,
+          "w": 3,
+          "h": 4
+        }
+      ]
     }
   ]
 }

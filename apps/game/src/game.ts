@@ -26,6 +26,7 @@ import { parseBootOptions } from './boot-options.js';
 import { startSimWorker } from './sim/start-sim.js';
 import type { SimClient } from './sim/sim-client.js';
 import type { LoadedMap } from './world/content-map.js';
+import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 
@@ -47,7 +48,7 @@ const boot = parseBootOptions(window.location.search);
 const world: LoadedMap =
   boot.map !== 'test'
     ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
-    : { source: createTestMap(), range: TEST_MAP_RANGE };
+    : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
 
 const scene = createScene();
 const terrain = new Terrain(world.source);
@@ -56,6 +57,11 @@ scene.add(terrain.root);
 const structures = new Structures(world.source);
 structures.loadRange(world.range);
 scene.add(structures.root);
+if (import.meta.env.DEV && boot.zones) {
+  void import('./dev/zones-overlay.js').then(({ createZonesOverlay }) =>
+    scene.add(createZonesOverlay(world.zones)),
+  );
+}
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 const settings = createSettingsStore();
@@ -71,7 +77,7 @@ bindCameraInput(rig, input);
 // and `?spawn=inside` (the worker `init` has no spawn option yet); it has no collisions.
 const sim: SimClient =
   boot.sim === 'worker'
-    ? startSimWorker(world.source, world.range, SIM_SEED)
+    ? startSimWorker(world.source, world.range, SIM_SEED, startSpawn(world.zones))
     : new MockSimClient(
         rangeBounds(world.range),
         boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },

@@ -33,5 +33,5 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm --filter @deadzone/map map build tools/map/blueprints/demo-house.json --check
+      - run: pnpm --filter @deadzone/map map build tools/map/blueprints/demo-house.json tools/map/blueprints/test-town.json --check
       - run: pnpm build

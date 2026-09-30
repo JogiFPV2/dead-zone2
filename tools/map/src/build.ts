@@ -8,6 +8,7 @@ import {
   type MapManifest,
 } from '@deadzone/content';
 import type { Blueprint, Building } from './blueprint.js';
+import { buildZones } from './zones.js';
 
 type Side = 'n' | 'w';
 interface EdgeCell {
@@ -167,6 +168,8 @@ export function buildMap(bp: Blueprint): BuiltMap {
     floorHeight: bp.floorHeight,
     chunks: addresses,
   };
+  const zones = buildZones(bp);
+  if (zones.length > 0) manifest.zones = zones;
   return { id: bp.id, manifest, chunks };
 }
 

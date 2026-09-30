@@ -7,6 +7,11 @@ it('uses the worker by default and the mock only for mock-only debug options', (
     crowd: 0,
     spawnInside: false,
     sim: 'worker',
+    zones: false,
+  });
+  expect(parseBootOptions('?map=test-town&zones=1')).toMatchObject({
+    map: 'test-town',
+    zones: true,
   });
   expect(parseBootOptions('?crowd=200').sim).toBe('mock');
   expect(parseBootOptions('?spawn=inside')).toMatchObject({ spawnInside: true, sim: 'mock' });

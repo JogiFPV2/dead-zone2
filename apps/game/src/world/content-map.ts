@@ -1,4 +1,4 @@
-import type { MapData } from '@deadzone/content';
+import type { MapData, MapZone } from '@deadzone/content';
 import {
   CHUNK_TILES,
   tileIndex,
@@ -13,6 +13,8 @@ import {
 export interface LoadedMap {
   source: ChunkSource;
   range: ChunkRange;
+  /** Named zones from the manifest (global tiles); empty for maps without zones. */
+  zones: MapZone[];
 }
 
 /** Appends-on-miss lookup into a 1-based palette whose index 0 stays empty. */
@@ -77,8 +79,13 @@ export function mapDataToChunkSource(map: MapData): LoadedMap {
     cy1: Math.max(...ground.map((a) => a.cy)),
     z: 0,
   };
+  const zones = (map.manifest.zones ?? []).map((z) => ({
+    ...z,
+    rects: z.rects.map((r) => ({ ...r })),
+  }));
   return {
     range,
+    zones,
     source: { tilePalette, edgePalette, getChunk: (cx, cy, z) => chunks.get(`${cx},${cy},${z}`) },
   };
 }
