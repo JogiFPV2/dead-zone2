@@ -1,5 +1,6 @@
 import { GAITS, type Command, type CommandRejectReason } from '@deadzone/protocol';
 import { applyAiCommand, isAiCommand } from '../ai/commands.js';
+import { queueAttack } from '../combat/commands.js';
 import type { SimWorld } from '../core/world.js';
 import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applySurvivalCommand } from '../survival/commands.js';
@@ -32,6 +33,9 @@ export function inputSystem(w: SimWorld): void {
       MoveIntent.dx[eid] = Math.fround(dx);
       MoveIntent.dy[eid] = Math.fround(dy);
       MoveIntent.gait[eid] = GAITS.indexOf(cmd.gait ?? 'walk');
+    } else if (cmd.type === 'attack' || cmd.type === 'shove') {
+      const reason = queueAttack(w, eid, cmd.type === 'shove');
+      if (reason) reject(w, cmd, reason);
     } else if (isAiCommand(cmd)) {
       const reason = applyAiCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);

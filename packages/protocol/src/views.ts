@@ -1,5 +1,5 @@
 import type { BodyPart, ContainerId, EquipSlot, ItemId, WoundKind } from './commands.js';
-import type { ActionKind, Freshness } from './events.js';
+import type { ActionKind, DeathCause, Freshness } from './events.js';
 
 /**
  * UI views (docs/sim-architecture.md 4.2): sent by the worker as `{ kind: 'view' }` only when
@@ -170,4 +170,26 @@ export interface SimViewPatch {
    * threat radius (`worldSettings.survival.sleep.wakeOnZombieTiles`). 0 = safe.
    */
   threat?: number;
+  /** Combat state of the local player (changes on kills, cooldown and weapon switch). */
+  combat?: CombatView;
+  /** Set once when the local player dies (death screen). */
+  death?: DeathView;
+}
+
+export interface CombatView {
+  zombiesKilled: number;
+  /** Content id of the melee weapon in `hand_primary`, null = bare hands. */
+  weapon: string | null;
+  /** Weapon condition 0..max (null = bare hands). */
+  condition: number | null;
+  maxCondition: number | null;
+  /** Tick from which the next attack is possible. */
+  readyTick: number;
+}
+
+export interface DeathView {
+  cause: DeathCause;
+  day: number;
+  daysSurvived: number;
+  zombiesKilled: number;
 }

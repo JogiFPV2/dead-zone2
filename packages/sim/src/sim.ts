@@ -13,7 +13,9 @@ import {
   type WoundView,
 } from '@deadzone/protocol';
 import type { Stage4Config } from './ai/config.js';
+import type { CombatConfig } from './combat/config.js';
 import { hashAi } from './ai/hash.js';
+import { hashCombat } from './combat/hash.js';
 import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
 import { spawnZombies } from './ai/zombies.js';
 import { threatLevel } from './ai/threat.js';
@@ -40,7 +42,7 @@ import { threatNearby } from './systems/sleep.js';
 import type { MinuteTicks } from './systems/clock.js';
 import { circleOverlaps } from './world/collision.js';
 import { registerItemActions } from './items/actions.js';
-import { createWorldContainers } from './items/loot.js';
+import { createWorldContainers, scatterFloorLoot } from './items/loot.js';
 import { createItemStore, createPlayerItems } from './items/store.js';
 import { actionView, containerView, inventoryView } from './items/views.js';
 import { hashItems } from './items/hash.js';
@@ -72,6 +74,10 @@ export interface SimOptions {
   spawnZombies?: readonly SimZombieSpawn[] | undefined;
   /** Stage 4 tuning without data fields yet (ai/config.ts); default DEFAULT_STAGE4_CONFIG. */
   aiConfig?: Stage4Config | undefined;
+  /** Combat tuning without data fields yet (combat/config.ts); default DEFAULT_COMBAT_CONFIG. */
+  combatConfig?: CombatConfig | undefined;
+  /** Scatter single loot items on room floors and outdoors at init (worker: on). Default false. */
+  floorLoot?: boolean | undefined;
   /** Game clock start; default day 1, 09:00. */
   clockStart?: ClockStart | undefined;
   /** Ambient temperature in °C until weather exists; default 20 (comfortable). */
@@ -195,9 +201,13 @@ export function createSim(opts: SimOptions): Sim {
         opts.map,
         opts.maxEntities ?? DEFAULT_MAX_ENTITIES,
         opts.aiConfig,
+        opts.combatConfig,
       ),
   });
-  if (w.items) createWorldContainers(w.items, opts.map, w.seed);
+  if (w.items) {
+    createWorldContainers(w.items, opts.map, w.seed);
+    if (opts.floorLoot) scatterFloorLoot(w.items, opts.map, w.seed, w.clock.startMinute);
+  }
   const minutes: MinuteTicks = { first: 0, count: 0 };
   const ctx: SystemContext = {
     grid: new TileGrid(opts.map),
@@ -294,6 +304,7 @@ export function createSim(opts: SimOptions): Sim {
     }
     if (w.items) hashItems(w.items, h);
     hashAi(w, h);
+    hashCombat(w, h);
     return h.digest();
   };
 

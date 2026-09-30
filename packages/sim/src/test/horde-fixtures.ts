@@ -1,4 +1,5 @@
 import type { SimZombieSpawn } from '@deadzone/protocol';
+import { DEFAULT_COMBAT_CONFIG } from '../combat/config.js';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent } from './content-fixtures.js';
 import { buildMap } from './fixtures.js';
@@ -46,6 +47,11 @@ export function hordeSim(count: number, seed = 5): Sim {
     clockStart: NOON,
     spawn: { x: 64.5, y: 64.5 },
     spawnZombies: hordeSpawns(count),
+    // Zombies attack (the cost is measured) but never hit, so the chase goes on.
+    combatConfig: {
+      ...DEFAULT_COMBAT_CONFIG,
+      zombie: { ...DEFAULT_COMBAT_CONFIG.zombie, hitChance: 0 },
+    },
   });
   return sim;
 }

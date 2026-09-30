@@ -63,6 +63,7 @@ export { TileGrid } from './world/grid.js';
 export { SKIN, circleOverlaps, moveCircle, type Vec2 } from './world/collision.js';
 export type { SimWorld } from './core/world.js';
 export { DEFAULT_STAGE4_CONFIG } from './ai/config.js';
+export { DEFAULT_COMBAT_CONFIG, type CombatConfig } from './combat/config.js';
 export type { AiConfig, GaitConfig, NoiseConfig, Stage4Config, VisionConfig } from './ai/config.js';
 export { ZOMBIE_STATE_NAMES, ZombieState, type ZombieStateName } from './ai/state.js';
 export { daylight } from './ai/vision.js';

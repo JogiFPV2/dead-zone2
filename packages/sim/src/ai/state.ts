@@ -8,6 +8,8 @@ import {
 import type { ContentIndex, ZombieTypeDef } from '../content/adapter.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { SpatialHash } from '../core/spatial.js';
+import { createCombatWorld, type CombatWorld } from '../combat/state.js';
+import type { CombatConfig } from '../combat/config.js';
 import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from './config.js';
 
 /** Zombie FSM (docs 2.5 `ai`). Values are stored in `Zombie.state` and hashed. */
@@ -113,6 +115,8 @@ export interface AiWorld {
   readonly lastX: Float32Array;
   readonly lastY: Float32Array;
   zombieCount: number;
+  /** Melee combat (Stage 4, `combat/*`). */
+  readonly combat: CombatWorld;
 }
 
 export function createAiWorld(
@@ -120,6 +124,7 @@ export function createAiWorld(
   map: SimMap,
   capacity: number,
   cfg: Stage4Config = DEFAULT_STAGE4_CONFIG,
+  combatCfg?: CombatConfig,
 ): AiWorld {
   const perTick = (v: number): number => Math.fround(v / TICKS_PER_SECOND);
   const v = content.vision;
@@ -156,6 +161,7 @@ export function createAiWorld(
     lastX: new Float32Array(capacity),
     lastY: new Float32Array(capacity),
     zombieCount: 0,
+    combat: createCombatWorld(capacity, combatCfg),
   };
 }
 

@@ -1,5 +1,6 @@
 import { actionsSystem } from '../actions/queue.js';
 import { aiThinkSystem } from '../ai/brain.js';
+import { combatSystem } from '../combat/system.js';
 import { aiLocomotionSystem } from '../ai/locomotion.js';
 import { footstepSystem, noiseCollectSystem } from '../ai/noise.js';
 import { threatSystem } from '../ai/threat.js';
@@ -50,5 +51,6 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     },
     { name: 'sleep', run: (w, ctx) => sleepSystem(w, ctx.minutes.first, ctx.minutes.count) },
     { name: 'moodles', run: (w, ctx) => moodlesSystem(w, ctx.minutes.count > 0) },
+    { name: 'combat', run: (w, ctx) => combatSystem(w, ctx.grid) },
     { name: 'lifecycle', run: (w) => lifecycleSystem(w) },
   ];

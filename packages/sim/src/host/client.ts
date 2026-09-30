@@ -43,6 +43,7 @@ export interface SimWorkerClient {
       content?: SimContentSource;
       dev?: boolean;
       zombies?: readonly SimZombieSpawn[];
+      floorLoot?: boolean;
     },
   ): void;
   /** Sends a fully formed command (tick, playerId, seq chosen by the caller). */
@@ -67,6 +68,10 @@ export interface SimWorkerClient {
   /** Eat / drink / unpack; medical items need `part`. */
   useItem(item: ItemId, part?: BodyPart): void;
   cancelAction(): void;
+  /** Melee swing towards the aim point (weapon in hand_primary, bare hands otherwise). */
+  attack(): void;
+  /** Shove zombies in front (stagger, no damage). */
+  shove(): void;
   placeStorage(item: ItemId, x: number, y: number): void;
   pickUpStorage(container: ContainerId): void;
   /** Dev only (init `dev: true`). */
@@ -150,6 +155,7 @@ export function createSimWorkerClient(
         ...(opts?.content ? { content: opts.content } : {}),
         ...(opts?.dev ? { dev: true } : {}),
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
+        ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
       }),
     send: (cmd) => post({ kind: 'cmd', cmd }),
     move: (dx, dy, gait) =>
@@ -180,6 +186,8 @@ export function createSimWorkerClient(
     closeContainer: () => cmd({ type: 'closeContainer' }),
     useItem: (item, part) => cmd({ type: 'useItem', item, ...(part ? { part } : {}) }),
     cancelAction: () => cmd({ type: 'cancelAction' }),
+    attack: () => cmd({ type: 'attack' }),
+    shove: () => cmd({ type: 'shove' }),
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     debugGiveItem: (itemId, count) =>

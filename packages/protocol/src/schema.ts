@@ -114,6 +114,14 @@ export const cancelActionCommandSchema = z.strictObject({
   ...header,
   type: z.literal('cancelAction'),
 });
+export const attackCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('attack'),
+});
+export const shoveCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('shove'),
+});
 export const placeStorageCommandSchema = z.strictObject({
   ...header,
   type: z.literal('placeStorage'),
@@ -184,6 +192,8 @@ export const commandSchema = z.discriminatedUnion('type', [
   closeContainerCommandSchema,
   useItemCommandSchema,
   cancelActionCommandSchema,
+  attackCommandSchema,
+  shoveCommandSchema,
   placeStorageCommandSchema,
   pickUpStorageCommandSchema,
   debugWoundCommandSchema,
@@ -281,6 +291,7 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
     seed: z.number().int(),
     map: simMapDataSchema,
     spawn: simSpawnSchema.optional(),
+    floorLoot: z.boolean().optional(),
     zombies: z
       .array(
         z.strictObject({

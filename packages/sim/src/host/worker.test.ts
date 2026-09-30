@@ -269,6 +269,7 @@ describe('survival over the worker protocol', () => {
         content: { packs: [fixturePack()] },
         dev: true,
         spawn: { x: 2.5, y: 2.5, z: 0 },
+        floorLoot: false,
       },
     );
     h.advance(100);

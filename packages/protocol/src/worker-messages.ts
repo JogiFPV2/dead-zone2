@@ -32,6 +32,8 @@ export type MainToWorker =
       content?: SimContentSource | undefined;
       /** Zombies at start (game modes, tests); needs content with `zombieTypes`. */
       zombies?: readonly SimZombieSpawn[] | undefined;
+      /** Single loot items on floors at init (default true). */
+      floorLoot?: boolean | undefined;
       /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). */
       dev?: boolean | undefined;
     }

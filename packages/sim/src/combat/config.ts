@@ -1,0 +1,61 @@
+/**
+ * Stage 4 combat tuning without data fields yet (docs 9.8). Weapon stats come from
+ * `melee` of the item in `hand_primary`, zombie damage / cooldown / bite chance from
+ * `zombieTypes`, infection chance per wound kind from `worldSettings.survival.wounds`.
+ * Proposed data fields in the comments.
+ */
+export interface CombatConfig {
+  /** `combat.unarmed`: bare-hands "weapon". */
+  unarmed: {
+    damage: { min: number; max: number };
+    rangeTiles: number;
+    attacksPerSec: number;
+    staminaCost: number;
+    knockback: number;
+  };
+  /** `combat.arcHalfDeg`: swing cone around the facing. */
+  arcHalfDeg: number;
+  /** `combat.exhaustedDamageMul`: endurance below the swing's cost → damage × this, cooldown ÷ this. */
+  exhaustedDamageMul: number;
+  /** `combat.critMul`: damage × this on a critical hit (`melee.critChance`). */
+  critMul: number;
+  /** `combat.knockbackTiles` / `staggerSecPerKnockback`: push and stagger per `melee.knockback`. */
+  knockbackTiles: number;
+  staggerSecPerKnockback: number;
+  /** `combat.shove`. */
+  shove: {
+    rangeTiles: number;
+    cooldownSec: number;
+    staminaCost: number;
+    pushTiles: number;
+    staggerSec: number;
+  };
+  /** `combat.attackNoise`: noise of a swing when the weapon has no `hitNoise`. */
+  attackNoise: { radiusTiles: number; volume: number };
+  /** `combat.zombie`: hit chance of a zombie attack and reach beyond the colliders. */
+  zombie: { hitChance: number; reachTiles: number; windupSec: number };
+  /** `combat.zombieWoundWeights`: non-bite wound kinds of a successful zombie hit. */
+  zombieWoundWeights: { scratch: number; laceration: number };
+  /** Snapshot `anim = attack` this long after a swing. */
+  attackAnimSec: number;
+}
+
+export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
+  unarmed: {
+    damage: { min: 1, max: 3 },
+    rangeTiles: 0.8,
+    attacksPerSec: 1.5,
+    staminaCost: 1,
+    knockback: 0.3,
+  },
+  arcHalfDeg: 60,
+  exhaustedDamageMul: 0.5,
+  critMul: 2,
+  knockbackTiles: 0.5,
+  staggerSecPerKnockback: 0.6,
+  shove: { rangeTiles: 1.2, cooldownSec: 0.8, staminaCost: 4, pushTiles: 0.7, staggerSec: 1.2 },
+  attackNoise: { radiusTiles: 4, volume: 0.3 },
+  zombie: { hitChance: 0.7, reachTiles: 0.9, windupSec: 0.5 },
+  zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },
+  attackAnimSec: 0.4,
+};

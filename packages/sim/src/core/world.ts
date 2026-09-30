@@ -1,5 +1,5 @@
 import type { PlayerId, SimEvent, SimMap } from '@deadzone/protocol';
-import { addComponent, addEntity, createWorld, query, type World } from 'bitecs';
+import { addComponent, addEntity, createWorld, query, removeComponent, type World } from 'bitecs';
 import { CommandQueue } from '../commands/queue.js';
 import type { AiWorld } from '../ai/state.js';
 import type { ItemStore } from '../items/store.js';
@@ -83,6 +83,11 @@ export function spawnEntity(w: SimWorld): number {
 
 export function attach(w: SimWorld, eid: number, component: object): void {
   addComponent(w.ecs, eid, component);
+  w.structureVersion++;
+}
+
+export function detach(w: SimWorld, eid: number, component: object): void {
+  removeComponent(w.ecs, eid, component);
   w.structureVersion++;
 }
 

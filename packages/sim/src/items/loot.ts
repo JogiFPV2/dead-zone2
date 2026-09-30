@@ -4,6 +4,7 @@ import { deriveSeed, Rng } from '../core/rng.js';
 import {
   addContainer,
   createItem,
+  groundPile,
   stackLimit,
   tileKey,
   type ItemContainer,
@@ -141,6 +142,67 @@ function rollTable(
     } else {
       const nested = st.content.lootTableById.get(e.table);
       for (let k = 0; nested && k < count; k++) rollTable(st, nested, rng, depth + 1, out);
+    }
+  }
+}
+
+/** Floor loot at init (first playable build): chance per room / per chunk outdoors. */
+export const FLOOR_LOOT = { roomChance: 0.6, outdoorChance: 0.35 } as const;
+
+/**
+ * Deterministic items lying on the floor (seed + chunk only): per room of a chunk one item from
+ * the room's loot table with `roomChance`, and outdoors (floor tiles without a room, e.g. by
+ * roads) one item from a random table with `outdoorChance`. Items go to ground piles, so they
+ * show up in `nearby` and can be picked up with `pickUp`.
+ */
+export function scatterFloorLoot(
+  st: ItemStore,
+  map: SimMap,
+  seed: number,
+  worldStartMinute: number,
+): void {
+  const tables = st.content.lootTables;
+  if (tables.length === 0) return;
+  const list = [...(map.listChunks?.() ?? [])].sort(
+    (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
+  );
+  for (const addr of list) {
+    const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
+    if (!chunk) continue;
+    const rng = Rng.fromSeed(deriveSeed(seed, 'floor-loot', addr.cx, addr.cy, addr.z));
+    const byRoom = new Map<number, number[]>();
+    for (let i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++) {
+      if (!(chunk.floor[i] ?? 0)) continue;
+      const room = chunk.room?.[i] ?? 0;
+      let tiles = byRoom.get(room);
+      if (!tiles) byRoom.set(room, (tiles = []));
+      tiles.push(i);
+    }
+    for (const room of [...byRoom.keys()].sort((a, b) => a - b)) {
+      const tiles = byRoom.get(room)!;
+      const type = room ? chunk.rooms?.[String(room)] : undefined;
+      const table = type
+        ? tables.find((t) => t.rooms.includes(type))
+        : tables[rng.int(0, tables.length - 1)];
+      if (!rng.chance(room ? FLOOR_LOOT.roomChance : FLOOR_LOOT.outdoorChance) || !table) continue;
+      const i = tiles[rng.int(0, tiles.length - 1)]!;
+      const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
+      const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
+      const weights = table.entries.map((e) => lootWeight(st, e.weight, e.rarity));
+      let e = table.entries[rng.pickWeighted(weights)];
+      // One level of nested tables is enough for single floor items.
+      if (e && !('item' in e)) {
+        const nested = st.content.lootTableById.get(e.table);
+        e =
+          nested?.entries[
+            rng.pickWeighted(nested.entries.map((n) => lootWeight(st, n.weight, n.rarity)))
+          ];
+      }
+      if (!e || !('item' in e)) continue;
+      const def = st.content.itemIndex.get(e.item);
+      if (def === undefined) continue;
+      const count = Math.min(Math.max(1, e.count.min), stackLimit(st, st.content.items[def]!));
+      createItem(st, def, groundPile(st, x, y, addr.z).id, count, worldStartMinute);
     }
   }
 }

@@ -36,7 +36,7 @@ describe('ai: chase and losing the target', () => {
     expect(zombie(sim).targetId).toBe(0);
   });
 
-  it('stops at reach and faces the player (no attacks before combat)', () => {
+  it('stops at reach, faces the player and attacks', () => {
     const sim = aiSim({ zombies: [{ x: 14.5, y: 10.5 }], aiConfig: WIDE });
     runTicks(sim, 100);
     const z = zombie(sim);
@@ -45,7 +45,7 @@ describe('ai: chase and losing the target', () => {
     expect(z.state).toBe('chase');
     expect(d).toBeLessThan(DEFAULT_STAGE4_CONFIG.ai.reachTiles + 0.35);
     expect(d).toBeGreaterThan(0.5);
-    expect(sim.getSurvival()!.stats.health).toBe(100);
+    expect(sim.getSurvival()!.stats.health).toBeLessThan(100);
   });
 });
 

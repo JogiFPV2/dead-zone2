@@ -177,6 +177,19 @@ export interface CancelActionCommand extends CommandHeader {
 }
 
 /**
+ * Melee attack with the weapon in `hand_primary` (bare hands without one) towards the aim point
+ * (last `aim`), or the facing without aim. Rejected with `busy` while the weapon cools down.
+ */
+export interface AttackCommand extends CommandHeader {
+  type: 'attack';
+}
+
+/** Shove: pushes zombies in front back and staggers them (no damage), costs stamina. */
+export interface ShoveCommand extends CommandHeader {
+  type: 'shove';
+}
+
+/**
  * Places a storage item (`placeable` with `containerType`, e.g. `base:wooden-crate`) on tile
  * (x, y) of the player's floor, in reach. Its contents stay inside; `pickUp` takes it back.
  */
@@ -272,6 +285,8 @@ export type Command =
   | CloseContainerCommand
   | UseItemCommand
   | CancelActionCommand
+  | AttackCommand
+  | ShoveCommand
   | PlaceStorageCommand
   | PickUpStorageCommand
   | DebugWoundCommand

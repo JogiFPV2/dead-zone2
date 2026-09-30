@@ -3,6 +3,7 @@ import {
   VIEW_STATS,
   WOUND_KINDS,
   type ClockView,
+  type CombatView,
   type MoodleView,
   type PlayerId,
   type PlayerView,
@@ -13,6 +14,7 @@ import {
 import {
   dayOf,
   gameMinuteAt,
+  MINUTES_PER_DAY,
   minuteOfDay,
   minuteStartTick,
   ticksPerGameMinute,
@@ -21,7 +23,24 @@ import type { SimWorld } from '../core/world.js';
 import { actionView, inventoryView, nearbyView, openContainerView } from '../items/views.js';
 import { threatNearby } from '../systems/sleep.js';
 import { threatLevel } from '../ai/threat.js';
+import { meleeOf } from '../combat/system.js';
+import { defOf, maxCondition } from '../items/store.js';
+import { DEATH_CAUSES } from '../survival/state.js';
 import { bandageDirty, woundBleeding } from '../survival/wounds.js';
+
+function combatView(w: SimWorld, eid: number): CombatView {
+  const cb = w.ai!.combat;
+  const m = meleeOf(w, cb, eid);
+  const item = m.item === undefined ? undefined : w.items?.items.get(m.item);
+  const def = item && w.items ? defOf(w.items, item) : undefined;
+  return {
+    zombiesKilled: cb.kills[eid] ?? 0,
+    weapon: def?.id ?? null,
+    condition: item ? item.condition : null,
+    maxCondition: def ? maxCondition(def) : null,
+    readyTick: cb.readyTick[eid] ?? 0,
+  };
+}
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;
 const round2 = (v: number): number => Math.round(v * 100) / 100;
@@ -59,6 +78,8 @@ export class ViewTracker {
   private nearbyKey = '';
   private actionKey = '';
   private threat: number | undefined;
+  private combatKey = '';
+  private deathSent = false;
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -163,6 +184,23 @@ export class ViewTracker {
       if (threat !== this.threat) {
         this.threat = threat;
         patch.threat = threat;
+      }
+      const cv = combatView(w, eid);
+      const ck = JSON.stringify(cv);
+      if (ck !== this.combatKey) {
+        this.combatKey = ck;
+        patch.combat = cv;
+      }
+      const s = w.survival;
+      if (s?.dead[eid] && !this.deathSent) {
+        this.deathSent = true;
+        const minute = gameMinuteAt(w.clock, Math.max(0, w.tick - 1));
+        patch.death = {
+          cause: DEATH_CAUSES[s.cause[eid] ?? 0] ?? 'wounds',
+          day: dayOf(minute),
+          daysSurvived: Math.max(0, Math.floor((minute - w.clock.startMinute) / MINUTES_PER_DAY)),
+          zombiesKilled: w.ai.combat.kills[eid] ?? 0,
+        };
       }
     }
   }

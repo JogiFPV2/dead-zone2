@@ -1,4 +1,4 @@
-import { dayOf, gameMinuteAt, minuteOfDay } from '../core/clock.js';
+import { dayOf, gameMinuteAt, MINUTES_PER_DAY, minuteOfDay } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { DEATH_CAUSES } from '../survival/state.js';
 import { wake } from './sleep.js';
@@ -26,6 +26,8 @@ export function lifecycleSystem(w: SimWorld): void {
       cause: DEATH_CAUSES[s.cause[eid] ?? 0] ?? 'wounds',
       day: dayOf(minute),
       minuteOfDay: minuteOfDay(minute),
+      daysSurvived: Math.max(0, Math.floor((minute - w.clock.startMinute) / MINUTES_PER_DAY)),
+      zombiesKilled: w.ai?.combat.kills[eid] ?? 0,
     });
   }
 }

@@ -41,6 +41,12 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
     ai.lastX[eid] = x;
     ai.lastY[eid] = y;
 
+    // Staggered by a hit or a shove (combat): stands still.
+    if (w.tick < (ai.combat.staggerUntil[eid] ?? 0)) {
+      MoveIntent.dx[eid] = 0;
+      MoveIntent.dy[eid] = 0;
+      continue;
+    }
     let gx = Zombie.tx[eid] ?? x;
     let gy = Zombie.ty[eid] ?? y;
     let dx = 0;

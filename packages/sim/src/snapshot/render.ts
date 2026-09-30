@@ -7,8 +7,12 @@ import {
   type PlayerId,
 } from '@deadzone/protocol';
 import { ZombieState } from '../ai/state.js';
+import { TICKS_PER_SECOND } from '../core/constants.js';
 import { bamToRad } from '../core/dmath.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
+
+const attackTicks = (w: SimWorld): number =>
+  Math.max(1, Math.round((w.ai?.combat.cfg.attackAnimSec ?? 0) * TICKS_PER_SECOND));
 
 export function renderEntityCount(w: SimWorld): number {
   return sortedQuery(w, 'render', [w.c.Position, w.c.Facing]).length;
@@ -37,23 +41,33 @@ export function writeRenderSnapshot(
     f[o + 3] = Position.z[eid] ?? 0;
     f[o + 4] = bamToRad(Facing.angle[eid] ?? 0);
     const moving = (Velocity.x[eid] ?? 0) !== 0 || (Velocity.y[eid] ?? 0) !== 0;
+    const cb = w.ai?.combat;
+    const swing = cb?.swingTick[eid] ?? 0;
+    const attacking = swing > 0 && w.tick - swing < attackTicks(w);
     if (Zombie.is[eid]) {
       f[o + 5] = SnapshotEntityKind.zombie;
-      f[o + 6] = !moving
-        ? SnapshotAnim.idle
-        : Zombie.state[eid] === ZombieState.chase
-          ? SnapshotAnim.run
-          : SnapshotAnim.walk;
+      f[o + 6] =
+        (Zombie.hp[eid] ?? 0) <= 0
+          ? SnapshotAnim.dead
+          : attacking
+            ? SnapshotAnim.attack
+            : !moving
+              ? SnapshotAnim.idle
+              : Zombie.state[eid] === ZombieState.chase
+                ? SnapshotAnim.run
+                : SnapshotAnim.walk;
     } else {
       f[o + 5] = SnapshotEntityKind.player;
       const dead = w.survival?.dead[eid] === 1;
       f[o + 6] = dead
         ? SnapshotAnim.dead
-        : !moving
-          ? SnapshotAnim.idle
-          : GAITS[MoveIntent.gait[eid] ?? 1] === 'run'
-            ? SnapshotAnim.run
-            : SnapshotAnim.walk;
+        : attacking
+          ? SnapshotAnim.attack
+          : !moving
+            ? SnapshotAnim.idle
+            : GAITS[MoveIntent.gait[eid] ?? 1] === 'run'
+              ? SnapshotAnim.run
+              : SnapshotAnim.walk;
     }
     o += SNAPSHOT_ENTITY_STRIDE;
   };

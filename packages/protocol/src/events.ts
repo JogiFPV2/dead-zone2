@@ -31,7 +31,18 @@ export type CommandRejectReason =
   | 'busy';
 
 export type DeathCause =
-  'bleeding' | 'starvation' | 'dehydration' | 'infection' | 'temperature' | 'wounds' | 'debug';
+  | 'bleeding'
+  | 'starvation'
+  | 'dehydration'
+  | 'infection'
+  | 'temperature'
+  | 'wounds'
+  | 'debug'
+  /** Killed by zombie attacks (health reached 0 in combat). */
+  | 'zombie';
+
+/** What caused a `hit`: a player's melee swing, a shove, or a zombie attack. */
+export type HitSource = 'melee' | 'shove' | 'zombie';
 
 /** Timed actions (docs/sim-architecture.md, `actions`). */
 export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack';
@@ -82,7 +93,30 @@ export type SimEvent =
       cause: DeathCause;
       day: number;
       minuteOfDay: number;
+      /** Full game days since the start of the game (death screen: "survived N days"). Always set by the sim. */
+      daysSurvived?: number;
+      /** Always set by the sim. */
+      zombiesKilled?: number;
     }
+  /**
+   * A hit landed. `attacker` / `target` are StableIds (player or zombie); `damage` in HP (zombie
+   * HP or player health 0–100), 0 for shoves; `killed` = the target died of it.
+   */
+  | {
+      type: 'hit';
+      tick: number;
+      source: HitSource;
+      attacker: number;
+      target: number;
+      damage: number;
+      x: number;
+      y: number;
+      killed: boolean;
+    }
+  /** A zombie died; `playerId` = the killer. */
+  | { type: 'zombieKilled'; tick: number; zombie: number; playerId: PlayerId; x: number; y: number }
+  /** A melee weapon broke (condition reached 0) and was removed or replaced by `brokenInto`. */
+  | { type: 'weaponBroke'; tick: number; playerId: PlayerId; itemId: string }
   | { type: 'wounded'; tick: number; playerId: PlayerId; part: BodyPart; wound: WoundKind }
   /** Dev builds only (`init.dev`): every noise of the tick, for debug circles. */
   | {

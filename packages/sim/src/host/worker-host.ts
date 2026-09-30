@@ -103,6 +103,7 @@ export function startSimWorkerHost(
         ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
         content,
         dev: msg.dev ?? false,
+        floorLoot: msg.floorLoot ?? true,
       });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });

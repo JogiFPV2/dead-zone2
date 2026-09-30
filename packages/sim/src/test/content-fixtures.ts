@@ -198,6 +198,17 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
         },
       },
       {
+        path: 'skills/fixture.json',
+        json: [
+          {
+            id: 'fixture:blunt',
+            name: 'skill.fixture.blunt',
+            group: 'combat',
+            xpPerLevel: [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700],
+          },
+        ],
+      },
+      {
         path: 'items/lights.json',
         json: [
           {
@@ -206,6 +217,32 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
             kind: 'placeable',
             weightKg: 1,
             placeable: { light: { radiusTiles: 6, intensity: 1, requiresPower: false } },
+          },
+          {
+            id: 'fixture:flashlight',
+            name: 'item.fixture.flashlight',
+            kind: 'tool',
+            weightKg: 0.3,
+            tool: {},
+            light: { radiusTiles: 8, intensity: 0.9, coneDeg: 50 },
+          },
+          {
+            id: 'fixture:bat',
+            name: 'item.fixture.bat',
+            kind: 'weapon_melee',
+            weightKg: 1,
+            melee: {
+              category: 'blunt',
+              skill: 'fixture:blunt',
+              damage: { min: 30, max: 30 },
+              rangeTiles: 1.3,
+              attacksPerSec: 1,
+              staminaCost: 5,
+              knockback: 1,
+              twoHanded: true,
+              hitNoise: { radiusTiles: 5, volume: 0.4 },
+              durability: { max: 2, lossChancePerUse: 1 },
+            },
           },
           {
             id: 'fixture:street-lamp',
