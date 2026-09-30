@@ -2,9 +2,9 @@ import type { Command, CommandRejectReason } from '@deadzone/protocol';
 import type { SimWorld } from '../core/world.js';
 import { fallAsleep, wake } from '../systems/sleep.js';
 import { bodyPartIndex, clampStat, deathCauseIndex, woundKindIndex } from './state.js';
-import { bandagePart, inflictWound } from './wounds.js';
+import { inflictWound } from './wounds.js';
 
-type SurvivalCommand = Exclude<Command, { type: 'move' } | { type: 'aim' }>;
+type SurvivalCommand = Extract<Command, { type: 'sleep' | 'wake' | 'debugWound' | 'debugStat' }>;
 
 /** Gameplay validation + effect of survival commands; returns a reject reason or undefined. */
 export function applySurvivalCommand(
@@ -20,11 +20,6 @@ export function applySurvivalCommand(
       return fallAsleep(w, eid) === 'ok' ? undefined : 'invalid-state';
     case 'wake':
       return wake(w, s, eid, 'command') ? undefined : 'invalid-state';
-    case 'bandage': {
-      if (cmd.itemId !== undefined && !s.content.bandageItems.has(cmd.itemId))
-        return 'unknown-item';
-      return bandagePart(w, eid, bodyPartIndex(cmd.part)) > 0 ? undefined : 'invalid-target';
-    }
     case 'debugWound':
       inflictWound(w, eid, bodyPartIndex(cmd.part), woundKindIndex(cmd.wound), {
         zombie: cmd.zombie ?? false,

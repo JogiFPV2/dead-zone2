@@ -5,6 +5,9 @@ import {
   type PlayerId,
   type SimEvent,
   type SimMap,
+  type ActionView,
+  type ContainerView,
+  type InventoryView,
   type SimViewPatch,
   type WoundView,
 } from '@deadzone/protocol';
@@ -30,6 +33,11 @@ import { DEFAULT_AMBIENT_C } from './systems/survival.js';
 import { threatNearby } from './systems/sleep.js';
 import type { MinuteTicks } from './systems/clock.js';
 import { circleOverlaps } from './world/collision.js';
+import { registerItemActions } from './items/actions.js';
+import { createWorldContainers } from './items/loot.js';
+import { createItemStore, createPlayerItems } from './items/store.js';
+import { actionView, containerView, inventoryView } from './items/views.js';
+import { hashItems } from './items/hash.js';
 import { TileGrid } from './world/grid.js';
 
 export interface SimOptions {
@@ -111,6 +119,12 @@ export interface Sim {
   fastForwardBlocked(): boolean;
   /** UI view delta for player 0 since the last call (undefined when nothing changed). */
   drainView(): SimViewPatch | undefined;
+  /** Full inventory view (all carried containers); undefined without content. */
+  getInventory(playerId?: PlayerId): InventoryView | undefined;
+  /** Full view of any container by id (tests, tools; no reach check). */
+  getContainer(id: number): ContainerView | undefined;
+  /** Current timed action of a player (null = none). */
+  getAction(playerId?: PlayerId): ActionView | null;
   /** Escape hatch for tests and tools; systems' internals, not a stable API. */
   readonly world: SimWorld;
 }
@@ -127,6 +141,7 @@ function findSpawn(grid: TileGrid): { x: number; y: number } {
 
 export function createSim(opts: SimOptions): Sim {
   const content = opts.content;
+  registerItemActions();
   const w = createSimWorld({
     seed: opts.seed,
     map: opts.map,
@@ -143,7 +158,9 @@ export function createSim(opts: SimOptions): Sim {
             gameMinuteAt(clock, 0),
           )
       : undefined,
+    items: (survival) => createItemStore(survival.content),
   });
+  if (w.items) createWorldContainers(w.items, opts.map, w.seed);
   const minutes: MinuteTicks = { first: 0, count: 0 };
   const ctx: SystemContext = {
     grid: new TileGrid(opts.map),
@@ -177,6 +194,7 @@ export function createSim(opts: SimOptions): Sim {
     c.Player.id[eid] = playerId;
     w.players.set(playerId, eid);
     if (w.survival) initVitals(w.survival, eid);
+    if (w.items) createPlayerItems(w.items, c.StableId.value[eid] ?? 0);
     return eid;
   };
 
@@ -233,8 +251,10 @@ export function createSim(opts: SimOptions): Sim {
             .u32(wd.bandageAgeMin)
             .u32(wd.dirt ? 1 : 0);
         }
+        h.f32(s.carryLoad[eid] ?? 0).f32(s.bagSpeed[eid] ?? 1);
       }
     }
+    if (w.items) hashItems(w.items, h);
     return h.digest();
   };
 
@@ -288,6 +308,15 @@ export function createSim(opts: SimOptions): Sim {
       return eid !== undefined && threatNearby(w, eid);
     },
     drainView: () => views.diff(w),
+    getInventory(playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? undefined : inventoryView(w, eid);
+    },
+    getContainer: (id) => containerView(w, id),
+    getAction(playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? null : actionView(w, eid);
+    },
     getPlayer(playerId = 0) {
       const eid = w.players.get(playerId);
       if (eid === undefined) return undefined;

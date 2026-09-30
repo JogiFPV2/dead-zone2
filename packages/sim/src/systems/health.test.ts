@@ -63,9 +63,17 @@ describe('health: wounds, bleeding, bandages', () => {
     send(sim, { type: 'debugWound', part: 'torso_lower', wound: 'deep' });
     sim.step();
     expect(sim.getSurvival()!.stats.bleeding).toBe(cfg.types.deep.bleeding);
+    send(sim, { type: 'debugGiveItem', itemId: 'fixture:bandage' });
     send(sim, { type: 'bandage', part: 'torso_lower', itemId: 'fixture:bandage' });
     sim.step();
+    // A timed action (`medical.durationMin` = 3): still bleeding until it completes.
+    expect(sim.getAction()).toMatchObject({ kind: 'bandage', part: 'torso_lower' });
+    expect(sim.getSurvival()!.stats.bleeding).toBeGreaterThan(0);
+    runMinutes(sim, 3);
+    expect(sim.getAction()).toBeNull();
     expect(sim.getSurvival()!.stats.bleeding).toBe(0);
+    // The bandage was used up.
+    expect(sim.getInventory()!.containers![0]!.items).toEqual([]);
     expect(sim.getSurvival()!.wounds[0]).toMatchObject({ bandaged: true, bandageDirty: false });
     runMinutes(sim, cfg.bandage.dirtyAfterMin + 1);
     const w = sim.getSurvival()!.wounds[0]!;
@@ -77,6 +85,10 @@ describe('health: wounds, bleeding, bandages', () => {
   it('rejects bandages on parts without wounds and non-bandage items', () => {
     const sim = survivalSim(content);
     send(sim, { type: 'debugWound', part: 'hand_l', wound: 'scratch' });
+    send(sim, { type: 'bandage', part: 'hand_l' });
+    sim.step();
+    expect(rejected(sim)).toEqual(['no-item']);
+    send(sim, { type: 'debugGiveItem', itemId: 'fixture:bandage' });
     send(sim, { type: 'bandage', part: 'hand_r' });
     send(sim, { type: 'bandage', part: 'hand_l', itemId: 'fixture:pills' });
     send(sim, { type: 'bandage', part: 'hand_l', itemId: 'fixture:nope' });
@@ -91,6 +103,7 @@ describe('health: wounds, bleeding, bandages', () => {
     const dressed = survivalSim(fixtureContent(noDirt));
     for (const sim of [open, dressed])
       send(sim, { type: 'debugWound', part: 'neck', wound: 'scratch' });
+    send(dressed, { type: 'debugGiveItem', itemId: 'fixture:quick-bandage' });
     send(dressed, { type: 'bandage', part: 'neck' });
     const heal = cfg.types.scratch.healMin;
     runMinutes(open, heal / cfg.bandage.healMul + 2);
@@ -114,6 +127,7 @@ describe('health: wounds, bleeding, bandages', () => {
       fixtureContent({ survival: { wounds: { dirtInfection: { unbandagedChancePerMin: 1 } } } }),
     );
     send(clean, { type: 'debugWound', part: 'foot_l', wound: 'scratch' });
+    send(clean, { type: 'debugGiveItem', itemId: 'fixture:quick-bandage' });
     send(clean, { type: 'bandage', part: 'foot_l' });
     runMinutes(clean, 10);
     expect(clean.getSurvival()!.wounds[0]!.infected).toBe(false);

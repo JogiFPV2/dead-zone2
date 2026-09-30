@@ -19,7 +19,7 @@ export class TileGrid {
     return this.lastChunk;
   }
 
-  private layer(tx: number, ty: number, z: number, name: keyof SimChunk): number {
+  private layer(tx: number, ty: number, z: number, name: 'floor' | 'edgeN' | 'edgeW'): number {
     const cx = Math.floor(tx / CHUNK_SIZE);
     const cy = Math.floor(ty / CHUNK_SIZE);
     const chunk = this.chunkAt(cx, cy, z);

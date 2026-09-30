@@ -22,7 +22,7 @@ export type MainToWorker =
       spawn?: SimSpawn | undefined;
       /** Content packs (raw JSON files, base first); the worker validates and builds the bundle. */
       content?: SimContentSource | undefined;
-      /** Enables debug commands (`debugWound`, `debugStat`). */
+      /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`). */
       dev?: boolean | undefined;
     }
   | { kind: 'cmd'; cmd: Command }

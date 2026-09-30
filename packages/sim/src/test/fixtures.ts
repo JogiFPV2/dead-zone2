@@ -14,6 +14,11 @@ export interface MapSpec {
   floor?: (x: number, y: number) => number;
   wallN?: (x: number, y: number) => boolean;
   wallW?: (x: number, y: number) => boolean;
+  /** Map objects in world tiles (storage, placeables). */
+  objects?: readonly { contentId: string; x: number; y: number }[];
+  /** Room id per world tile (0 = outside) and room id → room type (same for every chunk). */
+  room?: (x: number, y: number) => number;
+  rooms?: Record<string, string>;
 }
 
 /** Builds an in-memory map on level 0 covering [0, width) × [0, height). */
@@ -36,7 +41,32 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           edgeW[i] = spec.wallW?.(x, y) ? 1 : 0;
         }
       }
-      chunks.push({ cx, cy, z: 0, floor, edgeN, edgeW });
+      const room = new Uint16Array(CHUNK_TILES);
+      if (spec.room) {
+        for (let i = 0; i < CHUNK_TILES; i++) {
+          room[i] = spec.room(
+            cx * CHUNK_SIZE + (i % CHUNK_SIZE),
+            cy * CHUNK_SIZE + ((i / CHUNK_SIZE) | 0),
+          );
+        }
+      }
+      const objects = (spec.objects ?? [])
+        .filter((o) => Math.floor(o.x / CHUNK_SIZE) === cx && Math.floor(o.y / CHUNK_SIZE) === cy)
+        .map((o) => ({
+          contentId: o.contentId,
+          x: o.x - cx * CHUNK_SIZE,
+          y: o.y - cy * CHUNK_SIZE,
+        }));
+      chunks.push({
+        cx,
+        cy,
+        z: 0,
+        floor,
+        edgeN,
+        edgeW,
+        ...(spec.room ? { room, rooms: spec.rooms ?? {} } : {}),
+        ...(objects.length > 0 ? { objects } : {}),
+      });
     }
   }
   return simMapFromData({ chunks });

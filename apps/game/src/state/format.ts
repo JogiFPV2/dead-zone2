@@ -26,6 +26,16 @@ export function describeEvent(e: SimEvent): string {
       return `day ${e.day}`;
     case 'commandRejected':
       return `command ${e.seq} rejected (${e.reason})`;
+    case 'actionStarted':
+      return `action ${e.action} → tick ${e.endTick}`;
+    case 'actionCompleted':
+      return `action ${e.action} done`;
+    case 'actionInterrupted':
+      return `action ${e.action} interrupted (${e.reason})`;
+    case 'containerOpened':
+      return `container ${e.container} opened${e.firstSearch ? ' (searched)' : ''}`;
+    case 'itemUsed':
+      return `used ${e.itemId}${e.freshness ? ` (${e.freshness})` : ''}`;
   }
 }
 

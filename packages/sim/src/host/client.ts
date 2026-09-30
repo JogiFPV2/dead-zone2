@@ -1,6 +1,9 @@
 import type {
   BodyPart,
   Command,
+  ContainerId,
+  EquipSlot,
+  ItemId,
   DebugStat,
   SimContentSource,
   SimEvent,
@@ -43,7 +46,23 @@ export interface SimWorkerClient {
   aim(x: number, y: number): void;
   sleep(): void;
   wake(): void;
+  /** Timed action with a bandage from the inventory (`itemId` = content id filter). */
   bandage(part: BodyPart, itemId?: string): void;
+  pickUp(item: ItemId, count?: number): void;
+  drop(item: ItemId, count?: number): void;
+  moveItem(item: ItemId, to: ContainerId, count?: number): void;
+  equip(item: ItemId, slot: EquipSlot): void;
+  unequip(slot: EquipSlot): void;
+  /** Opens a container (first time for world storage: timed search). */
+  openContainer(container: ContainerId): void;
+  closeContainer(): void;
+  /** Eat / drink / unpack; medical items need `part`. */
+  useItem(item: ItemId, part?: BodyPart): void;
+  cancelAction(): void;
+  placeStorage(item: ItemId, x: number, y: number): void;
+  pickUpStorage(container: ContainerId): void;
+  /** Dev only (init `dev: true`). */
+  debugGiveItem(itemId: string, count?: number): void;
   /** Dev only (init `dev: true`). */
   debugWound(part: BodyPart, wound: WoundKind, zombie?: boolean): void;
   /** Dev only (init `dev: true`). */
@@ -101,6 +120,13 @@ export function createSimWorkerClient(
 
   // The worker moves commands for past ticks to its current tick, so the last seen tick is safe.
   const nextHeader = () => ({ tick, playerId, seq: seq++ });
+  type Payload = Command extends infer C
+    ? C extends Command
+      ? Omit<C, 'tick' | 'playerId' | 'seq'>
+      : never
+    : never;
+  const cmd = (payload: Payload): void =>
+    post({ kind: 'cmd', cmd: { ...nextHeader(), ...payload } });
 
   return {
     init: (seed, map, opts) =>
@@ -122,6 +148,19 @@ export function createSimWorkerClient(
         kind: 'cmd',
         cmd: { ...nextHeader(), type: 'bandage', part, ...(itemId ? { itemId } : {}) },
       }),
+    pickUp: (item, count) => cmd({ type: 'pickUp', item, ...(count ? { count } : {}) }),
+    drop: (item, count) => cmd({ type: 'drop', item, ...(count ? { count } : {}) }),
+    moveItem: (item, to, count) => cmd({ type: 'moveItem', item, to, ...(count ? { count } : {}) }),
+    equip: (item, slot) => cmd({ type: 'equip', item, slot }),
+    unequip: (slot) => cmd({ type: 'unequip', slot }),
+    openContainer: (container) => cmd({ type: 'openContainer', container }),
+    closeContainer: () => cmd({ type: 'closeContainer' }),
+    useItem: (item, part) => cmd({ type: 'useItem', item, ...(part ? { part } : {}) }),
+    cancelAction: () => cmd({ type: 'cancelAction' }),
+    placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
+    pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
+    debugGiveItem: (itemId, count) =>
+      cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),
     debugWound: (part, wound, zombie) =>
       post({
         kind: 'cmd',

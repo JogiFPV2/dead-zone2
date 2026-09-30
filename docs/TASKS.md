@@ -32,13 +32,13 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 3 — Przedmioty i ekwipunek
 - [x] Definicje przedmiotów w JSON (Modules)
-- [ ] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
+- [x] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
 - [ ] Szybkie sloty 1–5 (Silnik + Designer)
-- [ ] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)
-- [ ] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja)
-- [ ] Kontenery i akcja „Przeszukaj” z czasem (Symulacja)
+- [x] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)
+- [~] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja) — w sim gotowe; schowki z mapy wymagają przekazania `objects`/`rooms` chunków w `apps/game` (Silnik), kolizje postawionych skrzyń i zapis w diffie chunka później
+- [x] Kontenery i akcja „Przeszukaj” z czasem (Symulacja)
 - [ ] Okno ekwipunku i przeciąganie przedmiotów (Silnik + Designer)
-- [ ] Psucie się jedzenia (Symulacja)
+- [x] Psucie się jedzenia (Symulacja)
 
 ## Etap 4 — Zombie i walka
 - [ ] AI: wzrok, słuch, wędrowanie, gonienie (Symulacja)

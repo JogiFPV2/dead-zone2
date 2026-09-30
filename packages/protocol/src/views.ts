@@ -1,4 +1,5 @@
-import type { BodyPart, WoundKind } from './commands.js';
+import type { BodyPart, ContainerId, EquipSlot, ItemId, WoundKind } from './commands.js';
+import type { ActionKind, Freshness } from './events.js';
 
 /**
  * UI views (docs/sim-architecture.md 4.2): sent by the worker as `{ kind: 'view' }` only when
@@ -70,8 +71,98 @@ export interface PlayerView {
   wounds?: WoundView[];
 }
 
+/** One item instance (names, icons and kinds come from content by `def`). */
+export interface ItemView {
+  id: ItemId;
+  /** Content id, e.g. `base:canned-beans`. */
+  def: string;
+  count: number;
+  /** Total weight in kg (stack × `weightKg` + contents, before bag weight reduction). */
+  weightKg: number;
+  /** Durability points left (items with `durability`; the max is in content). */
+  condition?: number;
+  /** Portions (food), uses (drink, medical) or loaded rounds (guns, magazines) left. */
+  uses?: number;
+  /** Items with `spoilage` only. */
+  freshness?: Freshness;
+  /** Own container (bags, placed storage), opened like any other container. */
+  container?: ContainerId;
+  /** Slots this item is equipped in (two-handed: both hands). */
+  equipped?: EquipSlot[];
+  /** Placed on the ground as storage (render it as furniture). */
+  placed?: boolean;
+}
+
+export type ContainerKind = 'inventory' | 'bag' | 'world' | 'ground';
+
+/** Full content of one container (sent whole when anything in it changes). */
+export interface ContainerView {
+  id: ContainerId;
+  kind: ContainerKind;
+  /** Container type id (`containers/`), e.g. `base:fridge`; world and placed storage. */
+  type?: string;
+  /** Tile of world storage and ground piles. */
+  x?: number;
+  y?: number;
+  z?: number;
+  /** Null = no limit (main inventory: see `InventoryView.hardLimitKg`; ground). */
+  capacityKg: number | null;
+  /** Sum of the items' `weightKg`. */
+  weightKg: number;
+  items: ItemView[];
+}
+
+export interface InventoryView {
+  /** Main inventory container id (`moveItem.to`). */
+  container: ContainerId;
+  /** Carried weight after bag weight reduction. */
+  loadKg: number;
+  /** Carry capacity (`worldSettings.carry.baseCapacityKg` + modifiers). */
+  capacityKg: number;
+  /** Nothing more can be picked up above this (`capacityKg × hardLimitMultiplier`). */
+  hardLimitKg: number;
+  /** Stat `carry-load`: `loadKg / capacityKg × 100` (moodle `base:heavy-load` at 100+). */
+  carryLoad: number;
+  equipped: Partial<Record<EquipSlot, ItemId>>;
+  /** Changed containers only: main inventory and containers of carried bags. */
+  containers?: ContainerView[];
+  /** Carried containers that are gone (bag dropped or moved away). */
+  removed?: ContainerId[];
+}
+
+/** A storage or ground pile within reach (for the loot panel / highlights). */
+export interface NearbyContainerView {
+  id: ContainerId;
+  kind: ContainerKind;
+  type?: string;
+  x: number;
+  y: number;
+  z: number;
+  /** This player searched it already (opening is instant). */
+  searched: boolean;
+}
+
+export interface ActionView {
+  kind: ActionKind;
+  /** Progress bar: the UI interpolates between these ticks. */
+  startTick: number;
+  endTick: number;
+  item?: ItemId;
+  container?: ContainerId;
+  part?: BodyPart;
+  /** Actions waiting behind this one. */
+  queued: number;
+}
+
 export interface SimViewPatch {
   clock?: ClockView;
   /** Local player (id 0). */
   player?: PlayerView;
+  inventory?: InventoryView;
+  /** Opened container (loot panel), full each time it changes; null = closed. */
+  container?: ContainerView | null;
+  /** Full list of containers in reach when it changes. */
+  nearby?: NearbyContainerView[];
+  /** Current timed action; null = none. */
+  action?: ActionView | null;
 }

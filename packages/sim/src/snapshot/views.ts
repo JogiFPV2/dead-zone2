@@ -18,6 +18,7 @@ import {
   ticksPerGameMinute,
 } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
+import { actionView, inventoryView, nearbyView, openContainerView } from '../items/views.js';
 import { threatNearby } from '../systems/sleep.js';
 import { bandageDirty, woundBleeding } from '../survival/wounds.js';
 
@@ -51,6 +52,11 @@ export class ViewTracker {
   private readonly stats = new Map<ViewStat, number>();
   private moodles: number[] = [];
   private woundsKey = '';
+  private invHeaderKey = '';
+  private readonly invContainers = new Map<number, string>();
+  private openKey = '';
+  private nearbyKey = '';
+  private actionKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -100,6 +106,55 @@ export class ViewTracker {
       }
       if (Object.keys(p).length > 0) patch.player = p;
     }
-    return patch.clock || patch.player ? patch : undefined;
+    if (w.items && eid !== undefined) this.diffItems(w, eid, patch);
+    return Object.keys(patch).length > 0 ? patch : undefined;
+  }
+
+  /** Inventory (header + changed carried containers), open container, nearby, action. */
+  private diffItems(w: SimWorld, eid: number, patch: SimViewPatch): void {
+    const inv = inventoryView(w, eid);
+    if (inv) {
+      const { containers = [], ...header } = inv;
+      const changed = [];
+      const seen = new Set<number>();
+      for (const c of containers) {
+        seen.add(c.id);
+        const key = JSON.stringify(c);
+        if (this.invContainers.get(c.id) !== key) {
+          this.invContainers.set(c.id, key);
+          changed.push(c);
+        }
+      }
+      const removed = [...this.invContainers.keys()].filter((id) => !seen.has(id));
+      for (const id of removed) this.invContainers.delete(id);
+      const headerKey = JSON.stringify(header);
+      if (headerKey !== this.invHeaderKey || changed.length > 0 || removed.length > 0) {
+        this.invHeaderKey = headerKey;
+        patch.inventory = {
+          ...header,
+          ...(changed.length > 0 ? { containers: changed } : {}),
+          ...(removed.length > 0 ? { removed } : {}),
+        };
+      }
+    }
+    const open = openContainerView(w, eid);
+    const openKey = JSON.stringify(open);
+    if (openKey !== this.openKey) {
+      // First view: `null` is only sent after something was open.
+      if (this.openKey !== '' || open) patch.container = open;
+      this.openKey = openKey;
+    }
+    const nearby = nearbyView(w, eid);
+    const nearbyKey = JSON.stringify(nearby);
+    if (nearbyKey !== this.nearbyKey) {
+      this.nearbyKey = nearbyKey;
+      patch.nearby = nearby;
+    }
+    const action = actionView(w, eid);
+    const actionKey = JSON.stringify(action);
+    if (actionKey !== this.actionKey) {
+      if (this.actionKey !== '' || action) patch.action = action;
+      this.actionKey = actionKey;
+    }
   }
 }

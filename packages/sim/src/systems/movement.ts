@@ -21,7 +21,9 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     let speed = MoveStats.speedPerTick[eid] ?? 0;
     // Asleep or dead: no movement (the held intent stays for after waking).
     if (s && (s.asleep[eid] || s.dead[eid])) speed = 0;
-    else if (s) speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed));
+    else if (s) {
+      speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed) * (s.bagSpeed[eid] ?? 1));
+    }
     const vx = Math.fround((MoveIntent.dx[eid] ?? 0) * speed);
     const vy = Math.fround((MoveIntent.dy[eid] ?? 0) * speed);
     Velocity.x[eid] = vx;

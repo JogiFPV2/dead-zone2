@@ -14,9 +14,11 @@ function script(): Command[] {
     ({ ...H, tick, seq: seq++, ...cmd }) as Command;
   return [
     c(0, { type: 'debugWound', part: 'forearm_l', wound: 'bite', zombie: true }),
+    c(0, { type: 'debugGiveItem', itemId: 'fixture:bandage', count: 2 }),
     c(0, { type: 'debugWound', part: 'shin_r', wound: 'scratch', zombie: true }),
     c(0, { type: 'move', dx: 1, dy: 0.25 }),
     c(400, { type: 'debugWound', part: 'torso_lower', wound: 'laceration', zombie: true }),
+    c(1190, { type: 'move', dx: 0, dy: 0 }),
     c(1200, { type: 'bandage', part: 'forearm_l', itemId: 'fixture:bandage' }),
     c(2000, { type: 'move', dx: -0.5, dy: 1 }),
     c(3000, { type: 'move', dx: 0, dy: 0 }),
@@ -72,7 +74,7 @@ describe('survival determinism', () => {
   });
 
   it('matches the golden hash (update consciously with `vitest -u` and a note in the PR)', () => {
-    expect(runScript(5, 18_000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"a4bdc4ee"`);
+    expect(runScript(5, 18_000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"dd3db638"`);
   });
 
   it('the hash covers survival state (stats, wounds, virus) and the seed changes the rolls', () => {

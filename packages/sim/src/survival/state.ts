@@ -82,6 +82,10 @@ export interface SurvivalWorld {
   readonly modAdd: Float32Array;
   /** Wounds per player StableId, in wound id order. */
   readonly wounds: Map<number, Wound[]>;
+  /** Stat `carry-load` (carried kg / capacity × 100), written by the inventory system. */
+  readonly carryLoad: Float32Array;
+  /** Speed factor of worn bags (`bag.movementPenalty` × fill), written by the inventory system. */
+  readonly bagSpeed: Float32Array;
   nextWoundId: number;
   /** Last absolute game minute processed by the per-minute systems. */
   lastMinute: number;
@@ -111,6 +115,8 @@ export function createSurvivalWorld(
     modMul: new Float32Array(mods).fill(1),
     modAdd: new Float32Array(mods),
     wounds: new Map(),
+    carryLoad: new Float32Array(capacity),
+    bagSpeed: new Float32Array(capacity).fill(1),
     nextWoundId: 1,
     lastMinute: startMinute,
   };
@@ -128,6 +134,8 @@ export function initVitals(s: SurvivalWorld, eid: number): void {
   s.dead[eid] = 0;
   s.asleep[eid] = 0;
   s.virus[eid] = 0;
+  s.carryLoad[eid] = 0;
+  s.bagSpeed[eid] = 1;
   for (let i = 0; i < MOD_STATS.length; i++) {
     s.modMul[eid * MOD_STATS.length + i] = 1;
     s.modAdd[eid * MOD_STATS.length + i] = 0;
@@ -144,6 +152,7 @@ export const clampStat = (v: number): number => Math.fround(v < 0 ? 0 : v > 100 
 /** Moodle stat value (content stat id), or undefined for stats the sim does not track yet. */
 export function statValue(s: SurvivalWorld, eid: number, stat: string): number | undefined {
   if (stat === 'injury') return Math.fround(100 - (s.vitals.health[eid] ?? 0));
+  if (stat === 'carry-load') return s.carryLoad[eid] ?? 0;
   const arr = (s.vitals as Record<string, Float32Array | undefined>)[stat];
   return arr ? (arr[eid] ?? 0) : undefined;
 }

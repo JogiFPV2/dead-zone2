@@ -217,8 +217,10 @@ describe('survival over the worker protocol', () => {
     client.init(1, openMap(), { content: { packs: [fixturePack()] }, dev: true });
     client.debugWound('hand_r', 'laceration');
     h.advance(100);
+    client.debugGiveItem('fixture:bandage');
     client.bandage('hand_r', 'fixture:bandage');
-    h.advance(100);
+    // Bandaging is a timed action: 3 game minutes = 7.5 s at ×1.
+    h.advance(8000);
     expect(events.map((e) => e.type)).toContain('wounded');
     const woundViews = views.flatMap((v) => (v.player?.wounds ? [v.player.wounds] : []));
     expect(woundViews.at(-1)).toEqual([
@@ -228,6 +230,53 @@ describe('survival over the worker protocol', () => {
     expect(moodles).toContainEqual({ id: 'fixture:bleeding', level: 1 });
     expect(moodles.at(-1)).toEqual({ id: 'fixture:bleeding', level: 0 });
     expect(h.host.droppedMessages).toBe(0);
+  });
+
+  it('item views: nearby storage, search progress, loot panel and inventory deltas', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const views: SimViewPatch[] = [];
+    client.onView((v) => views.push(v));
+    const map = openMap();
+    const chunk = { ...map.chunks[0]!, objects: [{ contentId: 'fixture:cabinet', x: 3, y: 2 }] };
+    client.init(
+      1,
+      { chunks: [chunk] },
+      {
+        content: { packs: [fixturePack()] },
+        dev: true,
+        spawn: { x: 2.5, y: 2.5, z: 0 },
+      },
+    );
+    h.advance(100);
+    const nearby = views.flatMap((v) => v.nearby ?? []);
+    expect(nearby).toEqual([
+      { id: 1, kind: 'world', type: 'fixture:cabinet', x: 3, y: 2, z: 0, searched: false },
+    ]);
+    const inv = views.find((v) => v.inventory)!.inventory!;
+    expect(inv).toMatchObject({ container: 2, loadKg: 0, equipped: {} });
+    expect(inv.containers).toEqual([
+      { id: 2, kind: 'inventory', capacityKg: null, weightKg: 0, items: [] },
+    ]);
+    client.openContainer(1);
+    h.advance(200);
+    expect(views.at(-1)?.action).toMatchObject({ kind: 'search', container: 1, queued: 0 });
+    // searchMin 2 → 5 s at ×1.
+    h.advance(5200);
+    const opened = views.find((v) => v.container)!.container!;
+    expect(opened).toMatchObject({ id: 1, kind: 'world', type: 'fixture:cabinet' });
+    expect(views.some((v) => v.action === null)).toBe(true);
+    const n = views.length;
+    client.debugGiveItem('fixture:brick', 2);
+    h.advance(200);
+    const delta = views.slice(n).find((v) => v.inventory)!.inventory!;
+    expect(delta.containers).toEqual([
+      expect.objectContaining({
+        id: 2,
+        items: [expect.objectContaining({ def: 'fixture:brick' })],
+      }),
+    ]);
+    expect(delta.loadKg).toBe(4);
   });
 
   it('without dev, debug commands are rejected by the sim', () => {

@@ -1,6 +1,8 @@
+import { actionsSystem } from '../actions/queue.js';
 import { clockSystem, type MinuteTicks } from '../systems/clock.js';
 import { healthSystem } from '../systems/health.js';
 import { inputSystem } from '../systems/input.js';
+import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { facingSystem, movementSystem } from '../systems/movement.js';
@@ -26,8 +28,10 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
   [
     { name: 'commands.apply', run: (w) => inputSystem(w) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
+    { name: 'actions', run: (w) => actionsSystem(w) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
+    { name: 'inventory', run: (w) => inventorySystem(w) },
     { name: 'health', run: (w, ctx) => healthSystem(w, ctx.minutes.first, ctx.minutes.count) },
     {
       name: 'survival',

@@ -1,4 +1,4 @@
-import type { BodyPart, PlayerId, WoundKind } from './commands.js';
+import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -18,10 +18,34 @@ export type CommandRejectReason =
   /** Nothing to act on (e.g. bandage on a part without wounds). */
   | 'invalid-target'
   /** `itemId` is not a known item usable for this command. */
-  | 'unknown-item';
+  | 'unknown-item'
+  /** No such item / container, or not usable this way (e.g. eating a hammer). */
+  | 'no-item'
+  /** Target container or item is not within reach (1.5 tiles) of the player. */
+  | 'out-of-range'
+  /** Does not fit: container capacity, bag tags, or the carry hard limit. */
+  | 'no-space'
+  /** Needs a tool the player does not carry (e.g. a can opener, `food.openWith`). */
+  | 'missing-tool'
+  /** The action queue is full. */
+  | 'busy';
 
 export type DeathCause =
   'bleeding' | 'starvation' | 'dehydration' | 'infection' | 'temperature' | 'wounds' | 'debug';
+
+/** Timed actions (docs/sim-architecture.md, `actions`). */
+export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack';
+
+export type ActionInterruptReason =
+  /** Movement intent while the action runs. */
+  | 'moved'
+  | 'cancelled'
+  /** Zombies nearby (hook, never until Stage 4). */
+  | 'threat'
+  | 'asleep'
+  | 'died'
+  /** The item or container is gone or out of reach when the action should complete. */
+  | 'target-lost';
 
 export type WakeReason = 'command' | 'rested' | 'max-duration' | 'died';
 
@@ -57,4 +81,41 @@ export type SimEvent =
     }
   /** Suggested game speed (sleep: `sleep.timeScaleHint`, waking: 1). The host decides. */
   | { type: 'timeScaleHint'; tick: number; speed: 1 | 2 | 4 }
-  | { type: 'dayPassed'; tick: number; day: number };
+  | { type: 'dayPassed'; tick: number; day: number }
+  | {
+      type: 'actionStarted';
+      tick: number;
+      playerId: PlayerId;
+      action: ActionKind;
+      endTick: number;
+      item?: ItemId;
+      container?: ContainerId;
+    }
+  | { type: 'actionCompleted'; tick: number; playerId: PlayerId; action: ActionKind }
+  | {
+      type: 'actionInterrupted';
+      tick: number;
+      playerId: PlayerId;
+      action: ActionKind;
+      reason: ActionInterruptReason;
+    }
+  /** Loot panel opened (`firstSearch` = this search generated the loot). */
+  | {
+      type: 'containerOpened';
+      tick: number;
+      playerId: PlayerId;
+      container: ContainerId;
+      firstSearch: boolean;
+    }
+  /** Ate / drank / used an item (content id), e.g. for sounds and toasts. */
+  | {
+      type: 'itemUsed';
+      tick: number;
+      playerId: PlayerId;
+      action: ActionKind;
+      itemId: string;
+      freshness?: Freshness;
+    };
+
+/** Food and drink state from `spoilage.freshMin` / `rottenMin` (lazy, per game minute). */
+export type Freshness = 'fresh' | 'stale' | 'rotten';

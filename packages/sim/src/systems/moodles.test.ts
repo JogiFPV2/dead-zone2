@@ -19,7 +19,7 @@ describe('moodles', () => {
     ]);
     expect(cold.enterAt[0]).toBe(Math.fround(36));
     expect(index.coldMoodles).toEqual([2]);
-    expect([...index.bandageItems]).toEqual(['fixture:bandage']);
+    expect([...index.bandageItems]).toEqual(['fixture:bandage', 'fixture:quick-bandage']);
   });
 
   it('rising: enters at enterAt, leaves only below exitAt (hysteresis), can jump levels', () => {

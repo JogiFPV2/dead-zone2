@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   BODY_PARTS,
   DEBUG_STATS,
+  EQUIP_SLOTS,
   MAX_PLAYER_ID,
   MAX_WORLD_COORD,
   U32_MAX,
@@ -13,7 +14,7 @@ import {
   type Command,
   type CommandParseResult,
 } from './commands.js';
-import { CHUNK_TILES } from './map.js';
+import { CHUNK_SIZE, CHUNK_TILES } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
 const header = {
@@ -56,6 +57,80 @@ export const bandageCommandSchema = z.strictObject({
   itemId: contentId.optional(),
 });
 
+const u32 = z.number().int().min(0).max(U32_MAX);
+const itemId = u32;
+const containerId = u32;
+const count = z.number().int().min(1).max(100_000).optional();
+const tileCoord = z.number().int().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
+
+export const pickUpCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('pickUp'),
+  item: itemId,
+  count,
+});
+export const dropCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('drop'),
+  item: itemId,
+  count,
+});
+export const moveItemCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('moveItem'),
+  item: itemId,
+  to: containerId,
+  count,
+});
+export const equipCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('equip'),
+  item: itemId,
+  slot: z.enum(EQUIP_SLOTS),
+});
+export const unequipCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('unequip'),
+  slot: z.enum(EQUIP_SLOTS),
+});
+export const openContainerCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('openContainer'),
+  container: containerId,
+});
+export const closeContainerCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('closeContainer'),
+});
+export const useItemCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('useItem'),
+  item: itemId,
+  part: bodyPart.optional(),
+});
+export const cancelActionCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('cancelAction'),
+});
+export const placeStorageCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('placeStorage'),
+  item: itemId,
+  x: tileCoord,
+  y: tileCoord,
+});
+export const pickUpStorageCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('pickUpStorage'),
+  container: containerId,
+});
+export const debugGiveItemCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugGiveItem'),
+  itemId: contentId,
+  count: z.number().int().min(1).max(1000).optional(),
+});
+
 export const debugWoundCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugWound'),
@@ -78,8 +153,20 @@ export const commandSchema = z.discriminatedUnion('type', [
   sleepCommandSchema,
   wakeCommandSchema,
   bandageCommandSchema,
+  pickUpCommandSchema,
+  dropCommandSchema,
+  moveItemCommandSchema,
+  equipCommandSchema,
+  unequipCommandSchema,
+  openContainerCommandSchema,
+  closeContainerCommandSchema,
+  useItemCommandSchema,
+  cancelActionCommandSchema,
+  placeStorageCommandSchema,
+  pickUpStorageCommandSchema,
   debugWoundCommandSchema,
   debugStatCommandSchema,
+  debugGiveItemCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */
@@ -98,9 +185,28 @@ const layer = z.custom<Uint16Array>(
 );
 const chunkInt = z.number().int().min(-0x8000).max(0x7fff);
 
+const localTile = z
+  .number()
+  .int()
+  .min(0)
+  .max(CHUNK_SIZE - 1);
+
 export const simMapDataSchema = z.object({
   chunks: z.array(
-    z.object({ cx: chunkInt, cy: chunkInt, z: chunkInt, floor: layer, edgeN: layer, edgeW: layer }),
+    z.object({
+      cx: chunkInt,
+      cy: chunkInt,
+      z: chunkInt,
+      floor: layer,
+      edgeN: layer,
+      edgeW: layer,
+      room: layer.optional(),
+      rooms: z.record(z.string().regex(/^[1-9]\d{0,4}$/), contentId).optional(),
+      objects: z
+        .array(z.object({ contentId, x: localTile, y: localTile }))
+        .max(CHUNK_TILES * 4)
+        .optional(),
+    }),
   ),
 });
 

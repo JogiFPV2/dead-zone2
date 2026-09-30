@@ -204,8 +204,9 @@ Jedna lista, wykonywana w każdym ticku:
 |---|---|---|---|
 | 1 | Wejście | `commands.apply` | komendy ticku N → intencje (`MoveIntent`, `ActionRequest`…) |
 | 2 | Czas | `clock` | czas gry, dzień, które minuty gry upłynęły w ticku (systemy 12–14 liczą raz na minutę gry) |
-| 3 | Akcje | `actions` | postęp akcji czasowych, zakończenie → efekty (craft, jedzenie, bandaż, przeszukanie) |
-| 4 | Ruch | `movement` | gracz: intencja → prędkość (waga, zmęczenie, moodle), kolizje z gridem |
+| 3 | Akcje | `actions` | przerwania (ruch, sen, śmierć, zagrożenie), postęp akcji czasowych, zakończenie → efekty (jedzenie, picie, bandaż, przeszukanie, rozpakowanie; później craft) |
+| 4 | Ruch | `movement` | gracz: intencja → prędkość (moodle, w tym `heavy-load`, kara toreb), kolizje z gridem |
+| 4a | Ekwipunek | `inventory` | stat `carry-load`, współczynnik prędkości toreb, zamknięcie panelu kontenera poza zasięgiem (co tick, po ruchu) |
 | 5 | Świat | `doors` | otwieranie, zamykanie, uderzenia zombie, barykady → aktualizacja gridu |
 | 6 | Hałas | `noise.collect` | hałasy z ruchu, akcji, walki z poprzedniego ticku i bieżących akcji |
 | 7 | AI | `ai.perception` | wzrok i słuch zombie (rozłożone na ticki) |
@@ -221,7 +222,7 @@ Jedna lista, wykonywana w każdym ticku:
 | 17 | Porządek | `lifecycle` | śmierć, zamiana zombie w zwłoki, usuwanie encji, `StableId` |
 | 18 | Wyjście | `spatial.rebuild`, `views.diff` | odświeżenie spatial hash i widoków UI; eventy gotowe do odczytu |
 
-`inventory`, `containers`, `storage`, `spoilage` i `crafting` nie mają własnego kroku co tick. Działają przez komendy (1) i handlery akcji (3), a psucie liczy się leniwie. Zmiana kolejności to decyzja architektoniczna: wymaga aktualizacji tego dokumentu i złotych hashy w testach.
+`containers`, `storage`, `spoilage` i `crafting` nie mają własnego kroku co tick. Działają przez komendy (1) i handlery akcji (3), a psucie liczy się leniwie. `inventory` (4a) tylko przelicza obciążenie i zasięg panelu; przenoszenie przedmiotów robią komendy. Zmiana kolejności to decyzja architektoniczna: wymaga aktualizacji tego dokumentu i złotych hashy w testach.
 
 ### 2.4 System komend
 Typy komend i snapshotów leżą w `packages/protocol` (zgodnie z PLAN.md), a sim je importuje. Koperta:
@@ -251,6 +252,7 @@ type Command =
   | { t: 'reload' } | { t: 'hotbar'; slot: 1 | 2 | 3 | 4 | 5 }
   | { t: 'createCharacter'; profession: string; traits: string[] };
 ```
+- **Stan po Etapie 3** (typy w `protocol/commands.ts`, pole `type` zamiast `t`): `move`, `aim`, `sleep`, `wake`, `bandage {part, itemId?}`, `pickUp {item, count?}`, `drop {item, count?}`, `moveItem {item, to, count?}` (`to` = id kontenera z widoku), `equip {item, slot}` (sloty `EquipSlot` z contentu: `hand_primary` = prawa, `hand_secondary` = lewa, `back`, `belt`, …), `unequip {slot}`, `openContainer {container}`, `closeContainer`, `useItem {item, part?}`, `cancelAction`, `placeStorage {item, x, y}`, `pickUpStorage {container}`, a tylko w trybie dev `debugWound`, `debugStat`, `debugGiveItem {itemId, count?}`. `interact`/`startAction` z listy powyżej zastępują na razie `openContainer` i `useItem`.
 - **Kolejka per tick** (`commands/queue.ts`): `Map<tick, CommandEnvelope[]>`. Przed zastosowaniem sortujemy po `(playerId, seq)`. Komenda z `tick < bieżący` jest w singleplayerze przesuwana na bieżący tick (host i tak nadaje tick), a w multiplayerze odrzucana albo przesuwana zgodnie z polityką serwera (6.4). Komendy z tickiem bardziej w przyszłości niż okno (np. 40 ticków) są odrzucane.
 - **Walidacja dwustopniowa:** (a) strukturalna, czyli schemat zod z `@deadzone/protocol/schema` na granicy hosta (worker lub serwer), poza tickiem (główne wejście `@deadzone/protocol` ma tylko stałe, typy i kodowanie snapshotu, bez zod, więc nie trafia do bundla wątku głównego gry); (b) gameplayowa w `validate.ts` w ticku, na aktualnym stanie: czy gracz żyje, czy przedmiot jest w jego zasięgu i posiadaniu, czy cel jest w zasięgu interakcji (≤ 1,5 kafla), czy receptura jest znana i spełniona. Odrzucenie nie rzuca wyjątku, tylko emituje zdarzenie `commandRejected { seq, reason }`.
 - **Komendy są jedynym wejściem**, więc log `CommandEnvelope[]` plus stan początkowy wystarcza do replaya. Host może go nagrywać (tryb debug, raport błędu).
@@ -319,6 +321,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Wyjścia:** waga i obciążenie dla `movement` i `moodles`, zdarzenia `inventoryChanged` (dla widoku UI), `itemEquipped`.
 - **Zależności:** `core`, `content`.
 - **Etap:** 3.
+- **Stan po Etapie 3:** `items/store.ts`, `items/inventory.ts`, `systems/inventory.ts`. Przedmiot w ekwipunku to rekord `ItemInstance {id, def, loc, count, condition, uses, ageMin, ageStamp, inner, placed}` (bez `createdTick` i `extra`, patrz 9.6); pojemniki to `ItemContainer` rodzaju `inventory` / `bag` / `world` / `ground`. Założony przedmiot zostaje w głównym ekwipunku, a sloty są osobno (`PlayerItems.slots`), więc waga liczy się raz. Szybkie sloty 1–5 jeszcze nie istnieją.
 
 #### Schowki (`systems/storage`)
 - **Odpowiedzialność:** schowki jako kontenery świata z pojemnością (skrzynie, szafki, lodówki, bagażniki później): postawienie skrzyni z przedmiotu (`placeStorage`), podniesienie pustej lub pełnej (waga zawartości wlicza się do przedmiotu), zapis zawartości w diffie chunka, lodówka spowalnia psucie przy zasilaniu (później elektryczność).
@@ -327,6 +330,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Wyjścia:** nowe encje kontenerów, zmiany gridu (przeszkoda), zdarzenia `storagePlaced`, `storagePicked`, oznaczenie chunka jako zmienionego (`chunks.markDirty`).
 - **Zależności:** `inventory`, `containers`, `world/chunks`.
 - **Etap:** 3.
+- **Stan po Etapie 3:** schowki z mapy to kontenery `world` tworzone przy starcie z `objects` chunków (typ z `containers/` albo `placeable.containerType`). Postawiona skrzynia to przedmiot na stosie `ground` z flagą `placed` i własnym kontenerem o typie schowka (bez komponentu ECS i bez kolizji). `pickUpStorage` zamienia schowek z mapy z `pickupItem` w przedmiot z zawartością. Diffy chunków i zapis przyjdą z `save`.
 
 #### Kontenery i przeszukiwanie (`systems/containers`)
 - **Odpowiedzialność:** kontenery z mapy (meble z definicji chunka), **leniwe generowanie lootu** przy pierwszym otwarciu z tablic dobieranych **po parze pokój + pojemnik** (`lootTable.rooms` i `lootTable.containers`, np. `base:room-kitchen` + `base:kitchen-cabinet`; `chance`, `rolls`, wpisy `item` lub zagnieżdżone `table`), z wagą wpisu skalowaną rzadkością (`rarity` × `worldSettings.loot.rarityWeightPct`: `max(1, floor(weight × pct / 100))`, 0 przy pct = 0, same liczby całkowite) (RNG pochodny od seeda i położenia), akcja „Przeszukaj” z czasem zależnym od umiejętności, zbieractwa i cech, stan „przeszukany”.
@@ -335,6 +339,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Wyjścia:** instancje w `ItemStore`, zdarzenia `containerOpened {items}`, `searchComplete`, XP zbieractwa, hałas otwierania (drobny).
 - **Zależności:** `inventory`, `actions`, `world/grid`, `content`, `core/rng`.
 - **Etap:** 3 (kontenery, przeszukiwanie), 7 (loot tables zależne od pomieszczeń).
+- **Stan po Etapie 3:** `items/loot.ts`. Tabela: pierwsza (po id), której `rooms` zawiera typ pomieszczenia schowka, a `containers` jego typ (pusta lista = każdy), inaczej `defaultLootTable` typu. RNG pochodny `deriveSeed(seed, 'loot', x, y, z, typ, ordinal na kaflu)`, generowanie przy pierwszym ukończonym przeszukaniu. Czas przeszukania to `searchMin / search-speed`. Pomieszczenia już działają (warstwa `room` i `rooms` w `SimChunk`).
 
 #### Psucie jedzenia (`systems/spoilage`)
 - **Odpowiedzialność:** świeżość jedzenia bez tykania każdego przedmiotu. Świeżość to funkcja `(tick − createdTick) × współczynnik miejsca` z progami „świeże / czerstwe / zepsute” z definicji. Zmiana miejsca (lodówka, gotowanie) zapisuje „wiek efektywny” w `ItemInstance.extra` albo przesuwa `createdTick`.
@@ -343,6 +348,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Wyjścia:** funkcje zapytań `freshness(item, tick)` dla `views`, efektów jedzenia (zatrucie z zepsutego) i hashu (liczone deterministycznie z ticku).
 - **Zależności:** `inventory`, `content`, `clock`.
 - **Etap:** 3.
+- **Stan po Etapie 3:** `items/spoilage.ts`. Zamiast `createdTick` przedmiot ma `ageMin` (wiek efektywny) i `ageStamp` (minuta gry zapisu); wiek teraz = `ageMin + (teraz − ageStamp) × mnożnik kontenera`, a każde przeniesienie najpierw zapisuje wiek. Mnożnik to `spoilageMultiplier` typu schowka (także postawionej skrzyni), przy `requiresPower` tylko z prądem (`ItemStore.powered`, na razie zawsze `true`). Łupy starzeją się od startu świata. `rottenInto` jeszcze nie działa.
 
 #### Hałas (`systems/noise`)
 - **Odpowiedzialność:** jeden bufor hałasów na tick: `{x, y, radius, volume, sourceKind, sourceId}`. Źródła: kroki (bieg głośniej, skradanie ciszej), strzał (zależny od broni), rozbicie okna, walenie w drzwi, upadek rzuconego przedmiotu (wabik), akcje (barykadowanie młotkiem), alarmy (później). Tłumienie przez ściany: promień efektywny liczymy prosto, ×0,5 za każdą ścianę na linii (DDA po krawędziach), bez propagacji dźwięku po grafie w demo.
@@ -403,6 +409,7 @@ Format opisu: **Odpowiedzialność / Komponenty i stan / Wejścia / Wyjścia / Z
 - **Komponenty:** `ActionQueue {currentKind u8, startTick u32, endTick u32, argsRef u32}` (argumenty w tablicy obok), `ActionReservations` (poza ECS).
 - **Wejścia:** komendy `startAction`, `cancelAction`, `craft`, `useItem`, receptury z contentu.
 - **Wyjścia:** efekty w innych modułach, zdarzenia `actionStarted {kind, durationTicks}`, `actionProgress` (UI liczy pasek lokalnie z `startTick` i `endTick`, bez eventu co tick), `actionCompleted`, `actionInterrupted`.
+- **Stan po Etapie 3:** `actions/queue.ts` (kolejka: bieżąca akcja + do 8 w kolejce, czas liczony przy starcie w minutach gry × ticki na minutę) i handlery w `items/actions.ts`: `search`, `eat`, `drink`, `bandage`, `unpack`. Przerywa: intencja ruchu, sen, śmierć, hook zagrożenia (`threatNearby`), `cancelAction`; przy końcu handler waliduje ponownie (`target-lost`). Zdarzenia `actionStarted {endTick}`, `actionCompleted`, `actionInterrupted {reason}`, widok `action`. Rezerwacje składników przyjdą z craftingiem.
 - **Zależności:** `inventory`, `progression`, `content`. Handlery rejestrują moduły docelowe (`health` → bandaż, `containers` → przeszukaj, `doors` → barykada), więc `actions` nie zależy od nich w kodzie.
 - **Etap:** `actions` minimalnie w Etapie 3 (przeszukiwanie, jedzenie), pełne w Etapie 6 z craftingiem.
 
@@ -537,6 +544,8 @@ type ViewPatch =
   | { v: 'action'; kind; startTick; endTick } | { v: 'skills'; ... };
 ```
 Stan po Etapie 2: zaimplementowany jest widok gracza i zegara jako `SimViewPatch { clock?, player? }` w `protocol/views.ts` (wiadomość `{ kind: 'view', tick, view }`). Każde pole jest opcjonalne i oznacza zmianę: `stats` zawiera tylko zmienione statystyki (zaokrąglone do 0,1), `moodles` tylko zmienione poziomy (`{ id, level }`, 0 = zniknął), `wounds` pełną listę po każdej zmianie ran. Pierwszy widok po `init` jest pełny (patrz 9.5).
+
+Stan po Etapie 3: `SimViewPatch` ma też `inventory` (nagłówek `{container, loadKg, capacityKg, hardLimitKg, carryLoad, equipped}` przy każdej zmianie plus `containers` z pełnym widokiem tylko zmienionych pojemników: główny ekwipunek i kontenery noszonych toreb, oraz `removed`), `container` (otwarty kontener w pełni albo `null`), `nearby` (schowki i stosy na ziemi w zasięgu, `searched`) i `action` (`{kind, startTick, endTick, item?, container?, part?, queued}` albo `null`). `ItemView` ma `def` (id contentu), `count`, `weightKg`, `condition?`, `uses?`, `freshness?`, `container?` (torba), `equipped?`, `placed?`.
 
 ### 4.3 Zdarzenia (co tick, lista)
 `SimEvent` to unia dyskryminowana z `packages/protocol`: `footstep`, `noise`, `hit`, `shot`, `zombieAlerted`, `windowBroken`, `doorChanged`, `tileChanged`, `chunkChanged`, `xpGained`, `levelUp`, `moodleChanged`, `wounded`, `actionStarted/Completed/Interrupted`, `commandRejected`, `died`, `dayPassed`, `timeScaleHint`. Render używa ich do dźwięków, efektów cząsteczkowych, toastów i ekranu śmierci. Zdarzenia **nie są źródłem prawdy**: pominięcie zdarzenia nie może zepsuć stanu klienta, bo stan odtwarzamy ze snapshotu i widoków.
@@ -730,8 +739,18 @@ Dane Modules mają pierwszeństwo przed wcześniejszymi założeniami tego dokum
 - **Zegar:** start domyślnie dzień 1, 09:00 (jak tryb `base:survival`). `gameTime()` i widok `clock` pokazują czas ostatniego wykonanego ticku. Blokada przyspieszenia to hook `threatNearby()` (na razie zawsze `false`); worker wymusza ×1, gdy `fastForwardBlocked()`.
 - **Aktywność:** na razie tylko `idle`, `walking` (niezerowa intencja ruchu) i `sleeping`; bieg, skradanie i walka przyjdą z komendą ruchu z `run`/`sneak` i z walką. Temperatura otoczenia jest stała (20 °C, opcja `ambientTemperatureC`), a schnięcie ma tempo „na zewnątrz”, bo sim nie zna jeszcze dachów.
 - **Moodle:** progi i histereza z danych, tylko modyfikatory poziomu bieżącego (nie kumulują się). Na razie działają modyfikatory temp (`hunger-rate`, `thirst-rate`, `fatigue-rate`, `endurance-regen`, `healing-rate`, `move-speed`); pozostałe (np. `aim-accuracy`) przejmą walka i akcje. Moodle na statystykach, których sim jeszcze nie liczy (`carry-load`, `drunkenness`, `comfort`), pozostają ukryte. `injury` = 100 − `health`.
-- **Rany:** krwawienie rany = `bleeding × (1 − healed)`, 0 po `clotsAfterMin` (0 = nie krzepnie), bandaż mnoży przez `bleedingMul` (brudny po `dirtyAfterMin`: `dirtyBleedingMul`). Zakażenie brudem losowane co minutę strumieniem `health`. Wirus losowany przy ranie od zombie (`zombieInfectionChance`), `infection` rośnie liniowo do śmierci, `sickness` i gorączka po inkubacji. Bandaż jest na razie natychmiastowy i nie zużywa przedmiotu (`itemId` tylko sprawdzany w contencie); akcja czasowa i ekwipunek w Etapach 3 i 6.
+- **Rany:** krwawienie rany = `bleeding × (1 − healed)`, 0 po `clotsAfterMin` (0 = nie krzepnie), bandaż mnoży przez `bleedingMul` (brudny po `dirtyAfterMin`: `dirtyBleedingMul`). Zakażenie brudem losowane co minutę strumieniem `health`. Wirus losowany przy ranie od zombie (`zombieInfectionChance`), `infection` rośnie liniowo do śmierci, `sickness` i gorączka po inkubacji. Od Etapu 3 bandaż jest akcją czasową (`medical.durationMin`) z przedmiotem z ekwipunku, zużywanym na końcu (patrz 9.6).
 - **Sen:** komendy `sleep` / `wake`, powierzchnia na razie zawsze `floor` (łóżka z meblami później). Zdarzenia `fellAsleep`, `wokeUp {reason}` i `timeScaleHint` (host decyduje o prędkości).
 - **Protokół:** `PROTOCOL_VERSION = 3`. Nowe komendy `sleep`, `wake`, `bandage {part, itemId?}`, tylko w trybie dev (`init.dev`) `debugWound {part, wound, zombie?}` i `debugStat {stat, value}`. Worker → main: `view` (delta `SimViewPatch`: `clock`, `player {alive, sleeping, stats, moodles, wounds}`, tylko przy zmianie), `events` (lista `SimEvent`, m.in. `died`, `wounded`, `moodleChanged`, `dayPassed`) i `error`. Zamiast jednej wiadomości `frame` z 5.2 są osobne `snapshot`, `view` i `events`.
 - **Determinizm:** stan przetrwania wchodzi do `hash()` (sekcja dopisywana tylko przy contencie, więc złote hashe samego ruchu się nie zmieniły). Nowy złoty hash scenariusza przetrwania jest w `test/survival-determinism.test.ts`.
 
+### 9.6 Stan po Etapie 3 (Przedmioty i ekwipunek) — kontrakt z danymi i odstępstwa
+Zaimplementowane: `items/{store,inventory,loot,spoilage,actions,commands,views,hash}`, `actions/queue`, `systems/inventory`. Content w sim to teraz `worldSettings`, `moodles`, `items`, `containers` i `lootTables`.
+- **Mapa:** `SimChunk` ma opcjonalne `room` (warstwa), `rooms` (id → typ pomieszczenia) i `objects` (`{contentId, x, y}` w kaflach lokalnych), a `SimMap.listChunks?()` wylicza chunki. Z tych danych przy starcie powstają schowki świata (ids w kolejności chunków `z, cy, cx` i obiektów). Adapter mapy w `apps/game` musi je przekazać (zadanie Silnika); bez nich sim nie ma schowków.
+- **Waga i obciążenie:** udźwig = `carry.baseCapacityKg` (× / + modyfikatory `carry-capacity-kg`; cechy przyjdą z postacią), limit twardy = udźwig × `hardLimitMultiplier` (podnoszenie ponad limit: `no-space`). `carry-load` = ładunek / udźwig × 100, więc moodle `base:heavy-load` (progi 100–175) spowalnia ruch z danych. `overloadSlowdownPerKg` nie jest używane, bo liczyłoby tę samą karę drugi raz (do decyzji Modules). Obciążenie nie zmienia zmęczenia, bo dane nie mają takiego efektu. Torba założona w swoim slocie (`bag.slots`) odejmuje `weightReductionPct` od wagi zawartości, a pełna spowalnia o `movementPenalty × zapełnienie`. `acceptsTags` ogranicza zawartość.
+- **Ręce:** `hand_primary` = prawa, `hand_secondary` = lewa; broń `twoHanded` zajmuje obie. Torby tylko w swoich slotach, odzież w swoim slocie, reszta w rękach. Odzież nie daje jeszcze izolacji ani ochrony.
+- **Jedzenie i picie:** `nutrition` przedmiotu dotyczy całości i dzieli się na `portions`; napój ma `perUse` na łyk. Głód poniżej 0 zamienia się w sytość (`satiety.perKcalWhenFull`), kalorie idą do bilansu. `openWith` wymaga noszonego narzędzia z tagiem, `emptyInto` zostaje po ostatniej porcji. Czasy akcji nie są jeszcze w danych, więc sim ma stałe (`EAT_PORTION_MIN = 1`, `DRINK_USE_MIN = 0,5`, `UNPACK_MIN = 0,5` minuty gry); propozycja dla Modules: `food.eatMin`, `drink.drinkMin`, `ammoBox.unpackMin`. Makroskładniki, `sicknessChance`, alkohol i efekty zepsutego jedzenia czekają na dane i system zatrucia.
+- **Amunicja:** pudełko `ammo_box` rozpakowuje się akcją `unpack` na `ammoBox.count` naboi (stosy po `maxStack`). Broń palna i magazynki mają `uses` = naboje (startowo 0); ładowanie przyjdzie z walką.
+- **Stosy:** przedmioty z `maxStack > 1` łączą się tylko przy identycznym stanie; przedmioty z własnym kontenerem (torby, skrzynie) nigdy się nie stackują.
+- **Protokół:** `PROTOCOL_VERSION = 4`. Komendy w 2.4, widoki w 4.2. Nowe powody `commandRejected`: `no-item`, `out-of-range`, `no-space`, `missing-tool`, `busy`. Nowe zdarzenia: `actionStarted`, `actionCompleted`, `actionInterrupted`, `containerOpened {firstSearch}`, `itemUsed {action, itemId, freshness?}`. Komenda `bandage` nie jest już natychmiastowa: bierze bandaż z ekwipunku.
+- **Determinizm:** cały `ItemStore` (kontenery, przedmioty, sloty, akcje) wchodzi do `hash()`. Złoty hash scenariusza przetrwania zmienił się (nowa sekcja i czasowy bandaż); nowy scenariusz przedmiotów jest w `test/items-determinism.test.ts`. Złoty hash samego ruchu bez zmian.

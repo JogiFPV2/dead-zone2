@@ -14,11 +14,35 @@ export interface SimChunk {
   readonly floor: Uint16Array;
   readonly edgeN: Uint16Array;
   readonly edgeW: Uint16Array;
+  /** Room id per tile (0 = outside), keys of `rooms`; optional (no rooms = outside). */
+  readonly room?: Uint16Array | undefined;
+  /** Room id → room type (e.g. `base:room-kitchen`, picks loot tables). */
+  readonly rooms?: Readonly<Record<string, string>> | undefined;
+  /**
+   * Map objects (chunk `objects` in content): storage types (`containers/`) and placeables with
+   * `containerType` become world storage; the rest is ignored by the sim for now.
+   */
+  readonly objects?: readonly SimMapObject[] | undefined;
+}
+
+/** A map object at local tile (x, y) of its chunk. */
+export interface SimMapObject {
+  readonly contentId: string;
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface SimChunkAddress {
+  readonly cx: number;
+  readonly cy: number;
+  readonly z: number;
 }
 
 export interface SimMap {
   /** Returns undefined for chunks outside the map (treated as solid). */
   getChunk(cx: number, cy: number, z: number): SimChunk | undefined;
+  /** All chunks (world storage is created from their objects); optional for plain maps. */
+  listChunks?(): readonly SimChunkAddress[];
 }
 
 export const tileIndex = (x: number, y: number): number => y * CHUNK_SIZE + x;
@@ -48,9 +72,21 @@ export function simMapFromData(data: SimMapData): SimMap {
     checkLayer(c.floor, 'floor');
     checkLayer(c.edgeN, 'edgeN');
     checkLayer(c.edgeW, 'edgeW');
-    chunks.set(chunkKey(c.cx, c.cy, c.z), { floor: c.floor, edgeN: c.edgeN, edgeW: c.edgeW });
+    if (c.room) checkLayer(c.room, 'room');
+    chunks.set(chunkKey(c.cx, c.cy, c.z), {
+      floor: c.floor,
+      edgeN: c.edgeN,
+      edgeW: c.edgeW,
+      room: c.room,
+      rooms: c.rooms,
+      objects: c.objects,
+    });
   }
-  return { getChunk: (cx, cy, z) => chunks.get(chunkKey(cx, cy, z)) };
+  const list: SimChunkAddress[] = data.chunks.map(({ cx, cy, z }) => ({ cx, cy, z }));
+  return {
+    getChunk: (cx, cy, z) => chunks.get(chunkKey(cx, cy, z)),
+    listChunks: () => list,
+  };
 }
 
 /** Inclusive chunk rectangle on one level. */
@@ -76,6 +112,9 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         floor: c.floor.slice(),
         edgeN: c.edgeN.slice(),
         edgeW: c.edgeW.slice(),
+        ...(c.room ? { room: c.room.slice() } : {}),
+        ...(c.rooms ? { rooms: { ...c.rooms } } : {}),
+        ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
       });
     }
   }

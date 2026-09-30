@@ -4,7 +4,13 @@ import type { ContentBundle } from '@deadzone/content';
  * What the sim reads from a `ContentBundle` (a full bundle is assignable). Kept structural so
  * tests can pass a hand-made fixture and the sim never imports content at runtime (no zod).
  */
-export type SimContent = Pick<ContentBundle, 'worldSettings' | 'moodles' | 'items'>;
+export type SimContent = Pick<
+  ContentBundle,
+  'worldSettings' | 'moodles' | 'items' | 'containers' | 'lootTables'
+>;
+export type ItemDef = ContentBundle['items'][string];
+export type ContainerTypeDef = ContentBundle['containers'][string];
+export type LootTableDef = ContentBundle['lootTables'][string];
 export type SurvivalSettings = ContentBundle['worldSettings']['survival'];
 type MoodleDef = ContentBundle['moodles'][string];
 type ModifierDef = MoodleDef['levels'][number]['modifiers'][number];
@@ -18,6 +24,8 @@ export const MOD_STATS = [
   'endurance-regen',
   'healing-rate',
   'move-speed',
+  'search-speed',
+  'carry-capacity-kg',
 ] as const;
 export type ModStat = (typeof MOD_STATS)[number];
 export const ModSlot = Object.fromEntries(MOD_STATS.map((s, i) => [s, i])) as Record<
@@ -56,6 +64,17 @@ export interface ContentIndex {
   coldMoodles: number[];
   /** Medical items with `stop_bleeding` (valid `bandage.itemId`). */
   bandageItems: ReadonlySet<string>;
+  /** Item definitions sorted by id (numeric index = position; part of the state hash). */
+  items: ItemDef[];
+  itemIndex: ReadonlyMap<string, number>;
+  /** Storage types sorted by id. */
+  containerTypes: ContainerTypeDef[];
+  containerTypeIndex: ReadonlyMap<string, number>;
+  /** Loot tables sorted by id (table choice by room + container is the first match). */
+  lootTables: LootTableDef[];
+  lootTableById: ReadonlyMap<string, LootTableDef>;
+  carry: ContentBundle['worldSettings']['carry'];
+  loot: ContentBundle['worldSettings']['loot'];
 }
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -86,7 +105,18 @@ export function compileContent(content: SimContent): ContentIndex {
       bandageItems.add(id);
     }
   }
+  const itemIds = Object.keys(content.items).sort(byId);
+  const typeIds = Object.keys(content.containers).sort(byId);
+  const tableIds = Object.keys(content.lootTables).sort(byId);
   return {
+    items: itemIds.map((id) => content.items[id]!),
+    itemIndex: new Map(itemIds.map((id, i) => [id, i])),
+    containerTypes: typeIds.map((id) => content.containers[id]!),
+    containerTypeIndex: new Map(typeIds.map((id, i) => [id, i])),
+    lootTables: tableIds.map((id) => content.lootTables[id]!),
+    lootTableById: new Map(tableIds.map((id) => [id, content.lootTables[id]!])),
+    carry: content.worldSettings.carry,
+    loot: content.worldSettings.loot,
     dayLengthMinutes: content.worldSettings.dayLengthMinutes,
     survival: content.worldSettings.survival,
     moodles,

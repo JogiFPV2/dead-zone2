@@ -1,11 +1,12 @@
 import type { Command, CommandRejectReason } from '@deadzone/protocol';
 import type { SimWorld } from '../core/world.js';
+import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 
 /**
  * Pipeline step 1: applies this tick's commands in (playerId, seq) order. `move` and `aim` are
  * held intents, so only the last one per player in a tick matters. Survival commands (sleep,
- * wake, bandage, dev debug) take effect immediately.
+ * wake, dev debug) and item commands take effect immediately; item uses start timed actions.
  */
 export function inputSystem(w: SimWorld): void {
   const { MoveIntent, AimIntent } = w.c;
@@ -33,6 +34,9 @@ export function inputSystem(w: SimWorld): void {
       AimIntent.x[eid] = Math.fround(cmd.x);
       AimIntent.y[eid] = Math.fround(cmd.y);
       AimIntent.active[eid] = 1;
+    } else if (isItemCommand(cmd)) {
+      const reason = applyItemCommand(w, eid, cmd);
+      if (reason) reject(w, cmd, reason);
     } else {
       const reason = applySurvivalCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);

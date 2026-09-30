@@ -39,7 +39,34 @@ describe('parseCommand', () => {
     }
   });
 
+  it('accepts item and action commands', () => {
+    for (const cmd of [
+      { ...base, type: 'pickUp', item: 12 },
+      { ...base, type: 'pickUp', item: 12, count: 3 },
+      { ...base, type: 'drop', item: 12 },
+      { ...base, type: 'moveItem', item: 12, to: 4, count: 1 },
+      { ...base, type: 'equip', item: 12, slot: 'hand_primary' },
+      { ...base, type: 'unequip', slot: 'back' },
+      { ...base, type: 'openContainer', container: 4 },
+      { ...base, type: 'closeContainer' },
+      { ...base, type: 'useItem', item: 12 },
+      { ...base, type: 'useItem', item: 12, part: 'hand_l' },
+      { ...base, type: 'cancelAction' },
+      { ...base, type: 'placeStorage', item: 12, x: -3, y: 40 },
+      { ...base, type: 'pickUpStorage', container: 4 },
+      { ...base, type: 'debugGiveItem', itemId: 'base:bandage', count: 5 },
+    ]) {
+      expect(parseCommand(cmd).ok, JSON.stringify(cmd)).toBe(true);
+    }
+  });
+
   it.each([
+    ['negative item id', { ...base, type: 'pickUp', item: -1 }],
+    ['zero count', { ...base, type: 'drop', item: 1, count: 0 }],
+    ['fractional count', { ...base, type: 'moveItem', item: 1, to: 2, count: 1.5 }],
+    ['unknown slot', { ...base, type: 'equip', item: 1, slot: 'tail' }],
+    ['fractional tile', { ...base, type: 'placeStorage', item: 1, x: 0.5, y: 0 }],
+    ['bad give id', { ...base, type: 'debugGiveItem', itemId: 'bandage' }],
     ['unknown body part', { ...base, type: 'bandage', part: 'tail' }],
     ['bad item id', { ...base, type: 'bandage', part: 'head', itemId: 'Bandage' }],
     ['unknown wound kind', { ...base, type: 'debugWound', part: 'head', wound: 'burn' }],
@@ -107,6 +134,34 @@ describe('SimMapData', () => {
     const data = simMapToData(map, { cx0: -1, cy0: -1, cx1: 1, cy1: 1, z: 0 });
     expect(data.chunks).toHaveLength(1);
     expect(data.chunks[0]?.floor).not.toBe(floor);
+  });
+
+  it('carries rooms and map objects (world storage)', () => {
+    const room = layer();
+    room[tileIndex(1, 1)] = 1;
+    const objects = [{ contentId: 'base:fridge', x: 1, y: 1 }];
+    const map = simMapFromData({
+      chunks: [
+        {
+          cx: 0,
+          cy: 0,
+          z: 0,
+          floor: layer(),
+          edgeN: layer(),
+          edgeW: layer(),
+          room,
+          rooms: { '1': 'base:room-kitchen' },
+          objects,
+        },
+      ],
+    });
+    expect(map.listChunks?.()).toEqual([{ cx: 0, cy: 0, z: 0 }]);
+    expect(map.getChunk(0, 0, 0)?.objects).toEqual(objects);
+    const data = simMapToData(map, { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
+    expect(data.chunks[0]).toMatchObject({ rooms: { '1': 'base:room-kitchen' }, objects });
+    expect(parseMainToWorker({ kind: 'init', seed: 1, map: data }).ok).toBe(true);
+    const bad = { ...data.chunks[0]!, objects: [{ contentId: 'fridge', x: 40, y: 0 }] };
+    expect(parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [bad] } }).ok).toBe(false);
   });
 
   it('rejects malformed layers', () => {
