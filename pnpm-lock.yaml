@@ -199,6 +199,9 @@ importers:
 
   apps/game:
     dependencies:
+      '@deadzone/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -264,9 +267,20 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/protocol: {}
+  packages/protocol:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
-  packages/sim: {}
+  packages/sim:
+    dependencies:
+      '@deadzone/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      bitecs:
+        specifier: ^0.4.0
+        version: 0.4.0
 
   packages/ui: {}
 
@@ -909,6 +923,9 @@ packages:
     resolution: {integrity: sha512-GLQdD3y6UF8iVuMJl5fHgE4jdn/ua7n+toKfLgNlg3BqQtOZjpy68T8Tup8/wGWZCDlm7KMg7tPb4MPn7oN0TQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  bitecs@0.4.0:
+    resolution: {integrity: sha512-ho6Zop/L79DRTnBAfakPpGPuX7y0+lAjX06CpaAW+5tnAc7BH3L3RlSrWAXAqwnQGDZ10GsoxaxyTTsddlun3g==}
 
   brace-expansion@5.0.12:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
@@ -2190,6 +2207,8 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.11.26: {}
+
+  bitecs@0.4.0: {}
 
   brace-expansion@5.0.12:
     dependencies:

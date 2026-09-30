@@ -52,5 +52,45 @@ export default tseslint.config(
       ],
     },
   },
+  // Determinism (docs/sim-architecture.md 1.2): no wall clock, no Math.random, no
+  // engine-dependent transcendental math, no host globals in sim logic.
+  {
+    files: ['packages/sim/src/**'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        ...['random', 'sin', 'cos', 'tan', 'atan', 'atan2', 'exp', 'log', 'pow', 'hypot'].map(
+          (property) => ({
+            object: 'Math',
+            property,
+            message: 'Niedeterministyczne w sim: użyj core/rng lub core/dmath.',
+          }),
+        ),
+      ],
+      'no-restricted-globals': [
+        'error',
+        ...[
+          'Date',
+          'performance',
+          'setTimeout',
+          'setInterval',
+          'queueMicrotask',
+          'requestAnimationFrame',
+          'self',
+          'window',
+          'document',
+          'globalThis',
+        ].map((name) => ({
+          name,
+          message: 'Czas i API hosta tylko w src/host/worker-entry.ts; w sim czas = numer ticku.',
+        })),
+      ],
+    },
+  },
+  // The worker entry is the single place that binds the host (globalThis, timers, clock).
+  {
+    files: ['packages/sim/src/host/worker-entry.ts'],
+    rules: { 'no-restricted-globals': 'off' },
+  },
   prettier,
 );

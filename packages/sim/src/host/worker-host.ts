@@ -1,0 +1,150 @@
+import {
+  parseMainToWorker,
+  simMapFromData,
+  type MainToWorker,
+  type WorkerToMain,
+} from '@deadzone/protocol';
+import { FixedStepLoop } from '../core/loop.js';
+import { createSim, type Sim } from '../sim.js';
+
+/** Minimal structural view of a worker global / MessagePort (no DOM types in sim). */
+export interface WorkerPortLike {
+  postMessage(message: WorkerToMain, transfer: ArrayBuffer[]): void;
+  addEventListener(type: 'message', listener: (event: { data: unknown }) => void): void;
+}
+
+/** Real-time source injected by the entry module (performance.now + setTimeout in a worker). */
+export interface HostClock {
+  now(): number;
+  schedule(fn: () => void, delayMs: number): void;
+}
+
+export interface WorkerHostOptions {
+  /** Polling interval of the real-time loop (docs: ~4 ms). */
+  intervalMs?: number;
+  /** Max snapshot buffers kept for reuse. */
+  poolSize?: number;
+}
+
+export interface WorkerHost {
+  readonly sim: Sim | undefined;
+  readonly loop: FixedStepLoop | undefined;
+  /** Buffers currently available for reuse (returned by main via `release`). */
+  readonly pooledBuffers: number;
+  /** Messages dropped because they failed validation or arrived before `init`. */
+  readonly droppedMessages: number;
+  /** Runs one iteration of the real-time loop (normally driven by `clock.schedule`). */
+  pump(): void;
+  dispose(): void;
+}
+
+/**
+ * Worker side of the sim bridge: validates messages (zod), runs the fixed-step loop against real
+ * time and posts one snapshot per batch of ticks, transferring pooled ArrayBuffers.
+ */
+export function startSimWorkerHost(
+  port: WorkerPortLike,
+  clock: HostClock,
+  opts: WorkerHostOptions = {},
+): WorkerHost {
+  const intervalMs = opts.intervalMs ?? 4;
+  const poolSize = opts.poolSize ?? 4;
+  const pool: ArrayBuffer[] = [];
+  let sim: Sim | undefined;
+  let loop: FixedStepLoop | undefined;
+  let last = clock.now();
+  let running = true;
+  let dropped = 0;
+
+  const acquire = (bytes: number): ArrayBuffer | undefined => {
+    for (let i = pool.length - 1; i >= 0; i--) {
+      const b = pool[i];
+      if (b?.byteLength === bytes) {
+        pool.splice(i, 1);
+        return b;
+      }
+    }
+    return undefined;
+  };
+
+  const postSnapshot = (): void => {
+    if (!sim) return;
+    const buf = sim.snapshot(acquire(sim.snapshotByteLength()));
+    port.postMessage({ kind: 'snapshot', tick: sim.tick, buf }, [buf]);
+  };
+
+  const handle = (msg: MainToWorker): void => {
+    if (msg.kind === 'init') {
+      const s = createSim({ seed: msg.seed, map: simMapFromData(msg.map) });
+      sim = s;
+      loop = new FixedStepLoop({ step: () => s.step() });
+      last = clock.now();
+      port.postMessage({ kind: 'ready', tick: s.tick }, []);
+      postSnapshot();
+      return;
+    }
+    if (msg.kind === 'release') {
+      if (pool.length < poolSize && msg.buf.byteLength > 0) pool.push(msg.buf);
+      return;
+    }
+    if (!sim || !loop) {
+      dropped++;
+      return;
+    }
+    switch (msg.kind) {
+      case 'cmd':
+        if (!sim.enqueue(msg.cmd).ok) dropped++;
+        break;
+      case 'pause':
+        loop.pause();
+        break;
+      case 'resume':
+        last = clock.now();
+        loop.resume();
+        break;
+      case 'speed':
+        loop.setSpeed(msg.x);
+        break;
+    }
+  };
+
+  port.addEventListener('message', (event) => {
+    if (!running) return;
+    const parsed = parseMainToWorker(event.data);
+    if (parsed.ok) handle(parsed.value);
+    else dropped++;
+  });
+
+  const pump = (): void => {
+    const now = clock.now();
+    const dt = now - last;
+    last = now;
+    if (loop && loop.advance(dt) > 0) postSnapshot();
+  };
+
+  const tickLoop = (): void => {
+    if (!running) return;
+    pump();
+    clock.schedule(tickLoop, intervalMs);
+  };
+  clock.schedule(tickLoop, intervalMs);
+
+  return {
+    get sim() {
+      return sim;
+    },
+    get loop() {
+      return loop;
+    },
+    get pooledBuffers() {
+      return pool.length;
+    },
+    get droppedMessages() {
+      return dropped;
+    },
+    pump,
+    dispose() {
+      running = false;
+    },
+  };
+}

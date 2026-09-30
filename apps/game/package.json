@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@deadzone/protocol": "workspace:*",
     "three": "^0.186.1"
   },
   "devDependencies": {

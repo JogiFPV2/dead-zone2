@@ -713,3 +713,11 @@ Hash: xxHash32 po kanonicznej serializacji (to samo co zapis, bez pól `hash: fa
 - Wersja bitecs: celujemy w aktualną stabilną (0.4.x, komponenty jako dowolne SoA). Jeśli okaże się niestabilna, zostaje 0.3.x (`defineComponent` + `Types`). Rejestr komponentów (2.2) izoluje resztę kodu od tej różnicy.
 - Float32 + `dmath` zamiast fixed-point (z planem awaryjnym w 1.4).
 - Przedmioty poza ECS (`ItemStore`).
+
+### 9.4 Stan po pierwszym PR Etapu 1 (odstępstwa od powyższego)
+Zaimplementowane: `core/{loop,rng,dmath,hash,world,components,pipeline}`, `commands/queue`, `world/{grid,collision}`, `systems/{input,movement}`, `snapshot/render`, `host/{worker-host,worker-entry,client}`. Świadome uproszczenia względem sekcji 2.4, 4.1 i 5.2 (do ujednolicenia w kolejnych PR):
+- **Komendy** mają płaską postać `{ tick, playerId, seq, type: 'move', dx, dy } | { …, type: 'aim', x, y }` zamiast koperty `{ …, cmd: { t } }`. `move` przyjmuje wektor analogowy (`dx, dy ∈ [-1, 1]`, długość obcinana do 1), bez `run`/`sneak`; `aim` to punkt świata, a kąt `u16` liczy sim.
+- **Protokół workera** używa pola `kind` i wiadomości `init | cmd | pause | resume | speed | release` → `ready | snapshot`. `init.map` to serializowalne `SimMapData` (lista chunków), bo funkcji `getChunk` nie da się przesłać przez `postMessage`. `release` oddaje bufor do puli. Brak jeszcze `views`, `events`, `perf`, `error` i zapisu.
+- **Snapshot** to na razie `Float32Array` bez nagłówka: rekordy `[stableId, x, y, z, facingRad]`, gracz pierwszy, liczba encji = `długość / 5` (zamiast 28-bajtowego rekordu z 4.1). Pula buforów używa ponownie tylko buforów o dokładnie pasującym rozmiarze.
+- **Kolizje:** okrąg r = 0,3 (kapsuła w rzucie 2D) z kaflami bez podłogi i krawędziami `edgeN`/`edgeW` (każde id ≠ 0 blokuje; adapter `apps/game` przepuszcza na razie krawędzie typu `door` jako otwarte, bo nie ma jeszcze stanu drzwi). Ruch rozdzielony po osiach (najpierw x, potem y) z analitycznym „sweepem”, więc nie ma przenikania przy dowolnej prędkości.
+- **Facing** liczy własny `datan2` z `core/dmath` (szereg z redukcją zakresu, tylko `+ - * /`), a nie `Math.atan2`.

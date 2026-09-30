@@ -1,8 +1,11 @@
 /** Bump on every breaking change to commands or snapshots. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
-/** Player intent sent to the simulation (PLAN.md: commands instead of direct state changes). */
-export type Command = { type: 'move'; tick: number; dx: number; dy: number };
+export * from './commands.js';
+export * from './events.js';
+export * from './map.js';
+export * from './snapshot.js';
+export * from './worker-messages.js';
 
 export interface HealthResponse {
   status: 'ok';
