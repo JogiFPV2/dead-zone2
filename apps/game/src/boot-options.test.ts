@@ -17,5 +17,6 @@ it('uses the worker by default and the mock only for mock-only debug options', (
     spawnInside: false,
     sim: 'worker',
   });
-  expect(parseBootOptions('?map=nope').map).toBe('test');
+  expect(parseBootOptions('?map=town-2').map).toBe('town-2');
+  expect(parseBootOptions('?map=../x').map).toBe('test');
 });

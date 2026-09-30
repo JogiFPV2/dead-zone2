@@ -1,0 +1,70 @@
+{
+  "id": "test-town",
+  "floorHeight": 3,
+  "chunks": { "cx0": -2, "cy0": -2, "cx1": 1, "cy1": 1 },
+  "ground": "base:grass",
+  "areas": [
+    { "x": -64, "y": -64, "w": 4, "h": 128, "floor": "base:asphalt" },
+    { "x": -64, "y": -64, "w": 128, "h": 4, "floor": "base:asphalt" },
+    { "x": -32, "y": -64, "w": 4, "h": 128, "floor": "base:asphalt" },
+    { "x": -64, "y": -32, "w": 128, "h": 4, "floor": "base:asphalt" },
+    { "x": 0, "y": -64, "w": 4, "h": 128, "floor": "base:asphalt" },
+    { "x": -64, "y": 0, "w": 128, "h": 4, "floor": "base:asphalt" },
+    { "x": 32, "y": -64, "w": 4, "h": 128, "floor": "base:asphalt" },
+    { "x": -64, "y": 32, "w": 128, "h": 4, "floor": "base:asphalt" },
+    { "x": -54, "y": -54, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -22, "y": -54, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 10, "y": -54, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 42, "y": -54, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -54, "y": -22, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -22, "y": -22, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 10, "y": -22, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 42, "y": -22, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -54, "y": 10, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -22, "y": 10, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 10, "y": 10, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 42, "y": 10, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -54, "y": 42, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": -22, "y": 42, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 10, "y": 42, "w": 12, "h": 12, "floor": "base:concrete" },
+    { "x": 42, "y": 42, "w": 12, "h": 12, "floor": "base:concrete" }
+  ],
+  "buildings": [
+    {
+      "id": 1,
+      "origin": [11, 11],
+      "plan": [
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB"
+      ],
+      "rooms": {
+        "L": { "id": 1, "type": "base:room-living-room", "floor": "base:concrete" },
+        "K": { "id": 2, "type": "base:room-kitchen", "floor": "base:concrete" },
+        "B": { "id": 3, "type": "base:room-bedroom", "floor": "base:concrete" }
+      },
+      "wall": "base:wall-plain",
+      "window": "base:window-plain",
+      "door": "base:door-plain",
+      "roof": "base:roof-flat",
+      "openings": [
+        { "at": [3, 0], "side": "n", "type": "window" },
+        { "at": [7, 0], "side": "n", "type": "window" },
+        { "at": [2, 7], "side": "s", "type": "door" },
+        { "at": [4, 7], "side": "s", "type": "window" },
+        { "at": [7, 7], "side": "s", "type": "window" },
+        { "at": [0, 5], "side": "w", "type": "window" },
+        { "at": [9, 1], "side": "e", "type": "window" },
+        { "at": [9, 5], "side": "e", "type": "window" },
+        { "at": [5, 2], "side": "w", "type": "door" },
+        { "at": [5, 6], "side": "w", "type": "door" },
+        { "at": [7, 4], "side": "n", "type": "door" }
+      ]
+    }
+  ]
+}

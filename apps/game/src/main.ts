@@ -42,8 +42,8 @@ container.appendChild(renderer.domElement);
 
 const boot = parseBootOptions(window.location.search);
 const world: LoadedMap =
-  boot.map === 'demo-house'
-    ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap('demo-house'))
+  boot.map !== 'test'
+    ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
     : { source: createTestMap(), range: TEST_MAP_RANGE };
 
 const scene = createScene();

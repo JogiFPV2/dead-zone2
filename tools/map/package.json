@@ -1,0 +1,34 @@
+{
+  "name": "@deadzone/map",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Narz\u0119dzie deweloperskie: budowanie map w chunkach z blueprint\u00f3w i walidacja map",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./blueprints/*": "./blueprints/*"
+  },
+  "files": [
+    "dist",
+    "blueprints"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "map": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@deadzone/content": "workspace:*",
+    "prettier": "^3.9.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "tsx": "^4.23.15"
+  }
+}

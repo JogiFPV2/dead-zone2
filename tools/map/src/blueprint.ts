@@ -1,0 +1,92 @@
+import {
+  ContentIdSchema,
+  EDGE_TYPES,
+  I18nKeySchema,
+  RoomTypeSchema,
+  TileRefSchema,
+} from '@deadzone/content';
+import { z } from 'zod';
+
+const Int = z.number().int();
+const Xy = z.tuple([Int, Int]);
+
+/** Door or window cut into a generated wall; `at` is building-local, `side` of that tile. */
+export const OpeningSchema = z.strictObject({
+  at: Xy,
+  side: z.enum(['n', 's', 'e', 'w']),
+  type: z.enum(EDGE_TYPES).exclude(['wall']),
+  /** Default: the building's `door` / `window`. */
+  contentId: TileRefSchema.optional(),
+});
+
+export const BuildingSchema = z.strictObject({
+  /** Map-global `buildingId` (the renderer hides roof and walls per building). */
+  id: Int.min(1).max(0xffff),
+  /** World tile of `plan[0][0]`. */
+  origin: Xy,
+  /**
+   * ASCII floor plan, one string per row. Each character is a key of `rooms`; `.` and space are
+   * outside. Walls are generated on every border between different rooms or room and outside.
+   */
+  plan: z.array(z.string().min(1)).min(1),
+  rooms: z.record(
+    z.string().length(1),
+    z.strictObject({
+      /** Map-global `roomId`. */
+      id: Int.min(1).max(0xffff),
+      type: RoomTypeSchema,
+      floor: TileRefSchema,
+    }),
+  ),
+  wall: TileRefSchema,
+  window: TileRefSchema.optional(),
+  door: TileRefSchema.optional(),
+  /** Roof over every room tile; omit for no roof. */
+  roof: TileRefSchema.optional(),
+  openings: z.array(OpeningSchema).default([]),
+});
+
+/**
+ * Human-editable authoring source of a map (`tools/map/blueprints/*.json`). All coordinates are
+ * world tiles (+x east, +y south); later entries paint over earlier ones.
+ */
+export const BlueprintSchema = z.strictObject({
+  /** Map folder = `<pack>/maps/<id>/`. */
+  id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'id: kebab-case'),
+  name: I18nKeySchema.optional(),
+  floorHeight: z.number().positive().default(3),
+  /** Inclusive chunk range on level 0 (32×32 tiles per chunk). */
+  chunks: z.strictObject({ cx0: Int, cy0: Int, cx1: Int, cy1: Int }),
+  /** Floor everywhere before areas and buildings. */
+  ground: TileRefSchema,
+  /** Floor rectangles: roads, lots, paths. */
+  areas: z
+    .array(z.strictObject({ x: Int, y: Int, w: Int.min(1), h: Int.min(1), floor: TileRefSchema }))
+    .default([]),
+  buildings: z.array(BuildingSchema).default([]),
+  /** Map objects in world tiles (furniture, containers, lights). */
+  objects: z
+    .array(
+      z.strictObject({
+        contentId: ContentIdSchema,
+        x: Int,
+        y: Int,
+        rot: Int.min(0).max(3).default(0),
+        offset: z
+          .strictObject({ x: z.number().min(-0.5).max(0.5), y: z.number().min(-0.5).max(0.5) })
+          .optional(),
+      }),
+    )
+    .default([]),
+});
+
+export type Blueprint = z.output<typeof BlueprintSchema>;
+export type BlueprintInput = z.input<typeof BlueprintSchema>;
+export type Building = z.output<typeof BuildingSchema>;
+
+/** Parses a blueprint; throws with readable zod issues. */
+export function parseBlueprint(input: unknown): Blueprint {
+  const r = BlueprintSchema.safeParse(input);
+  if (!r.success) throw new Error(`blueprint: ${z.prettifyError(r.error)}`);
+  return r.data;
+}

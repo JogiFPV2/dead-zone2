@@ -212,6 +212,9 @@ importers:
         specifier: ^0.186.1
         version: 0.186.1
     devDependencies:
+      '@deadzone/map':
+        specifier: workspace:*
+        version: link:../../tools/map
       '@types/three':
         specifier: ^0.186.0
         version: 0.186.0
@@ -289,6 +292,25 @@ importers:
         version: 0.4.0
 
   packages/ui: {}
+
+  tools/map:
+    dependencies:
+      '@deadzone/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      prettier:
+        specifier: ^3.9.9
+        version: 3.9.9
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
 
 packages:
 

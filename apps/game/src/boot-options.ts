@@ -1,6 +1,7 @@
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 
-export type MapChoice = 'test' | 'demo-house';
+/** `test` = generated test map; anything else = a map folder of the base pack (`base:<name>`). */
+export type MapChoice = 'test' | (string & {});
 
 export interface BootOptions {
   map: MapChoice;
@@ -12,12 +13,13 @@ export interface BootOptions {
   sim: 'worker' | 'mock';
 }
 
-/** Parses the URL query (`?map=demo-house`, `?crowd=N`, `?spawn=inside`, `?sim=mock`). */
+/** Parses the URL query (`?map=<base map>`, e.g. `demo-house`, `?crowd=N`, `?spawn=inside`, `?sim=mock`). */
 export function parseBootOptions(search: string): BootOptions {
   const q = new URLSearchParams(search);
   const crowd = parseCrowdParam(search);
   const spawnInside = q.get('spawn') === 'inside';
-  const map: MapChoice = q.get('map') === 'demo-house' ? 'demo-house' : 'test';
+  const name = q.get('map') ?? '';
+  const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : 'test';
   const mock = crowd > 0 || (spawnInside && map === 'test') || q.get('sim') === 'mock';
   return { map, crowd, spawnInside: spawnInside && map === 'test', sim: mock ? 'mock' : 'worker' };
 }

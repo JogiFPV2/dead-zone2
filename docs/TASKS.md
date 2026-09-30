@@ -67,7 +67,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Gotowanie, bandaże, barykadowanie okien, rozbiórka mebli (Symulacja)
 
 ## Etap 7 — Mapa demo i loot
-- [ ] Format mapy w chunkach + narzędzie do budowania mapy (Silnik)
+- [x] Format mapy w chunkach + narzędzie do budowania mapy (Silnik)
 - [ ] Miasteczko demo: około 20 budynków, stacja, sklep, apteka (Designer + Silnik)
 - [ ] Loot tables zależne od pomieszczeń (Modules)
 - [ ] Drzwi i okna: zamykanie, rozbijanie, wchodzenie przez okno (Symulacja)
