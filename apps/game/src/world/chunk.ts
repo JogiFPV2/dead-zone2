@@ -23,6 +23,9 @@ export interface ChunkData {
   readonly coord: ChunkCoord;
   /** CHUNK_TILES entries, indexed `y * CHUNK_SIZE + x`. */
   readonly floor: Uint16Array;
+  /** Optional wall edges (CHUNK_TILES entries, 0 = none), mirrored from the sim's SimMap shape. */
+  readonly edgeN?: Uint16Array;
+  readonly edgeW?: Uint16Array;
   // Planned: roof (Uint16Array, hidden together with walls by buildingId), edges, objects, rooms.
 }
 

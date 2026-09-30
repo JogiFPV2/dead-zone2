@@ -24,6 +24,21 @@ function tileAt(wx: number, wy: number): number {
   return GRASS;
 }
 
+/** World-space floor rectangle covered by a chunk range (1 tile = 1 unit). */
+export function rangeBounds(range: ChunkRange): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+} {
+  return {
+    minX: range.cx0 * CHUNK_SIZE,
+    minY: range.cy0 * CHUNK_SIZE,
+    maxX: (range.cx1 + 1) * CHUNK_SIZE,
+    maxY: (range.cy1 + 1) * CHUNK_SIZE,
+  };
+}
+
 export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
   const inRange = (cx: number, cy: number, z: number) =>
     z === range.z && cx >= range.cx0 && cx <= range.cx1 && cy >= range.cy0 && cy <= range.cy1;
@@ -38,7 +53,10 @@ export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
           floor[tileIndex(x, y)] = tileAt(cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
         }
       }
-      return { coord: { cx, cy, z }, floor };
+      // No walls yet: empty edges so this source can also satisfy the sim's SimMap later.
+      const edgeN = new Uint16Array(CHUNK_TILES);
+      const edgeW = new Uint16Array(CHUNK_TILES);
+      return { coord: { cx, cy, z }, floor, edgeN, edgeW };
     },
   };
 }

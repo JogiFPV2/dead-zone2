@@ -23,6 +23,11 @@ export class CameraRig {
     return this.camera.zoom;
   }
 
+  /** Yaw of the current 90° step (tween end), used to map WASD to world directions. */
+  get targetYaw(): number {
+    return this.tween.to;
+  }
+
   /** Rotate the view by one 90° step: +1 (E) or -1 (Q), with a short tween. */
   rotate(direction: 1 | -1, nowMs: number): void {
     const from = sampleYaw(this.tween, nowMs);
