@@ -23,6 +23,8 @@ export interface BootOptions {
   give: { itemId: string; count: number }[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
   stats: { stat: DebugStat; value: number }[];
+  /** Dev `?zspawn=N`: N zombies spawned 2 tiles east (within near-sense) of the player at start. */
+  zspawn: number;
   /** `?zombies=0` disables the start zombies on content maps. */
   zombies: boolean;
 }
@@ -75,5 +77,6 @@ export function parseBootOptions(search: string): BootOptions {
     give: parseGiveParam(q.get('give')),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
+    zspawn: Math.max(0, Math.min(50, Math.floor(Number(q.get('zspawn')) || 0))),
   };
 }

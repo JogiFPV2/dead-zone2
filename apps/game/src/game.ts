@@ -154,6 +154,12 @@ sim.onSnapshot(({ tick, buf }) => {
     if (import.meta.env.DEV) {
       for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
       for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
+      const p0 = readEntity(buf, 0);
+      if (boot.zspawn > 0 && p0) {
+        sim.send(
+          stamper.stamp({ type: 'debugSpawnZombie', x: p0.x + 2, y: p0.y, count: boot.zspawn }),
+        );
+      }
     }
   }
   const player = readEntity(buf, 0);

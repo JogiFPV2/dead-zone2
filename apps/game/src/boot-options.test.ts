@@ -12,6 +12,7 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     give: [],
     stats: [],
     zombies: true,
+    zspawn: 0,
   });
   expect(parseBootOptions('?time=06:30&timescale=30')).toMatchObject({ time: 390, timescale: 30 });
   expect(parseBootOptions('?time=25:00').time).toBeUndefined();

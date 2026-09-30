@@ -92,5 +92,6 @@ export function devStateLine(s: GameState): string {
     `${formatClock(s.clock.day, s.clock.minuteOfDay)} · hp ${stat(s, 'health')} hun ${stat(s, 'hunger')} thr ${stat(s, 'thirst')} fat ${stat(s, 'fatigue')}${s.player.alive ? '' : ' · DEAD'}${s.player.sleeping ? ' · asleep' : ''}`,
     `moodles: ${moodles || '–'} · wounds ${s.player.wounds.length}${last ? ` · last: ${describeEvent(last)}` : ''}`,
     devItemsLine(s),
+    `combat: kills ${s.combat?.zombiesKilled ?? 0} · ${s.combat?.weapon?.replace(/^base:/, '') ?? 'fists'}${s.combat?.condition != null ? ` ${s.combat.condition}/${s.combat.maxCondition ?? '?'}` : ''} · threat ${s.threat}`,
   ].join('\n');
 }
