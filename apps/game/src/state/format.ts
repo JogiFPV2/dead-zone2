@@ -42,6 +42,34 @@ export function describeEvent(e: SimEvent): string {
 const stat = (s: GameState, id: 'health' | 'hunger' | 'thirst' | 'fatigue') =>
   s.player.stats[id]?.toFixed(0) ?? '–';
 
+const short = (id: string | undefined) => (id ?? '?').replace(/^base:/, '');
+
+/**
+ * Compact items line: `inv 2.5/12kg 3it · near 2 crate fridge* · open fridge 4it · search 40% +1`
+ * (`*` = already searched, `+N` = queued actions).
+ */
+export function devItemsLine(s: GameState): string {
+  const inv = s.inventory;
+  const count = inv ? Object.values(inv.containers).reduce((n, c) => n + c.items.length, 0) : 0;
+  const parts = [
+    inv ? `inv ${inv.loadKg.toFixed(1)}/${inv.capacityKg.toFixed(0)}kg ${count}it` : 'inv –',
+    `near ${s.nearby.length}${s.nearby
+      .slice(0, 4)
+      .map((c) => ` ${c.kind === 'ground' ? 'ground' : short(c.type)}${c.searched ? '*' : ''}`)
+      .join('')}${s.nearby.length > 4 ? ' …' : ''}`,
+  ];
+  if (s.container) {
+    parts.push(`open ${short(s.container.type ?? s.container.kind)} ${s.container.items.length}it`);
+  }
+  const a = s.action;
+  if (a) {
+    const span = Math.max(1, a.endTick - a.startTick);
+    const pct = Math.round(Math.min(1, Math.max(0, (s.tick - a.startTick) / span)) * 100);
+    parts.push(`${a.kind} ${pct}%${a.queued > 0 ? ` +${a.queued}` : ''}`);
+  }
+  return parts.join(' · ');
+}
+
 /** Dev overlay line: clock, key stats, moodles, last event or error. */
 export function devStateLine(s: GameState): string {
   if (s.status === 'error') return `sim error: ${s.error ?? ''}`;
@@ -53,5 +81,6 @@ export function devStateLine(s: GameState): string {
   return [
     `${formatClock(s.clock.day, s.clock.minuteOfDay)} · hp ${stat(s, 'health')} hun ${stat(s, 'hunger')} thr ${stat(s, 'thirst')} fat ${stat(s, 'fatigue')}${s.player.alive ? '' : ' · DEAD'}${s.player.sleeping ? ' · asleep' : ''}`,
     `moodles: ${moodles || '–'} · wounds ${s.player.wounds.length}${last ? ` · last: ${describeEvent(last)}` : ''}`,
+    devItemsLine(s),
   ].join('\n');
 }

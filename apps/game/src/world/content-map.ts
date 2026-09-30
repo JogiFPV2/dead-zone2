@@ -60,6 +60,12 @@ export function mapDataToChunkSource(map: MapData): LoadedMap {
     );
     const roof = layer(c.layers.roof);
     const room = c.layers.room;
+    const objects = c.objects.map((o) => ({
+      contentId: o.contentId as ContentId,
+      x: o.x,
+      y: o.y,
+      rot: o.rot,
+    }));
     chunks.set(`${cx},${cy},${z}`, {
       coord: { cx, cy, z },
       floor: layer(c.layers.floor) ?? new Uint16Array(CHUNK_TILES),
@@ -68,6 +74,7 @@ export function mapDataToChunkSource(map: MapData): LoadedMap {
       rooms,
       ...(roof ? { roof } : {}),
       ...(room ? { room } : {}),
+      ...(objects.length > 0 ? { objects } : {}),
     });
   }
 

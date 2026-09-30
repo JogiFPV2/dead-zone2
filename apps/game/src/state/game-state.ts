@@ -1,6 +1,13 @@
 import type {
+  ActionView,
   ClockView,
+  ContainerId,
+  ContainerView,
   DeathCause,
+  EquipSlot,
+  InventoryView,
+  ItemId,
+  NearbyContainerView,
   SimEvent,
   SimViewPatch,
   ViewStat,
@@ -20,12 +27,31 @@ export interface PlayerState {
   wounds: readonly WoundView[];
 }
 
+/** Main inventory: the latest summary plus every carried container (patched by id). */
+export interface InventoryState {
+  container: ContainerId;
+  loadKg: number;
+  capacityKg: number;
+  hardLimitKg: number;
+  carryLoad: number;
+  equipped: Readonly<Partial<Record<EquipSlot, ItemId>>>;
+  /** Main inventory and carried bags by container id (full content each). */
+  containers: Readonly<Record<ContainerId, ContainerView>>;
+}
+
 export interface GameState {
   status: 'booting' | 'running' | 'error';
   /** Last sim tick seen in a view/events message. */
   tick: number;
   clock?: ClockView;
   player: PlayerState;
+  inventory?: InventoryState;
+  /** Opened container (loot panel); absent = closed. */
+  container?: ContainerView;
+  /** Containers in reach (full list from the last patch that had it). */
+  nearby: readonly NearbyContainerView[];
+  /** Current timed action; absent = none. */
+  action?: ActionView;
   death?: { cause: DeathCause; day: number; minuteOfDay: number; tick: number };
   /** Suggested game speed from the sim (sleep); the host decides whether to apply it. */
   timeScaleHint: 1 | 2 | 4;
@@ -40,6 +66,7 @@ export const INITIAL_GAME_STATE: GameState = {
   status: 'booting',
   tick: 0,
   player: { alive: true, sleeping: false, stats: {}, moodles: {}, wounds: [] },
+  nearby: [],
   timeScaleHint: 1,
   recentEvents: [],
 };
@@ -48,6 +75,41 @@ export type GameAction =
   | { type: 'view'; view: SimViewPatch; tick: number }
   | { type: 'events'; events: readonly SimEvent[]; tick: number }
   | { type: 'error'; message: string };
+
+function applyInventory(prev: InventoryState | undefined, v: InventoryView): InventoryState {
+  let containers = prev?.containers ?? {};
+  if (v.containers?.length || v.removed?.length) {
+    const next: Record<ContainerId, ContainerView> = { ...containers };
+    for (const c of v.containers ?? []) next[c.id] = c;
+    for (const id of v.removed ?? []) delete next[id];
+    containers = next;
+  }
+  return {
+    container: v.container,
+    loadKg: v.loadKg,
+    capacityKg: v.capacityKg,
+    hardLimitKg: v.hardLimitKg,
+    carryLoad: v.carryLoad,
+    equipped: v.equipped,
+    containers,
+  };
+}
+
+/** `undefined` = not in the patch (keep), `null` = cleared, otherwise the new value. */
+function patchNullable<K extends 'container' | 'action'>(
+  s: GameState,
+  key: K,
+  value: NonNullable<GameState[K]> | null | undefined,
+): GameState {
+  if (value === undefined) return s;
+  if (value === null) {
+    if (s[key] === undefined) return s;
+    const next = { ...s };
+    delete next[key];
+    return next;
+  }
+  return { ...s, [key]: value };
+}
 
 function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
   const p = view.player;
@@ -70,13 +132,18 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
       wounds: p.wounds ?? player.wounds,
     };
   }
-  return {
+  let next: GameState = {
     ...s,
     status: s.status === 'error' ? 'error' : 'running',
     tick: Math.max(s.tick, tick),
     ...(view.clock ? { clock: view.clock } : {}),
+    ...(view.inventory ? { inventory: applyInventory(s.inventory, view.inventory) } : {}),
+    ...(view.nearby ? { nearby: view.nearby } : {}),
     player,
   };
+  next = patchNullable(next, 'container', view.container);
+  next = patchNullable(next, 'action', view.action);
+  return next;
 }
 
 function applyEvents(s: GameState, events: readonly SimEvent[], tick: number): GameState {

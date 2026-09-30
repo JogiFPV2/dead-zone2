@@ -36,7 +36,17 @@ export interface ChunkData {
   readonly room?: Uint16Array;
   /** Rooms referenced by `room`. Room ids are unique within the whole map. */
   readonly rooms?: ReadonlyMap<RoomId, RoomInfo>;
-  // Planned: objects. Dynamic state (open/broken doors) is never part of chunk data.
+  /** Static map objects (furniture, storage, lights) at local tiles. Dynamic state is never here. */
+  readonly objects?: readonly MapObjectRef[];
+}
+
+/** A map object at local tile (x, y) of its chunk (content `objects`). */
+export interface MapObjectRef {
+  readonly contentId: ContentId;
+  readonly x: number;
+  readonly y: number;
+  /** Rotation in 90° steps (0..3). */
+  readonly rot: number;
 }
 
 /** 0 = outside. */

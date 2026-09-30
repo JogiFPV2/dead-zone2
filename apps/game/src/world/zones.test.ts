@@ -78,6 +78,9 @@ describe('zone overlay data', () => {
   it('colours by role: fixed for known roles, stable hash otherwise', () => {
     expect(zoneColor('start')).not.toBe(zoneColor('villa'));
     expect(zoneColor('loot')).toBe(zoneColor('loot'));
+    const fixed = ['start', 'villa', 'extraction', 'dark'].map(zoneColor);
+    expect(new Set(fixed).size).toBe(4);
+    expect(zoneColor('dark')).toBe(0x9b3fe0);
     expect(zoneColor('loot')).toBeGreaterThanOrEqual(0);
     expect(zoneColor('loot')).toBeLessThanOrEqual(0xffffff);
   });

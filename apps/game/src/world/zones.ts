@@ -18,6 +18,8 @@ const ROLE_COLORS: Record<string, number> = {
   start: 0x3ccf5a,
   villa: 0xe0902c,
   extraction: 0x2c8fe0,
+  /** Dark areas (no light; stealth/visibility later): violet, distinct from the others. */
+  dark: 0x9b3fe0,
 };
 
 /** Debug colour per role (dev overlay only); unknown roles get a stable hashed hue. */

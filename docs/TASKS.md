@@ -37,7 +37,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
 - [ ] Szybkie sloty 1–5 (Silnik + Designer)
 - [x] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)
-- [~] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja) — w sim gotowe; schowki z mapy wymagają przekazania `objects`/`rooms` chunków w `apps/game` (Silnik), kolizje postawionych skrzyń i zapis w diffie chunka później
+- [~] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja) — w sim gotowe; schowki z mapy (`objects`/`rooms` chunków) przekazywane z `apps/game` (Silnik), kolizje postawionych skrzyń i zapis w diffie chunka później
 - [x] Kontenery i akcja „Przeszukaj” z czasem (Symulacja)
 - [ ] Okno ekwipunku i przeciąganie przedmiotów (Silnik + Designer)
 - [x] Psucie się jedzenia (Symulacja)

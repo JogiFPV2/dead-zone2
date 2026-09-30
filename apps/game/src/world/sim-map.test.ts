@@ -43,6 +43,34 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(map.getChunk(1, 0, 0)).toBeUndefined();
   });
 
+  it('passes rooms (as room types) and objects, and lists chunks of the range', () => {
+    const room = new Uint16Array(CHUNK_TILES);
+    room[tileIndex(3, 4)] = 7;
+    const src: ChunkSource = {
+      tilePalette: [null, 'base:grass'],
+      getChunk: (cx, cy, z) =>
+        cx === 1 && cy === 0 && z === 0
+          ? {
+              coord: { cx, cy, z },
+              floor: new Uint16Array(CHUNK_TILES).fill(1),
+              room,
+              rooms: new Map([[7, { type: 'base:room-kitchen', buildingId: 1 }]]),
+              objects: [{ contentId: 'base:fridge', x: 3, y: 4, rot: 2 }],
+            }
+          : undefined,
+    };
+    const map = chunkSourceToSimMap(src, { cx0: 0, cy0: 0, cx1: 1, cy1: 0, z: 0 });
+    const c = map.getChunk(1, 0, 0)!;
+    expect(c.room).toBe(room);
+    expect(c.rooms).toEqual({ '7': 'base:room-kitchen' });
+    expect(c.objects).toEqual([{ contentId: 'base:fridge', x: 3, y: 4 }]);
+    expect(map.listChunks?.()).toEqual([{ cx: 1, cy: 0, z: 0 }]);
+    expect('listChunks' in chunkSourceToSimMap(src)).toBe(false);
+    const data = chunkSourceToSimMapData(src, { cx0: 0, cy0: 0, cx1: 1, cy1: 0, z: 0 });
+    expect(data.chunks[0]).toMatchObject({ rooms: { '7': 'base:room-kitchen' } });
+    expect(data.chunks[0]?.objects).toHaveLength(1);
+  });
+
   it('serializes the whole test map for the worker', () => {
     expect(chunkSourceToSimMapData(source, TEST_MAP_RANGE).chunks).toHaveLength(16);
   });

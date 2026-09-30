@@ -1,4 +1,4 @@
-import type { SimEvent, SimViewPatch } from '@deadzone/protocol';
+import type { ContainerView, SimEvent, SimViewPatch } from '@deadzone/protocol';
 import { describe, expect, it, vi } from 'vitest';
 import {
   GameStateStore,
@@ -9,7 +9,7 @@ import {
   type GameAction,
   type SimStateSource,
 } from './game-state.js';
-import { describeEvent, devStateLine, formatClock } from './format.js';
+import { describeEvent, devItemsLine, devStateLine, formatClock } from './format.js';
 
 const clock = {
   day: 1,
@@ -92,6 +92,94 @@ describe('reduceGameState: view', () => {
     expect(
       run(view({ player: { wounds: [wound] } }), view({ player: { wounds: [] } })).player.wounds,
     ).toEqual([]);
+  });
+});
+
+describe('reduceGameState: items (v4 view)', () => {
+  const inv = (c: ContainerView[] = [], removed: number[] = []) => ({
+    container: 2,
+    loadKg: 1,
+    capacityKg: 12,
+    hardLimitKg: 18,
+    carryLoad: 8.3,
+    equipped: {},
+    containers: c,
+    ...(removed.length ? { removed } : {}),
+  });
+  const box = (id: number, kind: ContainerView['kind'], n = 0): ContainerView => ({
+    id,
+    kind,
+    capacityKg: null,
+    weightKg: n,
+    items: Array.from({ length: n }, (_, i) => ({
+      id: 100 + i,
+      def: 'base:brick',
+      count: 1,
+      weightKg: 1,
+    })),
+  });
+
+  it('merges inventory containers by id and drops removed ones', () => {
+    let s = run(view({ inventory: inv([box(2, 'inventory', 1), box(5, 'bag', 2)]) }));
+    expect(Object.keys(s.inventory!.containers)).toEqual(['2', '5']);
+    const bag = s.inventory!.containers[5];
+    s = reduceGameState(s, view({ inventory: { ...inv([box(2, 'inventory', 3)]), loadKg: 4 } }));
+    expect(s.inventory!.loadKg).toBe(4);
+    expect(s.inventory!.containers[2]!.items).toHaveLength(3);
+    expect(s.inventory!.containers[5]).toBe(bag);
+    s = reduceGameState(s, view({ inventory: inv([], [5]) }));
+    expect(Object.keys(s.inventory!.containers)).toEqual(['2']);
+    // Missing inventory keeps the previous state.
+    expect(reduceGameState(s, view({ clock })).inventory).toBe(s.inventory);
+  });
+
+  it('replaces nearby, opens/closes the container and sets/clears the action', () => {
+    const near = {
+      id: 1,
+      kind: 'world' as const,
+      type: 'base:crate',
+      x: -62,
+      y: 1,
+      z: 0,
+      searched: false,
+    };
+    let s = run(view({ nearby: [near] }));
+    expect(s.nearby).toEqual([near]);
+    s = reduceGameState(s, view({ clock }));
+    expect(s.nearby).toEqual([near]);
+    s = reduceGameState(
+      s,
+      view({ action: { kind: 'search', startTick: 10, endTick: 110, container: 1, queued: 0 } }),
+    );
+    expect(s.action?.kind).toBe('search');
+    s = reduceGameState(s, view({ action: null, container: box(1, 'world', 2), nearby: [] }));
+    expect(s.action).toBeUndefined();
+    expect('action' in s).toBe(false);
+    expect(s.container?.items).toHaveLength(2);
+    expect(s.nearby).toEqual([]);
+    s = reduceGameState(s, view({ container: null }));
+    expect(s.container).toBeUndefined();
+  });
+
+  it('formats a compact items line', () => {
+    expect(devItemsLine(INITIAL_GAME_STATE)).toBe('inv – · near 0');
+    const s = run(
+      view(
+        {
+          inventory: inv([box(2, 'inventory', 1)]),
+          nearby: [
+            { id: 1, kind: 'world', type: 'base:crate', x: 0, y: 0, z: 0, searched: true },
+            { id: 3, kind: 'ground', x: 0, y: 0, z: 0, searched: false },
+          ],
+          container: { ...box(1, 'world', 2), type: 'base:crate' },
+          action: { kind: 'search', startTick: 0, endTick: 100, queued: 1 },
+        },
+        40,
+      ),
+    );
+    expect(devItemsLine(s)).toBe(
+      'inv 1.0/12kg 1it · near 2 crate* ground · open crate 2it · search 40% +1',
+    );
   });
 });
 

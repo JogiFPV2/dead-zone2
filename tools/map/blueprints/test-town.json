@@ -319,5 +319,37 @@
         "vvvvvvvvvv"
       ]
     }
+  ],
+  "objects": [
+    {
+      "contentId": "base:crate",
+      "x": -62,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 16,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 17,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 18,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 20,
+      "y": 18,
+      "rot": 0
+    }
   ]
 }
