@@ -27,4 +27,20 @@ describe('przykładowa mapa data/base/maps/demo-house', () => {
     });
     expect(lights.map((o) => o.contentId)).toEqual(['base:ceiling-lamp']);
   });
+
+  it('ma id używane przez blueprint test-town (tools/map)', async () => {
+    const bundle = await buildContentBundleFromDirs([BASE_PACK_DIR]);
+    const category = (id: string) => bundle.tiles[id]?.category;
+    expect(category('base:asphalt')).toBe('floor');
+    expect(category('base:roof-flat')).toBe('roof');
+    expect(category('base:wall-plain')).toBe('wall');
+    expect(category('base:window-plain')).toBe('window');
+    expect(category('base:door-plain')).toBe('door');
+    const tablesFor = (room: string) =>
+      Object.values(bundle.lootTables)
+        .filter((t) => t.rooms.includes(room))
+        .map((t) => t.id);
+    expect(tablesFor('base:room-living-room')).toEqual(['base:living-room']);
+    expect(tablesFor('base:room-bedroom')).toEqual(['base:bedroom']);
+  });
 });

@@ -117,14 +117,13 @@ describe('buildMap', () => {
     expect(() => parseBlueprint({ id: 'Bad Id' })).toThrow(/blueprint/);
   });
 
-  it('reports missing content refs through full pack validation', async () => {
+  it('validates test-town against the base pack and reports missing content refs', async () => {
     const built = buildMap(await blueprint('test-town'));
-    const result = validateWithPack(
-      await mapFiles(built),
-      built.id,
-      await readPackDir(BASE_PACK_DIR),
-    );
+    const pack = await readPackDir(BASE_PACK_DIR);
+    expect(formatErrors(validateWithPack(await mapFiles(built), built.id, pack))).toEqual([]);
+    const bad = buildMap(parseBlueprint(small({ ground: 'base:no-such-floor' })));
+    const result = validateWithPack(await mapFiles(bad), bad.id, pack);
     expect(result.ok).toBe(false);
-    expect(formatErrors(result).join('\n')).toMatch(/base:asphalt/);
+    expect(formatErrors(result).join('\n')).toMatch(/base:no-such-floor/);
   });
 });

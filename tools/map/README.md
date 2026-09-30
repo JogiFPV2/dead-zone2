@@ -35,5 +35,5 @@ Paleta chunka ma kolejność z blueprintu (ground, areas, podłogi pokojów, dac
 
 ## Blueprinty
 
-- `blueprints/demo-house.json`: odtwarza `base:demo-house` (testy sprawdzają, że warstwy, krawędzie, pokoje i obiekty są równe). Pliki w paczce przygotował Modules i mają inny układ JSON, więc `build` bez `--check` przepisałby ich formatowanie. Zanim blueprint stanie się źródłem, trzeba to uzgodnić.
-- `blueprints/test-town.json`: odtwarza wygenerowaną mapę testową gry (`apps/game/src/world/test-map.ts`) kafel w kafel (test round trip w grze). Używa placeholderów (`base:asphalt`, `base:roof-flat`, `base:wall-plain`, `base:window-plain`, `base:door-plain`, pokoje `living-room` i `bedroom`), których content jeszcze nie definiuje. Dlatego waliduje się tylko z `--schema-only` i nie ma jej w paczce base.
+- `blueprints/demo-house.json`: źródło `base:demo-house`. Blueprint jest źródłem prawdy dla map, a pliki chunków w paczce są generowane (`map build`, sprawdzenie aktualności: `map build … --check`). Nie edytuj ich ręcznie.
+- `blueprints/test-town.json`: odtwarza wygenerowaną mapę testową gry (`apps/game/src/world/test-map.ts`) kafel w kafel (test round trip w grze). Wszystkie jej id (`base:asphalt`, `base:roof-flat`, `base:wall-plain`, `base:window-plain`, `base:door-plain`, pokoje `base:room-living-room` i `base:room-bedroom`) są w paczce base, więc waliduje się z pełną walidacją paczki (0 błędów). Nie jest zapisana w paczce base.

@@ -92,7 +92,8 @@ pomieszczenie jest w `rooms`, a typ w `containers` (pusta lista = każdy schowek
 ## Mapy
 
 Mapa to `maps/<mapId>/manifest.json` i `maps/<mapId>/chunks/<cx>_<cy>_<z>.json` (np. `-1_0_0.json`); id mapy
-to `<namespace>:<mapId>`. Przykład: `data/base/maps/demo-house` (jeden chunk, dom z kuchnią).
+to `<namespace>:<mapId>`. Przykład: `data/base/maps/demo-house` (jeden chunk, dom z kuchnią). Pliki map są generowane z blueprintów
+narzędziem `tools/map` (`pnpm --filter @deadzone/map map build tools/map/blueprints/demo-house.json`); nie edytuj ich ręcznie.
 
 - Manifest: `formatVersion` (1), `chunkSize` (zawsze 32), `floorHeight` w jednostkach świata (1 kafel = 1 j.),
   `chunks: [{ cx, cy, z }]` — dokładnie te pliki, które są w `chunks/`.
