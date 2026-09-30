@@ -58,6 +58,7 @@ const valid: Record<string, unknown> = {
       lingerSec: { min: 1, max: 2 },
     },
   },
+  vhs: { vhs: { skills: [{ skill: 't:cooking', xp: 50 }] } },
   misc: {},
 };
 

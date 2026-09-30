@@ -50,6 +50,13 @@ export function collectItemRefs(item: Item, r: RefList): void {
     case 'placeable':
       r.add('containerType', item.placeable.containerType, 'placeable', 'containerType');
       r.add('station', item.placeable.station?.id, 'placeable', 'station', 'id');
+      if (item.placeable.powerSource) {
+        const tag = item.placeable.powerSource.fuelTag;
+        r.tags.push({ tag, path: ['placeable', 'powerSource', 'fuelTag'] });
+      }
+      break;
+    case 'vhs':
+      item.vhs.skills.forEach((s, i) => r.add('skill', s.skill, 'vhs', 'skills', i, 'skill'));
       break;
     case 'lure':
       if (item.lure.trigger.type === 'remote')

@@ -13,6 +13,7 @@ import { MedicalItemSchema } from './medical.js';
 import { MiscItemSchema } from './misc.js';
 import { PlaceableItemSchema } from './placeable.js';
 import { ToolItemSchema } from './tool.js';
+import { VhsItemSchema } from './vhs.js';
 import { WeaponMeleeItemSchema } from './weapon-melee.js';
 import { WeaponRangedItemSchema } from './weapon-ranged.js';
 
@@ -33,6 +34,7 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   MaterialItemSchema,
   PlaceableItemSchema,
   LureItemSchema,
+  VhsItemSchema,
   MiscItemSchema,
 ]);
 

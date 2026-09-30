@@ -18,6 +18,8 @@ export * from './tool.js';
 export * from './literature.js';
 export * from './material.js';
 export * from './light.js';
+export * from './power.js';
+export * from './vhs.js';
 export * from './placeable.js';
 export * from './lure.js';
 export * from './misc.js';

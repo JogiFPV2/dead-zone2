@@ -1,0 +1,35 @@
+[
+  {
+    "id": "base:tv",
+    "name": "item.base.tv.name",
+    "kind": "placeable",
+    "weightKg": 12,
+    "tags": ["base:station-tv"],
+    "placeable": { "power": { "consumesW": 120 } }
+  },
+  {
+    "id": "base:generator",
+    "name": "item.base.generator.name",
+    "kind": "placeable",
+    "weightKg": 60,
+    "tags": ["base:generator"],
+    "placeable": {
+      "powerSource": {
+        "outputW": 3000,
+        "radiusTiles": 20,
+        "fuelTag": "base:fuel",
+        "litersPerFuelItem": 5,
+        "tankLiters": 10,
+        "litersPerHour": 1,
+        "noise": { "radiusTiles": 25, "volume": 0.6 }
+      }
+    }
+  },
+  {
+    "id": "base:gas-can",
+    "name": "item.base.gas-can.name",
+    "kind": "misc",
+    "weightKg": 4.5,
+    "tags": ["base:fuel"]
+  }
+]

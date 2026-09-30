@@ -1,0 +1,107 @@
+[
+  {
+    "id": "base:vhs-car-mechanics",
+    "name": "item.base.vhs-car-mechanics.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:mechanics", "xp": 100 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-electrical-repair",
+    "name": "item.base.vhs-electrical-repair.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:electrical", "xp": 100 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-sewing-basics",
+    "name": "item.base.vhs-sewing-basics.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:tailoring", "xp": 75 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-home-garden",
+    "name": "item.base.vhs-home-garden.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [
+        { "skill": "base:farming", "xp": 75 },
+        { "skill": "base:foraging", "xp": 25 }
+      ],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-fishing-tips",
+    "name": "item.base.vhs-fishing-tips.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [
+        { "skill": "base:fishing", "xp": 75 },
+        { "skill": "base:trapping", "xp": 25 }
+      ],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-wilderness-survival",
+    "name": "item.base.vhs-wilderness-survival.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [
+        { "skill": "base:foraging", "xp": 50 },
+        { "skill": "base:trapping", "xp": 50 },
+        { "skill": "base:fishing", "xp": 25 }
+      ],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-self-defense",
+    "name": "item.base.vhs-self-defense.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [
+        { "skill": "base:blunt", "xp": 50 },
+        { "skill": "base:blade-short", "xp": 50 },
+        { "skill": "base:nimble", "xp": 25 }
+      ],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  }
+]

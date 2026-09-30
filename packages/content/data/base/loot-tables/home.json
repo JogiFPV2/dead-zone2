@@ -24,7 +24,8 @@
       { "item": "base:jeans", "weight": 3 },
       { "item": "base:sewing-needle", "weight": 2 },
       { "item": "base:thread", "weight": 2, "count": { "min": 1, "max": 4 } },
-      { "table": "base:skill-books", "weight": 1, "rarity": "uncommon" }
+      { "table": "base:skill-books", "weight": 1, "rarity": "uncommon" },
+      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
     ]
   },
   {
@@ -61,7 +62,8 @@
       { "item": "base:mechanical-part", "weight": 3, "count": { "min": 1, "max": 2 } },
       { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" },
       { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:wooden-stick", "weight": 3 }
+      { "item": "base:wooden-stick", "weight": 3 },
+      { "item": "base:gas-can", "weight": 2, "rarity": "uncommon" }
     ]
   },
   {
@@ -87,7 +89,8 @@
       { "item": "base:camping-lantern", "weight": 1, "rarity": "uncommon" },
       { "table": "base:skill-books", "weight": 2 },
       { "table": "base:recipe-magazines", "weight": 2 },
-      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
+      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
     ]
   }
 ]

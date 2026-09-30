@@ -3,6 +3,7 @@ import { ContainerTypeRefSchema, StationRefSchema } from '../common/index.js';
 import { StationLevelSchema } from '../station.js';
 import { itemBaseShape } from './base.js';
 import { LightSchema } from './light.js';
+import { PowerConsumerSchema, PowerSourceSchema } from './power.js';
 
 /**
  * Przedmiot, który po postawieniu staje się obiektem świata — np. skrzynia z desek albo lampa.
@@ -17,6 +18,10 @@ export const PlaceableItemSchema = z.strictObject({
     light: LightSchema.optional(),
     /** Postawiony przedmiot jest stacją `id` na poziomie `level`. */
     station: z.strictObject({ id: StationRefSchema, level: StationLevelSchema }).optional(),
+    /** Potrzebuje prądu (telewizor). */
+    power: PowerConsumerSchema.optional(),
+    /** Daje prąd (generator). */
+    powerSource: PowerSourceSchema.optional(),
   }),
 });
 

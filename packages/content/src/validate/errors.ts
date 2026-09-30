@@ -22,6 +22,8 @@ export type ContentErrorCode =
   | 'station_level_gap'
   | 'station_item_mismatch'
   | 'station_upgrade_missing'
+  | 'vhs_no_tv'
+  | 'vhs_duplicate_skill'
   | 'zone_duplicate_id'
   | 'zone_empty'
   | 'zone_out_of_bounds'

@@ -85,6 +85,12 @@ z `station.minLevel = N`.
 - Książki umiejętności: serie po 5 tomów (`items/books-<umiejętność>.json`, tom N dla poziomów 2N−2..2N−1),
   magazyny z recepturami w `items/recipe-magazines.json`; loot w tabelach `base:skill-books` i `base:recipe-magazines`
   (księgarnia `base:room-bookstore`, dom, szkoła).
+- Kasety VHS (`kind: 'vhs'`, `items/vhs-*.json`): `vhs { skills: 1–3 × { skill, xp }, watchSec (30 s rzeczywistych),
+oncePerCharacter (true), tvTag ('base:station-tv') }`. Telewizor to `placeable` z tagiem `tvTag` i
+  `placeable.power { consumesW }`; generator ma `placeable.powerSource { outputW, radiusTiles, fuelTag, litersPerFuelItem,
+tankLiters, litersPerHour, noise }` (paliwo: `base:gas-can` z tagiem `base:fuel`). Błędy `vhs_no_tv`,
+  `vhs_duplicate_skill`. Loot: tabela `base:vhs-tapes` w salonie, sypialni i księgarni, wypożyczalnia `base:video-rental`
+  (`base:room-video-store`).
 
 ## Paczka moda
 

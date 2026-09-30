@@ -1,0 +1,109 @@
+[
+  {
+    "id": "base:vhs-fitness-workout",
+    "name": "item.base.vhs-fitness-workout.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:fitness", "xp": 60 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-strength-training",
+    "name": "item.base.vhs-strength-training.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [
+        { "skill": "base:strength", "xp": 60 },
+        { "skill": "base:fitness", "xp": 20 }
+      ],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-cooking-basics",
+    "name": "item.base.vhs-cooking-basics.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:cooking", "xp": 75 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-cooking-master",
+    "name": "item.base.vhs-cooking-master.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:cooking", "xp": 150 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-carpentry-basics",
+    "name": "item.base.vhs-carpentry-basics.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:carpentry", "xp": 75 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-carpentry-furniture",
+    "name": "item.base.vhs-carpentry-furniture.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:carpentry", "xp": 150 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-first-aid-basics",
+    "name": "item.base.vhs-first-aid-basics.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:first-aid", "xp": 75 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  },
+  {
+    "id": "base:vhs-first-aid-emergency",
+    "name": "item.base.vhs-first-aid-emergency.name",
+    "kind": "vhs",
+    "weightKg": 0.25,
+    "tags": ["base:vhs"],
+    "vhs": {
+      "skills": [{ "skill": "base:first-aid", "xp": 150 }],
+      "watchSec": 30,
+      "oncePerCharacter": true,
+      "tvTag": "base:station-tv"
+    }
+  }
+]

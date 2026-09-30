@@ -8,6 +8,7 @@ import { checkModeMaps } from './checks/check-mode-maps.js';
 import { checkRecipeKinds } from './checks/check-recipe-kinds.js';
 import { checkRecipeLearning } from './checks/check-recipe-learning.js';
 import { checkStations } from './checks/check-stations.js';
+import { checkVhs } from './checks/check-vhs.js';
 import { checkRefs } from './checks/check-refs.js';
 import { checkTraitConflicts } from './checks/check-trait-conflicts.js';
 import { ContentIndex } from './content-index.js';
@@ -66,6 +67,7 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   checkRecipeLearning(index, sink);
   checkRecipeKinds(index, sink);
   checkStations(index, sink);
+  checkVhs(index, sink);
   const maps = validateMaps(ordered, index, sink);
   checkModeMaps(index, maps, sink);
 

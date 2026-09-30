@@ -8,7 +8,8 @@
     "entries": [
       { "table": "base:skill-books", "weight": 6 },
       { "table": "base:recipe-magazines", "weight": 4 },
-      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "uncommon" },
+      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
     ]
   },
   {
