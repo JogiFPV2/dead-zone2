@@ -24,6 +24,8 @@ import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
 import { parseBootOptions } from './boot-options.js';
 import { startSimWorker } from './sim/start-sim.js';
+import { GameStateStore, connectSimState } from './state/game-state.js';
+import { describeEvent, devStateLine } from './state/format.js';
 import type { SimClient } from './sim/sim-client.js';
 import type { LoadedMap } from './world/content-map.js';
 import { startSpawn } from './world/zones.js';
@@ -45,6 +47,16 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
 const boot = parseBootOptions(window.location.search);
+// Base pack for the sim (survival content), fetched in parallel with the map/scene setup.
+const simContent =
+  boot.sim === 'worker'
+    ? import('./content/sim-content.js')
+        .then((m) => m.loadSimContent())
+        .catch((e: unknown) => {
+          console.error('Sim content failed to load; survival disabled', e);
+          return undefined;
+        })
+    : undefined;
 const world: LoadedMap =
   boot.map !== 'test'
     ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
@@ -73,17 +85,32 @@ const input = new InputMap(settings.get().input.bindings, {
 settings.subscribe((next) => input.setBindings(next.input.bindings));
 bindCameraInput(rig, input);
 
-// Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet)
-// and `?spawn=inside` (the worker `init` has no spawn option yet); it has no collisions.
-const sim: SimClient =
-  boot.sim === 'worker'
-    ? startSimWorker(world.source, world.range, SIM_SEED, startSpawn(world.zones))
-    : new MockSimClient(
-        rangeBounds(world.range),
-        boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
-        PLAYER_ID,
-        { count: boot.crowd, seed: SIM_SEED },
-      );
+// Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet;
+// they come with zombies); it has no collisions and no survival.
+const gameState = new GameStateStore();
+let sim: SimClient;
+if (boot.sim === 'worker') {
+  const worker = startSimWorker(world.source, world.range, SIM_SEED, {
+    spawn: boot.spawnInside ? { ...TEST_BUILDING_INSIDE, z: 0 } : startSpawn(world.zones),
+    content: await simContent,
+    dev: import.meta.env.DEV,
+  });
+  connectSimState(gameState, worker);
+  sim = worker;
+} else {
+  sim = new MockSimClient(
+    rangeBounds(world.range),
+    boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
+    PLAYER_ID,
+    { count: boot.crowd, seed: SIM_SEED },
+  );
+}
+gameState.subscribe((_next, _prev, action) => {
+  if (action.type === 'error') console.error(`Sim error: ${action.message}`);
+  else if (import.meta.env.DEV && action.type === 'events') {
+    for (const e of action.events) console.debug(`[sim t${e.tick}] ${describeEvent(e)}`);
+  }
+});
 const stamper = new CommandStamper(PLAYER_ID);
 const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
 const snapshots = new SnapshotBuffer();
@@ -125,7 +152,10 @@ if (import.meta.env.DEV) {
         const p = snapshots.sample(performance.now(), TICK_MS);
         return p ? `player ${p.x.toFixed(2)}, ${p.y.toFixed(2)} · sim ${boot.sim}` : '';
       };
-      afterRender = createStatsOverlay(document.body, () => `${bench.line()}\n${pos()}`);
+      afterRender = createStatsOverlay(
+        document.body,
+        () => `${bench.line()}\n${pos()}\n${devStateLine(gameState.get())}`,
+      );
     },
   );
 }

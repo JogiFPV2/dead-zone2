@@ -1,4 +1,4 @@
-import type { Command } from '@deadzone/protocol';
+import type { Command, SimEvent, SimViewPatch } from '@deadzone/protocol';
 import type { SimWorkerClient } from '@deadzone/sim/worker-client';
 import type { SimClient, SnapshotMessage } from './sim-client.js';
 
@@ -25,6 +25,20 @@ export class WorkerSimClient implements SimClient {
   onSnapshot(cb: (snapshot: SnapshotMessage) => void): () => void {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);
+  }
+
+  /** HUD view deltas (only on change; the first one after init is full). */
+  onView(cb: (view: SimViewPatch, tick: number) => void): () => void {
+    return this.client.onView(cb);
+  }
+
+  onEvents(cb: (events: SimEvent[], tick: number) => void): () => void {
+    return this.client.onEvents(cb);
+  }
+
+  /** Fatal init error (e.g. invalid content): the sim does not run. */
+  onError(cb: (message: string) => void): () => void {
+    return this.client.onError(cb);
   }
 
   dispose(): void {
