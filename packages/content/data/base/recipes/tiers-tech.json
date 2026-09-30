@@ -1,0 +1,56 @@
+[
+  {
+    "id": "base:weld-door-plate",
+    "name": "recipe.base.weld-door-plate.name",
+    "category": "building",
+    "ingredients": [
+      { "item": "base:metal-sheet", "count": 4 },
+      { "item": "base:mechanical-part", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-welding", "durabilityLoss": 3 }],
+    "skills": [
+      { "skill": "base:metalworking", "level": 5 },
+      { "skill": "base:mechanics", "level": 3 }
+    ],
+    "station": { "id": "base:station-mechanic", "minLevel": 3 },
+    "durationMin": 90,
+    "results": [{ "item": "base:door-plate" }],
+    "xp": [{ "skill": "base:metalworking", "amount": 20 }]
+  },
+  {
+    "id": "base:craft-lure-remote",
+    "name": "recipe.base.craft-lure-remote.name",
+    "category": "electronics",
+    "ingredients": [
+      { "item": "base:electronics-scrap", "count": 2 },
+      { "item": "base:wire" },
+      { "item": "base:battery" }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:electrical", "level": 3 }],
+    "station": { "id": "base:station-electronics", "minLevel": 2 },
+    "durationMin": 30,
+    "results": [{ "item": "base:lure-remote" }],
+    "xp": [{ "skill": "base:electrical", "amount": 8 }]
+  },
+  {
+    "id": "base:craft-lure-electronic",
+    "name": "recipe.base.craft-lure-electronic.name",
+    "category": "electronics",
+    "ingredients": [
+      { "item": "base:electronics-scrap", "count": 4 },
+      { "item": "base:wire", "count": 3 },
+      { "item": "base:mechanical-part" },
+      { "item": "base:battery", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:electrical", "level": 5 }],
+    "station": { "id": "base:station-electronics", "minLevel": 3 },
+    "durationMin": 60,
+    "results": [{ "item": "base:lure-electronic" }],
+    "xp": [
+      { "skill": "base:electrical", "amount": 16 },
+      { "skill": "base:mechanics", "amount": 4 }
+    ]
+  }
+]

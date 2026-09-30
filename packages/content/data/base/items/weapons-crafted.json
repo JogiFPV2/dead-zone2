@@ -1,0 +1,21 @@
+[
+  {
+    "id": "base:nailed-stick",
+    "name": "item.base.nailed-stick.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.6,
+    "tags": ["base:weapon-crafted"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": { "min": 7, "max": 12 },
+      "rangeTiles": 1.1,
+      "attacksPerSec": 1.1,
+      "staminaCost": 3,
+      "critChance": 0.05,
+      "knockback": 0.4,
+      "hitNoise": { "radiusTiles": 4, "volume": 0.3 },
+      "durability": { "max": 20, "lossChancePerUse": 0.3, "brokenInto": "base:wooden-stick" }
+    }
+  }
+]

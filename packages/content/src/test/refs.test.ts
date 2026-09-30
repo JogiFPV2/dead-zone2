@@ -11,7 +11,7 @@ describe('referencje krzyżowe', () => {
         'recipes/r.json': {
           id: 'base:crate',
           name: 'recipe.base.crate.name',
-          category: 'carpentry',
+          category: 'building',
           ingredients: [{ item: 'base:plank', count: 4 }, { item: 'base:nails' }],
           tools: [{ tag: 'base:tool-hammer' }],
           skills: [

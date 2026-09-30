@@ -22,7 +22,7 @@ describe('pozostałe schematy', () => {
     const r = {
       id: 'base:r',
       name: 'recipe.base.r.name',
-      category: 'carpentry',
+      category: 'building',
       ingredients: [{ item: 'base:plank', count: 2 }],
       durationMin: 10,
       results: [{ item: 'base:crate' }],

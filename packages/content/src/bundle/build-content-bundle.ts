@@ -19,6 +19,7 @@ export const BUNDLE_KEYS = {
   containerType: 'containers',
   tile: 'tiles',
   gameMode: 'gameModes',
+  station: 'stations',
 } as const satisfies Record<ContentType, keyof ContentBundle>;
 
 export class ContentValidationError extends Error {

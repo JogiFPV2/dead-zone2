@@ -2,30 +2,30 @@
   {
     "id": "base:bake-potato",
     "name": "recipe.base.bake-potato.name",
-    "category": "cooking",
+    "category": "food",
     "ingredients": [{ "item": "base:potato" }],
+    "station": { "id": "base:station-fire", "minLevel": 1 },
     "durationMin": 40,
     "results": [{ "item": "base:baked-potato" }],
-    "xp": [{ "skill": "base:cooking", "amount": 3 }],
-    "station": "base:station-fire"
+    "xp": [{ "skill": "base:cooking", "amount": 3 }]
   },
   {
     "id": "base:vegetable-stew",
     "name": "recipe.base.vegetable-stew.name",
-    "category": "cooking",
+    "category": "food",
     "ingredients": [{ "tag": "base:vegetable", "count": 3 }, { "item": "base:water-bottle" }],
     "tools": [{ "tag": "base:cooking-pot" }],
     "skills": [{ "skill": "base:cooking", "level": 2 }],
+    "station": { "id": "base:station-fire", "minLevel": 1 },
     "durationMin": 60,
     "results": [{ "item": "base:vegetable-stew" }],
     "xp": [{ "skill": "base:cooking", "amount": 10 }],
-    "requiresLearning": true,
-    "station": "base:station-fire"
+    "requiresLearning": true
   },
   {
     "id": "base:fillet-fish",
     "name": "recipe.base.fillet-fish.name",
-    "category": "cooking",
+    "category": "food",
     "ingredients": [{ "item": "base:raw-fish" }],
     "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
     "skills": [{ "skill": "base:fishing", "level": 1 }],
@@ -40,18 +40,19 @@
   {
     "id": "base:grill-fish",
     "name": "recipe.base.grill-fish.name",
-    "category": "cooking",
+    "category": "food",
     "ingredients": [{ "item": "base:fish-fillet" }],
+    "station": { "id": "base:station-fire", "minLevel": 1 },
     "durationMin": 15,
     "results": [{ "item": "base:grilled-fish" }],
     "xp": [{ "skill": "base:cooking", "amount": 4 }],
-    "requiresLearning": true,
-    "station": "base:station-fire"
+    "requiresLearning": true
   },
   {
     "id": "base:cabbage-salad",
     "name": "recipe.base.cabbage-salad.name",
-    "category": "cooking",
+    "kind": "combine",
+    "category": "food",
     "ingredients": [{ "item": "base:cabbage" }, { "item": "base:carrot" }],
     "tools": [{ "tag": "base:tool-knife" }],
     "durationMin": 10,

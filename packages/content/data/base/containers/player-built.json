@@ -7,5 +7,14 @@
     "pickupItem": "base:wooden-crate",
     "tags": ["base:player-built"],
     "searchMin": 0.5
+  },
+  {
+    "id": "base:large-wooden-crate",
+    "name": "container.base.large-wooden-crate.name",
+    "category": "crate",
+    "capacityKg": 110,
+    "pickupItem": "base:large-wooden-crate",
+    "tags": ["base:player-built"],
+    "searchMin": 0.8
   }
 ]

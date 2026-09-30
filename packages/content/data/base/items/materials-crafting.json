@@ -58,5 +58,27 @@
     "kind": "material",
     "weightKg": 9,
     "tags": ["base:barricade"]
+  },
+  {
+    "id": "base:wooden-stick",
+    "name": "item.base.wooden-stick.name",
+    "kind": "material",
+    "weightKg": 0.4,
+    "maxStack": 5,
+    "tags": ["base:wood-stick"]
+  },
+  {
+    "id": "base:barricade-reinforced",
+    "name": "item.base.barricade-reinforced.name",
+    "kind": "material",
+    "weightKg": 11,
+    "tags": ["base:barricade"]
+  },
+  {
+    "id": "base:door-plate",
+    "name": "item.base.door-plate.name",
+    "kind": "material",
+    "weightKg": 14,
+    "tags": ["base:barricade"]
   }
 ]

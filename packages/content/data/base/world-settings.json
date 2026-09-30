@@ -7,6 +7,14 @@
     "hardLimitMultiplier": 2
   },
   "loot": {
-    "rarityWeightPct": { "common": 100, "uncommon": 100, "rare": 100, "very_rare": 100 }
+    "rarityWeightPct": {
+      "common": 100,
+      "uncommon": 100,
+      "rare": 100,
+      "very_rare": 100
+    }
+  },
+  "crafting": {
+    "nearbyRadiusTiles": 3
   }
 }

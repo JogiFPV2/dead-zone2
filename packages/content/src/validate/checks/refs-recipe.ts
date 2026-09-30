@@ -8,6 +8,5 @@ export function collectRecipeRefs(recipe: Recipe, r: RefList): void {
   recipe.results.forEach((res, i) => r.add('item', res.item, 'results', i, 'item'));
   recipe.xp.forEach((x, i) => r.add('skill', x.skill, 'xp', i, 'skill'));
   if (recipe.repair) r.matcher(recipe.repair, 'repair');
-  // Stację (ognisko, warsztat) daje przedmiot z tym tagiem, np. postawione ognisko.
-  if (recipe.station) r.tags.push({ tag: recipe.station, path: ['station'] });
+  r.add('station', recipe.station?.id, 'station', 'id');
 }

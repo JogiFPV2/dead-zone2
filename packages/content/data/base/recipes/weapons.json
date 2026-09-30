@@ -2,6 +2,7 @@
   {
     "id": "base:craft-knife-spear",
     "name": "recipe.base.craft-knife-spear.name",
+    "kind": "combine",
     "category": "weapons",
     "ingredients": [
       { "item": "base:spear" },
@@ -15,6 +16,7 @@
   {
     "id": "base:craft-nailed-bat",
     "name": "recipe.base.craft-nailed-bat.name",
+    "kind": "combine",
     "category": "weapons",
     "ingredients": [{ "item": "base:baseball-bat" }, { "item": "base:nails", "count": 6 }],
     "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
@@ -25,6 +27,7 @@
   {
     "id": "base:tape-repair-weapon",
     "name": "recipe.base.tape-repair-weapon.name",
+    "kind": "combine",
     "category": "weapons",
     "ingredients": [{ "tag": "base:tape" }],
     "durationMin": 5,
@@ -34,6 +37,7 @@
   {
     "id": "base:tape-repair-bat",
     "name": "recipe.base.tape-repair-bat.name",
+    "kind": "combine",
     "category": "weapons",
     "ingredients": [{ "tag": "base:tape" }],
     "durationMin": 5,

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "base:build-brick-stove",
+    "name": "recipe.base.build-brick-stove.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:campfire" },
+      { "item": "base:brick", "count": 8 },
+      { "item": "base:metal-sheet" }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:cooking", "level": 2 }],
+    "durationMin": 90,
+    "results": [{ "item": "base:brick-stove" }],
+    "xp": [
+      { "skill": "base:cooking", "amount": 8 },
+      { "skill": "base:metalworking", "amount": 4 }
+    ]
+  },
+  {
+    "id": "base:build-kitchen-oven",
+    "name": "recipe.base.build-kitchen-oven.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:brick-stove" },
+      { "item": "base:metal-sheet", "count": 3 },
+      { "tag": "base:metal-scrap", "count": 4 },
+      { "item": "base:wire", "count": 2 }
+    ],
+    "tools": [
+      { "tag": "base:tool-welding", "durabilityLoss": 1 },
+      { "tag": "base:tool-hammer", "durabilityLoss": 1 }
+    ],
+    "skills": [
+      { "skill": "base:cooking", "level": 4 },
+      { "skill": "base:metalworking", "level": 2 }
+    ],
+    "durationMin": 180,
+    "results": [{ "item": "base:kitchen-oven" }],
+    "xp": [
+      { "skill": "base:cooking", "amount": 15 },
+      { "skill": "base:metalworking", "amount": 8 }
+    ]
+  },
+  {
+    "id": "base:upgrade-carpentry-table",
+    "name": "recipe.base.upgrade-carpentry-table.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:workbench" },
+      { "tag": "base:wood-plank", "count": 6 },
+      { "item": "base:nails", "count": 16 },
+      { "item": "base:metal-sheet" }
+    ],
+    "tools": [
+      { "tag": "base:tool-hammer", "durabilityLoss": 2 },
+      { "tag": "base:tool-saw", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:carpentry", "level": 4 }],
+    "durationMin": 120,
+    "results": [{ "item": "base:carpentry-table" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 20 }]
+  },
+  {
+    "id": "base:upgrade-master-carpentry-table",
+    "name": "recipe.base.upgrade-master-carpentry-table.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:carpentry-table" },
+      { "tag": "base:wood-plank", "count": 8 },
+      { "item": "base:nails", "count": 20 },
+      { "item": "base:mechanical-part", "count": 2 }
+    ],
+    "tools": [
+      { "tag": "base:tool-hammer", "durabilityLoss": 2 },
+      { "tag": "base:tool-saw", "durabilityLoss": 2 }
+    ],
+    "skills": [{ "skill": "base:carpentry", "level": 7 }],
+    "durationMin": 180,
+    "results": [{ "item": "base:master-carpentry-table" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 30 }]
+  }
+]

@@ -4,9 +4,9 @@
     "name": "item.base.campfire.name",
     "kind": "placeable",
     "weightKg": 5,
-    "tags": ["base:station-fire"],
     "placeable": {
-      "light": { "radiusTiles": 5, "intensity": 0.7, "color": "#ffb060", "requiresPower": false }
+      "light": { "radiusTiles": 5, "intensity": 0.7, "color": "#ffb060", "requiresPower": false },
+      "station": { "id": "base:station-fire", "level": 1 }
     }
   },
   {
@@ -14,8 +14,7 @@
     "name": "item.base.workbench.name",
     "kind": "placeable",
     "weightKg": 25,
-    "tags": ["base:station-workbench"],
-    "placeable": {}
+    "placeable": { "station": { "id": "base:station-workbench", "level": 1 } }
   },
   {
     "id": "base:rain-collector",
@@ -24,5 +23,12 @@
     "weightKg": 12,
     "tags": ["base:water-source"],
     "placeable": {}
+  },
+  {
+    "id": "base:large-wooden-crate",
+    "name": "item.base.large-wooden-crate.name",
+    "kind": "placeable",
+    "weightKg": 22,
+    "placeable": { "containerType": "base:large-wooden-crate" }
   }
 ]

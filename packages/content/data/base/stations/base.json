@@ -1,0 +1,106 @@
+[
+  {
+    "id": "base:station-workbench",
+    "name": "station.base.station-workbench.name",
+    "description": "station.base.station-workbench.desc",
+    "category": "carpentry",
+    "levels": [
+      {
+        "level": 1,
+        "item": "base:workbench",
+        "recipe": "base:build-workbench",
+        "craftTimeMultiplier": 1
+      },
+      {
+        "level": 2,
+        "item": "base:carpentry-table",
+        "recipe": "base:upgrade-carpentry-table",
+        "craftTimeMultiplier": 0.8
+      },
+      {
+        "level": 3,
+        "item": "base:master-carpentry-table",
+        "recipe": "base:upgrade-master-carpentry-table",
+        "craftTimeMultiplier": 0.65
+      }
+    ]
+  },
+  {
+    "id": "base:station-mechanic",
+    "name": "station.base.station-mechanic.name",
+    "description": "station.base.station-mechanic.desc",
+    "category": "mechanics",
+    "levels": [
+      {
+        "level": 1,
+        "item": "base:mechanic-bench",
+        "recipe": "base:build-mechanic-bench",
+        "craftTimeMultiplier": 1
+      },
+      {
+        "level": 2,
+        "item": "base:reinforced-mechanic-bench",
+        "recipe": "base:upgrade-mechanic-bench",
+        "craftTimeMultiplier": 0.8
+      },
+      {
+        "level": 3,
+        "item": "base:mechanic-workshop",
+        "recipe": "base:upgrade-mechanic-workshop",
+        "craftTimeMultiplier": 0.65
+      }
+    ]
+  },
+  {
+    "id": "base:station-fire",
+    "name": "station.base.station-fire.name",
+    "description": "station.base.station-fire.desc",
+    "category": "cooking",
+    "levels": [
+      {
+        "level": 1,
+        "item": "base:campfire",
+        "recipe": "base:build-campfire",
+        "craftTimeMultiplier": 1
+      },
+      {
+        "level": 2,
+        "item": "base:brick-stove",
+        "recipe": "base:build-brick-stove",
+        "craftTimeMultiplier": 0.8
+      },
+      {
+        "level": 3,
+        "item": "base:kitchen-oven",
+        "recipe": "base:build-kitchen-oven",
+        "craftTimeMultiplier": 0.65
+      }
+    ]
+  },
+  {
+    "id": "base:station-electronics",
+    "name": "station.base.station-electronics.name",
+    "description": "station.base.station-electronics.desc",
+    "category": "electronics",
+    "levels": [
+      {
+        "level": 1,
+        "item": "base:electronics-bench",
+        "recipe": "base:build-electronics-bench",
+        "craftTimeMultiplier": 1
+      },
+      {
+        "level": 2,
+        "item": "base:soldering-bench",
+        "recipe": "base:upgrade-electronics-bench",
+        "craftTimeMultiplier": 0.8
+      },
+      {
+        "level": 3,
+        "item": "base:electronics-lab",
+        "recipe": "base:upgrade-electronics-lab",
+        "craftTimeMultiplier": 0.65
+      }
+    ]
+  }
+]

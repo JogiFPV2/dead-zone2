@@ -46,7 +46,8 @@
       { "item": "base:wire", "weight": 2 },
       { "item": "base:duct-tape", "weight": 2 },
       { "item": "base:mechanical-part", "weight": 3, "count": { "min": 1, "max": 3 } },
-      { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" }
+      { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" },
+      { "item": "base:wooden-stick", "weight": 2, "count": { "min": 1, "max": 3 } }
     ]
   },
   {

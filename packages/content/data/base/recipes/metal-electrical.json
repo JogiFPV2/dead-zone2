@@ -2,26 +2,27 @@
   {
     "id": "base:flatten-scrap",
     "name": "recipe.base.flatten-scrap.name",
-    "category": "metalworking",
+    "category": "materials",
     "ingredients": [{ "tag": "base:metal-scrap", "count": 4 }],
     "tools": [
       { "tag": "base:tool-welding", "durabilityLoss": 1 },
       { "tag": "base:tool-hammer", "durabilityLoss": 1 }
     ],
     "skills": [{ "skill": "base:metalworking", "level": 1 }],
+    "station": { "id": "base:station-mechanic", "minLevel": 1 },
     "durationMin": 30,
     "results": [{ "item": "base:metal-sheet" }],
     "xp": [{ "skill": "base:metalworking", "amount": 6 }],
-    "requiresLearning": true,
-    "station": "base:station-workbench"
+    "requiresLearning": true
   },
   {
     "id": "base:metal-window-barricade",
     "name": "recipe.base.metal-window-barricade.name",
-    "category": "metalworking",
+    "category": "building",
     "ingredients": [{ "item": "base:metal-sheet", "count": 2 }],
     "tools": [{ "tag": "base:tool-welding", "durabilityLoss": 2 }],
     "skills": [{ "skill": "base:metalworking", "level": 3 }],
+    "station": { "id": "base:station-mechanic", "minLevel": 2 },
     "durationMin": 45,
     "results": [{ "item": "base:barricade-metal" }],
     "xp": [{ "skill": "base:metalworking", "amount": 12 }],
@@ -30,9 +31,10 @@
   {
     "id": "base:salvage-radio",
     "name": "recipe.base.salvage-radio.name",
-    "category": "electrical",
+    "category": "materials",
     "ingredients": [{ "item": "base:radio" }],
     "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "station": { "id": "base:station-electronics", "minLevel": 1 },
     "durationMin": 20,
     "results": [
       { "item": "base:electronics-scrap", "count": 3 },
@@ -45,7 +47,7 @@
   {
     "id": "base:craft-noise-maker",
     "name": "recipe.base.craft-noise-maker.name",
-    "category": "electrical",
+    "category": "electronics",
     "ingredients": [
       { "item": "base:electronics-scrap", "count": 2 },
       { "item": "base:wire" },
@@ -53,6 +55,7 @@
     ],
     "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
     "skills": [{ "skill": "base:electrical", "level": 2 }],
+    "station": { "id": "base:station-electronics", "minLevel": 1 },
     "durationMin": 30,
     "results": [{ "item": "base:noise-maker" }],
     "xp": [{ "skill": "base:electrical", "amount": 8 }],

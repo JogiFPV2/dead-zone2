@@ -60,7 +60,8 @@
       { "table": "base:recipe-magazines", "weight": 1, "rarity": "uncommon" },
       { "item": "base:mechanical-part", "weight": 3, "count": { "min": 1, "max": 2 } },
       { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" },
-      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:wooden-stick", "weight": 3 }
     ]
   },
   {

@@ -1,5 +1,6 @@
 import type { ContainerType } from '../../schemas/container-type.js';
 import type { LootTable } from '../../schemas/loot-table.js';
+import type { Station } from '../../schemas/station.js';
 import type { ZombieType } from '../../schemas/zombie-type.js';
 import type { RefList } from './ref-collector.js';
 
@@ -18,4 +19,11 @@ export function collectZombieTypeRefs(z: ZombieType, r: RefList): void {
 export function collectContainerTypeRefs(c: ContainerType, r: RefList): void {
   r.add('item', c.pickupItem, 'pickupItem');
   r.add('lootTable', c.defaultLootTable, 'defaultLootTable');
+}
+
+export function collectStationRefs(s: Station, r: RefList): void {
+  s.levels.forEach((l, i) => {
+    r.add('item', l.item, 'levels', i, 'item');
+    r.add('recipe', l.recipe, 'levels', i, 'recipe');
+  });
 }

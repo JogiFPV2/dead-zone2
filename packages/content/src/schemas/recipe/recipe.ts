@@ -5,33 +5,48 @@ import {
   ExtSchema,
   I18nKeySchema,
   SkillRequirementSchema,
+  StationRefSchema,
   TagListSchema,
-  TagSchema,
   XpRewardSchema,
 } from '../common/index.js';
+import { StationLevelSchema } from '../station.js';
 import { IngredientSchema } from './ingredient.js';
 import { RecipeRepairSchema } from './repair.js';
 import { RecipeResultSchema } from './result.js';
 import { ToolRequirementSchema } from './tool-requirement.js';
 
+/** Grupa w oknie craftingu/warsztatu (UI); dziedzinę umiejętności opisują `skills` i `xp`. */
 export const RecipeCategorySchema = z.enum([
-  'general',
-  'cooking',
-  'medical',
-  'carpentry',
-  'tailoring',
-  'metalworking',
-  'electrical',
-  'mechanics',
   'weapons',
-  'survival',
+  'tools',
+  'food',
+  'medical',
+  'building',
+  'furniture',
+  'electronics',
+  'clothing',
+  'materials',
+  'stations',
 ]);
+
+/**
+ * `craft` = receptura przy stacji albo w rękach; `combine` = łączenie w ekwipunku
+ * (najwyżej 4 części, czyli wpisy `ingredients`, bez stacji; narzędzia z ekwipunku dozwolone).
+ */
+export const RecipeKindSchema = z.enum(['craft', 'combine']);
+
+/** Wymagana stacja i jej minimalny poziom. */
+export const RecipeStationSchema = z.strictObject({
+  id: StationRefSchema,
+  minLevel: StationLevelSchema.default(1),
+});
 
 export const RecipeSchema = z
   .strictObject({
     id: ContentIdSchema,
     name: I18nKeySchema,
     description: I18nKeySchema.optional(),
+    kind: RecipeKindSchema.default('craft'),
     category: RecipeCategorySchema,
     tags: TagListSchema,
     ingredients: z.array(IngredientSchema).min(1),
@@ -44,8 +59,8 @@ export const RecipeSchema = z
     xp: z.array(XpRewardSchema).default([]),
     /** true = trzeba ją poznać (książka, magazyn, zawód); false = znana od startu. */
     requiresLearning: z.boolean().default(false),
-    /** Wymagane otoczenie, np. `base:station-fire`, `base:station-workbench`. */
-    station: TagSchema.optional(),
+    /** Stacja w pobliżu, np. `{ id: 'base:station-fire', minLevel: 2 }`. */
+    station: RecipeStationSchema.optional(),
     /** Receptura naprawy (np. taśma na broń); wtedy `results` może być puste. */
     repair: RecipeRepairSchema.optional(),
     ext: ExtSchema,
@@ -56,4 +71,5 @@ export const RecipeSchema = z
   });
 
 export type RecipeCategory = z.infer<typeof RecipeCategorySchema>;
+export type RecipeKind = z.infer<typeof RecipeKindSchema>;
 export type Recipe = z.infer<typeof RecipeSchema>;

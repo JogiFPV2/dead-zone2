@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { RecipeSchema } from '../schemas/recipe/recipe.js';
 import { validatePacks } from '../validate/validate-packs.js';
-import { material, miniBase, trait } from './helpers.js';
+import { miniBase, trait } from './helpers.js';
 
 const recipe = (extra: Record<string, unknown> = {}) => ({
   id: 'base:r',
   name: 'recipe.base.r.name',
-  category: 'carpentry',
+  category: 'building',
   ingredients: [{ item: 'base:plank' }],
   durationMin: 5,
   results: [{ item: 'base:branch' }],
@@ -30,26 +30,19 @@ describe('receptury: naprawa, stacje i nauka', () => {
     ).toBe(false);
   });
 
-  it('cel naprawy i stacja muszą istnieć (referencja albo tag przedmiotu)', () => {
+  it('cel naprawy i stacja muszą istnieć', () => {
     expect(
       run({
         'recipes/r.json': recipe({
           results: [],
           repair: { item: 'base:nope', restorePct: 20 },
-          station: 'base:station-fire',
+          station: { id: 'base:station-fire' },
         }),
       }),
     ).toEqual([
       ['missing_ref', '$.repair.item'],
-      ['missing_tag', '$.station'],
+      ['missing_ref', '$.station.id'],
     ]);
-    const fire = material('base:campfire', ['base:station-fire']);
-    expect(
-      run({
-        'recipes/r.json': recipe({ station: 'base:station-fire' }),
-        'items/fire.json': fire,
-      }),
-    ).toEqual([]);
   });
 
   it('receptura do nauczenia bez źródła to błąd; zawód, cecha lub książka ją odblokowują', () => {

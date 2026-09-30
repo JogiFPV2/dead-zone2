@@ -1,0 +1,75 @@
+[
+  {
+    "id": "base:brick-stove",
+    "name": "item.base.brick-stove.name",
+    "kind": "placeable",
+    "weightKg": 60,
+    "placeable": {
+      "station": { "id": "base:station-fire", "level": 2 },
+      "light": { "radiusTiles": 4, "intensity": 0.6, "color": "#ffb060", "requiresPower": false }
+    }
+  },
+  {
+    "id": "base:kitchen-oven",
+    "name": "item.base.kitchen-oven.name",
+    "kind": "placeable",
+    "weightKg": 70,
+    "placeable": { "station": { "id": "base:station-fire", "level": 3 } }
+  },
+  {
+    "id": "base:carpentry-table",
+    "name": "item.base.carpentry-table.name",
+    "kind": "placeable",
+    "weightKg": 40,
+    "placeable": { "station": { "id": "base:station-workbench", "level": 2 } }
+  },
+  {
+    "id": "base:master-carpentry-table",
+    "name": "item.base.master-carpentry-table.name",
+    "kind": "placeable",
+    "weightKg": 55,
+    "placeable": { "station": { "id": "base:station-workbench", "level": 3 } }
+  },
+  {
+    "id": "base:mechanic-bench",
+    "name": "item.base.mechanic-bench.name",
+    "kind": "placeable",
+    "weightKg": 35,
+    "placeable": { "station": { "id": "base:station-mechanic", "level": 1 } }
+  },
+  {
+    "id": "base:reinforced-mechanic-bench",
+    "name": "item.base.reinforced-mechanic-bench.name",
+    "kind": "placeable",
+    "weightKg": 50,
+    "placeable": { "station": { "id": "base:station-mechanic", "level": 2 } }
+  },
+  {
+    "id": "base:mechanic-workshop",
+    "name": "item.base.mechanic-workshop.name",
+    "kind": "placeable",
+    "weightKg": 70,
+    "placeable": { "station": { "id": "base:station-mechanic", "level": 3 } }
+  },
+  {
+    "id": "base:electronics-bench",
+    "name": "item.base.electronics-bench.name",
+    "kind": "placeable",
+    "weightKg": 20,
+    "placeable": { "station": { "id": "base:station-electronics", "level": 1 } }
+  },
+  {
+    "id": "base:soldering-bench",
+    "name": "item.base.soldering-bench.name",
+    "kind": "placeable",
+    "weightKg": 25,
+    "placeable": { "station": { "id": "base:station-electronics", "level": 2 } }
+  },
+  {
+    "id": "base:electronics-lab",
+    "name": "item.base.electronics-lab.name",
+    "kind": "placeable",
+    "weightKg": 35,
+    "placeable": { "station": { "id": "base:station-electronics", "level": 3 } }
+  }
+]

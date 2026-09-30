@@ -65,6 +65,10 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 6 — Crafting
 - [x] Receptury jako dane (Modules)
+- [x] Stacje rzemieślnicze z poziomami 1–3 i receptury „combine” jako dane (Modules)
+- [ ] Łączenie przedmiotów w ekwipunku (combine) (Symulacja)
+- [ ] Stacje: stawianie, ulepszanie, crafting przy stacji z poziomem (Symulacja)
+- [ ] Ikona łączenia i okno warsztatu z poziomem stacji (Designer + Silnik)
 - [ ] Kolejka akcji czasowych z paskiem postępu (Symulacja)
 - [ ] Okno craftingu (Designer + Silnik)
 - [ ] Gotowanie, bandaże, barykadowanie okien, rozbiórka mebli (Symulacja)

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ContainerTypeRefSchema } from '../common/index.js';
+import { ContainerTypeRefSchema, StationRefSchema } from '../common/index.js';
+import { StationLevelSchema } from '../station.js';
 import { itemBaseShape } from './base.js';
 import { LightSchema } from './light.js';
 
@@ -14,6 +15,8 @@ export const PlaceableItemSchema = z.strictObject({
   placeable: z.strictObject({
     containerType: ContainerTypeRefSchema.optional(),
     light: LightSchema.optional(),
+    /** Postawiony przedmiot jest stacją `id` na poziomie `level`. */
+    station: z.strictObject({ id: StationRefSchema, level: StationLevelSchema }).optional(),
   }),
 });
 

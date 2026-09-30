@@ -2,7 +2,8 @@
   {
     "id": "base:rip-sheet",
     "name": "recipe.base.rip-sheet.name",
-    "category": "tailoring",
+    "kind": "combine",
+    "category": "materials",
     "ingredients": [{ "item": "base:sheet" }],
     "durationMin": 2,
     "results": [{ "item": "base:rag", "count": 4 }],
@@ -11,7 +12,8 @@
   {
     "id": "base:rip-clothing",
     "name": "recipe.base.rip-clothing.name",
-    "category": "tailoring",
+    "kind": "combine",
+    "category": "materials",
     "ingredients": [{ "tag": "base:clothing-rippable" }],
     "durationMin": 3,
     "results": [{ "item": "base:rag", "count": 3 }],
@@ -20,7 +22,7 @@
   {
     "id": "base:repair-clothing",
     "name": "recipe.base.repair-clothing.name",
-    "category": "tailoring",
+    "category": "clothing",
     "ingredients": [{ "item": "base:thread", "count": 2 }, { "tag": "base:rag" }],
     "tools": [{ "tag": "base:tool-needle", "durabilityLoss": 1 }],
     "skills": [{ "skill": "base:tailoring", "level": 1 }],
@@ -31,7 +33,8 @@
   {
     "id": "base:sew-sheet-rope",
     "name": "recipe.base.sew-sheet-rope.name",
-    "category": "tailoring",
+    "kind": "combine",
+    "category": "tools",
     "ingredients": [{ "item": "base:sheet", "count": 2 }],
     "skills": [{ "skill": "base:tailoring", "level": 1 }],
     "durationMin": 10,

@@ -8,6 +8,7 @@ import { MoodleSchema } from './moodle.js';
 import { ProfessionSchema } from './profession.js';
 import { RecipeSchema } from './recipe/index.js';
 import { SkillSchema } from './skill.js';
+import { StationSchema } from './station.js';
 import { TileSchema } from './tile.js';
 import { TraitSchema } from './trait/index.js';
 import { ZombieTypeSchema } from './zombie-type.js';
@@ -25,6 +26,7 @@ export const CONTENT_SCHEMAS = {
   containerType: ContainerTypeSchema,
   tile: TileSchema,
   gameMode: GameModeSchema,
+  station: StationSchema,
 } as const satisfies Record<ContentType, z.ZodType>;
 
 export type ContentOf<T extends ContentType> = z.infer<(typeof CONTENT_SCHEMAS)[T]>;

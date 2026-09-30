@@ -13,34 +13,44 @@ describe('katalog receptur i książek w data/base', () => {
     expect(recipes.length).toBeGreaterThanOrEqual(30);
     const groups = new Set(recipes.map((r) => r.category));
     for (const g of [
-      'survival',
-      'medical',
-      'carpentry',
       'weapons',
-      'cooking',
-      'tailoring',
-      'metalworking',
-      'electrical',
+      'tools',
+      'food',
+      'medical',
+      'building',
+      'furniture',
+      'electronics',
+      'clothing',
+      'materials',
+      'stations',
     ] as const) {
       expect(groups.has(g), g).toBe(true);
     }
     for (const r of recipes) {
       expect(r.durationMin, r.id).toBeGreaterThan(0);
       expect(r.xp.length, r.id).toBeGreaterThan(0);
+      for (const x of r.xp) expect(x.amount, r.id).toBeGreaterThan(0);
+      expect(Array.isArray(r.tools) && Array.isArray(r.skills), r.id).toBe(true);
+      // Stan w warsztacie: stacja+poziom albo combine albo „w rękach” — zawsze jawnie.
+      if (r.kind === 'combine') expect(r.station, r.id).toBeUndefined();
+      else if (r.station) expect(r.station.minLevel, r.id).toBeGreaterThanOrEqual(1);
     }
     const ids = recipes.map((r) => r.id);
     for (const id of ['make-bandage', 'boil-water', 'build-campfire', 'saw-planks'])
       expect(ids).toContain(`base:${id}`);
   });
 
-  it('receptury naprawy mają cel, stacje dają przedmioty z tagiem', async () => {
+  it('receptury naprawy mają cel, stacje istnieją z wymaganym poziomem', async () => {
     const b = await baseBundle();
     const repairs = Object.values(b.recipes).filter((r) => r.repair);
     expect(repairs.map((r) => r.id).sort()).toEqual(
       ['base:repair-clothing', 'base:tape-repair-bat', 'base:tape-repair-weapon'].sort(),
     );
-    const tags = new Set(Object.values(b.items).flatMap((i) => i.tags));
-    for (const r of Object.values(b.recipes)) if (r.station) expect(tags.has(r.station)).toBe(true);
+    for (const r of Object.values(b.recipes)) {
+      if (!r.station) continue;
+      const levels = b.stations[r.station.id]?.levels.map((l) => l.level) ?? [];
+      expect(levels, r.id).toContain(r.station.minLevel);
+    }
   });
 
   it('każda receptura do nauczenia ma źródło: książkę, zawód albo cechę', async () => {

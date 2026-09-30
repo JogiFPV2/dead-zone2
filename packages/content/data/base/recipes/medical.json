@@ -2,6 +2,7 @@
   {
     "id": "base:make-splint",
     "name": "recipe.base.make-splint.name",
+    "kind": "combine",
     "category": "medical",
     "ingredients": [{ "tag": "base:wood-plank" }, { "tag": "base:rag", "count": 2 }],
     "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
@@ -14,6 +15,7 @@
   {
     "id": "base:disinfect-rag",
     "name": "recipe.base.disinfect-rag.name",
+    "kind": "combine",
     "category": "medical",
     "ingredients": [{ "tag": "base:rag" }, { "tag": "base:disinfectant-liquid" }],
     "durationMin": 2,

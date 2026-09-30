@@ -51,13 +51,29 @@ Błędy mają plik i ścieżkę JSON, np. `data/base/recipes/basic.json $[1].too
 
 Dopisz obiekt w `data/base/recipes/<grupa>.json` (survival, medical, carpentry, weapons, cooking, tailoring,
 metal-electrical): `ingredients` (item albo tag), `tools` (zwykle tag, np. `base:tool-hammer`), `skills`,
-`durationMin`, `results`, `xp`. Receptura z `requiresLearning: true` musi być gdzieś odblokowana (książka
+`durationMin` (minuty gry), `results`, `xp` (umiejętność i ilość). `category` to grupa w oknie warsztatu: `weapons`,
+`tools`, `food`, `medical`, `building`, `furniture`, `electronics`, `clothing`, `materials`, `stations`. Narzędzia
+(`tools`, niezużywane) są zawsze osobno od składników (`ingredients`, zużywane). Stan receptury w UI wynika z danych:
+dostępna, brak części (`ingredients`/`tools`), brak umiejętności (`skills`), za niski poziom stacji (`station.minLevel`).
+Składniki bierze się z ekwipunku i schowków w promieniu `worldSettings.crafting.nearbyRadiusTiles` (3). Receptura z `requiresLearning: true` musi być gdzieś odblokowana (książka
 `unlocksRecipes`, zawód lub cecha `knownRecipes`), inaczej walidator zgłasza `unlearnable_recipe`.
 
-- `station`: tag przedmiotu, przy którym się ją wykonuje, np. `base:station-fire` (ognisko) albo
-  `base:station-workbench`; jakiś przedmiot musi mieć ten tag.
+- `kind`: `craft` (domyślnie) albo `combine`, czyli łączenie w ekwipunku. `combine` ma najwyżej 4 części (wpisy
+  `ingredients`; ilość w wpisie dowolna, np. gwoździe ×5), może wymagać narzędzi z ekwipunku (młotek), nie ma stacji
+  (błędy `combine_too_many_parts`, `combine_has_station`).
+- `station: { id, minLevel }`: stacja z `stations/` (`base:station-workbench`, `base:station-mechanic`, `base:station-fire`,
+  `base:station-electronics`) na poziomie co najmniej `minLevel` (1–3).
 - `repair: { item | tag, restorePct }`: naprawa (taśma na broń, nici na ubranie) przywraca `restorePct` %
   trwałości celu, który nie jest zużywany; wtedy `results` może być puste.
+
+## Stacje
+
+`stations/`: `{ id, name, category, levels: [{ level, item, recipe, craftTimeMultiplier }] }`, poziomy 1..3 po kolei. Przedmiot poziomu jest
+`placeable` z `placeable.station = { id, level }` (można go postawić, znaleźć albo umieścić na mapie jako obiekt).
+Receptura poziomu 1 go buduje, a od poziomu 2 ulepsza, czyli zużywa przedmiot poprzedniego poziomu. Błędy: `station_level_gap`,
+`station_item_mismatch`, `station_upgrade_missing`, `station_level_missing` (receptura wymaga poziomu, którego stacja nie ma). Dolny pasek warsztatu: ulepszenie na
+poziom N to `levels[N].recipe`, bonus to `craftTimeMultiplier` (base: 1 / 0.8 / 0.65), a „odblokowuje” to receptury
+z `station.minLevel = N`.
 
 ## Postać, książki
 
@@ -78,7 +94,7 @@ my-mod/
   world-settings.json   opcjonalnie, głęboki merge z ustawieniami bazy
   world-settings/       opcjonalne fragmenty ustawień (np. survival-needs.json), merge po world-settings.json
   items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/ tiles/
-  game-modes/
+  game-modes/ stations/
   maps/<mapId>/         manifest.json i chunks/<cx>_<cy>_<z>.json
   overrides/            zmiany cudzych definicji
 ```

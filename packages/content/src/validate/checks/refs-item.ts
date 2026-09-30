@@ -49,6 +49,7 @@ export function collectItemRefs(item: Item, r: RefList): void {
       break;
     case 'placeable':
       r.add('containerType', item.placeable.containerType, 'placeable', 'containerType');
+      r.add('station', item.placeable.station?.id, 'placeable', 'station', 'id');
       break;
     case 'lure':
       if (item.lure.trigger.type === 'remote')

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CapacityKgSchema, ExtSchema } from './common/index.js';
+import { CraftingSettingsSchema } from './crafting-settings.js';
 import { LootSettingsSchema } from './loot-rarity.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
@@ -31,6 +32,8 @@ export const WorldSettingsSchema = z.strictObject({
   survival: SurvivalSettingsSchema,
   /** Skalowanie rzadkości lootu (sandbox). */
   loot: LootSettingsSchema,
+  /** Crafting i łączenie: skąd brać składniki. */
+  crafting: CraftingSettingsSchema,
   ext: ExtSchema,
 });
 

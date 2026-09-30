@@ -8,6 +8,7 @@ import { collectRecipeRefs } from './refs-recipe.js';
 import {
   collectContainerTypeRefs,
   collectLootTableRefs,
+  collectStationRefs,
   collectZombieTypeRefs,
 } from './refs-world.js';
 import { RefList } from './ref-collector.js';
@@ -42,6 +43,9 @@ export function collectRefs(def: IndexedDefinition): RefList {
       break;
     case 'gameMode':
       collectGameModeRefs(d.data, r);
+      break;
+    case 'station':
+      collectStationRefs(d.data, r);
       break;
     case 'skill':
     case 'tile':

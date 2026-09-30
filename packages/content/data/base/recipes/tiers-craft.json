@@ -1,0 +1,81 @@
+[
+  {
+    "id": "base:craft-nailed-stick",
+    "name": "recipe.base.craft-nailed-stick.name",
+    "kind": "combine",
+    "category": "weapons",
+    "ingredients": [
+      { "item": "base:wooden-stick" },
+      { "item": "base:nails", "count": 5 },
+      { "tag": "base:tape" }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:carpentry", "level": 1 }],
+    "durationMin": 0.5,
+    "results": [{ "item": "base:nailed-stick" }],
+    "xp": [{ "skill": "base:blunt", "amount": 1 }]
+  },
+  {
+    "id": "base:rabbit-stew",
+    "name": "recipe.base.rabbit-stew.name",
+    "category": "food",
+    "ingredients": [
+      { "item": "base:rabbit-carcass" },
+      { "tag": "base:vegetable", "count": 2 },
+      { "item": "base:water-bottle" }
+    ],
+    "tools": [{ "tag": "base:cooking-pot" }, { "tag": "base:tool-knife", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:cooking", "level": 4 }],
+    "station": { "id": "base:station-fire", "minLevel": 2 },
+    "durationMin": 75,
+    "results": [{ "item": "base:rabbit-stew" }],
+    "xp": [{ "skill": "base:cooking", "amount": 14 }]
+  },
+  {
+    "id": "base:jar-vegetables",
+    "name": "recipe.base.jar-vegetables.name",
+    "category": "food",
+    "ingredients": [{ "tag": "base:vegetable", "count": 4 }, { "item": "base:water-bottle" }],
+    "tools": [{ "tag": "base:cooking-pot" }],
+    "skills": [{ "skill": "base:cooking", "level": 6 }],
+    "station": { "id": "base:station-fire", "minLevel": 3 },
+    "durationMin": 90,
+    "results": [{ "item": "base:jarred-vegetables" }],
+    "xp": [{ "skill": "base:cooking", "amount": 18 }]
+  },
+  {
+    "id": "base:reinforced-barricade",
+    "name": "recipe.base.reinforced-barricade.name",
+    "category": "building",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 4 },
+      { "item": "base:nails", "count": 10 },
+      { "item": "base:metal-sheet" }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:carpentry", "level": 4 }],
+    "station": { "id": "base:station-workbench", "minLevel": 2 },
+    "durationMin": 30,
+    "results": [{ "item": "base:barricade-reinforced" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 10 }]
+  },
+  {
+    "id": "base:build-large-crate",
+    "name": "recipe.base.build-large-crate.name",
+    "category": "furniture",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 10 },
+      { "item": "base:nails", "count": 20 },
+      { "item": "base:mechanical-part" }
+    ],
+    "tools": [
+      { "tag": "base:tool-hammer", "durabilityLoss": 2 },
+      { "tag": "base:tool-saw", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:carpentry", "level": 7 }],
+    "station": { "id": "base:station-workbench", "minLevel": 3 },
+    "durationMin": 90,
+    "results": [{ "item": "base:large-wooden-crate" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 25 }]
+  }
+]

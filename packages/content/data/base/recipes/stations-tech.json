@@ -1,0 +1,119 @@
+[
+  {
+    "id": "base:build-mechanic-bench",
+    "name": "recipe.base.build-mechanic-bench.name",
+    "category": "stations",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 4 },
+      { "item": "base:scrap-metal", "count": 4 },
+      { "item": "base:nails", "count": 8 }
+    ],
+    "tools": [
+      { "tag": "base:tool-hammer", "durabilityLoss": 1 },
+      { "tag": "base:tool-wrench", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:mechanics", "level": 1 }],
+    "durationMin": 60,
+    "results": [{ "item": "base:mechanic-bench" }],
+    "xp": [{ "skill": "base:mechanics", "amount": 8 }]
+  },
+  {
+    "id": "base:upgrade-mechanic-bench",
+    "name": "recipe.base.upgrade-mechanic-bench.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:mechanic-bench" },
+      { "item": "base:mechanical-part", "count": 3 },
+      { "item": "base:metal-sheet", "count": 2 }
+    ],
+    "tools": [
+      { "tag": "base:tool-wrench", "durabilityLoss": 1 },
+      { "tag": "base:tool-welding", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:mechanics", "level": 3 }],
+    "durationMin": 120,
+    "results": [{ "item": "base:reinforced-mechanic-bench" }],
+    "xp": [
+      { "skill": "base:mechanics", "amount": 15 },
+      { "skill": "base:metalworking", "amount": 5 }
+    ]
+  },
+  {
+    "id": "base:upgrade-mechanic-workshop",
+    "name": "recipe.base.upgrade-mechanic-workshop.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:reinforced-mechanic-bench" },
+      { "item": "base:mechanical-part", "count": 4 },
+      { "item": "base:metal-sheet", "count": 3 },
+      { "item": "base:wire", "count": 4 }
+    ],
+    "tools": [
+      { "tag": "base:tool-wrench", "durabilityLoss": 2 },
+      { "tag": "base:tool-welding", "durabilityLoss": 2 }
+    ],
+    "skills": [
+      { "skill": "base:mechanics", "level": 5 },
+      { "skill": "base:metalworking", "level": 2 }
+    ],
+    "durationMin": 180,
+    "results": [{ "item": "base:mechanic-workshop" }],
+    "xp": [
+      { "skill": "base:mechanics", "amount": 25 },
+      { "skill": "base:metalworking", "amount": 8 }
+    ]
+  },
+  {
+    "id": "base:build-electronics-bench",
+    "name": "recipe.base.build-electronics-bench.name",
+    "category": "stations",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 3 },
+      { "item": "base:wire", "count": 2 },
+      { "item": "base:electronics-scrap", "count": 2 }
+    ],
+    "tools": [
+      { "tag": "base:tool-screwdriver", "durabilityLoss": 1 },
+      { "tag": "base:tool-hammer", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:electrical", "level": 1 }],
+    "durationMin": 60,
+    "results": [{ "item": "base:electronics-bench" }],
+    "xp": [{ "skill": "base:electrical", "amount": 8 }]
+  },
+  {
+    "id": "base:upgrade-electronics-bench",
+    "name": "recipe.base.upgrade-electronics-bench.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:electronics-bench" },
+      { "item": "base:electronics-scrap", "count": 4 },
+      { "item": "base:battery", "count": 2 },
+      { "item": "base:wire", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:electrical", "level": 3 }],
+    "durationMin": 120,
+    "results": [{ "item": "base:soldering-bench" }],
+    "xp": [{ "skill": "base:electrical", "amount": 15 }]
+  },
+  {
+    "id": "base:upgrade-electronics-lab",
+    "name": "recipe.base.upgrade-electronics-lab.name",
+    "category": "stations",
+    "ingredients": [
+      { "item": "base:soldering-bench" },
+      { "item": "base:electronics-scrap", "count": 6 },
+      { "item": "base:wire", "count": 4 },
+      { "item": "base:mechanical-part", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 2 }],
+    "skills": [{ "skill": "base:electrical", "level": 5 }],
+    "durationMin": 180,
+    "results": [{ "item": "base:electronics-lab" }],
+    "xp": [
+      { "skill": "base:electrical", "amount": 25 },
+      { "skill": "base:mechanics", "amount": 5 }
+    ]
+  }
+]

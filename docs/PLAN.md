@@ -82,6 +82,7 @@ Tworzenie postaci: zawód, cechy pozytywne i negatywne z bilansem punktów. Umie
 
 ### Etap 6 — Crafting i akcje czasowe
 Receptury jako dane (składniki, narzędzia, wymagana umiejętność, czas), okno craftingu, gotowanie, zabarykadowanie okien deskami, rozbiórka mebli na materiały, kolejka akcji z paskiem postępu.
+Stacje rzemieślnicze jako dane: warsztat stolarski, stół mechanika, piec (ognisko → piec murowany → piekarnik) i stół elektronika. Każda ma poziomy 1–3; poziom to stawiany przedmiot budowany albo ulepszany recepturą (materiały + umiejętność), a wyższe poziomy odblokowują lepsze receptury. Receptury „combine” to łączenie w ekwipunku (najwyżej 4 części, bez stacji, narzędzia z ekwipunku dozwolone, np. kij + gwoździe ×5 + taśma, młotek = kij z gwoździami). Każda receptura ma jawnie grupę (`category`), narzędzia osobno od składników, wymagane umiejętności, XP, czas w minutach gry oraz stację z minimalnym poziomem, więc okno warsztatu liczy stan z danych (dostępna / brak części / brak umiejętności / za niski poziom stacji). Poziom stacji skraca czas craftingu (1 / 0.8 / 0.65), a składniki bierze się z ekwipunku i schowków w promieniu 3 kafli (`worldSettings.crafting.nearbyRadiusTiles`).
 **Gotowe, gdy:** da się zrobić bandaż, ugotować jedzenie i zabić deskami okno.
 
 ### Etap 7 — Mapa demo i loot
