@@ -9,3 +9,4 @@ export * from './load-order.js';
 export * from './validate-packs.js';
 export * from './format.js';
 export * from './checks/index.js';
+export * from './maps/index.js';

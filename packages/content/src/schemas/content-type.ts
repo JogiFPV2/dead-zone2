@@ -9,6 +9,7 @@ export const CONTENT_TYPES = [
   'lootTable',
   'zombieType',
   'containerType',
+  'tile',
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -23,8 +24,11 @@ export const CONTENT_FOLDERS: Record<ContentType, string> = {
   lootTable: 'loot-tables',
   zombieType: 'zombie-types',
   containerType: 'containers',
+  tile: 'tiles',
 };
 
 export const OVERRIDES_FOLDER = 'overrides';
 export const MANIFEST_FILE = 'mod.json';
 export const WORLD_SETTINGS_FILE = 'world-settings.json';
+/** Mapy: `maps/<mapId>/manifest.json` i `maps/<mapId>/chunks/*.json` (poza definicjami). */
+export const MAPS_FOLDER = 'maps';

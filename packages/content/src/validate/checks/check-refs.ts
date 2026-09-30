@@ -40,6 +40,7 @@ export function collectRefs(def: IndexedDefinition): RefList {
       collectMoodleRefs(d.data, r);
       break;
     case 'skill':
+    case 'tile':
       break;
   }
   return r;

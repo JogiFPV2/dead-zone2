@@ -1,0 +1,7 @@
+{
+  "formatVersion": 1,
+  "name": "map.base.demo-house.name",
+  "chunkSize": 32,
+  "floorHeight": 3,
+  "chunks": [{ "cx": 0, "cy": 0, "z": 0 }]
+}

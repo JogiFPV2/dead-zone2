@@ -13,7 +13,8 @@ export type ContentErrorCode =
   | 'bad_override'
   | 'loot_cycle'
   | 'trait_conflict'
-  | 'dependency';
+  | 'dependency'
+  | 'map';
 
 export interface ContentError {
   code: ContentErrorCode;

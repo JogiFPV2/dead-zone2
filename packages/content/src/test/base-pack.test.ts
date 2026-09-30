@@ -66,6 +66,7 @@ describe('paczka bazowa data/base', () => {
       'lootTables',
       'zombieTypes',
       'containers',
+      'tiles',
     ] as const) {
       expect(Object.keys(bundle[key]).length).toBeGreaterThan(0);
     }

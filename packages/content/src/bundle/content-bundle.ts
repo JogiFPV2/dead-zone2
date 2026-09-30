@@ -6,6 +6,7 @@ import type { Moodle } from '../schemas/moodle.js';
 import type { Profession } from '../schemas/profession.js';
 import type { Recipe } from '../schemas/recipe/recipe.js';
 import type { Skill } from '../schemas/skill.js';
+import type { Tile } from '../schemas/tile.js';
 import type { Trait } from '../schemas/trait/trait.js';
 import type { WorldSettings } from '../schemas/world-settings.js';
 import type { ZombieType } from '../schemas/zombie-type.js';
@@ -25,6 +26,8 @@ export type ContentBundle = DeepReadonly<{
   lootTables: Record<string, LootTable>;
   zombieTypes: Record<string, ZombieType>;
   containers: Record<string, ContainerType>;
+  /** Elementy statyczne mapy (podłogi, dachy, ściany, okna, drzwi). */
+  tiles: Record<string, Tile>;
   worldSettings: WorldSettings;
   /** Mody w kolejności wczytywania. */
   mods: ModManifest[];

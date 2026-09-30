@@ -10,7 +10,8 @@ src/
     common/   id, jednostki, klucze i18n, modyfikatory, warunki
     item/     unia rozróżniana po `kind`, jeden plik na rodzaj
     recipe/ trait/ …  receptury, cechy, zawody, moodle, loot, zombie, schowki, świat, manifest
-  validate/   walidator (czysty TS, bez API Node) i sprawdzanie referencji (checks/)
+    map/      manifest i chunk mapy, kodeki warstw (RLE, base64)
+  validate/   walidator (czysty TS, bez API Node), referencje (checks/) i mapy (maps/)
   bundle/     ContentBundle i buildContentBundle(packs)
   node/       wczytywanie paczek z dysku i CLI (`@deadzone/content/node`)
   test/       testy Vitest
@@ -28,7 +29,8 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   np. `{ "moodle": "base:panic", "minLevel": 2 }` albo `{ "skill": "base:carpentry", "minLevel": 3 }`.
 - `buildContentBundle(packs)` waliduje, łączy mody w kolejności wczytywania i zwraca głęboko zamrożony
   `ContentBundle` (Recordy po id: `items`, `recipes`, `skills`, `traits`, `professions`, `moodles`,
-  `lootTables`, `zombieTypes`, `containers` oraz `worldSettings`).
+  `lootTables`, `zombieTypes`, `containers`, `tiles` oraz `worldSettings`). Mapy są w wyniku walidacji
+  (`validatePacks(…).maps`), nie w bundlu.
 
 ## Walidacja
 
@@ -57,7 +59,8 @@ Dopisz obiekt w `data/base/recipes/`: `ingredients` (item albo tag), `tools` (zw
 my-mod/
   mod.json              { "id": "my-mod", "name": "…", "version": "1.0.0", "dependencies": [{ "id": "base" }] }
   world-settings.json   opcjonalnie, głęboki merge z ustawieniami bazy
-  items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/
+  items/ recipes/ skills/ traits/ professions/ moodles/ loot-tables/ zombie-types/ containers/ tiles/
+  maps/<mapId>/         manifest.json i chunks/<cx>_<cy>_<z>.json
   overrides/            zmiany cudzych definicji
 ```
 
@@ -65,3 +68,23 @@ Id moda jest namespace wszystkich jego definicji (`my-mod:…`). Plik zawiera je
 Definicje innych paczek zmienia się w `overrides/`: `{ "op": "merge" | "replace" | "remove", "type": "item",
 "target": "base:axe", "data": { … } }`. Nadpisanie celu, którego nie ma, jest błędem. Kolejność wczytywania
 wynika z `dependencies`, `loadAfter`, `loadBefore` i `priority`.
+
+## Mapy
+
+Mapa to `maps/<mapId>/manifest.json` i `maps/<mapId>/chunks/<cx>_<cy>_<z>.json` (np. `-1_0_0.json`); id mapy
+to `<namespace>:<mapId>`. Przykład: `data/base/maps/demo-house` (jeden chunk, dom z kuchnią).
+
+- Manifest: `formatVersion` (1), `chunkSize` (zawsze 32), `floorHeight` w jednostkach świata (1 kafel = 1 j.),
+  `chunks: [{ cx, cy, z }]` — dokładnie te pliki, które są w `chunks/`.
+- Chunk: `address`, `palette`, `layers`, `edges`, `objects`, `rooms`. Warstwy to 1024 wartości uint16
+  (indeks `y * 32 + x`), w JSON `{ "rle": [[wartość, ile], …] }` albo `{ "base64": "…" }` (Uint16 little-endian).
+  Kodeki: `encodeRle`/`decodeRle`, `encodeBase64U16`/`decodeBase64U16`, `encodeLayer`/`decodeLayer`.
+- `floor`, `roof`: wartość `v` to `palette[v - 1]`, 0 = pusto; paleta jest lokalna dla chunka i wskazuje `tiles/`.
+- `room`: wartość to `roomId` z `rooms` (0 = na zewnątrz); `rooms: { "1": { roomType, buildingId } }`.
+  `roomType` (np. `base:room-kitchen`) musi być w `rooms` jakiejś loot table. `roomId` i `buildingId` są wspólne dla mapy.
+- `edges`: rzadka lista `{ x, y, side: "n" | "w", type: "wall" | "window" | "door", contentId }`. Krawędź
+  południowa/wschodnia to `n`/`w` sąsiedniego kafla (na granicy — w sąsiednim chunku). `contentId` wskazuje
+  `tiles/` z `category` równym `type`.
+- `objects`: `{ contentId, x, y, rot: 0–3 (co 90°), offset? }`, `contentId` to typ schowka albo przedmiot
+  `placeable`. Światłem jest obiekt z blokiem `placeable.light`.
+- Stanu dynamicznego (otwarte, rozbite, zabite deskami, zawartość schowków) nie ma w plikach chunków.

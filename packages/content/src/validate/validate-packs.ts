@@ -9,6 +9,8 @@ import { checkTraitConflicts } from './checks/check-trait-conflicts.js';
 import { ContentIndex } from './content-index.js';
 import { ErrorSink, type ContentError } from './errors.js';
 import { resolveLoadOrder } from './load-order.js';
+import type { MapData } from './maps/map-data.js';
+import { validateMaps } from './maps/validate-maps.js';
 import type { PackSource } from './pack-source.js';
 import { parseManifest } from './parse-manifest.js';
 import { splitPack, type LoadedPack, type RawDocument } from './split-pack.js';
@@ -22,12 +24,14 @@ export interface ValidationResult {
   /** Końcowa zawartość po nałożeniu wszystkich paczek i nadpisań. */
   content: ContentIndex;
   worldSettings: WorldSettings;
+  /** Mapy wszystkich paczek (`maps/<mapId>/`), warstwy zdekodowane. */
+  maps: MapData[];
 }
 
 /**
  * Waliduje paczki (base + mody; kolejność wejścia nie ma znaczenia — liczy się manifest):
  * 1. JSON i manifest, 2. kolejność wczytywania, 3. schemat każdej definicji, namespace, duplikaty,
- * 4. nadpisania, 5. referencje krzyżowe na końcowym zbiorze.
+ * 4. nadpisania, 5. referencje krzyżowe na końcowym zbiorze, 6. mapy.
  */
 export function validatePacks(sources: readonly PackSource[]): ValidationResult {
   const sink = new ErrorSink();
@@ -55,6 +59,7 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   checkItemKinds(index, sink);
   checkLootCycles(index, sink);
   checkTraitConflicts(index, sink);
+  const maps = validateMaps(ordered, index, sink);
 
   return {
     ok: sink.errors.length === 0,
@@ -62,5 +67,6 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
     loadOrder: ordered.map((p) => p.manifest),
     content: index,
     worldSettings,
+    maps,
   };
 }

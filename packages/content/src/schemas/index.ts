@@ -8,6 +8,8 @@ export * from './moodle.js';
 export * from './loot-table.js';
 export * from './zombie-type.js';
 export * from './container-type.js';
+export * from './tile.js';
+export * from './map/index.js';
 export * from './world-settings.js';
 export * from './mod-manifest.js';
 export * from './mod-override.js';

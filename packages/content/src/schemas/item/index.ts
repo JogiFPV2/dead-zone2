@@ -16,6 +16,7 @@ export * from './medical.js';
 export * from './tool.js';
 export * from './literature.js';
 export * from './material.js';
+export * from './light.js';
 export * from './placeable.js';
 export * from './misc.js';
 export * from './item.js';

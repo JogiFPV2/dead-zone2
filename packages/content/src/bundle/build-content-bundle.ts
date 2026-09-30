@@ -17,6 +17,7 @@ export const BUNDLE_KEYS = {
   lootTable: 'lootTables',
   zombieType: 'zombieTypes',
   containerType: 'containers',
+  tile: 'tiles',
 } as const satisfies Record<ContentType, keyof ContentBundle>;
 
 export class ContentValidationError extends Error {

@@ -21,8 +21,9 @@ async function main(argv: string[]): Promise<number> {
   for (const d of result.content.all()) counts.set(d.type, (counts.get(d.type) ?? 0) + 1);
   const summary = [...counts].map(([t, n]) => `${t}: ${n}`).join(', ');
   const mods = result.loadOrder.map((m) => `${m.id}@${m.version}`).join(' → ');
+  const maps = result.maps.map((m) => `${m.id} (${m.chunks.length} chunków)`).join(', ');
   if (result.ok) {
-    console.log(`OK — ${mods} (${summary})`);
+    console.log(`OK — ${mods} (${summary})${maps ? `; mapy: ${maps}` : ''}`);
     return 0;
   }
   console.error(`\n${result.errors.length} błędów`);

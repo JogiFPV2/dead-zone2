@@ -1,0 +1,5 @@
+[
+  { "id": "base:brick-wall", "name": "tile.base.brick-wall.name", "category": "wall" },
+  { "id": "base:wooden-window", "name": "tile.base.wooden-window.name", "category": "window" },
+  { "id": "base:wooden-door", "name": "tile.base.wooden-door.name", "category": "door" }
+]

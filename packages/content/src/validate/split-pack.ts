@@ -1,6 +1,7 @@
 import {
   CONTENT_FOLDERS,
   MANIFEST_FILE,
+  MAPS_FOLDER,
   OVERRIDES_FOLDER,
   WORLD_SETTINGS_FILE,
   type ContentType,
@@ -27,6 +28,8 @@ export interface LoadedPack {
   worldSettings: RawDocument | undefined;
   definitions: RawDefinition[];
   overrides: RawDocument[];
+  /** Pliki z `maps/` (manifesty i chunki), sprawdzane przez validateMaps. */
+  maps: RawDocument[];
 }
 
 const FOLDER_TO_TYPE = new Map<string, ContentType>(
@@ -44,6 +47,7 @@ export function splitPack(source: PackSource, sink: ErrorSink): LoadedPack {
     worldSettings: undefined,
     definitions: [],
     overrides: [],
+    maps: [],
   };
   const files = [...source.files].sort((a, b) => a.path.localeCompare(b.path));
 
@@ -62,13 +66,17 @@ export function splitPack(source: PackSource, sink: ErrorSink): LoadedPack {
       continue;
     }
     const folder = file.path.split('/')[0] ?? '';
+    if (folder === MAPS_FOLDER) {
+      pack.maps.push({ raw: json, source: at });
+      continue;
+    }
     const type = FOLDER_TO_TYPE.get(folder);
     const isOverrides = folder === OVERRIDES_FOLDER;
     if (!type && !isOverrides) {
       if (!folder.startsWith('i18n')) {
         sink.add({
           code: 'unknown_folder',
-          message: `plik poza znanymi katalogami: ${Object.values(CONTENT_FOLDERS).join(', ')}, ${OVERRIDES_FOLDER}`,
+          message: `plik poza znanymi katalogami: ${Object.values(CONTENT_FOLDERS).join(', ')}, ${OVERRIDES_FOLDER}, ${MAPS_FOLDER}`,
           ...ref(at),
         });
       }
