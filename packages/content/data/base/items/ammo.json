@@ -1,0 +1,22 @@
+[
+  {
+    "id": "base:ammo-9mm",
+    "name": "item.base.ammo-9mm.name",
+    "kind": "ammo",
+    "weightKg": 0.012,
+    "maxStack": 60,
+    "ammo": {
+      "caliber": "9mm"
+    }
+  },
+  {
+    "id": "base:shotgun-shell",
+    "name": "item.base.shotgun-shell.name",
+    "kind": "ammo",
+    "weightKg": 0.04,
+    "maxStack": 24,
+    "ammo": {
+      "caliber": "12ga"
+    }
+  }
+]

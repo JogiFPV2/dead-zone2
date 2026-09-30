@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base:plastic-bag",
+    "name": "item.base.plastic-bag.name",
+    "kind": "container",
+    "weightKg": 0.02,
+    "bag": {
+      "capacityKg": 4,
+      "weightReductionPct": 0,
+      "slots": ["hand_primary", "hand_secondary"],
+      "movementPenalty": 0
+    }
+  },
+  {
+    "id": "base:school-backpack",
+    "name": "item.base.school-backpack.name",
+    "kind": "container",
+    "weightKg": 0.6,
+    "bag": {
+      "capacityKg": 11,
+      "weightReductionPct": 35,
+      "slots": ["back"],
+      "movementPenalty": 0.05
+    }
+  },
+  {
+    "id": "base:military-backpack",
+    "name": "item.base.military-backpack.name",
+    "kind": "container",
+    "weightKg": 1.4,
+    "bag": {
+      "capacityKg": 24,
+      "weightReductionPct": 65,
+      "slots": ["back"],
+      "movementPenalty": 0.08
+    }
+  }
+]

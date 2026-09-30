@@ -1,0 +1,36 @@
+{
+  "id": "base:boredom",
+  "name": "moodle.base.boredom.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "boredom",
+  "levels": [
+    {
+      "label": "moodle.base.boredom.level-1",
+      "enterAt": 30,
+      "exitAt": 25
+    },
+    {
+      "label": "moodle.base.boredom.level-2",
+      "enterAt": 55,
+      "exitAt": 50
+    },
+    {
+      "label": "moodle.base.boredom.level-3",
+      "enterAt": 75,
+      "exitAt": 70
+    },
+    {
+      "label": "moodle.base.boredom.level-4",
+      "enterAt": 90,
+      "exitAt": 85,
+      "modifiers": [
+        {
+          "stat": "unhappiness",
+          "op": "add",
+          "value": 0.1
+        }
+      ]
+    }
+  ]
+}

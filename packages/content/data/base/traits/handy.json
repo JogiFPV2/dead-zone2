@@ -1,0 +1,24 @@
+{
+  "id": "base:handy",
+  "name": "trait.base.handy.name",
+  "polarity": "positive",
+  "cost": 4,
+  "skillBonuses": [
+    {
+      "skill": "base:carpentry",
+      "levels": 1
+    }
+  ],
+  "knownRecipes": ["base:wooden-crate"],
+  "modifiers": [
+    {
+      "stat": "crafting-speed",
+      "op": "mul",
+      "value": 1.15,
+      "when": {
+        "skill": "base:carpentry",
+        "minLevel": 3
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "base",
+  "name": "Deadzone — paczka bazowa",
+  "version": "0.1.0",
+  "description": "Podstawowa zawartość gry: przedmioty, receptury, umiejętności, moodle.",
+  "authors": ["Deadzone"],
+  "nameKey": "mod.base.name"
+}

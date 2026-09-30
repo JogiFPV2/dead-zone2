@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base:canned-beans",
+    "name": "item.base.canned-beans.name",
+    "kind": "food",
+    "weightKg": 0.45,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 380,
+        "hunger": -30,
+        "unhappiness": 2
+      },
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      },
+      "portions": 2,
+      "openWith": "base:tool-can-opener"
+    }
+  },
+  {
+    "id": "base:water-bottle",
+    "name": "item.base.water-bottle.name",
+    "kind": "drink",
+    "weightKg": 0.55,
+    "drink": {
+      "perUse": {
+        "thirst": -20
+      },
+      "uses": 5,
+      "spoilage": {
+        "freshMin": 259200,
+        "rottenMin": 525600
+      }
+    }
+  }
+]

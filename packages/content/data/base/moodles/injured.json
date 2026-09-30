@@ -1,0 +1,36 @@
+{
+  "id": "base:injured",
+  "name": "moodle.base.injured.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "injury",
+  "levels": [
+    {
+      "label": "moodle.base.injured.level-1",
+      "enterAt": 10,
+      "exitAt": 5
+    },
+    {
+      "label": "moodle.base.injured.level-2",
+      "enterAt": 35,
+      "exitAt": 30
+    },
+    {
+      "label": "moodle.base.injured.level-3",
+      "enterAt": 60,
+      "exitAt": 55
+    },
+    {
+      "label": "moodle.base.injured.level-4",
+      "enterAt": 85,
+      "exitAt": 80,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.7
+        }
+      ]
+    }
+  ]
+}

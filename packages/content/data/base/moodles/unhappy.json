@@ -1,0 +1,36 @@
+{
+  "id": "base:unhappy",
+  "name": "moodle.base.unhappy.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "unhappiness",
+  "levels": [
+    {
+      "label": "moodle.base.unhappy.level-1",
+      "enterAt": 25,
+      "exitAt": 20
+    },
+    {
+      "label": "moodle.base.unhappy.level-2",
+      "enterAt": 50,
+      "exitAt": 45
+    },
+    {
+      "label": "moodle.base.unhappy.level-3",
+      "enterAt": 70,
+      "exitAt": 65,
+      "modifiers": [
+        {
+          "stat": "xp-gain",
+          "op": "mul",
+          "value": 0.8
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.unhappy.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

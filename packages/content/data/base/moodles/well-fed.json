@@ -1,0 +1,26 @@
+{
+  "id": "base:well-fed",
+  "name": "moodle.base.well-fed.name",
+  "polarity": "positive",
+  "maxLevel": 2,
+  "stat": "satiety",
+  "levels": [
+    {
+      "label": "moodle.base.well-fed.level-1",
+      "enterAt": 55,
+      "exitAt": 50
+    },
+    {
+      "label": "moodle.base.well-fed.level-2",
+      "enterAt": 85,
+      "exitAt": 80,
+      "modifiers": [
+        {
+          "stat": "endurance-regen",
+          "op": "mul",
+          "value": 1.1
+        }
+      ]
+    }
+  ]
+}

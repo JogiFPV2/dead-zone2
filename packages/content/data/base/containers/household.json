@@ -1,0 +1,25 @@
+[
+  {
+    "id": "base:kitchen-cabinet",
+    "name": "container.base.kitchen-cabinet.name",
+    "category": "cabinet",
+    "capacityKg": 25,
+    "defaultLootTable": "base:kitchen"
+  },
+  {
+    "id": "base:fridge",
+    "name": "container.base.fridge.name",
+    "category": "fridge",
+    "capacityKg": 35,
+    "spoilageMultiplier": 0.3,
+    "requiresPower": true,
+    "defaultLootTable": "base:kitchen"
+  },
+  {
+    "id": "base:wooden-chest",
+    "name": "container.base.wooden-chest.name",
+    "category": "chest",
+    "capacityKg": 60,
+    "searchMin": 2
+  }
+]

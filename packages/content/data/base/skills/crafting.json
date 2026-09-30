@@ -1,0 +1,32 @@
+[
+  {
+    "id": "base:carpentry",
+    "name": "skill.base.carpentry.name",
+    "group": "crafting",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:mechanics",
+    "name": "skill.base.mechanics.name",
+    "group": "crafting",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:electrical",
+    "name": "skill.base.electrical.name",
+    "group": "crafting",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:tailoring",
+    "name": "skill.base.tailoring.name",
+    "group": "crafting",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:metalworking",
+    "name": "skill.base.metalworking.name",
+    "group": "crafting",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  }
+]

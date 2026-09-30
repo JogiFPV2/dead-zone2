@@ -1,0 +1,36 @@
+{
+  "id": "base:wet",
+  "name": "moodle.base.wet.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "wetness",
+  "levels": [
+    {
+      "label": "moodle.base.wet.level-1",
+      "enterAt": 15,
+      "exitAt": 10
+    },
+    {
+      "label": "moodle.base.wet.level-2",
+      "enterAt": 40,
+      "exitAt": 35
+    },
+    {
+      "label": "moodle.base.wet.level-3",
+      "enterAt": 65,
+      "exitAt": 60,
+      "modifiers": [
+        {
+          "stat": "body-temperature-c",
+          "op": "add",
+          "value": -0.5
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.wet.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "base:carpentry-for-beginners",
+    "name": "item.base.carpentry-for-beginners.name",
+    "kind": "literature",
+    "weightKg": 0.5,
+    "literature": {
+      "format": "book",
+      "readMin": 180,
+      "skillBook": {
+        "skill": "base:carpentry",
+        "multiplier": 2.5,
+        "minLevel": 0,
+        "maxLevel": 2
+      },
+      "unlocksRecipes": ["base:wooden-crate"],
+      "boredomReduction": 15
+    }
+  }
+]

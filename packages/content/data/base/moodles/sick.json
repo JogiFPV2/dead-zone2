@@ -1,0 +1,36 @@
+{
+  "id": "base:sick",
+  "name": "moodle.base.sick.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "sickness",
+  "levels": [
+    {
+      "label": "moodle.base.sick.level-1",
+      "enterAt": 20,
+      "exitAt": 15
+    },
+    {
+      "label": "moodle.base.sick.level-2",
+      "enterAt": 45,
+      "exitAt": 40,
+      "modifiers": [
+        {
+          "stat": "endurance-regen",
+          "op": "mul",
+          "value": 0.8
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.sick.level-3",
+      "enterAt": 70,
+      "exitAt": 65
+    },
+    {
+      "label": "moodle.base.sick.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

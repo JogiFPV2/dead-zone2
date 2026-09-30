@@ -1,0 +1,29 @@
+{
+  "id": "base:bleeding",
+  "name": "moodle.base.bleeding.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "bleeding",
+  "levels": [
+    {
+      "label": "moodle.base.bleeding.level-1",
+      "enterAt": 5,
+      "exitAt": 2
+    },
+    {
+      "label": "moodle.base.bleeding.level-2",
+      "enterAt": 30,
+      "exitAt": 27
+    },
+    {
+      "label": "moodle.base.bleeding.level-3",
+      "enterAt": 60,
+      "exitAt": 57
+    },
+    {
+      "label": "moodle.base.bleeding.level-4",
+      "enterAt": 85,
+      "exitAt": 82
+    }
+  ]
+}

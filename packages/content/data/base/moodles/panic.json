@@ -1,0 +1,43 @@
+{
+  "id": "base:panic",
+  "name": "moodle.base.panic.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "panic",
+  "levels": [
+    {
+      "label": "moodle.base.panic.level-1",
+      "enterAt": 15,
+      "exitAt": 10
+    },
+    {
+      "label": "moodle.base.panic.level-2",
+      "enterAt": 40,
+      "exitAt": 35,
+      "modifiers": [
+        {
+          "stat": "aim-accuracy",
+          "op": "mul",
+          "value": 0.9
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.panic.level-3",
+      "enterAt": 65,
+      "exitAt": 60
+    },
+    {
+      "label": "moodle.base.panic.level-4",
+      "enterAt": 90,
+      "exitAt": 85,
+      "modifiers": [
+        {
+          "stat": "aim-accuracy",
+          "op": "mul",
+          "value": 0.6
+        }
+      ]
+    }
+  ]
+}

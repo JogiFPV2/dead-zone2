@@ -1,0 +1,21 @@
+{
+  "id": "base:comfortable",
+  "name": "moodle.base.comfortable.name",
+  "polarity": "positive",
+  "maxLevel": 1,
+  "stat": "comfort",
+  "levels": [
+    {
+      "label": "moodle.base.comfortable.level-1",
+      "enterAt": 70,
+      "exitAt": 65,
+      "modifiers": [
+        {
+          "stat": "fatigue-rate",
+          "op": "mul",
+          "value": 0.9
+        }
+      ]
+    }
+  ]
+}

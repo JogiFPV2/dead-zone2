@@ -1,0 +1,13 @@
+{
+  "id": "base:fast-learner",
+  "name": "trait.base.fast-learner.name",
+  "polarity": "positive",
+  "cost": 5,
+  "modifiers": [
+    {
+      "stat": "xp-gain",
+      "op": "mul",
+      "value": 1.25
+    }
+  ]
+}

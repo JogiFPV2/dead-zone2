@@ -1,0 +1,9 @@
+{
+  "dayLengthMinutes": 60,
+  "startingTraitPoints": 8,
+  "carry": {
+    "baseCapacityKg": 12,
+    "overloadSlowdownPerKg": 0.03,
+    "hardLimitMultiplier": 2
+  }
+}

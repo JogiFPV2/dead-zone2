@@ -1,0 +1,48 @@
+{
+  "id": "base:hunger",
+  "name": "moodle.base.hunger.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "hunger",
+  "levels": [
+    {
+      "label": "moodle.base.hunger.level-1",
+      "enterAt": 20,
+      "exitAt": 15
+    },
+    {
+      "label": "moodle.base.hunger.level-2",
+      "enterAt": 45,
+      "exitAt": 40
+    },
+    {
+      "label": "moodle.base.hunger.level-3",
+      "enterAt": 70,
+      "exitAt": 65,
+      "modifiers": [
+        {
+          "stat": "endurance-regen",
+          "op": "mul",
+          "value": 0.8
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.hunger.level-4",
+      "enterAt": 90,
+      "exitAt": 85,
+      "modifiers": [
+        {
+          "stat": "endurance-regen",
+          "op": "mul",
+          "value": 0.5
+        },
+        {
+          "stat": "health",
+          "op": "add",
+          "value": -0.2
+        }
+      ]
+    }
+  ]
+}

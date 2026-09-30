@@ -1,0 +1,77 @@
+[
+  {
+    "id": "base:pistol",
+    "name": "item.base.pistol.name",
+    "kind": "weapon_ranged",
+    "weightKg": 0.9,
+    "ranged": {
+      "category": "pistol",
+      "skill": "base:aiming",
+      "ammo": "base:ammo-9mm",
+      "feed": {
+        "type": "magazine",
+        "magazine": "base:pistol-magazine"
+      },
+      "damage": {
+        "min": 18,
+        "max": 28
+      },
+      "rangeTiles": 22,
+      "accuracy": 0.55,
+      "shotsPerSec": 2.5,
+      "reloadSec": 2.2,
+      "shotNoise": {
+        "radiusTiles": 45,
+        "volume": 1
+      },
+      "durability": {
+        "max": 800,
+        "lossChancePerUse": 0.05
+      },
+      "jamChance": 0.01
+    }
+  },
+  {
+    "id": "base:shotgun",
+    "name": "item.base.shotgun.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.4,
+    "ranged": {
+      "category": "shotgun",
+      "skill": "base:aiming",
+      "ammo": "base:shotgun-shell",
+      "feed": {
+        "type": "internal",
+        "capacity": 5
+      },
+      "damage": {
+        "min": 8,
+        "max": 14
+      },
+      "rangeTiles": 12,
+      "accuracy": 0.7,
+      "shotsPerSec": 0.9,
+      "reloadSec": 5.5,
+      "shotNoise": {
+        "radiusTiles": 70,
+        "volume": 1
+      },
+      "durability": {
+        "max": 600,
+        "lossChancePerUse": 0.05
+      },
+      "projectiles": 8,
+      "twoHanded": true
+    }
+  },
+  {
+    "id": "base:pistol-magazine",
+    "name": "item.base.pistol-magazine.name",
+    "kind": "magazine",
+    "weightKg": 0.12,
+    "magazine": {
+      "ammo": "base:ammo-9mm",
+      "capacity": 13
+    }
+  }
+]

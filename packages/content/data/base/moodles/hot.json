@@ -1,0 +1,36 @@
+{
+  "id": "base:hot",
+  "name": "moodle.base.hot.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "body-temperature-c",
+  "levels": [
+    {
+      "label": "moodle.base.hot.level-1",
+      "enterAt": 37.6,
+      "exitAt": 37.3
+    },
+    {
+      "label": "moodle.base.hot.level-2",
+      "enterAt": 38.3,
+      "exitAt": 38.0,
+      "modifiers": [
+        {
+          "stat": "thirst-rate",
+          "op": "mul",
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.hot.level-3",
+      "enterAt": 39.2,
+      "exitAt": 38.9
+    },
+    {
+      "label": "moodle.base.hot.level-4",
+      "enterAt": 40.3,
+      "exitAt": 40.0
+    }
+  ]
+}

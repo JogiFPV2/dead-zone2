@@ -1,0 +1,17 @@
+{
+  "id": "base:walker",
+  "name": "zombie.base.walker.name",
+  "health": 60,
+  "speed": {
+    "wanderTilesPerSec": 0.4,
+    "chaseTilesPerSec": 1.1
+  },
+  "damage": {
+    "min": 4,
+    "max": 9
+  },
+  "attackCooldownSec": 1.6,
+  "biteChance": 0.2,
+  "sightRangeTiles": 18,
+  "hearingRangeTiles": 30
+}

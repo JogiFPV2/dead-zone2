@@ -1,0 +1,50 @@
+{
+  "id": "base:fatigue",
+  "name": "moodle.base.fatigue.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "fatigue",
+  "levels": [
+    {
+      "label": "moodle.base.fatigue.level-1",
+      "enterAt": 40,
+      "exitAt": 35
+    },
+    {
+      "label": "moodle.base.fatigue.level-2",
+      "enterAt": 60,
+      "exitAt": 55,
+      "modifiers": [
+        {
+          "stat": "aim-accuracy",
+          "op": "mul",
+          "value": 0.9
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.fatigue.level-3",
+      "enterAt": 80,
+      "exitAt": 75,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.9
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.fatigue.level-4",
+      "enterAt": 95,
+      "exitAt": 90,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.75
+        }
+      ]
+    }
+  ]
+}

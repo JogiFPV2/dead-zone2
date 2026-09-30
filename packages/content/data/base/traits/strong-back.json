@@ -1,0 +1,14 @@
+{
+  "id": "base:strong-back",
+  "name": "trait.base.strong-back.name",
+  "polarity": "positive",
+  "cost": 4,
+  "conflicts": ["base:weak-back"],
+  "modifiers": [
+    {
+      "stat": "carry-capacity-kg",
+      "op": "add",
+      "value": 4
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "base:rip-sheet",
+    "name": "recipe.base.rip-sheet.name",
+    "category": "tailoring",
+    "ingredients": [
+      {
+        "item": "base:sheet"
+      }
+    ],
+    "durationMin": 2,
+    "results": [
+      {
+        "item": "base:rag",
+        "count": 4
+      }
+    ],
+    "xp": [
+      {
+        "skill": "base:tailoring",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "base:craft-spear",
+    "name": "recipe.base.craft-spear.name",
+    "category": "weapons",
+    "ingredients": [
+      {
+        "item": "base:plank"
+      }
+    ],
+    "tools": [
+      {
+        "tag": "base:tool-knife",
+        "durabilityLoss": 1
+      }
+    ],
+    "durationMin": 20,
+    "results": [
+      {
+        "item": "base:spear"
+      }
+    ],
+    "xp": [
+      {
+        "skill": "base:carpentry",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "base:wooden-crate",
+    "name": "recipe.base.wooden-crate.name",
+    "category": "carpentry",
+    "ingredients": [
+      {
+        "tag": "base:wood-plank",
+        "count": 4
+      },
+      {
+        "item": "base:nails",
+        "count": 8
+      }
+    ],
+    "tools": [
+      {
+        "tag": "base:tool-hammer",
+        "durabilityLoss": 1
+      }
+    ],
+    "skills": [
+      {
+        "skill": "base:carpentry",
+        "level": 2
+      }
+    ],
+    "durationMin": 45,
+    "results": [
+      {
+        "item": "base:wooden-crate"
+      }
+    ],
+    "xp": [
+      {
+        "skill": "base:carpentry",
+        "amount": 10
+      }
+    ],
+    "requiresLearning": true
+  }
+]

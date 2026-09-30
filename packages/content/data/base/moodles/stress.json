@@ -1,0 +1,29 @@
+{
+  "id": "base:stress",
+  "name": "moodle.base.stress.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "stress",
+  "levels": [
+    {
+      "label": "moodle.base.stress.level-1",
+      "enterAt": 25,
+      "exitAt": 20
+    },
+    {
+      "label": "moodle.base.stress.level-2",
+      "enterAt": 50,
+      "exitAt": 45
+    },
+    {
+      "label": "moodle.base.stress.level-3",
+      "enterAt": 75,
+      "exitAt": 70
+    },
+    {
+      "label": "moodle.base.stress.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

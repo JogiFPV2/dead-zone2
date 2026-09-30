@@ -1,0 +1,13 @@
+{
+  "id": "base:weak-back",
+  "name": "trait.base.weak-back.name",
+  "polarity": "negative",
+  "cost": -3,
+  "modifiers": [
+    {
+      "stat": "carry-capacity-kg",
+      "op": "add",
+      "value": -3
+    }
+  ]
+}

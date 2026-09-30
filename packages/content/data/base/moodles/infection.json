@@ -1,0 +1,29 @@
+{
+  "id": "base:infection",
+  "name": "moodle.base.infection.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "infection",
+  "levels": [
+    {
+      "label": "moodle.base.infection.level-1",
+      "enterAt": 10,
+      "exitAt": 10
+    },
+    {
+      "label": "moodle.base.infection.level-2",
+      "enterAt": 40,
+      "exitAt": 40
+    },
+    {
+      "label": "moodle.base.infection.level-3",
+      "enterAt": 70,
+      "exitAt": 70
+    },
+    {
+      "label": "moodle.base.infection.level-4",
+      "enterAt": 95,
+      "exitAt": 95
+    }
+  ]
+}

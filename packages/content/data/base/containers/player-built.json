@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base:wooden-crate",
+    "name": "container.base.wooden-crate.name",
+    "category": "crate",
+    "capacityKg": 50,
+    "pickupItem": "base:wooden-crate",
+    "tags": ["base:player-built"]
+  }
+]

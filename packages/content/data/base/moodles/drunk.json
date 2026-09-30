@@ -1,0 +1,43 @@
+{
+  "id": "base:drunk",
+  "name": "moodle.base.drunk.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "drunkenness",
+  "levels": [
+    {
+      "label": "moodle.base.drunk.level-1",
+      "enterAt": 20,
+      "exitAt": 15
+    },
+    {
+      "label": "moodle.base.drunk.level-2",
+      "enterAt": 45,
+      "exitAt": 40,
+      "modifiers": [
+        {
+          "stat": "aim-accuracy",
+          "op": "mul",
+          "value": 0.85
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.drunk.level-3",
+      "enterAt": 70,
+      "exitAt": 65,
+      "modifiers": [
+        {
+          "stat": "panic-resistance",
+          "op": "mul",
+          "value": 1.3
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.drunk.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

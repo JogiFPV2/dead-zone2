@@ -1,0 +1,67 @@
+{
+  "id": "base:gas-station",
+  "rooms": ["base:room-gas-station"],
+  "chance": 0.85,
+  "rolls": {
+    "min": 2,
+    "max": 4
+  },
+  "entries": [
+    {
+      "item": "base:water-bottle",
+      "weight": 6,
+      "count": {
+        "min": 1,
+        "max": 2
+      }
+    },
+    {
+      "item": "base:canned-beans",
+      "weight": 3,
+      "count": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "item": "base:plastic-bag",
+      "weight": 5,
+      "count": {
+        "min": 1,
+        "max": 4
+      }
+    },
+    {
+      "item": "base:crowbar",
+      "weight": 1,
+      "count": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "item": "base:bandage",
+      "weight": 2,
+      "count": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "item": "base:carpentry-for-beginners",
+      "weight": 1,
+      "count": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "item": "base:nails",
+      "weight": 2,
+      "count": {
+        "min": 5,
+        "max": 20
+      }
+    }
+  ]
+}

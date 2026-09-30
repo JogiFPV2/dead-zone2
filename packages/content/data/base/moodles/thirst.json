@@ -1,0 +1,36 @@
+{
+  "id": "base:thirst",
+  "name": "moodle.base.thirst.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "thirst",
+  "levels": [
+    {
+      "label": "moodle.base.thirst.level-1",
+      "enterAt": 20,
+      "exitAt": 15
+    },
+    {
+      "label": "moodle.base.thirst.level-2",
+      "enterAt": 45,
+      "exitAt": 40
+    },
+    {
+      "label": "moodle.base.thirst.level-3",
+      "enterAt": 70,
+      "exitAt": 65
+    },
+    {
+      "label": "moodle.base.thirst.level-4",
+      "enterAt": 90,
+      "exitAt": 85,
+      "modifiers": [
+        {
+          "stat": "health",
+          "op": "add",
+          "value": -0.3
+        }
+      ]
+    }
+  ]
+}

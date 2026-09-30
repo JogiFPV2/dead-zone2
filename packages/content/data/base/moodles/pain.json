@@ -1,0 +1,43 @@
+{
+  "id": "base:pain",
+  "name": "moodle.base.pain.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "pain",
+  "levels": [
+    {
+      "label": "moodle.base.pain.level-1",
+      "enterAt": 15,
+      "exitAt": 10
+    },
+    {
+      "label": "moodle.base.pain.level-2",
+      "enterAt": 35,
+      "exitAt": 30
+    },
+    {
+      "label": "moodle.base.pain.level-3",
+      "enterAt": 60,
+      "exitAt": 55,
+      "modifiers": [
+        {
+          "stat": "melee-damage",
+          "op": "mul",
+          "value": 0.85
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.pain.level-4",
+      "enterAt": 85,
+      "exitAt": 80,
+      "modifiers": [
+        {
+          "stat": "aim-accuracy",
+          "op": "mul",
+          "value": 0.7
+        }
+      ]
+    }
+  ]
+}

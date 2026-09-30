@@ -1,0 +1,33 @@
+[
+  {
+    "id": "base:sheet",
+    "name": "item.base.sheet.name",
+    "kind": "material",
+    "weightKg": 0.6,
+    "tags": ["base:fabric"]
+  },
+  {
+    "id": "base:rag",
+    "name": "item.base.rag.name",
+    "kind": "material",
+    "weightKg": 0.08,
+    "maxStack": 20,
+    "tags": ["base:fabric", "base:rag"]
+  },
+  {
+    "id": "base:plank",
+    "name": "item.base.plank.name",
+    "kind": "material",
+    "weightKg": 1.8,
+    "maxStack": 10,
+    "tags": ["base:wood-plank"]
+  },
+  {
+    "id": "base:nails",
+    "name": "item.base.nails.name",
+    "kind": "material",
+    "weightKg": 0.005,
+    "maxStack": 100,
+    "tags": ["base:fastener"]
+  }
+]

@@ -1,0 +1,57 @@
+{
+  "id": "base:heavy-load",
+  "name": "moodle.base.heavy-load.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "carry-load",
+  "levels": [
+    {
+      "label": "moodle.base.heavy-load.level-1",
+      "enterAt": 100,
+      "exitAt": 97,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.9
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.heavy-load.level-2",
+      "enterAt": 125,
+      "exitAt": 122,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.8
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.heavy-load.level-3",
+      "enterAt": 150,
+      "exitAt": 147,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.65
+        }
+      ]
+    },
+    {
+      "label": "moodle.base.heavy-load.level-4",
+      "enterAt": 175,
+      "exitAt": 172,
+      "modifiers": [
+        {
+          "stat": "move-speed",
+          "op": "mul",
+          "value": 0.5
+        }
+      ]
+    }
+  ]
+}

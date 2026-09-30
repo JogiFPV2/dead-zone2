@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base:first-aid",
+    "name": "skill.base.first-aid.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:cooking",
+    "name": "skill.base.cooking.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:farming",
+    "name": "skill.base.farming.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:foraging",
+    "name": "skill.base.foraging.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:fishing",
+    "name": "skill.base.fishing.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:trapping",
+    "name": "skill.base.trapping.name",
+    "group": "survival",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  }
+]

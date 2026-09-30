@@ -1,0 +1,13 @@
+{
+  "id": "base:keen-ears",
+  "name": "trait.base.keen-ears.name",
+  "polarity": "positive",
+  "cost": 3,
+  "modifiers": [
+    {
+      "stat": "hearing-range-tiles",
+      "op": "mul",
+      "value": 1.3
+    }
+  ]
+}

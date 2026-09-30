@@ -1,24 +1,36 @@
 {
   "name": "@deadzone/content",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
+  "description": "Schematy contentu (zod), walidator paczek, ContentBundle i paczka bazowa gry Deadzone",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./data/*": "./data/*"
   },
   "files": [
-    "dist"
+    "dist",
+    "data"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate": "tsx src/node/cli.ts"
   },
   "dependencies": {
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "tsx": "^4.23.15"
   }
 }

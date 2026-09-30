@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base:blunt",
+    "name": "skill.base.blunt.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:blade-long",
+    "name": "skill.base.blade-long.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:blade-short",
+    "name": "skill.base.blade-short.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:spear",
+    "name": "skill.base.spear.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:aiming",
+    "name": "skill.base.aiming.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  },
+  {
+    "id": "base:reloading",
+    "name": "skill.base.reloading.name",
+    "group": "combat",
+    "xpPerLevel": [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700]
+  }
+]

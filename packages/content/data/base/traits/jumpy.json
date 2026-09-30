@@ -1,0 +1,22 @@
+{
+  "id": "base:jumpy",
+  "name": "trait.base.jumpy.name",
+  "polarity": "negative",
+  "cost": -2,
+  "modifiers": [
+    {
+      "stat": "panic-resistance",
+      "op": "mul",
+      "value": 0.7
+    },
+    {
+      "stat": "aim-accuracy",
+      "op": "mul",
+      "value": 0.85,
+      "when": {
+        "moodle": "base:panic",
+        "minLevel": 2
+      }
+    }
+  ]
+}
