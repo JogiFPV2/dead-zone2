@@ -510,6 +510,24 @@
       "x": 20,
       "y": 18,
       "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 18,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 19,
+      "y": 11,
+      "rot": 0
     }
   ],
   "rooms": {

@@ -56,6 +56,7 @@ import { createInventoryWindow } from './hud/inventory-window.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
+import { MapObjects } from './world/map-objects.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -213,6 +214,8 @@ input.on('reload', () => {
 });
 const groundPiles = new GroundPiles();
 scene.add(groundPiles.root);
+const mapObjects = new MapObjects(world.source, world.range);
+scene.add(mapObjects.root);
 let deathShown = false;
 gameState.subscribe((next) => {
   if (!next.death || deathShown) return;
@@ -327,7 +330,8 @@ renderer.setAnimationLoop((time) => {
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   lighting.update(camera, rig.target.x, rig.target.z);
   const gs = gameState.get();
-  groundPiles.update(gs.nearby);
+  groundPiles.update(gs.groundPiles, gs.nearby, time);
+  mapObjects.update(gs.nearby, time);
   inventory.update();
   if (state) {
     const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);

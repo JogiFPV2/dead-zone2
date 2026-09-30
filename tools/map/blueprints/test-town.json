@@ -350,6 +350,300 @@
       "x": 20,
       "y": 18,
       "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": -52,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -52,
+      "y": -45,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wooden-chest",
+      "x": -20,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -13,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -20,
+      "y": -45,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 12,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 19,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 12,
+      "y": -45,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 44,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 51,
+      "y": -52,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": 44,
+      "y": -45,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -45,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wooden-chest",
+      "x": -52,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -20,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -13,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -20,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 12,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 19,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 12,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 44,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": 51,
+      "y": -20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 44,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -52,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": -45,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -52,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -20,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -13,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -20,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 44,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 51,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 44,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": -52,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -52,
+      "y": 51,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wooden-chest",
+      "x": -20,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -13,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -20,
+      "y": 51,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 12,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 19,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 12,
+      "y": 51,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 44,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 51,
+      "y": 44,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": 44,
+      "y": 51,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 18,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 19,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -59,
+      "y": 5,
+      "rot": 0
     }
   ]
 }

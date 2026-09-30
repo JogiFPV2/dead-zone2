@@ -98,6 +98,30 @@
       "x": 2,
       "y": 1,
       "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": 12,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 19,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 12,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 5,
+      "y": 5,
+      "rot": 0
     }
   ],
   "rooms": {}

@@ -92,6 +92,25 @@
     }
   },
   "edges": [],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 12,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 19,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 12,
+      "y": 19,
+      "rot": 0
+    }
+  ],
   "rooms": {}
 }

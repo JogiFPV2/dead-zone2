@@ -142,6 +142,16 @@ export interface NearbyContainerView {
   searched: boolean;
 }
 
+/** Radius (tiles) of `SimViewPatch.groundPiles`. */
+export const GROUND_PILE_MARKER_TILES = 24;
+
+export interface GroundPileView {
+  id: ContainerId;
+  x: number;
+  y: number;
+  z: number;
+}
+
 export interface ActionView {
   kind: ActionKind;
   /** Progress bar: the UI interpolates between these ticks. */
@@ -163,6 +173,11 @@ export interface SimViewPatch {
   container?: ContainerView | null;
   /** Full list of containers in reach when it changes. */
   nearby?: NearbyContainerView[];
+  /**
+   * Non-empty ground piles within `GROUND_PILE_MARKER_TILES` of the player (world markers),
+   * full list when it changes; opening still needs reach (`nearby`).
+   */
+  groundPiles?: GroundPileView[];
   /** Current timed action; null = none. */
   action?: ActionView | null;
   /**

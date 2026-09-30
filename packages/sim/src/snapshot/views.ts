@@ -1,5 +1,6 @@
 import {
   BODY_PARTS,
+  GROUND_PILE_MARKER_TILES,
   VIEW_STATS,
   WOUND_KINDS,
   type ClockView,
@@ -20,7 +21,13 @@ import {
   ticksPerGameMinute,
 } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
-import { actionView, inventoryView, nearbyView, openContainerView } from '../items/views.js';
+import {
+  actionView,
+  groundPilesView,
+  inventoryView,
+  nearbyView,
+  openContainerView,
+} from '../items/views.js';
 import { threatNearby } from '../systems/sleep.js';
 import { threatLevel } from '../ai/threat.js';
 import { meleeOf } from '../combat/system.js';
@@ -75,6 +82,7 @@ export class ViewTracker {
   private invHeaderKey = '';
   private readonly invContainers = new Map<number, string>();
   private openKey = '';
+  private pilesKey = '';
   private nearbyKey = '';
   private actionKey = '';
   private threat: number | undefined;
@@ -172,6 +180,15 @@ export class ViewTracker {
     if (nearbyKey !== this.nearbyKey) {
       this.nearbyKey = nearbyKey;
       patch.nearby = nearby;
+    }
+    // Pile markers: twice a second is enough (walking 24 tiles takes seconds).
+    if (w.tick % 10 === 0 || this.pilesKey === '') {
+      const piles = groundPilesView(w, eid, GROUND_PILE_MARKER_TILES);
+      const pilesKey = JSON.stringify(piles);
+      if (pilesKey !== this.pilesKey) {
+        this.pilesKey = pilesKey;
+        patch.groundPiles = piles;
+      }
     }
     const action = actionView(w, eid);
     const actionKey = JSON.stringify(action);

@@ -92,6 +92,25 @@
     }
   },
   "edges": [],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:metal-shelf",
+      "x": 12,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": 19,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wooden-chest",
+      "x": 12,
+      "y": 19,
+      "rot": 0
+    }
+  ],
   "rooms": {}
 }

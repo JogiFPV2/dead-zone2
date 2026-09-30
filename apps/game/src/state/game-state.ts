@@ -1,5 +1,6 @@
 import type {
   CombatView,
+  GroundPileView,
   ActionView,
   ClockView,
   ContainerId,
@@ -51,6 +52,8 @@ export interface GameState {
   container?: ContainerView;
   /** Containers in reach (full list from the last patch that had it). */
   nearby: readonly NearbyContainerView[];
+  /** Ground piles within marker range (view.groundPiles). */
+  groundPiles: readonly GroundPileView[];
   /** Current timed action; absent = none. */
   action?: ActionView;
   death?: {
@@ -79,6 +82,7 @@ export const INITIAL_GAME_STATE: GameState = {
   tick: 0,
   player: { alive: true, sleeping: false, stats: {}, moodles: {}, wounds: [] },
   nearby: [],
+  groundPiles: [],
   threat: 0,
   timeScaleHint: 1,
   recentEvents: [],
@@ -152,6 +156,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.clock ? { clock: view.clock } : {}),
     ...(view.inventory ? { inventory: applyInventory(s.inventory, view.inventory) } : {}),
     ...(view.nearby ? { nearby: view.nearby } : {}),
+    ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
     ...(view.combat ? { combat: view.combat } : {}),
     player,

@@ -1,5 +1,6 @@
 import type {
   ActionView,
+  GroundPileView,
   ContainerView,
   EquipSlot,
   InventoryView,
@@ -87,6 +88,26 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
     equipped,
     containers: carriedContainerIds(st, p.inventory).flatMap((id) => containerView(w, id) ?? []),
   };
+}
+
+/** Non-empty ground piles on the player's floor within `radius` tiles, by id. */
+export function groundPilesView(w: SimWorld, eid: number, radius: number): GroundPileView[] {
+  const st = w.items;
+  if (!st) return [];
+  const { Position } = w.c;
+  const px = Position.x[eid] ?? 0;
+  const py = Position.y[eid] ?? 0;
+  const z = Position.z[eid] ?? 0;
+  const out: GroundPileView[] = [];
+  for (const id of st.ground.values()) {
+    const c = st.containers.get(id);
+    if (!c || c.z !== z || c.items.length === 0) continue;
+    const dx = c.x + 0.5 - px;
+    const dy = c.y + 0.5 - py;
+    if (dx * dx + dy * dy > radius * radius) continue;
+    out.push({ id, x: c.x, y: c.y, z: c.z });
+  }
+  return out.sort((a, b) => a.id - b.id);
 }
 
 /** Storage and ground piles in reach (3×3 tiles around the player), by container id. */
