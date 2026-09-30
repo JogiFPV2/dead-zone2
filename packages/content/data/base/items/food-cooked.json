@@ -1,0 +1,82 @@
+[
+  {
+    "id": "base:baked-potato",
+    "name": "item.base.baked-potato.name",
+    "kind": "food",
+    "weightKg": 0.22,
+    "food": {
+      "nutrition": {
+        "calories": 120,
+        "carbsG": 27,
+        "proteinG": 3,
+        "hunger": -12,
+        "unhappiness": -2
+      },
+      "spoilage": { "freshMin": 4320, "rottenMin": 8640 }
+    }
+  },
+  {
+    "id": "base:grilled-fish",
+    "name": "item.base.grilled-fish.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "food": {
+      "nutrition": { "calories": 170, "proteinG": 30, "fatG": 5, "hunger": -14, "unhappiness": -4 },
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 }
+    }
+  },
+  {
+    "id": "base:vegetable-stew",
+    "name": "item.base.vegetable-stew.name",
+    "kind": "food",
+    "weightKg": 1.2,
+    "food": {
+      "nutrition": {
+        "calories": 600,
+        "carbsG": 110,
+        "proteinG": 18,
+        "fatG": 6,
+        "hunger": -60,
+        "thirst": -10,
+        "unhappiness": -10
+      },
+      "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
+      "portions": 4
+    }
+  },
+  {
+    "id": "base:cabbage-salad",
+    "name": "item.base.cabbage-salad.name",
+    "kind": "food",
+    "weightKg": 0.4,
+    "food": {
+      "nutrition": {
+        "calories": 90,
+        "carbsG": 20,
+        "proteinG": 3,
+        "hunger": -10,
+        "unhappiness": -3
+      },
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 }
+    }
+  },
+  {
+    "id": "base:dirty-water-bottle",
+    "name": "item.base.dirty-water-bottle.name",
+    "kind": "drink",
+    "weightKg": 0.55,
+    "drink": { "perUse": { "thirst": -20, "sicknessChance": 0.4 }, "uses": 5 }
+  },
+  {
+    "id": "base:vodka",
+    "name": "item.base.vodka.name",
+    "kind": "drink",
+    "weightKg": 0.9,
+    "tags": ["base:disinfectant-liquid"],
+    "drink": {
+      "perUse": { "thirst": -5, "stress": -8, "unhappiness": -5 },
+      "uses": 10,
+      "alcohol": 0.2
+    }
+  }
+]

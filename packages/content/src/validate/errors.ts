@@ -13,6 +13,7 @@ export type ContentErrorCode =
   | 'bad_override'
   | 'loot_cycle'
   | 'trait_conflict'
+  | 'unlearnable_recipe'
   | 'dependency'
   | 'map';
 

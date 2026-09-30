@@ -1,0 +1,40 @@
+[
+  {
+    "id": "base:battery",
+    "name": "item.base.battery.name",
+    "kind": "misc",
+    "weightKg": 0.03,
+    "maxStack": 20,
+    "tags": ["base:battery"]
+  },
+  {
+    "id": "base:wire",
+    "name": "item.base.wire.name",
+    "kind": "material",
+    "weightKg": 0.1,
+    "maxStack": 20,
+    "tags": ["base:wire"]
+  },
+  {
+    "id": "base:electronics-scrap",
+    "name": "item.base.electronics-scrap.name",
+    "kind": "material",
+    "weightKg": 0.1,
+    "maxStack": 20,
+    "tags": ["base:electronics"]
+  },
+  {
+    "id": "base:radio",
+    "name": "item.base.radio.name",
+    "kind": "misc",
+    "weightKg": 1.2,
+    "tags": ["base:electronics-salvage"]
+  },
+  {
+    "id": "base:noise-maker",
+    "name": "item.base.noise-maker.name",
+    "kind": "misc",
+    "weightKg": 0.4,
+    "throwable": { "rangeTiles": 8, "impactNoise": { "radiusTiles": 25, "volume": 0.9 } }
+  }
+]

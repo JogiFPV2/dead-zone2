@@ -14,7 +14,9 @@
       { "item": "base:screwdriver", "weight": 2 },
       { "item": "base:baseball-bat", "weight": 3 },
       { "item": "base:golf-club", "weight": 1, "rarity": "rare" },
-      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "rare" }
+      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "rare" },
+      { "table": "base:skill-books", "weight": 3 },
+      { "table": "base:recipe-magazines", "weight": 1, "rarity": "uncommon" }
     ]
   },
   {
@@ -38,7 +40,11 @@
       { "item": "base:machete", "weight": 1, "rarity": "rare" },
       { "item": "base:axe", "weight": 1, "rarity": "rare" },
       { "item": "base:fire-axe", "weight": 1, "rarity": "rare" },
-      { "item": "base:military-backpack", "weight": 1, "rarity": "very_rare" }
+      { "item": "base:military-backpack", "weight": 1, "rarity": "very_rare" },
+      { "item": "base:log", "weight": 2 },
+      { "item": "base:scrap-metal", "weight": 3, "count": { "min": 2, "max": 5 } },
+      { "item": "base:wire", "weight": 2 },
+      { "item": "base:duct-tape", "weight": 2 }
     ]
   },
   {

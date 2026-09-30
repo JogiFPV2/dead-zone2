@@ -1,0 +1,109 @@
+[
+  {
+    "id": "base:strong",
+    "name": "trait.base.strong.name",
+    "description": "trait.base.strong.desc",
+    "polarity": "positive",
+    "cost": 6,
+    "conflicts": ["base:weak"],
+    "modifiers": [
+      { "stat": "melee-damage", "op": "mul", "value": 1.15 },
+      { "stat": "carry-capacity-kg", "op": "add", "value": 3 }
+    ],
+    "skillBonuses": [{ "skill": "base:strength", "levels": 2 }]
+  },
+  {
+    "id": "base:weak",
+    "name": "trait.base.weak.name",
+    "description": "trait.base.weak.desc",
+    "polarity": "negative",
+    "cost": -5,
+    "modifiers": [
+      { "stat": "melee-damage", "op": "mul", "value": 0.85 },
+      { "stat": "carry-capacity-kg", "op": "add", "value": -3 }
+    ],
+    "skillBonuses": [{ "skill": "base:strength", "levels": -2 }]
+  },
+  {
+    "id": "base:athletic",
+    "name": "trait.base.athletic.name",
+    "description": "trait.base.athletic.desc",
+    "polarity": "positive",
+    "cost": 5,
+    "conflicts": ["base:unfit"],
+    "modifiers": [
+      { "stat": "endurance-regen", "op": "mul", "value": 1.2 },
+      { "stat": "sprint-speed", "op": "mul", "value": 1.05 }
+    ],
+    "skillBonuses": [{ "skill": "base:fitness", "levels": 2 }]
+  },
+  {
+    "id": "base:unfit",
+    "name": "trait.base.unfit.name",
+    "description": "trait.base.unfit.desc",
+    "polarity": "negative",
+    "cost": -5,
+    "modifiers": [
+      { "stat": "endurance-regen", "op": "mul", "value": 0.8 },
+      { "stat": "sprint-speed", "op": "mul", "value": 0.95 }
+    ],
+    "skillBonuses": [{ "skill": "base:fitness", "levels": -2 }]
+  },
+  {
+    "id": "base:thick-skinned",
+    "name": "trait.base.thick-skinned.name",
+    "description": "trait.base.thick-skinned.desc",
+    "polarity": "positive",
+    "cost": 4,
+    "conflicts": ["base:thin-skinned"],
+    "modifiers": [
+      { "stat": "scratch-resistance", "op": "mul", "value": 1.25 },
+      { "stat": "bite-resistance", "op": "mul", "value": 1.1 }
+    ]
+  },
+  {
+    "id": "base:thin-skinned",
+    "name": "trait.base.thin-skinned.name",
+    "description": "trait.base.thin-skinned.desc",
+    "polarity": "negative",
+    "cost": -4,
+    "modifiers": [
+      { "stat": "scratch-resistance", "op": "mul", "value": 0.8 },
+      { "stat": "bite-resistance", "op": "mul", "value": 0.9 }
+    ]
+  },
+  {
+    "id": "base:fast-healer",
+    "name": "trait.base.fast-healer.name",
+    "description": "trait.base.fast-healer.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "conflicts": ["base:slow-healer"],
+    "modifiers": [{ "stat": "healing-rate", "op": "mul", "value": 1.25 }]
+  },
+  {
+    "id": "base:slow-healer",
+    "name": "trait.base.slow-healer.name",
+    "description": "trait.base.slow-healer.desc",
+    "polarity": "negative",
+    "cost": -3,
+    "modifiers": [{ "stat": "healing-rate", "op": "mul", "value": 0.75 }]
+  },
+  {
+    "id": "base:resilient",
+    "name": "trait.base.resilient.name",
+    "description": "trait.base.resilient.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "conflicts": ["base:prone-to-illness"],
+    "modifiers": [{ "stat": "infection-resistance", "op": "mul", "value": 1.3 }]
+  },
+  {
+    "id": "base:prone-to-illness",
+    "name": "trait.base.prone-to-illness.name",
+    "description": "trait.base.prone-to-illness.desc",
+    "polarity": "negative",
+    "cost": -3,
+    "modifiers": [{ "stat": "infection-resistance", "op": "mul", "value": 0.75 }]
+  }
+]

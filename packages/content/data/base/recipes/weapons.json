@@ -21,5 +21,23 @@
     "durationMin": 10,
     "results": [{ "item": "base:nailed-bat" }],
     "xp": [{ "skill": "base:carpentry", "amount": 2 }]
+  },
+  {
+    "id": "base:tape-repair-weapon",
+    "name": "recipe.base.tape-repair-weapon.name",
+    "category": "weapons",
+    "ingredients": [{ "tag": "base:tape" }],
+    "durationMin": 5,
+    "xp": [{ "skill": "base:blunt", "amount": 1 }],
+    "repair": { "tag": "base:weapon-crafted", "restorePct": 30 }
+  },
+  {
+    "id": "base:tape-repair-bat",
+    "name": "recipe.base.tape-repair-bat.name",
+    "category": "weapons",
+    "ingredients": [{ "tag": "base:tape" }],
+    "durationMin": 5,
+    "xp": [{ "skill": "base:blunt", "amount": 1 }],
+    "repair": { "item": "base:baseball-bat", "restorePct": 25 }
   }
 ]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "base:sterilized-bandage",
+    "name": "item.base.sterilized-bandage.name",
+    "kind": "medical",
+    "weightKg": 0.05,
+    "maxStack": 10,
+    "medical": {
+      "effects": ["stop_bleeding", "heal_wound", "disinfect"],
+      "potency": 0.75,
+      "durationMin": 3
+    }
+  },
+  {
+    "id": "base:sterilized-rag",
+    "name": "item.base.sterilized-rag.name",
+    "kind": "medical",
+    "weightKg": 0.08,
+    "maxStack": 10,
+    "medical": { "effects": ["stop_bleeding", "disinfect"], "potency": 0.45, "durationMin": 3 }
+  },
+  {
+    "id": "base:splint",
+    "name": "item.base.splint.name",
+    "kind": "medical",
+    "weightKg": 0.6,
+    "medical": {
+      "effects": ["splint"],
+      "potency": 0.6,
+      "durationMin": 10,
+      "requires": { "skill": "base:first-aid", "level": 1 }
+    }
+  }
+]

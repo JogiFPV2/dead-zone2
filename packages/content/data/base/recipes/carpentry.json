@@ -1,0 +1,81 @@
+[
+  {
+    "id": "base:saw-planks",
+    "name": "recipe.base.saw-planks.name",
+    "category": "carpentry",
+    "ingredients": [{ "tag": "base:wood-log" }],
+    "tools": [{ "tag": "base:tool-saw", "durabilityLoss": 1 }],
+    "durationMin": 20,
+    "results": [{ "item": "base:plank", "count": 3 }],
+    "xp": [{ "skill": "base:carpentry", "amount": 3 }]
+  },
+  {
+    "id": "base:wooden-crate",
+    "name": "recipe.base.wooden-crate.name",
+    "category": "carpentry",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 4 },
+      { "item": "base:nails", "count": 8 }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:carpentry", "level": 2 }],
+    "durationMin": 45,
+    "results": [{ "item": "base:wooden-crate" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 10 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:window-barricade",
+    "name": "recipe.base.window-barricade.name",
+    "category": "carpentry",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 3 },
+      { "item": "base:nails", "count": 6 }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "durationMin": 15,
+    "results": [{ "item": "base:barricade-planks" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 4 }]
+  },
+  {
+    "id": "base:craft-spear",
+    "name": "recipe.base.craft-spear.name",
+    "category": "weapons",
+    "ingredients": [{ "item": "base:plank" }],
+    "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
+    "durationMin": 20,
+    "results": [{ "item": "base:spear" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 3 }]
+  },
+  {
+    "id": "base:build-workbench",
+    "name": "recipe.base.build-workbench.name",
+    "category": "carpentry",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 6 },
+      { "item": "base:nails", "count": 12 }
+    ],
+    "tools": [
+      { "tag": "base:tool-hammer", "durabilityLoss": 2 },
+      { "tag": "base:tool-saw", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:carpentry", "level": 3 }],
+    "durationMin": 90,
+    "results": [{ "item": "base:workbench" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 15 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:dismantle-wooden-crate",
+    "name": "recipe.base.dismantle-wooden-crate.name",
+    "category": "carpentry",
+    "ingredients": [{ "item": "base:wooden-crate" }],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "durationMin": 15,
+    "results": [
+      { "item": "base:plank", "count": 3 },
+      { "item": "base:nails", "count": 4 }
+    ],
+    "xp": [{ "skill": "base:carpentry", "amount": 2 }]
+  }
+]

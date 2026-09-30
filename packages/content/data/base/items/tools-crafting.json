@@ -1,0 +1,58 @@
+[
+  {
+    "id": "base:saw",
+    "name": "item.base.saw.name",
+    "kind": "tool",
+    "weightKg": 1.2,
+    "tags": ["base:tool-saw"],
+    "tool": { "durability": { "max": 80, "lossChancePerUse": 0.3 } }
+  },
+  {
+    "id": "base:matches",
+    "name": "item.base.matches.name",
+    "kind": "tool",
+    "weightKg": 0.05,
+    "tags": ["base:tool-fire-starter"],
+    "tool": { "durability": { "max": 20 } }
+  },
+  {
+    "id": "base:lighter",
+    "name": "item.base.lighter.name",
+    "kind": "tool",
+    "weightKg": 0.05,
+    "tags": ["base:tool-fire-starter"],
+    "tool": { "durability": { "max": 60 } }
+  },
+  {
+    "id": "base:cooking-pot",
+    "name": "item.base.cooking-pot.name",
+    "kind": "tool",
+    "weightKg": 1.1,
+    "tags": ["base:cookware", "base:cooking-pot"],
+    "tool": {}
+  },
+  {
+    "id": "base:sewing-needle",
+    "name": "item.base.sewing-needle.name",
+    "kind": "tool",
+    "weightKg": 0.01,
+    "tags": ["base:tool-needle"],
+    "tool": { "durability": { "max": 40, "lossChancePerUse": 0.2 } }
+  },
+  {
+    "id": "base:welding-torch",
+    "name": "item.base.welding-torch.name",
+    "kind": "tool",
+    "weightKg": 3.5,
+    "tags": ["base:tool-welding"],
+    "tool": { "durability": { "max": 30 } }
+  },
+  {
+    "id": "base:stone-hammer",
+    "name": "item.base.stone-hammer.name",
+    "kind": "tool",
+    "weightKg": 1.0,
+    "tags": ["base:tool-hammer"],
+    "tool": { "durability": { "max": 15, "lossChancePerUse": 0.5 }, "speedMultiplier": 0.7 }
+  }
+]

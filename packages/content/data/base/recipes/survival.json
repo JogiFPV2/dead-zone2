@@ -1,0 +1,75 @@
+[
+  {
+    "id": "base:make-bandage",
+    "name": "recipe.base.make-bandage.name",
+    "category": "survival",
+    "ingredients": [{ "tag": "base:rag", "count": 2 }],
+    "durationMin": 3,
+    "results": [{ "item": "base:bandage" }],
+    "xp": [{ "skill": "base:first-aid", "amount": 2 }]
+  },
+  {
+    "id": "base:sterilize-bandage",
+    "name": "recipe.base.sterilize-bandage.name",
+    "category": "survival",
+    "ingredients": [{ "item": "base:bandage" }, { "item": "base:water-bottle" }],
+    "tools": [{ "tag": "base:cooking-pot" }],
+    "skills": [{ "skill": "base:first-aid", "level": 1 }],
+    "durationMin": 10,
+    "results": [{ "item": "base:sterilized-bandage" }],
+    "xp": [{ "skill": "base:first-aid", "amount": 3 }],
+    "requiresLearning": true,
+    "station": "base:station-fire"
+  },
+  {
+    "id": "base:boil-water",
+    "name": "recipe.base.boil-water.name",
+    "category": "survival",
+    "ingredients": [{ "item": "base:dirty-water-bottle" }],
+    "tools": [{ "tag": "base:cooking-pot" }],
+    "durationMin": 20,
+    "results": [{ "item": "base:water-bottle" }],
+    "xp": [{ "skill": "base:cooking", "amount": 1 }],
+    "station": "base:station-fire"
+  },
+  {
+    "id": "base:build-campfire",
+    "name": "recipe.base.build-campfire.name",
+    "category": "survival",
+    "ingredients": [{ "tag": "base:wood-plank", "count": 2 }, { "tag": "base:fabric" }],
+    "tools": [{ "tag": "base:tool-fire-starter", "durabilityLoss": 1 }],
+    "durationMin": 15,
+    "results": [{ "item": "base:campfire" }],
+    "xp": [{ "skill": "base:foraging", "amount": 2 }]
+  },
+  {
+    "id": "base:build-rain-collector",
+    "name": "recipe.base.build-rain-collector.name",
+    "category": "survival",
+    "ingredients": [
+      { "tag": "base:wood-plank", "count": 4 },
+      { "item": "base:nails", "count": 8 },
+      { "item": "base:garbage-bag", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-hammer", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:carpentry", "level": 2 }],
+    "durationMin": 60,
+    "results": [{ "item": "base:rain-collector" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 8 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:craft-stone-hammer",
+    "name": "recipe.base.craft-stone-hammer.name",
+    "category": "survival",
+    "ingredients": [
+      { "item": "base:stone" },
+      { "tag": "base:wood-plank" },
+      { "tag": "base:rag", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
+    "durationMin": 20,
+    "results": [{ "item": "base:stone-hammer" }],
+    "xp": [{ "skill": "base:carpentry", "amount": 2 }]
+  }
+]

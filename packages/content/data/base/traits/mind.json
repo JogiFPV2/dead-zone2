@@ -1,0 +1,93 @@
+[
+  {
+    "id": "base:brave",
+    "name": "trait.base.brave.name",
+    "description": "trait.base.brave.desc",
+    "polarity": "positive",
+    "cost": 4,
+    "conflicts": ["base:cowardly", "base:jumpy"],
+    "modifiers": [{ "stat": "panic-resistance", "op": "mul", "value": 1.5 }]
+  },
+  {
+    "id": "base:cowardly",
+    "name": "trait.base.cowardly.name",
+    "description": "trait.base.cowardly.desc",
+    "polarity": "negative",
+    "cost": -3,
+    "modifiers": [
+      { "stat": "panic-resistance", "op": "mul", "value": 0.6 },
+      {
+        "stat": "melee-damage",
+        "op": "mul",
+        "value": 0.9,
+        "when": { "moodle": "base:panic", "minLevel": 2 }
+      }
+    ]
+  },
+  {
+    "id": "base:slow-learner",
+    "name": "trait.base.slow-learner.name",
+    "description": "trait.base.slow-learner.desc",
+    "polarity": "negative",
+    "cost": -4,
+    "conflicts": ["base:fast-learner"],
+    "modifiers": [{ "stat": "xp-gain", "op": "mul", "value": 0.75 }]
+  },
+  {
+    "id": "base:fast-reader",
+    "name": "trait.base.fast-reader.name",
+    "description": "trait.base.fast-reader.desc",
+    "polarity": "positive",
+    "cost": 2,
+    "conflicts": ["base:slow-reader"],
+    "modifiers": [{ "stat": "reading-speed", "op": "mul", "value": 1.3 }]
+  },
+  {
+    "id": "base:slow-reader",
+    "name": "trait.base.slow-reader.name",
+    "description": "trait.base.slow-reader.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "modifiers": [{ "stat": "reading-speed", "op": "mul", "value": 0.7 }]
+  },
+  {
+    "id": "base:restful-sleeper",
+    "name": "trait.base.restful-sleeper.name",
+    "description": "trait.base.restful-sleeper.desc",
+    "polarity": "positive",
+    "cost": 2,
+    "conflicts": ["base:restless-sleeper"],
+    "modifiers": [{ "stat": "fatigue-rate", "op": "mul", "value": 0.85 }]
+  },
+  {
+    "id": "base:restless-sleeper",
+    "name": "trait.base.restless-sleeper.name",
+    "description": "trait.base.restless-sleeper.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "modifiers": [{ "stat": "fatigue-rate", "op": "mul", "value": 1.15 }]
+  },
+  {
+    "id": "base:hemophobic",
+    "name": "trait.base.hemophobic.name",
+    "description": "trait.base.hemophobic.desc",
+    "polarity": "negative",
+    "cost": -3,
+    "conflicts": ["base:desensitized"],
+    "modifiers": [
+      {
+        "stat": "panic",
+        "op": "add",
+        "value": 15,
+        "when": { "moodle": "base:bleeding", "minLevel": 1 }
+      },
+      {
+        "stat": "aim-accuracy",
+        "op": "mul",
+        "value": 0.9,
+        "when": { "moodle": "base:bleeding", "minLevel": 1 }
+      }
+    ],
+    "lostWhen": { "stat": "zombies-killed", "op": "gte", "value": 100 }
+  }
+]

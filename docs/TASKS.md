@@ -53,7 +53,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik)
 
 ## Etap 5 — Postać i umiejętności
-- [ ] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)
+- [x] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)
 - [ ] Cechy zdobywane i tracone w trakcie gry (Symulacja)
 - [ ] Ekran tworzenia postaci (Designer + Silnik)
 - [ ] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)
@@ -61,7 +61,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Toasty XP i obrażeń (Designer + Silnik)
 
 ## Etap 6 — Crafting
-- [ ] Receptury jako dane (Modules)
+- [x] Receptury jako dane (Modules)
 - [ ] Kolejka akcji czasowych z paskiem postępu (Symulacja)
 - [ ] Okno craftingu (Designer + Silnik)
 - [ ] Gotowanie, bandaże, barykadowanie okien, rozbiórka mebli (Symulacja)

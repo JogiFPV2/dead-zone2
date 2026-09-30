@@ -1,0 +1,64 @@
+[
+  {
+    "id": "base:light-eater",
+    "name": "trait.base.light-eater.name",
+    "description": "trait.base.light-eater.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "conflicts": ["base:hearty-appetite"],
+    "modifiers": [{ "stat": "hunger-rate", "op": "mul", "value": 0.8 }]
+  },
+  {
+    "id": "base:hearty-appetite",
+    "name": "trait.base.hearty-appetite.name",
+    "description": "trait.base.hearty-appetite.desc",
+    "polarity": "negative",
+    "cost": -3,
+    "modifiers": [{ "stat": "hunger-rate", "op": "mul", "value": 1.25 }]
+  },
+  {
+    "id": "base:iron-gut",
+    "name": "trait.base.iron-gut.name",
+    "description": "trait.base.iron-gut.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "conflicts": ["base:weak-stomach"],
+    "modifiers": [{ "stat": "food-sickness-chance", "op": "mul", "value": 0.5 }]
+  },
+  {
+    "id": "base:weak-stomach",
+    "name": "trait.base.weak-stomach.name",
+    "description": "trait.base.weak-stomach.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "modifiers": [{ "stat": "food-sickness-chance", "op": "mul", "value": 2 }]
+  },
+  {
+    "id": "base:overweight",
+    "name": "trait.base.overweight.name",
+    "description": "trait.base.overweight.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "conflicts": ["base:underweight", "base:athletic"],
+    "modifiers": [
+      { "stat": "move-speed", "op": "mul", "value": 0.95 },
+      { "stat": "endurance-regen", "op": "mul", "value": 0.9 }
+    ],
+    "gainedWhen": { "stat": "body-weight-kg", "op": "gte", "value": 95, "sustainedMin": 4320 },
+    "lostWhen": { "stat": "body-weight-kg", "op": "lte", "value": 88, "sustainedMin": 1440 }
+  },
+  {
+    "id": "base:underweight",
+    "name": "trait.base.underweight.name",
+    "description": "trait.base.underweight.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "conflicts": ["base:strong"],
+    "modifiers": [
+      { "stat": "melee-damage", "op": "mul", "value": 0.9 },
+      { "stat": "carry-capacity-kg", "op": "add", "value": -2 }
+    ],
+    "gainedWhen": { "stat": "body-weight-kg", "op": "lte", "value": 58, "sustainedMin": 4320 },
+    "lostWhen": { "stat": "body-weight-kg", "op": "gte", "value": 64, "sustainedMin": 1440 }
+  }
+]

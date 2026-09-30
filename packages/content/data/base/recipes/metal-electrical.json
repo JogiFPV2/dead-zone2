@@ -1,0 +1,61 @@
+[
+  {
+    "id": "base:flatten-scrap",
+    "name": "recipe.base.flatten-scrap.name",
+    "category": "metalworking",
+    "ingredients": [{ "tag": "base:metal-scrap", "count": 4 }],
+    "tools": [
+      { "tag": "base:tool-welding", "durabilityLoss": 1 },
+      { "tag": "base:tool-hammer", "durabilityLoss": 1 }
+    ],
+    "skills": [{ "skill": "base:metalworking", "level": 1 }],
+    "durationMin": 30,
+    "results": [{ "item": "base:metal-sheet" }],
+    "xp": [{ "skill": "base:metalworking", "amount": 6 }],
+    "requiresLearning": true,
+    "station": "base:station-workbench"
+  },
+  {
+    "id": "base:metal-window-barricade",
+    "name": "recipe.base.metal-window-barricade.name",
+    "category": "metalworking",
+    "ingredients": [{ "item": "base:metal-sheet", "count": 2 }],
+    "tools": [{ "tag": "base:tool-welding", "durabilityLoss": 2 }],
+    "skills": [{ "skill": "base:metalworking", "level": 3 }],
+    "durationMin": 45,
+    "results": [{ "item": "base:barricade-metal" }],
+    "xp": [{ "skill": "base:metalworking", "amount": 12 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:salvage-radio",
+    "name": "recipe.base.salvage-radio.name",
+    "category": "electrical",
+    "ingredients": [{ "item": "base:radio" }],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "durationMin": 20,
+    "results": [
+      { "item": "base:electronics-scrap", "count": 3 },
+      { "item": "base:wire", "count": 2 },
+      { "item": "base:battery" }
+    ],
+    "xp": [{ "skill": "base:electrical", "amount": 4 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:craft-noise-maker",
+    "name": "recipe.base.craft-noise-maker.name",
+    "category": "electrical",
+    "ingredients": [
+      { "item": "base:electronics-scrap", "count": 2 },
+      { "item": "base:wire" },
+      { "item": "base:battery", "count": 2 }
+    ],
+    "tools": [{ "tag": "base:tool-screwdriver", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:electrical", "level": 2 }],
+    "durationMin": 30,
+    "results": [{ "item": "base:noise-maker" }],
+    "xp": [{ "skill": "base:electrical", "amount": 8 }],
+    "requiresLearning": true
+  }
+]

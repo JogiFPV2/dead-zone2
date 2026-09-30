@@ -1,0 +1,25 @@
+[
+  {
+    "id": "base:desensitized",
+    "name": "trait.base.desensitized.name",
+    "description": "trait.base.desensitized.desc",
+    "polarity": "positive",
+    "cost": 0,
+    "conflicts": ["base:cowardly", "base:jumpy"],
+    "modifiers": [{ "stat": "panic-resistance", "op": "mul", "value": 2 }],
+    "selectable": false
+  },
+  {
+    "id": "base:hardened",
+    "name": "trait.base.hardened.name",
+    "description": "trait.base.hardened.desc",
+    "polarity": "positive",
+    "cost": 0,
+    "modifiers": [
+      { "stat": "panic-resistance", "op": "mul", "value": 1.3 },
+      { "stat": "stress", "op": "add", "value": -5 }
+    ],
+    "selectable": false,
+    "gainedWhen": { "stat": "zombies-killed", "op": "gte", "value": 250 }
+  }
+]

@@ -49,9 +49,26 @@ Błędy mają plik i ścieżkę JSON, np. `data/base/recipes/basic.json $[1].too
 
 ## Jak dodać recepturę
 
-Dopisz obiekt w `data/base/recipes/`: `ingredients` (item albo tag), `tools` (zwykle tag, np. `base:tool-hammer`),
-`skills`, `durationMin`, `results`, `xp`. Receptura z `requiresLearning: true` musi być gdzieś odblokowana
-(książka `unlocksRecipes`, zawód lub cecha `knownRecipes`).
+Dopisz obiekt w `data/base/recipes/<grupa>.json` (survival, medical, carpentry, weapons, cooking, tailoring,
+metal-electrical): `ingredients` (item albo tag), `tools` (zwykle tag, np. `base:tool-hammer`), `skills`,
+`durationMin`, `results`, `xp`. Receptura z `requiresLearning: true` musi być gdzieś odblokowana (książka
+`unlocksRecipes`, zawód lub cecha `knownRecipes`), inaczej walidator zgłasza `unlearnable_recipe`.
+
+- `station`: tag przedmiotu, przy którym się ją wykonuje, np. `base:station-fire` (ognisko) albo
+  `base:station-workbench`; jakiś przedmiot musi mieć ten tag.
+- `repair: { item | tag, restorePct }`: naprawa (taśma na broń, nici na ubranie) przywraca `restorePct` %
+  trwałości celu, który nie jest zużywany; wtedy `results` może być puste.
+
+## Postać, książki
+
+- Zawody (`professions/`): `points` (ujemne = mocny zawód zabiera punkty), `skillBonuses`, `freeTraits`,
+  `knownRecipes`, `startingItems`, `modifiers`. Darmowe cechy zawodu nie mogą się wykluczać.
+- Cechy (`traits/<kategoria>.json`): `cost` > 0 pozytywna, < 0 negatywna, `conflicts` (wystarczy po jednej
+  stronie), `modifiers`, `skillBonuses`, `xpMultipliers`. Cechy dynamiczne mają `gainedWhen`/`lostWhen`
+  (`{ stat, op, value, sustainedMin }`, np. `body-weight-kg`, `zombies-killed`); `selectable: false` = tylko z zawodu albo z gry.
+- Książki umiejętności: serie po 5 tomów (`items/books-<umiejętność>.json`, tom N dla poziomów 2N−2..2N−1),
+  magazyny z recepturami w `items/recipe-magazines.json`; loot w tabelach `base:skill-books` i `base:recipe-magazines`
+  (księgarnia `base:room-bookstore`, dom, szkoła).
 
 ## Paczka moda
 

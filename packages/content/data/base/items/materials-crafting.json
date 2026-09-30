@@ -1,0 +1,62 @@
+[
+  {
+    "id": "base:log",
+    "name": "item.base.log.name",
+    "kind": "material",
+    "weightKg": 8,
+    "tags": ["base:wood-log"]
+  },
+  {
+    "id": "base:duct-tape",
+    "name": "item.base.duct-tape.name",
+    "kind": "material",
+    "weightKg": 0.2,
+    "maxStack": 5,
+    "tags": ["base:tape"]
+  },
+  {
+    "id": "base:thread",
+    "name": "item.base.thread.name",
+    "kind": "material",
+    "weightKg": 0.02,
+    "maxStack": 20,
+    "tags": ["base:thread"]
+  },
+  {
+    "id": "base:sheet-rope",
+    "name": "item.base.sheet-rope.name",
+    "kind": "material",
+    "weightKg": 1.2,
+    "maxStack": 5
+  },
+  {
+    "id": "base:metal-sheet",
+    "name": "item.base.metal-sheet.name",
+    "kind": "material",
+    "weightKg": 2.5,
+    "maxStack": 5,
+    "tags": ["base:metal-sheet"]
+  },
+  {
+    "id": "base:scrap-metal",
+    "name": "item.base.scrap-metal.name",
+    "kind": "material",
+    "weightKg": 0.5,
+    "maxStack": 10,
+    "tags": ["base:metal-scrap"]
+  },
+  {
+    "id": "base:barricade-planks",
+    "name": "item.base.barricade-planks.name",
+    "kind": "material",
+    "weightKg": 7.5,
+    "tags": ["base:barricade"]
+  },
+  {
+    "id": "base:barricade-metal",
+    "name": "item.base.barricade-metal.name",
+    "kind": "material",
+    "weightKg": 9,
+    "tags": ["base:barricade"]
+  }
+]

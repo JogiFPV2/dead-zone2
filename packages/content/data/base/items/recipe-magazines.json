@@ -1,0 +1,93 @@
+[
+  {
+    "id": "base:mag-backyard-survival",
+    "name": "item.base.mag-backyard-survival.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:build-rain-collector", "base:sew-sheet-rope"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-home-cooking",
+    "name": "item.base.mag-home-cooking.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:vegetable-stew", "base:cabbage-salad"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-woodshop",
+    "name": "item.base.mag-woodshop.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:build-workbench", "base:wooden-crate"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-metal-shop",
+    "name": "item.base.mag-metal-shop.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:flatten-scrap", "base:metal-window-barricade"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-circuit-hobbyist",
+    "name": "item.base.mag-circuit-hobbyist.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:salvage-radio", "base:craft-noise-maker"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-field-medicine",
+    "name": "item.base.mag-field-medicine.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:make-splint", "base:sterilize-bandage"],
+      "boredomReduction": 15
+    }
+  },
+  {
+    "id": "base:mag-angler",
+    "name": "item.base.mag-angler.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "tags": ["base:recipe-magazine"],
+    "literature": {
+      "format": "magazine",
+      "readMin": 30,
+      "unlocksRecipes": ["base:fillet-fish", "base:grill-fish"],
+      "boredomReduction": 15
+    }
+  }
+]

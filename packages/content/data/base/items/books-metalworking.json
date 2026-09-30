@@ -1,0 +1,77 @@
+[
+  {
+    "id": "base:metalworking-vol-1",
+    "name": "item.base.metalworking-vol-1.name",
+    "kind": "literature",
+    "weightKg": 0.53,
+    "tags": ["base:skill-book"],
+    "literature": {
+      "format": "book",
+      "readMin": 150,
+      "skillBook": { "skill": "base:metalworking", "multiplier": 2, "minLevel": 0, "maxLevel": 1 },
+      "boredomReduction": 10
+    }
+  },
+  {
+    "id": "base:metalworking-vol-2",
+    "name": "item.base.metalworking-vol-2.name",
+    "kind": "literature",
+    "weightKg": 0.61,
+    "tags": ["base:skill-book"],
+    "literature": {
+      "format": "book",
+      "readMin": 210,
+      "skillBook": {
+        "skill": "base:metalworking",
+        "multiplier": 2.5,
+        "minLevel": 2,
+        "maxLevel": 3
+      },
+      "boredomReduction": 10
+    }
+  },
+  {
+    "id": "base:metalworking-vol-3",
+    "name": "item.base.metalworking-vol-3.name",
+    "kind": "literature",
+    "weightKg": 0.69,
+    "tags": ["base:skill-book"],
+    "literature": {
+      "format": "book",
+      "readMin": 270,
+      "skillBook": { "skill": "base:metalworking", "multiplier": 3, "minLevel": 4, "maxLevel": 5 },
+      "boredomReduction": 10
+    }
+  },
+  {
+    "id": "base:metalworking-vol-4",
+    "name": "item.base.metalworking-vol-4.name",
+    "kind": "literature",
+    "weightKg": 0.77,
+    "tags": ["base:skill-book"],
+    "literature": {
+      "format": "book",
+      "readMin": 330,
+      "skillBook": {
+        "skill": "base:metalworking",
+        "multiplier": 3.5,
+        "minLevel": 6,
+        "maxLevel": 7
+      },
+      "boredomReduction": 10
+    }
+  },
+  {
+    "id": "base:metalworking-vol-5",
+    "name": "item.base.metalworking-vol-5.name",
+    "kind": "literature",
+    "weightKg": 0.85,
+    "tags": ["base:skill-book"],
+    "literature": {
+      "format": "book",
+      "readMin": 390,
+      "skillBook": { "skill": "base:metalworking", "multiplier": 4, "minLevel": 8, "maxLevel": 9 },
+      "boredomReduction": 10
+    }
+  }
+]

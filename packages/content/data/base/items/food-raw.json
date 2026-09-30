@@ -1,0 +1,80 @@
+[
+  {
+    "id": "base:potato",
+    "name": "item.base.potato.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 110, "carbsG": 26, "proteinG": 3, "hunger": -8, "unhappiness": 3 },
+      "spoilage": { "freshMin": 28800, "rottenMin": 57600 },
+      "cooking": { "durationMin": 40, "cookedInto": "base:baked-potato" }
+    }
+  },
+  {
+    "id": "base:carrot",
+    "name": "item.base.carrot.name",
+    "kind": "food",
+    "weightKg": 0.1,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 30, "carbsG": 7, "hunger": -4 },
+      "spoilage": { "freshMin": 20160, "rottenMin": 40320 }
+    }
+  },
+  {
+    "id": "base:cabbage",
+    "name": "item.base.cabbage.name",
+    "kind": "food",
+    "weightKg": 1.0,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": {
+        "calories": 240,
+        "carbsG": 55,
+        "proteinG": 12,
+        "hunger": -15,
+        "unhappiness": 4
+      },
+      "spoilage": { "freshMin": 20160, "rottenMin": 43200 },
+      "portions": 4
+    }
+  },
+  {
+    "id": "base:raw-fish",
+    "name": "item.base.raw-fish.name",
+    "kind": "food",
+    "weightKg": 0.8,
+    "tags": ["base:fish"],
+    "food": {
+      "nutrition": {
+        "calories": 320,
+        "proteinG": 60,
+        "fatG": 8,
+        "hunger": -12,
+        "unhappiness": 10,
+        "sicknessChance": 0.35
+      },
+      "spoilage": { "freshMin": 1440, "rottenMin": 4320 }
+    }
+  },
+  {
+    "id": "base:fish-fillet",
+    "name": "item.base.fish-fillet.name",
+    "kind": "food",
+    "weightKg": 0.3,
+    "tags": ["base:fish"],
+    "food": {
+      "nutrition": {
+        "calories": 150,
+        "proteinG": 28,
+        "fatG": 4,
+        "hunger": -8,
+        "unhappiness": 6,
+        "sicknessChance": 0.3
+      },
+      "spoilage": { "freshMin": 1440, "rottenMin": 2880 },
+      "cooking": { "durationMin": 15, "cookedInto": "base:grilled-fish" }
+    }
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "base:t-shirt",
+    "name": "item.base.t-shirt.name",
+    "kind": "clothing",
+    "weightKg": 0.15,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "clothing": {
+      "slot": "torso_inner",
+      "insulation": 0.1,
+      "durability": { "max": 30, "repairable": true }
+    }
+  },
+  {
+    "id": "base:hoodie",
+    "name": "item.base.hoodie.name",
+    "kind": "clothing",
+    "weightKg": 0.6,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.35,
+      "protection": { "scratch": 0.1, "bite": 0.02 },
+      "durability": { "max": 45, "repairable": true }
+    }
+  },
+  {
+    "id": "base:jeans",
+    "name": "item.base.jeans.name",
+    "kind": "clothing",
+    "weightKg": 0.8,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.25,
+      "protection": { "scratch": 0.15, "bite": 0.05 },
+      "durability": { "max": 60, "repairable": true }
+    }
+  }
+]

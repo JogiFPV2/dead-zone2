@@ -51,6 +51,12 @@ export const CORE_STATS = [
   'infection-resistance',
   'panic-resistance',
   'xp-gain',
+  /** Mnożnik szansy zatrucia jedzeniem (cechy żołądka). */
+  'food-sickness-chance',
+  /** Mnożnik zużycia broni i narzędzi. */
+  'weapon-wear',
+  // liczniki przebiegu gry (do `gainedWhen`/`lostWhen` cech)
+  'zombies-killed',
 ] as const;
 
 export const CoreStatSchema = z.enum(CORE_STATS);

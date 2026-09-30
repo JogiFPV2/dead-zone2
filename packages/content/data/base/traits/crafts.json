@@ -1,0 +1,69 @@
+[
+  {
+    "id": "base:nimble-fingers",
+    "name": "trait.base.nimble-fingers.name",
+    "description": "trait.base.nimble-fingers.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "conflicts": ["base:all-thumbs"],
+    "modifiers": [
+      { "stat": "crafting-speed", "op": "mul", "value": 1.15 },
+      { "stat": "search-speed", "op": "mul", "value": 1.1 }
+    ],
+    "xpMultipliers": [{ "skill": "base:tailoring", "multiplier": 1.25 }]
+  },
+  {
+    "id": "base:all-thumbs",
+    "name": "trait.base.all-thumbs.name",
+    "description": "trait.base.all-thumbs.desc",
+    "polarity": "negative",
+    "cost": -2,
+    "modifiers": [
+      { "stat": "crafting-speed", "op": "mul", "value": 0.85 },
+      { "stat": "weapon-wear", "op": "mul", "value": 1.15 }
+    ]
+  },
+  {
+    "id": "base:home-cook",
+    "name": "trait.base.home-cook.name",
+    "description": "trait.base.home-cook.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "skillBonuses": [{ "skill": "base:cooking", "levels": 1 }],
+    "xpMultipliers": [{ "skill": "base:cooking", "multiplier": 1.5 }],
+    "knownRecipes": ["base:vegetable-stew"]
+  },
+  {
+    "id": "base:outdoorsy",
+    "name": "trait.base.outdoorsy.name",
+    "description": "trait.base.outdoorsy.desc",
+    "polarity": "positive",
+    "cost": 2,
+    "modifiers": [
+      {
+        "stat": "fatigue-rate",
+        "op": "mul",
+        "value": 0.95,
+        "when": { "stat": "wetness", "op": "gte", "value": 20 }
+      }
+    ],
+    "skillBonuses": [{ "skill": "base:foraging", "levels": 1 }],
+    "xpMultipliers": [
+      { "skill": "base:foraging", "multiplier": 1.5 },
+      { "skill": "base:trapping", "multiplier": 1.25 }
+    ]
+  },
+  {
+    "id": "base:gearhead",
+    "name": "trait.base.gearhead.name",
+    "description": "trait.base.gearhead.desc",
+    "polarity": "positive",
+    "cost": 3,
+    "modifiers": [{ "stat": "weapon-wear", "op": "mul", "value": 0.85 }],
+    "skillBonuses": [{ "skill": "base:mechanics", "levels": 1 }],
+    "xpMultipliers": [
+      { "skill": "base:mechanics", "multiplier": 1.5 },
+      { "skill": "base:electrical", "multiplier": 1.25 }
+    ]
+  }
+]

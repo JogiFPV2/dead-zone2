@@ -1,0 +1,62 @@
+[
+  {
+    "id": "base:bake-potato",
+    "name": "recipe.base.bake-potato.name",
+    "category": "cooking",
+    "ingredients": [{ "item": "base:potato" }],
+    "durationMin": 40,
+    "results": [{ "item": "base:baked-potato" }],
+    "xp": [{ "skill": "base:cooking", "amount": 3 }],
+    "station": "base:station-fire"
+  },
+  {
+    "id": "base:vegetable-stew",
+    "name": "recipe.base.vegetable-stew.name",
+    "category": "cooking",
+    "ingredients": [{ "tag": "base:vegetable", "count": 3 }, { "item": "base:water-bottle" }],
+    "tools": [{ "tag": "base:cooking-pot" }],
+    "skills": [{ "skill": "base:cooking", "level": 2 }],
+    "durationMin": 60,
+    "results": [{ "item": "base:vegetable-stew" }],
+    "xp": [{ "skill": "base:cooking", "amount": 10 }],
+    "requiresLearning": true,
+    "station": "base:station-fire"
+  },
+  {
+    "id": "base:fillet-fish",
+    "name": "recipe.base.fillet-fish.name",
+    "category": "cooking",
+    "ingredients": [{ "item": "base:raw-fish" }],
+    "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:fishing", "level": 1 }],
+    "durationMin": 5,
+    "results": [{ "item": "base:fish-fillet", "count": 2 }],
+    "xp": [
+      { "skill": "base:cooking", "amount": 2 },
+      { "skill": "base:fishing", "amount": 2 }
+    ],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:grill-fish",
+    "name": "recipe.base.grill-fish.name",
+    "category": "cooking",
+    "ingredients": [{ "item": "base:fish-fillet" }],
+    "durationMin": 15,
+    "results": [{ "item": "base:grilled-fish" }],
+    "xp": [{ "skill": "base:cooking", "amount": 4 }],
+    "requiresLearning": true,
+    "station": "base:station-fire"
+  },
+  {
+    "id": "base:cabbage-salad",
+    "name": "recipe.base.cabbage-salad.name",
+    "category": "cooking",
+    "ingredients": [{ "item": "base:cabbage" }, { "item": "base:carrot" }],
+    "tools": [{ "tag": "base:tool-knife" }],
+    "durationMin": 10,
+    "results": [{ "item": "base:cabbage-salad", "count": 3 }],
+    "xp": [{ "skill": "base:cooking", "amount": 3 }],
+    "requiresLearning": true
+  }
+]

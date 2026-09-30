@@ -1,0 +1,64 @@
+[
+  {
+    "id": "base:carpenter",
+    "name": "profession.base.carpenter.name",
+    "description": "profession.base.carpenter.desc",
+    "points": 2,
+    "skillBonuses": [
+      { "skill": "base:carpentry", "levels": 3 },
+      { "skill": "base:blunt", "levels": 1 }
+    ],
+    "knownRecipes": ["base:wooden-crate", "base:build-workbench"],
+    "startingItems": [{ "item": "base:hammer" }]
+  },
+  {
+    "id": "base:mechanic",
+    "name": "profession.base.mechanic.name",
+    "description": "profession.base.mechanic.desc",
+    "points": -1,
+    "skillBonuses": [
+      { "skill": "base:mechanics", "levels": 3 },
+      { "skill": "base:blunt", "levels": 1 }
+    ],
+    "freeTraits": ["base:gearhead"],
+    "knownRecipes": ["base:flatten-scrap"],
+    "startingItems": [{ "item": "base:pipe-wrench" }]
+  },
+  {
+    "id": "base:electrician",
+    "name": "profession.base.electrician.name",
+    "description": "profession.base.electrician.desc",
+    "points": -1,
+    "skillBonuses": [
+      { "skill": "base:electrical", "levels": 3 },
+      { "skill": "base:mechanics", "levels": 1 }
+    ],
+    "knownRecipes": ["base:salvage-radio", "base:craft-noise-maker"],
+    "startingItems": [{ "item": "base:screwdriver" }]
+  },
+  {
+    "id": "base:construction-worker",
+    "name": "profession.base.construction-worker.name",
+    "description": "profession.base.construction-worker.desc",
+    "points": 0,
+    "skillBonuses": [
+      { "skill": "base:carpentry", "levels": 1 },
+      { "skill": "base:metalworking", "levels": 1 },
+      { "skill": "base:strength", "levels": 1 }
+    ],
+    "modifiers": [{ "stat": "carry-capacity-kg", "op": "add", "value": 2 }],
+    "knownRecipes": ["base:metal-window-barricade"]
+  },
+  {
+    "id": "base:lumberjack",
+    "name": "profession.base.lumberjack.name",
+    "description": "profession.base.lumberjack.desc",
+    "points": 0,
+    "skillBonuses": [
+      { "skill": "base:blade-long", "levels": 2 },
+      { "skill": "base:strength", "levels": 1 }
+    ],
+    "freeTraits": ["base:strong-back"],
+    "startingItems": [{ "item": "base:hatchet" }]
+  }
+]

@@ -45,5 +45,12 @@
     "category": "cabinet",
     "capacityKg": 30,
     "defaultLootTable": "base:bedroom"
+  },
+  {
+    "id": "base:bookshelf",
+    "name": "container.base.bookshelf.name",
+    "category": "shelf",
+    "capacityKg": 40,
+    "searchMin": 1.5
   }
 ]

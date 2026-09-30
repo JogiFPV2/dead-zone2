@@ -1,0 +1,35 @@
+[
+  {
+    "id": "base:unemployed",
+    "name": "profession.base.unemployed.name",
+    "description": "profession.base.unemployed.desc",
+    "points": 8,
+    "skillBonuses": []
+  },
+  {
+    "id": "base:burglar",
+    "name": "profession.base.burglar.name",
+    "description": "profession.base.burglar.desc",
+    "points": -3,
+    "skillBonuses": [
+      { "skill": "base:sneaking", "levels": 2 },
+      { "skill": "base:nimble", "levels": 2 },
+      { "skill": "base:lightfoot", "levels": 1 }
+    ],
+    "freeTraits": ["base:stealthy"],
+    "startingItems": [{ "item": "base:crowbar" }]
+  },
+  {
+    "id": "base:veteran",
+    "name": "profession.base.veteran.name",
+    "description": "profession.base.veteran.desc",
+    "points": -6,
+    "skillBonuses": [
+      { "skill": "base:aiming", "levels": 2 },
+      { "skill": "base:blade-short", "levels": 1 },
+      { "skill": "base:reloading", "levels": 1 }
+    ],
+    "modifiers": [{ "stat": "panic-resistance", "op": "mul", "value": 1.25 }],
+    "freeTraits": ["base:desensitized"]
+  }
+]

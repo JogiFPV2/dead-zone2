@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base:farmer",
+    "name": "profession.base.farmer.name",
+    "description": "profession.base.farmer.desc",
+    "points": 2,
+    "skillBonuses": [
+      { "skill": "base:farming", "levels": 3 },
+      { "skill": "base:cooking", "levels": 1 }
+    ],
+    "knownRecipes": ["base:build-rain-collector"]
+  },
+  {
+    "id": "base:fisherman",
+    "name": "profession.base.fisherman.name",
+    "description": "profession.base.fisherman.desc",
+    "points": 2,
+    "skillBonuses": [
+      { "skill": "base:fishing", "levels": 3 },
+      { "skill": "base:foraging", "levels": 1 }
+    ],
+    "knownRecipes": ["base:fillet-fish", "base:grill-fish"]
+  },
+  {
+    "id": "base:park-ranger",
+    "name": "profession.base.park-ranger.name",
+    "description": "profession.base.park-ranger.desc",
+    "points": -1,
+    "skillBonuses": [
+      { "skill": "base:foraging", "levels": 2 },
+      { "skill": "base:trapping", "levels": 1 },
+      { "skill": "base:carpentry", "levels": 1 }
+    ],
+    "freeTraits": ["base:outdoorsy"],
+    "knownRecipes": ["base:build-rain-collector"],
+    "startingItems": [{ "item": "base:matches" }]
+  }
+]

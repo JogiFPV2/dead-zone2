@@ -1,0 +1,81 @@
+[
+  {
+    "id": "base:firefighter",
+    "name": "profession.base.firefighter.name",
+    "description": "profession.base.firefighter.desc",
+    "points": 0,
+    "skillBonuses": [
+      { "skill": "base:fitness", "levels": 1 },
+      { "skill": "base:strength", "levels": 1 },
+      { "skill": "base:blade-long", "levels": 1 }
+    ],
+    "modifiers": [{ "stat": "panic-resistance", "op": "mul", "value": 1.2 }],
+    "startingItems": [{ "item": "base:fire-axe" }]
+  },
+  {
+    "id": "base:police-officer",
+    "name": "profession.base.police-officer.name",
+    "description": "profession.base.police-officer.desc",
+    "points": -4,
+    "skillBonuses": [
+      { "skill": "base:aiming", "levels": 3 },
+      { "skill": "base:reloading", "levels": 2 }
+    ],
+    "freeTraits": ["base:desensitized"],
+    "startingItems": [{ "item": "base:pistol" }]
+  },
+  {
+    "id": "base:nurse",
+    "name": "profession.base.nurse.name",
+    "description": "profession.base.nurse.desc",
+    "points": 0,
+    "skillBonuses": [
+      { "skill": "base:first-aid", "levels": 3 },
+      { "skill": "base:lightfoot", "levels": 1 }
+    ],
+    "modifiers": [{ "stat": "healing-rate", "op": "mul", "value": 1.1 }],
+    "knownRecipes": ["base:make-splint"],
+    "startingItems": [{ "item": "base:bandage", "count": 3 }]
+  },
+  {
+    "id": "base:doctor",
+    "name": "profession.base.doctor.name",
+    "description": "profession.base.doctor.desc",
+    "points": -2,
+    "skillBonuses": [
+      { "skill": "base:first-aid", "levels": 4 },
+      { "skill": "base:blade-short", "levels": 1 }
+    ],
+    "knownRecipes": ["base:make-splint", "base:sterilize-bandage"],
+    "startingItems": [{ "item": "base:sterilized-bandage", "count": 2 }]
+  },
+  {
+    "id": "base:chef",
+    "name": "profession.base.chef.name",
+    "description": "profession.base.chef.desc",
+    "points": 0,
+    "skillBonuses": [
+      { "skill": "base:cooking", "levels": 3 },
+      { "skill": "base:blade-short", "levels": 1 }
+    ],
+    "freeTraits": ["base:home-cook"],
+    "knownRecipes": [
+      "base:vegetable-stew",
+      "base:cabbage-salad",
+      "base:fillet-fish",
+      "base:grill-fish"
+    ],
+    "startingItems": [{ "item": "base:kitchen-knife" }]
+  },
+  {
+    "id": "base:fitness-instructor",
+    "name": "profession.base.fitness-instructor.name",
+    "description": "profession.base.fitness-instructor.desc",
+    "points": -2,
+    "skillBonuses": [
+      { "skill": "base:fitness", "levels": 3 },
+      { "skill": "base:sprinting", "levels": 2 }
+    ],
+    "freeTraits": ["base:light-eater"]
+  }
+]

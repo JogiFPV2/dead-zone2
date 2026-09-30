@@ -1,0 +1,23 @@
+[
+  {
+    "id": "base:make-splint",
+    "name": "recipe.base.make-splint.name",
+    "category": "medical",
+    "ingredients": [{ "tag": "base:wood-plank" }, { "tag": "base:rag", "count": 2 }],
+    "tools": [{ "tag": "base:tool-knife", "durabilityLoss": 1 }],
+    "skills": [{ "skill": "base:first-aid", "level": 1 }],
+    "durationMin": 8,
+    "results": [{ "item": "base:splint" }],
+    "xp": [{ "skill": "base:first-aid", "amount": 4 }],
+    "requiresLearning": true
+  },
+  {
+    "id": "base:disinfect-rag",
+    "name": "recipe.base.disinfect-rag.name",
+    "category": "medical",
+    "ingredients": [{ "tag": "base:rag" }, { "tag": "base:disinfectant-liquid" }],
+    "durationMin": 2,
+    "results": [{ "item": "base:sterilized-rag" }],
+    "xp": [{ "skill": "base:first-aid", "amount": 1 }]
+  }
+]
