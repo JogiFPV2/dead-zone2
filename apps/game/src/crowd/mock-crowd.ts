@@ -1,6 +1,11 @@
 // TEMPORARY: wandering placeholder entities for the render load test (`?crowd=N`).
 import type { FloorBounds } from '../sim/mock-step.js';
-import { SNAPSHOT_ENTITY_STRIDE, SnapshotField } from '@deadzone/protocol';
+import {
+  SNAPSHOT_ENTITY_STRIDE,
+  SnapshotAnim,
+  SnapshotEntityKind,
+  SnapshotField,
+} from '@deadzone/protocol';
 
 export const CROWD_SPEED = 1.2;
 /** Chance per tick to pick a new heading. */
@@ -55,7 +60,7 @@ export function stepCrowd(crowd: Crowd, rng: RandomSource, dtSec: number, b: Flo
   }
 }
 
-/** Writes wanderers as snapshot entities [id, x, y, z = 0, facing] starting at float `offset`. */
+/** Writes wanderers as snapshot entities [id, x, y, z = 0, facing, kind = zombie, anim = walk] starting at float `offset`. */
 export function writeCrowd(crowd: Crowd, out: Float32Array, offset: number): void {
   const s = crowd.state;
   for (let i = 0; i < crowd.count; i++) {
@@ -65,6 +70,8 @@ export function writeCrowd(crowd: Crowd, out: Float32Array, offset: number): voi
     out[o + SnapshotField.y] = s[i * W + 1] ?? 0;
     out[o + SnapshotField.z] = 0;
     out[o + SnapshotField.facingRad] = s[i * W + 2] ?? 0;
+    out[o + SnapshotField.kind] = SnapshotEntityKind.zombie;
+    out[o + SnapshotField.anim] = SnapshotAnim.walk;
   }
 }
 

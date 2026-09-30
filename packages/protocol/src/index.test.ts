@@ -4,6 +4,9 @@ import {
   PROTOCOL_VERSION,
   decodeSnapshot,
   encodeSnapshot,
+  SNAPSHOT_ENTITY_STRIDE,
+  SnapshotAnim,
+  SnapshotEntityKind,
   ensureSnapshotBuffer,
   simMapFromData,
   simMapToData,
@@ -12,6 +15,7 @@ import {
   tileIndex,
 } from './index.js';
 import { parseCommand, parseMainToWorker } from './schema.js';
+import type { SimMapData } from './map.js';
 
 it('exposes a positive integer protocol version', () => {
   expect(Number.isInteger(PROTOCOL_VERSION)).toBe(true);
@@ -55,6 +59,19 @@ describe('parseCommand', () => {
       { ...base, type: 'placeStorage', item: 12, x: -3, y: 40 },
       { ...base, type: 'pickUpStorage', container: 4 },
       { ...base, type: 'debugGiveItem', itemId: 'base:bandage', count: 5 },
+      { ...base, type: 'move', dx: 1, dy: 0, gait: 'run' },
+      { ...base, type: 'move', dx: 0, dy: 1, gait: 'sneak' },
+      { ...base, type: 'debugSpawnZombie', x: 3.5, y: 4.5 },
+      {
+        ...base,
+        type: 'debugSpawnZombie',
+        x: 3.5,
+        y: 4.5,
+        z: 0,
+        count: 20,
+        zombieType: 'base:walker',
+      },
+      { ...base, type: 'debugNoise', x: 3.5, y: 4.5, radiusTiles: 30, volume: 0.5 },
     ]) {
       expect(parseCommand(cmd).ok, JSON.stringify(cmd)).toBe(true);
     }
@@ -72,6 +89,10 @@ describe('parseCommand', () => {
     ['unknown wound kind', { ...base, type: 'debugWound', part: 'head', wound: 'burn' }],
     ['unknown debug stat', { ...base, type: 'debugStat', stat: 'xp', value: 1 }],
     ['sleep with payload', { ...base, type: 'sleep', hours: 8 }],
+    ['unknown gait', { ...base, type: 'move', dx: 0, dy: 0, gait: 'crawl' }],
+    ['zero zombies', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, count: 0 }],
+    ['bad zombie type', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, zombieType: 'Walker' }],
+    ['noise volume > 1', { ...base, type: 'debugNoise', x: 1, y: 1, radiusTiles: 3, volume: 2 }],
   ])('rejects %s', (_name, input) => {
     expect(parseCommand(input).ok).toBe(false);
   });
@@ -95,8 +116,8 @@ describe('parseCommand', () => {
 describe('snapshot encoding', () => {
   it('round-trips entities and reports count', () => {
     const ents = [
-      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5 },
-      { stableId: 7, x: -3, y: 4, z: 1, facingRad: 3 },
+      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5, kind: 1, anim: 2 },
+      { stableId: 7, x: -3, y: 4, z: 1, facingRad: 3, kind: 2, anim: 0 },
     ];
     const buf = encodeSnapshot(ents);
     expect(buf.byteLength).toBe(snapshotByteLength(2));
@@ -104,9 +125,23 @@ describe('snapshot encoding', () => {
     expect(decodeSnapshot(buf)).toEqual(ents);
   });
 
-  it('has no header: 5 floats per entity, player first', () => {
-    const buf = encodeSnapshot([{ stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 }]);
-    expect(Array.from(new Float32Array(buf))).toEqual([3, 1, 2, 0, 0.25]);
+  it('has no header: 7 floats per entity (kind, anim default 0)', () => {
+    expect(SNAPSHOT_ENTITY_STRIDE).toBe(7);
+    const buf = encodeSnapshot([
+      { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
+      {
+        stableId: 4,
+        x: 1,
+        y: 2,
+        z: 0,
+        facingRad: 0,
+        kind: SnapshotEntityKind.zombie,
+        anim: SnapshotAnim.run,
+      },
+    ]);
+    expect(Array.from(new Float32Array(buf))).toEqual([
+      3, 1, 2, 0, 0.25, 0, 0, 4, 1, 2, 0, 0, 2, 2,
+    ]);
   });
 
   it('reuses a buffer only when its size matches exactly', () => {
@@ -186,6 +221,27 @@ describe('parseMainToWorker', () => {
         cmd: { tick: 0, playerId: 0, seq: 0, type: 'aim', x: 1, y: 1 },
       }).ok,
     ).toBe(true);
+  });
+
+  it('accepts init with zombies and a map with zones and an edge palette', () => {
+    const map: SimMapData = {
+      chunks: [],
+      zones: [{ id: 'cellar', role: 'dark', z: 0, rects: [{ x: 1, y: 2, w: 3, h: 4 }] }],
+      edgeKinds: [null, 'wall', 'window', 'door'],
+    };
+    const zombies = [
+      { x: 3.5, y: 4.5 },
+      { x: 5.5, y: 4.5, z: 0, type: 'base:walker' },
+    ];
+    expect(parseMainToWorker({ kind: 'init', seed: 1, map, zombies }).ok).toBe(true);
+    expect(
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['fence'] } }).ok,
+    ).toBe(false);
+    expect(
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] }, zombies: [{ x: 1 }] }).ok,
+    ).toBe(false);
+    const back = simMapToData(simMapFromData(map), { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
+    expect(back).toEqual(map);
   });
 
   it('accepts init with raw content packs and dev', () => {

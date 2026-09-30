@@ -1,4 +1,9 @@
 import { actionsSystem } from '../actions/queue.js';
+import { aiThinkSystem } from '../ai/brain.js';
+import { aiLocomotionSystem } from '../ai/locomotion.js';
+import { footstepSystem, noiseCollectSystem } from '../ai/noise.js';
+import { threatSystem } from '../ai/threat.js';
+import { navSystem } from '../nav/system.js';
 import { clockSystem, type MinuteTicks } from '../systems/clock.js';
 import { healthSystem } from '../systems/health.js';
 import { inputSystem } from '../systems/input.js';
@@ -29,8 +34,14 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'commands.apply', run: (w) => inputSystem(w) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
     { name: 'actions', run: (w) => actionsSystem(w) },
+    { name: 'noise.collect', run: (w) => noiseCollectSystem(w) },
+    { name: 'ai.brain', run: (w, ctx) => aiThinkSystem(w, ctx.grid) },
+    { name: 'nav', run: (w, ctx) => navSystem(w, ctx.grid) },
+    { name: 'ai.locomotion', run: (w, ctx) => aiLocomotionSystem(w, ctx.grid) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
+    { name: 'noise.footsteps', run: (w) => footstepSystem(w) },
+    { name: 'ai.threat', run: (w, ctx) => threatSystem(w, ctx.grid) },
     { name: 'inventory', run: (w) => inventorySystem(w) },
     { name: 'health', run: (w, ctx) => healthSystem(w, ctx.minutes.first, ctx.minutes.count) },
     {

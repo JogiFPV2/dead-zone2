@@ -7,7 +7,9 @@ import type { ContentBundle } from '@deadzone/content';
 export type SimContent = Pick<
   ContentBundle,
   'worldSettings' | 'moodles' | 'items' | 'containers' | 'lootTables'
->;
+> &
+  Partial<Pick<ContentBundle, 'zombieTypes'>>;
+export type ZombieTypeDef = ContentBundle['zombieTypes'][string];
 export type ItemDef = ContentBundle['items'][string];
 export type ContainerTypeDef = ContentBundle['containers'][string];
 export type LootTableDef = ContentBundle['lootTables'][string];
@@ -26,6 +28,7 @@ export const MOD_STATS = [
   'move-speed',
   'search-speed',
   'carry-capacity-kg',
+  'footstep-noise',
 ] as const;
 export type ModStat = (typeof MOD_STATS)[number];
 export const ModSlot = Object.fromEntries(MOD_STATS.map((s, i) => [s, i])) as Record<
@@ -73,8 +76,13 @@ export interface ContentIndex {
   /** Loot tables sorted by id (table choice by room + container is the first match). */
   lootTables: LootTableDef[];
   lootTableById: ReadonlyMap<string, LootTableDef>;
+  /** Zombie types sorted by id (index = `Zombie.type`, part of the state hash). */
+  zombieTypes: ZombieTypeDef[];
+  zombieTypeIndex: ReadonlyMap<string, number>;
   carry: ContentBundle['worldSettings']['carry'];
   loot: ContentBundle['worldSettings']['loot'];
+  /** `worldSettings.vision` (optional for older bundles). */
+  vision: ContentBundle['worldSettings']['vision'] | undefined;
 }
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -108,7 +116,10 @@ export function compileContent(content: SimContent): ContentIndex {
   const itemIds = Object.keys(content.items).sort(byId);
   const typeIds = Object.keys(content.containers).sort(byId);
   const tableIds = Object.keys(content.lootTables).sort(byId);
+  const zombieIds = Object.keys(content.zombieTypes ?? {}).sort(byId);
   return {
+    zombieTypes: zombieIds.map((id) => content.zombieTypes![id]!),
+    zombieTypeIndex: new Map(zombieIds.map((id, i) => [id, i])),
     items: itemIds.map((id) => content.items[id]!),
     itemIndex: new Map(itemIds.map((id, i) => [id, i])),
     containerTypes: typeIds.map((id) => content.containers[id]!),
@@ -117,6 +128,7 @@ export function compileContent(content: SimContent): ContentIndex {
     lootTableById: new Map(tableIds.map((id) => [id, content.lootTables[id]!])),
     carry: content.worldSettings.carry,
     loot: content.worldSettings.loot,
+    vision: content.worldSettings.vision,
     dayLengthMinutes: content.worldSettings.dayLengthMinutes,
     survival: content.worldSettings.survival,
     moodles,

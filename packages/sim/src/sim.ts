@@ -9,8 +9,14 @@ import {
   type ContainerView,
   type InventoryView,
   type SimViewPatch,
+  type SimZombieSpawn,
   type WoundView,
 } from '@deadzone/protocol';
+import type { Stage4Config } from './ai/config.js';
+import { hashAi } from './ai/hash.js';
+import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
+import { spawnZombies } from './ai/zombies.js';
+import { threatLevel } from './ai/threat.js';
 import { compileContent, type SimContent } from './content/adapter.js';
 import { dayOf, gameMinuteAt, minuteOfDay, type ClockStart } from './core/clock.js';
 import {
@@ -57,8 +63,15 @@ export interface SimOptions {
    * it the sim runs movement only: no clock-driven survival, moodles or health.
    */
   content?: SimContent | undefined;
-  /** Allows debug commands (`debugWound`, `debugStat`). Default false. */
+  /** Allows debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). Default false. */
   dev?: boolean | undefined;
+  /**
+   * Zombies at start (game modes, tests); needs content. `type` = zombie type id, omitted =
+   * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
+   */
+  spawnZombies?: readonly SimZombieSpawn[] | undefined;
+  /** Stage 4 tuning without data fields yet (ai/config.ts); default DEFAULT_STAGE4_CONFIG. */
+  aiConfig?: Stage4Config | undefined;
   /** Game clock start; default day 1, 09:00. */
   clockStart?: ClockStart | undefined;
   /** Ambient temperature in °C until weather exists; default 20 (comfortable). */
@@ -94,6 +107,19 @@ export interface PlayerState {
   facingRad: number;
 }
 
+/** Read-only zombie state (tests, tools, debug overlays). */
+export interface ZombieInfo {
+  stableId: number;
+  type: string;
+  x: number;
+  y: number;
+  z: number;
+  state: ZombieStateName;
+  /** StableId of the chased player (0 = none). */
+  targetId: number;
+  hp: number;
+}
+
 export interface Sim {
   /** Index of the next tick to run (= ticks already run). */
   readonly tick: number;
@@ -115,8 +141,12 @@ export interface Sim {
   getSurvival(playerId?: PlayerId): PlayerSurvival | undefined;
   /** Game time of the last executed tick (tick 0 before the first step). */
   gameTime(): GameTime;
-  /** Speed-up must be ×1 now (threat nearby). Hook for Stage 4; always false for now. */
+  /** Speed-up must be ×1 now: a zombie chases the player or is within the threat radius. */
   fastForwardBlocked(): boolean;
+  /** HUD threat level 0–100 of a player (same as view `threat`). */
+  threatLevel(playerId?: PlayerId): number;
+  /** All zombies in StableId order. */
+  getZombies(): ZombieInfo[];
   /** UI view delta for player 0 since the last call (undefined when nothing changed). */
   drainView(): SimViewPatch | undefined;
   /** Full inventory view (all carried containers); undefined without content. */
@@ -159,6 +189,13 @@ export function createSim(opts: SimOptions): Sim {
           )
       : undefined,
     items: (survival) => createItemStore(survival.content),
+    ai: (survival) =>
+      createAiWorld(
+        survival.content,
+        opts.map,
+        opts.maxEntities ?? DEFAULT_MAX_ENTITIES,
+        opts.aiConfig,
+      ),
   });
   if (w.items) createWorldContainers(w.items, opts.map, w.seed);
   const minutes: MinuteTicks = { first: 0, count: 0 };
@@ -200,6 +237,7 @@ export function createSim(opts: SimOptions): Sim {
 
   const spawn = opts.spawn ?? findSpawn(ctx.grid);
   spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
+  if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
 
   const hash = (): number => {
     const h = new HashWriter();
@@ -255,6 +293,7 @@ export function createSim(opts: SimOptions): Sim {
       }
     }
     if (w.items) hashItems(w.items, h);
+    hashAi(w, h);
     return h.digest();
   };
 
@@ -306,6 +345,24 @@ export function createSim(opts: SimOptions): Sim {
     fastForwardBlocked() {
       const eid = w.players.get(0);
       return eid !== undefined && threatNearby(w, eid);
+    },
+    threatLevel(playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? 0 : threatLevel(w, eid);
+    },
+    getZombies() {
+      const ai = w.ai;
+      if (!ai) return [];
+      return sortedQuery(w, 'zombies', [c.Zombie]).map((eid) => ({
+        stableId: c.StableId.value[eid] ?? 0,
+        type: ai.types[c.Zombie.type[eid] ?? 0]?.def.id ?? '',
+        x: c.Position.x[eid] ?? 0,
+        y: c.Position.y[eid] ?? 0,
+        z: c.Position.z[eid] ?? 0,
+        state: ZOMBIE_STATE_NAMES[c.Zombie.state[eid] ?? 0] ?? 'idle',
+        targetId: c.Zombie.targetId[eid] ?? 0,
+        hp: c.Zombie.hp[eid] ?? 0,
+      }));
     },
     drainView: () => views.diff(w),
     getInventory(playerId = 0) {

@@ -38,11 +38,42 @@ export interface SimChunkAddress {
   readonly z: number;
 }
 
+/** Edge kinds (content `map/edge.ts` types). Windows block movement but not sight. */
+export const SIM_EDGE_KINDS = ['wall', 'window', 'door'] as const;
+export type SimEdgeKind = (typeof SIM_EDGE_KINDS)[number];
+
+/** Rectangle in global tiles (`x = cx * 32 + lx`). */
+export interface SimZoneRect {
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
+
+/**
+ * Map zone from the manifest (`zones[]`): a union of rectangles on level `z`. The sim reads
+ * role `dark` (unlit areas: a player there without an active light is invisible to zombies).
+ */
+export interface SimZone {
+  readonly id: string;
+  readonly role: string;
+  readonly z: number;
+  readonly rects: readonly SimZoneRect[];
+  readonly tags?: readonly string[] | undefined;
+}
+
 export interface SimMap {
   /** Returns undefined for chunks outside the map (treated as solid). */
   getChunk(cx: number, cy: number, z: number): SimChunk | undefined;
   /** All chunks (world storage is created from their objects); optional for plain maps. */
   listChunks?(): readonly SimChunkAddress[];
+  /** Manifest zones (optional). */
+  readonly zones?: readonly SimZone[] | undefined;
+  /**
+   * Edge palette: kind of each non-zero edge id in `edgeN`/`edgeW` (index = id). Without it
+   * every edge is a wall (blocks sight); `window` lets sight through.
+   */
+  readonly edgeKinds?: readonly (SimEdgeKind | null)[] | undefined;
 }
 
 export const tileIndex = (x: number, y: number): number => y * CHUNK_SIZE + x;
@@ -55,6 +86,8 @@ export interface SimMapChunkData extends SimChunk {
 }
 export interface SimMapData {
   readonly chunks: readonly SimMapChunkData[];
+  readonly zones?: readonly SimZone[] | undefined;
+  readonly edgeKinds?: readonly (SimEdgeKind | null)[] | undefined;
 }
 
 const chunkKey = (cx: number, cy: number, z: number): string => `${cx},${cy},${z}`;
@@ -86,6 +119,8 @@ export function simMapFromData(data: SimMapData): SimMap {
   return {
     getChunk: (cx, cy, z) => chunks.get(chunkKey(cx, cy, z)),
     listChunks: () => list,
+    ...(data.zones ? { zones: data.zones } : {}),
+    ...(data.edgeKinds ? { edgeKinds: data.edgeKinds } : {}),
   };
 }
 
@@ -118,5 +153,11 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
       });
     }
   }
-  return { chunks };
+  return {
+    chunks,
+    ...(map.zones
+      ? { zones: map.zones.map((zn) => ({ ...zn, rects: zn.rects.map((r) => ({ ...r })) })) }
+      : {}),
+    ...(map.edgeKinds ? { edgeKinds: [...map.edgeKinds] } : {}),
+  };
 }

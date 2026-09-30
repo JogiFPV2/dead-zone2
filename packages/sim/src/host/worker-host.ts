@@ -79,7 +79,7 @@ export function startSimWorkerHost(
     if (events.length > 0) port.postMessage({ kind: 'events', tick: sim.tick, events }, []);
   };
 
-  // Speed-up is forced back to ×1 while the sim reports a threat (Stage 4 hook).
+  // Speed-up is forced back to ×1 while the sim reports a threat (zombie chasing or nearby).
   const enforceSpeedLock = (): void => {
     if (sim && loop && loop.speed > 1 && sim.fastForwardBlocked()) loop.setSpeed(1);
   };
@@ -100,6 +100,7 @@ export function startSimWorkerHost(
         seed: msg.seed,
         map: simMapFromData(msg.map),
         ...(msg.spawn ? { spawn: msg.spawn } : {}),
+        ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
         content,
         dev: msg.dev ?? false,
       });

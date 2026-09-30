@@ -47,7 +47,23 @@ export type ActionInterruptReason =
   /** The item or container is gone or out of reach when the action should complete. */
   | 'target-lost';
 
-export type WakeReason = 'command' | 'rested' | 'max-duration' | 'died';
+export type WakeReason = 'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie';
+
+/** What made a noise (`noise` event, debug circles). */
+export const NOISE_SOURCES = [
+  'footstep',
+  'action',
+  'break',
+  'attack',
+  'shot',
+  'impact',
+  'lure',
+  'debug',
+] as const;
+export type NoiseSource = (typeof NOISE_SOURCES)[number];
+
+/** Why a zombie became alert: heard a noise (investigates) or saw a player (chases). */
+export type ZombieAlertReason = 'noise' | 'sight';
 
 /** Events emitted by the sim for the host (sounds, UI, debug). Never a source of truth. */
 export type SimEvent =
@@ -68,6 +84,29 @@ export type SimEvent =
       minuteOfDay: number;
     }
   | { type: 'wounded'; tick: number; playerId: PlayerId; part: BodyPart; wound: WoundKind }
+  /** Dev builds only (`init.dev`): every noise of the tick, for debug circles. */
+  | {
+      type: 'noise';
+      tick: number;
+      x: number;
+      y: number;
+      z: number;
+      radiusTiles: number;
+      volume: number;
+      source: NoiseSource;
+    }
+  /**
+   * A zombie (StableId) started investigating a noise or chasing a player (growl sound, HUD).
+   * Not emitted again while it stays in that state.
+   */
+  | {
+      type: 'zombieAlerted';
+      tick: number;
+      zombie: number;
+      reason: ZombieAlertReason;
+      x: number;
+      y: number;
+    }
   | { type: 'fellAsleep'; tick: number; playerId: PlayerId }
   | { type: 'wokeUp'; tick: number; playerId: PlayerId; reason: WakeReason }
   /** Moodle level change (0 = hidden). Sound / toast hook; the HUD uses the `view` message. */

@@ -1,3 +1,5 @@
+import { GAITS } from '@deadzone/protocol';
+import { DEFAULT_STAGE4_CONFIG } from '../ai/config.js';
 import { ModSlot } from '../content/adapter.js';
 import { atan2Bam } from '../core/dmath.js';
 import { modded } from '../survival/state.js';
@@ -19,10 +21,20 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
   ])) {
     const s = w.survival;
     let speed = MoveStats.speedPerTick[eid] ?? 0;
-    // Asleep or dead: no movement (the held intent stays for after waking).
-    if (s && (s.asleep[eid] || s.dead[eid])) speed = 0;
-    else if (s) {
-      speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed) * (s.bagSpeed[eid] ?? 1));
+    if (w.c.Zombie.is[eid]) {
+      // Zombies: speed set by ai.locomotion, no survival modifiers.
+    } else if (s && (s.asleep[eid] || s.dead[eid])) {
+      // Asleep or dead: no movement (the held intent stays for after waking).
+      speed = 0;
+    } else {
+      const gait = effectiveGait(w, eid);
+      if (gait !== 'walk') {
+        const g = (w.ai?.cfg ?? DEFAULT_STAGE4_CONFIG).gait;
+        speed = Math.fround(speed * (gait === 'run' ? g.runSpeedMul : g.sneakSpeedMul));
+      }
+      if (s) {
+        speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed) * (s.bagSpeed[eid] ?? 1));
+      }
     }
     const vx = Math.fround((MoveIntent.dx[eid] ?? 0) * speed);
     const vy = Math.fround((MoveIntent.dy[eid] ?? 0) * speed);
@@ -63,4 +75,11 @@ export function facingSystem(w: SimWorld): void {
     }
     if (dx !== 0 || dy !== 0) Facing.angle[eid] = atan2Bam(dy, dx);
   }
+}
+
+/** Gait of a player this tick: `run` needs endurance > 0 (with survival), else walks. */
+export function effectiveGait(w: SimWorld, eid: number): (typeof GAITS)[number] {
+  const gait = GAITS[w.c.MoveIntent.gait[eid] ?? 1] ?? 'walk';
+  if (gait === 'run' && w.survival && (w.survival.vitals.endurance[eid] ?? 0) <= 0) return 'walk';
+  return gait;
 }

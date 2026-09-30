@@ -36,7 +36,7 @@ export interface ClockView {
   ticksPerGameMinute: number;
   /** Tick at which `minuteOfDay` started. */
   minuteStartTick: number;
-  /** Speed-up (×2/×4) not allowed now (threat nearby; always false until zombies exist). */
+  /** Speed-up (×2/×4) not allowed now: a zombie chases the player or is within the threat radius. */
   fastForwardBlocked: boolean;
 }
 
@@ -165,4 +165,9 @@ export interface SimViewPatch {
   nearby?: NearbyContainerView[];
   /** Current timed action; null = none. */
   action?: ActionView | null;
+  /**
+   * Threat level 0–100 for the HUD: zombies chasing the local player and zombies within the
+   * threat radius (`worldSettings.survival.sleep.wakeOnZombieTiles`). 0 = safe.
+   */
+  threat?: number;
 }

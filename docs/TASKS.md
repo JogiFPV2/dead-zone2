@@ -43,9 +43,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Psucie się jedzenia (Symulacja)
 
 ## Etap 4 — Zombie i walka
-- [ ] AI: wzrok, słuch, wędrowanie, gonienie (Symulacja)
-- [ ] System hałasu (Symulacja)
-- [ ] Pathfinding + flow field dla hord (Symulacja)
+- [x] AI: wzrok, słuch, wędrowanie, gonienie (Symulacja)
+- [x] System hałasu (Symulacja)
+- [x] Pathfinding + flow field dla hord (Symulacja)
 - [ ] Walka wręcz, stamina, pchnięcie (Symulacja)
 - [ ] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules)
 - [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
@@ -54,8 +54,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Wabik elektroniczny: postawienie, pilot do 60 m, hałas 30 s na 40 m, zombie zostają 20–40 s, zużycie baterii (Symulacja)
 - [ ] Wabik biegający: opóźnienie 3–30 s i kierunek od gracza, bieg ~15 m, hałas 20 s na 30 m, jednorazowy (Symulacja)
 - [ ] Ugryzienia i szansa infekcji (Symulacja)
-- [ ] Poziom zagrożenia w HUD (Designer + Silnik)
-- [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik)
+- [ ] Poziom zagrożenia w HUD (Designer + Silnik); sim wystawia `view.threat` 0–100
+- [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik); sim: 200 zombie ≈ 2,5 ms/tick w Node (`test/ai-perf.test.ts`)
 
 ## Etap 5 — Postać i umiejętności
 - [x] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)

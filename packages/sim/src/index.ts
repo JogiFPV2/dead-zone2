@@ -5,6 +5,7 @@ export {
   type PlayerSurvival,
   type Sim,
   type SimOptions,
+  type ZombieInfo,
 } from './sim.js';
 export {
   MOD_STATS,
@@ -61,3 +62,7 @@ export { CommandQueue, type EnqueueResult } from './commands/queue.js';
 export { TileGrid } from './world/grid.js';
 export { SKIN, circleOverlaps, moveCircle, type Vec2 } from './world/collision.js';
 export type { SimWorld } from './core/world.js';
+export { DEFAULT_STAGE4_CONFIG } from './ai/config.js';
+export type { AiConfig, GaitConfig, NoiseConfig, Stage4Config, VisionConfig } from './ai/config.js';
+export { ZOMBIE_STATE_NAMES, ZombieState, type ZombieStateName } from './ai/state.js';
+export { daylight } from './ai/vision.js';

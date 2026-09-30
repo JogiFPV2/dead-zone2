@@ -1,6 +1,7 @@
 import {
   CHUNK_TILES,
   decodeSnapshot,
+  SnapshotEntityKind,
   type MainToWorker,
   type SimEvent,
   type SimMapData,
@@ -155,6 +156,28 @@ describe('createSimWorkerClient', () => {
     expect(first).toMatchObject({ x: 7.5, y: 9.5, z: 0 });
     expect(h.host.sim?.getPlayer()).toMatchObject({ x: 7.5, y: 9.5 });
     expect(h.host.droppedMessages).toBe(0);
+  });
+
+  it('spawns init zombies and tells players and zombies apart in the snapshot', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    let last: ReturnType<typeof decodeSnapshot> | undefined;
+    client.onSnapshot(({ buf }) => (last = decodeSnapshot(buf)));
+    client.init(1, openMap(), {
+      spawn: { x: 5.5, y: 5.5, z: 0 },
+      content: { packs: [fixturePack()] },
+      zombies: [{ x: 20.5, y: 20.5 }],
+      dev: true,
+    });
+    client.debugSpawnZombie(25.5, 25.5, 2);
+    h.advance(200);
+    expect(last?.map((e) => e.kind)).toEqual([
+      SnapshotEntityKind.player,
+      SnapshotEntityKind.zombie,
+      SnapshotEntityKind.zombie,
+      SnapshotEntityKind.zombie,
+    ]);
+    expect(h.host.sim?.getZombies()).toHaveLength(3);
   });
 
   it('stops listening after dispose', () => {

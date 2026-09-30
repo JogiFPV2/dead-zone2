@@ -9,6 +9,7 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { playerItems } from '../items/inventory.js';
 import type { ActionState, PlayerItems } from '../items/store.js';
 import { threatNearby } from '../systems/sleep.js';
+import { emitNoise } from '../ai/noise.js';
 
 /**
  * Timed actions (docs 2.5 `actions`), the Stage 6 foundation: one current action per player plus
@@ -74,6 +75,19 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
   a.startTick = w.tick;
   a.endTick = w.tick + ticks;
   p.current = a;
+  const noise = w.ai?.cfg.noise.actions[kindName(a)];
+  if (noise) {
+    const { Position } = w.c;
+    emitNoise(
+      w,
+      Position.x[eid] ?? 0,
+      Position.y[eid] ?? 0,
+      Position.z[eid] ?? 0,
+      noise.radiusTiles,
+      noise.volume,
+      'action',
+    );
+  }
   w.events.push({
     type: 'actionStarted',
     tick: w.tick,

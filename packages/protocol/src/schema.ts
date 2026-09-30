@@ -7,6 +7,7 @@ import {
   BODY_PARTS,
   DEBUG_STATS,
   EQUIP_SLOTS,
+  GAITS,
   MAX_PLAYER_ID,
   MAX_WORLD_COORD,
   U32_MAX,
@@ -14,7 +15,7 @@ import {
   type Command,
   type CommandParseResult,
 } from './commands.js';
-import { CHUNK_SIZE, CHUNK_TILES } from './map.js';
+import { CHUNK_SIZE, CHUNK_TILES, SIM_EDGE_KINDS } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
 const header = {
@@ -31,6 +32,7 @@ export const moveCommandSchema = z.strictObject({
   type: z.literal('move'),
   dx: axis,
   dy: axis,
+  gait: z.enum(GAITS).optional(),
 });
 
 export const aimCommandSchema = z.strictObject({
@@ -146,6 +148,26 @@ export const debugStatCommandSchema = z.strictObject({
   value: z.number().finite().min(-100).max(1000),
 });
 
+export const debugSpawnZombieCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugSpawnZombie'),
+  x: coord,
+  y: coord,
+  z: z.number().int().min(-0x8000).max(0x7fff).optional(),
+  count: z.number().int().min(1).max(500).optional(),
+  zombieType: contentId.optional(),
+});
+
+export const debugNoiseCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugNoise'),
+  x: coord,
+  y: coord,
+  z: z.number().int().min(-0x8000).max(0x7fff).optional(),
+  radiusTiles: z.number().finite().min(0).max(500),
+  volume: z.number().finite().min(0).max(1).optional(),
+});
+
 /** Structural validation at the host boundary (worker, server). Gameplay checks live in sim. */
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
@@ -167,6 +189,8 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugWoundCommandSchema,
   debugStatCommandSchema,
   debugGiveItemCommandSchema,
+  debugSpawnZombieCommandSchema,
+  debugNoiseCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */
@@ -208,6 +232,28 @@ export const simMapDataSchema = z.object({
         .optional(),
     }),
   ),
+  zones: z
+    .array(
+      z.object({
+        id: z.string().max(128),
+        role: z.string().max(128),
+        z: chunkInt,
+        rects: z
+          .array(
+            z.object({
+              x: z.number().int(),
+              y: z.number().int(),
+              w: z.number().int().min(1),
+              h: z.number().int().min(1),
+            }),
+          )
+          .max(4096),
+        tags: z.array(z.string().max(128)).max(64).optional(),
+      }),
+    )
+    .max(4096)
+    .optional(),
+  edgeKinds: z.array(z.enum(SIM_EDGE_KINDS).nullable()).max(0x10000).optional(),
 });
 
 export const simSpawnSchema = z.strictObject({ x: coord, y: coord, z: chunkInt });
@@ -235,6 +281,17 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
     seed: z.number().int(),
     map: simMapDataSchema,
     spawn: simSpawnSchema.optional(),
+    zombies: z
+      .array(
+        z.strictObject({
+          x: coord,
+          y: coord,
+          z: chunkInt.optional(),
+          type: contentId.optional(),
+        }),
+      )
+      .max(5000)
+      .optional(),
     content: simContentSourceSchema.optional(),
     dev: z.boolean().optional(),
   }),

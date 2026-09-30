@@ -184,6 +184,39 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
         ],
       },
       {
+        path: 'zombie-types/walker.json',
+        json: {
+          id: 'fixture:walker',
+          name: 'zombie.fixture.walker',
+          health: 50,
+          speed: { wanderTilesPerSec: 0.5, chaseTilesPerSec: 2 },
+          damage: { min: 1, max: 2 },
+          attackCooldownSec: 1,
+          biteChance: 0.2,
+          sightRangeTiles: 16,
+          hearingRangeTiles: 30,
+        },
+      },
+      {
+        path: 'items/lights.json',
+        json: [
+          {
+            id: 'fixture:lantern',
+            name: 'item.fixture.lantern',
+            kind: 'placeable',
+            weightKg: 1,
+            placeable: { light: { radiusTiles: 6, intensity: 1, requiresPower: false } },
+          },
+          {
+            id: 'fixture:street-lamp',
+            name: 'item.fixture.street-lamp',
+            kind: 'placeable',
+            weightKg: 20,
+            placeable: { light: { radiusTiles: 5, intensity: 0.9 } },
+          },
+        ],
+      },
+      {
         path: 'containers/fixture.json',
         json: [
           {

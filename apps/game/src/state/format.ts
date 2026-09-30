@@ -34,6 +34,10 @@ export function describeEvent(e: SimEvent): string {
       return `action ${e.action} interrupted (${e.reason})`;
     case 'containerOpened':
       return `container ${e.container} opened${e.firstSearch ? ' (searched)' : ''}`;
+    case 'noise':
+      return `noise ${e.source} r${e.radiusTiles.toFixed(1)} at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+    case 'zombieAlerted':
+      return `zombie ${e.zombie} alerted (${e.reason})`;
     case 'itemUsed':
       return `used ${e.itemId}${e.freshness ? ` (${e.freshness})` : ''}`;
   }

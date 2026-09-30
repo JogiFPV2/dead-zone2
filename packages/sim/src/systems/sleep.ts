@@ -3,9 +3,13 @@ import { gameMinuteAt } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { clampStat, moodleLevel, type SurvivalWorld } from '../survival/state.js';
 
-/** Hook for Stage 4: zombies nearby block sleep and speed-up. No zombies yet → never. */
-export function threatNearby(_w: SimWorld, _eid: number): boolean {
-  return false;
+/**
+ * A zombie chases the player or is within `sleep.wakeOnZombieTiles` (computed by `ai.threat`
+ * after movement of the previous tick): blocks sleep, speed-up and timed actions.
+ */
+export function threatNearby(w: SimWorld, eid: number): boolean {
+  const t = w.ai?.threat.get(eid);
+  return t !== undefined && (t.chasing > 0 || t.near > 0);
 }
 
 /**

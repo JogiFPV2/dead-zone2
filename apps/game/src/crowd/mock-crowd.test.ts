@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SNAPSHOT_ENTITY_STRIDE } from '@deadzone/protocol';
 import { createRng } from '@deadzone/sim';
 import { readEntity } from '../sim/snapshot.js';
 import {
@@ -36,8 +37,8 @@ describe('mock crowd', () => {
 
   it('writes snapshot entities with stable ids after an offset', () => {
     const c = { count: 2, state: new Float32Array([1, 2, 0.5, 3, 4, 1]) };
-    const out = new Float32Array(15);
-    writeCrowd(c, out, 5);
+    const out = new Float32Array(3 * SNAPSHOT_ENTITY_STRIDE);
+    writeCrowd(c, out, SNAPSHOT_ENTITY_STRIDE);
     expect(readEntity(out, 2)).toEqual({ id: CROWD_FIRST_ID + 1, x: 3, y: 4, z: 0, facing: 1 });
   });
 

@@ -3,16 +3,38 @@
  *
  * Layout (all f32), SNAPSHOT_ENTITY_STRIDE floats per entity:
  * ```
- *   stableId, x, y, z, facingRad
+ *   stableId, x, y, z, facingRad, kind, anim
  * ```
- * The first record is always the local player. The entity count is
+ * The first record is always the local player; the other players and the zombies (NPCs) follow
+ * in StableId order. `kind` tells them apart (SnapshotEntityKind; 0 = unknown, e.g. mock data),
+ * `anim` is a locomotion hint for the renderer (SnapshotAnim). The entity count is
  * `byteLength / (SNAPSHOT_ENTITY_STRIDE * 4)`, so pooled buffers are only reused when their size
- * matches exactly (the entity count changes rarely). `stableId` is exact up to 2^24 (f32 mantissa).
+ * matches exactly. `stableId` is exact up to 2^24 (f32 mantissa).
  * x/y are in tiles (+x east, +y south), z is the floor level, facingRad is in [0, 2π) measured
  * from +x towards +y (i.e. clockwise on screen when +y points down).
+ * PROTOCOL_VERSION 5 added `kind` and `anim` (stride 5 → 7).
  */
-export const SNAPSHOT_ENTITY_STRIDE = 5;
-export const SnapshotField = { stableId: 0, x: 1, y: 2, z: 3, facingRad: 4 } as const;
+export const SNAPSHOT_ENTITY_STRIDE = 7;
+export const SnapshotField = {
+  stableId: 0,
+  x: 1,
+  y: 2,
+  z: 3,
+  facingRad: 4,
+  kind: 5,
+  anim: 6,
+} as const;
+
+/** `kind` field values. */
+export const SnapshotEntityKind = { unknown: 0, player: 1, zombie: 2 } as const;
+export type SnapshotEntityKindValue = (typeof SnapshotEntityKind)[keyof typeof SnapshotEntityKind];
+
+/**
+ * `anim` field values: idle, walk (wander / investigate), run (chase), attack (reserved for
+ * combat), dead (reserved: corpses).
+ */
+export const SnapshotAnim = { idle: 0, walk: 1, run: 2, attack: 3, dead: 4 } as const;
+export type SnapshotAnimValue = (typeof SnapshotAnim)[keyof typeof SnapshotAnim];
 
 export interface SnapshotEntity {
   stableId: number;
@@ -20,6 +42,10 @@ export interface SnapshotEntity {
   y: number;
   z: number;
   facingRad: number;
+  /** SnapshotEntityKind (0 when omitted). */
+  kind?: number;
+  /** SnapshotAnim (0 when omitted). */
+  anim?: number;
 }
 
 export const snapshotFloatLength = (entityCount: number): number =>
@@ -48,6 +74,8 @@ export function encodeSnapshot(
     f[o + 2] = e.y;
     f[o + 3] = e.z;
     f[o + 4] = e.facingRad;
+    f[o + 5] = e.kind ?? 0;
+    f[o + 6] = e.anim ?? 0;
     o += SNAPSHOT_ENTITY_STRIDE;
   }
   return out;
@@ -60,7 +88,7 @@ export const snapshotEntityCount = (buf: ArrayBuffer | Float32Array): number =>
 export function readSnapshotEntity(
   view: Float32Array,
   index: number,
-  out: SnapshotEntity = { stableId: 0, x: 0, y: 0, z: 0, facingRad: 0 },
+  out: SnapshotEntity = { stableId: 0, x: 0, y: 0, z: 0, facingRad: 0, kind: 0, anim: 0 },
 ): SnapshotEntity {
   const o = index * SNAPSHOT_ENTITY_STRIDE;
   out.stableId = view[o] ?? 0;
@@ -68,6 +96,8 @@ export function readSnapshotEntity(
   out.y = view[o + 2] ?? 0;
   out.z = view[o + 3] ?? 0;
   out.facingRad = view[o + 4] ?? 0;
+  out.kind = view[o + 5] ?? 0;
+  out.anim = view[o + 6] ?? 0;
   return out;
 }
 

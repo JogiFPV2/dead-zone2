@@ -1,4 +1,5 @@
-import type { Command, CommandRejectReason } from '@deadzone/protocol';
+import { GAITS, type Command, type CommandRejectReason } from '@deadzone/protocol';
+import { applyAiCommand, isAiCommand } from '../ai/commands.js';
 import type { SimWorld } from '../core/world.js';
 import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applySurvivalCommand } from '../survival/commands.js';
@@ -30,6 +31,10 @@ export function inputSystem(w: SimWorld): void {
       }
       MoveIntent.dx[eid] = Math.fround(dx);
       MoveIntent.dy[eid] = Math.fround(dy);
+      MoveIntent.gait[eid] = GAITS.indexOf(cmd.gait ?? 'walk');
+    } else if (isAiCommand(cmd)) {
+      const reason = applyAiCommand(w, eid, cmd);
+      if (reason) reject(w, cmd, reason);
     } else if (cmd.type === 'aim') {
       AimIntent.x[eid] = Math.fround(cmd.x);
       AimIntent.y[eid] = Math.fround(cmd.y);

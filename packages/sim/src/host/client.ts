@@ -5,7 +5,9 @@ import type {
   EquipSlot,
   ItemId,
   DebugStat,
+  Gait,
   SimContentSource,
+  SimZombieSpawn,
   SimEvent,
   SimViewPatch,
   WoundKind,
@@ -36,12 +38,18 @@ export interface SimWorkerClient {
   init(
     seed: number,
     map: SimMapData,
-    opts?: { spawn?: SimSpawn; content?: SimContentSource; dev?: boolean },
+    opts?: {
+      spawn?: SimSpawn;
+      content?: SimContentSource;
+      dev?: boolean;
+      zombies?: readonly SimZombieSpawn[];
+    },
   ): void;
   /** Sends a fully formed command (tick, playerId, seq chosen by the caller). */
   send(cmd: Command): void;
   /** Held movement for the local player; fills tick/playerId/seq. */
-  move(dx: number, dy: number): void;
+  /** `gait` default walk (sneak / run change speed, footstep noise and needs). */
+  move(dx: number, dy: number, gait?: Gait): void;
   /** Aim at a world point (tiles) for the local player. */
   aim(x: number, y: number): void;
   sleep(): void;
@@ -63,6 +71,10 @@ export interface SimWorkerClient {
   pickUpStorage(container: ContainerId): void;
   /** Dev only (init `dev: true`). */
   debugGiveItem(itemId: string, count?: number): void;
+  /** Dev: spawns zombies around a point (free tiles). */
+  debugSpawnZombie(x: number, y: number, count?: number, zombieType?: string): void;
+  /** Dev: a noise at a point (radius in tiles, volume 0..1). */
+  debugNoise(x: number, y: number, radiusTiles: number, volume?: number): void;
   /** Dev only (init `dev: true`). */
   debugWound(part: BodyPart, wound: WoundKind, zombie?: boolean): void;
   /** Dev only (init `dev: true`). */
@@ -137,9 +149,20 @@ export function createSimWorkerClient(
         ...(opts?.spawn ? { spawn: opts.spawn } : {}),
         ...(opts?.content ? { content: opts.content } : {}),
         ...(opts?.dev ? { dev: true } : {}),
+        ...(opts?.zombies ? { zombies: opts.zombies } : {}),
       }),
     send: (cmd) => post({ kind: 'cmd', cmd }),
-    move: (dx, dy) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'move', dx, dy } }),
+    move: (dx, dy, gait) =>
+      post({
+        kind: 'cmd',
+        cmd: {
+          ...nextHeader(),
+          type: 'move',
+          dx,
+          dy,
+          ...(gait && gait !== 'walk' ? { gait } : {}),
+        },
+      }),
     aim: (x, y) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'aim', x, y } }),
     sleep: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'sleep' } }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
@@ -161,6 +184,16 @@ export function createSimWorkerClient(
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     debugGiveItem: (itemId, count) =>
       cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),
+    debugSpawnZombie: (x, y, count, zombieType) =>
+      cmd({
+        type: 'debugSpawnZombie',
+        x,
+        y,
+        ...(count ? { count } : {}),
+        ...(zombieType ? { zombieType } : {}),
+      }),
+    debugNoise: (x, y, radiusTiles, volume) =>
+      cmd({ type: 'debugNoise', x, y, radiusTiles, ...(volume !== undefined ? { volume } : {}) }),
     debugWound: (part, wound, zombie) =>
       post({
         kind: 'cmd',

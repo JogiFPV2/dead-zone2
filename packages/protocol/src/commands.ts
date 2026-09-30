@@ -21,10 +21,16 @@ export interface CommandHeader {
  * Held movement direction in world tiles (+x east, +y south). Stays active until the next
  * `move`. The vector length is clamped to 1 by the sim, so analog input is allowed.
  */
+/** Movement gait: speed, footstep noise and needs (`worldSettings.survival.activity`). */
+export const GAITS = ['sneak', 'walk', 'run'] as const;
+export type Gait = (typeof GAITS)[number];
+
 export interface MoveCommand extends CommandHeader {
   type: 'move';
   dx: number;
   dy: number;
+  /** Default `walk`; `run` falls back to walk at 0 endurance. */
+  gait?: Gait | undefined;
 }
 
 /** World-space point (tiles) the player is aiming at; the sim derives facing from it. */
@@ -228,6 +234,29 @@ export interface DebugStatCommand extends CommandHeader {
   value: number;
 }
 
+/**
+ * Dev only (`init.dev`): spawns `count` zombies (default 1) around (x, y) on free tiles; `zombieType`
+ * is a content id (default: weighted by `spawnWeight`).
+ */
+export interface DebugSpawnZombieCommand extends CommandHeader {
+  type: 'debugSpawnZombie';
+  x: number;
+  y: number;
+  z?: number | undefined;
+  count?: number | undefined;
+  zombieType?: string | undefined;
+}
+
+/** Dev only (`init.dev`): emits a noise at (x, y) (e.g. to test hearing and lures). */
+export interface DebugNoiseCommand extends CommandHeader {
+  type: 'debugNoise';
+  x: number;
+  y: number;
+  z?: number | undefined;
+  radiusTiles: number;
+  volume?: number | undefined;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -247,7 +276,9 @@ export type Command =
   | PickUpStorageCommand
   | DebugWoundCommand
   | DebugStatCommand
-  | DebugGiveItemCommand;
+  | DebugGiveItemCommand
+  | DebugSpawnZombieCommand
+  | DebugNoiseCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

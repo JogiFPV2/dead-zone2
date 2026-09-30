@@ -1,6 +1,7 @@
 import type { PlayerId, SimEvent, SimMap } from '@deadzone/protocol';
 import { addComponent, addEntity, createWorld, query, type World } from 'bitecs';
 import { CommandQueue } from '../commands/queue.js';
+import type { AiWorld } from '../ai/state.js';
 import type { ItemStore } from '../items/store.js';
 import type { SurvivalWorld } from '../survival/state.js';
 import { createClock, type Clock, type ClockStart } from './clock.js';
@@ -26,6 +27,8 @@ export interface SimWorld {
   readonly survival: SurvivalWorld | undefined;
   /** Items, inventories, storage and timed actions (Stage 3); undefined without content. */
   readonly items: ItemStore | undefined;
+  /** Noise, zombies, vision, navigation (Stage 4); undefined without content. */
+  readonly ai: AiWorld | undefined;
   /** Debug commands allowed (dev builds, tests). Not part of the state. */
   readonly dev: boolean;
   events: SimEvent[];
@@ -41,6 +44,7 @@ export function createSimWorld(opts: {
   clockStart?: ClockStart | undefined;
   survival?: ((clock: Clock) => SurvivalWorld) | undefined;
   items?: ((survival: SurvivalWorld) => ItemStore) | undefined;
+  ai?: ((survival: SurvivalWorld) => AiWorld) | undefined;
   dev?: boolean | undefined;
 }): SimWorld {
   const clock = createClock(opts.dayLengthMinutes, opts.clockStart);
@@ -60,6 +64,7 @@ export function createSimWorld(opts: {
     clock,
     survival,
     items: survival && opts.items ? opts.items(survival) : undefined,
+    ai: survival && opts.ai ? opts.ai(survival) : undefined,
     dev: opts.dev ?? false,
     events: [],
     sortedCache: new Map(),

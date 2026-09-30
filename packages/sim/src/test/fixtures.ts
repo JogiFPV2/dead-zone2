@@ -3,7 +3,9 @@ import {
   CHUNK_TILES,
   simMapFromData,
   type SimMap,
+  type SimEdgeKind,
   type SimMapChunkData,
+  type SimZone,
 } from '@deadzone/protocol';
 
 export interface MapSpec {
@@ -19,6 +21,10 @@ export interface MapSpec {
   /** Room id per world tile (0 = outside) and room id → room type (same for every chunk). */
   room?: (x: number, y: number) => number;
   rooms?: Record<string, string>;
+  /** Edge id of walls (default 1), with `edgeKinds` as the palette (e.g. 2 = window). */
+  edgeId?: (x: number, y: number) => number;
+  edgeKinds?: readonly (SimEdgeKind | null)[];
+  zones?: readonly SimZone[];
 }
 
 /** Builds an in-memory map on level 0 covering [0, width) × [0, height). */
@@ -37,8 +43,9 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           const y = cy * CHUNK_SIZE + ly;
           const i = ly * CHUNK_SIZE + lx;
           floor[i] = spec.floor ? spec.floor(x, y) : 1;
-          edgeN[i] = spec.wallN?.(x, y) ? 1 : 0;
-          edgeW[i] = spec.wallW?.(x, y) ? 1 : 0;
+          const id = spec.edgeId?.(x, y) ?? 1;
+          edgeN[i] = spec.wallN?.(x, y) ? id : 0;
+          edgeW[i] = spec.wallW?.(x, y) ? id : 0;
         }
       }
       const room = new Uint16Array(CHUNK_TILES);
@@ -69,5 +76,9 @@ export function buildMap(spec: MapSpec = {}): SimMap {
       });
     }
   }
-  return simMapFromData({ chunks });
+  return simMapFromData({
+    chunks,
+    ...(spec.zones ? { zones: spec.zones } : {}),
+    ...(spec.edgeKinds ? { edgeKinds: spec.edgeKinds } : {}),
+  });
 }

@@ -20,6 +20,7 @@ import {
 import type { SimWorld } from '../core/world.js';
 import { actionView, inventoryView, nearbyView, openContainerView } from '../items/views.js';
 import { threatNearby } from '../systems/sleep.js';
+import { threatLevel } from '../ai/threat.js';
 import { bandageDirty, woundBleeding } from '../survival/wounds.js';
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;
@@ -57,6 +58,7 @@ export class ViewTracker {
   private openKey = '';
   private nearbyKey = '';
   private actionKey = '';
+  private threat: number | undefined;
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -155,6 +157,13 @@ export class ViewTracker {
     if (actionKey !== this.actionKey) {
       if (this.actionKey !== '' || action) patch.action = action;
       this.actionKey = actionKey;
+    }
+    if (w.ai) {
+      const threat = threatLevel(w, eid);
+      if (threat !== this.threat) {
+        this.threat = threat;
+        patch.threat = threat;
+      }
     }
   }
 }

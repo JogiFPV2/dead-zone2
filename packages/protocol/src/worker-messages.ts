@@ -12,6 +12,14 @@ export interface SimSpawn {
   z: number;
 }
 
+/** A zombie to spawn at init (`createSim({ spawnZombies })`); `type` = zombie type content id. */
+export interface SimZombieSpawn {
+  x: number;
+  y: number;
+  z?: number | undefined;
+  type?: string | undefined;
+}
+
 /** Main thread → sim worker. */
 export type MainToWorker =
   | {
@@ -22,7 +30,9 @@ export type MainToWorker =
       spawn?: SimSpawn | undefined;
       /** Content packs (raw JSON files, base first); the worker validates and builds the bundle. */
       content?: SimContentSource | undefined;
-      /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`). */
+      /** Zombies at start (game modes, tests); needs content with `zombieTypes`. */
+      zombies?: readonly SimZombieSpawn[] | undefined;
+      /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). */
       dev?: boolean | undefined;
     }
   | { kind: 'cmd'; cmd: Command }

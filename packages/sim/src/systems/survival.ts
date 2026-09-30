@@ -1,3 +1,4 @@
+import { effectiveGait } from './movement.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
 import { clampStat, modded, type SurvivalWorld } from '../survival/state.js';
@@ -25,7 +26,16 @@ function survivalMinute(w: SimWorld, s: SurvivalWorld, eid: number, ambientC: nu
   const asleep = s.asleep[eid] === 1;
   const moving =
     !asleep && ((w.c.MoveIntent.dx[eid] ?? 0) !== 0 || (w.c.MoveIntent.dy[eid] ?? 0) !== 0);
-  const act = asleep ? cfg.activity.sleeping : moving ? cfg.activity.walking : cfg.activity.idle;
+  const gait = moving ? effectiveGait(w, eid) : 'walk';
+  const act = asleep
+    ? cfg.activity.sleeping
+    : !moving
+      ? cfg.activity.idle
+      : gait === 'run'
+        ? cfg.activity.running
+        : gait === 'sneak'
+          ? cfg.activity.sneaking
+          : cfg.activity.walking;
 
   // Needs.
   const satiety = v.satiety[eid] ?? 0;
