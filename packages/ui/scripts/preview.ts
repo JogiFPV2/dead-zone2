@@ -15,6 +15,7 @@ import { COMPONENT_CSS, FONTS_CSS, TOKENS_CSS } from '../src/styles/files.js';
 import { copyFonts } from './build-css.js';
 import { contrastRatio } from '../src/tokens/contrast.js';
 import { tokens } from '../src/tokens/tokens.generated.js';
+import { buildNewComponents, type PreviewKit } from './preview-new.js';
 import type { Doc } from '../src/dom/h.js';
 import {
   ACTION_STATES,
@@ -44,7 +45,9 @@ import {
   type StatBarProps,
 } from '../src/index.js';
 
-const HEIGHT = 1480;
+const HEIGHT = 2040;
+/** Height of the page with only the new components (3 mood bands). */
+const NEW_HEIGHT = 1610;
 const hm = (h: number, m = 0): number => h * 60 + m;
 /** Scene colours behind the HUD per mood (spec §4: night background, dusk fog, day background). */
 const MOOD_BG: Record<HudMood, string> = { night: '#0d1112', dusk: '#3b3a3f', day: '#7d8588' };
@@ -429,7 +432,9 @@ function buildSheet(doc: Doc, mood: HudMood): HTMLElement {
     h('p', 'pv-note', 'ThreatBanner · low = brak paska · kontrast liczony na tle tego nastroju.'),
   );
 
-  root.append(moodles, slots, actions, stats, maps, extra);
+  const fresh = section('Nowe: Clock · Toast · wiersz skrótów · ObjectiveCard', true);
+  fresh.append(buildNewComponents(doc, mood, MOOD_BG[mood], { h, cell }));
+  root.append(moodles, slots, actions, stats, maps, extra, fresh);
 
   root.append(createVignette(doc));
   return root;
@@ -442,46 +447,89 @@ const outDir = `${pkgDir}dist/preview`;
 await mkdir(outDir, { recursive: true });
 await copyFonts(`${pkgDir}dist`);
 
-for (const mood of MOODS) {
-  const window = new Window();
-  const doc = window.document as unknown as Document;
-  const sheet = buildSheet(doc, mood);
-  const html = `<!doctype html>
+const pngNewArg = process.argv.indexOf('--png-new');
+const pngNew = pngNewArg > 0 ? process.argv[pngNewArg + 1] : undefined;
+
+function screenshot(file: string, png: string, height: number): void {
+  execFileSync(
+    process.env.CHROME_BIN ?? 'google-chrome',
+    [
+      '--headless=new',
+      '--no-sandbox',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      `--window-size=1920,${height}`,
+      '--force-device-scale-factor=1',
+      '--virtual-time-budget=5000',
+      `--screenshot=${png}`,
+      `file://${file}`,
+    ],
+    { stdio: 'ignore' },
+  );
+  console.log(`wrote ${png}`);
+}
+
+const page = (title: string, body: string, attrs: string): string => `<!doctype html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>@deadzone/ui · preview · ${mood}</title>
+<title>@deadzone/ui · ${title}</title>
 <style>
 ${style}
 </style>
 </head>
-<body data-hud-mood="${mood}" data-hud-chips="${mood === 'day' ? 'day' : 'night'}" style="min-height:${HEIGHT}px;--pv-bg:${MOOD_BG[mood]}">
-${sheet.outerHTML}
+<body ${attrs}>
+${body}
 </body>
 </html>
 `;
+
+for (const mood of MOODS) {
+  const window = new Window();
+  const doc = window.document as unknown as Document;
+  const sheet = buildSheet(doc, mood);
+  const html = page(
+    `preview · ${mood}`,
+    sheet.outerHTML,
+    `data-hud-mood="${mood}" data-hud-chips="${mood === 'day' ? 'day' : 'night'}" style="min-height:${HEIGHT}px;--pv-bg:${MOOD_BG[mood]}"`,
+  );
   const file = `${outDir}/preview-${mood}.html`;
   await writeFile(file, html);
   console.log(`wrote ${file}`);
   await window.happyDOM.close();
+  if (pngOut)
+    screenshot(file, mood === 'day' ? pngOut : pngOut.replace(/\.png$/, `-${mood}.png`), HEIGHT);
+}
 
-  if (pngOut) {
-    const png = mood === 'day' ? pngOut : pngOut.replace(/\.png$/, `-${mood}.png`);
-    execFileSync(
-      process.env.CHROME_BIN ?? 'google-chrome',
-      [
-        '--headless=new',
-        '--no-sandbox',
-        '--disable-gpu',
-        '--hide-scrollbars',
-        `--window-size=1920,${HEIGHT}`,
-        '--force-device-scale-factor=1',
-        '--virtual-time-budget=5000',
-        `--screenshot=${png}`,
-        `file://${file}`,
-      ],
-      { stdio: 'ignore' },
-    );
-    console.log(`wrote ${png}`);
+// Only the new components, one band per mood (scene colour behind each band).
+{
+  const window = new Window();
+  const doc = window.document as unknown as Document;
+  const h: PreviewKit['h'] = (tag, cls = '', text) => {
+    const n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+  const cell: PreviewKit['cell'] = (node, caption) => {
+    const c = h('div', 'pv-cell');
+    c.append(node, h('span', 'pv-cap', caption));
+    return c;
+  };
+  const root = h('main', 'pv pv-new');
+  for (const mood of ['night', 'dusk', 'day'] as const) {
+    const s = h('section', 'pv-section wide pv-mood');
+    s.style.background = MOOD_BG[mood];
+    s.append(h('h2', '', `${MOOD_LABEL[mood]} · tło sceny ${MOOD_BG[mood]}`));
+    s.append(buildNewComponents(doc, mood, MOOD_BG[mood], { h, cell }));
+    root.append(s);
   }
+  const file = `${outDir}/preview-new.html`;
+  await writeFile(
+    file,
+    page('nowe komponenty', root.outerHTML, `style="min-height:${NEW_HEIGHT}px;--pv-bg:#0d1112"`),
+  );
+  console.log(`wrote ${file}`);
+  await window.happyDOM.close();
+  if (pngNew) screenshot(file, pngNew, NEW_HEIGHT);
 }

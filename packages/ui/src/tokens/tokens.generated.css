@@ -170,6 +170,15 @@
   --motion-reduced-fade: 150ms;
   --motion-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --motion-highlight: 600ms;
+  --motion-objective-hold: 3000ms;
+  --motion-toast-exit: 160ms;
+  --motion-toast-merge: 1000ms;
+  --motion-toast-life-damage: 3000ms;
+  --motion-toast-life-gain: 2500ms;
+  --motion-toast-life-info: 4000ms;
+  --motion-toast-life-warning: 3500ms;
+  --motion-hints-visible: 600000ms;
   --z-canvas: 0;
   --z-label: 10;
   --z-vignette: 20;
@@ -191,4 +200,16 @@
   --size-hints: 34px;
   --size-stats: 40px;
   --size-minimap: 200px;
+  --size-clock-width: 100px;
+  --size-clock-height: 72px;
+  --size-objective-width: 380px;
+  --size-objective-height: 85px;
+  --size-objective-row: 22px;
+  --size-objective-progress: 4px;
+  --size-objective-progress-gap: 7px;
+  --size-objective-marker-width: 3px;
+  --size-objective-marker-height: 13px;
+  --size-icon-sm: 16px;
+  --size-icon-md: 18px;
+  --size-icon-lg: 24px;
 }

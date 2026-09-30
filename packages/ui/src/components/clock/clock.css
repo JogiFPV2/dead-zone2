@@ -1,0 +1,24 @@
+/* Clock + day counter (spec §3.8): glass 100×72, centred column, gap space.0-5. */
+.dz-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-0-5);
+  width: var(--size-clock-width);
+  height: var(--size-clock-height);
+  pointer-events: none;
+}
+.dz-clock__time {
+  color: var(--color-text-primary);
+  font: var(--font-display-clock);
+  letter-spacing: var(--font-tracking-none);
+  font-variant-numeric: tabular-nums;
+}
+.dz-clock__day {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-xwide);
+  text-transform: uppercase;
+}

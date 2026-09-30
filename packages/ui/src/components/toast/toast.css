@@ -1,0 +1,82 @@
+/* Toast (spec §3.4). Stack: top right under the minimap, gap space.2, right-aligned. */
+.dz-toasts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.dz-toast {
+  --_border: var(--color-border-strong);
+  --_accent: var(--color-text-primary);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  height: var(--size-toast);
+  padding: 0 var(--space-4-5);
+  border: var(--border-1) solid var(--_border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-hud);
+  color: var(--color-text-primary);
+  font: var(--font-mono-md);
+  white-space: nowrap;
+  transition: transform var(--motion-base) var(--motion-ease-out);
+}
+.dz-toast .dz-icon {
+  flex: none;
+  color: var(--_accent);
+}
+.dz-toast__value {
+  color: var(--_accent);
+  font: var(--font-label-md);
+}
+.dz-toast__value[hidden] {
+  display: none;
+}
+
+.dz-toast[data-kind='damage'] {
+  --_border: var(--color-danger-base);
+  --_accent: var(--color-danger-text);
+}
+.dz-toast[data-kind='gain'] {
+  --_border: var(--color-success-base);
+  --_accent: var(--color-success-text);
+}
+.dz-toast[data-kind='info'] {
+  --_border: var(--color-border-strong);
+  --_accent: var(--color-text-primary);
+}
+.dz-toast[data-kind='warning'] {
+  --_border: var(--color-warning-base);
+  --_accent: var(--color-warning-text);
+}
+
+/* Enter: translateX(24px) → 0 + fade in, motion.base ease.out. Exit: 160 ms ease.in. */
+.dz-toast[data-enter] {
+  animation: dz-toast-in var(--motion-base) var(--motion-ease-out) both;
+}
+.dz-toast[data-exit] {
+  animation: dz-toast-out var(--motion-toast-exit) var(--motion-ease-in) forwards;
+}
+@keyframes dz-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--space-6));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes dz-toast-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(var(--space-6));
+  }
+}

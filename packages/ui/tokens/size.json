@@ -9,6 +9,26 @@
     "banner": "35px",
     "hints": "34px",
     "stats": "40px",
-    "minimap": "200px"
+    "minimap": "200px",
+    "clock": {
+      "width": "100px",
+      "height": "72px"
+    },
+    "objective": {
+      "width": "380px",
+      "height": "85px",
+      "row": "22px",
+      "progress": "4px",
+      "progressGap": "7px",
+      "marker": {
+        "width": "3px",
+        "height": "13px"
+      }
+    },
+    "icon": {
+      "sm": "16px",
+      "md": "18px",
+      "lg": "24px"
+    }
   }
 }

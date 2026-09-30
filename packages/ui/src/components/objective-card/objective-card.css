@@ -1,0 +1,81 @@
+/* ObjectiveCard (spec §3.1): glass 380×85 (grows with 2 title lines), padding space.3 space.4. */
+.dz-objective {
+  display: flex;
+  flex-direction: column;
+  width: var(--size-objective-width);
+  min-height: var(--size-objective-height);
+  padding: var(--space-3) var(--space-4);
+  pointer-events: none;
+  transition: border-color var(--motion-fast) linear;
+}
+.dz-objective[hidden] {
+  display: none;
+}
+.dz-objective__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--size-objective-row);
+}
+.dz-objective__marker {
+  flex: none;
+  width: var(--size-objective-marker-width);
+  height: var(--size-objective-marker-height);
+  background: var(--_accent, var(--color-accent-base));
+}
+.dz-objective__label {
+  flex: 1;
+  color: var(--_accent, var(--color-accent-base));
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-wide);
+  text-transform: uppercase;
+}
+.dz-objective__step {
+  color: var(--color-text-muted);
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-md);
+}
+.dz-objective__step[hidden] {
+  display: none;
+}
+.dz-objective__title {
+  display: -webkit-box;
+  margin: var(--space-1-5) 0 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font: var(--font-body-md);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.dz-objective__track {
+  height: var(--size-objective-progress);
+  margin-top: var(--size-objective-progress-gap);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+}
+.dz-objective__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--_fill, var(--color-accent-base));
+  transform-origin: left center;
+  transition: transform var(--motion-slow) var(--motion-ease-out);
+}
+
+/* updated: accent border for motion.highlight (600 ms), then back to border.default. */
+.dz-objective[data-updated] {
+  border-color: var(--color-border-accent);
+}
+
+/* completed: success header and full bar; fades out after motion.objective.hold (3 s). */
+.dz-objective[data-state='completed'] {
+  --_accent: var(--color-success-text);
+  --_fill: var(--color-success-base);
+  animation: dz-objective-out var(--motion-slow) linear var(--motion-objective-hold) forwards;
+}
+@keyframes dz-objective-out {
+  to {
+    opacity: 0;
+  }
+}

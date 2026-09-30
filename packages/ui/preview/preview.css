@@ -9,7 +9,7 @@ body {
 body {
   position: relative;
   width: 1920px;
-  min-height: 1480px;
+  min-height: 1080px;
   background: var(--pv-bg);
   color: var(--color-text-primary);
   font-family: var(--font-family-sans);
@@ -112,4 +112,24 @@ body {
 }
 .pv .dz-vignette {
   position: fixed;
+}
+.pv-band {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.pv-new {
+  gap: 20px;
+}
+.pv-mood {
+  border-color: var(--color-border-strong);
+}
+/* Captions stay readable on the bright day band (preview chrome, not HUD). */
+.pv-mood h2,
+.pv-mood .pv-cap {
+  align-self: flex-start;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(14, 17, 19, 0.7);
 }

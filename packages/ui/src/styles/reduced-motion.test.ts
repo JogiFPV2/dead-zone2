@@ -50,3 +50,22 @@ describe('reduced motion (Designer, answer 9)', () => {
     expect(css).toContain('@keyframes dz-fade-in');
   });
 });
+
+describe('reduced motion for toasts and the objective card', () => {
+  it('toasts only fade (no slide, no FLIP transition)', () => {
+    expect(classRules['.dz-toast']?.transition).toBe('none !important');
+    expect(classRules['.dz-toast[data-enter]']?.animation).toBe(
+      'dz-fade-in var(--motion-reduced-fade) linear both !important',
+    );
+    expect(classRules['.dz-toast[data-exit]']?.animation).toBe(
+      'dz-fade-out var(--motion-reduced-fade) linear forwards !important',
+    );
+    expect(css).toContain('@keyframes dz-fade-out');
+  });
+  it('objective progress jumps; completed fades in motion.reduced.fade after the hold', () => {
+    expect(classRules['.dz-objective__fill']?.transition).toBe('none !important');
+    expect(classRules[".dz-objective[data-state='completed']"]?.animation).toBe(
+      'dz-fade-out var(--motion-reduced-fade) linear var(--motion-objective-hold) forwards !important',
+    );
+  });
+});

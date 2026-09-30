@@ -64,7 +64,57 @@ stats.update(nextStats); // co tick HUD (spec: throttling do 10 Hz)
 | ThreatBanner        | `createThreatBanner`               | `data-level` low (ukryty)/medium/high/critical; critical: mocniej nasycone tło + ramka + puls, przy reduced motion „!!”                                       |
 | KeyBadge            | `createKeyBadge`                   | `data-variant` light/inverse                                                                                                                                  |
 | Minimap             | `createMinimap`                    | `data-orientation` north-up (domyślnie)/camera                                                                                                                |
+| Clock               | `createClock`                      | `data-mood` day/dusk/night (tylko informacyjnie)                                                                                                              |
+| Toast               | `createToastStack`, `createToast`  | `data-kind` damage/gain/info/warning, `data-enter`, `data-exit`; maks. 4, łączenie ×N w 1 s                                                                   |
+| Wiersz skrótów      | `createKeyHints`                   | `data-hidden` (fade) → `hidden`                                                                                                                               |
+| ObjectiveCard       | `createObjectiveCard`              | `data-state` active/updated/completed/none, `data-updated` (ramka 600 ms), licznik kroków `2/3`                                                               |
+
+## Nowe komponenty: API dla Silnika
+
+```ts
+import {
+  createClock,
+  createToastStack,
+  toastFromSimEvent,
+  createKeyHints,
+  DEFAULT_HINTS,
+  hintsVisible,
+  toggleHints,
+  createObjectiveCard,
+} from '@deadzone/ui';
+
+// Clock: widok `clock` z sim (ClockView pasuje strukturalnie), co minutę gry.
+const clock = createClock({ day: 1, minuteOfDay: 7 * 60 });
+clock.update(view.clock);
+
+// Toasty: stos sam pilnuje kolejki, łączenia i czasu życia.
+const toasts = createToastStack();
+for (const e of msg.events) {
+  const t = toastFromSimEvent(e, { playerId, moodle: (id) => moodleLabel(id) });
+  if (t) toasts.push(t);
+}
+toasts.push({ kind: 'gain', value: '+3', text: 'Brodawka' }); // loot itp.
+
+// Wiersz skrótów: klawisze z aktualnego bindingu; auto = pierwsze 10 min gry, F1 przełącza.
+const hints = createKeyHints({ items: DEFAULT_HINTS, visible: true });
+hints.update({ items, visible: hintsVisible(setting, playedMs) });
+setting = toggleHints(setting, playedMs); // F1
+
+// ObjectiveCard: ObjectiveVM ze spec + opcjonalne step/steps (tryb ratunkowy).
+const objective = createObjectiveCard({
+  id,
+  title,
+  progress: 0.4,
+  state: 'active',
+  step: 1,
+  steps: 3,
+});
+objective.update(null); // brak celu → ukryta (moodle podjeżdżają na y 32: layout gry)
+```
+
+- Nowe tokeny: `size.clock.{width,height}`, `size.objective.{width,height,row,progress,progressGap,marker.width,marker.height}`, `size.icon.{sm,md,lg}`, `motion.highlight` (600 ms), `motion.objective.hold` (3 s), `motion.toast.{exit,merge,life.*}`, `motion.hints.visible` (10 min). Czasy w JS czytają `ms()` z tokenów.
+- Reduced motion: toasty tylko fade 150 ms (bez przesuwu i FLIP), pasek celu skacze bez animacji, ukończony cel znika fade 150 ms.
 
 ## Podgląd
 
-`pnpm --filter @deadzone/ui preview -- --png /tmp/ui.png` renderuje wszystkie stany na jednym arkuszu do `dist/preview/preview-{night,day,dusk}.html` (statyczny HTML) i, z `--png`, do PNG przez headless Chrome (`CHROME_BIN`, domyślnie `google-chrome`): `/tmp/ui.png` (dzień), `/tmp/ui-night.png` (noc) i `/tmp/ui-dusk.png` (zmierzch).
+`pnpm --filter @deadzone/ui preview -- --png /tmp/ui.png` renderuje wszystkie stany na jednym arkuszu do `dist/preview/preview-{night,day,dusk}.html` (statyczny HTML) i, z `--png`, do PNG przez headless Chrome (`CHROME_BIN`, domyślnie `google-chrome`): `/tmp/ui.png` (dzień), `/tmp/ui-night.png` (noc) i `/tmp/ui-dusk.png` (zmierzch). `--png-new /tmp/ui-new.png` zapisuje dodatkowo same nowe komponenty w trzech nastrojach (`dist/preview/preview-new.html`).

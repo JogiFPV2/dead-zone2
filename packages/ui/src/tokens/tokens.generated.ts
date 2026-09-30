@@ -291,6 +291,23 @@ export const tokens = {
       out: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
       in: 'cubic-bezier(0.4, 0, 1, 1)',
     },
+    highlight: '600ms',
+    objective: {
+      hold: '3000ms',
+    },
+    toast: {
+      exit: '160ms',
+      merge: '1000ms',
+      life: {
+        damage: '3000ms',
+        gain: '2500ms',
+        info: '4000ms',
+        warning: '3500ms',
+      },
+    },
+    hints: {
+      visible: '600000ms',
+    },
   },
   z: {
     canvas: '0',
@@ -316,6 +333,26 @@ export const tokens = {
     hints: '34px',
     stats: '40px',
     minimap: '200px',
+    clock: {
+      width: '100px',
+      height: '72px',
+    },
+    objective: {
+      width: '380px',
+      height: '85px',
+      row: '22px',
+      progress: '4px',
+      progressGap: '7px',
+      marker: {
+        width: '3px',
+        height: '13px',
+      },
+    },
+    icon: {
+      sm: '16px',
+      md: '18px',
+      lg: '24px',
+    },
   },
 } as const;
 
@@ -492,6 +529,15 @@ export const tokenPaths = [
   'motion.reduced.fade',
   'motion.ease.out',
   'motion.ease.in',
+  'motion.highlight',
+  'motion.objective.hold',
+  'motion.toast.exit',
+  'motion.toast.merge',
+  'motion.toast.life.damage',
+  'motion.toast.life.gain',
+  'motion.toast.life.info',
+  'motion.toast.life.warning',
+  'motion.hints.visible',
   'z.canvas',
   'z.label',
   'z.vignette',
@@ -513,6 +559,18 @@ export const tokenPaths = [
   'size.hints',
   'size.stats',
   'size.minimap',
+  'size.clock.width',
+  'size.clock.height',
+  'size.objective.width',
+  'size.objective.height',
+  'size.objective.row',
+  'size.objective.progress',
+  'size.objective.progressGap',
+  'size.objective.marker.width',
+  'size.objective.marker.height',
+  'size.icon.sm',
+  'size.icon.md',
+  'size.icon.lg',
 ] as const;
 
 export type TokenPath = (typeof tokenPaths)[number];

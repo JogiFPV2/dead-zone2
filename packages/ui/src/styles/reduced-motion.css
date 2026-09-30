@@ -1,6 +1,7 @@
 /*
  * Reduced motion (Designer, answer 9): no pulses, drain is instant, fades only (motion.reduced.fade).
- * The critical threat banner shows a "!!" badge instead of its pulse.
+ * The critical threat banner shows a "!!" badge instead of its pulse. Toasts enter and leave
+ * with a fade only (motion.reduced.fade, no slide, no FLIP); objective progress jumps.
  * Active when the OS asks for it (prefers-reduced-motion) unless an ancestor has `.dz-full-motion`,
  * or always under `.dz-reduced-motion` (in-game setting). Both blocks must stay identical.
  * `!important` so the reductions beat the (more specific) effect selectors in component CSS.
@@ -40,6 +41,22 @@
   animation: none !important;
 }
 
+.dz-reduced-motion .dz-toast {
+  transition: none !important;
+}
+.dz-reduced-motion .dz-toast[data-enter] {
+  animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+}
+.dz-reduced-motion .dz-toast[data-exit] {
+  animation: dz-fade-out var(--motion-reduced-fade) linear forwards !important;
+}
+.dz-reduced-motion .dz-objective__fill {
+  transition: none !important;
+}
+.dz-reduced-motion .dz-objective[data-state='completed'] {
+  animation: dz-fade-out var(--motion-reduced-fade) linear var(--motion-objective-hold) forwards !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dz-moodle:not(.dz-full-motion *)::before,
   .dz-statbar__fill:not(.dz-full-motion *) {
@@ -74,6 +91,21 @@
   .dz-threat[data-flash]:not(.dz-full-motion *) {
     animation: none !important;
   }
+  .dz-toast:not(.dz-full-motion *) {
+    transition: none !important;
+  }
+  .dz-toast[data-enter]:not(.dz-full-motion *) {
+    animation: dz-fade-in var(--motion-reduced-fade) linear both !important;
+  }
+  .dz-toast[data-exit]:not(.dz-full-motion *) {
+    animation: dz-fade-out var(--motion-reduced-fade) linear forwards !important;
+  }
+  .dz-objective__fill:not(.dz-full-motion *) {
+    transition: none !important;
+  }
+  .dz-objective[data-state='completed']:not(.dz-full-motion *) {
+    animation: dz-fade-out var(--motion-reduced-fade) linear var(--motion-objective-hold) forwards !important;
+  }
 }
 
 /* Shared fade for reduced motion (toasts use the same: opacity only, motion.reduced.fade). */
@@ -83,5 +115,13 @@
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes dz-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }

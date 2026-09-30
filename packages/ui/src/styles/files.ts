@@ -17,6 +17,10 @@ export const COMPONENT_CSS = [
   'components/action-button/action-button.css',
   'components/minimap/minimap.css',
   'components/threat-banner/threat-banner.css',
+  'components/clock/clock.css',
+  'components/toast/toast.css',
+  'components/key-hints/key-hints.css',
+  'components/objective-card/objective-card.css',
   // Last: overrides the effects above.
   'styles/reduced-motion.css',
 ] as const;

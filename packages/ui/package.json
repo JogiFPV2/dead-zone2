@@ -33,6 +33,9 @@
     "gen:tokens": "tsx scripts/gen-tokens.ts",
     "preview": "tsx scripts/preview.ts"
   },
+  "dependencies": {
+    "@deadzone/protocol": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^22.20.4",
     "happy-dom": "^20.14.5",

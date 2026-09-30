@@ -1,0 +1,22 @@
+/* Key-hint row (spec §3.11): glass, height 34, padding 0 space.3-5, radius.md, mono.sm muted. */
+.dz-hints {
+  display: inline-flex;
+  align-items: center;
+  height: var(--size-hints);
+  padding: 0 var(--space-3-5);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font: var(--font-mono-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) linear;
+}
+.dz-hints[data-hidden] {
+  opacity: 0;
+}
+.dz-hints[hidden] {
+  display: none;
+}
+.dz-hints__sep {
+  white-space: pre;
+}

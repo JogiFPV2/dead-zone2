@@ -295,6 +295,10 @@ importers:
         version: 0.4.0
 
   packages/ui:
+    dependencies:
+      '@deadzone/protocol':
+        specifier: workspace:*
+        version: link:../protocol
     devDependencies:
       '@types/node':
         specifier: ^22.20.4
