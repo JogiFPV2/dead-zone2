@@ -3,6 +3,8 @@ import { createIsometricCamera, resizeIsometricCamera } from './camera/isometric
 import { CameraRig } from './camera/rig.js';
 import { bindCameraInput } from './input/camera-input.js';
 import { createScene } from './scene.js';
+import { TEST_MAP_RANGE, createTestMap } from './world/test-map.js';
+import { Terrain } from './world/terrain.js';
 
 const VIEW_HEIGHT = 24;
 
@@ -14,6 +16,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
 const scene = createScene();
+const terrain = new Terrain(createTestMap());
+terrain.loadRange(TEST_MAP_RANGE);
+scene.add(terrain.root);
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 bindCameraInput(rig, renderer.domElement);

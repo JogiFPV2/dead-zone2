@@ -14,7 +14,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 1 — Prototyp ruchu i świata
 - [x] Scena Three.js, kamera izometryczna, zoom, obrót (Silnik)
-- [ ] Teren z kafli + instancing (Silnik)
+- [x] Teren z kafli + instancing (Silnik)
 - [ ] Budynek z wnętrzem, ukrywanie dachu i ścian (Silnik)
 - [ ] Pętla symulacji 20 Hz w Web Workerze + interpolacja renderu (Symulacja)
 - [ ] ECS (bitecs), RNG z seedem, system komend (Symulacja)
