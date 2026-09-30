@@ -10,3 +10,6 @@ coverage/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Cache pobranych packów assetów (tools/assets)
+.cache/

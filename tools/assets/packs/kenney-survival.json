@@ -1,0 +1,26 @@
+{
+  "id": "kenney-survival",
+  "name": "Survival Kit",
+  "version": "2.0",
+  "author": "Kenney (www.kenney.nl)",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://kenney.nl/assets/survival-kit",
+  "download": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+  "sha256": "c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e",
+  "root": "Models/GLB format",
+  "palette": { "image": "Textures/colormap.png", "encoding": "uastc" },
+  "lod": { "ratios": [0.5, 0.2], "distances": [30, 60] },
+  "models": [
+    "barrel",
+    "box-large",
+    "campfire-pit",
+    "chest",
+    "fence",
+    "rock-a",
+    "tent",
+    "tree",
+    "tree-tall",
+    "workbench-anvil"
+  ]
+}
