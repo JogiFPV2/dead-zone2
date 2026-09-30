@@ -20,7 +20,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] ECS (bitecs), RNG z seedem, system komend (Symulacja)
 - [ ] Ruch WASD, celowanie myszą, kolizje (Symulacja + Silnik)
 - [ ] Dzień i noc, latarnie, cienie (Silnik)
-- [ ] Pomiar fps i draw calli w trybie dev (Silnik)
+- [x] Pomiar fps i draw calli w trybie dev (Silnik)
 
 ## Etap 2 — Przetrwanie
 - [ ] Statystyki: zdrowie, głód, pragnienie, zmęczenie, nuda, stres, temperatura (Symulacja)

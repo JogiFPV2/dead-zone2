@@ -24,4 +24,14 @@ function resize(): void {
 new ResizeObserver(resize).observe(container);
 resize();
 
-renderer.setAnimationLoop(() => renderer.render(scene, camera));
+let afterRender: ((r: WebGLRenderer) => void) | undefined;
+if (import.meta.env.DEV) {
+  void import('./dev/stats-overlay.js').then(({ createStatsOverlay }) => {
+    afterRender = createStatsOverlay(document.body);
+  });
+}
+
+renderer.setAnimationLoop(() => {
+  renderer.render(scene, camera);
+  afterRender?.(renderer);
+});
