@@ -1,4 +1,5 @@
 import { Group, WebGLRenderer } from 'three';
+import { computeUiScale } from '@deadzone/ui';
 import {
   CAMERA_DISTANCE,
   createIsometricCamera,
@@ -64,6 +65,8 @@ import {
 import { createInventoryWindow } from './hud/inventory-window.js';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
+import { createSleepController } from './hud/sleep-controller.js';
+import { leisureSpots, mapObjectsOf, type LeisureSpot } from './hud/leisure-spots.js';
 import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
@@ -236,8 +239,51 @@ const hud = createHud({
       z.rects.map((r) => ({ x: r.x + r.w / 2, z: r.y + r.h / 2, kind: 'objective' as const })),
     ),
   onInteract: interact,
+  onAction: (id) => {
+    if (id === 'sleep') sleep.toggleSleep();
+    else if (id === 'watchTv') sleep.watchTv();
+  },
+  spots: () => spots,
+  feedback: (e) => sleep.feedback(e),
   playerId: PLAYER_ID,
   tickMs: TICK_MS,
+});
+// Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
+const sendBody = (body: CommandBody) => {
+  const cmd = stamper.stamp(body);
+  sim.send(cmd);
+  return cmd;
+};
+const sleep = createSleepController({
+  root: container,
+  playerId: PLAYER_ID,
+  send: sendBody,
+  // `client.setSpeed` sets the loop speed and sends `setTimeScale` with the worker client's own
+  // seq, which is behind the game's stamper (the sim drops it as `stale-seq`), so the game also
+  // sends a stamped `setTimeScale`: the sleep save then counts real seconds right at ×2 / ×4.
+  setSpeed: sim.setSpeed
+    ? (x) => {
+        sim.setSpeed?.(x);
+        sim.send(stamper.stamp({ type: 'setTimeScale', speed: x }));
+      }
+    : undefined,
+  state: () => gameState.get(),
+  content: () => hudContent,
+  keys: () => {
+    const b = settings.get().input.bindings;
+    return {
+      wake: actionKey(b, 'pause'),
+      speed: [actionKey(b, 'quickslot1'), actionKey(b, 'quickslot2'), actionKey(b, 'quickslot4')],
+    };
+  },
+});
+gameState.subscribe((next, prev) => sleep.observe(next, prev));
+/** Beds, sofas and TVs of the map (sleep / TV buttons); filled once content is indexed. */
+const mapObjectList = mapObjectsOf(world.source, world.range);
+let spots: LeisureSpot[] = [];
+input.on('sleep', () => sleep.toggleSleep());
+input.on('watchTv', () => {
+  if (!gameState.get().player.sleeping) sleep.watchTv();
 });
 // Zombie health (approved mockup): target bubble on Shift + LMB, bars over wounded (setting).
 const zombieHp = new ZombieHpLayer(container, crowd);
@@ -252,6 +298,7 @@ let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
   void import('./content/base-pack.js').then((m) => {
     hudContent = buildHudContentIndex(m.baseFiles);
+    spots = leisureSpots(mapObjectList, hudContent);
     weaponIndex = buildWeaponIndex(m.baseFiles);
     hud.setContent(hudContent);
   });
@@ -261,7 +308,7 @@ void loadItemIcons();
 // Inventory window (I / Esc): character + equipment, bags and the opened container.
 const inventory = createInventoryWindow({
   root: container,
-  send: (cmd) => sim.send(stamper.stamp(cmd)),
+  send: (cmd) => sleep.track(sendBody(cmd)),
   state: () => gameState.get(),
   content: () => hudContent,
   keys: () => {
@@ -305,6 +352,7 @@ input.on('crafting', () => {
   workshop.toggle();
 });
 input.on('pause', () => {
+  if (sleep.sleeping) sleep.wake();
   inventory.close();
   workshop.close();
 });
@@ -471,7 +519,11 @@ function updateReticle(px: number, py: number, now: number): void {
     now,
   });
 }
-QUICKSLOTS.forEach((action, i) => input.on(action, () => hud.selectSlot(i)));
+QUICKSLOTS.forEach((action, i) =>
+  input.on(action, () => {
+    if (!sleep.speedKey(i)) hud.selectSlot(i);
+  }),
+);
 input.on('toggleHints', () => hud.toggleHints(performance.now()));
 // F1 & co. open browser help otherwise.
 window.addEventListener('keydown', (e) => {
@@ -483,6 +535,7 @@ gameState.subscribe((_next, _prev, action) => {
     for (const c of action.view.characters) characters.set(c.stableId, c);
   }
   if (action.type === 'events') {
+    sleep.events(action.events);
     hud.events(action.events);
     const p = snapshots.sample(performance.now(), TICK_MS);
     if (p) for (const c of eventCues(action.events, p.x, p.y)) audio.play('sfx', c.id, c.volume);
@@ -515,6 +568,8 @@ function resize(): void {
   renderer.setSize(width, height);
   resizeIsometricCamera(camera, width / Math.max(height, 1), VIEW_HEIGHT);
   hud.resize(width, height);
+  // Sleep screen and notices live outside the HUD layer: same scale as the HUD (1920×1080 ref).
+  container?.style.setProperty('--dz-sleep-scale', String(computeUiScale(width, height)));
 }
 
 new ResizeObserver(resize).observe(container);
@@ -610,6 +665,7 @@ renderer.setAnimationLoop((time) => {
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
   workshop.update();
+  sleep.frame(performance.now(), simTick);
   shelfFill.update(gs.storages, gs.container?.id);
   inventory.update();
   if (state) {

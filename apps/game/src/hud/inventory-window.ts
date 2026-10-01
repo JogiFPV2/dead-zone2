@@ -6,6 +6,7 @@ import type { HudContentIndex } from './content-index.js';
 import { combineCommand, combineTipVM } from './combine-model.js';
 import { createCombineTooltip, linkIcon } from './combine-tooltip.js';
 import {
+  CONTEXT_ACTION,
   contextCommand,
   equipmentVM,
   findItem,
@@ -48,8 +49,6 @@ const div = (cls: string, text?: string): HTMLDivElement => {
   if (text !== undefined) d.textContent = text;
   return d;
 };
-
-const CONTEXT_LABEL = { equip: 'załóż', unequip: 'zdejmij', use: 'użyj' } as const;
 
 /** Item icon cell: baked 3D icon, else the vector icon, else an empty tile. */
 function iconCell(cls: string, item: Pick<ItemRowVM, 'icon' | 'image'> | undefined): HTMLElement {
@@ -188,7 +187,7 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
       if (r.combine) row.dataset.combo = r.combine.state;
       const txt = div('dz-inv__row-text');
       txt.append(div('dz-inv__row-name', r.name));
-      const subText = [r.sub, r.context ? `PPM ${CONTEXT_LABEL[r.context]}` : '']
+      const subText = [r.sub, r.context ? `PPM ${CONTEXT_ACTION[r.context]}` : '']
         .filter(Boolean)
         .join(' · ');
       if (subText || r.durability !== undefined || r.combine) {

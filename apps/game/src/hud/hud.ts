@@ -47,6 +47,11 @@ import { containerName, humanizeId, itemCountLabel, moodleName } from './labels.
 import type { MinimapGeometry } from './minimap-data.js';
 import { dockSide, firearmVM, noiseRingRadius, type FirearmVM } from './firearm-model.js';
 import { createFirearmWidget } from './firearm-widget.js';
+import { leisureActionVMs } from './leisure-actions.js';
+import type { LeisureSpot } from './leisure-spots.js';
+import type { Feedback } from './sleep-feedback.js';
+import { createSleepNotice } from './sleep-notice.js';
+import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
 export const HUD_UPDATE_MS = 100;
@@ -59,6 +64,12 @@ export interface HudOptions {
   pois?: MinimapVM['pois'];
   /** Interact button clicked (same as the interact key). */
   onInteract: () => void;
+  /** Other contextual buttons (`sleep`, `watchTv`) clicked. */
+  onAction: (id: string) => void;
+  /** Beds, sofas and TVs of the map (sleep / TV buttons). */
+  spots: () => readonly LeisureSpot[];
+  /** Sleep / leisure feedback for an event; undefined = the default toast mapping. */
+  feedback: (e: SimEvent) => Feedback | undefined;
   playerId: number;
   /** Sim tick length (reload seconds left). */
   tickMs: number;
@@ -166,6 +177,7 @@ export function createHud(opts: HudOptions): Hud {
   minimapGroup.append(noiseRing);
   const toasts = createToastStack();
   group('toasts', toasts.el);
+  const notice = createSleepNotice(root);
 
   let selected = 0;
   const slots = Array.from({ length: HOTBAR_SLOTS }, (_, i) => {
@@ -228,7 +240,7 @@ export function createHud(opts: HudOptions): Hud {
         enabled: vm.enabled,
         ...(vm.progress !== undefined ? { progress: vm.progress } : {}),
         ...(held && vm.enabled ? { forced: 'pressed' as const } : {}),
-        onActivate: opts.onInteract,
+        onActivate: vm.id === 'interact' ? opts.onInteract : () => opts.onAction(vm.id),
       };
       let b = buttons.get(vm.id);
       if (!b) {
@@ -318,8 +330,17 @@ export function createHud(opts: HudOptions): Hud {
           slot.set(p);
         }
       }
-      const key = actionKey(opts.bindings(), 'interact');
-      syncActions(actionVMs(s, f.px, f.py, key, f.tick), f.interactHeld);
+      const key = actionKey(b, 'interact');
+      const leisure = leisureActionVMs(
+        s,
+        opts.spots(),
+        f.px,
+        f.py,
+        { sleep: actionKey(b, 'sleep'), tv: actionKey(b, 'watchTv') },
+        content.sleep ?? DEFAULT_SLEEP_SETTINGS,
+        f.tick,
+      );
+      syncActions([...leisure, ...actionVMs(s, f.px, f.py, key, f.tick)], f.interactHeld);
       const mm = minimapVM(f);
       const mmKey = `${mm.player.x.toFixed(1)},${mm.player.z.toFixed(1)},${mm.player.heading.toFixed(2)},${mm.cameraYaw.toFixed(2)}`;
       if (mmKey !== lastMinimapKey) {
@@ -337,6 +358,12 @@ export function createHud(opts: HudOptions): Hud {
           noiseRing.classList.remove('dz-noise-ring--flash');
           void noiseRing.getBoundingClientRect();
           noiseRing.classList.add('dz-noise-ring--flash');
+        }
+        const fb = opts.feedback(e);
+        if (fb) {
+          if (fb.toast) toasts.push(fb.toast);
+          if (fb.notice) notice.show(fb.notice);
+          continue;
         }
         const t = toastFromSimEvent(e, { playerId: opts.playerId, moodle: moodleInfo });
         if (t) toasts.push(t);

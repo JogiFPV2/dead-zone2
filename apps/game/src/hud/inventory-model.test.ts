@@ -95,3 +95,32 @@ describe('inventory model', () => {
     expect(putAll(s)).toEqual([{ type: 'moveItem', item: 10, to: 5 }]);
   });
 });
+
+describe('VHS tapes', () => {
+  it('PPM plays the tape on the TV nearby', async () => {
+    const { contextCommand, itemRow } = await import('./inventory-model.js');
+    const content = {
+      ...EMPTY_HUD_CONTENT,
+      items: new Map([
+        ['base:vhs-a', { id: 'base:vhs-a', kind: 'vhs', maxStack: 1, weightKg: 0.25 }],
+      ]),
+    };
+    const tape = { id: 30, def: 'base:vhs-a', count: 1, weightKg: 0.25 };
+    expect(itemRow(tape, content.items.get('base:vhs-a')).context).toBe('watch');
+    const st: GameState = {
+      ...INITIAL_GAME_STATE,
+      inventory: {
+        container: 1,
+        loadKg: 0,
+        capacityKg: 12,
+        hardLimitKg: 24,
+        carryLoad: 0,
+        equipped: {},
+        containers: {
+          1: { id: 1, kind: 'inventory', capacityKg: null, weightKg: 0, items: [tape] },
+        },
+      },
+    };
+    expect(contextCommand(st, content, 30)).toEqual({ type: 'watchTv', vhs: 30 });
+  });
+});

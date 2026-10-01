@@ -22,6 +22,11 @@ export class WorkerSimClient implements SimClient {
     this.client.send(cmd);
   }
 
+  /** Loop speed and the sim's real-time measure (`setTimeScale`, sleep save) together. */
+  setSpeed(x: 1 | 2 | 4): void {
+    this.client.setSpeed(x);
+  }
+
   onSnapshot(cb: (snapshot: SnapshotMessage) => void): () => void {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);

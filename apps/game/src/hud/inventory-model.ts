@@ -28,8 +28,8 @@ export interface ItemRowVM {
   sub: string;
   weight: string;
   equipped: boolean;
-  /** PPM label: `załóż`, `zdejmij`, `użyj` or none. */
-  context?: 'equip' | 'unequip' | 'use';
+  /** PPM label: `załóż`, `zdejmij`, `użyj`, `oglądaj` (VHS tape) or none. */
+  context?: 'equip' | 'unequip' | 'use' | 'watch';
   /** Vector icon name (`@deadzone/ui`), used when there is no baked `image`. */
   icon: string;
   /** Baked 3D icon URL. */
@@ -41,7 +41,12 @@ export interface ItemRowVM {
   combine?: CombineRowVM;
 }
 
-const CONTEXT_ACTION = { equip: 'załóż', unequip: 'zdejmij', use: 'użyj' } as const;
+export const CONTEXT_ACTION = {
+  equip: 'załóż',
+  unequip: 'zdejmij',
+  use: 'użyj',
+  watch: 'oglądaj',
+} as const;
 
 /** Tooltip (ItemTooltip from @deadzone/ui) for an inventory row. */
 export function itemTooltip(
@@ -109,7 +114,9 @@ export function itemRow(
       ? 'equip'
       : def?.usable
         ? 'use'
-        : undefined;
+        : def?.kind === 'vhs'
+          ? 'watch'
+          : undefined;
   const image = itemImage(it.def);
   const combine = content ? combineRowVM(it, crafting, content) : undefined;
   const durability =
@@ -271,5 +278,7 @@ export function contextCommand(
   const first = def?.equipSlots?.[0];
   if (first) return { type: 'equip', item, slot: first };
   if (def?.usable) return { type: 'useItem', item };
+  // VHS tape: play it on the TV nearby (sim: `no-station` / `no-power` when there is none).
+  if (def?.kind === 'vhs') return { type: 'watchTv', vhs: item };
   return undefined;
 }

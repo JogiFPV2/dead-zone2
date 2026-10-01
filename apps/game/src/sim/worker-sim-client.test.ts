@@ -11,6 +11,7 @@ function fakeClient() {
       return () => {};
     },
     send: vi.fn(),
+    setSpeed: vi.fn(),
     release: vi.fn(),
     dispose: vi.fn(),
   };
@@ -44,5 +45,11 @@ describe('WorkerSimClient', () => {
     expect(raw.send).toHaveBeenCalledWith(cmd);
     sim.dispose();
     expect(raw.dispose).toHaveBeenCalled();
+  });
+
+  it('setSpeed goes to the worker client (loop speed + setTimeScale)', () => {
+    const { client, raw } = fakeClient();
+    new WorkerSimClient(client).setSpeed(4);
+    expect(raw.setSpeed).toHaveBeenCalledWith(4);
   });
 });

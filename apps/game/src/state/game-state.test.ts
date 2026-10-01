@@ -291,3 +291,34 @@ describe('format', () => {
     expect(devStateLine(run({ type: 'error', message: 'x' }))).toBe('sim error: x');
   });
 });
+
+describe('sleep view', () => {
+  const sleep = {
+    sleeping: true as const,
+    sleepStartTick: 10,
+    surface: 'bed' as const,
+    restCap: 50,
+    restGained: 1,
+    realSec: 3,
+    saveAfterRealSec: 120,
+    saveReady: false,
+  };
+  it('keeps player.sleep until null or wokeUp / died', () => {
+    const asleep = run(view({ player: { sleeping: true, sleep } }));
+    expect(asleep.player.sleep).toEqual(sleep);
+    expect(
+      run(view({ player: { sleeping: true, sleep } }), view({ player: { stats: { fatigue: 40 } } }))
+        .player.sleep,
+    ).toEqual(sleep);
+    expect(
+      run(view({ player: { sleep } }), view({ player: { sleep: null } })).player.sleep,
+    ).toBeUndefined();
+    const woke = run(view({ player: { sleeping: true, sleep } }), {
+      type: 'events',
+      tick: 2,
+      events: [{ type: 'wokeUp', tick: 2, playerId: 0, reason: 'noise' }],
+    });
+    expect(woke.player).toMatchObject({ sleeping: false });
+    expect(woke.player.sleep).toBeUndefined();
+  });
+});

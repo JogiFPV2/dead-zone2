@@ -16,6 +16,7 @@ import type {
   NearbyContainerView,
   SimEvent,
   SimViewPatch,
+  SleepView,
   ViewStat,
   WoundView,
 } from '@deadzone/protocol';
@@ -27,6 +28,8 @@ import type {
 export interface PlayerState {
   alive: boolean;
   sleeping: boolean;
+  /** Current sleep (`player.sleep`); absent when awake. */
+  sleep?: SleepView;
   stats: Readonly<Partial<Record<ViewStat, number>>>;
   /** Visible moodles by content id → level (≥ 1); level 0 removes the entry. */
   moodles: Readonly<Record<string, number>>;
@@ -155,9 +158,11 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
       }
       moodles = next;
     }
+    const sleep = p.sleep === undefined ? player.sleep : (p.sleep ?? undefined);
     player = {
       alive: p.alive ?? player.alive,
       sleeping: p.sleeping ?? player.sleeping,
+      ...(sleep ? { sleep } : {}),
       stats: p.stats ? { ...player.stats, ...p.stats } : player.stats,
       moodles,
       wounds: p.wounds ?? player.wounds,
@@ -184,6 +189,13 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
   return next;
 }
 
+/** Awake: `sleeping` false and no sleep view (the sim sends `player.sleep: null` too). */
+function awake(p: PlayerState): PlayerState {
+  const next: PlayerState = { ...p, sleeping: false };
+  delete next.sleep;
+  return next;
+}
+
 function applyEvents(s: GameState, events: readonly SimEvent[], tick: number): GameState {
   if (events.length === 0) return s;
   let next: GameState = { ...s, tick: Math.max(s.tick, tick) };
@@ -199,12 +211,12 @@ function applyEvents(s: GameState, events: readonly SimEvent[], tick: number): G
           ...(e.daysSurvived !== undefined ? { daysSurvived: e.daysSurvived } : {}),
           ...(e.zombiesKilled !== undefined ? { zombiesKilled: e.zombiesKilled } : {}),
         },
-        player: { ...next.player, alive: false, sleeping: false },
+        player: { ...awake(next.player), alive: false },
       };
     } else if (e.type === 'fellAsleep') {
       next = { ...next, player: { ...next.player, sleeping: true } };
     } else if (e.type === 'wokeUp') {
-      next = { ...next, player: { ...next.player, sleeping: false } };
+      next = { ...next, player: awake(next.player) };
     } else if (e.type === 'timeScaleHint') {
       next = { ...next, timeScaleHint: e.speed };
     }

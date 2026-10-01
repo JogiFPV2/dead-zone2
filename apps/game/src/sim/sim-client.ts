@@ -18,6 +18,8 @@ export interface SimClient {
   send(cmd: Command): void;
   /** Subscribes to per-tick snapshots. Returns an unsubscribe function. */
   onSnapshot(cb: (snapshot: SnapshotMessage) => void): () => void;
+  /** Singleplayer speed-up ×1/×2/×4 (worker loop + `setTimeScale`); absent = not supported. */
+  setSpeed?(x: 1 | 2 | 4): void;
   dispose(): void;
 }
 

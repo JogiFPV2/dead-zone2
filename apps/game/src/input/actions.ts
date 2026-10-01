@@ -21,6 +21,8 @@ export const ACTIONS = [
   'quickslot5',
   'inventory',
   'crafting',
+  'sleep',
+  'watchTv',
   'map',
   'pause',
   'toggleHints',

@@ -1,5 +1,6 @@
 import type { PackFile } from '@deadzone/content';
 import { EQUIP_SLOTS, type EquipSlot } from '@deadzone/protocol';
+import { TV_TAG, readSleepSettings, type HudSleepSettings } from './sleep-settings.js';
 
 /** What the HUD needs from content (names are i18n keys; texts come from labels.ts for now). */
 export interface HudMoodleDef {
@@ -25,6 +26,10 @@ export interface HudItemDef {
   ranged?: HudRangedDef;
   /** Magazines: rounds they take and how many. */
   magazine?: { ammo: string; capacity: number };
+  /** Furniture you can sleep on (`placeable.sleepSurface`). */
+  sleepSurface?: 'bed' | 'sofa';
+  /** A TV (`placeable.power` + the leisure TV tag): `watchTv` nearby. */
+  tv?: boolean;
 }
 
 export interface HudRangedDef {
@@ -61,6 +66,8 @@ export interface HudContentIndex {
   items: ReadonlyMap<string, HudItemDef>;
   stations?: ReadonlyMap<string, HudStationDef>;
   recipes?: ReadonlyMap<string, HudRecipeDef>;
+  /** `worldSettings.survival.sleep` / `leisure` (sleep screen, leisure buttons). */
+  sleep?: HudSleepSettings;
 }
 
 export const EMPTY_HUD_CONTENT: HudContentIndex = { moodles: new Map(), items: new Map() };
@@ -119,6 +126,7 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
   const items = new Map<string, HudItemDef>();
   const stations = new Map<string, HudStationDef>();
   const recipes = new Map<string, HudRecipeDef>();
+  let sleep: HudSleepSettings | undefined;
   for (const f of files) {
     if (!('json' in f)) continue;
     if (f.path.startsWith('stations/')) {
@@ -144,6 +152,8 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           }));
         recipes.set(r.id, { id: r.id, results, ...(isObj(r.repair) ? { repair: true } : {}) });
       }
+    } else if (f.path.startsWith('world-settings/')) {
+      sleep = readSleepSettings(f.json) ?? sleep;
     } else if (f.path.startsWith('moodles/')) {
       for (const m of list(f.json)) {
         if (typeof m.id !== 'string') continue;
@@ -165,6 +175,10 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           isObj(i.magazine) && typeof i.magazine.ammo === 'string'
             ? { ammo: i.magazine.ammo, capacity: num(i.magazine.capacity) }
             : undefined;
+        const placeable = isObj(i.placeable) ? i.placeable : undefined;
+        const surface = placeable?.sleepSurface;
+        const tags = Array.isArray(i.tags) ? i.tags : [];
+        const tv = isObj(placeable?.power) && tags.includes(TV_TAG);
         items.set(i.id, {
           id: i.id,
           kind,
@@ -176,9 +190,11 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(kind === 'food' || kind === 'drink' || kind === 'medical' ? { usable: true } : {}),
           ...(ranged ? { ranged } : {}),
           ...(magazine ? { magazine } : {}),
+          ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),
+          ...(tv ? { tv: true } : {}),
         });
       }
     }
   }
-  return { moodles, items, stations, recipes };
+  return { moodles, items, stations, recipes, ...(sleep ? { sleep } : {}) };
 }

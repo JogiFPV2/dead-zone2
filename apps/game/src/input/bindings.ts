@@ -27,6 +27,8 @@ export const DEFAULT_BINDINGS: Bindings = {
   quickslot5: ['Digit5'],
   inventory: ['KeyI'],
   crafting: ['KeyB'],
+  sleep: ['KeyN'],
+  watchTv: ['KeyT'],
   map: ['KeyM'],
   pause: ['Escape'],
   toggleHints: ['F1'],
