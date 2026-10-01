@@ -20,6 +20,7 @@ export const ACTIONS = [
   'quickslot4',
   'quickslot5',
   'inventory',
+  'crafting',
   'map',
   'pause',
   'toggleHints',

@@ -1,6 +1,8 @@
 import type {
   CharacterProfileView,
   CombatView,
+  CraftingView,
+  SkillView,
   GroundPileView,
   StorageMarkerView,
   ActionView,
@@ -60,6 +62,10 @@ export interface GameState {
   storages: readonly StorageMarkerView[];
   /** Current timed action; absent = none. */
   action?: ActionView;
+  /** Recipes with their state and stations nearby (view.crafting, full when it changes). */
+  crafting?: CraftingView;
+  /** Skills of the local player (view.skills, full list). */
+  skills: readonly SkillView[];
   /** The local player's created character (view.characterProfile; look, profession, traits). */
   characterProfile?: CharacterProfileView;
   death?: {
@@ -90,6 +96,7 @@ export const INITIAL_GAME_STATE: GameState = {
   nearby: [],
   groundPiles: [],
   storages: [],
+  skills: [],
   threat: 0,
   timeScaleHint: 1,
   recentEvents: [],
@@ -167,6 +174,8 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
     ...(view.combat ? { combat: view.combat } : {}),
+    ...(view.crafting ? { crafting: view.crafting } : {}),
+    ...(view.skills ? { skills: view.skills } : {}),
     ...(view.characterProfile ? { characterProfile: view.characterProfile } : {}),
     player,
   };

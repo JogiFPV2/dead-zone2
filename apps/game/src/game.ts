@@ -61,6 +61,7 @@ import {
 } from './hud/content-index.js';
 import { createInventoryWindow } from './hud/inventory-window.js';
 import { createLootWindow } from './hud/loot-window.js';
+import { createWorkshopWindow } from './hud/workshop-window.js';
 import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
@@ -277,11 +278,27 @@ const loot = createLootWindow({
   },
   onSwitch: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
 });
+const workshop = createWorkshopWindow({
+  root: container,
+  send: (cmd) => sim.send(stamper.stamp(cmd)),
+  state: () => gameState.get(),
+  content: () => hudContent,
+  position: () => snapshots.sample(performance.now(), TICK_MS),
+});
 input.on('inventory', () => {
   if (loot.open) loot.hide();
+  workshop.close();
   inventory.toggle();
 });
-input.on('pause', () => inventory.close());
+input.on('crafting', () => {
+  if (loot.open) loot.hide();
+  inventory.close();
+  workshop.toggle();
+});
+input.on('pause', () => {
+  inventory.close();
+  workshop.close();
+});
 input.on('reload', () => {
   if (inventory.open) inventory.takeAll();
 });
@@ -524,6 +541,7 @@ renderer.setAnimationLoop((time) => {
   groundPiles.update(gs.groundPiles, gs.nearby, time);
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
+  workshop.update();
   shelfFill.update(gs.storages, gs.container?.id);
   inventory.update();
   if (state) {

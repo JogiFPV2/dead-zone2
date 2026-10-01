@@ -197,6 +197,7 @@ export function hintItems(b: Bindings): KeyHint[] {
     { key: actionKey(b, 'crouch'), label: 'skradanie' },
     { key: actionKey(b, 'interact'), label: 'przeszukaj' },
     { key: actionKey(b, 'inventory'), label: 'ekwipunek' },
+    { key: actionKey(b, 'crafting'), label: 'warsztat' },
     { key: actionKey(b, 'map'), label: 'mapa' },
     { key: actionKey(b, 'pause'), label: 'menu' },
     { key: actionKey(b, 'toggleHints'), label: 'skróty' },

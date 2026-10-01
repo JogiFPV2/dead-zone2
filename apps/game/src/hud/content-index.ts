@@ -23,9 +23,25 @@ export interface HudItemDef {
   usable?: boolean;
 }
 
+/** Crafting station: level items and the recipe that builds / upgrades to each level. */
+export interface HudStationDef {
+  id: string;
+  levels: readonly { level: number; item: string; recipe: string; craftTimeMultiplier: number }[];
+}
+
+/** Recipe results (the sim's crafting view has the state, content has what comes out). */
+export interface HudRecipeDef {
+  id: string;
+  results: readonly { item: string; count: number }[];
+  /** Repair recipes restore an item instead of producing one. */
+  repair?: boolean;
+}
+
 export interface HudContentIndex {
   moodles: ReadonlyMap<string, HudMoodleDef>;
   items: ReadonlyMap<string, HudItemDef>;
+  stations?: ReadonlyMap<string, HudStationDef>;
+  recipes?: ReadonlyMap<string, HudRecipeDef>;
 }
 
 export const EMPTY_HUD_CONTENT: HudContentIndex = { moodles: new Map(), items: new Map() };
@@ -63,9 +79,34 @@ function equipSlotsOf(i: Obj, kind: string): EquipSlot[] {
 export function buildHudContentIndex(files: readonly PackFile[]): HudContentIndex {
   const moodles = new Map<string, HudMoodleDef>();
   const items = new Map<string, HudItemDef>();
+  const stations = new Map<string, HudStationDef>();
+  const recipes = new Map<string, HudRecipeDef>();
   for (const f of files) {
     if (!('json' in f)) continue;
-    if (f.path.startsWith('moodles/')) {
+    if (f.path.startsWith('stations/')) {
+      for (const st of list(f.json)) {
+        if (typeof st.id !== 'string' || !Array.isArray(st.levels)) continue;
+        const levels = list(st.levels).map((l) => ({
+          level: typeof l.level === 'number' ? l.level : 1,
+          item: typeof l.item === 'string' ? l.item : '',
+          recipe: typeof l.recipe === 'string' ? l.recipe : '',
+          craftTimeMultiplier:
+            typeof l.craftTimeMultiplier === 'number' ? l.craftTimeMultiplier : 1,
+        }));
+        stations.set(st.id, { id: st.id, levels });
+      }
+    } else if (f.path.startsWith('recipes/')) {
+      for (const r of list(f.json)) {
+        if (typeof r.id !== 'string') continue;
+        const results = (Array.isArray(r.results) ? list(r.results) : [])
+          .filter((x) => typeof x.item === 'string')
+          .map((x) => ({
+            item: x.item as string,
+            count: typeof x.count === 'number' ? x.count : 1,
+          }));
+        recipes.set(r.id, { id: r.id, results, ...(isObj(r.repair) ? { repair: true } : {}) });
+      }
+    } else if (f.path.startsWith('moodles/')) {
       for (const m of list(f.json)) {
         if (typeof m.id !== 'string') continue;
         moodles.set(m.id, {
@@ -94,5 +135,5 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
       }
     }
   }
-  return { moodles, items };
+  return { moodles, items, stations, recipes };
 }
