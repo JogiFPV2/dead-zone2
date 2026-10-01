@@ -6,7 +6,7 @@ import { WORDMARK, icon } from './icons.js';
 import { firstEnabled, menuScale, stepFocus } from './menu-model.js';
 import { createSettingsScreen, type SettingsScreen } from './settings-screen.js';
 import type { CharacterStore } from '../characters/character-store.js';
-import type { CharacterRecord } from '../characters/schema.js';
+import { MAX_LIVING_CHARACTERS, type CharacterRecord } from '../characters/schema.js';
 import { createCharactersScreen, type CharactersScreen } from './characters-screen.js';
 
 export type GameMode = 'survive' | 'rescue';
@@ -25,7 +25,7 @@ export interface MainMenuOptions {
   readonly continueInfo?: string | undefined;
   /** Postacie screen; undefined = the item is hidden. */
   readonly characters?: CharacterStore | undefined;
-  /** All slots taken: Nowa gra opens Postacie instead of the creator. */
+  /** Living-character limit reached: Nowa gra opens Postacie instead of the creator. */
   readonly slotsFull?: boolean;
   /** Open Postacie right away (back from the creator). */
   readonly startView?: 'characters';
@@ -227,7 +227,7 @@ ${audioChips(false)}`;
       return;
     }
     if (id === 'new' || id === 'modes') {
-      charactersNote = 'Wszystkie miejsca zajęte: usuń postać, aby zacząć nową grę.';
+      charactersNote = `Limit ${MAX_LIVING_CHARACTERS} żywych postaci: usuń postać, aby zacząć nową grę.`;
       view = 'characters';
     } else if (id === 'characters') view = 'characters';
     else if (id === 'settings') view = 'settings';

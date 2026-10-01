@@ -1,5 +1,5 @@
 import {
-  CHARACTER_SLOTS,
+  MAX_LIVING_CHARACTERS,
   WORLD_GENERATOR_VERSION,
   type CharacterAppearance,
   type CharacterBackend,
@@ -44,7 +44,7 @@ export interface StoreDeps {
 
 export class SlotsFullError extends Error {
   constructor() {
-    super(`Wszystkie ${CHARACTER_SLOTS} miejsca są zajęte`);
+    super(`Masz już ${MAX_LIVING_CHARACTERS} żywych postaci`);
   }
 }
 
@@ -89,8 +89,10 @@ export class CharacterStore {
     return (await this.list()).find((c) => c.status === 'alive');
   }
 
+  /** How many more living characters fit under the limit (tombstones are free). */
   async freeSlots(): Promise<number> {
-    return CHARACTER_SLOTS - (await this.backend.listCharacters()).length;
+    const alive = (await this.backend.listCharacters()).filter((c) => c.status === 'alive');
+    return MAX_LIVING_CHARACTERS - alive.length;
   }
 
   async create(input: NewCharacterInput): Promise<CharacterRecord> {

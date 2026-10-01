@@ -2,7 +2,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CharacterStore } from '../characters/character-store.js';
 import { createMemoryBackend } from '../characters/memory-backend.js';
-import { createCharactersScreen } from './characters-screen.js';
+import { MAX_LIVING_CHARACTERS } from '../characters/schema.js';
+import { createCharactersScreen, scrollFor } from './characters-screen.js';
 
 const key = (code: string): KeyboardEvent => new KeyboardEvent('keydown', { code });
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -38,6 +39,8 @@ describe('Postacie screen', () => {
     expect(cards[1]?.querySelector('[data-act="play"]')).toBeNull();
     expect(cards[1]?.textContent).toContain('Wykrwawienie');
     expect(root.querySelectorAll('.dzo-card--empty')).toHaveLength(2);
+    // Only living characters count toward the limit.
+    expect(root.querySelector('.dzo-chars-slots')?.textContent).toBe('1 / 20 żywych postaci');
     expect(screen.onKey(key('Enter'))).toBe(true);
     expect(on.play).toHaveBeenCalledWith(expect.objectContaining({ id: ewa.id }));
   });
@@ -67,5 +70,41 @@ describe('Postacie screen', () => {
     const s2 = await setup();
     s2.screen.onKey(key('Escape'));
     expect(s2.on.close).toHaveBeenCalled();
+  });
+
+  it('at 20 living characters Nowa postać is disabled; tombstones are extra cards', async () => {
+    const { store, root, screen, on } = await setup();
+    for (let i = 1; i < MAX_LIVING_CHARACTERS; i++) {
+      await store.create({ name: `P${i}`, appearance: look, worldSettings: world });
+    }
+    screen.dispose();
+    root.innerHTML = '';
+    const s2 = createCharactersScreen({
+      root,
+      store,
+      onPlay: on.play,
+      onNew: on.new,
+      onClose: on.close,
+    });
+    await flush();
+    expect(root.querySelectorAll('.dzo-card:not(.dzo-card--empty)')).toHaveLength(21);
+    expect(root.querySelectorAll('.dzo-card--empty')).toHaveLength(0);
+    const btn = root.querySelector('.dzo-chars-new');
+    expect(btn?.getAttribute('aria-disabled')).toBe('true');
+    expect(btn?.textContent).toContain('limit 20 żywych postaci');
+    expect(root.querySelector('.dzo-chars-slots')?.textContent).toBe('20 / 20 żywych postaci');
+    s2.onKey(key('ArrowDown'));
+    s2.onKey(key('ArrowDown'));
+    s2.onKey(key('Enter'));
+    expect(on.new).not.toHaveBeenCalled();
+  });
+
+  it('scrolls the card row to keep the focused card in view', () => {
+    expect(scrollFor(0, 0)).toBe(0);
+    expect(scrollFor(3, 0)).toBe(0);
+    expect(scrollFor(4, 0)).toBe(256);
+    expect(scrollFor(10, 256)).toBe(7 * 256);
+    expect(scrollFor(2, 7 * 256)).toBe(512);
+    expect(scrollFor(-1, 300)).toBe(300);
   });
 });

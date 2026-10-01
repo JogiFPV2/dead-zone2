@@ -5,7 +5,7 @@ import { createIdbBackend, openCharactersDb } from './idb-backend.js';
 import { createMemoryBackend } from './memory-backend.js';
 import { CharacterSaver } from './session-saver.js';
 import type { CharacterBackend } from './schema.js';
-import { CHARACTER_SLOTS } from './schema.js';
+import { MAX_LIVING_CHARACTERS } from './schema.js';
 
 const blob = (text: string): ArrayBuffer => new TextEncoder().encode(text).buffer;
 const text = (b: ArrayBuffer | undefined): string | undefined =>
@@ -126,8 +126,9 @@ describe.each(backends)('CharacterStore (%s)', (_name, make) => {
       false,
     );
     expect(await store.loadSave(c.id)).toBeUndefined();
-    // The tombstone takes a slot until Usuń.
-    expect(await store.freeSlots()).toBe(CHARACTER_SLOTS - 1);
+    // The tombstone stays (until Usuń) but does not count toward the living limit.
+    expect(await store.list()).toHaveLength(1);
+    expect(await store.freeSlots()).toBe(MAX_LIVING_CHARACTERS);
     await store.remove(c.id);
     expect(await store.list()).toEqual([]);
   });
@@ -141,15 +142,26 @@ describe.each(backends)('CharacterStore (%s)', (_name, make) => {
     expect(await store.loadSave(c.id)).toBeUndefined();
   });
 
-  it('lists most recently played first and caps the slots', async () => {
+  it('lists most recently played first and caps LIVING characters at 20', async () => {
     const { store } = await setup();
+    expect(MAX_LIVING_CHARACTERS).toBe(20);
     const ids: string[] = [];
-    for (let i = 0; i < CHARACTER_SLOTS; i++) {
+    for (let i = 0; i < MAX_LIVING_CHARACTERS; i++) {
       ids.push((await store.create({ name: `P${i}`, appearance: look, worldSettings: world })).id);
     }
     await expect(
       store.create({ name: 'X', appearance: look, worldSettings: world }),
     ).rejects.toBeInstanceOf(SlotsFullError);
+    expect(await store.freeSlots()).toBe(0);
+    // A death frees a place: tombstones do not count.
+    expect((await store.markDead(ids[1]!, 0, { cause: 'zombie', daysSurvived: 2 })).ok).toBe(true);
+    expect(await store.freeSlots()).toBe(1);
+    const extra = await store.create({ name: 'X', appearance: look, worldSettings: world });
+    expect(await store.list()).toHaveLength(MAX_LIVING_CHARACTERS + 1);
+    await expect(
+      store.create({ name: 'Y', appearance: look, worldSettings: world }),
+    ).rejects.toBeInstanceOf(SlotsFullError);
+    expect((await store.get(extra.id))?.status).toBe('alive');
     await store.touch(ids[0]!);
     expect((await store.list())[0]?.id).toBe(ids[0]);
     expect((await store.mostRecentAlive())?.id).toBe(ids[0]);
@@ -199,7 +211,7 @@ describe.each(backends)('CharacterStore (%s)', (_name, make) => {
 
   it('keeps the legacy save when there is no free slot', async () => {
     const { store } = await setup();
-    for (let i = 0; i < CHARACTER_SLOTS; i++) {
+    for (let i = 0; i < MAX_LIVING_CHARACTERS; i++) {
       await store.create({ name: `P${i}`, appearance: look, worldSettings: world });
     }
     let cleared = false;

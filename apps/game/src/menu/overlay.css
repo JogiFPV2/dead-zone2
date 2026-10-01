@@ -608,6 +608,20 @@
   top: 157px;
   display: flex;
   gap: 12px;
+  /* 4 cards visible; more scroll with the focus (no scrollbar, wheel/trackpad still work). */
+  width: 1012px;
+  height: 386px;
+  padding: 1px;
+  margin: -1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.dzo-chars-row::-webkit-scrollbar {
+  display: none;
+}
+.dzo-card {
+  flex: none;
 }
 .dzo-card {
   position: relative;

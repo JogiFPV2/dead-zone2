@@ -15,8 +15,11 @@
 import type { CharacterSpec } from '@deadzone/protocol';
 import type { RenderLook } from '../creator/appearance-map.js';
 
-/** Slots on the Postacie screen; tombstones take a slot until deleted. */
-export const CHARACTER_SLOTS = 4;
+/**
+ * Most LIVING characters a player may have (approved cloud plan). Tombstones (dead characters)
+ * do not count and stay until deleted.
+ */
+export const MAX_LIVING_CHARACTERS = 20;
 /** Bump when the world generator / map content changes what a seed produces. */
 export const WORLD_GENERATOR_VERSION = 1;
 

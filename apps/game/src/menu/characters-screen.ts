@@ -1,6 +1,6 @@
 import type { AudioEngine } from '../audio/audio-engine.js';
 import type { CharacterStore } from '../characters/character-store.js';
-import { CHARACTER_SLOTS, type CharacterRecord } from '../characters/schema.js';
+import { MAX_LIVING_CHARACTERS, type CharacterRecord } from '../characters/schema.js';
 import {
   NEW_FOCUS,
   cardView,
@@ -17,7 +17,7 @@ export interface CharactersScreenOptions {
   readonly root: HTMLElement;
   readonly store: CharacterStore;
   readonly audio?: AudioEngine | undefined;
-  /** Note under the title (e.g. „Wszystkie miejsca zajęte”). */
+  /** Note under the title (e.g. the living-character limit). */
   readonly note?: string | undefined;
   /** Graj: the screen is already disposed. */
   onPlay(c: CharacterRecord): void;
@@ -26,6 +26,19 @@ export interface CharactersScreenOptions {
   /** Esc / wstecz: the screen is already disposed. */
   onClose(): void;
   now?: () => number;
+}
+
+/** Cards visible at once in the 1280×720 stage (244 px + 12 px gap). */
+const VISIBLE_CARDS = 4;
+const CARD_STEP = 256;
+
+/** Row scroll that keeps card `i` in view (unchanged for Nowa postać). */
+export function scrollFor(i: number, current: number): number {
+  if (i < 0) return current;
+  const left = i * CARD_STEP;
+  if (left < current) return left;
+  const right = left - (VISIBLE_CARDS - 1) * CARD_STEP;
+  return right > current ? right : current;
 }
 
 export interface CharactersScreen {
@@ -55,9 +68,12 @@ export function createCharactersScreen(o: CharactersScreenOptions): CharactersSc
   let confirm: ConfirmDialog | undefined;
   let disposed = false;
   let note = o.note ?? '';
+  /** Horizontal scroll of the card row (more than 4 cards). */
+  let scroll = 0;
 
   const ui = (id: 'ui-click1' | 'ui-rollover2'): void => o.audio?.play('ui', id);
-  const canCreate = (): boolean => chars.length < CHARACTER_SLOTS;
+  const alive = (): number => chars.filter((c) => c.status === 'alive').length;
+  const canCreate = (): boolean => alive() < MAX_LIVING_CHARACTERS;
 
   async function load(): Promise<void> {
     chars = await o.store.list();
@@ -90,18 +106,22 @@ ${portraitHtml(v)}<div class="dzo-card-body"><div class="dzo-card-name">${esc(v.
   function render(): void {
     if (disposed) return;
     const empty = Array.from(
-      { length: Math.max(0, CHARACTER_SLOTS - cards.length) },
+      // Placeholders fill the visible row (4 cards) while new characters fit.
+      { length: canCreate() ? Math.max(0, VISIBLE_CARDS - cards.length) : 0 },
       () =>
         `<div class="dzo-card dzo-card--empty" aria-hidden="true"><span>WOLNE MIEJSCE</span></div>`,
     ).join('');
     const newFocus = focus.card < 0;
     overlay.stage.innerHTML = `${MINI_LOGO}
 <div class="dzo-chars-head"><div class="dzo-chars-title">POSTACIE</div><div class="dzo-chars-sub">KAŻDA POSTAĆ · JEDNA GRA</div></div>
-<div class="dzo-chars-slots">${icon('user', 15)}<span>${chars.length} / ${CHARACTER_SLOTS} miejsca na świecie</span></div>
+<div class="dzo-chars-slots">${icon('user', 15)}<span>${alive()} / ${MAX_LIVING_CHARACTERS} żywych postaci</span></div>
 <div class="dzo-chars-row">${cards.map(cardHtml).join('')}${empty}</div>
-<button type="button" class="dzo-btn dzo-chars-new${newFocus ? ' dzo-btn--focus' : ''}" data-act="new" tabindex="${newFocus ? 0 : -1}"${canCreate() ? '' : ' aria-disabled="true"'}>${icon('plus', 16)} NOWA POSTAĆ${canCreate() ? '' : '<em>· brak wolnych miejsc</em>'}</button>
+<button type="button" class="dzo-btn dzo-chars-new${newFocus ? ' dzo-btn--focus' : ''}" data-act="new" tabindex="${newFocus ? 0 : -1}"${canCreate() ? '' : ' aria-disabled="true"'}>${icon('plus', 16)} NOWA POSTAĆ${canCreate() ? '' : `<em>· limit ${MAX_LIVING_CHARACTERS} żywych postaci</em>`}</button>
 ${note ? `<div class="dzo-chars-note">${icon('warning', 14)}<span>${esc(note)}</span></div>` : ''}
 <div class="dzo-chars-back" data-act="back">${keyBadge('ESC')} wstecz</div>`;
+    const row = overlay.stage.querySelector<HTMLElement>('.dzo-chars-row');
+    if (row) row.scrollLeft = scrollFor(focus.card, scroll);
+    scroll = row?.scrollLeft ?? 0;
     if (!confirm) {
       overlay.stage.querySelector<HTMLElement>('[tabindex="0"]')?.focus({ preventScroll: true });
     }
