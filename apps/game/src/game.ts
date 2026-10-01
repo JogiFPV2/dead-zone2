@@ -45,7 +45,7 @@ import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
-import { ZombieHpLayer } from './hud/zombie-hp.js';
+import { PICK_PLANE_Y, ZombieHpLayer } from './hud/zombie-hp.js';
 import { clientToNdc, ndcToFloor } from './input/aim.js';
 import { interactIntent } from './hud/hud-model.js';
 import { minimapGeometry } from './hud/minimap-data.js';
@@ -200,7 +200,8 @@ const zombieHp = new ZombieHpLayer(container, crowd);
 renderer.domElement.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !e.shiftKey || !settings.get().interface.targetZombieHp) return;
   const ndc = clientToNdc(e.clientX, e.clientY, renderer.domElement.getBoundingClientRect());
-  const hit = ndcToFloor(camera, ndc.x, ndc.y);
+  // Intersect at waist height: the cursor is on the body, not on the feet behind it.
+  const hit = ndcToFloor(camera, ndc.x, ndc.y, PICK_PLANE_Y);
   if (hit) zombieHp.pickAt(hit.x, hit.z);
 });
 let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;

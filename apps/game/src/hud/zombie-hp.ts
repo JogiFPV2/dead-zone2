@@ -10,6 +10,8 @@ import './zombie-hp.css';
 const ANCHOR_Y = PLAYER_HEIGHT + 0.12;
 /** Shift + LMB picks a zombie within this distance (tiles) of the floor point under the cursor. */
 export const PICK_RADIUS = 0.9;
+/** Height (world units) of the plane the Shift + LMB ray is intersected with: the zombie's waist. */
+export const PICK_PLANE_Y = PLAYER_HEIGHT * 0.55;
 
 export interface ZombieHpOptions {
   /** „Pokazuj życie zombie”: small bar over every wounded zombie. */
