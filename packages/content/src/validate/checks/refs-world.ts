@@ -2,6 +2,7 @@ import type { ContainerType } from '../../schemas/container-type.js';
 import type { LootTable } from '../../schemas/loot-table.js';
 import type { Station } from '../../schemas/station.js';
 import type { ZombieType } from '../../schemas/zombie-type.js';
+import type { AnimalType } from '../../schemas/animal-type.js';
 import type { RefList } from './ref-collector.js';
 
 export function collectLootTableRefs(t: LootTable, r: RefList): void {
@@ -14,6 +15,10 @@ export function collectLootTableRefs(t: LootTable, r: RefList): void {
 
 export function collectZombieTypeRefs(z: ZombieType, r: RefList): void {
   r.add('lootTable', z.lootTable, 'lootTable');
+}
+
+export function collectAnimalTypeRefs(a: AnimalType, r: RefList): void {
+  a.loot.forEach((l, i) => r.add('item', l.item, 'loot', i, 'item'));
 }
 
 export function collectContainerTypeRefs(c: ContainerType, r: RefList): void {

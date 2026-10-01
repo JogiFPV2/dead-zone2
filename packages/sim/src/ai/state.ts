@@ -5,7 +5,7 @@ import {
   type SimMap,
   type SimZone,
 } from '@deadzone/protocol';
-import type { ContentIndex, ZombieTypeDef } from '../content/adapter.js';
+import type { AnimalTypeDef, ContentIndex, ZombieTypeDef } from '../content/adapter.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { SpatialHash } from '../core/spatial.js';
 import { createCombatWorld, type CombatWorld } from '../combat/state.js';
@@ -47,6 +47,13 @@ export interface CompiledZombieType {
   def: ZombieTypeDef;
   wanderPerTick: number;
   chasePerTick: number;
+}
+
+/** An animal type with speeds in tiles per tick (f32) and timers in ticks. */
+export interface CompiledAnimalType {
+  def: AnimalTypeDef;
+  wanderPerTick: number;
+  fleePerTick: number;
 }
 
 /** A static light (map object whose definition has a `light` block). */
@@ -117,6 +124,14 @@ export interface AiWorld {
   readonly lastX: Float32Array;
   readonly lastY: Float32Array;
   zombieCount: number;
+  /** Animal types with speeds in tiles per tick (`animals/*`, from content). */
+  readonly animalTypes: CompiledAnimalType[];
+  /** Integer map-population weights (`spawnWeight` × 1000), index = animal type. */
+  readonly animalSpawnWeights: number[];
+  /** Living animals (state, saved). */
+  animalCount: number;
+  /** Animals ever spawned (state, saved): the animal hash section exists only when > 0. */
+  animalsSpawned: number;
   /** Melee combat (Stage 4, `combat/*`). */
   readonly combat: CombatWorld;
 }
@@ -165,6 +180,14 @@ export function createAiWorld(
     lastX: new Float32Array(capacity),
     lastY: new Float32Array(capacity),
     zombieCount: 0,
+    animalTypes: content.animalTypes.map((def) => ({
+      def,
+      wanderPerTick: perTick(def.speed.wanderTilesPerSec),
+      fleePerTick: perTick(def.speed.fleeTilesPerSec),
+    })),
+    animalSpawnWeights: content.animalTypes.map((t) => Math.round((t.spawnWeight ?? 1) * 1000)),
+    animalCount: 0,
+    animalsSpawned: 0,
     combat: createCombatWorld(
       capacity,
       content.firearms

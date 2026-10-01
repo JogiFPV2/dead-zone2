@@ -105,8 +105,16 @@ export const NOISE_SOURCES = [
   'impact',
   'lure',
   'debug',
+  /** An animal call while fleeing (a dog barking, `animalType.fleeNoise`). Last: indices are hashed. */
+  'animal',
 ] as const;
 export type NoiseSource = (typeof NOISE_SOURCES)[number];
+
+/**
+ * Why an animal started to flee: saw a player within `fleeDistanceTiles`, saw a zombie, heard a
+ * noise (footsteps, shots…; sneaking is quieter and less visible) or was hit.
+ */
+export type AnimalFleeReason = 'player' | 'zombie' | 'noise' | 'hit';
 
 /** Why a zombie became alert: heard a noise (investigates) or saw a player (chases). */
 export type ZombieAlertReason = 'noise' | 'sight';
@@ -173,8 +181,8 @@ export type SimEvent =
       zombiesKilled?: number;
     }
   /**
-   * A hit landed. `attacker` / `target` are StableIds (player or zombie); `damage` in HP (zombie
-   * HP or player health 0–100), 0 for shoves; `killed` = the target died of it.
+   * A hit landed. `attacker` / `target` are StableIds (player, zombie or animal); `damage` in HP
+   * (zombie / animal HP or player health 0–100), 0 for shoves; `killed` = the target died of it.
    */
   | {
       type: 'hit';
@@ -190,6 +198,54 @@ export type SimEvent =
   /** A zombie died; `playerId` = the killer. */
   /** `playerId` −1: no killer (the zombie died from a fall). */
   | { type: 'zombieKilled'; tick: number; zombie: number; playerId: PlayerId; x: number; y: number }
+  /**
+   * Animals (sim `animals/*`, snapshot kind `animal`). `animal` = StableId, `animalType` = content
+   * id. `animalSpawned`: new animal (map population, init list, `debugSpawnAnimal`).
+   */
+  | {
+      type: 'animalSpawned';
+      tick: number;
+      animal: number;
+      animalType: string;
+      x: number;
+      y: number;
+      z: number;
+    }
+  /**
+   * The animal started to flee (snapshot anim `flee`) from (fromX, fromY). `noise` = it made its
+   * flee call (`fleeNoise`, e.g. a dog barking: zombies hear it, source `animal`).
+   */
+  | {
+      type: 'animalFled';
+      tick: number;
+      animal: number;
+      animalType: string;
+      reason: AnimalFleeReason;
+      x: number;
+      y: number;
+      fromX: number;
+      fromY: number;
+      noise: boolean;
+    }
+  /**
+   * The animal was killed (`hit` events carry the damage; the corpse stays in the snapshot with
+   * anim `dead`). Loot (`animalType.loot`) lies in ground pile `container` (0 = no loot), pick it
+   * up with `pickUp` / `takeItem` / `takeAll`.
+   */
+  | {
+      type: 'animalKilled';
+      tick: number;
+      animal: number;
+      animalType: string;
+      playerId: PlayerId;
+      x: number;
+      y: number;
+      z: number;
+      container: ContainerId;
+      loot: { def: string; count: number }[];
+    }
+  /** A bird flew off and left the world (gone from the snapshot from this tick). */
+  | { type: 'animalDespawned'; tick: number; animal: number; animalType: string; reason: 'fled' }
   /** A melee weapon broke (condition reached 0) and was removed or replaced by `brokenInto`. */
   | { type: 'weaponBroke'; tick: number; playerId: PlayerId; itemId: string }
   | { type: 'wounded'; tick: number; playerId: PlayerId; part: BodyPart; wound: WoundKind }

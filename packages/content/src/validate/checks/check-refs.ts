@@ -15,6 +15,7 @@ import {
   collectLootTableRefs,
   collectStationRefs,
   collectZombieTypeRefs,
+  collectAnimalTypeRefs,
 } from './refs-world.js';
 import { RefList } from './ref-collector.js';
 
@@ -39,6 +40,9 @@ export function collectRefs(def: IndexedDefinition): RefList {
       break;
     case 'zombieType':
       collectZombieTypeRefs(d.data, r);
+      break;
+    case 'animalType':
+      collectAnimalTypeRefs(d.data, r);
       break;
     case 'containerType':
       collectContainerTypeRefs(d.data, r);

@@ -100,7 +100,9 @@ export class Rng {
 
 /**
  * Named streams, so extra rolls in one system never shift randomness in another
- * (docs/sim-architecture.md 2.2). The order is fixed and is part of the state hash.
+ * (docs/sim-architecture.md 2.2). The order is fixed and is part of the state hash. `animals`
+ * (wander goals, graze pauses, map population, loot rolls) is hashed only in the animal section
+ * of the hash (when animals were ever spawned), so worlds without animals keep their goldens.
  */
 export const RNG_STREAMS = [
   'world',
@@ -111,6 +113,7 @@ export const RNG_STREAMS = [
   'actions',
   'progression',
   'physics',
+  'animals',
 ] as const;
 export type RngStream = (typeof RNG_STREAMS)[number];
 export type RngStreams = Record<RngStream, Rng>;

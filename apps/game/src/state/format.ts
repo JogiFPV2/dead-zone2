@@ -72,6 +72,14 @@ export function describeEvent(e: SimEvent): string {
       return `body ${e.entity} ${e.kind}${e.source !== undefined ? ` (by ${e.source})` : ''}`;
     case 'zombieKilled':
       return `zombie ${e.zombie} killed`;
+    case 'animalSpawned':
+      return `animal ${e.animal} (${e.animalType}) spawned at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+    case 'animalFled':
+      return `animal ${e.animal} (${e.animalType}) fled (${e.reason})${e.noise ? ' noisily' : ''}`;
+    case 'animalKilled':
+      return `animal ${e.animal} (${e.animalType}) killed by ${e.playerId} → ${e.loot.map((l) => `${l.def}×${l.count}`).join(', ') || 'no loot'}`;
+    case 'animalDespawned':
+      return `animal ${e.animal} (${e.animalType}) despawned (${e.reason})`;
     case 'weaponBroke':
       return `weapon broke: ${e.itemId}`;
     case 'itemUsed':

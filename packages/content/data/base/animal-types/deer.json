@@ -1,0 +1,22 @@
+{
+  "id": "base:deer",
+  "name": "animal.base.deer.name",
+  "tags": ["base:big-game"],
+  "health": 70,
+  "speed": { "wanderTilesPerSec": 0.9, "fleeTilesPerSec": 6.5 },
+  "radiusTiles": 0.45,
+  "sightRangeTiles": 22,
+  "hearingRangeTiles": 30,
+  "fleeDistanceTiles": 16,
+  "safeDistanceTiles": 30,
+  "fleeMinSec": 5,
+  "huntable": true,
+  "habitat": "wild",
+  "spawnWeight": 2,
+  "wanderRadiusTiles": 10,
+  "grazeSec": { "min": 4, "max": 12 },
+  "loot": [
+    { "item": "base:venison", "count": { "min": 3, "max": 5 } },
+    { "item": "base:deer-hide" }
+  ]
+}

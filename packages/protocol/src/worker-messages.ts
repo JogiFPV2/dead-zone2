@@ -22,6 +22,14 @@ export interface SimZombieSpawn {
   type?: string | undefined;
 }
 
+/** An animal to spawn at init (`createSim({ spawnAnimals })`); `type` = animal type content id. */
+export interface SimAnimalSpawn {
+  x: number;
+  y: number;
+  z?: number | undefined;
+  type?: string | undefined;
+}
+
 /** Main thread → sim worker. */
 export type MainToWorker =
   | {
@@ -34,11 +42,18 @@ export type MainToWorker =
       content?: SimContentSource | undefined;
       /** Zombies at start (game modes, tests); needs content with `zombieTypes`. */
       zombies?: readonly SimZombieSpawn[] | undefined;
+      /** Animals at start at given points (`type` omitted = weighted by `spawnWeight`). */
+      animals?: readonly SimAnimalSpawn[] | undefined;
+      /**
+       * Populate the map with this many animals at init (outdoor tiles, habitat: chunks with
+       * buildings = town, without = wild; deterministic, RNG stream `animals`). Default 0.
+       */
+      populateAnimals?: number | undefined;
       /** Single loot items on floors at init (default true). */
       floorLoot?: boolean | undefined;
       /** Save from a `saved` message: restores the game (spawn, zombies, floorLoot are ignored). */
       save?: ArrayBuffer | undefined;
-      /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). */
+      /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugSpawnAnimal`, `debugNoise`). */
       dev?: boolean | undefined;
       /** New game: the creator's character, sent as `newCharacter` for player 0 (ignored with `save`). */
       character?: CharacterSpec | undefined;

@@ -46,6 +46,26 @@ export function createComponents(capacity: number) {
       stuck: new Uint16Array(capacity),
       tz: new Int16Array(capacity),
     },
+    /**
+     * Animal brain and body (`animals/*`). `state` = AnimalState, `stateTick` = end of the current
+     * graze pause / wander leg / minimum flee time / bird despawn, `tx`/`ty` = goal point,
+     * `fromX`/`fromY` = what it flees from, `homeX`/`homeY` = spawn point (wander centre).
+     * Kept after death (corpse, `state` dead) and after a bird flew off (`state` gone, no
+     * Position: not rendered).
+     */
+    Animal: {
+      is: new Uint8Array(capacity),
+      type: new Uint16Array(capacity),
+      state: new Uint8Array(capacity),
+      stateTick: new Uint32Array(capacity),
+      tx: f32(),
+      ty: f32(),
+      fromX: f32(),
+      fromY: f32(),
+      homeX: f32(),
+      homeY: f32(),
+      hp: f32(),
+    },
   };
 }
 

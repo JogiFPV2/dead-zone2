@@ -195,6 +195,16 @@ export const debugSpawnZombieCommandSchema = z.strictObject({
   zombieType: contentId.optional(),
 });
 
+export const debugSpawnAnimalCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugSpawnAnimal'),
+  x: coord,
+  y: coord,
+  z: z.number().int().min(-0x8000).max(0x7fff).optional(),
+  count: z.number().int().min(1).max(200).optional(),
+  animalType: contentId.optional(),
+});
+
 export const debugNoiseCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugNoise'),
@@ -361,6 +371,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugStatCommandSchema,
   debugGiveItemCommandSchema,
   debugSpawnZombieCommandSchema,
+  debugSpawnAnimalCommandSchema,
   debugNoiseCommandSchema,
   toggleDoorCommandSchema,
   breakWindowCommandSchema,
@@ -490,6 +501,18 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
       )
       .max(5000)
       .optional(),
+    animals: z
+      .array(
+        z.strictObject({
+          x: coord,
+          y: coord,
+          z: chunkInt.optional(),
+          type: contentId.optional(),
+        }),
+      )
+      .max(2000)
+      .optional(),
+    populateAnimals: z.number().int().min(0).max(2000).optional(),
     content: simContentSourceSchema.optional(),
     dev: z.boolean().optional(),
     character: characterSpecSchema.optional(),

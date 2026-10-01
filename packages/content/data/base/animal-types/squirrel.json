@@ -1,0 +1,17 @@
+{
+  "id": "base:squirrel",
+  "name": "animal.base.squirrel.name",
+  "tags": ["base:small-game"],
+  "health": 5,
+  "speed": { "wanderTilesPerSec": 1, "fleeTilesPerSec": 5 },
+  "radiusTiles": 0.15,
+  "sightRangeTiles": 12,
+  "hearingRangeTiles": 20,
+  "fleeDistanceTiles": 7,
+  "safeDistanceTiles": 14,
+  "habitat": "any",
+  "spawnWeight": 3,
+  "wanderRadiusTiles": 4,
+  "grazeSec": { "min": 2, "max": 7 },
+  "loot": [{ "item": "base:small-game-meat" }]
+}

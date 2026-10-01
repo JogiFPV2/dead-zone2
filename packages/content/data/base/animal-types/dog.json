@@ -1,0 +1,18 @@
+{
+  "id": "base:dog",
+  "name": "animal.base.dog.name",
+  "tags": ["base:pet"],
+  "health": 30,
+  "speed": { "wanderTilesPerSec": 1, "fleeTilesPerSec": 5.5 },
+  "radiusTiles": 0.3,
+  "sightRangeTiles": 18,
+  "hearingRangeTiles": 30,
+  "fleeDistanceTiles": 6,
+  "safeDistanceTiles": 16,
+  "fleeMinSec": 4,
+  "fleeNoise": { "radiusTiles": 25, "volume": 0.7 },
+  "habitat": "town",
+  "spawnWeight": 1,
+  "wanderRadiusTiles": 8,
+  "grazeSec": { "min": 3, "max": 10 }
+}

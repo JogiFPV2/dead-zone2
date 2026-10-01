@@ -14,6 +14,7 @@ import type { Tile } from '../schemas/tile.js';
 import type { Trait } from '../schemas/trait/trait.js';
 import type { WorldSettings } from '../schemas/world-settings.js';
 import type { ZombieType } from '../schemas/zombie-type.js';
+import type { AnimalType } from '../schemas/animal-type.js';
 import type { DeepReadonly } from './deep-freeze.js';
 
 /**
@@ -29,6 +30,8 @@ export type ContentBundle = DeepReadonly<{
   moodles: Record<string, Moodle>;
   lootTables: Record<string, LootTable>;
   zombieTypes: Record<string, ZombieType>;
+  /** Zwierzęta (sim `animals/*`): dzikie i miejskie, łowne lub nie. */
+  animalTypes: Record<string, AnimalType>;
   containers: Record<string, ContainerType>;
   /** Elementy statyczne mapy (podłogi, dachy, ściany, okna, drzwi). */
   tiles: Record<string, Tile>;

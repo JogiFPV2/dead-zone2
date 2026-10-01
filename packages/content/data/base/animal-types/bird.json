@@ -1,0 +1,20 @@
+{
+  "id": "base:bird",
+  "name": "animal.base.bird.name",
+  "tags": ["base:bird"],
+  "health": 2,
+  "speed": { "wanderTilesPerSec": 0.6, "fleeTilesPerSec": 8 },
+  "radiusTiles": 0.1,
+  "sightRangeTiles": 12,
+  "hearingRangeTiles": 18,
+  "fleeDistanceTiles": 6,
+  "safeDistanceTiles": 12,
+  "fleeMinSec": 1,
+  "fliesAway": true,
+  "despawnAfterFleeSec": 2,
+  "habitat": "any",
+  "spawnWeight": 5,
+  "wanderRadiusTiles": 3,
+  "grazeSec": { "min": 2, "max": 6 },
+  "loot": [{ "item": "base:small-game-meat", "chance": 0.5 }]
+}

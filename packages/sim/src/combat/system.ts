@@ -14,6 +14,8 @@ import type { CombatWorld } from './state.js';
 import { fire, firearmOf, reloadSystem } from './firearms.js';
 import { physicsBeginAttack, physicsCanAct, physicsHit } from '../physics/system.js';
 import { floorZ } from '../world/levels.js';
+import { damageAnimal } from '../animals/damage.js';
+import { isLiveAnimal } from '../animals/state.js';
 
 /**
  * Pipeline `combat` (docs 2.5): player swings and shoves queued by `attack` / `shove` this tick
@@ -84,7 +86,10 @@ export function meleeOf(w: SimWorld, cb: CombatWorld, eid: number): MeleeStats {
   };
 }
 
-/** Zombies in the swing cone within `range` (+ their radius) and in sight, nearest first. */
+/**
+ * Zombies (and with `animals` living animals: hunting) in the swing cone within `range` (+ their
+ * radius) and in sight, nearest first.
+ */
 function targetsInArc(
   w: SimWorld,
   ai: AiWorld,
@@ -92,6 +97,7 @@ function targetsInArc(
   grid: TileGrid,
   eid: number,
   range: number,
+  animals = false,
 ): { eid: number; d2: number }[] {
   const { Position, Facing, Collider, StableId } = w.c;
   const x = Position.x[eid] ?? 0;
@@ -100,7 +106,10 @@ function targetsInArc(
   const face = Facing.angle[eid] ?? 0;
   const half = Math.round((cb.cfg.arcHalfDeg / 360) * 65536);
   const out: { eid: number; d2: number }[] = [];
-  for (const zid of sortedQuery(w, 'zombies', [w.c.Zombie])) {
+  const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]);
+  const prey = animals && ai.animalCount > 0 ? sortedQuery(w, 'animals', [w.c.Animal]) : [];
+  for (const zid of prey.length > 0 ? [...zombies, ...prey] : zombies) {
+    if (prey.length > 0 && w.c.Animal.is[zid] === 1 && !isLiveAnimal(w, zid)) continue;
     if (floorZ(w, zid) !== z) continue;
     const dx = (Position.x[zid] ?? 0) - x;
     const dy = (Position.y[zid] ?? 0) - y;
@@ -140,13 +149,17 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   const y = Position.y[eid] ?? 0;
   const z = floorZ(w, eid);
   const rng = w.rng.combat;
-  const targets = targetsInArc(w, ai, cb, grid, eid, m.rangeTiles).slice(0, m.maxTargets);
+  const targets = targetsInArc(w, ai, cb, grid, eid, m.rangeTiles, true).slice(0, m.maxTargets);
   for (const t of targets) {
     let dmg = m.damage.min + rng.nextFloat() * (m.damage.max - m.damage.min);
     if (m.critChance > 0 && rng.chance(m.critChance)) dmg *= cfg.critMul;
     if (exhausted) dmg *= cfg.exhaustedDamageMul;
     // Arm / torso wounds (woundPenalties.attackPower).
     dmg = Math.fround(dmg * penaltyMul(w, eid, Pen.attack));
+    if (w.c.Animal.is[t.eid] === 1) {
+      damageAnimal(w, ai, grid, t.eid, eid, dmg, 'melee');
+      continue;
+    }
     const killed = damageZombie(w, ai, cb, grid, t.eid, eid, dmg, 'melee');
     physicsHit(w, eid, t.eid, 'melee', m.knockback, killed);
   }

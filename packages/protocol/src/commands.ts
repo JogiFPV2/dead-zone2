@@ -322,6 +322,19 @@ export interface DebugSpawnZombieCommand extends CommandHeader {
   zombieType?: string | undefined;
 }
 
+/**
+ * Dev only (`init.dev`): spawns `count` animals (default 1) around (x, y) on free tiles;
+ * `animalType` is a content id (default: weighted by `spawnWeight`).
+ */
+export interface DebugSpawnAnimalCommand extends CommandHeader {
+  type: 'debugSpawnAnimal';
+  x: number;
+  y: number;
+  z?: number | undefined;
+  count?: number | undefined;
+  animalType?: string | undefined;
+}
+
 /** Dev only (`init.dev`): emits a noise at (x, y) (e.g. to test hearing and lures). */
 export interface DebugNoiseCommand extends CommandHeader {
   type: 'debugNoise';
@@ -537,6 +550,7 @@ export type Command =
   | DebugStatCommand
   | DebugGiveItemCommand
   | DebugSpawnZombieCommand
+  | DebugSpawnAnimalCommand
   | DebugNoiseCommand
   | ToggleDoorCommand
   | BreakWindowCommand

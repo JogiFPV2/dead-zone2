@@ -5,7 +5,7 @@
  * ```
  *   stableId, x, y, z, facingRad, kind, anim, hpPct,
  *   state, stateStartTick*, stateDuration, knockbackDirX, knockbackDirY, knockbackStrength,
- *   hitFromDir, gaitSeed*
+ *   hitFromDir, gaitSeed*, variant
  * ```
  * All words are f32 except the ones marked `*` (SNAPSHOT_U32_FIELDS): those are u32 bit patterns,
  * read them through a `Uint32Array` over the same buffer (`readSnapshotEntity` does this).
@@ -23,8 +23,12 @@
  * hit (unit direction + strength 0..1, zeroed when the entity is back in control), `hitFromDir`
  * (rad, like facingRad: where the last hit came from), `gaitSeed` (u32, fixed per zombie, 0 for
  * players).
+ * 8 changed the map only (stairs); 9 added `variant` (stride 16 → 17): type index of the entity — animals: index of the animal type
+ * in the content ids sorted ascending (`Object.keys(bundle.animalTypes).sort()`, sim helper
+ * `animalTypeIds`), zombies: index of the zombie type the same way, players: 0. Kind `animal` (3)
+ * and anim `flee` (5) came with it.
  */
-export const SNAPSHOT_ENTITY_STRIDE = 16;
+export const SNAPSHOT_ENTITY_STRIDE = 17;
 export const SnapshotField = {
   stableId: 0,
   x: 1,
@@ -42,20 +46,21 @@ export const SnapshotField = {
   knockbackStrength: 13,
   hitFromDir: 14,
   gaitSeed: 15,
+  variant: 16,
 } as const;
 
 /** Fields stored as u32 bit patterns (not f32). */
 export const SNAPSHOT_U32_FIELDS = [SnapshotField.stateStartTick, SnapshotField.gaitSeed] as const;
 
 /** `kind` field values. */
-export const SnapshotEntityKind = { unknown: 0, player: 1, zombie: 2 } as const;
+export const SnapshotEntityKind = { unknown: 0, player: 1, zombie: 2, animal: 3 } as const;
 export type SnapshotEntityKindValue = (typeof SnapshotEntityKind)[keyof typeof SnapshotEntityKind];
 
 /**
  * `anim` field values: idle, walk (wander / investigate), run (chase), attack (reserved for
- * combat), dead (reserved: corpses).
+ * combat), dead (corpses), flee (animals running away; birds: flying off).
  */
-export const SnapshotAnim = { idle: 0, walk: 1, run: 2, attack: 3, dead: 4 } as const;
+export const SnapshotAnim = { idle: 0, walk: 1, run: 2, attack: 3, dead: 4, flee: 5 } as const;
 export type SnapshotAnimValue = (typeof SnapshotAnim)[keyof typeof SnapshotAnim];
 
 /**
@@ -117,6 +122,8 @@ export interface SnapshotEntity {
   hitFromDir?: number;
   /** u32 per zombie from the seeded RNG, fixed for life (gait / animation variation). */
   gaitSeed?: number;
+  /** Type index (`SnapshotField.variant`): animal / zombie type in sorted content ids, 0 when omitted. */
+  variant?: number;
 }
 
 export const snapshotFloatLength = (entityCount: number): number =>
@@ -164,6 +171,7 @@ export function encodeSnapshot(
     f[o + 13] = kb.strength;
     f[o + 14] = e.hitFromDir ?? 0;
     u[o + 15] = (e.gaitSeed ?? 0) >>> 0;
+    f[o + 16] = e.variant ?? 0;
     o += SNAPSHOT_ENTITY_STRIDE;
   }
   return out;
@@ -201,6 +209,7 @@ export function readSnapshotEntity(
   out.knockback = kb;
   out.hitFromDir = view[o + 14] ?? 0;
   out.gaitSeed = u32[o + 15] ?? 0;
+  out.variant = view[o + 16] ?? 0;
   return out;
 }
 

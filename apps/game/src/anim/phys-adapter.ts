@@ -159,6 +159,8 @@ export class PhysAdapter {
       const x = buf[o + SnapshotField.x] ?? 0;
       const y = buf[o + SnapshotField.y] ?? 0;
       const kind = buf[o + SnapshotField.kind] ?? 0;
+      // Animals have no skeleton physics yet (TODO: animal renderer, docs 9.19).
+      if (kind === SnapshotEntityKind.animal) continue;
       const anim = buf[o + SnapshotField.anim] ?? 0;
       let b = this.bodies.get(id);
       if (!b) {

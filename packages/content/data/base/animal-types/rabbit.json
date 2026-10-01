@@ -1,0 +1,18 @@
+{
+  "id": "base:rabbit",
+  "name": "animal.base.rabbit.name",
+  "tags": ["base:small-game"],
+  "health": 8,
+  "speed": { "wanderTilesPerSec": 0.8, "fleeTilesPerSec": 5.5 },
+  "radiusTiles": 0.2,
+  "sightRangeTiles": 14,
+  "hearingRangeTiles": 22,
+  "fleeDistanceTiles": 9,
+  "safeDistanceTiles": 18,
+  "huntable": true,
+  "habitat": "wild",
+  "spawnWeight": 4,
+  "wanderRadiusTiles": 5,
+  "grazeSec": { "min": 3, "max": 9 },
+  "loot": [{ "item": "base:rabbit-carcass" }]
+}

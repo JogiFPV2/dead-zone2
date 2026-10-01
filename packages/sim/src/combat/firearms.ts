@@ -27,6 +27,8 @@ import { lineOfSight } from '../world/los.js';
 import { RK, type CombatWorld } from './state.js';
 import { damageZombie } from './system.js';
 import { floorZ } from '../world/levels.js';
+import { damageAnimal } from '../animals/damage.js';
+import { isLiveAnimal } from '../animals/state.js';
 
 type RangedDef = Extract<ItemDef, { kind: 'weapon_ranged' }>;
 type MagazineDef = Extract<ItemDef, { kind: 'magazine' }>;
@@ -415,7 +417,13 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
     penaltyMul(w, eid, Pen.attack) * (1 + fc.accuracyPerSkillLevel * skillLevel(w, eid, r.skill));
   const spread = effectiveSpread(w, cb, eid, g.def);
   let hits = 0;
+  // Zombies and living animals (hunting) on the shooter's floor.
   const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]).filter((zid) => floorZ(w, zid) === z);
+  if (ai.animalCount > 0) {
+    for (const aid of sortedQuery(w, 'animals', [w.c.Animal])) {
+      if (isLiveAnimal(w, aid) && floorZ(w, aid) === z) zombies.push(aid);
+    }
+  }
   const rays: { toX: number; toY: number; hit: number }[] = [];
   for (let p = 0; p < r.projectiles; p++) {
     const off = (rng.nextFloat() * 2 - 1) * spread;
@@ -441,7 +449,9 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
     let hit = 0;
     let tEnd = end;
     for (const a of along) {
-      if ((w.c.Zombie.hp[a.zid] ?? 0) <= 0) continue; // killed by an earlier projectile
+      const animal = w.c.Animal.is[a.zid] === 1;
+      // Killed by an earlier projectile.
+      if (animal ? !isLiveAnimal(w, a.zid) : (w.c.Zombie.hp[a.zid] ?? 0) <= 0) continue;
       const chance = r.accuracy * (1 - (fc.hitFalloffAtRange * a.t) / r.rangeTiles) * aimMul;
       if (!rng.chance(Math.max(0, chance))) continue;
       const dmg = Math.fround(
@@ -450,7 +460,8 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
       hit = StableId.value[a.zid] ?? 0;
       tEnd = a.t;
       hits++;
-      damageZombie(w, ai, cb, grid, a.zid, eid, dmg, 'shot');
+      if (animal) damageAnimal(w, ai, grid, a.zid, eid, dmg, 'shot');
+      else damageZombie(w, ai, cb, grid, a.zid, eid, dmg, 'shot');
       break;
     }
     rays.push({

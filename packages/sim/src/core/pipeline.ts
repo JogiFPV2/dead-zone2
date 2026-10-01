@@ -2,6 +2,7 @@ import { actionsSystem } from '../actions/queue.js';
 import { aiThinkSystem } from '../ai/brain.js';
 import { combatSystem } from '../combat/system.js';
 import { aiLocomotionSystem } from '../ai/locomotion.js';
+import { animalSystem } from '../animals/system.js';
 import { footstepSystem, noiseCollectSystem } from '../ai/noise.js';
 import { threatSystem } from '../ai/threat.js';
 import { navSystem } from '../nav/system.js';
@@ -43,6 +44,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'ai.brain', run: (w, ctx) => aiThinkSystem(w, ctx.grid) },
     { name: 'nav', run: (w, ctx) => navSystem(w, ctx.grid) },
     { name: 'ai.locomotion', run: (w, ctx) => aiLocomotionSystem(w, ctx.grid) },
+    { name: 'animals', run: (w, ctx) => animalSystem(w, ctx.grid) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
     { name: 'physics', run: (w, ctx) => physicsSystem(w, ctx.grid) },

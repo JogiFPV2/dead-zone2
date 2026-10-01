@@ -14,6 +14,7 @@ import { StationSchema } from './station.js';
 import { TileSchema } from './tile.js';
 import { TraitSchema } from './trait/index.js';
 import { ZombieTypeSchema } from './zombie-type.js';
+import { AnimalTypeSchema } from './animal-type.js';
 
 /** Schemat dla każdego rodzaju definicji. */
 export const CONTENT_SCHEMAS = {
@@ -25,6 +26,7 @@ export const CONTENT_SCHEMAS = {
   moodle: MoodleSchema,
   lootTable: LootTableSchema,
   zombieType: ZombieTypeSchema,
+  animalType: AnimalTypeSchema,
   containerType: ContainerTypeSchema,
   tile: TileSchema,
   gameMode: GameModeSchema,

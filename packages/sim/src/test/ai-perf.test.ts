@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { SimOptions } from '../sim.js';
+import { animalContent } from './animal-fixtures.js';
 import { hordeSim, stepScripted } from './horde-fixtures.js';
 
 /**
@@ -16,8 +18,12 @@ interface PerfHost {
 const host = globalThis as unknown as PerfHost;
 const tolerance = Number(host.process.env.PERF_TOLERANCE ?? (host.process.env.CI ? 1.5 : 1));
 
-function measure(count: number): { avg: number; p95: number; chasing: number } {
-  const sim = hordeSim(count);
+function measure(
+  count: number,
+  extra: Partial<SimOptions> = {},
+  label = `${count} zombies`,
+): { avg: number; p95: number; chasing: number } {
+  const sim = hordeSim(count, 5, undefined, extra);
   for (let i = 0; i < 200; i++) stepScripted(sim); // warm-up, horde gathers
   const times: number[] = [];
   for (let i = 0; i < 600; i++) {
@@ -31,7 +37,7 @@ function measure(count: number): { avg: number; p95: number; chasing: number } {
   times.sort((a, b) => a - b);
   const chasing = sim.getZombies().filter((z) => z.state === 'chase').length;
   host.process.stderr.write(
-    `[perf] ${count} zombies: avg ${avg.toFixed(2)} ms (best 200-tick batch), p95 ${times[Math.floor(times.length * 0.95)]!.toFixed(2)} ms, chasing ${chasing}\n`,
+    `[perf] ${label}: avg ${avg.toFixed(2)} ms (best 200-tick batch), p95 ${times[Math.floor(times.length * 0.95)]!.toFixed(2)} ms, chasing ${chasing}\n`,
   );
   return { avg, p95: times[Math.floor(times.length * 0.95)]!, chasing };
 }
@@ -39,6 +45,17 @@ function measure(count: number): { avg: number; p95: number; chasing: number } {
 describe('ai performance', () => {
   it('200 zombies: average tick ≤ 4 ms', { timeout: 120_000 }, () => {
     const r = measure(200);
+    expect(r.chasing).toBeGreaterThan(100);
+    expect(r.avg).toBeLessThanOrEqual(4 * tolerance);
+  });
+
+  it('200 zombies + 50 animals: average tick ≤ 4 ms (same budget)', { timeout: 120_000 }, () => {
+    // Animals across the town; the loud noise every 5 s keeps them fleeing (worst case).
+    const r = measure(
+      200,
+      { content: animalContent(), populateAnimals: 50 },
+      '200 zombies + 50 animals',
+    );
     expect(r.chasing).toBeGreaterThan(100);
     expect(r.avg).toBeLessThanOrEqual(4 * tolerance);
   });

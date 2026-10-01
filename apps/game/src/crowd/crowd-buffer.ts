@@ -1,4 +1,4 @@
-import { SNAPSHOT_ENTITY_STRIDE, SnapshotField } from '@deadzone/protocol';
+import { SNAPSHOT_ENTITY_STRIDE, SnapshotEntityKind, SnapshotField } from '@deadzone/protocol';
 import { SlotMap } from './slot-map.js';
 
 /** Floats per slot in prev/curr: x, y, z, facing. */
@@ -52,6 +52,8 @@ export class CrowdBuffer {
     const n = Math.floor(buf.length / SNAPSHOT_ENTITY_STRIDE);
     for (let e = skip; e < n; e++) {
       const o = e * SNAPSHOT_ENTITY_STRIDE;
+      // Animals are not zombies: skip until the client renders them (TODO, docs 9.19).
+      if (buf[o + SnapshotField.kind] === SnapshotEntityKind.animal) continue;
       const id = buf[o + SnapshotField.stableId] ?? 0;
       const known = this.slots.get(id);
       const slot = known ?? this.slots.add(id);

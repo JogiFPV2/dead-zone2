@@ -1,5 +1,6 @@
 import { GAITS, type Command, type CommandRejectReason } from '@deadzone/protocol';
 import { applyAiCommand, isAiCommand } from '../ai/commands.js';
+import { applyAnimalCommand, isAnimalCommand } from '../animals/commands.js';
 import { queueAttack } from '../combat/commands.js';
 import { applyFirearmCommand } from '../combat/firearms.js';
 import type { SimWorld } from '../core/world.js';
@@ -43,6 +44,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       MoveIntent.gait[eid] = GAITS.indexOf(cmd.gait ?? 'walk');
     } else if (cmd.type === 'attack' || cmd.type === 'shove') {
       const reason = queueAttack(w, eid, cmd.type === 'shove');
+      if (reason) reject(w, cmd, reason);
+    } else if (isAnimalCommand(cmd)) {
+      const reason = applyAnimalCommand(w, cmd);
       if (reason) reject(w, cmd, reason);
     } else if (isAiCommand(cmd)) {
       const reason = applyAiCommand(w, eid, cmd);

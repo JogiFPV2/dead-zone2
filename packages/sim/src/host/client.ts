@@ -10,6 +10,7 @@ import type {
   Gait,
   SimContentSource,
   SimZombieSpawn,
+  SimAnimalSpawn,
   SimEvent,
   SimViewPatch,
   EdgeSide,
@@ -54,6 +55,10 @@ export interface SimWorkerClient {
       content?: SimContentSource;
       dev?: boolean;
       zombies?: readonly SimZombieSpawn[];
+      /** Animals at given points (`type` omitted = weighted). */
+      animals?: readonly SimAnimalSpawn[];
+      /** Populate the map with this many animals (habitat by chunk, deterministic). */
+      populateAnimals?: number;
       floorLoot?: boolean;
       /** Restores a save (`SavedGame.buf`). */
       save?: ArrayBuffer;
@@ -132,6 +137,8 @@ export interface SimWorkerClient {
   debugGiveItem(itemId: string, count?: number): void;
   /** Dev: spawns zombies around a point (free tiles). */
   debugSpawnZombie(x: number, y: number, count?: number, zombieType?: string): void;
+  /** Dev: spawns animals around a point (free tiles); `animalType` = content id. */
+  debugSpawnAnimal(x: number, y: number, count?: number, animalType?: string): void;
   /** Dev: a noise at a point (radius in tiles, volume 0..1). */
   debugNoise(x: number, y: number, radiusTiles: number, volume?: number): void;
   /** Dev only (init `dev: true`). */
@@ -221,6 +228,8 @@ export function createSimWorkerClient(
         ...(opts?.content ? { content: opts.content } : {}),
         ...(opts?.dev ? { dev: true } : {}),
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
+        ...(opts?.animals ? { animals: opts.animals } : {}),
+        ...(opts?.populateAnimals ? { populateAnimals: opts.populateAnimals } : {}),
         ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
         ...(opts?.save ? { save: opts.save } : {}),
         ...(opts?.character ? { character: opts.character } : {}),
@@ -296,6 +305,14 @@ export function createSimWorkerClient(
         y,
         ...(count ? { count } : {}),
         ...(zombieType ? { zombieType } : {}),
+      }),
+    debugSpawnAnimal: (x, y, count, animalType) =>
+      cmd({
+        type: 'debugSpawnAnimal',
+        x,
+        y,
+        ...(count ? { count } : {}),
+        ...(animalType ? { animalType } : {}),
       }),
     debugNoise: (x, y, radiusTiles, volume) =>
       cmd({ type: 'debugNoise', x, y, radiusTiles, ...(volume !== undefined ? { volume } : {}) }),

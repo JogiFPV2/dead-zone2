@@ -112,6 +112,8 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     if (zombie) {
       // Zombies: speed set by ai.locomotion, no survival modifiers; a shambling wobble.
       speed = Math.fround(speed * zombieWobble(gaitSeedOf(w, eid), w.tick));
+    } else if (w.c.Animal.is[eid] === 1) {
+      // Animals: speed set by the `animals` step (graze / wander / flee), nothing else.
     } else if (s && (s.asleep[eid] || s.dead[eid])) {
       // Asleep or dead: no movement (the held intent stays for after waking).
       speed = 0;

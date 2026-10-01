@@ -10,6 +10,7 @@ import {
   type InventoryView,
   type SimViewPatch,
   type SimZombieSpawn,
+  type SimAnimalSpawn,
   type CharacterSpec,
   type WoundView,
 } from '@deadzone/protocol';
@@ -21,6 +22,9 @@ import { PENALTY_SLOTS } from './survival/penalties.js';
 import { hashCombat } from './combat/hash.js';
 import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
 import { spawnZombies } from './ai/zombies.js';
+import { populateAnimals, spawnAnimals } from './animals/spawn.js';
+import { hashAnimals } from './animals/hash.js';
+import { ANIMAL_STATE_NAMES, type AnimalStateName } from './animals/state.js';
 import { threatLevel } from './ai/threat.js';
 import { compileContent, type SimContent } from './content/adapter.js';
 import { dayOf, gameMinuteAt, minuteOfDay, type ClockStart } from './core/clock.js';
@@ -80,6 +84,16 @@ export interface SimOptions {
    * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
    */
   spawnZombies?: readonly SimZombieSpawn[] | undefined;
+  /**
+   * Animals at start at given points (needs content with `animalTypes`); `type` omitted =
+   * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
+   */
+  spawnAnimals?: readonly SimAnimalSpawn[] | undefined;
+  /**
+   * Populate the map with this many animals at init (`animals/spawn.ts`: outdoor tiles, habitat
+   * by chunk, RNG stream `animals`). Default 0.
+   */
+  populateAnimals?: number | undefined;
   /** Stage 4 tuning without data fields yet (ai/config.ts); default DEFAULT_STAGE4_CONFIG. */
   aiConfig?: Stage4Config | undefined;
   /** Combat tuning without data fields yet (combat/config.ts); default DEFAULT_COMBAT_CONFIG. */
@@ -127,6 +141,18 @@ export interface PlayerState {
   facingRad: number;
 }
 
+/** Read-only animal state (tests, tools, debug overlays). */
+export interface AnimalInfo {
+  stableId: number;
+  /** Animal type content id. */
+  type: string;
+  x: number;
+  y: number;
+  z: number;
+  state: AnimalStateName;
+  hp: number;
+}
+
 /** Read-only zombie state (tests, tools, debug overlays). */
 export interface ZombieInfo {
   stableId: number;
@@ -169,6 +195,8 @@ export interface Sim {
   threatLevel(playerId?: PlayerId): number;
   /** All zombies in StableId order. */
   getZombies(): ZombieInfo[];
+  /** All animals (alive and corpses; gone birds excluded) in StableId order. */
+  getAnimals(): AnimalInfo[];
   /** UI view delta for player 0 since the last call (undefined when nothing changed). */
   drainView(): SimViewPatch | undefined;
   /** Full inventory view (all carried containers); undefined without content. */
@@ -275,6 +303,8 @@ export function createSim(input: SimOptions): Sim {
     const spawn = opts.spawn ?? findSpawn(ctx.grid);
     spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
     if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
+    if (opts.spawnAnimals) spawnAnimals(w, opts.spawnAnimals);
+    if (opts.populateAnimals) populateAnimals(w, ctx.grid, opts.populateAnimals);
     if (opts.character) {
       const r = applyNewCharacter(w, w.players.get(0)!, opts.character);
       if (r) throw new Error(`character: ${r.detail ?? r.reason}`);
@@ -284,7 +314,10 @@ export function createSim(input: SimOptions): Sim {
   const hash = (): number => {
     const h = new HashWriter();
     h.u32(w.tick).u32(w.seed).u32(w.nextStableId);
-    for (const name of RNG_STREAMS) for (const word of w.rng[name].state()) h.u32(word);
+    for (const name of RNG_STREAMS) {
+      if (name === 'animals') continue; // animal section (hashAnimals)
+      for (const word of w.rng[name].state()) h.u32(word);
+    }
     const seqs = w.queue.seqState();
     h.u32(seqs.length);
     for (const [pid, seq] of seqs) h.u32(pid).u32(seq);
@@ -343,6 +376,7 @@ export function createSim(input: SimOptions): Sim {
     }
     if (w.items) hashItems(w.items, h);
     hashAi(w, h);
+    hashAnimals(w, h);
     hashCombat(w, h);
     writePhysicsHash(w.physics, h);
     // Doors / windows: only when something differs from the map (keeps older goldens).
@@ -429,6 +463,26 @@ export function createSim(input: SimOptions): Sim {
         targetId: c.Zombie.targetId[eid] ?? 0,
         hp: c.Zombie.hp[eid] ?? 0,
       }));
+    },
+    getAnimals() {
+      const ai = w.ai;
+      if (!ai) return [];
+      const A = c.Animal;
+      return sortedQuery(w, 'animals', [A]).flatMap((eid) => {
+        const state = ANIMAL_STATE_NAMES[A.state[eid] ?? 0] ?? 'graze';
+        if (state === 'gone') return [];
+        return [
+          {
+            stableId: c.StableId.value[eid] ?? 0,
+            type: ai.animalTypes[A.type[eid] ?? 0]?.def.id ?? '',
+            x: c.Position.x[eid] ?? 0,
+            y: c.Position.y[eid] ?? 0,
+            z: c.Position.z[eid] ?? 0,
+            state,
+            hp: A.hp[eid] ?? 0,
+          },
+        ];
+      });
     },
     drainView: () => views.diff(w),
     save: () => saveWorld(w),

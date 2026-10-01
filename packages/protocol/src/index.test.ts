@@ -81,6 +81,8 @@ describe('parseCommand', () => {
         zombieType: 'base:walker',
       },
       { ...base, type: 'debugNoise', x: 3.5, y: 4.5, radiusTiles: 30, volume: 0.5 },
+      { ...base, type: 'debugSpawnAnimal', x: 3.5, y: 4.5 },
+      { ...base, type: 'debugSpawnAnimal', x: 3, y: 4, z: 0, count: 5, animalType: 'base:deer' },
     ]) {
       expect(parseCommand(cmd).ok, JSON.stringify(cmd)).toBe(true);
     }
@@ -103,6 +105,8 @@ describe('parseCommand', () => {
     ['unknown gait', { ...base, type: 'move', dx: 0, dy: 0, gait: 'crawl' }],
     ['zero zombies', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, count: 0 }],
     ['bad zombie type', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, zombieType: 'Walker' }],
+    ['zero animals', { ...base, type: 'debugSpawnAnimal', x: 1, y: 1, count: 0 }],
+    ['bad animal type', { ...base, type: 'debugSpawnAnimal', x: 1, y: 1, animalType: 'Deer' }],
     ['noise volume > 1', { ...base, type: 'debugNoise', x: 1, y: 1, radiusTiles: 3, volume: 2 }],
   ])('rejects %s', (_name, input) => {
     expect(parseCommand(input).ok).toBe(false);
@@ -152,17 +156,18 @@ describe('snapshot encoding', () => {
         knockback: { dirX: 1, dirY: 0, strength: 0.5 },
         hitFromDir: 3,
         gaitSeed: 0xdeadbeef,
+        variant: 2,
       },
     ];
     const buf = encodeSnapshot(ents);
     expect(buf.byteLength).toBe(snapshotByteLength(2));
     expect(snapshotEntityCount(buf)).toBe(2);
-    expect(decodeSnapshot(buf)).toEqual(ents);
+    expect(decodeSnapshot(buf)).toEqual([{ ...ents[0], variant: 0 }, ents[1]]);
   });
 
-  it('has no header: 16 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
-    expect(SNAPSHOT_ENTITY_STRIDE).toBe(16);
-    expect(PROTOCOL_VERSION).toBe(8);
+  it('has no header: 17 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
+    expect(SNAPSHOT_ENTITY_STRIDE).toBe(17);
+    expect(PROTOCOL_VERSION).toBe(9);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -183,8 +188,8 @@ describe('snapshot encoding', () => {
       },
     ]);
     const f = Array.from(new Float32Array(buf));
-    expect(f.slice(0, 16)).toEqual([3, 1, 2, 0, 0.25, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
-    expect(f.slice(16, 24)).toEqual([4, 1, 2, 0, 0, 2, 2, 0.25]);
+    expect(f.slice(0, 17)).toEqual([3, 1, 2, 0, 0.25, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(f.slice(17, 25)).toEqual([4, 1, 2, 0, 0, 2, 2, 0.25]);
     const o = SNAPSHOT_ENTITY_STRIDE;
     expect(f[o + SnapshotField.state]).toBe(ENTITY_PHYS_STATES.indexOf('getup'));
     expect(f[o + SnapshotField.stateDuration]).toBe(30);
@@ -195,6 +200,28 @@ describe('snapshot encoding', () => {
     expect(SNAPSHOT_U32_FIELDS).toEqual([SnapshotField.stateStartTick, SnapshotField.gaitSeed]);
     expect(u[o + SnapshotField.stateStartTick]).toBe(40);
     expect(u[o + SnapshotField.gaitSeed]).toBe(7);
+  });
+
+  it('encodes animals: kind 3, flee anim, type index in variant', () => {
+    expect(SnapshotEntityKind.animal).toBe(3);
+    expect(SnapshotAnim.flee).toBe(5);
+    expect(SnapshotField.variant).toBe(16);
+    const animal = {
+      stableId: 9,
+      x: 4,
+      y: 5,
+      z: 0,
+      facingRad: 1,
+      kind: SnapshotEntityKind.animal,
+      anim: SnapshotAnim.flee,
+      hpPct: 0.5,
+      variant: 4,
+    };
+    const f = new Float32Array(encodeSnapshot([animal]));
+    expect(f[SnapshotField.kind]).toBe(3);
+    expect(f[SnapshotField.anim]).toBe(5);
+    expect(f[SnapshotField.variant]).toBe(4);
+    expect(decodeSnapshot(f.buffer)[0]).toMatchObject(animal);
   });
 
   it('reuses a buffer only when its size matches exactly', () => {
@@ -318,6 +345,14 @@ describe('parseMainToWorker', () => {
     expect(
       parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] }, zombies: [{ x: 1 }] }).ok,
     ).toBe(false);
+    const animals = [
+      { x: 3.5, y: 4.5 },
+      { x: 6, y: 7, z: 0, type: 'base:rabbit' },
+    ];
+    const withAnimals = { kind: 'init', seed: 1, map, animals, populateAnimals: 20 };
+    expect(parseMainToWorker(withAnimals).ok).toBe(true);
+    expect(parseMainToWorker({ ...withAnimals, populateAnimals: -1 }).ok).toBe(false);
+    expect(parseMainToWorker({ ...withAnimals, animals: [{ y: 1 }] }).ok).toBe(false);
     const back = simMapToData(simMapFromData(map), { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
     expect(back).toEqual(map);
   });

@@ -1,0 +1,16 @@
+{
+  "id": "base:cat",
+  "name": "animal.base.cat.name",
+  "tags": ["base:pet"],
+  "health": 12,
+  "speed": { "wanderTilesPerSec": 0.7, "fleeTilesPerSec": 5 },
+  "radiusTiles": 0.2,
+  "sightRangeTiles": 14,
+  "hearingRangeTiles": 22,
+  "fleeDistanceTiles": 5,
+  "safeDistanceTiles": 12,
+  "habitat": "town",
+  "spawnWeight": 2,
+  "wanderRadiusTiles": 6,
+  "grazeSec": { "min": 4, "max": 14 }
+}

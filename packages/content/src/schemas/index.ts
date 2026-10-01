@@ -8,6 +8,7 @@ export * from './moodle.js';
 export * from './loot-table.js';
 export * from './loot-rarity.js';
 export * from './zombie-type.js';
+export * from './animal-type.js';
 export * from './container-type.js';
 export * from './tile.js';
 export * from './station.js';

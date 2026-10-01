@@ -6,6 +6,7 @@ export {
   type Sim,
   type SimOptions,
   type ZombieInfo,
+  type AnimalInfo,
 } from './sim.js';
 export {
   MOD_STATS,
@@ -67,6 +68,14 @@ export { DEFAULT_COMBAT_CONFIG, type CombatConfig } from './combat/config.js';
 export type { AiConfig, GaitConfig, NoiseConfig, Stage4Config, VisionConfig } from './ai/config.js';
 export { ZOMBIE_STATE_NAMES, ZombieState, type ZombieStateName } from './ai/state.js';
 export { daylight } from './ai/vision.js';
+export {
+  ANIMAL_CONFIG,
+  ANIMAL_STATE_NAMES,
+  AnimalState,
+  animalTypeIds,
+  type AnimalStateName,
+} from './animals/state.js';
+export { POPULATE_MIN_PLAYER_TILES, populateAnimals, spawnAnimals } from './animals/spawn.js';
 export {
   DEFAULT_PHYSICS_CONFIG,
   ENDURANCE_ACCEL_MUL,

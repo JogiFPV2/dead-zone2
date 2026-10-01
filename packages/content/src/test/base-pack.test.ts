@@ -65,6 +65,7 @@ describe('paczka bazowa data/base', () => {
       'moodles',
       'lootTables',
       'zombieTypes',
+      'animalTypes',
       'containers',
       'tiles',
       'gameModes',

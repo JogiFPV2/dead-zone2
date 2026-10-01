@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SNAPSHOT_ENTITY_STRIDE,
   SnapshotAnim,
   SnapshotEntityKind,
   encodeSnapshot,
@@ -24,7 +25,8 @@ const ent = (stableId: number, x: number, kind: number, anim: number = SnapshotA
 const snap = (...e: ReturnType<typeof ent>[]) => {
   const full = new Float32Array(encodeSnapshot(e));
   const out = new Float32Array(e.length * 8);
-  for (let i = 0; i < e.length; i++) out.set(full.subarray(i * 16, i * 16 + 8), i * 8);
+  for (let i = 0; i < e.length; i++)
+    out.set(full.subarray(i * SNAPSHOT_ENTITY_STRIDE, i * SNAPSHOT_ENTITY_STRIDE + 8), i * 8);
   return out;
 };
 const hit = (

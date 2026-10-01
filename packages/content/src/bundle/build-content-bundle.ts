@@ -16,6 +16,7 @@ export const BUNDLE_KEYS = {
   moodle: 'moodles',
   lootTable: 'lootTables',
   zombieType: 'zombieTypes',
+  animalType: 'animalTypes',
   containerType: 'containers',
   tile: 'tiles',
   gameMode: 'gameModes',

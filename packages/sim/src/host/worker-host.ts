@@ -118,6 +118,8 @@ export function startSimWorkerHost(
         map: simMapFromData(msg.map),
         ...(msg.spawn ? { spawn: msg.spawn } : {}),
         ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
+        ...(msg.animals ? { spawnAnimals: msg.animals } : {}),
+        ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),
         content,
         dev: msg.dev ?? false,
         floorLoot: msg.floorLoot ?? true,

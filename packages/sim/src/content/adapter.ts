@@ -12,6 +12,7 @@ export type SimContent = Pick<
     Pick<
       ContentBundle,
       | 'zombieTypes'
+      | 'animalTypes'
       | 'recipes'
       | 'skills'
       | 'stations'
@@ -30,6 +31,7 @@ export type RecipeDef = ContentBundle['recipes'][string];
 export type SkillDef = ContentBundle['skills'][string];
 export type StationDef = ContentBundle['stations'][string];
 export type ZombieTypeDef = ContentBundle['zombieTypes'][string];
+export type AnimalTypeDef = ContentBundle['animalTypes'][string];
 export type ItemDef = ContentBundle['items'][string];
 export type ContainerTypeDef = ContentBundle['containers'][string];
 export type LootTableDef = ContentBundle['lootTables'][string];
@@ -99,6 +101,9 @@ export interface ContentIndex {
   /** Zombie types sorted by id (index = `Zombie.type`, part of the state hash). */
   zombieTypes: ZombieTypeDef[];
   zombieTypeIndex: ReadonlyMap<string, number>;
+  /** Animal types sorted by id (index = `Animal.type` = snapshot `variant`, hashed). */
+  animalTypes: AnimalTypeDef[];
+  animalTypeIndex: ReadonlyMap<string, number>;
   carry: ContentBundle['worldSettings']['carry'];
   loot: ContentBundle['worldSettings']['loot'];
   /** `worldSettings.vision` (optional for older bundles). */
@@ -169,6 +174,7 @@ export function compileContent(content: SimContent): ContentIndex {
   const typeIds = Object.keys(content.containers).sort(byId);
   const tableIds = Object.keys(content.lootTables).sort(byId);
   const zombieIds = Object.keys(content.zombieTypes ?? {}).sort(byId);
+  const animalIds = Object.keys(content.animalTypes ?? {}).sort(byId);
   const skillIds = Object.keys(content.skills ?? {}).sort(byId);
   const recipeIds = Object.keys(content.recipes ?? {}).sort(byId);
   const itemIndex = new Map(itemIds.map((id, i) => [id, i]));
@@ -211,6 +217,8 @@ export function compileContent(content: SimContent): ContentIndex {
     },
     zombieTypes: zombieIds.map((id) => content.zombieTypes![id]!),
     zombieTypeIndex: new Map(zombieIds.map((id, i) => [id, i])),
+    animalTypes: animalIds.map((id) => content.animalTypes![id]!),
+    animalTypeIndex: new Map(animalIds.map((id, i) => [id, i])),
     items: itemIds.map((id) => content.items[id]!),
     itemIndex,
     containerTypes: typeIds.map((id) => content.containers[id]!),

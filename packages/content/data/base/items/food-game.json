@@ -1,0 +1,67 @@
+[
+  {
+    "id": "base:venison",
+    "name": "item.base.venison.name",
+    "kind": "food",
+    "weightKg": 0.5,
+    "maxStack": 1,
+    "tags": ["base:meat"],
+    "food": {
+      "nutrition": {
+        "calories": 600,
+        "proteinG": 110,
+        "fatG": 12,
+        "hunger": -20,
+        "unhappiness": 12,
+        "sicknessChance": 0.45
+      },
+      "spoilage": { "freshMin": 2880, "rottenMin": 5760 },
+      "portions": 2,
+      "cooking": { "durationMin": 25, "cookedInto": "base:venison-steak" }
+    }
+  },
+  {
+    "id": "base:venison-steak",
+    "name": "item.base.venison-steak.name",
+    "kind": "food",
+    "weightKg": 0.4,
+    "tags": ["base:meat"],
+    "food": {
+      "nutrition": {
+        "calories": 620,
+        "proteinG": 110,
+        "fatG": 14,
+        "hunger": -30,
+        "unhappiness": -6
+      },
+      "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
+      "portions": 2,
+      "eatMin": 2
+    }
+  },
+  {
+    "id": "base:small-game-meat",
+    "name": "item.base.small-game-meat.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:meat"],
+    "food": {
+      "nutrition": {
+        "calories": 220,
+        "proteinG": 40,
+        "fatG": 6,
+        "hunger": -10,
+        "unhappiness": 12,
+        "sicknessChance": 0.45
+      },
+      "spoilage": { "freshMin": 1440, "rottenMin": 4320 }
+    }
+  },
+  {
+    "id": "base:deer-hide",
+    "name": "item.base.deer-hide.name",
+    "kind": "material",
+    "weightKg": 2.5,
+    "tags": ["base:hide", "base:leather"]
+  }
+]

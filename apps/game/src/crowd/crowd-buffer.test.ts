@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SnapshotEntityKind, encodeSnapshot } from '@deadzone/protocol';
 import { writeEntities } from '../sim/snapshot.js';
 import { CrowdBuffer } from './crowd-buffer.js';
 
@@ -7,6 +8,26 @@ const e = (id: number, x: number, y = 0, facing = 0) => ({ id, x, y, z: 0, facin
 const snap = (...entities: ReturnType<typeof e>[]) => writeEntities([player, ...entities]);
 
 describe('CrowdBuffer', () => {
+  it('skips animals (no animal renderer yet)', () => {
+    const b = new CrowdBuffer();
+    const at = (stableId: number, x: number, kind: number) => ({
+      stableId,
+      x,
+      y: 0,
+      z: 0,
+      facingRad: 0,
+      kind,
+    });
+    const buf = encodeSnapshot([
+      at(1, 0, SnapshotEntityKind.player),
+      at(2, 3, SnapshotEntityKind.zombie),
+      at(3, 4, SnapshotEntityKind.animal),
+    ]);
+    b.push(new Float32Array(buf));
+    expect(b.count).toBe(1);
+    expect(b.slots.idAt(0)).toBe(2);
+  });
+
   it('skips the player and holds new entities still until the next snapshot', () => {
     const b = new CrowdBuffer();
     b.push(snap(e(5, 2, 3)));
