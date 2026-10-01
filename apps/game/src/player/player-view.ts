@@ -12,6 +12,7 @@ import { placeholderMaterial } from '../lighting/materials.js';
 import { PLAYER_RADIUS } from '@deadzone/sim';
 import { facingToRotationY, simToWorld } from '../sim/coords.js';
 import type { EntityState } from '../sim/snapshot.js';
+import { approachAngle, gaitClip, targetYaw } from './locomotion.js';
 
 /** Grey-box placeholder sizes (world units). */
 export const PLAYER_HEIGHT = 1.6;
@@ -39,7 +40,13 @@ export class PlayerView {
 
   private rig: CharacterRig | undefined;
   private last: { x: number; y: number; t: number } | undefined;
-  private speed = 0;
+  /** Smoothed velocity (tiles/s; snapshots arrive at 20 Hz, frames faster). */
+  private vx = 0;
+  private vy = 0;
+  /** Rendered body yaw (sim angle); turns smoothly towards movement or the cursor. */
+  private yaw: number | undefined;
+  /** Aiming (set by the game from input): the body faces the cursor instead of the movement. */
+  aiming = false;
 
   /** Replaces the capsule with an animated character (model faces +Z). */
   setModel(object: Object3D, clips: readonly AnimationClip[]): void {
@@ -54,19 +61,25 @@ export class PlayerView {
   apply(state: EntityState, nowMs = performance.now()): void {
     const p = simToWorld(state.x, state.y, state.z);
     this.root.position.set(p.x, p.y, p.z);
-    this.root.rotation.y = facingToRotationY(state.facing);
-    if (!this.rig) return;
     const l = this.last;
-    if (l && nowMs > l.t) {
-      const v = Math.hypot(state.x - l.x, state.y - l.y) / ((nowMs - l.t) / 1000);
-      // Smoothed tiles/s (snapshots arrive at 20 Hz, frames faster).
-      this.speed += (v - this.speed) * 0.2;
-      this.rig.update((nowMs - l.t) / 1000);
+    const dtMs = l ? nowMs - l.t : 0;
+    if (l && dtMs > 0) {
+      const k = 0.2;
+      this.vx += ((state.x - l.x) / (dtMs / 1000) - this.vx) * k;
+      this.vy += ((state.y - l.y) / (dtMs / 1000) - this.vy) * k;
     }
     this.last = { x: state.x, y: state.y, t: nowMs };
-    this.rig.play(
-      this.dead ? 'dead' : this.speed > 3.2 ? 'run' : this.speed > 0.4 ? 'walk' : 'idle',
-    );
+    // Without a model the capsule nose keeps showing the raw sim facing (aim).
+    if (!this.rig) {
+      this.root.rotation.y = facingToRotationY(state.facing);
+      return;
+    }
+    const input = { facing: state.facing, vx: this.vx, vy: this.vy, aiming: this.aiming };
+    const prev = this.yaw ?? state.facing;
+    this.yaw = this.dead ? prev : approachAngle(prev, targetYaw(input, prev), dtMs);
+    this.root.rotation.y = facingToRotationY(this.yaw);
+    if (dtMs > 0) this.rig.update(dtMs / 1000);
+    this.rig.play(this.dead ? 'dead' : gaitClip(this.yaw, this.vx, this.vy));
   }
 
   dead = false;

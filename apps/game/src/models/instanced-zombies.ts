@@ -54,15 +54,17 @@ const CULL_RADIUS = 1.6;
 /** Walk / run playback speed (shamble). */
 const LOCO_SPEED = 0.7;
 
-const CLIP_NAMES: Record<CharacterAnim, string> = {
+/** Zombie clips (baked): no aiming, so no backwards / side gaits. */
+type ZombieAnim = Extract<CharacterAnim, 'idle' | 'walk' | 'run' | 'attack' | 'dead'>;
+const CLIP_NAMES: Record<ZombieAnim, string> = {
   idle: 'Idle',
   walk: 'Walk',
   run: 'Run',
   attack: 'Punch_Right',
   dead: 'Death',
 };
-const ANIMS: readonly CharacterAnim[] = ['idle', 'walk', 'run', 'attack', 'dead'];
-const ANIM_OF: Record<number, CharacterAnim> = {
+const ANIMS: readonly ZombieAnim[] = ['idle', 'walk', 'run', 'attack', 'dead'];
+const ANIM_OF: Record<number, ZombieAnim> = {
   [SnapshotAnim.idle]: 'idle',
   [SnapshotAnim.walk]: 'walk',
   [SnapshotAnim.run]: 'run',
@@ -93,7 +95,7 @@ interface Template {
   far: Part[];
   /** Low-poly shadow casters for every visible zombie (shadow-only layer). */
   shadow: Part[];
-  clips: Record<CharacterAnim, ClipRange>;
+  clips: Record<ZombieAnim, ClipRange>;
 }
 
 /**
@@ -243,11 +245,11 @@ function mergeParts(skinned: readonly SkinnedMesh[]): Merged | undefined {
 
 /** Row layout of the bake texture: one range of frames per animation, clips matched by name. */
 function layoutClips(clips: readonly AnimationClip[]): {
-  ranges: Record<CharacterAnim, ClipRange>;
+  ranges: Record<ZombieAnim, ClipRange>;
   rows: number;
   picked: (AnimationClip | undefined)[];
 } {
-  const ranges = {} as Record<CharacterAnim, ClipRange>;
+  const ranges = {} as Record<ZombieAnim, ClipRange>;
   const picked: (AnimationClip | undefined)[] = [];
   let rows = 0;
   for (const anim of ANIMS) {
@@ -416,7 +418,7 @@ function simplified(source: BufferGeometry, sloppy = false): BufferGeometry {
 }
 
 interface AnimState {
-  anim: CharacterAnim;
+  anim: ZombieAnim;
   since: number;
 }
 

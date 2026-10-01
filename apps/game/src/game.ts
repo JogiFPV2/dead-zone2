@@ -282,11 +282,23 @@ function interact(): void {
 input.on('interact', interact);
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
-  if (!inventory.open && !gameState.get().death) sim.send(stamper.stamp({ type: 'attack' }));
+  if (inventory.open || gameState.get().death) return;
+  lastSwingMs = performance.now();
+  sim.send(stamper.stamp({ type: 'attack' }));
 });
 input.on('secondaryAction', () => {
-  if (!inventory.open && !gameState.get().death) sim.send(stamper.stamp({ type: 'shove' }));
+  if (inventory.open || gameState.get().death) return;
+  lastSwingMs = performance.now();
+  sim.send(stamper.stamp({ type: 'shove' }));
 });
+// Aiming (PZ-like): the body faces the cursor while a mouse action is held and shortly after a
+// swing; otherwise it turns towards the movement (player/locomotion.ts). Shift is sprint.
+const AIM_HOLD_MS = 700;
+let lastSwingMs = -Infinity;
+const isAiming = (now: number): boolean =>
+  input.isDown('primaryAction') ||
+  input.isDown('secondaryAction') ||
+  now - lastSwingMs < AIM_HOLD_MS;
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 QUICKSLOTS.forEach((action, i) => input.on(action, () => hud.selectSlot(i)));
 input.on('toggleHints', () => hud.toggleHints(performance.now()));
@@ -358,6 +370,7 @@ renderer.setAnimationLoop((time) => {
   playerInput.update(time, rig.targetYaw, camera);
   const state = snapshots.sample(performance.now(), TICK_MS);
   if (state) {
+    player.aiming = isAiming(performance.now());
     player.apply(state);
     const goal = simToWorld(state.x, state.y, state.z);
     if (!cameraSnapped) rig.target.set(goal.x, goal.y, goal.z);

@@ -6,17 +6,26 @@ import {
   type Object3D,
 } from 'three';
 
-export type CharacterAnim = 'idle' | 'walk' | 'run' | 'attack' | 'dead';
+export type CharacterAnim =
+  'idle' | 'walk' | 'run' | 'back' | 'strafeLeft' | 'strafeRight' | 'attack' | 'dead';
 
 /** Clip name suffix per anim (Quaternius `CharacterArmature|Walk` …). */
 const CLIPS: Record<CharacterAnim, string> = {
   idle: 'Idle',
   walk: 'Walk',
   run: 'Run',
+  // Quaternius has no slow backwards / side walk: the run clips played slower read as a walk.
+  back: 'Run_Back',
+  strafeLeft: 'Run_Left',
+  strafeRight: 'Run_Right',
   attack: 'Punch_Right',
   dead: 'Death',
 };
 const FADE_S = 0.2;
+/** Walk-speed playback of the run-based backwards / side clips. */
+const SLOW_GAIT_SCALE = 0.6;
+const LOCOMOTION: ReadonlySet<CharacterAnim> = new Set(['walk', 'run']);
+const SLOW_GAITS: ReadonlySet<CharacterAnim> = new Set(['back', 'strafeLeft', 'strafeRight']);
 
 /** One animated character: mixer + cross-fading between a few clips. */
 export class CharacterRig {
@@ -50,7 +59,11 @@ export class CharacterRig {
     const prev = this.current ? this.actions.get(this.current) : undefined;
     this.current = anim;
     next.reset();
-    next.timeScale = anim === 'walk' || anim === 'run' ? this.speed : 1;
+    next.timeScale = LOCOMOTION.has(anim)
+      ? this.speed
+      : SLOW_GAITS.has(anim)
+        ? this.speed * SLOW_GAIT_SCALE
+        : 1;
     next.play();
     if (prev && prev !== next) prev.crossFadeTo(next, FADE_S, false);
   }
