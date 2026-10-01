@@ -51,6 +51,8 @@ import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
 import { PICK_PLANE_Y, ZombieHpLayer } from './hud/zombie-hp.js';
+import { createAimReticle } from './hud/aim-reticle.js';
+import { SPREAD_WARN, reticleRadius } from './hud/firearm-model.js';
 import { clientToNdc, ndcToFloor } from './input/aim.js';
 import { interactIntent } from './hud/hud-model.js';
 import { minimapGeometry } from './hud/minimap-data.js';
@@ -235,6 +237,7 @@ const hud = createHud({
     ),
   onInteract: interact,
   playerId: PLAYER_ID,
+  tickMs: TICK_MS,
 });
 // Zombie health (approved mockup): target bubble on Shift + LMB, bars over wounded (setting).
 const zombieHp = new ZombieHpLayer(container, crowd);
@@ -301,6 +304,7 @@ input.on('pause', () => {
 });
 input.on('reload', () => {
   if (inventory.open) inventory.takeAll();
+  else if (hud.firearm() && !gameState.get().death) sim.send(stamper.stamp({ type: 'reload' }));
 });
 const groundPiles = new GroundPiles();
 scene.add(groundPiles.root);
@@ -385,11 +389,15 @@ input.on('interact', interact);
 input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death) return;
   lastSwingMs = performance.now();
+  const gun = hud.firearm();
+  if (gun?.state === 'empty') hud.dryFire();
   sim.send(stamper.stamp({ type: 'attack' }));
   phys.noteLocalAction('attack');
 });
 input.on('secondaryAction', () => {
   if (inventory.open || gameState.get().death) return;
+  // Firearm in hand: RMB (held) aims with the reticle instead of shoving.
+  if (hud.firearm()) return;
   lastSwingMs = performance.now();
   sim.send(stamper.stamp({ type: 'shove' }));
   phys.noteLocalAction('shove');
@@ -403,6 +411,60 @@ const isAiming = (now: number): boolean =>
   input.isDown('secondaryAction') ||
   now - lastSwingMs < AIM_HOLD_MS;
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+// Firearm aim reticle (spec §4): RMB held with a gun in hand, follows the cursor.
+const gameRoot: HTMLElement = container;
+const reticle = createAimReticle(gameRoot);
+let cursorPx: { x: number; y: number } | undefined;
+renderer.domElement.addEventListener('pointermove', (e) => {
+  const r = container.getBoundingClientRect();
+  cursorPx = { x: e.clientX - r.left, y: e.clientY - r.top };
+});
+renderer.domElement.addEventListener('pointerleave', () => (cursorPx = undefined));
+const isGunAiming = (): boolean =>
+  hud.firearm() !== undefined &&
+  input.isDown('secondaryAction') &&
+  !inventory.open &&
+  !gameState.get().death;
+function updateReticle(px: number, py: number, now: number): void {
+  const gun = hud.firearm();
+  const active = isGunAiming() && cursorPx !== undefined;
+  gameRoot.classList.toggle('dz-aiming', active);
+  if (!active || !gun || !cursorPx) {
+    reticle.update({
+      active: false,
+      x: 0,
+      y: 0,
+      r: 0,
+      warn: false,
+      outOfRange: false,
+      disabled: false,
+      noiseRadius: 0,
+      now,
+    });
+    return;
+  }
+  const w = gameRoot.clientWidth;
+  const h = gameRoot.clientHeight;
+  const ndc = clientToNdc(cursorPx.x, cursorPx.y, { left: 0, top: 0, width: w, height: h });
+  const floor = ndcToFloor(camera, ndc.x, ndc.y);
+  const dist = floor ? Math.hypot(floor.x - px, floor.z - py) : 0;
+  // Ortho camera: screen px per world unit (tile = 1 m).
+  const pxPerM = (h * camera.zoom) / Math.max(1e-6, camera.top - camera.bottom);
+  const spread = gameState.get().combat?.spread ?? 0;
+  const hit = ndcToFloor(camera, ndc.x, ndc.y, PICK_PLANE_Y);
+  reticle.update({
+    active: true,
+    x: cursorPx.x,
+    y: cursorPx.y,
+    r: reticleRadius(spread, dist, pxPerM),
+    warn: spread >= SPREAD_WARN,
+    outOfRange: dist > gun.rangeTiles,
+    disabled: gun.state === 'reloading' || gun.state === 'shell',
+    distanceM: hit && zombieHp.zombieAt(hit.x, hit.z) ? dist : undefined,
+    noiseRadius: gun.noiseRadius,
+    now,
+  });
+}
 QUICKSLOTS.forEach((action, i) => input.on(action, () => hud.selectSlot(i)));
 input.on('toggleHints', () => hud.toggleHints(performance.now()));
 // F1 & co. open browser help otherwise.
@@ -559,7 +621,9 @@ renderer.setAnimationLoop((time) => {
           ? { day: gs.clock?.day ?? 1, minuteOfDay: lightMinute }
           : gs.clock,
       interactHeld: input.isDown('interact'),
+      aiming: isGunAiming(),
     });
+    updateReticle(state.x, state.y, performance.now());
   }
   const t0 = performance.now();
   const alpha = tickAlpha(t0, crowdArrivedMs, TICK_MS);

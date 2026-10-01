@@ -54,6 +54,12 @@ export class InputMap {
     this.listen(win, 'blur', () => this.releaseAll());
     this.listen(element, 'pointerdown', (e) => this.onButton((e as PointerEvent).button, true));
     this.listen(win, 'pointerup', (e) => this.onButton((e as PointerEvent).button, false));
+    // Chorded buttons (LMB while RMB is held to aim) fire `pointermove` with `button` ≥ 0, not
+    // `pointerdown` / `pointerup` (Pointer Events spec).
+    this.listen(element, 'pointermove', (e) => {
+      const p = e as PointerEvent;
+      if (p.button >= 0) this.onButton(p.button, (p.buttons & buttonBit(p.button)) !== 0);
+    });
     this.listen(element, 'wheel', (e) => this.onWheel(e as WheelEvent), { passive: false });
     if (doc) {
       this.listen(doc, 'visibilitychange', () => {
@@ -132,3 +138,6 @@ export class InputMap {
     if (isWheel(code)) this.press(code, Math.abs(e.deltaY));
   }
 }
+
+/** `PointerEvent.button` → its bit in `PointerEvent.buttons` (left 1, right 2, middle 4, …). */
+const buttonBit = (button: number): number => (button === 1 ? 4 : button === 2 ? 2 : 1 << button);

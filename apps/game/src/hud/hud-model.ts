@@ -190,7 +190,18 @@ export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem |
 }
 
 /** Key hints from the current bindings (spec §3.11 order; only actions the game has). */
-export function hintItems(b: Bindings): KeyHint[] {
+export function hintItems(b: Bindings, firearm = false): KeyHint[] {
+  // Firearm in hand (spec firearm HUD §5): aim / shoot / reload / magazines.
+  if (firearm)
+    return [
+      { key: moveKeysLabel(b), label: 'ruch' },
+      { key: actionKey(b, 'secondaryAction'), label: 'celuj' },
+      { key: actionKey(b, 'primaryAction'), label: 'strzał' },
+      { key: actionKey(b, 'reload'), label: 'przeładuj' },
+      { key: actionKey(b, 'inventory'), label: 'magazynki' },
+      { key: actionKey(b, 'pause'), label: 'menu' },
+      { key: actionKey(b, 'toggleHints'), label: 'skróty' },
+    ];
   return [
     { key: moveKeysLabel(b), label: 'ruch' },
     { key: actionKey(b, 'sprint'), label: 'sprint' },

@@ -21,6 +21,25 @@ export interface HudItemDef {
   equipSlots?: readonly EquipSlot[];
   /** Food, drink or medical: `useItem` (eat, drink, apply). */
   usable?: boolean;
+  /** Firearms (`weapon_ranged`): what the firearm HUD needs. */
+  ranged?: HudRangedDef;
+  /** Magazines: rounds they take and how many. */
+  magazine?: { ammo: string; capacity: number };
+}
+
+export interface HudRangedDef {
+  ammo: string;
+  feed: 'internal' | 'magazine';
+  /** Internal feed capacity (magazine feed: the magazine's). */
+  capacity?: number;
+  /** Magazine feed: magazine item id. */
+  magazine?: string;
+  rangeTiles: number;
+  /** `shotNoise.radiusTiles` (m). */
+  noiseRadius: number;
+  reloadSec: number;
+  /** Internal feed loaded one round at a time (pump shotgun, hunting rifle). */
+  loadSecPerRound?: number;
 }
 
 /** Crafting station: level items and the recipe that builds / upgrades to each level. */
@@ -61,6 +80,25 @@ function durabilityOf(i: Obj): number | undefined {
     }
   }
   return undefined;
+}
+
+const num = (v: unknown, d = 0): number => (typeof v === 'number' ? v : d);
+
+function rangedOf(i: Obj): HudRangedDef | undefined {
+  const r = i.ranged;
+  if (!isObj(r) || typeof r.ammo !== 'string') return undefined;
+  const feed = isObj(r.feed) ? r.feed : {};
+  const mag = feed.type === 'magazine';
+  return {
+    ammo: r.ammo,
+    feed: mag ? 'magazine' : 'internal',
+    ...(!mag && typeof feed.capacity === 'number' ? { capacity: feed.capacity } : {}),
+    ...(mag && typeof feed.magazine === 'string' ? { magazine: feed.magazine } : {}),
+    rangeTiles: num(r.rangeTiles, 20),
+    noiseRadius: isObj(r.shotNoise) ? num(r.shotNoise.radiusTiles) : 0,
+    reloadSec: num(r.reloadSec, 2),
+    ...(typeof r.loadSecPerRound === 'number' ? { loadSecPerRound: r.loadSecPerRound } : {}),
+  };
 }
 
 function equipSlotsOf(i: Obj, kind: string): EquipSlot[] {
@@ -122,6 +160,11 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
         const kind = typeof i.kind === 'string' ? i.kind : 'misc';
         const durabilityMax = durabilityOf(i);
         const equipSlots = equipSlotsOf(i, kind);
+        const ranged = rangedOf(i);
+        const magazine =
+          isObj(i.magazine) && typeof i.magazine.ammo === 'string'
+            ? { ammo: i.magazine.ammo, capacity: num(i.magazine.capacity) }
+            : undefined;
         items.set(i.id, {
           id: i.id,
           kind,
@@ -131,6 +174,8 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(durabilityMax !== undefined ? { durabilityMax } : {}),
           ...(equipSlots.length ? { equipSlots } : {}),
           ...(kind === 'food' || kind === 'drink' || kind === 'medical' ? { usable: true } : {}),
+          ...(ranged ? { ranged } : {}),
+          ...(magazine ? { magazine } : {}),
         });
       }
     }

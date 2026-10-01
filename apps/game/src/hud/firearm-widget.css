@@ -1,0 +1,379 @@
+/* FirearmWidget (deadzone-firearm-hud-spec.md §1–3, HUD A tokens). Inside .dz-g--hotbar. */
+.dz-fw {
+  position: absolute;
+  bottom: 0;
+  width: 200px;
+  pointer-events: none;
+  font-family: var(--font-family-mono);
+  color: var(--color-text-primary);
+  animation: dz-fw-in var(--motion-base) var(--motion-ease-out);
+}
+.dz-fw[hidden] {
+  display: none;
+}
+.dz-fw[data-dock='left'] {
+  right: calc(100% + 10px);
+}
+.dz-fw[data-dock='right'] {
+  left: calc(100% + 10px);
+}
+@keyframes dz-fw-in {
+  from {
+    opacity: 0;
+  }
+}
+.dz-fw__panel {
+  box-sizing: border-box;
+  height: 82px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  border: var(--border-1, 1px) solid var(--_fw-border, var(--color-border-default));
+  background: var(--_fw-bg, var(--color-bg-hud));
+  backdrop-filter: blur(var(--blur-glass));
+  display: flex;
+  flex-direction: column;
+}
+.dz-fw[data-state='low'] {
+  --_fw-border: var(--color-warning-base);
+  --_fw-pip: var(--color-warning-base);
+}
+.dz-fw[data-state='empty'] {
+  --_fw-border: var(--color-danger-base);
+}
+.dz-fw[data-state='jammed'] {
+  --_fw-border: var(--color-danger-base);
+  --_fw-bg:
+    linear-gradient(var(--color-moodle-neg-3-bg), var(--color-moodle-neg-3-bg)), var(--color-bg-hud);
+}
+.dz-fw__r1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 11px;
+}
+.dz-fw__name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-md);
+  color: var(--color-text-muted);
+}
+.dz-fw__name span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dz-fw[data-state='reloading'] .dz-fw__name,
+.dz-fw[data-state='shell'] .dz-fw__name {
+  color: var(--color-accent-base);
+}
+.dz-fw[data-state='jammed'] .dz-fw__name {
+  color: var(--color-danger-bright);
+}
+.dz-fw[data-state='jammed'] .dz-fw__name svg {
+  color: var(--color-danger-text);
+  flex: none;
+}
+.dz-fw__zl {
+  font: var(--font-label-xs);
+  color: var(--color-text-muted);
+}
+.dz-fw__r2 {
+  margin-top: 6px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+}
+.dz-fw__main {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+.dz-fw[data-state='reloading'] .dz-fw__main {
+  align-items: center;
+  gap: 8px;
+}
+.dz-fw__count {
+  font: var(--font-display-clock);
+}
+.dz-fw[data-state='low'] .dz-fw__count {
+  color: var(--color-warning-text);
+}
+.dz-fw__cap {
+  font: var(--font-label-md);
+  color: var(--color-text-muted);
+}
+.dz-fw__low {
+  margin-left: 4px;
+  font: var(--font-label-xs);
+  color: var(--color-warning-text);
+}
+.dz-fw__state {
+  font: 700 20px/1 var(--font-family-mono);
+  letter-spacing: var(--font-tracking-tight);
+  color: var(--color-danger-text);
+}
+.dz-fw__sec {
+  color: var(--color-text-primary);
+}
+.dz-fw__state--muted {
+  font: var(--font-label-md);
+  color: var(--color-text-muted);
+}
+.dz-fw__res {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--font-label-md);
+}
+.dz-fw[data-state='reloading'] .dz-fw__res {
+  opacity: 0.5;
+}
+.dz-fw__ammo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.dz-fw__ringtrack,
+.dz-fw__ringarc {
+  fill: none;
+  stroke-width: 3;
+}
+.dz-fw__ringtrack {
+  stroke: var(--color-bg-track);
+}
+.dz-fw__ringarc {
+  stroke: var(--color-accent-base);
+  stroke-linecap: round;
+}
+.dz-fw__r3 {
+  margin-top: 7px;
+  height: 8px;
+  display: flex;
+  align-items: center;
+}
+.dz-fw__pips {
+  display: flex;
+  width: 176px;
+  height: 6px;
+  gap: 2px;
+}
+.dz-fw__pips--shells {
+  gap: 4px;
+  height: 8px;
+}
+.dz-fw__bar {
+  flex: 1;
+  border-radius: 1px;
+  background: var(--color-bg-track);
+  transition: background-color var(--motion-fast);
+}
+.dz-fw__bar.on {
+  background: var(--_fw-pip, var(--color-text-primary));
+}
+.dz-fw__shell {
+  --fill: 0;
+  position: relative;
+  flex: 1;
+  max-width: 28px;
+  border-radius: 2px;
+  background: var(--color-bg-track);
+  overflow: hidden;
+  display: flex;
+}
+.dz-fw__shell.on {
+  background: linear-gradient(
+    90deg,
+    var(--color-text-muted) 0 6px,
+    var(--_fw-pip, var(--color-text-primary)) 6px
+  );
+}
+.dz-fw__shell.loading {
+  outline: 1px solid var(--color-accent-base);
+  outline-offset: -1px;
+}
+.dz-fw__shell.loading b {
+  display: block;
+  width: calc(var(--fill) * 100%);
+  background: var(--color-accent-base);
+}
+.dz-fw[data-state='jammed'] .dz-fw__pips {
+  opacity: 0.45;
+}
+.dz-fw__prog,
+.dz-fw__pill {
+  width: 176px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+  overflow: hidden;
+}
+.dz-fw__prog i,
+.dz-fw__pill i {
+  display: block;
+  height: 100%;
+  background: var(--color-accent-base);
+  border-radius: inherit;
+}
+.dz-fw__prog i {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.dz-fw__pill i {
+  background: var(--_fw-pip, var(--color-text-primary));
+}
+
+/* hint tag */
+.dz-fw__hint {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  height: 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 3px;
+  border-radius: var(--radius-md);
+  font: var(--font-label-sm);
+  letter-spacing: var(--font-tracking-banner);
+  white-space: nowrap;
+}
+.dz-fw[data-dock='left'] .dz-fw__hint {
+  right: 0;
+}
+.dz-fw[data-dock='right'] .dz-fw__hint {
+  left: 0;
+}
+.dz-fw__hint[data-variant='primary'] {
+  background: var(--color-accent-base);
+  color: var(--color-text-inverse);
+}
+.dz-fw__hint[data-variant='glass'] {
+  background: var(--color-bg-hud);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-muted);
+}
+.dz-fw__hint[data-disabled] {
+  padding-left: 10px;
+  color: var(--color-text-disabled);
+}
+.dz-fw__key {
+  min-width: 21px;
+  height: 21px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-chip);
+  color: var(--color-text-primary);
+  font: var(--font-label-sm);
+}
+.dz-fw__key--wide {
+  padding: 0 5px;
+}
+.dz-fw__hint[data-variant='primary'] .dz-fw__key {
+  background: transparent;
+  border-color: var(--color-border-inverse);
+  color: var(--color-text-inverse);
+}
+
+/* motion */
+.dz-fw--flash .dz-fw__panel {
+  animation: dz-fw-flash var(--motion-highlight) ease-out;
+}
+@keyframes dz-fw-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 2px var(--_fw-border, var(--color-border-default));
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+.dz-fw--shake .dz-fw__panel {
+  animation: dz-fw-shake var(--motion-base) linear;
+}
+@keyframes dz-fw-shake {
+  25% {
+    transform: translateX(-2px);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+/* mini ammo bar in the hotbar slot holding the gun */
+.dz-fw-slotbar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+  overflow: hidden;
+  pointer-events: none;
+}
+.dz-fw-slotbar i {
+  display: block;
+  height: 100%;
+  background: var(--_c, var(--color-text-primary));
+}
+.dz-fw-slotbar[data-state='low'] {
+  --_c: var(--color-warning-base);
+}
+.dz-fw-slotbar[data-state='jammed'] {
+  --_c: var(--color-danger-base);
+}
+.dz-fw-slotbar[data-state='reloading'],
+.dz-fw-slotbar[data-state='shell'] {
+  --_c: var(--color-accent-base);
+}
+
+/* minimap noise ring (overlay on the minimap group) */
+.dz-noise-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.dz-noise-ring[hidden] {
+  display: none;
+}
+.dz-noise-ring circle {
+  fill: none;
+  stroke: var(--color-warning-base);
+  stroke-opacity: 0.8;
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+}
+.dz-noise-ring--flash circle {
+  animation: dz-noise-flash var(--motion-slow) ease-out;
+}
+@keyframes dz-noise-flash {
+  from {
+    stroke-opacity: 1;
+    stroke-width: 3;
+  }
+  to {
+    stroke-opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dz-fw,
+  .dz-fw--flash .dz-fw__panel,
+  .dz-fw--shake .dz-fw__panel {
+    animation: none;
+  }
+}

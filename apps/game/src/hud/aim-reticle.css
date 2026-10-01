@@ -1,0 +1,92 @@
+/* Aim reticle (deadzone-firearm-hud-spec.md §4). Positioned in the game root, screen px. */
+.dz-reticle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 132px;
+  height: 132px;
+  pointer-events: none;
+  z-index: 5;
+  --_rc: var(--color-text-primary);
+  will-change: transform;
+}
+.dz-reticle[hidden] {
+  display: none;
+}
+.dz-reticle[data-tone='warn'] {
+  --_rc: var(--color-warning-base);
+}
+.dz-reticle[data-tone='range'] {
+  --_rc: var(--color-text-muted);
+}
+.dz-reticle[data-tone='disabled'] {
+  --_rc: var(--color-text-disabled);
+}
+.dz-reticle svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.dz-reticle__ring,
+.dz-reticle__ticks {
+  fill: none;
+}
+.dz-reticle__under .dz-reticle__ring,
+.dz-reticle__under .dz-reticle__ticks {
+  stroke: rgba(14, 17, 19, 0.75);
+  stroke-width: 3.5;
+}
+.dz-reticle__under .dz-reticle__dot {
+  fill: rgba(14, 17, 19, 0.75);
+  r: 3.5;
+}
+.dz-reticle__top .dz-reticle__ring {
+  stroke: var(--_rc);
+  stroke-width: 1.5;
+}
+.dz-reticle[data-tone='range'] .dz-reticle__top .dz-reticle__ring {
+  stroke-dasharray: 4 4;
+}
+.dz-reticle__top .dz-reticle__ticks {
+  stroke: var(--_rc);
+  stroke-width: 2;
+}
+.dz-reticle__top .dz-reticle__dot {
+  fill: var(--color-text-primary);
+}
+.dz-reticle__dist {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font: var(--font-mono-sm);
+  color: var(--color-text-primary);
+  text-shadow: var(--shadow-text);
+  white-space: nowrap;
+}
+.dz-reticle__dist[hidden] {
+  display: none;
+}
+.dz-reticle__noise {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 22px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-chip);
+  border: 1px solid rgba(217, 182, 74, 0.55);
+  color: var(--color-warning-text);
+  font: var(--font-label-xs);
+  letter-spacing: var(--font-tracking-md);
+  white-space: nowrap;
+}
+.dz-reticle__noise svg {
+  position: static;
+}
+.dz-aiming canvas {
+  cursor: none;
+}

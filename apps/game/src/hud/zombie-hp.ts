@@ -79,6 +79,22 @@ export class ZombieHpLayer {
     return this.targetId;
   }
 
+  /** Live zombie within PICK_RADIUS of floor point (x, z) (last sampled frame), without targeting it. */
+  zombieAt(x: number, z: number): boolean {
+    const b = this.buffer;
+    return (
+      pickNearest(
+        this.sampled,
+        this.sampledCount,
+        CROWD_SAMPLE_STRIDE,
+        x,
+        z,
+        PICK_RADIUS,
+        (k) => b.anim[k] === SnapshotAnim.dead || (b.hp[k] ?? 1) <= 0,
+      ) >= 0
+    );
+  }
+
   update(
     alpha: number,
     camera: Camera,

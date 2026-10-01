@@ -73,6 +73,23 @@ describe('InputMap', () => {
     expect(input.isDown('secondaryAction')).toBe(false);
   });
 
+  it('chorded mouse buttons (LMB while RMB held) come as pointermove', () => {
+    const { input, win, element } = setup();
+    const shoot = vi.fn();
+    input.on('primaryAction', shoot);
+    element.dispatchEvent(ev('pointerdown', { button: 2 }));
+    element.dispatchEvent(ev('pointermove', { button: -1, buttons: 2 }));
+    expect(shoot).not.toHaveBeenCalled();
+    element.dispatchEvent(ev('pointermove', { button: 0, buttons: 3 }));
+    expect(shoot).toHaveBeenCalledTimes(1);
+    expect(input.isDown('primaryAction')).toBe(true);
+    element.dispatchEvent(ev('pointermove', { button: 0, buttons: 2 }));
+    expect(input.isDown('primaryAction')).toBe(false);
+    expect(input.isDown('secondaryAction')).toBe(true);
+    win.dispatchEvent(ev('pointerup', { button: 2 }));
+    expect(input.isDown('secondaryAction')).toBe(false);
+  });
+
   it('wheel fires zoom actions with the delta and prevents page scroll', () => {
     const { input, element } = setup();
     const zin = vi.fn();

@@ -45,6 +45,8 @@ import {
 import { actionKey } from './key-label.js';
 import { containerName, humanizeId, itemCountLabel, moodleName } from './labels.js';
 import type { MinimapGeometry } from './minimap-data.js';
+import { dockSide, firearmVM, noiseRingRadius, type FirearmVM } from './firearm-model.js';
+import { createFirearmWidget } from './firearm-widget.js';
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
 export const HUD_UPDATE_MS = 100;
@@ -58,6 +60,8 @@ export interface HudOptions {
   /** Interact button clicked (same as the interact key). */
   onInteract: () => void;
   playerId: number;
+  /** Sim tick length (reload seconds left). */
+  tickMs: number;
 }
 
 /** Per-frame inputs; the HUD itself throttles to HUD_UPDATE_MS. */
@@ -76,6 +80,8 @@ export interface HudFrame {
   /** Clock shown (sim `view.clock`, or the dev override); undefined = no clock yet. */
   clock: { day: number; minuteOfDay: number } | undefined;
   interactHeld: boolean;
+  /** RMB aim with a firearm (minimap noise ring). */
+  aiming: boolean;
 }
 
 export interface Hud {
@@ -86,6 +92,10 @@ export interface Hud {
   /** F1: flips the key-hint row. */
   toggleHints(now: number): void;
   resize(width: number, height: number): void;
+  /** Firearm in hand: the widget's view model (aim reticle, input), else undefined. */
+  firearm(): FirearmVM | undefined;
+  /** LMB on an empty gun: widget shake. */
+  dryFire(): void;
 }
 
 /** Runs `update` only when the view model's key changes (no DOM writes for equal values). */
@@ -142,7 +152,18 @@ export function createHud(opts: HudOptions): Hud {
   const minimap = createMinimap(minimapVM({ px: 0, py: 0, facing: 0, cameraYaw: 0 }), {
     roadWidth: 1,
   });
-  group('minimap', minimap.el);
+  const minimapGroup = group('minimap', minimap.el);
+  // Shot noise radius while aiming a firearm (spec §4): dashed ring around the player.
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const noiseRing = document.createElementNS(SVG_NS, 'svg');
+  noiseRing.setAttribute('class', 'dz-noise-ring');
+  noiseRing.setAttribute('viewBox', '0 0 200 200');
+  const noiseCircle = document.createElementNS(SVG_NS, 'circle');
+  noiseCircle.setAttribute('cx', '100');
+  noiseCircle.setAttribute('cy', '100');
+  noiseRing.append(noiseCircle);
+  noiseRing.setAttribute('hidden', '');
+  minimapGroup.append(noiseRing);
   const toasts = createToastStack();
   group('toasts', toasts.el);
 
@@ -154,7 +175,14 @@ export function createHud(opts: HudOptions): Hud {
   const hotbar = document.createElement('div');
   hotbar.className = 'dz-hotbar dz-glass';
   hotbar.append(...slots.map((s) => s.slot.el));
-  group('hotbar', hotbar);
+  const hotbarGroup = group('hotbar', hotbar);
+  const firearmWidget = createFirearmWidget();
+  hotbarGroup.append(firearmWidget.el);
+  let firearm: FirearmVM | undefined;
+  const slotBar = document.createElement('div');
+  slotBar.className = 'dz-fw-slotbar';
+  const slotBarFill = document.createElement('i');
+  slotBar.append(slotBarFill);
   const stats = createStatBars({ health: 100, thirst: 100, hunger: 100, energy: 100 });
   const setStats = gated(stats);
   group('stats', stats.el);
@@ -213,6 +241,25 @@ export function createHud(opts: HudOptions): Hud {
     }
   };
 
+  /** 3 px ammo bar in the hotbar slot that holds the gun in hand. */
+  const syncSlotBar = (s: GameState): void => {
+    const held = s.inventory?.equipped.hand_primary;
+    const items = held !== undefined && firearm ? hotbarItems(s, content) : [];
+    const i = items.findIndex((it) => it?.id === String(held));
+    if (!firearm || i < 0) {
+      slotBar.remove();
+      return;
+    }
+    const el = slots[i]!.slot.el;
+    if (slotBar.parentElement !== el) el.append(slotBar);
+    slotBar.dataset.state = firearm.state;
+    const p =
+      firearm.state === 'reloading'
+        ? (firearm.progress ?? 0)
+        : firearm.loaded / Math.max(1, firearm.capacity);
+    slotBarFill.style.width = `${(Math.min(1, p) * 100).toFixed(1)}%`;
+  };
+
   const moodleInfo = (id: string) => {
     const def = content.moodles.get(id);
     return def ? { label: moodleName(id), polarity: toPolarity(def.polarity) } : undefined;
@@ -231,6 +278,19 @@ export function createHud(opts: HudOptions): Hud {
         setClock({ day: f.clock.day, minuteOfDay: Math.floor(f.clock.minuteOfDay) });
       }
       const s = f.state;
+      // Firearm widget, slot mini-bar and the minimap noise ring follow every frame (animation).
+      const b = opts.bindings();
+      firearm = firearmVM(s, content, f.tick, opts.tickMs, {
+        reload: actionKey(b, 'reload'),
+        attack: actionKey(b, 'primaryAction'),
+        inventory: actionKey(b, 'inventory'),
+      });
+      firearmWidget.update(firearm, dockSide(selected));
+      syncSlotBar(s);
+      if (firearm && f.aiming) {
+        noiseRing.removeAttribute('hidden');
+        noiseCircle.setAttribute('r', noiseRingRadius(firearm.noiseRadius).toFixed(1));
+      } else noiseRing.setAttribute('hidden', '');
       if (s.container?.id !== openContainer) {
         openContainer = s.container?.id;
         if (s.container) {
@@ -267,12 +327,17 @@ export function createHud(opts: HudOptions): Hud {
         setMinimap(mm);
       }
       setHints({
-        items: hintItems(opts.bindings()),
+        items: hintItems(opts.bindings(), firearm !== undefined),
         visible: hintsVisible(hintsSetting, f.now - bootMs),
       });
     },
     events(events) {
       for (const e of events) {
+        if (e.type === 'shot' && e.playerId === opts.playerId) {
+          noiseRing.classList.remove('dz-noise-ring--flash');
+          void noiseRing.getBoundingClientRect();
+          noiseRing.classList.add('dz-noise-ring--flash');
+        }
         const t = toastFromSimEvent(e, { playerId: opts.playerId, moodle: moodleInfo });
         if (t) toasts.push(t);
         else if (e.type === 'actionInterrupted' && e.playerId === opts.playerId) {
@@ -297,6 +362,8 @@ export function createHud(opts: HudOptions): Hud {
       hintsSetting = toggleHints(hintsSetting, now - bootMs);
       lastUpdate = -Infinity;
     },
+    firearm: () => firearm,
+    dryFire: () => firearmWidget.dryFire(),
     resize(width, height) {
       applyUiScale(hud, computeUiScale(width, height));
       lowRes.hidden = !isBelowMinResolution(width, height);
