@@ -5,7 +5,8 @@ import {
   SRGBColorSpace,
   TextureLoader,
 } from 'three';
-import type { Object3D, Texture, WebGLRenderer } from 'three';
+import type { AnimationClip, Object3D, Texture, WebGLRenderer } from 'three';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
@@ -78,6 +79,17 @@ export class AssetLoader {
       levels.length === 1 ? levels[0]!.object : buildLod(levels, this.opts.lodDistanceBias);
     root.name = id;
     return root;
+  }
+
+  /**
+   * Animated model (skinned, single level): a skeleton-aware clone and the clips. Pair with
+   * `release(id)`.
+   */
+  async loadAnimated(id: string): Promise<{ object: Object3D; clips: AnimationClip[] }> {
+    const asset = findAsset(this.requireManifest(), id);
+    const lod = asset.lods[0]!;
+    const g = await this.acquire(lod.file);
+    return { object: cloneSkinned(g.scene), clips: g.animations };
   }
 
   /** One LOD level only (dev page / tools). Pair with `releaseFile(file)`. */

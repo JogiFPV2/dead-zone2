@@ -14,7 +14,7 @@ import {
   type ManifestPack,
 } from './manifest.js';
 import { countTriangles, optimize, ready } from './optimize.js';
-import { parsePack, type Pack } from './pack.js';
+import { modelRef, parsePack, type Pack } from './pack.js';
 import { encodeTexture } from './texture.js';
 
 /** LOD level kept only if it has at most this fraction of the previous level's triangles. */
@@ -65,11 +65,15 @@ async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
   const paletteMaterial = palette?.material;
   const levels = [
     { ratio: 1, distance: 0 },
-    ...(pack.lod?.ratios ?? []).map((ratio, i) => ({ ratio, distance: pack.lod!.distances[i]! })),
+    ...(pack.animated ? [] : (pack.lod?.ratios ?? [])).map((ratio, i) => ({
+      ratio,
+      distance: pack.lod!.distances[i]!,
+    })),
   ];
   const assets: ManifestAsset[] = [];
-  for (const model of pack.models) {
-    const input = join(src, `${model}.glb`);
+  for (const ref of pack.models) {
+    const { id: model, file: srcFile } = modelRef(ref);
+    const input = join(src, `${srcFile}.glb`);
     const lods: ManifestLod[] = [];
     for (const [i, lvl] of levels.entries()) {
       const doc = await optimize(await io.read(input), { paletteMaterial, ratio: lvl.ratio });

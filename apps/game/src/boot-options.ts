@@ -77,6 +77,6 @@ export function parseBootOptions(search: string): BootOptions {
     give: parseGiveParam(q.get('give')),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
-    zspawn: Math.max(0, Math.min(50, Math.floor(Number(q.get('zspawn')) || 0))),
+    zspawn: Math.max(0, Math.min(300, Math.floor(Number(q.get('zspawn')) || 0))),
   };
 }

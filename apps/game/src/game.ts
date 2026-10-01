@@ -1,4 +1,4 @@
-import { WebGLRenderer } from 'three';
+import { Group, WebGLRenderer } from 'three';
 import {
   CAMERA_DISTANCE,
   createIsometricCamera,
@@ -57,6 +57,10 @@ import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
 import { MapObjects } from './world/map-objects.js';
+import { CONTAINER_MODELS, ModelKit, PILE_MODEL, PLAYER_MODEL } from './models/model-kit.js';
+import { brighten, loadZombieTemplates } from './models/zombie-views.js';
+import { InstancedZombies } from './models/instanced-zombies.js';
+import { PLAYER_HEIGHT } from './player/player-view.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -216,10 +220,34 @@ const groundPiles = new GroundPiles();
 scene.add(groundPiles.root);
 const mapObjects = new MapObjects(world.source, world.range);
 scene.add(mapObjects.root);
+// CC0 models (tools/assets → public/models); grey placeholders stay until/unless they load.
+let zombieViews: InstancedZombies | undefined;
+void ModelKit.create(renderer).then(async (kit) => {
+  if (!kit) return;
+  mapObjects.applyModels((id, h) => {
+    const model = CONTAINER_MODELS[id];
+    return model ? kit.staticModel(model, h) : undefined;
+  });
+  groundPiles.pileModel = () => kit.staticModel(PILE_MODEL, 0.45) ?? new Group();
+  try {
+    const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
+    brighten(p.object);
+    player.setModel(p.object, p.clips);
+  } catch (e) {
+    console.warn('player model', e);
+  }
+  const templates = await loadZombieTemplates(kit);
+  if (templates.length) {
+    zombieViews = await InstancedZombies.create(templates, crowd);
+    scene.add(zombieViews.root);
+    crowdView.mesh.visible = false;
+  }
+});
 let deathShown = false;
 gameState.subscribe((next) => {
   if (!next.death || deathShown) return;
   deathShown = true;
+  player.dead = true;
   inventory.close();
   showDeathScreen(container, next.death, boot.map === 'test' ? 'test' : boot.map);
 });
@@ -352,7 +380,9 @@ renderer.setAnimationLoop((time) => {
     });
   }
   const t0 = performance.now();
-  crowdView.update(tickAlpha(t0, crowdArrivedMs, TICK_MS));
+  const alpha = tickAlpha(t0, crowdArrivedMs, TICK_MS);
+  if (zombieViews) zombieViews.update(alpha, t0 / 1000, camera, rig.target.x, rig.target.z);
+  else crowdView.update(alpha);
   const t1 = performance.now();
   renderer.render(scene, camera);
   frameSample.updateMs = t1 - t0;

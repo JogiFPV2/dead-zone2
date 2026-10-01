@@ -43,6 +43,8 @@ export class GroundPiles {
   private readonly piles = new Map<number, Pile>();
   private last: readonly GroundPileView[] | undefined;
   private near = new Set<number>();
+  /** Model for new piles (cardboard box); undefined = grey box. */
+  pileModel: (() => Object3D) | undefined;
 
   update(
     piles: readonly GroundPileView[],
@@ -57,10 +59,11 @@ export class GroundPiles {
         let p = this.piles.get(c.id);
         if (!p) {
           const root = new Group();
-          const box = new Mesh(BOX, BOX_MATERIAL);
+          const model = this.pileModel?.();
+          const box = model ?? new Mesh(BOX, BOX_MATERIAL);
           box.castShadow = true;
           box.receiveShadow = true;
-          box.position.y = 0.15;
+          if (!model) box.position.y = 0.15;
           const marker = new Mesh(MARKER_GEOMETRY, MARKER_MATERIAL);
           root.add(box, marker);
           p = { root, marker, baseY: MARKER_Y };

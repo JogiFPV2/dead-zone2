@@ -1,4 +1,4 @@
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Group, Mesh, MeshStandardMaterial, type Object3D } from 'three';
 import type { NearbyContainerView } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
@@ -24,6 +24,8 @@ const SIZES: Record<string, [number, number, number]> = {
 const DEFAULT_SIZE: [number, number, number] = [0.8, 0.8, 0.8];
 
 interface Obj {
+  contentId: string;
+  height: number;
   tx: number;
   ty: number;
   z: number;
@@ -65,10 +67,32 @@ export class MapObjects {
             marker.position.set(p.x, markerY, p.z);
             marker.visible = false;
             this.root.add(mesh, marker);
-            this.objects.push({ tx, ty, z, mesh, material, marker, markerY });
+            this.objects.push({
+              contentId: o.contentId,
+              height: h,
+              tx,
+              ty,
+              z,
+              mesh,
+              material,
+              marker,
+              markerY,
+            });
           }
         }
       }
+    }
+  }
+
+  /** Swaps the grey boxes for models where `model(contentId, height)` has one. */
+  applyModels(model: (contentId: string, height: number) => Object3D | undefined): void {
+    for (const o of this.objects) {
+      const m = model(o.contentId, o.height);
+      if (!m) continue;
+      m.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
+      m.rotation.y = o.mesh.rotation.y;
+      o.mesh.visible = false;
+      this.root.add(m);
     }
   }
 
