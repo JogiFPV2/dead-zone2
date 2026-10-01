@@ -136,6 +136,23 @@ describe('Minimap element', () => {
     expect(n?.getAttribute('transform')).toBe('rotate(0 0 -90)');
   });
 
+  it('zoom scales the world layer and dot positions', () => {
+    const map = createMinimap(vm(), { zoom: 2 }, document);
+    expect(map.el.dataset.zoom).toBe('2');
+    expect(map.el.querySelector('.dz-minimap__world')?.getAttribute('transform')).toBe(
+      'rotate(0) scale(5) translate(0 0)',
+    );
+    const cx = () => Number(map.el.querySelector('circle')?.getAttribute('cx'));
+    const at2 = cx();
+    map.setZoom(1);
+    expect(map.el.querySelector('.dz-minimap__world')?.getAttribute('transform')).toBe(
+      'rotate(0) scale(2.5) translate(0 0)',
+    );
+    expect(cx()).toBeCloseTo(at2 / 2);
+    map.setZoom(0); // ignored
+    expect(map.el.dataset.zoom).toBe('1');
+  });
+
   it('rebuilds static geometry only when the arrays change', () => {
     const data = vm();
     const map = createMinimap(data, {}, document);

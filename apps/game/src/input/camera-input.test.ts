@@ -34,4 +34,17 @@ describe('bindCameraInput', () => {
     win.dispatchEvent(ev('keydown', { code: 'KeyQ' }));
     expect(calls).toHaveLength(5);
   });
+
+  it('skips zoom while blocked (modal open)', () => {
+    const calls: number[] = [];
+    const rig = { zoomByWheel: (d: number) => calls.push(d) } as unknown as CameraRig;
+    const element = new EventTarget();
+    const input = new InputMap(DEFAULT_BINDINGS, { window: new EventTarget(), element });
+    let blocked = true;
+    bindCameraInput(rig, input, () => blocked);
+    element.dispatchEvent(ev('wheel', { deltaY: -100 }));
+    blocked = false;
+    element.dispatchEvent(ev('wheel', { deltaY: -100 }));
+    expect(calls).toEqual([-100]);
+  });
 });

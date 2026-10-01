@@ -33,6 +33,8 @@ export interface MinimapOptions {
   orientation?: MinimapOrientation;
   /** Road width in metres (default MINIMAP_ROAD_WIDTH_M = 6 m). */
   roadWidth?: number;
+  /** Scale multiplier over MINIMAP_PX_PER_M (1 = spec 2.5 px/m; 2 = closer, radius ≈ 20 m). */
+  zoom?: number;
   onOpen?: () => void;
 }
 
@@ -44,8 +46,12 @@ export function createMinimap(
   vm: MinimapVM,
   options: MinimapOptions = {},
   doc: Doc = defaultDoc(),
-): Mounted<MinimapVM> & { setOrientation(o: MinimapOrientation): void } {
+): Mounted<MinimapVM> & {
+  setOrientation(o: MinimapOrientation): void;
+  setZoom(zoom: number): void;
+} {
   let orientation = options.orientation ?? 'north-up';
+  let zoom = options.zoom ?? 1;
   const roadWidth = options.roadWidth ?? MINIMAP_ROAD_WIDTH_M;
   const root = el(doc, 'div', 'dz-minimap');
   root.setAttribute('role', 'img');
@@ -97,11 +103,14 @@ export function createMinimap(
         ...m.buildings.map((poly) => svgEl(doc, 'polygon', { points: pts(poly) })),
       );
     }
-    world.setAttribute('transform', worldLayerTransform(m.player, yaw, MINIMAP_PX_PER_M));
+    const pxPerM = MINIMAP_PX_PER_M * zoom;
+    root.dataset.zoom = String(zoom);
+    world.setAttribute('transform', worldLayerTransform(m.player, yaw, pxPerM));
     const dotEls: Element[] = [];
     for (const e of m.enemies)
-      dotEls.push(dot(doc, projectToMinimap(e, m.player, yaw), 2.5, 'enemy'));
-    for (const p of m.pois) dotEls.push(dot(doc, projectToMinimap(p, m.player, yaw), 5, p.kind));
+      dotEls.push(dot(doc, projectToMinimap(e, m.player, yaw, pxPerM), 2.5, 'enemy'));
+    for (const p of m.pois)
+      dotEls.push(dot(doc, projectToMinimap(p, m.player, yaw, pxPerM), 5, p.kind));
     dots.replaceChildren(...dotEls);
     player.setAttribute('transform', `rotate(${playerMarkerDeg(m.player.heading, yaw)})`);
     const n = northMarker(yaw, MINIMAP_NORTH_RADIUS);
@@ -117,6 +126,11 @@ export function createMinimap(
     destroy: () => root.remove(),
     setOrientation(o) {
       orientation = o;
+      update(last);
+    },
+    setZoom(z) {
+      if (!(z > 0) || z === zoom) return;
+      zoom = z;
       update(last);
     },
   };

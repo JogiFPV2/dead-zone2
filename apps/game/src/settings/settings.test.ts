@@ -47,6 +47,17 @@ describe('sanitizeSettings', () => {
     expect(s.input.bindings).toEqual(DEFAULT_BINDINGS);
     expect(sanitizeSettings('junk')).toEqual(DEFAULT_SETTINGS);
   });
+
+  it('keeps view zoom (clamped) and defaults it for files without it', () => {
+    expect(sanitizeSettings({ version: SETTINGS_VERSION }).view).toEqual({
+      cameraZoom: 1,
+      minimapZoom: 1,
+    });
+    expect(sanitizeSettings({ view: { cameraZoom: 1.4, minimapZoom: 99 } }).view).toEqual({
+      cameraZoom: 1.4,
+      minimapZoom: 4,
+    });
+  });
 });
 
 describe('migrate', () => {

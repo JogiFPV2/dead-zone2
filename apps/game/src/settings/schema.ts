@@ -43,10 +43,22 @@ export interface InterfaceSettings {
   targetZombieHp: boolean;
 }
 
+/**
+ * View state remembered between sessions (mouse wheel / minimap +−). Added without a version
+ * bump: older files simply lack it and sanitize fills the defaults.
+ */
+export interface ViewSettings {
+  /** Ortho camera zoom (1 = default view; clamped to camera/zoom.ts limits). */
+  cameraZoom: number;
+  /** Minimap scale multiplier (1 = spec 2.5 px/m; steps in hud/minimap-zoom.ts). */
+  minimapZoom: number;
+}
+
 export interface Settings {
   version: typeof SETTINGS_VERSION;
   input: { bindings: Bindings };
   interface: InterfaceSettings;
+  view: ViewSettings;
   graphics: GraphicsSettings;
   audio: AudioSettings;
 }
@@ -55,6 +67,7 @@ export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS },
   interface: { showZombieHp: false, targetZombieHp: true },
+  view: { cameraZoom: 1, minimapZoom: 1 },
   graphics: { style: 'classic', pixelRatioCap: 2, antialias: true, showFps: false },
   audio: {
     master: 0.8,
@@ -83,6 +96,8 @@ export function sanitizeSettings(raw: unknown): Settings {
   const g = obj(r.graphics);
   const a = obj(r.audio);
   const ui = obj(r.interface);
+  const v = obj(r.view);
+  const dv = DEFAULT_SETTINGS.view;
   const di = DEFAULT_SETTINGS.interface;
   const dg = DEFAULT_SETTINGS.graphics;
   const da = DEFAULT_SETTINGS.audio;
@@ -92,6 +107,10 @@ export function sanitizeSettings(raw: unknown): Settings {
     interface: {
       showZombieHp: bool(ui.showZombieHp, di.showZombieHp),
       targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
+    },
+    view: {
+      cameraZoom: range(v.cameraZoom, 0.25, 4, dv.cameraZoom),
+      minimapZoom: range(v.minimapZoom, 0.25, 4, dv.minimapZoom),
     },
     graphics: {
       style: (GRAPHICS_STYLES as readonly unknown[]).includes(g.style)

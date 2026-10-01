@@ -21,6 +21,7 @@ import {
   type ItemRowVM,
   type PanelVM,
 } from './inventory-model.js';
+import { bindOutsideClose } from './outside-click.js';
 
 export interface InventoryWindowOptions {
   root: HTMLElement;
@@ -349,6 +350,14 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
     const hit = id === undefined ? undefined : rowEls.get(id);
     if (hit?.row.isConnected) showTooltip(hit.row, hit.vm);
   };
+
+  // A press on the backdrop (outside the panels / tooltips) closes the window and is consumed.
+  bindOutsideClose(
+    el,
+    '.dz-inv__panel, .dz-inv__head',
+    () => isOpen,
+    () => api.close(),
+  );
 
   const api: InventoryWindow = {
     get open() {

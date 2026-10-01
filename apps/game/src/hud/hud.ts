@@ -10,6 +10,7 @@ import {
   createInventorySlot,
   createKeyHints,
   createMinimap,
+  MINIMAP_PX_PER_M,
   createMoodleList,
   createObjectiveCard,
   createStatBars,
@@ -51,6 +52,7 @@ import { leisureActionVMs } from './leisure-actions.js';
 import type { LeisureSpot } from './leisure-spots.js';
 import type { Feedback } from './sleep-feedback.js';
 import { createSleepNotice } from './sleep-notice.js';
+import { createMinimapZoomControls } from './minimap-zoom-controls.js';
 import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
@@ -73,6 +75,9 @@ export interface HudOptions {
   playerId: number;
   /** Sim tick length (reload seconds left). */
   tickMs: number;
+  /** Minimap zoom (steps in minimap-zoom.ts) and its change (persist). */
+  minimapZoom?: number;
+  onMinimapZoom?: (zoom: number) => void;
 }
 
 /** Per-frame inputs; the HUD itself throttles to HUD_UPDATE_MS. */
@@ -162,8 +167,14 @@ export function createHud(opts: HudOptions): Hud {
   });
   const minimap = createMinimap(minimapVM({ px: 0, py: 0, facing: 0, cameraYaw: 0 }), {
     roadWidth: 1,
+    zoom: opts.minimapZoom ?? 1,
   });
   const minimapGroup = group('minimap', minimap.el);
+  const minimapZoom = createMinimapZoomControls(minimap.el, opts.minimapZoom ?? 1, (z) => {
+    minimap.setZoom(z);
+    opts.onMinimapZoom?.(z);
+  });
+  minimapGroup.append(minimapZoom.el);
   // Shot noise radius while aiming a firearm (spec §4): dashed ring around the player.
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const noiseRing = document.createElementNS(SVG_NS, 'svg');
@@ -301,7 +312,10 @@ export function createHud(opts: HudOptions): Hud {
       syncSlotBar(s);
       if (firearm && f.aiming) {
         noiseRing.removeAttribute('hidden');
-        noiseCircle.setAttribute('r', noiseRingRadius(firearm.noiseRadius).toFixed(1));
+        noiseCircle.setAttribute(
+          'r',
+          noiseRingRadius(firearm.noiseRadius, MINIMAP_PX_PER_M * minimapZoom.get()).toFixed(1),
+        );
       } else noiseRing.setAttribute('hidden', '');
       if (s.container?.id !== openContainer) {
         openContainer = s.container?.id;

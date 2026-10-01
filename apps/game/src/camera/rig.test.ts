@@ -34,11 +34,31 @@ describe('CameraRig', () => {
     expect(dir(camera).distanceTo(new Vector3(-1, -1, -1).normalize())).toBeLessThan(1e-9);
   });
 
-  it('zooms with the wheel within limits', () => {
+  it('zooms with the wheel within limits, easing towards the target', () => {
     const { camera, rig } = setup();
+    const seen: number[] = [];
+    rig.onZoomTarget = (z) => seen.push(z);
+    rig.update(0);
     rig.zoomByWheel(-100);
+    expect(rig.zoomTarget).toBeCloseTo(1.25);
+    expect(camera.zoom).toBe(1);
+    rig.update(16);
+    expect(camera.zoom).toBeGreaterThan(1);
+    expect(camera.zoom).toBeLessThan(1.25);
+    rig.update(5000);
     expect(camera.zoom).toBeCloseTo(1.25);
     rig.zoomByWheel(-10_000);
+    rig.update(10_000);
     expect(rig.zoom).toBe(2);
+    expect(seen).toHaveLength(2);
+  });
+
+  it('setZoom clamps and applies immediately', () => {
+    const { camera, rig } = setup();
+    rig.setZoom(9);
+    expect(camera.zoom).toBe(2);
+    expect(rig.zoomTarget).toBe(2);
+    rig.setZoom(0.1);
+    expect(camera.zoom).toBe(0.5);
   });
 });

@@ -20,6 +20,7 @@ import {
   takeWithinLimit,
   type LootRowVM,
 } from './loot-model.js';
+import { bindOutsideClose } from './outside-click.js';
 
 export interface LootWindowOptions {
   root: HTMLElement;
@@ -602,6 +603,14 @@ export function createLootWindow(opts: LootWindowOptions): LootWindow {
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
   window.addEventListener('blur', () => setShift(false));
+
+  // A press on the backdrop (outside panels, tabs, hints) closes like Esc and is consumed.
+  bindOutsideClose(
+    el,
+    '.dz-loot__panel, .dz-loot__tabs, .dz-loot__head, .dz-loot__hint, .dz-loot__shortcuts, .dz-loot__toast',
+    () => isOpen && !drag,
+    () => opts.onClose(),
+  );
 
   const api: LootWindow = {
     get open() {

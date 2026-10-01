@@ -13,6 +13,7 @@ import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
+import { debounced } from './settings/debounce.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
 import {
@@ -146,7 +147,12 @@ const input = new InputMap(settings.get().input.bindings, {
   document,
 });
 settings.subscribe((next) => input.setBindings(next.input.bindings));
-bindCameraInput(rig, input);
+// Wheel zoom (smooth, 0.6×–1.6×), remembered in settings; not while a window is open.
+rig.setZoom(settings.get().view.cameraZoom);
+rig.onZoomTarget = debounced(400, (cameraZoom: number) =>
+  settings.update((s) => ({ ...s, view: { ...s.view, cameraZoom } })),
+);
+bindCameraInput(rig, input, () => !!container.dataset.modal);
 
 // Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet;
 // they come with zombies); it has no collisions and no survival.
@@ -255,6 +261,9 @@ const hud = createHud({
   feedback: (e) => sleep.feedback(e),
   playerId: PLAYER_ID,
   tickMs: TICK_MS,
+  minimapZoom: settings.get().view.minimapZoom,
+  onMinimapZoom: (minimapZoom) =>
+    settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
 });
 // Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
 const sendBody = (body: CommandBody) => {
