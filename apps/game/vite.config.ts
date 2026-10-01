@@ -36,6 +36,9 @@ function basisTranscoder(): Plugin {
 export default defineConfig({
   server: { port: 5174 },
   plugins: [basisTranscoder()],
+  define: {
+    __DZ_BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replaceAll('-', '.')),
+  },
   // three.js alone is ~500 kB minified; budget is tracked separately (PLAN.md).
   build: { target: 'es2022', chunkSizeWarningLimit: 800 },
 });

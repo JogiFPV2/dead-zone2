@@ -1,9 +1,9 @@
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bindings.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
-export const SETTINGS_VERSION = 2;
+export const SETTINGS_VERSION = 3;
 
-/** Graphics/audio are placeholders for the settings screen (Designer); not applied yet. */
+/** Graphics are placeholders for the settings screen (Designer); not applied yet. */
 export interface GraphicsSettings {
   /** Cap for devicePixelRatio (the game uses 2 today). */
   pixelRatioCap: number;
@@ -11,11 +11,19 @@ export interface GraphicsSettings {
   showFps: boolean;
 }
 
+/**
+ * Volumes 0..1 (shown as 0–100 in Ustawienia › Audio; gain = v², spec deadzone-menu-spec §5).
+ * Buses: master, music, effects = sfx (weapons, steps, zombies), ambience (wind, rain, town),
+ * voice = voices + UI clicks.
+ */
 export interface AudioSettings {
-  /** 0..1 */
   master: number;
   music: number;
   effects: number;
+  ambience: number;
+  voice: number;
+  /** „Muzyka w menu”: soundtrack in the main menu (and pause later). */
+  menuMusic: boolean;
   muted: boolean;
 }
 
@@ -40,7 +48,15 @@ export const DEFAULT_SETTINGS: Settings = {
   input: { bindings: DEFAULT_BINDINGS },
   interface: { showZombieHp: false, targetZombieHp: true },
   graphics: { pixelRatioCap: 2, antialias: true, showFps: false },
-  audio: { master: 1, music: 0.6, effects: 0.8, muted: false },
+  audio: {
+    master: 0.8,
+    music: 0.45,
+    effects: 0.85,
+    ambience: 0.7,
+    voice: 0.6,
+    menuMusic: true,
+    muted: false,
+  },
 };
 
 type Obj = Record<string, unknown>;
@@ -78,6 +94,9 @@ export function sanitizeSettings(raw: unknown): Settings {
       master: range(a.master, 0, 1, da.master),
       music: range(a.music, 0, 1, da.music),
       effects: range(a.effects, 0, 1, da.effects),
+      ambience: range(a.ambience, 0, 1, da.ambience),
+      voice: range(a.voice, 0, 1, da.voice),
+      menuMusic: bool(a.menuMusic, da.menuMusic),
       muted: bool(a.muted, da.muted),
     },
   };

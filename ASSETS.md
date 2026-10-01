@@ -22,6 +22,17 @@ zostają wektorowe (`@deadzone/ui`), bandaż używa ikony apteczki.
 | baseball-bat                           | Baseball Bat        | Pichuliru, poly.pizza/m/POXTjdMP2c                   | CC0-1.0  |
 | crowbar                                | Crowbar             | Pichuliru, poly.pizza/m/OS8gAoeDtM                   | CC0-1.0  |
 
+## Dźwięki (`apps/game/public/audio/`)
+
+Każdy plik jest w dwóch formatach: `.ogg` (Vorbis) i `.mp3` (fallback dla Safari). Przekodowane ffmpeg
+z oryginałów; sumy SHA-256 dotyczą pobranych oryginałów.
+
+| Plik                                      | Oryginał                                              | Autor / źródło                                                                                                                | Licencja | SHA-256 oryginału                                                                              |
+| ----------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `menu-emptycity` (muzyka menu, 1:40)      | `EmptyCity.ogg`                                       | yd, „EmptyCity: Background Music”, opengameart.org/content/emptycity-background-music                                         | CC0-1.0  | 10cdeb8e7ede29f8afeedaec23f16297752a89aac36c37b06a0262b5190efaad                               |
+| `amb-crickets` (otoczenie, pętla)         | `crickets_1.mp3`                                      | Wolfgang\_ (nagranie: Ted Kerr), „Crickets Ambient Noise - loopable”, opengameart.org/content/crickets-ambient-noise-loopable | CC0-1.0  | 5b5bd1f744087888c5623543c3ff80be9c2ce106093993e7c8a8492b0280b2c0                               |
+| `ui-click1`, `ui-rollover2`, `ui-switch2` | `click1.ogg`, `rollover2.ogg`, `switch2.ogg` z paczki | Kenney, „UI Audio”, kenney.nl/assets/ui-audio (`License.txt` w paczce: CC0)                                                   | CC0-1.0  | paczka `kenney_ui-audio.zip`: 946fc23a63d535d693eb31b2eabb80c8c28d6351e2186b344ceb71b2cb1d5eb6 |
+
 ## Pack testowy pipeline'u (nieużywany w scenie gry)
 
 <!-- assets-pipeline:begin -->

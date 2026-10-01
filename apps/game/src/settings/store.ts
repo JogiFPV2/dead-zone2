@@ -10,6 +10,8 @@ export const SETTINGS_STORAGE_KEY = 'deadzone.settings';
 export const MIGRATIONS: Migrations = {
   // 1 → 2: `interface` (zombie health overlays) added; sanitize fills its defaults.
   1: (data) => data,
+  // 2 → 3: audio ambience / voice / menuMusic added (menu, Ustawienia › Audio); defaults fill them.
+  2: (data) => data,
 };
 
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

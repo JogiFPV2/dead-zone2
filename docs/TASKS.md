@@ -99,7 +99,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Profil i lista zapisów, przycisk „Graj” (Designer + Silnik)
 
 ## Etap 9 — Grywalne demo
-- [ ] Dźwięki CC0 (Designer)
+- [ ] Dźwięki CC0 (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze brak
+- [x] Menu główne z żywą sceną w tle + Ustawienia › Audio, szyny głośności Web Audio (Silnik)
 - [ ] Samouczek i ustawienia (Designer + Silnik)
 - [ ] Profilowanie i optymalizacja (Silnik)
 - [ ] Sentry i zbieranie błędów (Serwer)

@@ -30,7 +30,15 @@ describe('sanitizeSettings', () => {
       audio: { master: -1, music: 0.3 },
     });
     expect(s.graphics).toEqual({ pixelRatioCap: 4, antialias: true, showFps: false });
-    expect(s.audio).toEqual({ master: 0, music: 0.3, effects: 0.8, muted: false });
+    expect(s.audio).toEqual({
+      master: 0,
+      music: 0.3,
+      effects: 0.85,
+      ambience: 0.7,
+      voice: 0.6,
+      menuMusic: true,
+      muted: false,
+    });
     expect(s.input.bindings).toEqual(DEFAULT_BINDINGS);
     expect(sanitizeSettings('junk')).toEqual(DEFAULT_SETTINGS);
   });
