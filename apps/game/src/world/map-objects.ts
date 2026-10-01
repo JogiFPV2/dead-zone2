@@ -1,4 +1,11 @@
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial, type Object3D } from 'three';
+import {
+  BoxGeometry,
+  Group,
+  Mesh,
+  MeshStandardMaterial,
+  type Material,
+  type Object3D,
+} from 'three';
 import type { NearbyContainerView } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
@@ -33,7 +40,11 @@ interface Obj {
   material: MeshStandardMaterial;
   marker: Mesh;
   markerY: number;
+  model?: Object3D;
 }
+
+/** Opacity of furniture while its contents are shown (shelf fill x-ray, loot panel open). */
+const XRAY_OPACITY = 0.3;
 
 /**
  * PLACEHOLDER map objects (chunk `objects`: storage and furniture) as grey boxes. Storage in
@@ -92,8 +103,39 @@ export class MapObjects {
       m.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
       m.rotation.y = o.mesh.rotation.y;
       o.mesh.visible = false;
+      o.model = m;
       this.root.add(m);
     }
+  }
+
+  /**
+   * See-through furniture at a tile (open loot panel shows the shelf props inside). Materials are
+   * cloned per object on the way in, so other copies of the model stay opaque.
+   */
+  setXray(tx: number, ty: number, z: number, on: boolean): void {
+    const o = this.objects.find((ob) => ob.tx === tx && ob.ty === ty && ob.z === z);
+    if (!o) return;
+    (o.model ?? o.mesh).traverse((node) => {
+      if (!(node instanceof Mesh)) return;
+      const data = node.userData as { opaqueMaterial?: Material | Material[] };
+      if (on) {
+        data.opaqueMaterial ??= node.material as Material | Material[];
+        const see = (m: Material): Material => {
+          const c = m.clone();
+          c.transparent = true;
+          c.opacity = XRAY_OPACITY;
+          c.depthWrite = false;
+          return c;
+        };
+        const src = data.opaqueMaterial;
+        node.material = Array.isArray(src) ? src.map(see) : see(src);
+      } else if (data.opaqueMaterial) {
+        const cur = node.material as Material | Material[];
+        for (const m of Array.isArray(cur) ? cur : [cur]) m.dispose();
+        node.material = data.opaqueMaterial;
+        delete data.opaqueMaterial;
+      }
+    });
   }
 
   get count(): number {

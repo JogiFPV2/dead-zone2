@@ -61,6 +61,7 @@ import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
 import { MapObjects } from './world/map-objects.js';
+import { ShelfFill } from './world/shelf-fill.js';
 import { CONTAINER_MODELS, ModelKit, PILE_MODEL, PLAYER_MODEL } from './models/model-kit.js';
 import { brighten, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
@@ -254,6 +255,10 @@ const groundPiles = new GroundPiles();
 scene.add(groundPiles.root);
 const mapObjects = new MapObjects(world.source, world.range);
 scene.add(mapObjects.root);
+const shelfFill = new ShelfFill(world.source, world.range, (tx, ty, z, on) =>
+  mapObjects.setXray(tx, ty, z, on),
+);
+scene.add(shelfFill.root);
 // CC0 models (tools/assets → public/models); grey placeholders stay until/unless they load.
 let zombieViews: InstancedZombies | undefined;
 void ModelKit.create(renderer).then(async (kit) => {
@@ -409,6 +414,7 @@ renderer.setAnimationLoop((time) => {
   groundPiles.update(gs.groundPiles, gs.nearby, time);
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
+  shelfFill.update(gs.storages, gs.container?.id);
   inventory.update();
   if (state) {
     const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
