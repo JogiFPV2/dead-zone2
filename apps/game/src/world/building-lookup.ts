@@ -25,11 +25,19 @@ export function buildingInChunk(chunk: ChunkData | undefined, tx: number, ty: nu
 export class BuildingLookup {
   private readonly cache = new Map<string, ChunkData | undefined>();
 
-  constructor(private readonly source: ChunkGetter) {}
+  /**
+   * `cache: false` for sources that are already a cheap lookup and change over time (the
+   * streamer's loaded chunks): nothing is pinned in memory, unloaded chunks are not remembered.
+   */
+  constructor(
+    private readonly source: ChunkGetter,
+    private readonly cacheChunks = true,
+  ) {}
 
   at(tx: number, ty: number, z: number): BuildingId {
     const cx = Math.floor(tx / CHUNK_SIZE);
     const cy = Math.floor(ty / CHUNK_SIZE);
+    if (!this.cacheChunks) return buildingInChunk(this.source.getChunk(cx, cy, z), tx, ty);
     const key = `${cx},${cy},${z}`;
     if (!this.cache.has(key)) this.cache.set(key, this.source.getChunk(cx, cy, z));
     return buildingInChunk(this.cache.get(key), tx, ty);

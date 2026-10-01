@@ -17,7 +17,15 @@ export interface GraphicsSettings {
   pixelRatioCap: number;
   antialias: boolean;
   showFps: boolean;
+  /**
+   * „Zasięg widzenia”: chunk streaming ring radii / budgets (world/streaming/rings.ts presets).
+   * No UI row yet; `?view=` overrides it.
+   */
+  viewDistance: ViewDistance;
 }
+
+export const VIEW_DISTANCE_SETTINGS = ['low', 'medium', 'high'] as const;
+export type ViewDistance = (typeof VIEW_DISTANCE_SETTINGS)[number];
 
 /**
  * Volumes 0..1 (shown as 0–100 in Ustawienia › Audio; gain = v², spec deadzone-menu-spec §5).
@@ -68,7 +76,13 @@ export const DEFAULT_SETTINGS: Settings = {
   input: { bindings: DEFAULT_BINDINGS },
   interface: { showZombieHp: false, targetZombieHp: true },
   view: { cameraZoom: 1, minimapZoom: 1 },
-  graphics: { style: 'classic', pixelRatioCap: 2, antialias: true, showFps: false },
+  graphics: {
+    style: 'classic',
+    pixelRatioCap: 2,
+    antialias: true,
+    showFps: false,
+    viewDistance: 'medium',
+  },
   audio: {
     master: 0.8,
     music: 0.45,
@@ -119,6 +133,9 @@ export function sanitizeSettings(raw: unknown): Settings {
       pixelRatioCap: range(g.pixelRatioCap, 0.5, 4, dg.pixelRatioCap),
       antialias: bool(g.antialias, dg.antialias),
       showFps: bool(g.showFps, dg.showFps),
+      viewDistance: (VIEW_DISTANCE_SETTINGS as readonly unknown[]).includes(g.viewDistance)
+        ? (g.viewDistance as ViewDistance)
+        : dg.viewDistance,
     },
     audio: {
       master: range(a.master, 0, 1, da.master),

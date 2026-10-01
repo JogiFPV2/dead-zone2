@@ -16,6 +16,8 @@ export class MockSimClient implements SimClient {
   private readonly crowd: Crowd;
   private readonly rng: Rng;
   private paused = false;
+  /** Stress / dev: constant move input overriding the player's (e.g. walking across the world). */
+  private autoMove: { dx: number; dy: number } | undefined;
 
   /** `crowd` = number of wandering placeholder entities appended after the player. */
   constructor(
@@ -32,7 +34,7 @@ export class MockSimClient implements SimClient {
 
   send(cmd: Command): void {
     if (cmd.playerId !== this.player.id) return;
-    if (cmd.type === 'move') {
+    if (cmd.type === 'move' && !this.autoMove) {
       this.input.dx = cmd.dx;
       this.input.dy = cmd.dy;
     } else if (cmd.type === 'aim') {
@@ -43,6 +45,18 @@ export class MockSimClient implements SimClient {
   onSnapshot(cb: (snapshot: SnapshotMessage) => void): () => void {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);
+  }
+
+  /** Dev: jumps the player to (x, y). */
+  teleport(x: number, y: number): void {
+    this.player = { ...this.player, x, y };
+  }
+
+  /** Dev: walks in (dx, dy) until called with undefined. */
+  setAutoMove(dir: { dx: number; dy: number } | undefined): void {
+    this.autoMove = dir;
+    this.input.dx = dir?.dx ?? 0;
+    this.input.dy = dir?.dy ?? 0;
   }
 
   setPaused(paused: boolean): void {

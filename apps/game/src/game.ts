@@ -36,11 +36,18 @@ import { MockSimClient } from './sim/mock-sim-client.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
-import { Terrain } from './world/terrain.js';
 import { tileOf } from './world/building-lookup.js';
 import { cameraSide } from './world/cutaway.js';
-import { Structures } from './world/structures.js';
+import {
+  createWorldStreaming,
+  fitSmallWorld,
+  streamConfigFor,
+  wholeWorldNear,
+} from './world/streaming/setup.js';
+import { chunkSourceToWorld } from './world/streaming/source.js';
+import { CHUNK_SIZE } from './world/chunk.js';
 import { OpeningsView } from './world/openings.js';
+import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
@@ -77,7 +84,6 @@ import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
-import { MapObjects } from './world/map-objects.js';
 import { ShelfFill } from './world/shelf-fill.js';
 import { CONTAINER_MODELS, ModelKit, PILE_MODEL, PLAYER_MODEL } from './models/model-kit.js';
 import { brighten, loadZombieTemplates } from './models/zombie-views.js';
@@ -98,6 +104,8 @@ const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'qui
 const PLAYER_ID = 0;
 const SIM_SEED = 1;
 const FOLLOW_HALF_LIFE_MS = 80;
+/** Stress world edge in tiles (8 km); kept here so the stress module stays lazy. */
+const STRESS_WORLD_TILES = 250 * CHUNK_SIZE;
 
 /** The game itself (the default page); imported by main.ts. */
 const container = document.getElementById('app');
@@ -125,41 +133,83 @@ const simContent =
           return undefined;
         })
     : undefined;
-const world: LoadedMap =
-  boot.map !== 'test'
+// `?stress=1`: procedural 8 × 8 km dummy world, streamed only (no sim map: the mock sim walks it;
+// minimap, shelf props and leisure spots see an empty map).
+const stressWorld = boot.stress
+  ? await import('./world/streaming/stress-source.js').then(
+      (m) => new m.StressWorldSource(SIM_SEED, boot.stressLatencyMs),
+    )
+  : undefined;
+const world: LoadedMap = stressWorld
+  ? {
+      source: { tilePalette: [null], getChunk: () => undefined },
+      range: { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 },
+      zones: [],
+    }
+  : boot.map !== 'test'
     ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
     : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
+/** Where the player starts (streaming warm-up centre before the first snapshot). */
+const startPoint: { x: number; y: number } = stressWorld
+  ? stressWorld.centre
+  : boot.spawnInside
+    ? TEST_BUILDING_INSIDE
+    : import.meta.env.DEV && boot.spawnAt
+      ? boot.spawnAt
+      : (startSpawn(world.zones) ?? (boot.sim === 'mock' ? { x: 6.5, y: 6.5 } : { x: 0, y: 0 }));
 
 const scene = createScene();
+const settings = createSettingsStore();
 // Town kit (CC0 modules, one atlas material): BatchedMesh per chunk + merged terrain per chunk.
-// `?town=0` or a failed load keeps the grey-box world.
-const townKit = boot.town
-  ? await import('./world/town/kit.js')
-      .then((m) => m.loadTownKit())
-      .catch((e: unknown) => {
-        console.error('Town kit failed to load; grey-box world', e);
-        return undefined;
-      })
-  : undefined;
+// `?town=0` or a failed load keeps the grey-box world. The kit lays out the whole authored map at
+// once, so it is not streamed yet; the stress world always uses the streamed grey-box layers.
+const townKit =
+  boot.town && !stressWorld
+    ? await import('./world/town/kit.js')
+        .then((m) => m.loadTownKit())
+        .catch((e: unknown) => {
+          console.error('Town kit failed to load; grey-box world', e);
+          return undefined;
+        })
+    : undefined;
 const town = townKit ? await import('./world/town/index.js') : undefined;
 // Procedural decor of content maps (lamps, poles, trees); the generated test map has its own lamps.
 const decor =
   boot.map !== 'test' && town
     ? town.townDecor(new town.MapTiles(world.source, world.range.z), world.range)
     : undefined;
-const terrain =
-  townKit && town ? new town.TownTerrain(world.source, townKit) : new Terrain(world.source);
-terrain.loadRange(world.range);
-scene.add(terrain.root);
+// Chunk streaming (docs/streaming.md): grey-box terrain / structures and map objects load per
+// chunk around the player / camera target; mid and far rings get merged LOD meshes.
+const streaming = createWorldStreaming(
+  stressWorld ?? chunkSourceToWorld(world.source, world.range, `content:${boot.map}`, SIM_SEED),
+  streamConfigFor(settings.get().graphics.viewDistance, window.location.search),
+  { greyBox: !townKit },
+);
+settings.subscribe((next, prev) => {
+  if (next.graphics.viewDistance !== prev.graphics.viewDistance) {
+    const cfg = streamConfigFor(next.graphics.viewDistance, window.location.search);
+    const b = streaming.streamer.source.bounds;
+    streaming.streamer.setConfig(townKit ? wholeWorldNear(cfg, b) : fitSmallWorld(cfg, b));
+  }
+});
+if (townKit && town) {
+  const terrain = new town.TownTerrain(world.source, townKit);
+  terrain.loadRange(world.range);
+  scene.add(terrain.root);
+}
 const townStructures = townKit && town ? new town.TownStructures(world.source, townKit) : undefined;
-const structures = townStructures ?? new Structures(world.source);
-if (townStructures) townStructures.loadRange(world.range, decor?.props);
-else structures.loadRange(world.range);
-scene.add(structures.root);
-// Doors, window panes and fences: sim opening state + shaking under crowd pressure.
+if (townStructures) {
+  townStructures.loadRange(world.range, decor?.props);
+  scene.add(townStructures.root);
+}
+const structures = townStructures ?? streaming.structures;
+for (const root of streaming.roots) scene.add(root);
+await streaming.streamer.warmup([startPoint]);
+// Doors, window panes and fences: sim opening state + shaking under crowd pressure. Not streamed
+// yet: built over the authored map (empty in the stress world), see docs/streaming.md.
 const openings = new OpeningsView(
   world.source,
-  structures.lookup,
+  townStructures?.lookup ?? new BuildingLookup(world.source),
   townKit && townStructures && town
     ? {
         kit: townKit,
@@ -186,7 +236,6 @@ if (import.meta.env.DEV && boot.zones) {
 }
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
-const settings = createSettingsStore();
 // „Styl grafiki” (#71): post-process on the same scene, switched live from the settings.
 const stylePass = new GraphicsStylePass(renderer);
 stylePass.setStyle(settings.get().graphics.style);
@@ -237,8 +286,10 @@ if (boot.sim === 'worker') {
   simWorker = worker;
 } else {
   sim = new MockSimClient(
-    rangeBounds(world.range),
-    boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
+    stressWorld
+      ? { minX: 0, minY: 0, maxX: STRESS_WORLD_TILES, maxY: STRESS_WORLD_TILES }
+      : rangeBounds(world.range),
+    stressWorld ? startPoint : boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
     PLAYER_ID,
     { count: boot.crowd, seed: SIM_SEED },
   );
@@ -522,8 +573,7 @@ input.on('reload', () => {
 });
 const groundPiles = new GroundPiles();
 scene.add(groundPiles.root);
-const mapObjects = new MapObjects(world.source, world.range);
-scene.add(mapObjects.root);
+const { mapObjects } = streaming;
 const shelfFill = new ShelfFill(world.source, world.range, (tx, ty, z, on) =>
   mapObjects.setXray(tx, ty, z, on),
 );
@@ -796,7 +846,35 @@ resize();
 
 let afterRender: ((r: WebGLRenderer) => void) | undefined;
 let recordFrame: ((s: FrameSample, r: WebGLRenderer) => void) | undefined;
-if (import.meta.env.DEV) {
+let perfFrame: ((r: WebGLRenderer, cpuMs: number) => void) | undefined;
+if (boot.perf) {
+  void import('./dev/perf-overlay.js').then(({ createPerfOverlay }) => {
+    perfFrame = createPerfOverlay(document.body, {
+      stream: () => streaming.streamer.stats(),
+      caps: () => streaming.streamer.config,
+      extra: () => {
+        const p = snapshots.sample(performance.now(), TICK_MS);
+        const at = p
+          ? `player ${p.x.toFixed(1)}, ${p.y.toFixed(1)} (chunk ${Math.floor(p.x / CHUNK_SIZE)},${Math.floor(p.y / CHUNK_SIZE)})`
+          : '';
+        return `${at} · world ${streaming.streamer.source.id} v${streaming.streamer.source.version}`;
+      },
+    }).frame;
+  });
+}
+if (boot.perf || boot.stress) {
+  // Streaming test hooks (also in the public build, behind ?perf / ?stress).
+  const mock = sim instanceof MockSimClient ? sim : undefined;
+  Object.assign(window, {
+    __dzStream: {
+      streamer: streaming.streamer,
+      stats: () => streaming.streamer.stats(),
+      teleport: (x: number, y: number) => mock?.teleport(x, y),
+      walk: (dx: number, dy: number) => mock?.setAutoMove(dx || dy ? { dx, dy } : undefined),
+    },
+  });
+}
+if (import.meta.env.DEV && !boot.perf) {
   void Promise.all([import('./dev/stats-overlay.js'), import('./dev/crowd-bench.js')]).then(
     ([{ createStatsOverlay }, { createCrowdBench }]) => {
       const bench = createCrowdBench(() => crowd.count);
@@ -850,6 +928,7 @@ if (import.meta.env.DEV) {
 let lastFrameMs: number | undefined;
 let cameraSnapped = false;
 renderer.setAnimationLoop((time) => {
+  const frameStart = performance.now();
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;
   if (pause.simPaused) {
@@ -883,6 +962,15 @@ renderer.setAnimationLoop((time) => {
     camera.updateProjectionMatrix();
   }
   rig.update(time);
+  // Stream around the player and the camera target (they differ while the camera catches up).
+  streaming.streamer.update(
+    state
+      ? [
+          { x: state.x, y: state.y },
+          { x: rig.target.x, y: rig.target.z },
+        ]
+      : [startPoint],
+  );
   lightMinute = currentMinute(performance.now());
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   if (townKit && townStructures) {
@@ -936,6 +1024,7 @@ renderer.setAnimationLoop((time) => {
   frameSample.renderMs = performance.now() - t1;
   recordFrame?.(frameSample, renderer);
   afterRender?.(renderer);
+  perfFrame?.(renderer, performance.now() - frameStart);
 });
 
 // Dev only: switch / freeze the graphics style for screenshots and measurements.

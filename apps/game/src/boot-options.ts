@@ -29,6 +29,14 @@ export interface BootOptions {
   zspawn: number;
   /** `?zombies=0` disables the start zombies on content maps. */
   zombies: boolean;
+  /**
+   * `?stress=1`: procedural 8 × 8 km dummy world (chunk streaming test, mock sim, no sim map);
+   * `&latency=N` adds N ms per chunk fetch.
+   */
+  stress: boolean;
+  stressLatencyMs: number;
+  /** `?perf=1`: perf overlay (fps, frame ms, streamed chunks, draw calls, memory); any build. */
+  perf: boolean;
   /** `?town=0`: grey-box world instead of the town kit (comparison, fallback). */
   town: boolean;
   /** Dev `?cam=x,z,viewH`: camera pinned at a world point with that view height (screenshots). */
@@ -70,7 +78,8 @@ export function parseBootOptions(search: string): BootOptions {
   // Public build (production): test-town with containers by default; dev: generated test map.
   const fallback: MapChoice = import.meta.env.PROD ? 'test-town' : 'test';
   const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : fallback;
-  const mock = crowd > 0;
+  const stress = q.get('stress') === '1';
+  const mock = crowd > 0 || stress;
   const time = parseTimeParam(q.get('time'));
   const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(q.get('spawn') ?? '');
   const cam = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/.exec(q.get('cam') ?? '');
@@ -91,5 +100,8 @@ export function parseBootOptions(search: string): BootOptions {
       ? { cam: { x: Number(cam[1]), z: Number(cam[2]), viewHeight: Number(cam[3]) } }
       : {}),
     zspawn: Math.max(0, Math.min(300, Math.floor(Number(q.get('zspawn')) || 0))),
+    stress,
+    stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
+    perf: q.get('perf') === '1',
   };
 }

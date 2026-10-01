@@ -34,6 +34,7 @@ describe('sanitizeSettings', () => {
       pixelRatioCap: 4,
       antialias: true,
       showFps: false,
+      viewDistance: 'medium',
     });
     expect(s.audio).toEqual({
       master: 0,

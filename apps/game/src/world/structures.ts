@@ -15,7 +15,7 @@ import {
 } from './structure-instances.js';
 
 /** Neutral grey placeholders (grey-box stage). */
-const GREYS: Record<EdgeKind | 'roof', string> = {
+export const STRUCTURE_GREYS: Readonly<Record<EdgeKind | 'roof', string>> = {
   wall: '#6b7178',
   window: '#8a9097',
   door: '#6b7178',
@@ -24,6 +24,8 @@ const GREYS: Record<EdgeKind | 'roof', string> = {
 };
 
 interface Part {
+  /** Chunk key `cx,cy,z` (streaming unload). */
+  chunk: string;
   mesh: InstancedMesh;
   baseY: number;
   edges?: EdgeGroup;
@@ -38,10 +40,15 @@ export class Structures {
   private readonly materials = new Map<string, MeshStandardMaterial>();
   private readonly parts: Part[] = [];
   private key = '';
+  private cutaway: Cutaway = NO_CUTAWAY;
 
-  constructor(private readonly source: ChunkSource) {
+  /** `cacheLookup: false` for streamed sources (see BuildingLookup). */
+  constructor(
+    private readonly source: ChunkSource,
+    cacheLookup = true,
+  ) {
     this.root.name = 'structures';
-    this.lookup = new BuildingLookup(source);
+    this.lookup = new BuildingLookup(source, cacheLookup);
   }
 
   loadRange(range: ChunkRange): void {
@@ -55,16 +62,47 @@ export class Structures {
   loadChunk(cx: number, cy: number, z: number): void {
     const chunk = this.source.getChunk(cx, cy, z);
     if (!chunk) return;
+    this.unloadChunk(cx, cy, z);
+    const key = `${cx},${cy},${z}`;
     const baseY = z * LEVEL_HEIGHT;
     const kindOf = (id: number) => this.source.edgePalette?.[id]?.kind;
     for (const edges of collectEdges(chunk, kindOf, this.lookup)) {
       const name = this.source.edgePalette?.[edges.edgeId]?.id ?? `edge:${edges.edgeId}`;
-      this.add({ baseY, edges }, edges.edges.length, edges.kind, `${name}@${cx},${cy},${z}`);
+      this.add(
+        { chunk: key, baseY, edges },
+        edges.edges.length,
+        edges.kind,
+        `${name}@${cx},${cy},${z}`,
+      );
     }
     for (const roof of collectRoofs(chunk, this.lookup)) {
       const name = this.source.tilePalette[roof.roofId] ?? `roof:${roof.roofId}`;
-      this.add({ baseY, roof }, roof.tiles.length, 'roof', `${name}@${cx},${cy},${z}`);
+      this.add({ chunk: key, baseY, roof }, roof.tiles.length, 'roof', `${name}@${cx},${cy},${z}`);
     }
+  }
+
+  /** Instance buffers of a loaded chunk's walls and roofs (the box geometry is shared). */
+  statsOf(cx: number, cy: number, z: number): { bytes: number; triangles: number } {
+    const key = `${cx},${cy},${z}`;
+    let n = 0;
+    for (const p of this.parts) if (p.chunk === key) n += p.mesh.count;
+    return { bytes: n * 64, triangles: n * 12 };
+  }
+
+  /** Removes a chunk's walls and roofs and frees their instance buffers. */
+  unloadChunk(cx: number, cy: number, z: number): void {
+    const key = `${cx},${cy},${z}`;
+    for (let i = this.parts.length - 1; i >= 0; i--) {
+      const p = this.parts[i]!;
+      if (p.chunk !== key) continue;
+      this.root.remove(p.mesh);
+      p.mesh.dispose();
+      this.parts.splice(i, 1);
+    }
+  }
+
+  get partCount(): number {
+    return this.parts.length;
   }
 
   /** Rewrites instance matrices only when the cutaway (building, tile, camera side) changes. */
@@ -72,6 +110,7 @@ export class Structures {
     const key = cutawayKey(c);
     if (key === this.key) return;
     this.key = key;
+    this.cutaway = c;
     for (const p of this.parts) this.write(p, c);
   }
 
@@ -88,8 +127,10 @@ export class Structures {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     const part = { ...p, mesh };
+    // Bounds from the full (uncut) layout; chunks streamed in later then get the current cutaway.
     this.write(part, NO_CUTAWAY);
     mesh.computeBoundingSphere();
+    if (this.cutaway !== NO_CUTAWAY) this.write(part, this.cutaway);
     this.parts.push(part);
     this.root.add(mesh);
   }
@@ -109,7 +150,7 @@ export class Structures {
   private material(kind: EdgeKind | 'roof'): MeshStandardMaterial {
     let m = this.materials.get(kind);
     if (!m) {
-      m = placeholderMaterial(GREYS[kind]);
+      m = placeholderMaterial(STRUCTURE_GREYS[kind]);
       this.materials.set(kind, m);
     }
     return m;

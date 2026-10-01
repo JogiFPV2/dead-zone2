@@ -14,6 +14,9 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     zombies: true,
     town: true,
     zspawn: 0,
+    stress: false,
+    stressLatencyMs: 0,
+    perf: false,
   });
   expect(parseBootOptions('?time=06:30&timescale=30')).toMatchObject({ time: 390, timescale: 30 });
   expect(parseBootOptions('?time=25:00').time).toBeUndefined();
@@ -22,6 +25,12 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     zones: true,
   });
   expect(parseBootOptions('?crowd=200').sim).toBe('mock');
+  expect(parseBootOptions('?stress=1&latency=15&perf=1')).toMatchObject({
+    stress: true,
+    stressLatencyMs: 15,
+    perf: true,
+    sim: 'mock',
+  });
   expect(parseBootOptions('?spawn=inside')).toMatchObject({ spawnInside: true, sim: 'worker' });
   expect(parseBootOptions('?sim=mock').sim).toBe('worker'); // removed: nothing needs it
   expect(parseBootOptions('?map=demo-house')).toMatchObject({ map: 'demo-house', sim: 'worker' });
