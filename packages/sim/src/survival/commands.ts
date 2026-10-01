@@ -4,7 +4,10 @@ import { fallAsleep, wake } from '../systems/sleep.js';
 import { bodyPartIndex, clampStat, deathCauseIndex, woundKindIndex } from './state.js';
 import { inflictWound } from './wounds.js';
 
-type SurvivalCommand = Extract<Command, { type: 'sleep' | 'wake' | 'debugWound' | 'debugStat' }>;
+type SurvivalCommand = Extract<
+  Command,
+  { type: 'sleep' | 'wake' | 'setTimeScale' | 'debugWound' | 'debugStat' }
+>;
 
 /** Gameplay validation + effect of survival commands; returns a reject reason or undefined. */
 export function applySurvivalCommand(
@@ -20,6 +23,10 @@ export function applySurvivalCommand(
       return fallAsleep(w, eid) === 'ok' ? undefined : 'invalid-state';
     case 'wake':
       return wake(w, s, eid, 'command') ? undefined : 'invalid-state';
+    case 'setTimeScale':
+      // World-wide (singleplayer host speed); `sleepSystem` resets it to 1 under threat.
+      s.timeScale = cmd.speed;
+      return undefined;
     case 'debugWound':
       inflictWound(w, eid, bodyPartIndex(cmd.part), woundKindIndex(cmd.wound), {
         zombie: cmd.zombie ?? false,

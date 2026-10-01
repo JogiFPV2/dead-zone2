@@ -74,6 +74,8 @@ export interface SimWorkerClient {
   aim(x: number, y: number): void;
   sleep(): void;
   wake(): void;
+  /** Watch the powered TV nearby (`watch` action); `vhs` = a carried VHS tape. */
+  watchTv(vhs?: ItemId): void;
   /** Timed action with a bandage from the inventory (`itemId` = content id filter). */
   bandage(part: BodyPart, itemId?: string): void;
   pickUp(item: ItemId, count?: number): void;
@@ -138,6 +140,7 @@ export interface SimWorkerClient {
   debugStat(stat: DebugStat, value: number): void;
   pause(): void;
   resume(): void;
+  /** Speed-up ×1/×2/×4: worker loop `speed` + `setTimeScale` command (sleep save real time). */
   setSpeed(x: SimSpeed): void;
   onReady(cb: (tick: number) => void): () => void;
   onSnapshot(cb: (snapshot: SimSnapshotMessage) => void): () => void;
@@ -248,6 +251,7 @@ export function createSimWorkerClient(
     aim: (x, y) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'aim', x, y } }),
     sleep: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'sleep' } }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
+    watchTv: (vhs) => cmd({ type: 'watchTv', ...(vhs !== undefined ? { vhs } : {}) }),
     bandage: (part, itemId) =>
       post({
         kind: 'cmd',
@@ -304,7 +308,11 @@ export function createSimWorkerClient(
       post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'debugStat', stat, value } }),
     pause: () => post({ kind: 'pause' }),
     resume: () => post({ kind: 'resume' }),
-    setSpeed: (x) => post({ kind: 'speed', x }),
+    setSpeed: (x) => {
+      // The loop speed (worker) and the sim's real-time measure (sleep save) move together.
+      post({ kind: 'speed', x });
+      cmd({ type: 'setTimeScale', speed: x });
+    },
     onReady(cb) {
       readyCbs.add(cb);
       return () => readyCbs.delete(cb);

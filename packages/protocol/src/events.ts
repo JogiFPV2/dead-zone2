@@ -44,7 +44,9 @@ export type CommandRejectReason =
   /** Crafting: parts missing (inventory + containers within the crafting radius). */
   | 'missing-parts'
   /** `newCharacter`: invalid choice or over budget (`commandRejected.detail` says what). */
-  | 'invalid-character';
+  | 'invalid-character'
+  /** `watchTv` / VHS: no TV within `leisure.tvRadiusTiles` (`no-station`) or it has no power. */
+  | 'no-power';
 
 export type DeathCause =
   | 'bleeding'
@@ -61,7 +63,16 @@ export type DeathCause =
 export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot';
 
 /** Timed actions (docs/sim-architecture.md, `actions`). */
-export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack' | 'craft' | 'read';
+export type ActionKind =
+  | 'search'
+  | 'eat'
+  | 'drink'
+  | 'bandage'
+  | 'unpack'
+  | 'craft'
+  | 'read'
+  /** TV session (`watchTv`) or a VHS tape (`useItem` on a `vhs` / `watchTv {vhs}`). */
+  | 'watch';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -76,6 +87,9 @@ export type ActionInterruptReason =
 
 export type WakeReason =
   'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie' | 'pain' | 'fever';
+
+/** Leisure activity of `leisureCompleted`. */
+export type LeisureActivity = 'read' | 'tv' | 'vhs';
 
 export type LurePhase = 'idle' | 'armed' | 'sounding' | 'running' | 'spent' | 'removed';
 
@@ -304,8 +318,53 @@ export type SimEvent =
    * Uninterrupted sleep long enough (`sleep.saveAfterRealSec`, 2 real minutes at ×1): the host
    * saves the game now (the worker posts `saved` with reason `sleep`).
    */
-  | { type: 'sleepSaved'; tick: number; playerId: PlayerId; fatigueRecovered: number }
-  | { type: 'wokeUp'; tick: number; playerId: PlayerId; reason: WakeReason }
+  | {
+      type: 'sleepSaved';
+      tick: number;
+      playerId: PlayerId;
+      fatigueRecovered: number;
+      /** Real seconds of uninterrupted sleep (≥ `sleep.saveAfterRealSec`); always set by the sim. */
+      realSec?: number;
+    }
+  /**
+   * Sleep ended. `restGained` = fatigue recovered by this sleep (partial when interrupted),
+   * `restCap` = the place's limit per sleep (`sleep.surfaces.*.maxRecoveryPerSleep`), `saved` =
+   * whether `sleepSaved` was emitted during this sleep. The sim always sets the three fields.
+   */
+  | {
+      type: 'wokeUp';
+      tick: number;
+      playerId: PlayerId;
+      reason: WakeReason;
+      restGained?: number;
+      restCap?: number;
+      saved?: boolean;
+    }
+  /**
+   * A leisure session finished (`read`, TV, VHS): fatigue rested and boredom / stress removed
+   * (points, actually applied).
+   */
+  | {
+      type: 'leisureCompleted';
+      tick: number;
+      playerId: PlayerId;
+      activity: LeisureActivity;
+      fatigue: number;
+      boredom: number;
+      stress: number;
+    }
+  /**
+   * A VHS tape was watched to the end. `xp` = XP granted per skill (empty when this character
+   * has already watched it and the tape is `oncePerCharacter`: `repeat` true).
+   */
+  | {
+      type: 'vhsWatched';
+      tick: number;
+      playerId: PlayerId;
+      vhs: string;
+      xp: { skill: string; xp: number }[];
+      repeat: boolean;
+    }
   /** Moodle level change (0 = hidden). Sound / toast hook; the HUD uses the `view` message. */
   | {
       type: 'moodleChanged';

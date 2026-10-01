@@ -42,6 +42,10 @@ export function describeEvent(e: SimEvent): string {
       return `sleep saved (-${e.fatigueRecovered} fatigue)`;
     case 'wokeUp':
       return `woke up (${e.reason})`;
+    case 'leisureCompleted':
+      return `${e.activity}: -${e.fatigue} fatigue, -${e.boredom} boredom, -${e.stress} stress`;
+    case 'vhsWatched':
+      return `watched ${e.vhs}${e.repeat ? ' (again)' : ''} ${e.xp.map((x) => `${x.skill}+${x.xp}`).join(', ')}`;
     case 'timeScaleHint':
       return `time scale hint ×${e.speed}`;
     case 'dayPassed':

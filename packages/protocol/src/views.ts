@@ -39,6 +39,31 @@ export interface ClockView {
   minuteStartTick: number;
   /** Speed-up (×2/×4) not allowed now: a zombie chases the player or is within the threat radius. */
   fastForwardBlocked: boolean;
+  /** Speed-up the sim counts real time with (`setTimeScale`; 1 after a threat). Always sent. */
+  timeScale?: 1 | 2 | 4;
+}
+
+/**
+ * Current sleep (`player.sleep`, null when awake). Real time: every tick adds
+ * 1 / (20 × `clock.timeScale`) s, so with `dayLengthMinutes` 60 (1 game day = 1 real hour)
+ * 120 s = 2400 ticks = 48 game minutes at ×1, 9600 ticks = 192 game minutes at ×4.
+ */
+export interface SleepView {
+  sleeping: true;
+  /** First tick of this sleep. */
+  sleepStartTick: number;
+  /** Place: `bed` / `sofa` (furniture within 1.5 tiles) or `floor`. */
+  surface: 'floor' | 'sofa' | 'bed';
+  /** Fatigue this sleep can recover at most (`sleep.surfaces.<surface>.maxRecoveryPerSleep`). */
+  restCap: number;
+  /** Fatigue recovered so far (0.1). */
+  restGained: number;
+  /** Real seconds of uninterrupted sleep (whole seconds). */
+  realSec: number;
+  /** `sleep.saveAfterRealSec`. */
+  saveAfterRealSec: number;
+  /** `sleepSaved` was emitted for this sleep (the save is due / done). */
+  saveReady: boolean;
 }
 
 export interface MoodleView {
@@ -64,6 +89,8 @@ export interface WoundView {
 export interface PlayerView {
   alive?: boolean;
   sleeping?: boolean;
+  /** Sleep state when it changes (null = awake). */
+  sleep?: SleepView | null;
   /** Changed stats only, rounded to 0.1. */
   stats?: Partial<Record<ViewStat, number>>;
   /** Changed moodles only. */

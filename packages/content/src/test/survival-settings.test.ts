@@ -64,6 +64,7 @@ describe('fragmenty world-settings/*.json', () => {
         'boredom',
         'health',
         'infection',
+        'leisure',
         'needs',
         'nutrition',
         'panic',

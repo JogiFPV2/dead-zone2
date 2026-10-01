@@ -37,6 +37,9 @@ describe('parseCommand', () => {
     for (const cmd of [
       { ...base, type: 'sleep' },
       { ...base, type: 'wake' },
+      { ...base, type: 'setTimeScale', speed: 4 },
+      { ...base, type: 'watchTv' },
+      { ...base, type: 'watchTv', vhs: 12 },
       { ...base, type: 'bandage', part: 'forearm_l' },
       { ...base, type: 'bandage', part: 'head', itemId: 'base:bandage' },
       { ...base, type: 'debugWound', part: 'foot_r', wound: 'bite', zombie: true },
@@ -95,6 +98,8 @@ describe('parseCommand', () => {
     ['unknown wound kind', { ...base, type: 'debugWound', part: 'head', wound: 'burn' }],
     ['unknown debug stat', { ...base, type: 'debugStat', stat: 'xp', value: 1 }],
     ['sleep with payload', { ...base, type: 'sleep', hours: 8 }],
+    ['time scale ×3', { ...base, type: 'setTimeScale', speed: 3 }],
+    ['fractional vhs id', { ...base, type: 'watchTv', vhs: 1.5 }],
     ['unknown gait', { ...base, type: 'move', dx: 0, dy: 0, gait: 'crawl' }],
     ['zero zombies', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, count: 0 }],
     ['bad zombie type', { ...base, type: 'debugSpawnZombie', x: 1, y: 1, zombieType: 'Walker' }],

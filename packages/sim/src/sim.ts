@@ -163,6 +163,8 @@ export interface Sim {
   gameTime(): GameTime;
   /** Speed-up must be ×1 now: a zombie chases the player or is within the threat radius. */
   fastForwardBlocked(): boolean;
+  /** Speed-up the sim measures real time with (`setTimeScale`, 1 after a threat). */
+  timeScale(): 1 | 2 | 4;
   /** HUD threat level 0–100 of a player (same as view `threat`). */
   threatLevel(playerId?: PlayerId): number;
   /** All zombies in StableId order. */
@@ -303,6 +305,7 @@ export function createSim(input: SimOptions): Sim {
     if (s) {
       // Survival section (absent without content, so movement-only golden hashes stay valid).
       h.u32(w.clock.ticksPerDay).u32(w.clock.startMinute).u32(s.lastMinute).u32(s.nextWoundId);
+      if (s.timeScale !== 1) h.u32(0x7153_0001).u32(s.timeScale);
       h.u32(s.content.moodles.length);
       const players = sortedQuery(w, 'players', [c.Player]);
       h.u32(players.length);
@@ -315,6 +318,9 @@ export function createSim(input: SimOptions): Sim {
         h.u32(s.asleep[eid] ?? 0).u32(s.sleepStart[eid] ?? 0);
         h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
         h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
+        // Real sleep time: only when it differs from ×1 (keeps older goldens).
+        const realQ = s.sleepRealQ[eid] ?? 0;
+        if (realQ !== (s.sleepTicks[eid] ?? 0) * 4) h.u32(0x5ee9_0001).u32(realQ);
         for (let i = 0; i < PENALTY_SLOTS; i++) h.f32(s.penalties[eid * PENALTY_SLOTS + i] ?? 0);
         h.u32(s.virus[eid] ?? 0)
           .u32(s.virusStart[eid] ?? 0)
@@ -399,6 +405,7 @@ export function createSim(input: SimOptions): Sim {
       const minute = gameMinuteAt(w.clock, Math.max(0, w.tick - 1));
       return { minute, day: dayOf(minute), minuteOfDay: minuteOfDay(minute) };
     },
+    timeScale: () => (w.survival?.timeScale ?? 1) as 1 | 2 | 4,
     fastForwardBlocked() {
       const eid = w.players.get(0);
       return eid !== undefined && threatNearby(w, eid);

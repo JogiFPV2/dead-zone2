@@ -147,7 +147,14 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   w.nextStableId = f.nextStableId;
   w.players.clear();
   for (const [p, e] of f.players) w.players.set(p, e);
-  if (w.survival && f.survival) restoreInto(w.survival, decode(f.survival));
+  if (w.survival && f.survival) {
+    restoreInto(w.survival, decode(f.survival));
+    // Saves before real sleep time: assume ×1 for the ticks already slept.
+    const sv = w.survival;
+    const savedSurvival = f.survival as Record<string, unknown>;
+    if (savedSurvival.sleepRealQ === undefined)
+      for (let e = 0; e < sv.sleepTicks.length; e++) sv.sleepRealQ[e] = (sv.sleepTicks[e] ?? 0) * 4;
+  }
   if (w.items && f.items) restoreInto(w.items, decode(f.items));
   if (w.ai && f.ai) {
     restoreInto(w.ai, decode(f.ai));

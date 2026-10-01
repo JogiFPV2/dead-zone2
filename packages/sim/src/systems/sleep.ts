@@ -20,16 +20,34 @@ export function threatNearby(w: SimWorld, eid: number): boolean {
   return t !== undefined && (t.chasing > 0 || t.near > 0);
 }
 
+/** Quarter-ticks of real time per tick at speed-up `scale` (×1: 4, ×2: 2, ×4: 1). */
+export const realQPerTick = (scale: number): number => (scale === 4 ? 1 : scale === 2 ? 2 : 4);
+
+/** Real seconds of the current sleep (from `sleepRealQ`). */
+export const sleepRealSec = (s: SurvivalWorld, eid: number): number =>
+  (s.sleepRealQ[eid] ?? 0) / (4 * TICKS_PER_SECOND);
+
+/** Fatigue the current sleeping place gives at most in one sleep (bed 50, sofa 35, floor 25). */
+export function restCapOf(s: SurvivalWorld, eid: number): number {
+  const surf = SLEEP_SURFACES[s.sleepSurface[eid] ?? 0] ?? 'floor';
+  return s.content.survival.sleep.surfaces[surf].maxRecoveryPerSleep;
+}
+
 /**
- * Pipeline step 14 (per game minute): fatigue recovery while asleep (floor for now; beds come
- * with furniture), quality × pain / cold, waking when rested or after `maxDurationMin`.
+ * Pipeline step 14 (per game minute): fatigue recovery while asleep, quality × pain / cold,
+ * limit per sleep by place, waking when rested or after `maxDurationMin`. Every tick: pain /
+ * fever wake up; real time asleep grows by 1 / (20 × `timeScale`) s and an uninterrupted
+ * `saveAfterRealSec` emits `sleepSaved` once (the host saves; the sim does no IO).
  */
 export function sleepSystem(w: SimWorld, first: number, count: number): void {
   const s = w.survival;
   if (!s) return;
   const cfg = s.content.survival.sleep;
-  // Every tick: pain / fever wake up; an uninterrupted `saveAfterRealSec` of sleep saves (once).
-  const saveTicks = Math.max(1, Math.round(cfg.saveAfterRealSec * TICKS_PER_SECOND));
+  // Same rule as the worker's speed lock (`fastForwardBlocked`): a threat forces ×1.
+  const p0 = w.players.get(0);
+  if (s.timeScale !== 1 && p0 !== undefined && threatNearby(w, p0)) s.timeScale = 1;
+  const saveQ = Math.max(1, Math.round(cfg.saveAfterRealSec * TICKS_PER_SECOND * 4));
+  const perTick = realQPerTick(s.timeScale);
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
     if (s.dead[eid] || !s.asleep[eid]) continue;
     if ((s.vitals.pain[eid] ?? 0) >= cfg.wakeOnPainAbove) {
@@ -40,14 +58,16 @@ export function sleepSystem(w: SimWorld, first: number, count: number): void {
       wake(w, s, eid, 'fever');
       continue;
     }
-    const t = (s.sleepTicks[eid] = (s.sleepTicks[eid] ?? 0) + 1);
-    if (t >= saveTicks && !s.sleepSaved[eid]) {
+    s.sleepTicks[eid] = (s.sleepTicks[eid] ?? 0) + 1;
+    const q = (s.sleepRealQ[eid] = (s.sleepRealQ[eid] ?? 0) + perTick);
+    if (q >= saveQ && !s.sleepSaved[eid]) {
       s.sleepSaved[eid] = 1;
       w.events.push({
         type: 'sleepSaved',
         tick: w.tick,
         playerId: w.c.Player.id[eid] ?? 0,
         fatigueRecovered: Math.round((s.sleepRecovered[eid] ?? 0) * 10) / 10,
+        realSec: Math.floor(sleepRealSec(s, eid)),
       });
     }
   }
@@ -87,6 +107,7 @@ export function fallAsleep(w: SimWorld, eid: number): SleepResult {
   s.sleepSurface[eid] = SLEEP_SURFACES.indexOf(sleepSurfaceAt(w, eid));
   s.sleepRecovered[eid] = 0;
   s.sleepTicks[eid] = 0;
+  s.sleepRealQ[eid] = 0;
   s.sleepSaved[eid] = 0;
   const playerId = w.c.Player.id[eid] ?? 0;
   w.events.push({ type: 'fellAsleep', tick: w.tick, playerId });
@@ -97,7 +118,15 @@ export function fallAsleep(w: SimWorld, eid: number): SleepResult {
 export function wake(w: SimWorld, s: SurvivalWorld, eid: number, reason: WakeReason): boolean {
   if (!s.asleep[eid]) return false;
   s.asleep[eid] = 0;
-  w.events.push({ type: 'wokeUp', tick: w.tick, playerId: w.c.Player.id[eid] ?? 0, reason });
+  w.events.push({
+    type: 'wokeUp',
+    tick: w.tick,
+    playerId: w.c.Player.id[eid] ?? 0,
+    reason,
+    restGained: Math.round((s.sleepRecovered[eid] ?? 0) * 10) / 10,
+    restCap: restCapOf(s, eid),
+    saved: s.sleepSaved[eid] === 1,
+  });
   w.events.push({ type: 'timeScaleHint', tick: w.tick, speed: 1 });
   return true;
 }

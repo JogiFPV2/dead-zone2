@@ -126,6 +126,8 @@ export function startSimWorkerHost(
       });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });
+      // A save resumes at the speed-up it was made with (the sim measures real time with it).
+      if (s.timeScale() !== 1) loop.setSpeed(s.timeScale());
       last = clock.now();
       port.postMessage({ kind: 'ready', tick: s.tick }, []);
       postSnapshot();

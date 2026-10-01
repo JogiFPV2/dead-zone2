@@ -25,6 +25,7 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'unpack',
   'craft',
   'read',
+  'watch',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;

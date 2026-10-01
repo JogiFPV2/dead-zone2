@@ -25,6 +25,7 @@ import {
   type ItemStore,
 } from '../items/store.js';
 import { addXp, learnRecipe, progressOf } from '../progress/skills.js';
+import { applyLeisure } from '../leisure/leisure.js';
 
 /** A station within the crafting radius: a station item on a ground pile, or a map object. */
 export interface StationAt {
@@ -415,11 +416,11 @@ export function registerCraftActions(): void {
         if (lvl >= book.minLevel && lvl <= book.maxLevel)
           prog.xpMul[si] = Math.max(prog.xpMul[si] ?? 1, book.multiplier);
       }
-      const v = w.survival?.vitals;
-      if (v && lit.boredomReduction > 0)
-        v.boredom[eid] = Math.max(0, (v.boredom[eid] ?? 0) - lit.boredomReduction);
-      if (v && lit.stressReduction > 0)
-        v.stress[eid] = Math.max(0, (v.stress[eid] ?? 0) - lit.stressReduction);
+      // Leisure session: fatigue rest + boredom / stress (`leisure.read` + the item's own).
+      applyLeisure(w, eid, 'read', {
+        boredom: lit.boredomReduction,
+        stress: lit.stressReduction,
+      });
       st.version++;
     },
   });

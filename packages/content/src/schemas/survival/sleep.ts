@@ -29,7 +29,10 @@ export const SleepSettingsSchema = z
     coldQualityMul: mul(0.7),
     /** Mnożnik gojenia i regeneracji zdrowia we śnie. */
     healingMul: mul(1.5),
-    /** Zapis gry po tylu sekundach rzeczywistych nieprzerwanego snu (przy ×1; liczone w tickach). */
+    /**
+     * Zapis gry po tylu sekundach rzeczywistych nieprzerwanego snu. Symulacja liczy czas
+     * rzeczywisty z ticków i przyspieszenia hosta (`setTimeScale`): tick = 1/(20 × przyspieszenie) s.
+     */
     saveAfterRealSec: num(120, 3600),
     /** Budzi ból ≥ progu albo temperatura ciała ≥ progu (gorączka). */
     wakeOnPainAbove: stat(70),

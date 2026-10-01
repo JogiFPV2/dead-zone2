@@ -79,6 +79,13 @@ export interface SurvivalWorld {
   readonly sleepRecovered: Float32Array;
   readonly sleepTicks: Uint32Array;
   readonly sleepSaved: Uint8Array;
+  /**
+   * Real time asleep in quarter-ticks (one tick adds 4 / `timeScale`: 4 at ×1, 1 at ×4), so
+   * `saveAfterRealSec` means real seconds at any speed-up.
+   */
+  readonly sleepRealQ: Uint32Array;
+  /** Host speed-up (`setTimeScale`, 1 | 2 | 4); reset to 1 by a threat. */
+  timeScale: number;
   /** Wound / condition penalties per entity × 5 (survival/penalties.ts `Pen`). */
   readonly penalties: Float32Array;
   /** Zombie virus: 0/1, absolute minute of infection, incubation and death delay (minutes). */
@@ -122,6 +129,8 @@ export function createSurvivalWorld(
     sleepRecovered: new Float32Array(capacity),
     sleepTicks: new Uint32Array(capacity),
     sleepSaved: new Uint8Array(capacity),
+    sleepRealQ: new Uint32Array(capacity),
+    timeScale: 1,
     penalties: new Float32Array(capacity * 5),
     virus: new Uint8Array(capacity),
     virusStart: new Uint32Array(capacity),

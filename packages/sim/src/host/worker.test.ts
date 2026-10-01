@@ -235,6 +235,7 @@ describe('survival over the worker protocol', () => {
       ticksPerGameMinute: 50,
       minuteStartTick: 0,
       fastForwardBlocked: false,
+      timeScale: 1,
     });
     expect(views[0]?.player).toMatchObject({
       alive: true,
@@ -332,6 +333,29 @@ describe('survival over the worker protocol', () => {
       }),
     ]);
     expect(delta.loadKg).toBe(4);
+  });
+
+  it('sleep save after 2 real minutes at ×4 (setSpeed also sends setTimeScale)', () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const saves: string[] = [];
+    const views: SimViewPatch[] = [];
+    client.onSaved((s) => saves.push(s.reason));
+    client.onView((v) => views.push(v));
+    client.init(1, openMap(), { content: { packs: [fixturePack()] }, dev: true });
+    client.debugStat('fatigue', 90);
+    client.sleep();
+    client.setSpeed(4);
+    h.advance(100);
+    expect(h.host.sim?.timeScale()).toBe(4);
+    expect(h.host.loop?.speed).toBe(4);
+    expect(views.some((v) => v.clock?.timeScale === 4)).toBe(true);
+    h.advance(118_000);
+    expect(saves).toEqual([]);
+    h.advance(3000);
+    expect(saves).toEqual(['sleep']);
+    const sleep = views.flatMap((v) => (v.player?.sleep ? [v.player.sleep] : [])).at(-1)!;
+    expect(sleep).toMatchObject({ saveReady: true, surface: 'floor', restCap: 25 });
   });
 
   it('without dev, debug commands are rejected by the sim', () => {

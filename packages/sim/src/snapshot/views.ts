@@ -18,6 +18,7 @@ import {
   type PlayerView,
   type PenaltiesView,
   type SimViewPatch,
+  type SleepView,
   type ViewStat,
   type WoundView,
 } from '@deadzone/protocol';
@@ -38,7 +39,8 @@ import {
   nearbyView,
   openContainerView,
 } from '../items/views.js';
-import { threatNearby } from '../systems/sleep.js';
+import { restCapOf, sleepRealSec, threatNearby } from '../systems/sleep.js';
+import { SLEEP_SURFACES } from '../survival/state.js';
 import { threatLevel } from '../ai/threat.js';
 import { meleeOf } from '../combat/system.js';
 import {
@@ -148,6 +150,7 @@ export class ViewTracker {
   private clockKey = '';
   private alive: boolean | undefined;
   private sleeping: boolean | undefined;
+  private sleepKey = '';
   private readonly stats = new Map<ViewStat, number>();
   private moodles: number[] = [];
   private woundsKey = '';
@@ -182,8 +185,9 @@ export class ViewTracker {
       ticksPerGameMinute: ticksPerGameMinute(w.clock),
       minuteStartTick: minuteStartTick(w.clock, minute),
       fastForwardBlocked: eid !== undefined && threatNearby(w, eid),
+      timeScale: (w.survival?.timeScale ?? 1) as 1 | 2 | 4,
     };
-    const key = `${minute}|${clock.fastForwardBlocked}`;
+    const key = `${minute}|${clock.fastForwardBlocked}|${clock.timeScale}`;
     if (key !== this.clockKey) {
       this.clockKey = key;
       patch.clock = clock;
@@ -195,6 +199,13 @@ export class ViewTracker {
       if (alive !== this.alive) p.alive = this.alive = alive;
       const sleeping = s.asleep[eid] === 1;
       if (sleeping !== this.sleeping) p.sleeping = this.sleeping = sleeping;
+      const sleep = sleepView(w, eid);
+      const slk = sleep ? JSON.stringify(sleep) : '';
+      if (slk !== this.sleepKey) {
+        // A fresh tracker sends nothing while awake.
+        if (this.sleepKey !== '' || sleep) p.sleep = sleep;
+        this.sleepKey = slk;
+      }
       for (const stat of VIEW_STATS) {
         const v = round1(s.vitals[stat][eid] ?? 0);
         if (this.stats.get(stat) !== v) {
@@ -367,4 +378,20 @@ export class ViewTracker {
       }
     }
   }
+}
+
+/** `player.sleep` (null while awake); `sleepStartTick` is derived from the ticks asleep. */
+export function sleepView(w: SimWorld, eid: number): SleepView | null {
+  const s = w.survival;
+  if (!s?.asleep[eid]) return null;
+  return {
+    sleeping: true,
+    sleepStartTick: Math.max(0, w.tick - (s.sleepTicks[eid] ?? 0)),
+    surface: SLEEP_SURFACES[s.sleepSurface[eid] ?? 0] ?? 'floor',
+    restCap: restCapOf(s, eid),
+    restGained: Math.round((s.sleepRecovered[eid] ?? 0) * 10) / 10,
+    realSec: Math.floor(sleepRealSec(s, eid)),
+    saveAfterRealSec: s.content.survival.sleep.saveAfterRealSec,
+    saveReady: s.sleepSaved[eid] === 1,
+  };
 }

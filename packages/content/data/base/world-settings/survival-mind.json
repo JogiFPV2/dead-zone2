@@ -44,6 +44,13 @@
       "wakeOnNoiseVolume": 0.3,
       "wakeOnZombieTiles": 6,
       "timeScaleHint": 4
+    },
+    "leisure": {
+      "read": { "fatigueRest": 5, "boredomReduction": 10, "stressReduction": 8 },
+      "tv": { "fatigueRest": 6, "boredomReduction": 25, "stressReduction": 12, "sessionMin": 30 },
+      "vhs": { "fatigueRest": 8, "boredomReduction": 30, "stressReduction": 15 },
+      "tvTag": "base:station-tv",
+      "tvRadiusTiles": 1.5
     }
   }
 }

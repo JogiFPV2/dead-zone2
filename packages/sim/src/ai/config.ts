@@ -32,7 +32,7 @@ export interface NoiseConfig {
   footstepEveryTicks: number;
   /** `noise.actions`: noise when a timed action starts (search, eat …). */
   actions: Record<
-    'search' | 'eat' | 'drink' | 'bandage' | 'unpack' | 'craft' | 'read',
+    'search' | 'eat' | 'drink' | 'bandage' | 'unpack' | 'craft' | 'read' | 'watch',
     { radiusTiles: number; volume: number }
   >;
   /** `noise.wallMul`: effective radius × this for every wall / window between source and listener. */
@@ -117,6 +117,7 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
       unpack: { radiusTiles: 2, volume: 0.15 },
       craft: { radiusTiles: 6, volume: 0.35 },
       read: { radiusTiles: 0, volume: 0 },
+      watch: { radiusTiles: 4, volume: 0.2 },
     },
     wallMul: 0.5,
     maxWalls: 4,

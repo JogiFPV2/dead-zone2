@@ -5,6 +5,7 @@ import type { ItemStore } from './store.js';
 import { hashLures } from '../lures/lures.js';
 import { hashProgress } from '../progress/skills.js';
 import { hashCharacters } from '../character/character.js';
+import { hashVhsWatched } from '../leisure/leisure.js';
 
 const KINDS = ['inventory', 'bag', 'world', 'ground'] as const;
 const byNumber = (a: number, b: number): number => a - b;
@@ -74,6 +75,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   hashLures(st, h);
   hashProgress(st, h);
   hashCharacters(st, h);
+  hashVhsWatched(st, h);
   if (st.magOf.size > 0 || st.jammed.size > 0) {
     h.u32(st.magOf.size).u32(st.jammed.size);
     for (const id of [...st.magOf.keys()].sort(byNumber)) h.u32(id).u32(st.magOf.get(id)!);

@@ -104,6 +104,16 @@ export const closeContainerCommandSchema = z.strictObject({
   ...header,
   type: z.literal('closeContainer'),
 });
+export const setTimeScaleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setTimeScale'),
+  speed: z.union([z.literal(1), z.literal(2), z.literal(4)]),
+});
+export const watchTvCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('watchTv'),
+  vhs: itemId.optional(),
+});
 export const useItemCommandSchema = z.strictObject({
   ...header,
   type: z.literal('useItem'),
@@ -328,6 +338,8 @@ export const commandSchema = z.discriminatedUnion('type', [
   aimCommandSchema,
   sleepCommandSchema,
   wakeCommandSchema,
+  setTimeScaleCommandSchema,
+  watchTvCommandSchema,
   bandageCommandSchema,
   pickUpCommandSchema,
   dropCommandSchema,

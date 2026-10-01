@@ -44,7 +44,15 @@ describe('sleep', () => {
     send(sim, { type: 'wake' });
     sim.step();
     expect(own(sim)).toEqual([
-      { type: 'wokeUp', tick: sim.tick - 1, playerId: 0, reason: 'command' },
+      {
+        type: 'wokeUp',
+        tick: sim.tick - 1,
+        playerId: 0,
+        reason: 'command',
+        restGained: 0.5,
+        restCap: cfg.surfaces.floor.maxRecoveryPerSleep,
+        saved: false,
+      },
       { type: 'timeScaleHint', tick: sim.tick - 1, speed: 1 },
     ]);
     sim.step();

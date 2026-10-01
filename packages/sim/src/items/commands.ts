@@ -181,6 +181,7 @@ export function applyItemCommand(
       if (kind === 'drink') return startAction(w, eid, newAction('drink', { item: item.id }));
       if (kind === 'ammo_box') return startAction(w, eid, newAction('unpack', { item: item.id }));
       if (kind === 'literature') return startAction(w, eid, newAction('read', { item: item.id }));
+      if (kind === 'vhs') return startAction(w, eid, newAction('watch', { item: item.id }));
       if (kind === 'medical') {
         if (!cmd.part) return 'invalid-target';
         const part = bodyPartIndex(cmd.part);

@@ -108,6 +108,8 @@ export interface ItemStore {
   readonly progress: Map<number, PlayerProgress>;
   /** Player StableId → created character (character/character.ts). */
   readonly characters: Map<number, CharacterState>;
+  /** Player StableId → content ids of VHS tapes watched to the end (sorted; leisure). */
+  readonly vhsWatched: Map<number, string[]>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
   powered: boolean;
   /** Bumped on any change (views and carry-load recompute). Not state. */
@@ -127,6 +129,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     lures: new Map(),
     progress: new Map(),
     characters: new Map(),
+    vhsWatched: new Map(),
     magOf: new Map(),
     jammed: new Set(),
     nextItemId: 1,

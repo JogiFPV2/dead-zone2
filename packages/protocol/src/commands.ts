@@ -71,13 +71,40 @@ export type BodyPart = (typeof BODY_PARTS)[number];
 export const WOUND_KINDS = ['scratch', 'laceration', 'bite', 'deep'] as const;
 export type WoundKind = (typeof WOUND_KINDS)[number];
 
-/** Falls asleep on the spot (needs `fatigue ≥ sleep.minFatigueToSleep`). Surface: floor for now. */
+/**
+ * Falls asleep on the spot (needs `fatigue ≥ sleep.minFatigueToSleep` and no zombie within
+ * `sleep.wakeOnZombieTiles`). Place: the best `placeable.sleepSurface` within 1.5 tiles (bed,
+ * sofa), else the floor; it sets the rest limit per sleep (`player.sleep.restCap`).
+ */
 export interface SleepCommand extends CommandHeader {
   type: 'sleep';
 }
 
+/** Wakes up now (`wokeUp {reason: 'command'}`, partial rest kept). */
 export interface WakeCommand extends CommandHeader {
   type: 'wake';
+}
+
+/**
+ * Singleplayer: the host's real-time speed-up (×1/×2/×4, same as the worker `speed` message).
+ * The sim only uses it to measure real time (sleep save after `sleep.saveAfterRealSec` real
+ * seconds); the tick length never changes. `SimWorkerClient.setSpeed` sends it together with
+ * `speed`. A threat (`clock.fastForwardBlocked`) resets it to 1 like the worker does.
+ */
+export interface SetTimeScaleCommand extends CommandHeader {
+  type: 'setTimeScale';
+  speed: 1 | 2 | 4;
+}
+
+/**
+ * Watches the powered TV within `survival.leisure.tvRadiusTiles` (timed action `watch`):
+ * without `vhs` a TV session (`leisure.tv.sessionMin` game minutes); with `vhs` = a carried VHS
+ * tape (`vhs.watchSec` real seconds at ×1, XP once per character). `useItem` on a tape is the
+ * same as `watchTv {vhs}`. Rejects: `no-station` (no TV), `no-power`, `no-item`.
+ */
+export interface WatchTvCommand extends CommandHeader {
+  type: 'watchTv';
+  vhs?: ItemId | undefined;
 }
 
 /**
@@ -193,7 +220,8 @@ export interface CloseContainerCommand extends CommandHeader {
 
 /**
  * Uses an item: eat one portion (food), drink one use (drink), bandage `part` (medical with
- * `stop_bleeding`), unpack an ammo box. Timed actions, queued behind the current one.
+ * `stop_bleeding`), unpack an ammo box, read (literature), watch a VHS tape on a powered TV
+ * nearby (`watch`). Timed actions, queued behind the current one.
  */
 export interface UseItemCommand extends CommandHeader {
   type: 'useItem';
@@ -486,6 +514,8 @@ export type Command =
   | AimCommand
   | SleepCommand
   | WakeCommand
+  | SetTimeScaleCommand
+  | WatchTvCommand
   | BandageCommand
   | PickUpCommand
   | DropCommand
