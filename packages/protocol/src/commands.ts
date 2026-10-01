@@ -303,6 +303,47 @@ export interface DebugOpeningCommand extends CommandHeader {
   state: OpeningState;
 }
 
+/**
+ * Puts a lure (`kind: 'lure'`) from the inventory on the ground at the player. Electronic lures
+ * take a battery (`lure.power.batteryTag`) from the inventory when empty and wait for
+ * `triggerLure`; timer lures (running) arm at once: after `delaySec` (clamped to
+ * `lure.trigger.delaySec`, default its min) they run `runner.distanceTiles` towards (dirX, dirY)
+ * (default: the facing) making noise for `lure.durationSec`, then are used up.
+ */
+export interface PlaceLureCommand extends CommandHeader {
+  type: 'placeLure';
+  item: ItemId;
+  delaySec?: number | undefined;
+  dirX?: number | undefined;
+  dirY?: number | undefined;
+}
+
+/**
+ * Triggers a placed remote lure: needs a carried item with the lure's `trigger.remoteTag` and
+ * the lure within `trigger.rangeTiles`; uses one activation of its battery. Without `item`: the
+ * nearest placed remote lure in range.
+ */
+export interface TriggerLureCommand extends CommandHeader {
+  type: 'triggerLure';
+  item?: ItemId | undefined;
+}
+
+/**
+ * Throws a carried item towards (x, y) (world coordinates), at most its `throwable.rangeTiles`
+ * (lures without `throwable`: 8 tiles); walls stop it. Impact noise from `throwable.impactNoise`
+ * (lures: a small thud); `breaksOnImpact` items break (`brokenInto`). A thrown lure lands placed
+ * (timer lures armed with `delaySec` / direction like `placeLure`).
+ */
+export interface ThrowCommand extends CommandHeader {
+  type: 'throw';
+  item: ItemId;
+  x: number;
+  y: number;
+  delaySec?: number | undefined;
+  dirX?: number | undefined;
+  dirY?: number | undefined;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -329,7 +370,10 @@ export type Command =
   | DebugNoiseCommand
   | ToggleDoorCommand
   | BreakWindowCommand
-  | DebugOpeningCommand;
+  | DebugOpeningCommand
+  | PlaceLureCommand
+  | TriggerLureCommand
+  | ThrowCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

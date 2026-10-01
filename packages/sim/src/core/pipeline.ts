@@ -8,6 +8,7 @@ import { navSystem } from '../nav/system.js';
 import { clockSystem, type MinuteTicks } from '../systems/clock.js';
 import { healthSystem } from '../systems/health.js';
 import { inputSystem } from '../systems/input.js';
+import { lureSystem } from '../lures/lures.js';
 import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { moodlesSystem } from '../systems/moodles.js';
@@ -36,6 +37,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'commands.apply', run: (w, ctx) => inputSystem(w, ctx.grid) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
     { name: 'actions', run: (w) => actionsSystem(w) },
+    { name: 'lures', run: (w, ctx) => lureSystem(w, ctx.grid) },
     { name: 'noise.collect', run: (w) => noiseCollectSystem(w) },
     { name: 'ai.brain', run: (w, ctx) => aiThinkSystem(w, ctx.grid) },
     { name: 'nav', run: (w, ctx) => navSystem(w, ctx.grid) },

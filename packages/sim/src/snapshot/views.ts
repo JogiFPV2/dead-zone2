@@ -1,3 +1,4 @@
+import { lureViews } from '../lures/lures.js';
 import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
 import { openingView } from '../openings/state.js';
 import {
@@ -92,6 +93,7 @@ export class ViewTracker {
   private combatKey = '';
   private deathSent = false;
   private openingsVersion = 0;
+  private luresKey = '';
   private penaltiesKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
@@ -157,6 +159,14 @@ export class ViewTracker {
       if (Object.keys(p).length > 0) patch.player = p;
     }
     if (w.items && eid !== undefined) this.diffItems(w, eid, patch);
+    if (w.items) {
+      const lures = lureViews(w.items);
+      const lk = JSON.stringify(lures);
+      if (lk !== this.luresKey) {
+        if (this.luresKey !== '' || lures.length > 0) patch.lures = lures;
+        this.luresKey = lk;
+      }
+    }
     if (w.openings.version !== this.openingsVersion) {
       this.openingsVersion = w.openings.version;
       patch.openings = [...w.openings.states.keys()]

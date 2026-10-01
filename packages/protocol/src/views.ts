@@ -1,5 +1,5 @@
 import type { BodyPart, ContainerId, EquipSlot, ItemId, WoundKind } from './commands.js';
-import type { ActionKind, DeathCause, Freshness } from './events.js';
+import type { ActionKind, DeathCause, Freshness, LurePhase } from './events.js';
 import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
 
 /**
@@ -209,6 +209,21 @@ export interface SimViewPatch {
    * whenever any of them changes (also in the first view after a load).
    */
   openings?: OpeningView[];
+  /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
+  lures?: LureView[];
+}
+
+export interface LureView {
+  item: ItemId;
+  def: string;
+  phase: Exclude<LurePhase, 'spent' | 'removed'>;
+  x: number;
+  y: number;
+  z: number;
+  /** End of the timer / the noise (armed, sounding, running). */
+  untilTick?: number;
+  /** Activations left (remote lures with a battery). */
+  charges?: number;
 }
 
 export interface OpeningView {

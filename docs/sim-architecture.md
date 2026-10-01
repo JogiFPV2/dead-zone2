@@ -815,3 +815,11 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
   - `actionSpeed`: czas akcji czasowych (÷ (1 − kara));
   - `visionRange`: zasięg wzroku gracza (`sightPenaltyMul`). Zastępuje wcześniejszy hook `vision.penalties` z `ai/config.ts`, który usunięto.
 - **Widok:** `player.penalties {moveSpeed, attackPower, actionSpeed, visionRange, blur}` przy zmianie (nie wysyłamy, dopóki wszystko jest 0). Kary są w stanie (`SurvivalWorld.penalties`), w hashu i w zapisie.
+
+### 9.11 Stan po PR „wabiki i rzucanie”
+- **Dane:** przedmioty `kind: 'lure'` (`base:lure-electronic`, `base:lure-running`, pilot `base:lure-remote`, bateria `base:battery`) i blok `throwable` innych przedmiotów. Kod: `lures/lures.ts`, krok pipeline'u `lures` po `actions`.
+- **Stan:** `ItemStore.lures` (id przedmiotu → faza, pozycja, timer, kierunek, dystans, następny impuls, linger). Wabik to zwykły przedmiot w kupce na ziemi; podniesienie go zatrzymuje (`lureChanged {phase:'removed'}`). Stan jest w hashu (gdy niepusty) i w zapisie.
+- **Elektroniczny:** `placeLure` kładzie go przy graczu i wkłada baterię z ekwipunku (`uses` = `activationsPerBattery`, czyli 3). `triggerLure` działa z pilotem z tagiem `remoteTag` w zasięgu `rangeTiles` (60). Daje hałas `lure.noise` (40 kafli) przez `durationSec` (30 s) impulsami co 1 s. Zombie zostają `lingerSec` (20–40 s, losowane raz na aktywację). Potem wabik wraca do `idle`.
+- **Biegający:** `placeLure {delaySec, dirX, dirY}`, opóźnienie przycięte do `trigger.delaySec` (3–30 s). Po opóźnieniu biegnie `runner.distanceTiles` (15) z `speedTilesPerSec` w zadanym kierunku (domyślnie celownik lub ruch gracza); ściany go zatrzymują. Hałasuje przez `durationSec` (20 s, 30 kafli), potem znika (`consumedOnUse`, `lureChanged 'spent'`).
+- **`throw {item, x, y, delaySec?, dirX?, dirY?}`:** zasięg `throwable.rangeTiles` (wabik bez bloku: 8). Lot zatrzymuje się na ścianie. Hałas uderzenia z `throwable.impactNoise` (inaczej cichy stuk). Przedmiot z `breaksOnImpact` rozbija się (`brokenInto`), a rzucony wabik ląduje położony lub uzbrojony. Zdarzenie `thrown`. Obrażeń od rzutu jeszcze nie ma.
+- **Widok:** `lures` to pełna lista położonych wabików (faza, pozycja, `untilTick`, `charges`) przy każdej zmianie. Zdarzenie `lureChanged` niesie dodatkowo `toX/toY` dla biegu (do tweenowania).

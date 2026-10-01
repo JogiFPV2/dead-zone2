@@ -1,3 +1,4 @@
+import type { LureState } from '../lures/lures.js';
 import type { ContainerKind, EquipSlot } from '@deadzone/protocol';
 import type { ContentIndex, ItemDef } from '../content/adapter.js';
 
@@ -89,6 +90,8 @@ export interface ItemStore {
   readonly worldByTile: Map<string, number[]>;
   nextItemId: number;
   nextContainerId: number;
+  /** Placed lures by item id (lures/lures.ts). */
+  readonly lures: Map<number, LureState>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
   powered: boolean;
   /** Bumped on any change (views and carry-load recompute). Not state. */
@@ -105,6 +108,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     players: new Map(),
     ground: new Map(),
     worldByTile: new Map(),
+    lures: new Map(),
     nextItemId: 1,
     nextContainerId: 1,
     powered: true,

@@ -2,6 +2,7 @@ import { EQUIP_SLOTS } from '@deadzone/protocol';
 import { hashString32 } from '../core/rng.js';
 import type { HashWriter } from '../core/hash.js';
 import type { ItemStore } from './store.js';
+import { hashLures } from '../lures/lures.js';
 
 const KINDS = ['inventory', 'bag', 'world', 'ground'] as const;
 const byNumber = (a: number, b: number): number => a - b;
@@ -57,4 +58,5 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
         .u32(a.part + 1);
     }
   }
+  hashLures(st, h);
 }

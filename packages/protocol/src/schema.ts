@@ -203,6 +203,32 @@ export const debugOpeningCommandSchema = z.strictObject({
   state: z.enum(OPENING_STATES),
 });
 
+const unitDir = z.number().finite().min(-1).max(1).optional();
+const lureDelay = z.number().finite().min(0).max(600).optional();
+export const placeLureCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('placeLure'),
+  item: itemId,
+  delaySec: lureDelay,
+  dirX: unitDir,
+  dirY: unitDir,
+});
+export const triggerLureCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('triggerLure'),
+  item: itemId.optional(),
+});
+export const throwCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('throw'),
+  item: itemId,
+  x: coord,
+  y: coord,
+  delaySec: lureDelay,
+  dirX: unitDir,
+  dirY: unitDir,
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
@@ -230,6 +256,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   toggleDoorCommandSchema,
   breakWindowCommandSchema,
   debugOpeningCommandSchema,
+  placeLureCommandSchema,
+  triggerLureCommandSchema,
+  throwCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */

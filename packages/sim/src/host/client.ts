@@ -91,6 +91,17 @@ export interface SimWorkerClient {
   placeStorage(item: ItemId, x: number, y: number): void;
   /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
+  /** Lay a lure at the player (timer lures: delay and run direction). */
+  placeLure(item: ItemId, opts?: { delaySec?: number; dirX?: number; dirY?: number }): void;
+  /** Fire a placed remote lure (nearest in range without `item`); needs the remote. */
+  triggerLure(item?: ItemId): void;
+  /** Throw a carried item towards (x, y); lures land placed (timer lures armed). */
+  throwItem(
+    item: ItemId,
+    x: number,
+    y: number,
+    opts?: { delaySec?: number; dirX?: number; dirY?: number },
+  ): void;
   /** Smash the window on edge (tx, ty, side) — loud. */
   breakWindow(tx: number, ty: number, side: EdgeSide): void;
   pickUpStorage(container: ContainerId): void;
@@ -235,6 +246,9 @@ export function createSimWorkerClient(
     toggleDoor: (tx, ty, side, lock) =>
       cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),
     breakWindow: (tx, ty, side) => cmd({ type: 'breakWindow', tx, ty, side }),
+    placeLure: (item, opts) => cmd({ type: 'placeLure', item, ...opts }),
+    triggerLure: (item) => cmd({ type: 'triggerLure', ...(item ? { item } : {}) }),
+    throwItem: (item, x, y, opts) => cmd({ type: 'throw', item, x, y, ...opts }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     debugGiveItem: (itemId, count) =>
       cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),

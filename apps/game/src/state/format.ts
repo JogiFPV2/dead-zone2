@@ -18,6 +18,10 @@ export function describeEvent(e: SimEvent): string {
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
     case 'fellAsleep':
       return 'fell asleep';
+    case 'lureChanged':
+      return `lure ${e.def} ${e.phase} at ${e.x},${e.y}`;
+    case 'thrown':
+      return `threw ${e.def} to ${e.x},${e.y}${e.broke ? ' (broke)' : ''}`;
     case 'openingChanged':
       return `${e.kind} ${e.tx},${e.ty}${e.side} ${e.state} (${e.hp}/${e.maxHp}, ${e.by})`;
     case 'sleepSaved':

@@ -64,6 +64,8 @@ export type ActionInterruptReason =
 export type WakeReason =
   'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie' | 'pain' | 'fever';
 
+export type LurePhase = 'idle' | 'armed' | 'sounding' | 'running' | 'spent' | 'removed';
+
 /** What made a noise (`noise` event, debug circles). */
 export const NOISE_SOURCES = [
   'footstep',
@@ -146,6 +148,39 @@ export type SimEvent =
       y: number;
     }
   | { type: 'fellAsleep'; tick: number; playerId: PlayerId }
+  /**
+   * A lure changed phase: `armed` (timer running until `untilTick`), `sounding` (noise until
+   * `untilTick`), `running` (runner moving towards (toX, toY), noise until `untilTick`),
+   * `idle` (placed, waiting for the remote), `spent` (used up, item gone) or `removed`
+   * (picked up).
+   */
+  | {
+      type: 'lureChanged';
+      tick: number;
+      item: ItemId;
+      def: string;
+      phase: LurePhase;
+      x: number;
+      y: number;
+      z: number;
+      untilTick?: number;
+      toX?: number;
+      toY?: number;
+    }
+  /** A thrown item landed at (x, y). */
+  | {
+      type: 'thrown';
+      tick: number;
+      playerId: PlayerId;
+      item: ItemId;
+      def: string;
+      fromX: number;
+      fromY: number;
+      x: number;
+      y: number;
+      z: number;
+      broke: boolean;
+    }
   /**
    * A door / window edge changed state or took damage (renderer: door sprite, broken glass,
    * planks). `by`: a player's command, a zombie bashing it, or a dev command.
