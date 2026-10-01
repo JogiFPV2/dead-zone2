@@ -25,6 +25,7 @@ import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
 import { addBody, physicsStep } from './step.js';
 import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
 import { floorZ } from '../world/levels.js';
+import { isActive, isFrozen, updateActiveWindows, updateFrozen } from './active.js';
 import { vaultSystem } from './vault.js';
 
 /**
@@ -68,7 +69,8 @@ export function gaitSeedOf(w: SimWorld, eid: number): number {
 /** The entity may steer itself (not hit, staggered, down, getting up or dead). */
 export function physicsCanMove(w: SimWorld, eid: number): boolean {
   const b = bodyOf(w, eid);
-  return !b || canMove(b.state);
+  // Frozen (outside the active chunks): stands still, the AI does not plan its moves.
+  return !b || (!isFrozen(b) && canMove(b.state));
 }
 
 /** The entity may start an attack or a shove. */
@@ -87,7 +89,8 @@ export function physicsCanRun(w: SimWorld, eid: number): boolean {
 export const physicsMovementModifier: MovementModifier = {
   speedMul(w, eid) {
     const b = bodyOf(w, eid);
-    return b ? physicsSpeedMul(b, w.physics.cfg) : 1;
+    // Frozen (outside every active chunk window): does not move.
+    return b ? (isFrozen(b) ? 0 : physicsSpeedMul(b, w.physics.cfg)) : 1;
   },
   accelMul(w, eid) {
     const b = bodyOf(w, eid);
@@ -186,9 +189,15 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   const st = w.items;
   const events: PhysicsEvent[] = [];
   eidBySid.clear();
+  updateActiveWindows(w);
   for (const eid of sortedQuery(w, 'render', [Position, Facing])) {
     const b = ensureBody(w, eid);
     if (!b) continue;
+    if (!updateFrozen(b, isActive(Position.x[eid] ?? 0, Position.y[eid] ?? 0), w.tick)) {
+      // Frozen: only deaths are synced (no timers, slide, crowd, stairs or falls).
+      if (b.kind === 'zombie' && (Zombie.hp[eid] ?? 0) <= 0) kill(b, w.tick, events);
+      continue;
+    }
     eidBySid.set(StableId.value[eid] ?? 0, eid);
     b.x = Position.x[eid] ?? 0;
     b.y = Position.y[eid] ?? 0;

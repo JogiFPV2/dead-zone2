@@ -83,6 +83,7 @@ export function addBody(pw: PhysicsWorld, init: BodyInit): PhysicsBody {
     stair: 0,
     fallFromZ: 0,
     fallToZ: 0,
+    frozenAt: -1,
     vaultFromX: 0,
     vaultFromY: 0,
     vaultToX: 0,
@@ -160,7 +161,7 @@ export function physicsStep(pw: PhysicsWorld, input: PhysicsStepInput): PhysicsE
   const cfg = pw.cfg;
   const events: PhysicsEvent[] = [];
   const bodies = sortedBodies(pw);
-  for (const b of bodies) advanceState(b, tick, events, cfg);
+  for (const b of bodies) if (!(b.frozenAt >= 0)) advanceState(b, tick, events, cfg);
 
   for (const hit of input.hits ?? []) {
     const attacker = pw.bodies.get(hit.attackerId);
@@ -176,6 +177,7 @@ export function physicsStep(pw: PhysicsWorld, input: PhysicsStepInput): PhysicsE
   }
 
   for (const b of bodies) {
+    if (b.frozenAt >= 0) continue;
     if (b.state === 'dead') {
       b.vel = { x: 0, y: 0 };
       b.maxSpeed = 0;
@@ -279,6 +281,7 @@ export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
     h.f32(b.carriedKg).f32(b.capacityKg).f32(b.endurance).f32(b.strength);
     // Level state only when used (single-level worlds keep their hashes).
     if (b.stair || b.state === 'fall') h.u32(b.stair).f32(b.fallFromZ).f32(b.fallToZ);
+    if (b.frozenAt >= 0) h.u32(0x7f20_0001).u32(b.frozenAt);
     if (b.state === 'vault') {
       h.f32(b.vaultFromX).f32(b.vaultFromY).f32(b.vaultToX).f32(b.vaultToY);
       h.f32(b.vaultTrip).u32(b.vaultGlass);

@@ -67,6 +67,8 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
   /** During `fall`: level it fell from and the landing level. */
   fallFromZ: number;
   fallToZ: number;
+  /** Tick the body was frozen at (outside every active chunk window, `active.ts`); −1 = active. */
+  frozenAt: number;
   /** During `vault`: start and landing point, trip chance, broken-glass window (0 / 1). */
   vaultFromX: number;
   vaultFromY: number;

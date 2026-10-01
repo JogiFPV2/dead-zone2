@@ -101,6 +101,11 @@ export interface PhysicsConfig {
   stairs: StairsConfig;
   /** Falling from a level edge (`stairs.ts`). */
   fall: FallConfig;
+  /**
+   * Active chunk window radius R ((2R + 1)² chunks per player, `active.ts`); default
+   * `ceil(ai.farTiles / 32)`.
+   */
+  activeChunkRadius?: number;
   /** Vaulting over low fences / through windows (`vault.ts`). */
   vault: VaultConfig;
   /** Knock-back of firearm hits per weapon category (`combat/firearms.ts` → `physicsHit`). */

@@ -172,7 +172,9 @@ export function crowdPressureSystem(w: SimWorld, grid: TileGrid): void {
   if (cc.enabled && w.tick % cc.pulseTicks === 0 && (pw.presses.size || pw.pressure.size)) {
     const keys = [...new Set([...pw.presses.keys(), ...pw.pressure.keys()])].sort((a, b) => a - b);
     for (const key of keys) {
-      const level = pulse(w, grid, key, pw.presses.get(key) ?? []);
+      // Only zombies in the active chunks press (frozen ones keep their intent, no force).
+      const eids = (pw.presses.get(key) ?? []).filter((e) => (body(w, e)?.frozenAt ?? -1) < 0);
+      const level = pulse(w, grid, key, eids);
       if (level) pw.pressure.set(key, level);
       else pw.pressure.delete(key);
     }
@@ -213,7 +215,8 @@ export function separateZombies(w: SimWorld): void {
     dys[eid] = 0;
     if ((Zombie.hp[eid] ?? 0) <= 0) continue;
     const b = body(w, eid);
-    if (!b || !canMove(b.state)) continue;
+    // Frozen bodies (outside the active chunks) are not pushed and do not push.
+    if (!b || !canMove(b.state) || b.frozenAt >= 0) continue;
     mass[eid] = b.bodyMassKg;
     rMax = Math.max(rMax, Collider.radius[eid] ?? 0);
     order.push(eid);
@@ -250,7 +253,7 @@ export function separateZombies(w: SimWorld): void {
   }
   for (const eid of zs) {
     const b = body(w, eid);
-    if (!b) continue;
+    if (!b || b.frozenAt >= 0) continue;
     let dx = dxs[eid]!;
     let dy = dys[eid]!;
     const l2 = dx * dx + dy * dy;
