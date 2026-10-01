@@ -5,6 +5,7 @@ import { modded } from '../survival/state.js';
 import { edgesBetween } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
 import { noiseSourceIndex, type AiWorld, type Noise } from './state.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Noise buffer (docs 2.5 `noise`). Anything that makes a sound calls `emitNoise`; zombies read
@@ -127,7 +128,7 @@ export function footstepSystem(w: SimWorld): void {
       w,
       Position.x[eid] ?? 0,
       Position.y[eid] ?? 0,
-      Position.z[eid] ?? 0,
+      floorZ(w, eid),
       radius,
       f.volume,
       'footstep',

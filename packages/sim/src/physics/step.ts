@@ -30,6 +30,8 @@ export function createPhysicsWorld(
     orderSize: -1,
     presses: new Map(),
     pressure: new Map(),
+    stairs: [],
+    multiLevel: false,
   };
 }
 
@@ -78,6 +80,9 @@ export function addBody(pw: PhysicsWorld, init: BodyInit): PhysicsBody {
     strength: init.strength ?? 5,
     pushX: 0,
     pushY: 0,
+    stair: 0,
+    fallFromZ: 0,
+    fallToZ: 0,
   };
   pw.bodies.set(b.id, b);
   updateMovementStats(b, pw.cfg);
@@ -212,12 +217,22 @@ function move(b: PhysicsBody, input: PhysicsStepInput): void {
   b.y = Math.fround(pos.y);
 }
 
-/** idle / walk / run from the speed (attack / push keep their state until they end). */
+/**
+ * idle / walk / run from the speed, `climb` on a flight of stairs (attack / push keep their
+ * state until they end).
+ */
 function classify(b: PhysicsBody, tick: number, cfg: PhysicsConfig): void {
-  if (b.state !== 'idle' && b.state !== 'walk' && b.state !== 'run') return;
+  if (b.state !== 'idle' && b.state !== 'walk' && b.state !== 'run' && b.state !== 'climb') return;
   const sp = Math.sqrt(b.vel.x * b.vel.x + b.vel.y * b.vel.y);
   const walk = b.kind === 'zombie' ? cfg.speed.zombieWalk : cfg.speed.walk;
-  const next = sp < cfg.idleSpeed ? 'idle' : sp > walk * cfg.runStateAtWalkMul ? 'run' : 'walk';
+  const next =
+    b.stair > 0
+      ? 'climb'
+      : sp < cfg.idleSpeed
+        ? 'idle'
+        : sp > walk * cfg.runStateAtWalkMul
+          ? 'run'
+          : 'walk';
   if (next !== b.state) {
     b.state = next;
     b.stateStartTick = tick;
@@ -256,6 +271,8 @@ export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
     h.f32(b.knockback.dirX).f32(b.knockback.dirY).f32(b.knockback.strength);
     h.u32(b.lastHitTick).f32(b.hitFromDir).u32(b.gaitSeed);
     h.f32(b.carriedKg).f32(b.capacityKg).f32(b.endurance).f32(b.strength);
+    // Level state only when used (single-level worlds keep their hashes).
+    if (b.stair || b.state === 'fall') h.u32(b.stair).f32(b.fallFromZ).f32(b.fallToZ);
   }
 }
 

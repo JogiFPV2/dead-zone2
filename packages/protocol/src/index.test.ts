@@ -162,7 +162,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 16 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(16);
-    expect(PROTOCOL_VERSION).toBe(7);
+    expect(PROTOCOL_VERSION).toBe(8);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -294,6 +294,27 @@ describe('parseMainToWorker', () => {
     expect(
       parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['gate'] } }).ok,
     ).toBe(false);
+    const chunk = (stairs: unknown) => ({
+      cx: 0,
+      cy: 0,
+      z: 0,
+      floor: new Uint16Array(CHUNK_TILES),
+      edgeN: new Uint16Array(CHUNK_TILES),
+      edgeW: new Uint16Array(CHUNK_TILES),
+      stairs,
+    });
+    const init = (stairs: unknown) =>
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [chunk(stairs)] } }).ok;
+    expect(init([{ tx: 3, ty: 4, dir: 'N', len: 4 }])).toBe(true);
+    expect(init([{ tx: 3, ty: 4, dir: 'up', len: 4 }])).toBe(false);
+    expect(init([{ tx: 3, ty: 4, dir: 'E', len: 0 }])).toBe(false);
+    expect(
+      simMapFromData({ chunks: [chunk([{ tx: 1, ty: 2, dir: 'S', len: 2 }]) as never] }).getChunk(
+        0,
+        0,
+        0,
+      )?.stairs,
+    ).toEqual([{ tx: 1, ty: 2, dir: 'S', len: 2 }]);
     expect(
       parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] }, zombies: [{ x: 1 }] }).ok,
     ).toBe(false);

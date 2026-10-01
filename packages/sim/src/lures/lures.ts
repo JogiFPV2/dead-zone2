@@ -17,6 +17,7 @@ import type { ItemDef } from '../content/adapter.js';
 import { moveCircle, type Vec2 } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
 import { walkableLine } from '../world/los.js';
+import { floorZ } from '../world/levels.js';
 
 type LureDef = Extract<ItemDef, { kind: 'lure' }>;
 type LureCommand = Extract<Command, { type: 'placeLure' | 'triggerLure' | 'throw' }>;
@@ -159,7 +160,7 @@ export function applyLureCommand(
   const { Position } = w.c;
   const px = Position.x[eid] ?? 0;
   const py = Position.y[eid] ?? 0;
-  const pz = Position.z[eid] ?? 0;
+  const pz = floorZ(w, eid);
   if (cmd.type === 'triggerLure') return trigger(w, eid, cmd.item, px, py, pz);
   const found = st.items.get(cmd.item);
   if (!found) return 'no-item';

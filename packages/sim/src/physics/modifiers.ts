@@ -64,6 +64,7 @@ export function canMove(state: PhysicsState): boolean {
     state === 'idle' ||
     state === 'walk' ||
     state === 'run' ||
+    state === 'climb' ||
     state === 'attack' ||
     state === 'push'
   );
@@ -76,6 +77,7 @@ export function controlLost(state: PhysicsState): boolean {
     state === 'stagger' ||
     state === 'knockdown' ||
     state === 'getup' ||
+    state === 'fall' ||
     state === 'dead'
   );
 }

@@ -1,5 +1,6 @@
 import type { HashWriter } from '../core/hash.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Stage 4 hash section (only with content, so movement-only golden hashes stay valid): player
@@ -47,6 +48,6 @@ export function hashAi(w: SimWorld, h: HashWriter): void {
       .u32(p?.cursor ?? 0);
     // Goal floor only when it differs from the zombie's floor (keeps single-floor goldens).
     const tz = Zombie.tz[eid] ?? 0;
-    if (tz !== Math.floor(w.c.Position.z[eid] ?? 0)) h.u32(0x7f10_0001).u32(tz >>> 0);
+    if (tz !== floorZ(w, eid)) h.u32(0x7f10_0001).u32(tz >>> 0);
   }
 }

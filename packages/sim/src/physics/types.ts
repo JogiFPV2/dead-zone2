@@ -5,6 +5,7 @@ import {
   type PhysEventKind,
 } from '@deadzone/protocol';
 import type { Rng } from '../core/rng.js';
+import type { Stair } from '../world/levels.js';
 import type { PhysicsConfig } from './constants.js';
 
 /** Body states (shared with the client through `@deadzone/protocol`). */
@@ -61,6 +62,11 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
    */
   pushX: number;
   pushY: number;
+  /** Flight of stairs the body is on (`Stair.id` + 1; 0 = none; `stairs.ts`). */
+  stair: number;
+  /** During `fall`: level it fell from and the landing level. */
+  fallFromZ: number;
+  fallToZ: number;
 }
 
 /** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
@@ -79,6 +85,10 @@ export interface PhysicsWorld {
   readonly presses: Map<number, number[]>;
   /** Edge key → last pressure level 1..3 sent to the client (`openingPressure`; saved). */
   readonly pressure: Map<number, number>;
+  /** Flights of stairs of the map (`TileGrid.stairs`, set by the sim; not saved). */
+  stairs: readonly Stair[];
+  /** The map has more than one level (falls possible; set by the sim). */
+  multiLevel: boolean;
 }
 
 /** Hit or shove of `attackerId` on `targetId`, resolved by `physicsStep` in the given order. */

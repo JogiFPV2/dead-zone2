@@ -26,6 +26,7 @@ import type { TileGrid } from '../world/grid.js';
 import { lineOfSight } from '../world/los.js';
 import { RK, type CombatWorld } from './state.js';
 import { damageZombie } from './system.js';
+import { floorZ } from '../world/levels.js';
 
 type RangedDef = Extract<ItemDef, { kind: 'weapon_ranged' }>;
 type MagazineDef = Extract<ItemDef, { kind: 'magazine' }>;
@@ -389,7 +390,7 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
   const { Position, AimIntent, Collider, StableId, Velocity } = w.c;
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   cb.readyTick[eid] = w.tick + secToTicks(1 / r.shotsPerSec);
   cb.swingTick[eid] = w.tick;
   g.item.uses--;
@@ -414,9 +415,7 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
     penaltyMul(w, eid, Pen.attack) * (1 + fc.accuracyPerSkillLevel * skillLevel(w, eid, r.skill));
   const spread = effectiveSpread(w, cb, eid, g.def);
   let hits = 0;
-  const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]).filter(
-    (zid) => (Position.z[zid] ?? 0) === z,
-  );
+  const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]).filter((zid) => floorZ(w, zid) === z);
   const rays: { toX: number; toY: number; hit: number }[] = [];
   for (let p = 0; p < r.projectiles; p++) {
     const off = (rng.nextFloat() * 2 - 1) * spread;

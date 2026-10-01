@@ -8,6 +8,7 @@ import {
   OS,
   type OpeningsWorld,
 } from '../openings/state.js';
+import { STAIR_STEP, type Stair } from './levels.js';
 
 const WALL = EF.present | EF.blocksMove | EF.blocksSight | EF.muffles;
 
@@ -22,12 +23,49 @@ export class TileGrid {
   private lastZ = Number.NaN;
   private lastChunk: SimChunk | undefined;
   readonly openings: OpeningsWorld;
+  /** Flights of stairs from `SimChunk.stairs` (world tiles), in chunk list order. */
+  readonly stairs: readonly Stair[];
+  /** Tile key (base level) → index in `stairs`. */
+  private readonly stairTiles = new Map<string, number>();
+  /** Chunks on more than one level (`listChunks`). */
+  readonly multiLevel: boolean;
 
   constructor(
     private readonly map: SimMap,
     openings?: OpeningsWorld,
   ) {
     this.openings = openings ?? createOpeningsWorld(map, DEFAULT_OPENINGS_CONFIG);
+    const stairs: Stair[] = [];
+    const levels = new Set<number>();
+    for (const a of map.listChunks?.() ?? []) {
+      levels.add(a.z);
+      for (const st of map.getChunk(a.cx, a.cy, a.z)?.stairs ?? []) {
+        const { dx, dy } = STAIR_STEP[st.dir];
+        const s: Stair = {
+          id: stairs.length,
+          tx: a.cx * CHUNK_SIZE + st.tx,
+          ty: a.cy * CHUNK_SIZE + st.ty,
+          z: a.z,
+          dir: st.dir,
+          len: st.len,
+          dx,
+          dy,
+        };
+        stairs.push(s);
+        for (let i = 0; i < s.len; i++) {
+          this.stairTiles.set(`${s.tx + dx * i},${s.ty + dy * i},${s.z}`, s.id);
+        }
+      }
+    }
+    this.stairs = stairs;
+    this.multiLevel = levels.size > 1;
+  }
+
+  /** Flight covering tile (tx, ty) of its base level `z` (`world/levels.ts` `stairsAt`). */
+  stairAt(tx: number, ty: number, z: number): Stair | undefined {
+    if (this.stairs.length === 0) return undefined;
+    const i = this.stairTiles.get(`${tx},${ty},${z}`);
+    return i === undefined ? undefined : this.stairs[i];
   }
 
   private chunkAt(cx: number, cy: number, z: number): SimChunk | undefined {

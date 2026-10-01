@@ -97,6 +97,54 @@ export interface PhysicsConfig {
   knockback: { maxSpeed: number; friction: number; stopSpeed: number };
   /** Crowd pressure on closed doors / windows / fences and zombie pushing (`crowd.ts`). */
   crowd: CrowdConfig;
+  /** Stairs: speed, congestion, domino, crowd pushing up a flight (`stairs.ts`). */
+  stairs: StairsConfig;
+  /** Falling from a level edge (`stairs.ts`). */
+  fall: FallConfig;
+}
+
+/**
+ * Stairs (PZ: climbing is slower, zombies climb slowly). Speed along the flight × `upMul` /
+ * `downMul` (players also × the load / endurance step of their level), zombies × `zombieUpMul`
+ * / `zombieDownMul`. A flight is one body wide and bodies keep `spacing` tiles apart along it
+ * (one at a time, throughput limited). A hit that knocks a body down the flight (stagger or
+ * knock-down, push pointing down) can floor the bodies below: the first with `dominoChance`, each
+ * next × `dominoDecay`, the chain stops at the first that stays up (1 `rng.physics` draw each).
+ * Zombies pushing up a flight on a player standing on it: every `crowd.pulseTicks` their units
+ * (mass / refMass, rows behind the first × `crowd.backRankWeight`) minus `holdForce` × player
+ * mass / refMass minus `crowd.freeUnits` → a push of force `pushForcePerUnit` × excess (≤ 1).
+ */
+export interface StairsConfig {
+  upMul: number;
+  downMul: number;
+  zombieUpMul: number;
+  zombieDownMul: number;
+  /** Extra climbing (up) multiplier per load level / endurance level 0..4. */
+  loadUpMul: readonly number[];
+  enduranceUpMul: readonly number[];
+  spacing: number;
+  dominoChance: number;
+  dominoDecay: number;
+  holdForce: number;
+  pushForcePerUnit: number;
+}
+
+/**
+ * Falls (PZ: one storey mostly hurts a little, two hurt badly, from high up it kills). Drop in
+ * metres = levels × `floorHeightM`; fall time = √(2h / g). Damage by levels (index = levels − 1,
+ * the last row for higher drops below `deathLevels`): with `chance` a hit of [min, max] (player
+ * health 0..100 / zombie hp); from `deathLevels` on the fall is lethal. Every landing draws 3
+ * numbers from `rng.physics` (chance, amount, leg) and ends in a knock-down.
+ */
+export interface FallConfig {
+  floorHeightM: number;
+  gravity: number;
+  damage: readonly { chance: number; min: number; max: number }[];
+  deathLevels: number;
+  /** Levels searched below for a landing floor. */
+  maxLevels: number;
+  /** Knock-down after landing (ticks). */
+  knockdownTicks: { player: number; zombie: number };
 }
 
 /**
@@ -211,5 +259,30 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     barricadeResist: 3,
     levelUnits: [2, 4],
     separation: { stiffness: 0.3, slop: 0.02, maxStep: perTick(1) },
+  },
+  stairs: {
+    upMul: 0.6,
+    downMul: 0.85,
+    zombieUpMul: 0.35,
+    zombieDownMul: 0.6,
+    loadUpMul: [1, 0.9, 0.75, 0.6, 0.45],
+    enduranceUpMul: [1, 0.95, 0.85, 0.7, 0.55],
+    spacing: 0.75,
+    dominoChance: 0.6,
+    dominoDecay: 0.7,
+    holdForce: 1.5,
+    pushForcePerUnit: 0.12,
+  },
+  fall: {
+    floorHeightM: 3,
+    gravity: 9.81,
+    damage: [
+      { chance: 0.3, min: 5, max: 15 },
+      { chance: 1, min: 30, max: 55 },
+      { chance: 1, min: 60, max: 95 },
+    ],
+    deathLevels: 4,
+    maxLevels: 8,
+    knockdownTicks: { player: sec(2), zombie: sec(3.5) },
   },
 };

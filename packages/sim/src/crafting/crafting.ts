@@ -26,6 +26,7 @@ import {
 } from '../items/store.js';
 import { addXp, learnRecipe, progressOf } from '../progress/skills.js';
 import { applyLeisure } from '../leisure/leisure.js';
+import { floorZ } from '../world/levels.js';
 
 /** A station within the crafting radius: a station item on a ground pile, or a map object. */
 export interface StationAt {
@@ -53,7 +54,7 @@ export function craftSources(w: SimWorld, eid: number): Sources {
   const { Position } = w.c;
   const px = Position.x[eid] ?? 0;
   const py = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const r = st.content.crafting.nearbyRadiusTiles;
   const near = (x: number, y: number): boolean => {
     const dx = x + 0.5 - px;
@@ -336,7 +337,7 @@ export function registerCraftActions(): void {
         : {
             x: Math.floor(Position.x[eid] ?? 0),
             y: Math.floor(Position.y[eid] ?? 0),
-            z: Position.z[eid] ?? 0,
+            z: floorZ(w, eid),
           };
       for (const [item, n] of ev.take) {
         if (n >= item.count) destroyItem(st, item);
@@ -435,7 +436,7 @@ export function craftingView(w: SimWorld, eid: number): CraftingView | undefined
   const st = w.items;
   if (!st || st.content.recipes.length === 0 || !playerItems(w, eid)) return undefined;
   const { Position } = w.c;
-  const key = `${st.version}|${Math.floor((Position.x[eid] ?? 0) * 2)},${Math.floor((Position.y[eid] ?? 0) * 2)},${Position.z[eid] ?? 0}`;
+  const key = `${st.version}|${Math.floor((Position.x[eid] ?? 0) * 2)},${Math.floor((Position.y[eid] ?? 0) * 2)},${floorZ(w, eid)}`;
   let per = cache.get(w);
   if (!per) {
     per = new Map<number, { key: string; view: CraftingView }>();

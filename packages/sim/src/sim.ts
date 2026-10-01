@@ -236,6 +236,8 @@ export function createSim(input: SimOptions): Sim {
     minutes,
     ambientC: opts.ambientTemperatureC ?? DEFAULT_AMBIENT_C,
   };
+  w.physics.stairs = ctx.grid.stairs;
+  w.physics.multiLevel = ctx.grid.multiLevel;
   const views = new ViewTracker(0);
   const c = w.c;
 

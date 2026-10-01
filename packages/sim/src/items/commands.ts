@@ -25,6 +25,7 @@ import {
   type ItemInstance,
   type PlayerItems,
 } from './store.js';
+import { floorZ } from '../world/levels.js';
 
 export type ItemCommand = Extract<
   Command,
@@ -233,7 +234,7 @@ export function playerTile(w: SimWorld, eid: number): { x: number; y: number; z:
   return {
     x: Math.floor(Position.x[eid] ?? 0),
     y: Math.floor(Position.y[eid] ?? 0),
-    z: Position.z[eid] ?? 0,
+    z: floorZ(w, eid),
   };
 }
 

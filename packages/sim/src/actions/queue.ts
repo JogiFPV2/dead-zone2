@@ -11,6 +11,7 @@ import type { ActionState, PlayerItems } from '../items/store.js';
 import { threatNearby } from '../systems/sleep.js';
 import { emitNoise } from '../ai/noise.js';
 import { Pen, penaltyMul } from '../survival/penalties.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Timed actions (docs 2.5 `actions`), the Stage 6 foundation: one current action per player plus
@@ -99,7 +100,7 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
       w,
       Position.x[eid] ?? 0,
       Position.y[eid] ?? 0,
-      Position.z[eid] ?? 0,
+      floorZ(w, eid),
       noise.radiusTiles,
       noise.volume,
       'action',

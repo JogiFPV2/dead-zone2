@@ -11,6 +11,7 @@ import { damageOpening, edgeCentre } from '../openings/actions.js';
 import { EF, openingKey, unpackKey } from '../openings/state.js';
 import { physicsBashMul, physicsPress } from '../physics/crowd.js';
 import { physicsCanMove } from '../physics/system.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Pipeline `ai.locomotion` (docs 2.5): turns the zombie's goal into a move intent for the shared
@@ -28,7 +29,7 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
   for (const eid of sortedQuery(w, 'zombies', [Zombie])) {
     const x = Position.x[eid] ?? 0;
     const y = Position.y[eid] ?? 0;
-    const z = Position.z[eid] ?? 0;
+    const z = floorZ(w, eid);
     const state = Zombie.state[eid] ?? 0;
     const type = ai.types[Zombie.type[eid] ?? 0]!;
 
@@ -156,7 +157,7 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
         let sx = 0;
         let sy = 0;
         ai.spatial.query(x, y, sep, (o) => {
-          if (o === eid || (Position.z[o] ?? 0) !== z) return;
+          if (o === eid || floorZ(w, o) !== z) return;
           const ox = x - (Position.x[o] ?? 0);
           const oy = y - (Position.y[o] ?? 0);
           const od2 = ox * ox + oy * oy;

@@ -12,6 +12,7 @@ import {
   sideIndex,
   unpackKey,
 } from './state.js';
+import { floorZ } from '../world/levels.js';
 
 type OpeningCommand = Extract<Command, { type: 'toggleDoor' | 'breakWindow' | 'debugOpening' }>;
 
@@ -77,7 +78,7 @@ export function applyOpeningCommand(
 ): CommandRejectReason | undefined {
   const o = w.openings;
   const side = sideIndex(cmd.side);
-  const z = cmd.type === 'debugOpening' ? (cmd.z ?? 0) : (w.c.Position.z[eid] ?? 0);
+  const z = cmd.type === 'debugOpening' ? (cmd.z ?? 0) : floorZ(w, eid);
   const id = side === 0 ? grid.edgeN(cmd.tx, cmd.ty, z) : grid.edgeW(cmd.tx, cmd.ty, z);
   const kind = grid.kindOf(id);
   if (cmd.type === 'debugOpening') {

@@ -9,6 +9,7 @@ const CAUSES: Record<DeathCause, string> = {
   temperature: 'Wychłodzenie / przegrzanie',
   wounds: 'Rany',
   zombie: 'Zagryziony',
+  fall: 'Upadek z wysokości',
   debug: 'Debug',
 };
 

@@ -31,6 +31,7 @@ import {
   type ItemContainer,
   type ItemStore,
 } from './store.js';
+import { floorZ } from '../world/levels.js';
 
 /** Ground piles without a capacity count as full at this many stacks. */
 const PILE_FULL_STACKS = 10;
@@ -65,7 +66,7 @@ export function storagesView(w: SimWorld, eid: number, radius: number): StorageM
   const { Position } = w.c;
   const px = Position.x[eid] ?? 0;
   const py = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const sid = stableIdOf(w, eid);
   const out: StorageMarkerView[] = [];
   for (const ids of st.worldByTile.values()) {
@@ -176,7 +177,7 @@ export function groundPilesView(w: SimWorld, eid: number, radius: number): Groun
   const { Position } = w.c;
   const px = Position.x[eid] ?? 0;
   const py = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const out: GroundPileView[] = [];
   for (const id of st.ground.values()) {
     const c = st.containers.get(id);
@@ -196,7 +197,7 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
   const { Position } = w.c;
   const px = Math.floor(Position.x[eid] ?? 0);
   const py = Math.floor(Position.y[eid] ?? 0);
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const sid = stableIdOf(w, eid);
   const out: NearbyContainerView[] = [];
   for (let y = py - 2; y <= py + 2; y++) {

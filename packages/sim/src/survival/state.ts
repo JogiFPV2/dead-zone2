@@ -38,6 +38,7 @@ export const DEATH_CAUSES: readonly DeathCause[] = [
   'wounds',
   'debug',
   'zombie',
+  'fall',
 ];
 export const deathCauseIndex = (c: DeathCause): number => DEATH_CAUSES.indexOf(c);
 

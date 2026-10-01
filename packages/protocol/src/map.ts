@@ -23,6 +23,27 @@ export interface SimChunk {
    * `containerType` become world storage; the rest is ignored by the sim for now.
    */
   readonly objects?: readonly SimMapObject[] | undefined;
+  /**
+   * Flights of stairs starting on this chunk's level `z` and leading to z + 1 (sim
+   * `world/levels.ts`). Optional; a chunk without stairs omits it.
+   */
+  readonly stairs?: readonly SimStairs[] | undefined;
+}
+
+/** Direction of ascent of a flight (N = towards −y, E = +x, S = +y, W = −x). */
+export const STAIR_DIRS = ['N', 'E', 'S', 'W'] as const;
+export type StairDir = (typeof STAIR_DIRS)[number];
+
+/**
+ * A flight of stairs: bottom tile at local tile (tx, ty) of its chunk, climbing `len` tiles
+ * (1..16, may run into the next chunk) in `dir`. Entered only from the bottom edge (the side of
+ * the first tile away from `dir`) or from the top (tile (tx, ty) + len × dir on level z + 1).
+ */
+export interface SimStairs {
+  readonly tx: number;
+  readonly ty: number;
+  readonly dir: StairDir;
+  readonly len: number;
 }
 
 /** A map object at local tile (x, y) of its chunk. */
@@ -126,6 +147,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       room: c.room,
       rooms: c.rooms,
       objects: c.objects,
+      ...(c.stairs ? { stairs: c.stairs } : {}),
     });
   }
   const list: SimChunkAddress[] = data.chunks.map(({ cx, cy, z }) => ({ cx, cy, z }));
@@ -163,6 +185,7 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         ...(c.room ? { room: c.room.slice() } : {}),
         ...(c.rooms ? { rooms: { ...c.rooms } } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
+        ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
       });
     }
   }

@@ -9,6 +9,7 @@ import { moveCircle, type Vec2 } from '../world/collision.js';
 import { EF } from '../openings/state.js';
 import { gaitSeedOf, physicsCanRun } from '../physics/system.js';
 import type { TileGrid } from '../world/grid.js';
+import { floorZ } from '../world/levels.js';
 
 const tmp: Vec2 = { x: 0, y: 0 };
 
@@ -75,10 +76,19 @@ export interface MovementModifier {
   accelMul?(w: SimWorld, eid: number): number;
   /** Extra displacement this tick (tiles, e.g. a crowd push), swept with the move; false = none. */
   push?(w: SimWorld, eid: number, out: Vec2): boolean;
+  /**
+   * Performs the move (dx, dy) itself (collisions included) and writes the position to `out`;
+   * false = not handled (plain `moveCircle` on `floorZ`). Physics: stairs and level changes.
+   */
+  move?(w: SimWorld, grid: TileGrid, eid: number, dx: number, dy: number, out: Vec2): boolean;
 }
 const modifiers: MovementModifier[] = [];
 export function registerMovementModifier(m: MovementModifier): void {
   if (!modifiers.includes(m)) modifiers.push(m);
+}
+function hookedMove(w: SimWorld, grid: TileGrid, eid: number, dx: number, dy: number): boolean {
+  for (const m of modifiers) if (m.move?.(w, grid, eid, dx, dy, tmp)) return true;
+  return false;
 }
 function modMul(w: SimWorld, eid: number, key: 'speedMul' | 'accelMul'): number {
   let f = 1;
@@ -144,17 +154,19 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
       }
     }
     if (vx === 0 && vy === 0) continue;
-    const z = Position.z[eid] ?? 0;
-    moveCircle(
-      grid,
-      z,
-      Position.x[eid] ?? 0,
-      Position.y[eid] ?? 0,
-      vx,
-      vy,
-      Collider.radius[eid] ?? 0,
-      tmp,
-    );
+    // A modifier may own the move (physics: stairs, level edges); else the plain sweep.
+    if (!hookedMove(w, grid, eid, vx, vy)) {
+      moveCircle(
+        grid,
+        floorZ(w, eid),
+        Position.x[eid] ?? 0,
+        Position.y[eid] ?? 0,
+        vx,
+        vy,
+        Collider.radius[eid] ?? 0,
+        tmp,
+      );
+    }
     Position.x[eid] = tmp.x;
     Position.y[eid] = tmp.y;
   }
@@ -165,7 +177,7 @@ function nearSlowEdge(grid: TileGrid, eid: number, w: SimWorld): boolean {
   if (w.openings.states.size === 0) return false;
   const x = w.c.Position.x[eid] ?? 0;
   const y = w.c.Position.y[eid] ?? 0;
-  const z = w.c.Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const r = (w.c.Collider.radius[eid] ?? 0) + 0.05;
   const tx = Math.floor(x);
   const ty = Math.floor(y);

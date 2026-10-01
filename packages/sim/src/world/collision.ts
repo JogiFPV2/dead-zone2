@@ -24,6 +24,7 @@ function sweep(
   across: number,
   d: number,
   r: number,
+  voidBlocks = true,
 ): number {
   if (d === 0) return along;
   let target = along + d;
@@ -54,7 +55,7 @@ function sweep(
     for (let a = a0; a <= a1; a++) {
       const tx = axis === 0 ? a : c;
       const ty = axis === 0 ? c : a;
-      if (grid.isVoid(tx, ty, z)) test(a, a + 1, c, c + 1);
+      if (voidBlocks && grid.isVoid(tx, ty, z)) test(a, a + 1, c, c + 1);
       // North edge: y = ty, x ∈ [tx, tx+1]. West edge: x = tx, y ∈ [ty, ty+1].
       if (grid.hasWallN(tx, ty, z)) {
         if (axis === 0) test(a, a + 1, c, c);
@@ -84,9 +85,11 @@ export function moveCircle(
   dy: number,
   r: number,
   out: Vec2 = { x: 0, y: 0 },
+  /** false: tiles without floor do not stop the circle (knock-back over an edge, physics). */
+  voidBlocks = true,
 ): Vec2 {
-  const nx = Math.fround(sweep(grid, z, 0, x, y, dx, r));
-  const ny = Math.fround(sweep(grid, z, 1, y, nx, dy, r));
+  const nx = Math.fround(sweep(grid, z, 0, x, y, dx, r, voidBlocks));
+  const ny = Math.fround(sweep(grid, z, 1, y, nx, dy, r, voidBlocks));
   out.x = nx;
   out.y = ny;
   return out;

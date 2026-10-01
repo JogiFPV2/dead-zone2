@@ -192,6 +192,8 @@ export class PhysAdapter {
           const b = this.bodies.get(ev.entity);
           if (b) b.phys.lastHitTick = ev.tick;
         }
+        // Level events (v8) have no animation event yet; the state is in the snapshot.
+        if (ev.kind === 'startedFalling' || ev.kind === 'landed') continue;
         this.emit(ev.kind, ev.entity, ev.tick);
         continue;
       }
@@ -207,8 +209,10 @@ export class PhysAdapter {
    */
   private readSim(b: Body, buf: Float32Array, u32: Uint32Array, o: number, tick: number): boolean {
     const si = buf[o + PhysField.state];
-    const state = si === undefined ? undefined : ENTITY_PHYS_STATES[si];
-    if (!state) return false;
+    const raw = si === undefined ? undefined : ENTITY_PHYS_STATES[si];
+    if (!raw) return false;
+    // Protocol v8 level states until the rig has own clips: climbing walks, falling staggers.
+    const state = raw === 'climb' ? 'walk' : raw === 'fall' ? 'stagger' : raw;
     const seed = u32[o + PhysField.gaitSeed] ?? 0;
     // Zombies always get a gait seed from the physics module: none = no physics body in this
     // record (mock crowd, older data), derive instead.

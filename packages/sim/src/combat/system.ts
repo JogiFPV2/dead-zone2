@@ -13,6 +13,7 @@ import type { TileGrid } from '../world/grid.js';
 import type { CombatWorld } from './state.js';
 import { fire, firearmOf, reloadSystem } from './firearms.js';
 import { physicsBeginAttack, physicsCanAct, physicsHit } from '../physics/system.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Pipeline `combat` (docs 2.5): player swings and shoves queued by `attack` / `shove` this tick
@@ -95,12 +96,12 @@ function targetsInArc(
   const { Position, Facing, Collider, StableId } = w.c;
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const face = Facing.angle[eid] ?? 0;
   const half = Math.round((cb.cfg.arcHalfDeg / 360) * 65536);
   const out: { eid: number; d2: number }[] = [];
   for (const zid of sortedQuery(w, 'zombies', [w.c.Zombie])) {
-    if ((Position.z[zid] ?? 0) !== z) continue;
+    if (floorZ(w, zid) !== z) continue;
     const dx = (Position.x[zid] ?? 0) - x;
     const dy = (Position.y[zid] ?? 0) - y;
     const r = range + (Collider.radius[zid] ?? 0);
@@ -137,7 +138,7 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   const { Position, StableId } = w.c;
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const rng = w.rng.combat;
   const targets = targetsInArc(w, ai, cb, grid, eid, m.rangeTiles).slice(0, m.maxTargets);
   for (const t of targets) {
@@ -226,7 +227,7 @@ export function damageZombie(
     // Hurt zombies turn on the attacker.
     Zombie.state[zid] = ZombieState.chase;
     Zombie.targetId[zid] = StableId.value[attacker] ?? 0;
-    Zombie.tz[zid] = Math.floor(w.c.Position.z[attacker] ?? 0);
+    Zombie.tz[zid] = floorZ(w, attacker);
     Zombie.memoryUntil[zid] = w.tick + secToTicks(ai.cfg.ai.memorySec);
     return false;
   }
@@ -235,11 +236,25 @@ export function damageZombie(
   return true;
 }
 
+/** A zombie dies without a killer (a fall, physics): `zombieKilled` with `playerId` −1. */
+export function killZombieByWorld(w: SimWorld, zid: number): void {
+  const ai = w.ai;
+  if (!ai || w.c.Zombie.is[zid] !== 1) return;
+  w.c.Zombie.hp[zid] = 0;
+  killZombie(w, ai, ai.combat, zid, undefined);
+}
+
 /**
  * Zombie death: leaves the AI and movement (components `Zombie` and `MoveIntent` removed), stays
  * in the snapshot as a corpse (`anim = dead`), counts as a kill of `killer`.
  */
-function killZombie(w: SimWorld, ai: AiWorld, cb: CombatWorld, zid: number, killer: number): void {
+function killZombie(
+  w: SimWorld,
+  ai: AiWorld,
+  cb: CombatWorld,
+  zid: number,
+  killer: number | undefined,
+): void {
   const { Velocity, Position, StableId, Zombie } = w.c;
   Velocity.x[zid] = 0;
   Velocity.y[zid] = 0;
@@ -251,13 +266,13 @@ function killZombie(w: SimWorld, ai: AiWorld, cb: CombatWorld, zid: number, kill
   const qi = ai.pathQueue.indexOf(zid);
   if (qi >= 0) ai.pathQueue.splice(qi, 1);
   ai.zombieCount--;
-  cb.kills[killer] = (cb.kills[killer] ?? 0) + 1;
+  if (killer !== undefined) cb.kills[killer] = (cb.kills[killer] ?? 0) + 1;
   cb.zombieReady[zid] = 0;
   w.events.push({
     type: 'zombieKilled',
     tick: w.tick,
     zombie: StableId.value[zid] ?? 0,
-    playerId: w.c.Player.id[killer] ?? 0,
+    playerId: killer === undefined ? -1 : (w.c.Player.id[killer] ?? 0),
     x: Position.x[zid] ?? 0,
     y: Position.y[zid] ?? 0,
   });
@@ -275,12 +290,12 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
       cb.zombieReady[zid] = 0;
       continue;
     }
-    const z = Position.z[zid] ?? 0;
+    const z = floorZ(w, zid);
     const dx = (Position.x[pid] ?? 0) - (Position.x[zid] ?? 0);
     const dy = (Position.y[pid] ?? 0) - (Position.y[zid] ?? 0);
     const reach = zc.reachTiles + (Collider.radius[pid] ?? 0) + (Collider.radius[zid] ?? 0);
     const inReach =
-      (Position.z[pid] ?? 0) === z &&
+      floorZ(w, pid) === z &&
       dx * dx + dy * dy <= reach * reach &&
       lineOfSight(
         grid,

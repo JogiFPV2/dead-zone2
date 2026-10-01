@@ -7,6 +7,7 @@ import { heard } from './noise.js';
 import { ZombieState, type AiWorld, type Noise } from './state.js';
 import { currentDaylight, playerVisibility } from './vision.js';
 import { secToTicks } from './zombies.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Pipeline `ai.perception` + `ai.brain` (docs 2.5 `ai`). Zombies think every
@@ -50,7 +51,7 @@ export function aiThinkSystem(w: SimWorld, grid: TileGrid): void {
       sid: StableId.value[eid] ?? 0,
       x: Position.x[eid] ?? 0,
       y: Position.y[eid] ?? 0,
-      z: Position.z[eid] ?? 0,
+      z: floorZ(w, eid),
       vis,
     });
   }
@@ -65,7 +66,7 @@ export function aiThinkSystem(w: SimWorld, grid: TileGrid): void {
     const sid = StableId.value[eid] ?? 0;
     const x = Position.x[eid] ?? 0;
     const y = Position.y[eid] ?? 0;
-    const z = Position.z[eid] ?? 0;
+    const z = floorZ(w, eid);
     let near = false;
     for (const t of targets) {
       const dx = t.x - x;
@@ -211,7 +212,7 @@ function pickGoal(
   cy: number,
   radius: number,
 ): boolean {
-  const z = w.c.Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const r = Math.max(1, Math.round(radius));
   for (let i = 0; i < 3; i++) {
     const tx = Math.floor(cx) + w.rng.ai.int(-r, r);
@@ -242,7 +243,7 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
             ai,
             grid,
             eid,
-            w.c.Position.z[eid] ?? 0,
+            floorZ(w, eid),
             x,
             y,
             Zombie.tx[eid] ?? 0,

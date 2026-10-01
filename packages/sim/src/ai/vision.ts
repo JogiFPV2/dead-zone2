@@ -5,6 +5,7 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { defOf } from '../items/store.js';
 import type { VisionConfig } from './config.js';
 import type { AiWorld } from './state.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Sight model shared by players and zombies: range = base range × light at the target. Daylight
@@ -82,7 +83,7 @@ export function lightAt(w: SimWorld, ai: AiWorld, x: number, y: number, z: numbe
   }
   const { Position } = w.c;
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
-    if ((Position.z[eid] ?? 0) !== z || w.survival?.dead[eid]) continue;
+    if (floorZ(w, eid) !== z || w.survival?.dead[eid]) continue;
     const h = heldLight(w, eid);
     if (!h || h.intensity <= best) continue;
     const dx = x - (Position.x[eid] ?? 0);
@@ -101,7 +102,7 @@ export function playerVisibility(w: SimWorld, ai: AiWorld, eid: number, day: num
   const { Position, MoveIntent } = w.c;
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const vc = ai.cfg.vision;
   if (!vc.enabled) return 1;
   const dark = inDarkZone(ai, Math.floor(x), Math.floor(y), z);
@@ -125,7 +126,7 @@ export function playerSightRange(w: SimWorld, ai: AiWorld, eid: number): number 
   const { Position } = w.c;
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const vc = ai.cfg.vision;
   const dark = inDarkZone(ai, Math.floor(x), Math.floor(y), z);
   const base = dark ? vc.nightFactor : currentDaylight(w, vc);

@@ -3,6 +3,7 @@ import { ZombieState, type Path } from '../ai/state.js';
 import type { TileGrid } from '../world/grid.js';
 import { findPath } from './astar.js';
 import { buildFlowField } from './flow.js';
+import { floorZ } from '../world/levels.js';
 
 /** Queues an A* request for a zombie towards tile (gx, gy) (no-op when one is pending or cached). */
 export function requestPath(w: SimWorld, eid: number, gx: number, gy: number): Path {
@@ -56,7 +57,7 @@ export function navSystem(w: SimWorld, grid: TileGrid): void {
     }
     const tx = Math.floor(Position.x[eid] ?? 0);
     const ty = Math.floor(Position.y[eid] ?? 0);
-    const z = Position.z[eid] ?? 0;
+    const z = floorZ(w, eid);
     const f = ai.flows.get(eid);
     if (f && f.targetTx === tx && f.targetTy === ty && f.z === z) continue;
     if (f && w.tick - f.builtTick < cfg.flowEveryTicks) continue;
@@ -72,7 +73,7 @@ export function navSystem(w: SimWorld, grid: TileGrid): void {
     if (!p || p.status !== 'pending' || !Zombie.is[eid]) continue;
     const max = Math.min(cfg.navMaxNodesPerRequest, budget);
     if (max < cfg.navMaxNodesPerRequest && i > 0) break;
-    const z = Position.z[eid] ?? 0;
+    const z = floorZ(w, eid);
     const r = findPath(
       grid,
       z,

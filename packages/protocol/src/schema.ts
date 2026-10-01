@@ -15,7 +15,7 @@ import {
   type Command,
   type CommandParseResult,
 } from './commands.js';
-import { CHUNK_SIZE, CHUNK_TILES, OPENING_STATES, SIM_EDGE_KINDS } from './map.js';
+import { CHUNK_SIZE, CHUNK_TILES, OPENING_STATES, SIM_EDGE_KINDS, STAIR_DIRS } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
 const header = {
@@ -414,6 +414,17 @@ export const simMapDataSchema = z.object({
       objects: z
         .array(z.object({ contentId, x: localTile, y: localTile }))
         .max(CHUNK_TILES * 4)
+        .optional(),
+      stairs: z
+        .array(
+          z.object({
+            tx: localTile,
+            ty: localTile,
+            dir: z.enum(STAIR_DIRS),
+            len: z.number().int().min(1).max(16),
+          }),
+        )
+        .max(CHUNK_TILES)
         .optional(),
     }),
   ),

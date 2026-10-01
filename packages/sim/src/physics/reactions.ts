@@ -152,7 +152,7 @@ export function applyHit(
     kill(target, tick, events);
     return;
   }
-  if (target.state === 'knockdown' || target.state === 'getup') return;
+  if (target.state === 'knockdown' || target.state === 'getup' || target.state === 'fall') return;
   pushBack(target, out, cfg);
   if (out.reaction === 'knockdown') {
     setState(target, 'knockdown', tick, out.duration);
@@ -222,6 +222,9 @@ export function advanceState(
       setState(b, 'idle', end);
       b.knockback = { dirX: 0, dirY: 0, strength: 0 };
       events.push({ type: 'gotUp', entityId: b.id, tick });
+      return;
+    case 'fall':
+      // Landing (damage, knock-down) is done by the sim adapter (`stairs.ts` `landFalls`).
       return;
     case 'hit':
     case 'stagger':

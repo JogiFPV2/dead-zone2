@@ -57,7 +57,9 @@ export type DeathCause =
   | 'wounds'
   | 'debug'
   /** Killed by zombie attacks (health reached 0 in combat). */
-  | 'zombie';
+  | 'zombie'
+  /** Fall from height (physics). */
+  | 'fall';
 
 /** What caused a `hit`: a player's melee swing, a shove, or a zombie attack. */
 export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot';
@@ -120,6 +122,10 @@ export const PHYS_EVENT_KINDS = [
   'fellDown',
   'gotUp',
   'died',
+  /** Left a floor over a drop (knocked back over an edge / into a hole): state `fall`. */
+  'startedFalling',
+  /** Hit the ground after a fall (see `fellFromHeight` for levels and damage). */
+  'landed',
 ] as const;
 export type PhysEventKind = (typeof PHYS_EVENT_KINDS)[number];
 
@@ -139,6 +145,18 @@ export type SimEvent =
    * for `hitLanded`. Same tick as the matching snapshot `state` change.
    */
   | { type: 'physics'; tick: number; kind: PhysEventKind; entity: number; source?: number }
+  /**
+   * Landing after a fall: `levels` dropped (× floor height 3 m), `damage` dealt (player health
+   * or zombie hp; 0 = unhurt). Same tick as the physics `landed` event.
+   */
+  | {
+      type: 'fellFromHeight';
+      tick: number;
+      entity: number;
+      levels: number;
+      damage: number;
+      killed: boolean;
+    }
   /** The player's character was created (`newCharacter`). */
   | { type: 'characterCreated'; tick: number; playerId: PlayerId; character: CharacterProfileView }
   /** Player death (permadeath): the death screen reads `day` / `minuteOfDay` from here. */
@@ -170,6 +188,7 @@ export type SimEvent =
       killed: boolean;
     }
   /** A zombie died; `playerId` = the killer. */
+  /** `playerId` −1: no killer (the zombie died from a fall). */
   | { type: 'zombieKilled'; tick: number; zombie: number; playerId: PlayerId; x: number; y: number }
   /** A melee weapon broke (condition reached 0) and was removed or replaced by `brokenInto`. */
   | { type: 'weaponBroke'; tick: number; playerId: PlayerId; itemId: string }

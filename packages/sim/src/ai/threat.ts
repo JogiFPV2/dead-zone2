@@ -3,6 +3,7 @@ import { wake } from '../systems/sleep.js';
 import type { TileGrid } from '../world/grid.js';
 import { heard } from './noise.js';
 import { ZombieState } from './state.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Pipeline `ai.threat` (after movement): per player, zombies chasing them and zombies within the
@@ -21,12 +22,12 @@ export function threatSystem(w: SimWorld, grid: TileGrid): void {
     const sid = StableId.value[eid] ?? 0;
     const x = Position.x[eid] ?? 0;
     const y = Position.y[eid] ?? 0;
-    const z = Position.z[eid] ?? 0;
+    const z = floorZ(w, eid);
     let chasing = 0;
     let near = 0;
     if (ai.zombieCount > 0 && !s.dead[eid]) {
       for (const zid of sortedQuery(w, 'zombies', [Zombie])) {
-        if ((Position.z[zid] ?? 0) !== z) continue;
+        if (floorZ(w, zid) !== z) continue;
         const isChasing = Zombie.state[zid] === ZombieState.chase && Zombie.targetId[zid] === sid;
         if (isChasing) chasing++;
         const dx = (Position.x[zid] ?? 0) - x;

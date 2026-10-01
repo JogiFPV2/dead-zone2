@@ -13,9 +13,18 @@ import {
   physicsSpeedMul,
 } from './modifiers.js';
 import { crowdPressureSystem, separateZombies } from './crowd.js';
+import {
+  fallSystem,
+  knockbackMove,
+  physicsLevelMove,
+  stairDomino,
+  stairPushSystem,
+  startFalls,
+} from './stairs.js';
 import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
 import { addBody, physicsStep } from './step.js';
 import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Sim adapter of the physics module: bodies live in `w.physics`, keyed by StableId, one per
@@ -83,6 +92,7 @@ export const physicsMovementModifier: MovementModifier = {
     const b = bodyOf(w, eid);
     return b ? physicsAccelMul(b, w.physics.cfg) : 1;
   },
+  move: physicsLevelMove,
   push(w, eid, out) {
     const b = bodyOf(w, eid);
     if (!b || (!b.pushX && !b.pushY)) return false;
@@ -153,6 +163,7 @@ export function physicsHit(
   }
   const events: PhysicsEvent[] = [];
   applyHit(t, resolveHit(a, t, hit, pw.rng, pw.cfg), hit, w.tick, events, pw.cfg);
+  if (t.stair) stairDomino(w, t, events);
   emit(w, events);
 }
 
@@ -161,7 +172,8 @@ const eidBySid = new Map<number, number>();
 /**
  * Pipeline `physics` (after `movement.facing`): syncs bodies from the ECS (position, facing,
  * velocity, load, endurance, deaths), runs `physicsStep` (timers, knock-back slide with
- * `moveCircle`, idle / walk / run) and writes slid positions back; then zombies in a crowd push
+ * `moveCircle`, idle / walk / run) and writes slid positions back; falls (start, free fall,
+ * landing) and pushes up stairs on maps with levels (`stairs.ts`); then zombies in a crowd push
  * each other apart and crowd pressure works on closed doors / windows / fences (`crowd.ts`).
  */
 export function physicsSystem(w: SimWorld, grid: TileGrid): void {
@@ -194,6 +206,8 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
       }
     }
   }
+  // Falls land before the state timers run (landing → knock-down this tick).
+  if (pw.multiLevel) fallSystem(w, eidBySid, events);
   events.push(
     ...physicsStep(pw, {
       tick: w.tick,
@@ -204,7 +218,8 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
           out.y = b.y + dy;
           return;
         }
-        moveCircle(grid, Position.z[eid] ?? 0, b.x, b.y, dx, dy, Collider.radius[eid] ?? 0, out);
+        if (pw.multiLevel || b.stair) knockbackMove(w, grid, eid, b, dx, dy, out);
+        else moveCircle(grid, floorZ(w, eid), b.x, b.y, dx, dy, Collider.radius[eid] ?? 0, out);
       },
     }),
   );
@@ -214,7 +229,9 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
     Position.x[eid] = b.x;
     Position.y[eid] = b.y;
   }
+  if (pw.multiLevel) startFalls(w, grid, eidBySid, events);
   emit(w, events);
   separateZombies(w);
   crowdPressureSystem(w, grid);
+  stairPushSystem(w, eidBySid, (z, p, force) => physicsHit(w, z, p, 'zombie', force));
 }

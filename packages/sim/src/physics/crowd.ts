@@ -7,6 +7,7 @@ import type { TileGrid } from '../world/grid.js';
 import { canAct, canMove } from './modifiers.js';
 import { PHYS_TICKS_PER_SECOND } from './constants.js';
 import type { PhysicsBody } from './types.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Crowd pressure (PZ hordes): zombies pressing on a closed door / window / fence add up their
@@ -59,7 +60,7 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
   const out: EdgePressure = { units: 0, pushers: 0, resist: 0 };
   const reach2 = cc.reachTiles * cc.reachTiles;
   w.ai?.spatial.query(c.x, c.y, cc.reachTiles, (o) => {
-    if ((Position.z[o] ?? 0) !== k.z || (Zombie.hp[o] ?? 0) <= 0) return;
+    if (floorZ(w, o) !== k.z || (Zombie.hp[o] ?? 0) <= 0) return;
     if (!purposeful(Zombie.state[o] ?? 0)) return;
     const b = body(w, o);
     if (b && !canMove(b.state)) return;
@@ -82,7 +83,7 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
   const s = w.survival;
   const hold2 = cc.holdReachTiles * cc.holdReachTiles;
   for (const eid of [...w.players.values()].sort((a, b) => a - b)) {
-    if ((Position.z[eid] ?? 0) !== k.z || s?.dead[eid] || s?.asleep[eid]) continue;
+    if (floorZ(w, eid) !== k.z || s?.dead[eid] || s?.asleep[eid]) continue;
     const b = body(w, eid);
     if (b && !canAct(b.state)) continue;
     const x = Position.x[eid] ?? 0;
@@ -224,7 +225,7 @@ export function separateZombies(w: SimWorld): void {
     const a = order[i]!;
     const ax = Position.x[a] ?? 0;
     const ay = Position.y[a] ?? 0;
-    const az = Position.z[a] ?? 0;
+    const az = floorZ(w, a);
     const ra = Collider.radius[a] ?? 0;
     for (let j = i + 1; j < order.length; j++) {
       const o = order[j]!;
@@ -233,7 +234,7 @@ export function separateZombies(w: SimWorld): void {
       const oy = (Position.y[o] ?? 0) - ay;
       const reach = ra + (Collider.radius[o] ?? 0);
       const d2 = ox * ox + oy * oy;
-      if (d2 >= reach * reach || (Position.z[o] ?? 0) !== az) continue;
+      if (d2 >= reach * reach || floorZ(w, o) !== az) continue;
       const d = Math.sqrt(d2);
       // Exactly on top of each other: split along x (sweep order).
       const nx = d > 1e-6 ? ox / d : 1;

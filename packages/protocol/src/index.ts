@@ -1,5 +1,5 @@
 /** Bump on every breaking change to commands, snapshots or worker messages. */
-export const PROTOCOL_VERSION = 7;
+export const PROTOCOL_VERSION = 8;
 
 export * from './commands.js';
 export * from './events.js';

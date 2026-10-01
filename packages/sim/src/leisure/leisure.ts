@@ -15,6 +15,7 @@ import { canReach, playerItems, stableIdOf } from '../items/inventory.js';
 import { defOf, tileKey, type ItemStore } from '../items/store.js';
 import { addXp } from '../progress/skills.js';
 import { clampStat } from '../survival/state.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * Leisure (`worldSettings.survival.leisure`): reading, TV sessions and VHS tapes. Every finished
@@ -41,7 +42,7 @@ export function tvCheck(w: SimWorld, eid: number, tag: string): CommandRejectRea
   const { Position } = w.c;
   const px = Position.x[eid] ?? 0;
   const py = Position.y[eid] ?? 0;
-  const z = Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   const near = (x: number, y: number): boolean => {
     const dx = x + 0.5 - px;
     const dy = y + 0.5 - py;

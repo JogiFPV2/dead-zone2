@@ -10,6 +10,7 @@ import {
   type SleepSurface,
   type SurvivalWorld,
 } from '../survival/state.js';
+import { floorZ } from '../world/levels.js';
 
 /**
  * A zombie chases the player or is within `sleep.wakeOnZombieTiles` (computed by `ai.threat`
@@ -137,7 +138,7 @@ export function sleepSurfaceAt(w: SimWorld, eid: number): SleepSurface {
   if (!content) return 'floor';
   const px = w.c.Position.x[eid] ?? 0;
   const py = w.c.Position.y[eid] ?? 0;
-  const z = w.c.Position.z[eid] ?? 0;
+  const z = floorZ(w, eid);
   let best: SleepSurface = 'floor';
   const cx0 = Math.floor((px - 2) / CHUNK_SIZE);
   const cx1 = Math.floor((px + 2) / CHUNK_SIZE);

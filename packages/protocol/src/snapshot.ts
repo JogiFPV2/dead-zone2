@@ -73,6 +73,10 @@ export const ENTITY_PHYS_STATES = [
   'knockdown',
   'getup',
   'dead',
+  /** On a flight of stairs (moving or standing; z fractional). */
+  'climb',
+  /** Falling down one or more levels (z drops to the landing level, then `knockdown`). */
+  'fall',
 ] as const;
 export type EntityPhysState = (typeof ENTITY_PHYS_STATES)[number];
 

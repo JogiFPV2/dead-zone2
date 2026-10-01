@@ -25,7 +25,7 @@ const SKIP_SURVIVAL = ['content'];
 const SKIP_ITEMS = ['content', 'version'];
 const SKIP_AI = ['cfg', 'types', 'spawnWeights', 'lights', 'darkZones', 'spatial', 'combat'];
 const SKIP_COMBAT = ['cfg'];
-const SKIP_PHYSICS = ['cfg', 'rng', 'order', 'orderSize', 'presses'];
+const SKIP_PHYSICS = ['cfg', 'rng', 'order', 'orderSize', 'presses', 'stairs', 'multiLevel'];
 
 interface SaveFile {
   format: string;

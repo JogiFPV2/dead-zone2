@@ -19,6 +19,7 @@ import {
   type ItemStore,
   type PlayerItems,
 } from './store.js';
+import { floorZ } from '../world/levels.js';
 
 /** Reach for containers and items (docs 2.4: ≤ 1.5 tiles, same floor). */
 export const INTERACT_RANGE_TILES = 1.5;
@@ -33,7 +34,7 @@ export function playerItems(w: SimWorld, eid: number): PlayerItems | undefined {
 /** Tile (x, y, z) within reach of the player (distance to the tile centre). */
 export function tileInReach(w: SimWorld, eid: number, x: number, y: number, z: number): boolean {
   const { Position } = w.c;
-  if ((Position.z[eid] ?? 0) !== z) return false;
+  if (floorZ(w, eid) !== z) return false;
   const dx = x + 0.5 - (Position.x[eid] ?? 0);
   const dy = y + 0.5 - (Position.y[eid] ?? 0);
   return dx * dx + dy * dy <= INTERACT_RANGE_TILES * INTERACT_RANGE_TILES;
