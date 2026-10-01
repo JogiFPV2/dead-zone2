@@ -159,6 +159,12 @@ export function createAiWorld(
     };
   const n = content.noise;
   if (n) cfg = { ...cfg, noise: { ...cfg.noise, floorMul: n.floorMul, maxFloors: n.maxFloors } };
+  const a = content.aiSettings;
+  if (a)
+    cfg = {
+      ...cfg,
+      ai: { ...cfg.ai, lostTrackSec: a.lostTrackSec, lostTrackDistTiles: a.lostTrackDistM },
+    };
   return {
     cfg,
     types: content.zombieTypes.map((def) => ({

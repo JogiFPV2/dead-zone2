@@ -100,6 +100,13 @@ export const openContainerCommandSchema = z.strictObject({
   type: z.literal('openContainer'),
   container: containerId,
 });
+export const searchCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('search'),
+  container: containerId.optional(),
+  x: tileCoord.optional(),
+  y: tileCoord.optional(),
+});
 export const closeContainerCommandSchema = z.strictObject({
   ...header,
   type: z.literal('closeContainer'),
@@ -360,6 +367,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   equipCommandSchema,
   unequipCommandSchema,
   openContainerCommandSchema,
+  searchCommandSchema,
   closeContainerCommandSchema,
   useItemCommandSchema,
   cancelActionCommandSchema,
@@ -461,6 +469,7 @@ export const simMapDataSchema = z.object({
     .max(4096)
     .optional(),
   edgeKinds: z.array(z.enum(SIM_EDGE_KINDS).nullable()).max(0x10000).optional(),
+  floorTiles: z.array(contentId.nullable()).max(0x10000).optional(),
 });
 
 export const simSpawnSchema = z.strictObject({ x: coord, y: coord, z: chunkInt });

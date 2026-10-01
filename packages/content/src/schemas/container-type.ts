@@ -33,8 +33,8 @@ export const ContainerTypeSchema = z.strictObject({
   /** Mnożnik szybkości psucia (lodówka 0.25, zamrażarka 0.05). Działa przy zasilaniu. */
   spoilageMultiplier: z.number().min(0).max(1).default(1),
   requiresPower: z.boolean().default(false),
-  /** Czas akcji „Przeszukaj”. */
-  searchMin: GameMinutesSchema.default(1),
+  /** Czas akcji „Przeszukaj” w minutach gry; brak = `worldSettings.loot.search.searchSec`. */
+  searchMin: GameMinutesSchema.optional(),
   /** Gracz może go podnieść i przenieść (jako ten przedmiot). */
   pickupItem: ItemRefSchema.optional(),
   /** Domyślny loot, gdy mapa nie wskaże innego. */

@@ -9,6 +9,7 @@ import type {
   StorageMarkerView,
 } from '@deadzone/protocol';
 import { previewLootWeight } from './loot.js';
+import { viewKind } from './search.js';
 import { ACTION_KINDS, actionPart } from '../actions/queue.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
@@ -124,13 +125,14 @@ export function containerView(w: SimWorld, id: number, marks?: Marks): Container
   const minute = gameMinuteAt(w.clock, Math.max(0, w.tick - 1));
   const v: ContainerView = {
     id,
-    kind: c.kind,
+    kind: viewKind(c),
     capacityKg: c.capacityKg === Infinity ? null : c.capacityKg,
     weightKg: kg(containerWeight(st, id)),
     items: c.items.flatMap((i) => itemView(st, i, minute, marks) ?? []),
   };
   if (c.type >= 0) v.type = st.content.containerTypes[c.type]!.id;
-  if (c.kind === 'world' || c.kind === 'ground') Object.assign(v, { x: c.x, y: c.y, z: c.z });
+  if (c.kind === 'world' || c.kind === 'ground' || c.kind === 'corpse')
+    Object.assign(v, { x: c.x, y: c.y, z: c.z });
   return v;
 }
 
@@ -212,7 +214,7 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
         if (!c) continue;
         const v: NearbyContainerView = {
           id,
-          kind: c.kind,
+          kind: viewKind(c),
           x,
           y,
           z,
@@ -223,6 +225,21 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
         out.push(v);
       }
     }
+  }
+  // Zombie corpses in reach (searched like storage; contents only after the search).
+  for (const [zsid, id] of st.corpses) {
+    const c = st.containers.get(id);
+    if (!c || !tileInReach(w, eid, c.x, c.y, c.z)) continue;
+    out.push({
+      id,
+      kind: 'corpse',
+      x: c.x,
+      y: c.y,
+      z: c.z,
+      searched: c.searchedBy.includes(sid),
+      fillPct: c.lootDone ? fillPct(st, c) : 0,
+      corpse: zsid,
+    });
   }
   return out.sort((a, b) => a.id - b.id);
 }
@@ -237,12 +254,16 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
   const p = playerItems(w, eid);
   const a = p?.current;
   if (!p || !a) return null;
+  const span = a.endTick - a.startTick;
+  const progress = span > 0 ? Math.min(1, Math.max(0, (w.tick - a.startTick) / span)) : 1;
   const v: ActionView = {
     kind: ACTION_KINDS[a.kind] ?? 'search',
     startTick: a.startTick,
     endTick: a.endTick,
     queued: p.queue.length,
+    progress: Math.round(progress * 20) / 20,
   };
+  if (a.spot) v.spot = { ...a.spot };
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';

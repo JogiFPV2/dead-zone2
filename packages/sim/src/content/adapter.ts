@@ -20,6 +20,7 @@ export type SimContent = Pick<
       | 'professions'
       | 'appearanceParts'
       | 'palettes'
+      | 'tiles'
     >
   >;
 export type TraitDef = ContentBundle['traits'][string];
@@ -114,6 +115,14 @@ export interface ContentIndex {
   firearms: ContentBundle['worldSettings']['firearms'] | undefined;
   /** `worldSettings.noise` (between floors; optional for older bundles). */
   noise: ContentBundle['worldSettings']['noise'] | undefined;
+  /** `worldSettings.ai` (losing the track; optional for older bundles). */
+  aiSettings: ContentBundle['worldSettings']['ai'] | undefined;
+  /** `worldSettings.loot.search` with defaults (search action, spot radius). */
+  search: { searchSec: number; spotRadiusTiles: number };
+  /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
+  scatterTables: LootTableDef[];
+  /** Tile id → tags (`tiles/`), for `scatter.terrain`. */
+  tileTags: ReadonlyMap<string, readonly string[]>;
   /** Skills sorted by id (index = position in `PlayerProgress.level/xp`). */
   skills: SkillDef[];
   skillIndex: ReadonlyMap<string, number>;
@@ -231,6 +240,13 @@ export function compileContent(content: SimContent): ContentIndex {
     openings: content.worldSettings.openings,
     firearms: content.worldSettings.firearms,
     noise: content.worldSettings.noise,
+    aiSettings: (content.worldSettings as { ai?: ContentBundle['worldSettings']['ai'] }).ai,
+    search: {
+      searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
+      spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,
+    },
+    scatterTables: tableIds.map((id) => content.lootTables[id]!).filter((t) => t.scatter),
+    tileTags: new Map(sortedEntries(content.tiles).map(([id, t]) => [id, t.tags])),
     dayLengthMinutes: content.worldSettings.dayLengthMinutes,
     survival: content.worldSettings.survival,
     moodles,

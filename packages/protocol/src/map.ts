@@ -108,6 +108,12 @@ export interface SimMap {
    * every edge is a wall (blocks sight); `window` lets sight through.
    */
   readonly edgeKinds?: readonly (SimEdgeKind | null)[] | undefined;
+  /**
+   * Floor palette: content tile id of each non-zero `floor` value (index = value, e.g. the
+   * renderer's global `tilePalette`). Scattered loot picks tiles by it (`lootTable.scatter.terrain`);
+   * without it every floor tile matches only tables with an empty `terrain`.
+   */
+  readonly floorTiles?: readonly (string | null)[] | undefined;
 }
 
 export const tileIndex = (x: number, y: number): number => y * CHUNK_SIZE + x;
@@ -122,6 +128,7 @@ export interface SimMapData {
   readonly chunks: readonly SimMapChunkData[];
   readonly zones?: readonly SimZone[] | undefined;
   readonly edgeKinds?: readonly (SimEdgeKind | null)[] | undefined;
+  readonly floorTiles?: readonly (string | null)[] | undefined;
 }
 
 const chunkKey = (cx: number, cy: number, z: number): string => `${cx},${cy},${z}`;
@@ -156,6 +163,7 @@ export function simMapFromData(data: SimMapData): SimMap {
     listChunks: () => list,
     ...(data.zones ? { zones: data.zones } : {}),
     ...(data.edgeKinds ? { edgeKinds: data.edgeKinds } : {}),
+    ...(data.floorTiles ? { floorTiles: data.floorTiles } : {}),
   };
 }
 
@@ -195,5 +203,6 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
       ? { zones: map.zones.map((zn) => ({ ...zn, rects: zn.rects.map((r) => ({ ...r })) })) }
       : {}),
     ...(map.edgeKinds ? { edgeKinds: [...map.edgeKinds] } : {}),
+    ...(map.floorTiles ? { floorTiles: [...map.floorTiles] } : {}),
   };
 }

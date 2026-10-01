@@ -6,6 +6,7 @@ import { secToTicks } from '../ai/zombies.js';
 import { atan2Bam } from '../core/dmath.js';
 import { detach, sortedQuery, type SimWorld } from '../core/world.js';
 import { defOf, destroyItem } from '../items/store.js';
+import { createCorpse } from '../items/search.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
 import { lineOfSight } from '../world/los.js';
@@ -241,7 +242,7 @@ export function damageZombie(
     Zombie.state[zid] = ZombieState.chase;
     Zombie.targetId[zid] = StableId.value[attacker] ?? 0;
     Zombie.tz[zid] = floorZ(w, attacker);
-    Zombie.memoryUntil[zid] = w.tick + secToTicks(ai.cfg.ai.memorySec);
+    Zombie.memoryUntil[zid] = w.tick + secToTicks(ai.cfg.ai.lostTrackSec);
     return false;
   }
   killZombie(w, ai, cb, zid, attacker);
@@ -259,7 +260,8 @@ export function killZombieByWorld(w: SimWorld, zid: number): void {
 
 /**
  * Zombie death: leaves the AI and movement (components `Zombie` and `MoveIntent` removed), stays
- * in the snapshot as a corpse (`anim = dead`), counts as a kill of `killer`.
+ * in the snapshot as a corpse (`anim = dead`) and in the item store as a `corpse` container,
+ * counts as a kill of `killer`.
  */
 function killZombie(
   w: SimWorld,
@@ -269,6 +271,15 @@ function killZombie(
   killer: number | undefined,
 ): void {
   const { Velocity, Position, StableId, Zombie } = w.c;
+  // The body becomes a searchable container with the type's loot (items/search.ts).
+  createCorpse(
+    w,
+    StableId.value[zid] ?? 0,
+    Position.x[zid] ?? 0,
+    Position.y[zid] ?? 0,
+    Position.z[zid] ?? 0,
+    ai.types[Zombie.type[zid] ?? 0]?.def.lootTable,
+  );
   Velocity.x[zid] = 0;
   Velocity.y[zid] = 0;
   Zombie.state[zid] = ZombieState.idle;

@@ -68,6 +68,9 @@ function storageTypeOf(st: ItemStore, contentId: string): number {
  * `defaultLootTable`; otherwise nothing.
  */
 export function lootTableFor(st: ItemStore, c: ItemContainer): LootTableDef | undefined {
+  // Zombie corpse: the zombie type's `lootTable`.
+  if (c.kind === 'corpse')
+    return c.lootTable ? st.content.lootTableById.get(c.lootTable) : undefined;
   if (c.type < 0) return undefined;
   const t = st.content.containerTypes[c.type]!;
   if (c.roomType) {
@@ -177,6 +180,8 @@ export function scatterFloorLoot(
 ): void {
   const tables = st.content.lootTables;
   if (tables.length === 0) return;
+  // Content with `scatter` tables places the outdoor items itself (items/search.ts).
+  const outdoor = st.content.scatterTables.length === 0;
   const list = [...(map.listChunks?.() ?? [])].sort(
     (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
   );
@@ -199,6 +204,7 @@ export function scatterFloorLoot(
         ? tables.find((t) => t.rooms.includes(type))
         : tables[rng.int(0, tables.length - 1)];
       if (!rng.chance(room ? FLOOR_LOOT.roomChance : FLOOR_LOOT.outdoorChance) || !table) continue;
+      if (!room && !outdoor) continue;
       const i = tiles[rng.int(0, tiles.length - 1)]!;
       const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
       const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "base:scatter-street",
+    "tags": ["base:loot-scatter"],
+    "rolls": { "min": 1, "max": 1 },
+    "scatter": {
+      "terrain": ["base:asphalt"],
+      "perChunk": { "min": 0, "max": 2 },
+      "hiddenChance": 0.1
+    },
+    "entries": [
+      { "item": "base:bottle", "weight": 6 },
+      { "item": "base:plastic-bag", "weight": 5 },
+      { "item": "base:garbage-bag", "weight": 3 },
+      { "item": "base:brick", "weight": 4 },
+      { "item": "base:stone", "weight": 3 },
+      { "item": "base:scrap-metal", "weight": 3 },
+      { "item": "base:metal-pipe", "weight": 2 },
+      { "item": "base:wooden-stick", "weight": 3 },
+      { "item": "base:rag", "weight": 3 },
+      { "item": "base:canned-beans", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:water-bottle", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:battery", "weight": 1, "rarity": "rare" },
+      { "item": "base:tire-iron", "weight": 1, "rarity": "rare" }
+    ]
+  },
+  {
+    "id": "base:scatter-grass",
+    "tags": ["base:loot-scatter"],
+    "rolls": { "min": 1, "max": 1 },
+    "scatter": {
+      "terrain": ["base:grass"],
+      "perChunk": { "min": 0, "max": 1 },
+      "hiddenChance": 0.5
+    },
+    "entries": [
+      { "item": "base:stone", "weight": 6 },
+      { "item": "base:wooden-stick", "weight": 6 },
+      { "item": "base:bottle", "weight": 3 },
+      { "item": "base:rag", "weight": 2 },
+      { "item": "base:plastic-bag", "weight": 2 },
+      { "item": "base:matches", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:carrot", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:hatchet", "weight": 1, "rarity": "rare" }
+    ]
+  },
+  {
+    "id": "base:scatter-bushes",
+    "tags": ["base:loot-scatter"],
+    "rolls": { "min": 1, "max": 1 },
+    "scatter": { "zones": ["bushes"], "perChunk": { "min": 1, "max": 2 }, "hiddenChance": 0.8 },
+    "entries": [
+      { "item": "base:wooden-stick", "weight": 5 },
+      { "item": "base:bottle", "weight": 3 },
+      { "item": "base:rag", "weight": 2 },
+      { "item": "base:water-bottle", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:hunting-knife", "weight": 1, "rarity": "rare" },
+      { "item": "base:lure-running", "weight": 1, "rarity": "rare" }
+    ]
+  },
+  {
+    "id": "base:scatter-ditch",
+    "tags": ["base:loot-scatter"],
+    "rolls": { "min": 1, "max": 1 },
+    "scatter": { "zones": ["ditch"], "perChunk": { "min": 1, "max": 2 }, "hiddenChance": 0.6 },
+    "entries": [
+      { "item": "base:brick", "weight": 4 },
+      { "item": "base:scrap-metal", "weight": 4 },
+      { "item": "base:metal-pipe", "weight": 3 },
+      { "item": "base:dirty-water-bottle", "weight": 2 },
+      { "item": "base:tire-iron", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:crowbar", "weight": 1, "rarity": "rare" }
+    ]
+  }
+]

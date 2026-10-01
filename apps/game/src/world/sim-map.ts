@@ -44,7 +44,7 @@ function roomTypes(data: ChunkData): Record<string, string> | undefined {
  * room types) and map objects are passed through, so the sim creates world storage with the
  * right loot tables. With `range`, `listChunks` lists its existing chunks (world storage is
  * created from them). Adapted chunks are cached, because ChunkSource implementations may build
- * them on every call.
+ * them on every call. `floorTiles` = the renderer's `tilePalette`.
  */
 export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange): SimMap {
   const cache = new Map<string, SimChunk | undefined>();
@@ -68,10 +68,13 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
     cache.set(key, chunk);
     return chunk;
   };
-  if (!range) return { getChunk };
+  // Floor palette: the sim picks scattered loot tiles by content tile id (`lootTable.scatter`).
+  const floorTiles = source.tilePalette;
+  if (!range) return { getChunk, floorTiles };
   let list: SimChunkAddress[] | undefined;
   return {
     getChunk,
+    floorTiles,
     listChunks: () => {
       if (!list) {
         list = [];

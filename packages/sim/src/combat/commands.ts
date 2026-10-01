@@ -1,6 +1,7 @@
 import type { CommandRejectReason } from '@deadzone/protocol';
 import type { SimWorld } from '../core/world.js';
 import { canShoot, interruptSingleLoad } from './firearms.js';
+import { interruptActions } from '../actions/queue.js';
 
 /**
  * `attack` / `shove`: queued for `combat` this tick. One swing per player per tick; `busy` while
@@ -21,5 +22,7 @@ export function queueAttack(
     if (reason) return reason;
   }
   cb.pending.push({ eid, shove });
+  // Swinging, shooting or shoving breaks off a timed action (search, eating, crafting ...).
+  interruptActions(w, eid, 'attack');
   return undefined;
 }

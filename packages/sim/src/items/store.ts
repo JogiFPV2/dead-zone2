@@ -31,9 +31,15 @@ export interface ItemInstance {
   placed: boolean;
 }
 
+/**
+ * Container kinds in the store: the protocol kinds plus `hidden` = a cache of hidden items on a
+ * tile (never in a view, unreachable; a spot search turns its items into a ground pile).
+ */
+export type StoreContainerKind = ContainerKind | 'hidden';
+
 export interface ItemContainer {
   readonly id: number;
-  readonly kind: ContainerKind;
+  readonly kind: StoreContainerKind;
   /** inventory: player StableId; bag: owning item id; world / ground: 0. */
   readonly owner: number;
   /** Storage type index (`ContentIndex.containerTypes`), −1 = none. */
@@ -56,6 +62,8 @@ export interface ItemContainer {
   lootDone: boolean;
   /** StableIds of players who searched it (opening is instant afterwards). */
   readonly searchedBy: number[];
+  /** Corpse: loot table id of the zombie type (`zombieType.lootTable`), undefined = none. */
+  readonly lootTable?: string | undefined;
 }
 
 /** Per-player item state: main inventory, equip slots, open container, timed actions. */
@@ -84,6 +92,8 @@ export interface ActionState {
   recipe: number;
   /** Craft: items to consume first (`combine` selection, the station being upgraded). */
   use: number[];
+  /** Search of a spot (`search {x, y}`; `container` 0): the tile searched. */
+  spot?: { x: number; y: number; z: number } | undefined;
 }
 
 export interface ItemStore {
@@ -96,6 +106,10 @@ export interface ItemStore {
   readonly ground: Map<string, number>;
   /** `x,y,z` → world storage ids on that tile (from the map, fixed at init). */
   readonly worldByTile: Map<string, number[]>;
+  /** Zombie StableId → its corpse container (kind `corpse`, created on the kill). */
+  readonly corpses: Map<number, number>;
+  /** `x,y,z` → hidden cache container on that tile (kind `hidden`, scattered loot). */
+  readonly hidden: Map<string, number>;
   nextItemId: number;
   nextContainerId: number;
   /** Magazine-fed firearms: weapon item id → content index of the inserted magazine. */
@@ -126,6 +140,8 @@ export function createItemStore(content: ContentIndex): ItemStore {
     players: new Map(),
     ground: new Map(),
     worldByTile: new Map(),
+    corpses: new Map(),
+    hidden: new Map(),
     lures: new Map(),
     progress: new Map(),
     characters: new Map(),

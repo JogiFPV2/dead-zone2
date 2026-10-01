@@ -9,6 +9,7 @@ import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
 import { canReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
 import { generateLoot } from './loot.js';
+import { revealHidden, searchable, searchSecMin } from './search.js';
 import { freshness } from './spoilage.js';
 import {
   createItem,
@@ -164,20 +165,36 @@ export function registerItemActions(): void {
 
   registerAction('search', {
     validate(w, eid, a) {
+      if (a.spot)
+        return tileInReach(w, eid, a.spot.x, a.spot.y, a.spot.z) ? undefined : 'out-of-range';
       const st = w.items!;
       const c = st.containers.get(a.container);
-      if (!c || c.kind !== 'world') return 'no-item';
+      if (!c || !searchable(c)) return 'no-item';
       return tileInReach(w, eid, c.x, c.y, c.z) ? undefined : 'out-of-range';
     },
     durationMin(w, eid, a) {
       const st = w.items!;
-      const c = st.containers.get(a.container)!;
-      const base = st.content.containerTypes[c.type]?.searchMin ?? 1;
+      const c = a.spot ? undefined : st.containers.get(a.container);
+      // Storage with its own `searchMin` keeps it; corpses, spots and the rest: `searchSec`.
+      const base =
+        (c?.kind === 'world' ? st.content.containerTypes[c.type]?.searchMin : undefined) ??
+        searchSecMin(w);
       const speed = w.survival ? modded(w.survival, eid, ModSlot['search-speed'], 1) : 1;
       return speed > 0 ? base / speed : base;
     },
     complete(w, eid, a) {
       const st = w.items!;
+      if (a.spot) {
+        const found = revealHidden(w, a.spot);
+        w.events.push({
+          type: 'spotSearched',
+          tick: w.tick,
+          playerId: w.c.Player.id[eid] ?? 0,
+          ...a.spot,
+          found,
+        });
+        return;
+      }
       const c = st.containers.get(a.container)!;
       const first = !c.lootDone;
       generateLoot(st, c, w.clock.startMinute);

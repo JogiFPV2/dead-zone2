@@ -33,7 +33,8 @@ describe('spoilage (lazy)', () => {
     const fridge = worldContainer(sim, 9, 10);
     send(sim, { type: 'openContainer', container: fridge.id });
     send(sim, { type: 'debugGiveItem', itemId: 'fixture:apple' });
-    runMinutes(sim, 1.1);
+    // No `searchMin` on the fridge: `loot.search.searchSec` 3.5 s = 1.4 game minutes.
+    runMinutes(sim, 1.5);
     const st = sim.world.items!;
     const id = findItem(sim, 'fixture:apple')!.id;
     send(sim, { type: 'moveItem', item: id, to: fridge.id });

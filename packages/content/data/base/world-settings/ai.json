@@ -1,0 +1,6 @@
+{
+  "ai": {
+    "lostTrackSec": 10,
+    "lostTrackDistM": 25
+  }
+}

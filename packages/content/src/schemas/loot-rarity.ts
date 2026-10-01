@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RealSecondsSchema, TilesSchema } from './common/index.js';
 
 /** Rzadkość wpisu lootu. Waga losowania zostaje w `weight`; rzadkość skaluje ją ustawieniem świata. */
 export const LOOT_RARITIES = ['common', 'uncommon', 'rare', 'very_rare'] as const;
@@ -18,6 +19,17 @@ export const LootSettingsSchema = z
         uncommon: pct(100),
         rare: pct(100),
         very_rare: pct(100),
+      })
+      .prefault({}),
+    /**
+     * Akcja „Przeszukaj” (komenda `search`): czas w sekundach rzeczywistych przy ×1 dla zwłok,
+     * miejsc (kafel, krzak, rów) i schowków bez własnego `searchMin`; przeszukanie miejsca odkrywa
+     * schowane przedmioty w promieniu `spotRadiusTiles` od wskazanego kafla.
+     */
+    search: z
+      .strictObject({
+        searchSec: RealSecondsSchema.default(3.5),
+        spotRadiusTiles: TilesSchema.default(1.5),
       })
       .prefault({}),
   })

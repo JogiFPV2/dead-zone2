@@ -55,6 +55,10 @@
       "uncommon": 100,
       "rare": 100,
       "very_rare": 100
+    },
+    "search": {
+      "searchSec": 3.5,
+      "spotRadiusTiles": 1.5
     }
   },
   "crafting": {

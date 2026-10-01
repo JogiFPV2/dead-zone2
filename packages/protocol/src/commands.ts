@@ -214,6 +214,24 @@ export interface OpenContainerCommand extends CommandHeader {
   container: ContainerId;
 }
 
+/**
+ * Timed search (`search` action, `worldSettings.loot.search.searchSec` = 3.5 s at ×1, storage with
+ * its own `containerType.searchMin` keeps that). Target: `container` = world storage or a zombie
+ * corpse (`nearby[]` kind `corpse`) in reach; or a tile `x, y` (player's floor, in reach) = search
+ * the spot (bush, ditch, street): hidden items within `search.spotRadiusTiles` of the tile turn
+ * into normal ground piles. Movement, an attack / shove or a threat interrupt it
+ * (`actionInterrupted`). Storage / corpse contents are not in any view before the search; on
+ * completion the container opens (`containerOpened`, `nearby[].searched` true). Rejects:
+ * `invalid-target` (neither or both targets, a container that is not storage / corpse),
+ * `no-item`, `out-of-range`, `busy`.
+ */
+export interface SearchCommand extends CommandHeader {
+  type: 'search';
+  container?: ContainerId | undefined;
+  x?: number | undefined;
+  y?: number | undefined;
+}
+
 export interface CloseContainerCommand extends CommandHeader {
   type: 'closeContainer';
 }
@@ -539,6 +557,7 @@ export type Command =
   | EquipCommand
   | UnequipCommand
   | OpenContainerCommand
+  | SearchCommand
   | CloseContainerCommand
   | UseItemCommand
   | CancelActionCommand

@@ -51,6 +51,7 @@ import { circleOverlaps } from './world/collision.js';
 import { registerItemActions } from './items/actions.js';
 import { applyNewCharacter } from './character/character.js';
 import { createWorldContainers, scatterFloorLoot } from './items/loot.js';
+import { scatterLoot } from './items/search.js';
 import { loadWorld, readSaveHeader, saveWorld } from './save/save.js';
 import { createItemStore, createPlayerItems } from './items/store.js';
 import { actionView, containerView, inventoryView } from './items/views.js';
@@ -100,7 +101,10 @@ export interface SimOptions {
   combatConfig?: CombatConfig | undefined;
   /** Physics tuning (physics/constants.ts); default DEFAULT_PHYSICS_CONFIG. */
   physicsConfig?: PhysicsConfig | undefined;
-  /** Scatter single loot items on room floors and outdoors at init (worker: on). Default false. */
+  /**
+   * Scatter single loot items on room floors and outdoors at init, plus `lootTable.scatter` items
+   * (visible or hidden, items/search.ts) (worker: on). Default false.
+   */
   floorLoot?: boolean | undefined;
   /** Restore a save from `Sim.save()` (same map, content and options; spawn options are ignored). */
   load?: Uint8Array | undefined;
@@ -256,7 +260,10 @@ export function createSim(input: SimOptions): Sim {
   });
   if (w.items && !opts.load) {
     createWorldContainers(w.items, opts.map, w.seed);
-    if (opts.floorLoot) scatterFloorLoot(w.items, opts.map, w.seed, w.clock.startMinute);
+    if (opts.floorLoot) {
+      scatterFloorLoot(w.items, opts.map, w.seed, w.clock.startMinute);
+      scatterLoot(w.items, opts.map, w.seed, w.clock.startMinute);
+    }
   }
   const minutes: MinuteTicks = { first: 0, count: 0 };
   const ctx: SystemContext = {

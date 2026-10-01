@@ -13,5 +13,6 @@
   "attackCooldownSec": 1.6,
   "biteChance": 0.2,
   "sightRangeTiles": 18,
-  "hearingRangeTiles": 30
+  "hearingRangeTiles": 30,
+  "lootTable": "base:zombie-walker"
 }

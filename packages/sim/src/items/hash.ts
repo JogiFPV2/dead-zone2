@@ -7,7 +7,7 @@ import { hashProgress } from '../progress/skills.js';
 import { hashCharacters } from '../character/character.js';
 import { hashVhsWatched } from '../leisure/leisure.js';
 
-const KINDS = ['inventory', 'bag', 'world', 'ground'] as const;
+const KINDS = ['inventory', 'bag', 'world', 'ground', 'corpse', 'hidden'] as const;
 const byNumber = (a: number, b: number): number => a - b;
 
 /** Items section of the state hash: every container, item, equip slot and action, by id. */
@@ -29,6 +29,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       .u32(c.lootKey)
       .u32(c.lootDone ? 1 : 0);
     h.u32(c.roomType ? hashString32(c.roomType) : 0);
+    if (c.kind === 'corpse') h.u32(c.lootTable ? hashString32(c.lootTable) : 0);
     h.u32(c.searchedBy.length);
     for (const sid of c.searchedBy) h.u32(sid);
     h.u32(c.items.length);
@@ -59,6 +60,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
         .u32(a.item)
         .u32(a.container)
         .u32(a.part + 1);
+      if (a.spot) h.u32(0x5907_0001).u32(a.spot.x).u32(a.spot.y).u32(a.spot.z);
       if (a.recipe) {
         h.u32(a.recipe).u32(a.use.length);
         for (const id of a.use) h.u32(id);
@@ -71,6 +73,15 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   if (backWeapons.length > 0) {
     h.u32(0xbac0_0001).u32(backWeapons.length);
     for (const [sid, item] of backWeapons) h.u32(sid).u32(item);
+  }
+  // Corpse and hidden-cache indexes (only when present: older golden hashes stay valid).
+  if (st.corpses.size > 0) {
+    h.u32(0xc0a5_0001).u32(st.corpses.size);
+    for (const sid of [...st.corpses.keys()].sort(byNumber)) h.u32(sid).u32(st.corpses.get(sid)!);
+  }
+  if (st.hidden.size > 0) {
+    h.u32(0x41dd_0001).u32(st.hidden.size);
+    for (const id of [...st.hidden.values()].sort(byNumber)) h.u32(id);
   }
   hashLures(st, h);
   hashProgress(st, h);

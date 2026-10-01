@@ -56,9 +56,14 @@ export interface AiConfig {
   /** Beyond this distance from every player: simplified mode (think every `farThinkEveryTicks`, no LOS). */
   farTiles: number;
   farThinkEveryTicks: number;
-  /** `ai.memorySec`: a zombie that lost sight keeps chasing the last known position this long. */
-  memorySec: number;
-  /** `ai.searchSec`: then it searches around that spot before wandering again. */
+  /**
+   * `worldSettings.ai.lostTrackSec` (data wins): a chase is lost only after this long without
+   * seeing or hearing the target (and only when it is farther than `lostTrackDistTiles`).
+   */
+  lostTrackSec: number;
+  /** `worldSettings.ai.lostTrackDistM` (1 tile = 1 m): closer than this the trail is never lost. */
+  lostTrackDistTiles: number;
+  /** `ai.searchSec`: after losing the track it walks to the last known spot and looks around this long. */
   searchSec: number;
   /** `ai.investigateLingerSec`: time spent at a noise (lures use their own `lingerSec`). */
   investigateLingerSec: { min: number; max: number };
@@ -136,7 +141,8 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     thinkEveryTicks: 4,
     farTiles: 64,
     farThinkEveryTicks: 20,
-    memorySec: 6,
+    lostTrackSec: 10,
+    lostTrackDistTiles: 25,
     searchSec: 8,
     investigateLingerSec: { min: 4, max: 10 },
     wanderRadiusTiles: 6,

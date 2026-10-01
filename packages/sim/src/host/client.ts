@@ -90,6 +90,11 @@ export interface SimWorkerClient {
   takeItem(container: ContainerId, item: ItemId, count?: number): void;
   /** Takes everything that fits out of a container. */
   takeAll(container: ContainerId): void;
+  /**
+   * Timed search (3.5 s): `{ container }` = world storage or a zombie corpse, `{ x, y }` = a tile
+   * (hidden items around it become ground piles). Progress: `view.action.progress`.
+   */
+  search(target: { container: ContainerId } | { x: number; y: number }): void;
   /** Puts a carried item (or `count`) into a container. */
   putItem(container: ContainerId, item: ItemId, count?: number): void;
   equip(item: ItemId, slot: EquipSlot): void;
@@ -261,6 +266,7 @@ export function createSimWorkerClient(
     sleep: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'sleep' } }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
     watchTv: (vhs) => cmd({ type: 'watchTv', ...(vhs !== undefined ? { vhs } : {}) }),
+    search: (target) => cmd({ type: 'search', ...target }),
     bandage: (part, itemId) =>
       post({
         kind: 'cmd',

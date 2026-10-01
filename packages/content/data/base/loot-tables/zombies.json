@@ -1,0 +1,22 @@
+[
+  {
+    "id": "base:zombie-walker",
+    "tags": ["base:loot-corpse"],
+    "chance": 0.6,
+    "rolls": { "min": 1, "max": 2 },
+    "entries": [
+      { "item": "base:rag", "weight": 6 },
+      { "item": "base:bandage", "weight": 3 },
+      { "item": "base:lighter", "weight": 3 },
+      { "item": "base:matches", "weight": 3 },
+      { "item": "base:canned-beans", "weight": 2 },
+      { "item": "base:water-bottle", "weight": 2 },
+      { "item": "base:battery", "weight": 2, "rarity": "uncommon" },
+      { "item": "base:kitchen-knife", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:screwdriver", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:flashlight", "weight": 1, "rarity": "rare" },
+      { "item": "base:pistol-magazine", "weight": 1, "rarity": "rare" },
+      { "table": "base:ammo-boxes", "weight": 1, "rarity": "rare" }
+    ]
+  }
+]

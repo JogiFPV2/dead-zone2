@@ -25,6 +25,8 @@ export interface MapSpec {
   edgeId?: (x: number, y: number) => number;
   edgeKinds?: readonly (SimEdgeKind | null)[];
   zones?: readonly SimZone[];
+  /** Floor palette (content tile id per floor value). */
+  floorTiles?: readonly (string | null)[];
 }
 
 /** Builds an in-memory map on level 0 covering [0, width) × [0, height). */
@@ -80,5 +82,6 @@ export function buildMap(spec: MapSpec = {}): SimMap {
     chunks,
     ...(spec.zones ? { zones: spec.zones } : {}),
     ...(spec.edgeKinds ? { edgeKinds: spec.edgeKinds } : {}),
+    ...(spec.floorTiles ? { floorTiles: spec.floorTiles } : {}),
   });
 }

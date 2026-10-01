@@ -13,19 +13,62 @@ import {
   hardLimit,
   moveItem,
   playerItems,
-  stableIdOf,
   tileInReach,
 } from './inventory.js';
+import { applySearchCommand, needsSearch, viewKind } from './search.js';
 import {
   containerWeight,
   defOf,
   groundPile,
   isInside,
   placeableType,
+  rootContainer,
+  type ItemContainer,
   type ItemInstance,
   type PlayerItems,
 } from './store.js';
 import { floorZ } from '../world/levels.js';
+
+/**
+ * `itemPicked` / `itemDropped` for a move that crosses the player's inventory boundary (main
+ * inventory and carried bags); moves inside it or outside it emit nothing.
+ */
+export function moveWithEvents(
+  w: SimWorld,
+  eid: number,
+  p: PlayerItems,
+  item: ItemInstance,
+  target: ItemContainer,
+  n: number,
+): ItemInstance {
+  const st = w.items!;
+  const from = item.loc;
+  const wasIn = isInside(st, from, p.inventory);
+  const source = rootContainer(st, from);
+  const defId = defOf(st, item).id;
+  const moved = moveItem(w, item, target, n);
+  const isIn = isInside(st, target.id, p.inventory);
+  if (wasIn === isIn) return moved;
+  const base = {
+    tick: w.tick,
+    playerId: w.c.Player.id[eid] ?? 0,
+    itemId: moved.id,
+    defId,
+    count: n,
+  };
+  if (isIn) {
+    w.events.push({
+      type: 'itemPicked',
+      ...base,
+      source: source ? viewKind(source) : 'ground',
+      container: from,
+    });
+  } else {
+    const root = rootContainer(st, target.id) ?? target;
+    w.events.push({ type: 'itemDropped', ...base, target: viewKind(root), container: target.id });
+  }
+  return moved;
+}
 
 export type ItemCommand = Extract<
   Command,
@@ -40,6 +83,7 @@ export type ItemCommand = Extract<
       | 'equip'
       | 'unequip'
       | 'openContainer'
+      | 'search'
       | 'closeContainer'
       | 'useItem'
       | 'cancelAction'
@@ -60,6 +104,7 @@ const ITEM_COMMANDS = new Set<string>([
   'equip',
   'unequip',
   'openContainer',
+  'search',
   'closeContainer',
   'useItem',
   'cancelAction',
@@ -94,7 +139,7 @@ export function applyItemCommand(
     if (n < item.count && item.inner) return 'invalid-target';
     const reason = checkFits(w, eid, item, n, target);
     if (reason) return reason;
-    moveItem(w, item, target, n);
+    moveWithEvents(w, eid, p, item, target, n);
     return undefined;
   };
 
@@ -123,8 +168,7 @@ export function applyItemCommand(
     }
     case 'takeAll': {
       const c = st.containers.get(cmd.container);
-      if (!c || (c.kind === 'world' && !c.searchedBy.includes(stableIdOf(w, eid))))
-        return 'no-item';
+      if (!c || c.kind === 'hidden' || needsSearch(w, eid, c)) return 'no-item';
       if (!canReach(w, eid, c.id)) return 'out-of-range';
       if (c.id === p.inventory || isInside(st, c.id, p.inventory)) return 'invalid-target';
       if (c.items.length === 0) return 'no-item';
@@ -133,7 +177,7 @@ export function applyItemCommand(
       for (const id of [...c.items]) {
         const item = st.items.get(id);
         if (!item || checkFits(w, eid, item, item.count, inv)) continue;
-        moveItem(w, item, inv, item.count);
+        moveWithEvents(w, eid, p, item, inv, item.count);
         taken++;
       }
       return taken > 0 ? undefined : 'no-space';
@@ -169,6 +213,8 @@ export function applyItemCommand(
     }
     case 'openContainer':
       return openContainer(w, eid, p, cmd.container);
+    case 'search':
+      return applySearchCommand(w, eid, cmd);
     case 'closeContainer':
       if (!p.open) return 'invalid-state';
       p.open = 0;
@@ -213,7 +259,7 @@ export function applyItemCommand(
       const z = playerTile(w, eid).z;
       if (!tileInReach(w, eid, cmd.x, cmd.y, z)) return 'out-of-range';
       const pile = groundPile(st, cmd.x, cmd.y, z);
-      if (item.loc !== pile.id) moveItem(w, item, pile, 1);
+      if (item.loc !== pile.id) moveWithEvents(w, eid, p, item, pile, 1);
       item.placed = true;
       st.version++;
       return undefined;
@@ -239,8 +285,8 @@ export function playerTile(w: SimWorld, eid: number): { x: number; y: number; z:
 }
 
 /**
- * Opens a container for the loot panel: bags, ground piles and storage already searched by this
- * player open at once; world storage otherwise starts the timed `search`.
+ * Opens a container for the loot panel: bags, ground piles and storage / corpses already searched
+ * by this player open at once; world storage and corpses otherwise start the timed `search`.
  */
 function openContainer(
   w: SimWorld,
@@ -250,8 +296,8 @@ function openContainer(
 ): CommandRejectReason | undefined {
   const st = w.items!;
   const c = st.containers.get(id);
-  if (!c) return 'no-item';
-  if (c.kind === 'world' && !c.searchedBy.includes(stableIdOf(w, eid))) {
+  if (!c || c.kind === 'hidden') return 'no-item';
+  if (needsSearch(w, eid, c)) {
     return startAction(w, eid, newAction('search', { container: id }));
   }
   if (!canReach(w, eid, id)) return 'out-of-range';
@@ -291,6 +337,16 @@ function pickUpStorage(
   addPieces(st, def, p.inventory, 1, minute);
   const inv = st.containers.get(p.inventory)!;
   const item = st.items.get(inv.items[inv.items.length - 1]!)!;
+  w.events.push({
+    type: 'itemPicked',
+    tick: w.tick,
+    playerId: w.c.Player.id[eid] ?? 0,
+    itemId: item.id,
+    defId: defOf(st, item).id,
+    count: 1,
+    source: 'world',
+    container: c.id,
+  });
   const inner = item.inner ? st.containers.get(item.inner) : undefined;
   for (const childId of [...c.items]) {
     const child = st.items.get(childId);

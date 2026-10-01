@@ -6,6 +6,7 @@ import { LootSettingsSchema } from './loot-rarity.js';
 import { FirearmsSettingsSchema } from './firearms-settings.js';
 import { OpeningsSettingsSchema } from './openings-settings.js';
 import { NoiseSettingsSchema } from './noise-settings.js';
+import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
@@ -43,6 +44,8 @@ export const WorldSettingsSchema = z.strictObject({
   vision: VisionSettingsSchema,
   /** Hałas między piętrami: tłumienie przez strop. */
   noise: NoiseSettingsSchema,
+  /** Zombie: gubienie tropu (czas bez wzroku i słuchu, dystans). */
+  ai: AiSettingsSchema,
   /** Drzwi i okna: wytrzymałość, hałas, przechodzenie przez okno. */
   openings: OpeningsSettingsSchema,
   /** Broń palna: spadek celności z odległością, rozrzut, ładowanie magazynków. */

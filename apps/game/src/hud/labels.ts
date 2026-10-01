@@ -49,7 +49,13 @@ export function humanizeId(id: string): string {
 
 export const moodleName = (id: string): string => MOODLES[id] ?? humanizeId(id);
 export const containerName = (type: string | undefined, kind: string): string =>
-  type ? (CONTAINERS[type] ?? humanizeId(type)) : kind === 'ground' ? 'Ziemia' : 'Schowek';
+  type
+    ? (CONTAINERS[type] ?? humanizeId(type))
+    : kind === 'ground'
+      ? 'Ziemia'
+      : kind === 'corpse'
+        ? 'Zwłoki'
+        : 'Schowek';
 
 /** `0 → pusto`, `1 przedmiot`, `2–4 przedmioty`, `5+ przedmiotów` (Polish plural rules). */
 export function itemCountLabel(n: number): string {

@@ -84,6 +84,12 @@ export function describeEvent(e: SimEvent): string {
       return `weapon broke: ${e.itemId}`;
     case 'itemUsed':
       return `used ${e.itemId}${e.freshness ? ` (${e.freshness})` : ''}`;
+    case 'itemPicked':
+      return `+ ${short(e.defId)}${e.count > 1 ? ` ×${e.count}` : ''} (${e.source})`;
+    case 'itemDropped':
+      return `- ${short(e.defId)}${e.count > 1 ? ` ×${e.count}` : ''} (${e.target})`;
+    case 'spotSearched':
+      return `searched ${e.x},${e.y}: ${e.found.length ? e.found.map((f) => short(f.defId)).join(', ') : 'nothing'}`;
   }
 }
 

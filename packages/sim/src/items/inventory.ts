@@ -42,8 +42,8 @@ export function tileInReach(w: SimWorld, eid: number, x: number, y: number, z: n
 
 /**
  * The player may look into / take from container `id`: own inventory (and bags in it), or world
- * storage / ground pile in reach (and bags or placed storage lying there). World storage must be
- * searched by this player first.
+ * storage / ground pile / corpse in reach (and bags or placed storage lying there). World storage
+ * and corpses must be searched by this player first; hidden caches are never reachable.
  */
 export function canReach(w: SimWorld, eid: number, id: number): boolean {
   const st = w.items;
@@ -51,8 +51,11 @@ export function canReach(w: SimWorld, eid: number, id: number): boolean {
   const root = rootContainer(st, id);
   if (!root) return false;
   if (root.kind === 'inventory') return root.owner === stableIdOf(w, eid);
+  // Hidden caches are found by a spot search only (they become ground piles then).
+  if (root.kind === 'hidden') return false;
   if (!tileInReach(w, eid, root.x, root.y, root.z)) return false;
-  return root.kind !== 'world' || root.searchedBy.includes(stableIdOf(w, eid));
+  const searchable = root.kind === 'world' || root.kind === 'corpse';
+  return !searchable || root.searchedBy.includes(stableIdOf(w, eid));
 }
 
 /** Carry capacity in kg (`worldSettings.carry.baseCapacityKg` × / + `carry-capacity-kg` mods). */

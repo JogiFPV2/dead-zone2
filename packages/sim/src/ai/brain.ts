@@ -19,7 +19,17 @@ import { floorZ } from '../world/levels.js';
  * (noise), chase (sees a player), search (lost the target), then wander again. Sight stays on
  * the zombie's floor (no seeing through ceilings); hearing reaches other floors (noise.ts), the
  * goal floor goes to `Zombie.tz` (ai/floors.ts).
+ *
+ * Losing the track (`worldSettings.ai`): seeing the target or hearing a noise at its position
+ * (within `HEAR_TARGET_TILES`) refreshes `memoryUntil` = now + `lostTrackSec` and the last known
+ * spot (`tx`/`ty`). The chase ends only when that memory ran out AND the target is farther than
+ * `lostTrackDistTiles` (or on another floor, or dead); closer, a zombie that reached the last
+ * known spot picks up the trail at the player's position. A lost chase becomes `search`: walk to
+ * the last known spot (`stateTick` 0), look around there for `searchSec`, then idle / wander.
  */
+
+/** A heard noise this close to the chased player counts as hearing the player (footsteps, shots). */
+export const HEAR_TARGET_TILES = 2;
 
 interface Target {
   eid: number;
@@ -134,10 +144,33 @@ function think(
     Zombie.tx[eid] = Math.fround(seen.x);
     Zombie.ty[eid] = Math.fround(seen.y);
     Zombie.tz[eid] = floorOf(seen.z);
-    Zombie.memoryUntil[eid] = w.tick + secToTicks(ai.cfg.ai.memorySec);
+    Zombie.memoryUntil[eid] = w.tick + secToTicks(ai.cfg.ai.lostTrackSec);
     Zombie.alert[eid] = 0;
     ai.direct[eid] = straight(w, ai, grid, eid, z, x, y, seen.x, seen.y);
     return;
+  }
+
+  // Hearing the chased player (a noise at its position) keeps the track fresh.
+  if (state === ZombieState.chase) {
+    const sid = Zombie.targetId[eid] ?? 0;
+    const tg = targets.find((c) => c.sid === sid);
+    let hit: Noise | undefined;
+    for (const n of tg ? ai.noises : []) {
+      if (n.tick < w.tick - every || n.z !== floorOf(tg!.z)) continue;
+      const dx = n.x - tg!.x;
+      const dy = n.y - tg!.y;
+      if (dx * dx + dy * dy > HEAR_TARGET_TILES * HEAR_TARGET_TILES) continue;
+      if (!heard(ai, grid, n, x, y, z, t.def.hearingRangeTiles)) continue;
+      hit = n;
+    }
+    if (hit) {
+      Zombie.tx[eid] = hit.x;
+      Zombie.ty[eid] = hit.y;
+      Zombie.tz[eid] = hit.z;
+      Zombie.memoryUntil[eid] = w.tick + secToTicks(ai.cfg.ai.lostTrackSec);
+      ai.direct[eid] = straight(w, ai, grid, eid, z, x, y, hit.x, hit.y);
+      return;
+    }
   }
 
   // Hearing (a chase with a fresh memory ignores noises).
@@ -282,18 +315,29 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
       break;
     case ZombieState.chase: {
       const target = findPlayer(w, Zombie.targetId[eid] ?? 0);
-      const lost = w.tick >= (Zombie.memoryUntil[eid] ?? 0);
       const dead = target === undefined || w.survival?.dead[target] === 1;
-      if (lost || dead || (arrived(w, eid, x, y) && !seesNow(w, eid))) {
-        Zombie.state[eid] = ZombieState.search;
-        Zombie.stateTick[eid] = w.tick + secToTicks(cfg.searchSec);
-        Zombie.targetId[eid] = 0;
-        Zombie.stuck[eid] = 0;
+      const sensed = w.tick < (Zombie.memoryUntil[eid] ?? 0);
+      const close = !dead && onTrail(w, eid, target, x, y);
+      if (dead || (!sensed && !close)) loseTrack(w, eid);
+      else if (arrived(w, eid, x, y) && !seesNow(w, eid)) {
+        if (close) {
+          // Within lostTrackDistTiles the trail goes on: head for the player again.
+          const { Position } = w.c;
+          Zombie.tx[eid] = Math.fround(Position.x[target] ?? 0);
+          Zombie.ty[eid] = Math.fround(Position.y[target] ?? 0);
+          Zombie.tz[eid] = floorOf(Position.z[target] ?? 0);
+        } else loseTrack(w, eid);
       }
       break;
     }
     case ZombieState.search:
-      if (w.tick >= (Zombie.stateTick[eid] ?? 0)) {
+      if ((Zombie.stateTick[eid] ?? 0) === 0) {
+        // Walking to the last known spot; the look-around timer starts there.
+        if (arrived(w, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
+          Zombie.stateTick[eid] = w.tick + secToTicks(cfg.searchSec);
+          Zombie.stuck[eid] = 0;
+        }
+      } else if (w.tick >= (Zombie.stateTick[eid] ?? 0)) {
         Zombie.state[eid] = ZombieState.idle;
         Zombie.stateTick[eid] = pause();
       } else if (arrived(w, eid, x, y)) {
@@ -303,10 +347,29 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
   }
 }
 
+/** Chase lost: walk to the last known spot (`tx`/`ty`), then look around (`search`). */
+function loseTrack(w: SimWorld, eid: number): void {
+  const { Zombie } = w.c;
+  Zombie.state[eid] = ZombieState.search;
+  Zombie.stateTick[eid] = 0;
+  Zombie.targetId[eid] = 0;
+  Zombie.stuck[eid] = 0;
+}
+
+/** The chased player is on the zombie's floor within `lostTrackDistTiles` (trail not lost). */
+function onTrail(w: SimWorld, eid: number, target: number, x: number, y: number): boolean {
+  const { Position } = w.c;
+  if (floorOf(Position.z[target] ?? 0) !== floorOf(Position.z[eid] ?? 0)) return false;
+  const d = w.ai!.cfg.ai.lostTrackDistTiles;
+  const dx = (Position.x[target] ?? 0) - x;
+  const dy = (Position.y[target] ?? 0) - y;
+  return dx * dx + dy * dy <= d * d;
+}
+
 /** Target seen at the last think (memory refreshed within one think interval). */
 function seesNow(w: SimWorld, eid: number): boolean {
   const ai = w.ai!;
-  const mem = secToTicks(ai.cfg.ai.memorySec);
+  const mem = secToTicks(ai.cfg.ai.lostTrackSec);
   return (w.c.Zombie.memoryUntil[eid] ?? 0) - w.tick > mem - ai.cfg.ai.thinkEveryTicks;
 }
 

@@ -209,6 +209,7 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
           biteChance: 0.2,
           sightRangeTiles: 16,
           hearingRangeTiles: 30,
+          lootTable: 'fixture:zombie',
         },
       },
       {
@@ -315,6 +316,14 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
             id: 'fixture:ammo',
             rolls: { min: 1, max: 1 },
             entries: [{ item: 'fixture:ammo-box', weight: 1, count: { min: 1, max: 2 } }],
+          },
+          {
+            id: 'fixture:zombie',
+            rolls: { min: 1, max: 2 },
+            entries: [
+              { item: 'fixture:bandage', weight: 3 },
+              { item: 'fixture:beans', weight: 1 },
+            ],
           },
           {
             id: 'fixture:default',

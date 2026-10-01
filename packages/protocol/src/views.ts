@@ -140,7 +140,11 @@ export interface ItemView {
   combine?: { recipes: string[]; ready: boolean };
 }
 
-export type ContainerKind = 'inventory' | 'bag' | 'world' | 'ground';
+/**
+ * `corpse` = body of a killed zombie (loot from `zombieType.lootTable`), searched like world
+ * storage (`search {container}`), then `takeItem` / `takeAll`.
+ */
+export type ContainerKind = 'inventory' | 'bag' | 'world' | 'ground' | 'corpse';
 
 /** Full content of one container (sent whole when anything in it changes). */
 export interface ContainerView {
@@ -189,6 +193,8 @@ export interface NearbyContainerView {
   searched: boolean;
   /** Fill 0..1 (see `StorageMarkerView.fillPct`); always set by the sim. */
   fillPct?: number;
+  /** Kind `corpse`: StableId of the dead zombie (the body in the snapshot). */
+  corpse?: number;
 }
 
 /** Radius (tiles) of `SimViewPatch.storages`. */
@@ -232,6 +238,10 @@ export interface ActionView {
   recipe?: string;
   /** Actions waiting behind this one. */
   queued: number;
+  /** 0..1 = (tick − startTick) / (endTick − startTick), rounded to 0.05; always set by the sim. */
+  progress?: number;
+  /** `search` of a spot (`search {x, y}`): the tile searched. */
+  spot?: { x: number; y: number; z: number };
 }
 
 export interface SimViewPatch {

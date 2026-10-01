@@ -1,6 +1,6 @@
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
-import type { CharacterProfileView, ReloadKind } from './views.js';
+import type { CharacterProfileView, ContainerKind, ReloadKind } from './views.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -79,6 +79,8 @@ export type ActionKind =
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
   | 'moved'
+  /** The player attacked or shoved (melee swing, shot, shove). */
+  | 'attack'
   | 'cancelled'
   /** Zombies nearby (hook, never until Stage 4). */
   | 'threat'
@@ -476,6 +478,51 @@ export type SimEvent =
       playerId: PlayerId;
       container: ContainerId;
       firstSearch: boolean;
+    }
+  /**
+   * Items came into the player's inventory (`pickUp`, `takeItem`, `takeAll` = one event per
+   * stack, `moveItem` / `equip` from outside). `itemId` = instance now holding them, `defId` =
+   * content id, `count` = pieces moved, `source` = kind of the container they came from
+   * (`ground`, `world` storage, `corpse`, a `bag` lying there), `container` = its id. Log:
+   * "+ Bandaż".
+   */
+  | {
+      type: 'itemPicked';
+      tick: number;
+      playerId: PlayerId;
+      itemId: ItemId;
+      defId: string;
+      count: number;
+      source: ContainerKind;
+      container: ContainerId;
+    }
+  /**
+   * Items left the player's inventory (`drop`, `putItem`, `moveItem` / `placeStorage` to the
+   * outside). `target` = kind of the receiving container, `container` = its id. Log:
+   * "- Puszka fasoli".
+   */
+  | {
+      type: 'itemDropped';
+      tick: number;
+      playerId: PlayerId;
+      itemId: ItemId;
+      defId: string;
+      count: number;
+      target: ContainerKind;
+      container: ContainerId;
+    }
+  /**
+   * A spot search (`search {x, y}`) finished: hidden items found within
+   * `search.spotRadiusTiles` (now normal ground piles, `container` = pile id); empty = nothing.
+   */
+  | {
+      type: 'spotSearched';
+      tick: number;
+      playerId: PlayerId;
+      x: number;
+      y: number;
+      z: number;
+      found: { itemId: ItemId; defId: string; count: number; container: ContainerId }[];
     }
   /** Ate / drank / used an item (content id), e.g. for sounds and toasts. */
   | {
