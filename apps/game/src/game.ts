@@ -205,6 +205,11 @@ if (townStructures) {
   scene.add(townStructures.root);
 }
 const structures = townStructures ?? streaming.structures;
+// Upper floors (z = 1..): one town batch set per level with chunks, drawn at z · floor height
+// (slabs with stair openings, flights of stairs). The sim reads the same chunks by (cx, cy, z).
+const upperTown: NonNullable<typeof townStructures>[] =
+  townKit && town ? town.loadUpperLevels(world.source, world.range, townKit) : [];
+for (const level of upperTown) scene.add(level.root);
 for (const root of streaming.roots) scene.add(root);
 await streaming.streamer.warmup([startPoint]);
 // Doors, window panes and fences: sim opening state + shaking under crowd pressure. Not streamed
@@ -270,7 +275,7 @@ if (boot.sim === 'worker') {
   const spawn = boot.spawnInside
     ? { ...TEST_BUILDING_INSIDE, z: 0 }
     : import.meta.env.DEV && boot.spawnAt
-      ? { ...boot.spawnAt, z: 0 }
+      ? { x: boot.spawnAt.x, y: boot.spawnAt.y, z: boot.spawnAt.z ?? 0 }
       : startSpawn(world.zones);
   const worker = startSimWorker(world.source, world.range, simSeed, {
     spawn,
@@ -1003,9 +1008,12 @@ renderer.setAnimationLoop((time) => {
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
     cameraSnapped = true;
     const { tx, ty } = tileOf(state.x, state.y);
-    const building = structures.lookup.at(tx, ty, state.z);
-    const cut = { building, tx, ty, side: cameraSide(rig.targetYaw) };
+    // Floor level of the body (fractional on stairs / while falling).
+    const level = Math.floor(state.z + 1e-3);
+    const building = structures.lookup.at(tx, ty, level);
+    const cut = { building, tx, ty, side: cameraSide(rig.targetYaw), z: level };
     structures.setCutaway(cut);
+    for (const l of upperTown) l.setCutaway(cut);
     openings.setCutaway(cut);
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
@@ -1030,6 +1038,7 @@ renderer.setAnimationLoop((time) => {
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   if (townKit && townStructures) {
     townStructures.setMinute(lightMinute);
+    for (const l of upperTown) l.setMinute(lightMinute);
     townKit.material.emissiveIntensity = town?.WINDOW_EMISSIVE_NIGHT
       ? town.WINDOW_EMISSIVE_NIGHT * dayCycle.lampLevel(lightMinute)
       : 0;

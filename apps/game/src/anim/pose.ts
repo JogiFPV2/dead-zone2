@@ -1,6 +1,12 @@
 import { TICKS_PER_SECOND } from '@deadzone/sim';
 import type { CharacterAnim } from '../models/character-rig.js';
-import { GETUP_TICKS, KNOCKDOWN_FALL_TICKS, type BodyState, type PhysState } from './contract.js';
+import {
+  GETUP_TICKS,
+  KNOCKDOWN_FALL_TICKS,
+  WINDOW_VAULT_TICKS,
+  type BodyState,
+  type PhysState,
+} from './contract.js';
 
 /** How the held weapon swings (`weapons/weapon-kinds.ts`). */
 export type WeaponClass = 'unarmed' | 'one_handed' | 'two_handed' | 'stab' | 'firearm';
@@ -44,6 +50,8 @@ export interface AnimPose {
   lockFacing: boolean;
   /** 0..1 share of locomotion (gait sway). */
   move: number;
+  /** Extra body height (m): step bob on stairs. */
+  lift: number;
   /** Shown state (may be a held reaction after the sim state ended). */
   state: BodyState;
 }
@@ -59,6 +67,7 @@ export const newPose = (): AnimPose => ({
   faceTo: Number.NaN,
   lockFacing: false,
   move: 0,
+  lift: 0,
   state: 'idle',
 });
 
@@ -70,7 +79,25 @@ export interface PoseContext {
   clipLen: (anim: CharacterAnim) => number;
   /** Seconds of locomotion clip time accumulated by the caller (loops). */
   loopTime: number;
+  /** Drawn vertical speed (levels/s, + = up); stairs lean. 0 when unknown. */
+  vz?: number;
 }
+
+/** Forward lean going up / back lean going down a flight of stairs (rad). */
+export const CLIMB_UP_PITCH = 0.16;
+export const CLIMB_DOWN_PITCH = -0.07;
+/** Step bob on stairs (m, peak), twice per walk cycle. */
+export const CLIMB_BOB = 0.05;
+/** Peak hop over a low fence (m) and the body height crawling through a window sill (m). */
+export const FENCE_HOP = 0.55;
+export const WINDOW_SILL = 0.75;
+/** Ticks of the forward stumble at the start of a knock-down after a trip (then the fall). */
+export const TRIP_STUMBLE_TICKS = 6;
+
+const smooth = (t: number): number => {
+  const k = Math.max(0, Math.min(1, t));
+  return k * k * (3 - 2 * k);
+};
 
 /** Smooth 0 -> 1 -> 0 envelope over p in 0..1. */
 const bell = (p: number): number => (p <= 0 || p >= 1 ? 0 : Math.sin(Math.PI * p));
@@ -94,13 +121,22 @@ export class PoseTracker {
   private held: Held | undefined;
   private lastShotTick = Number.NEGATIVE_INFINITY;
 
+  private posed = false;
+
   pose(p: PhysState, tickF: number, ctx: PoseContext, out: AnimPose): AnimPose {
+    // Frozen outside the sim's active window (#98): hold the last pose, no gait sway.
+    if (p.frozen && this.posed) {
+      out.move = 0;
+      return out;
+    }
+    this.posed = true;
     const tps = TICKS_PER_SECOND;
     out.pitch = out.roll = out.twist = out.recoil = 0;
     out.faceTo = Number.NaN;
     out.lockFacing = false;
     out.loop = false;
     out.move = 0;
+    out.lift = 0;
     const s = p.state;
     if (s === 'attack' || s === 'push' || s === 'hit' || s === 'stagger') {
       const h = this.held;
@@ -120,7 +156,13 @@ export class PoseTracker {
         };
         if (s === 'attack' && ctx.weapon === 'firearm') this.lastShotTick = p.stateStartTick;
       }
-    } else if (s === 'dead' || s === 'knockdown' || s === 'getup') {
+    } else if (
+      s === 'dead' ||
+      s === 'knockdown' ||
+      s === 'getup' ||
+      s === 'fall' ||
+      s === 'vault'
+    ) {
       this.held = undefined;
     }
     const h = this.held;
@@ -128,13 +170,43 @@ export class PoseTracker {
     this.held = undefined;
     out.state = s;
     const ts = Math.max(0, (tickF - p.stateStartTick) / tps);
+    if (s === 'vault') return vaultPose(p, ts, ctx, out);
+    if (s === 'knockdown' && p.tripTick !== undefined && p.tripTick >= 0) {
+      // Tripped on a vault: a stumble forward first, then the usual fall (below, delayed).
+      const since = tickF - p.stateStartTick;
+      if (p.tripTick >= p.stateStartTick - 1 && since < TRIP_STUMBLE_TICKS) {
+        const k = clamp01(since / TRIP_STUMBLE_TICKS);
+        out.anim = 'stagger';
+        out.time = 0.3 * ctx.clipLen('stagger') * k;
+        out.pitch = 0.5 * Math.sin((Math.PI / 2) * k);
+        out.roll = 0.1 * Math.sin(Math.PI * k);
+        out.lockFacing = true;
+        return out;
+      }
+    }
     if (s === 'dead' || s === 'knockdown') {
       const len = ctx.clipLen('dead');
       const fall = s === 'knockdown' ? KNOCKDOWN_FALL_TICKS / tps : len;
+      const tripped =
+        s === 'knockdown' && (p.tripTick ?? -1) >= p.stateStartTick - 1
+          ? TRIP_STUMBLE_TICKS / tps
+          : 0;
       out.anim = 'dead';
-      out.time = (Math.min(ts, fall) / fall) * len;
+      out.time = (Math.min(Math.max(0, ts - tripped), fall) / fall) * len;
       out.faceTo = p.lastHitTick >= 0 ? p.hitFromDir : Number.NaN;
       out.lockFacing = ts > 0.25;
+      return out;
+    }
+    if (s === 'fall') {
+      // Free fall: thrown back, arms up (frozen mid-flail of the hit clip), wobbling; the sim
+      // follows with `knockdown` (the fall-over + lying of the dead clip) or `dead`.
+      const len = ctx.clipLen('hit');
+      const k = clamp01(ts / 0.25);
+      out.anim = 'hit';
+      out.time = 0.55 * len * k;
+      out.pitch = -0.4 * k;
+      out.roll = 0.14 * Math.sin(ts * 15) * k;
+      out.lockFacing = true;
       return out;
     }
     if (s === 'getup') {
@@ -158,6 +230,13 @@ export class PoseTracker {
         : 'idle';
       out.move = 0;
     } else out.anim = s === 'run' ? 'run' : 'walk';
+    if (s === 'climb' && moving) {
+      // Stairs: lean into the flight, shorter steps lifting the body twice per cycle.
+      const vz = ctx.vz ?? 0;
+      out.pitch = vz > 0.02 ? CLIMB_UP_PITCH : vz < -0.02 ? CLIMB_DOWN_PITCH : 0;
+      const cycle = ctx.clipLen(out.anim) || 1;
+      out.lift = CLIMB_BOB * Math.abs(Math.sin((ctx.loopTime / cycle) * Math.PI * 2));
+    }
     return out;
   }
 
@@ -224,4 +303,35 @@ export class PoseTracker {
     }
     return out;
   }
+}
+
+/**
+ * Vault over a low fence (short `stateDuration`) or through a window (≥ WINDOW_VAULT_TICKS):
+ * progress from the sim's state timing. Fence: plant the hands (push clip), hop with the legs
+ * swung to the side. Window: lean in and down over the sill, crawl through at sill height,
+ * stand up on the far side. The sim moves the position across the edge meanwhile.
+ */
+function vaultPose(p: PhysState, ts: number, ctx: PoseContext, out: AnimPose): AnimPose {
+  const dur = Math.max(1, p.stateDuration) / TICKS_PER_SECOND;
+  const k = clamp01(ts / dur);
+  const len = ctx.clipLen('push');
+  out.anim = 'push';
+  out.lockFacing = true;
+  if (p.stateDuration >= WINDOW_VAULT_TICKS) {
+    // 0..0.3 lean in and climb onto the sill, 0.3..0.7 through, 0.7..1 down and up.
+    const up = smooth(k / 0.3);
+    const down = smooth((k - 0.7) / 0.3);
+    out.time = len * (0.3 + 0.4 * Math.min(1, k / 0.3));
+    out.pitch = 0.95 * up * (1 - down);
+    out.lift = WINDOW_SILL * up * (1 - down);
+    out.roll = 0.06 * Math.sin(Math.PI * 4 * k) * up * (1 - down);
+  } else {
+    // Hands on the rail at 0.2, over the top at 0.5, landing at 0.85.
+    const hop = bell(clamp01((k - 0.1) / 0.75));
+    out.time = len * Math.min(1, k / 0.35) * 0.5;
+    out.pitch = 0.35 * hop;
+    out.lift = FENCE_HOP * hop;
+    out.roll = 0.22 * hop;
+  }
+  return out;
 }

@@ -32,6 +32,9 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     sim: 'mock',
   });
   expect(parseBootOptions('?spawn=inside')).toMatchObject({ spawnInside: true, sim: 'worker' });
+  // Dev spawn on a floor level (stairs / upper floors testing).
+  expect(parseBootOptions('?spawn=16.5,13.5,1').spawnAt).toEqual({ x: 16.5, y: 13.5, z: 1 });
+  expect(parseBootOptions('?spawn=16.5,13.5').spawnAt).toEqual({ x: 16.5, y: 13.5 });
   expect(parseBootOptions('?sim=mock').sim).toBe('worker'); // removed: nothing needs it
   expect(parseBootOptions('?map=demo-house')).toMatchObject({ map: 'demo-house', sim: 'worker' });
   // The inside spawn belongs to the generated test map only.

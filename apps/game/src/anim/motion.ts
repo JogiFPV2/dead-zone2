@@ -35,8 +35,14 @@ export const ZOMBIE_MOTION: MotionTuning = {
   maxLag: 0.6,
 };
 
-/** Beyond this the body snaps (teleport, spawn, floor change). */
+/** Beyond this the body snaps (teleport, spawn). */
 const SNAP_TILES = 2;
+/**
+ * A level jump larger than this between frames snaps too. The sim z is the floor index as f32
+ * (fractional on stairs and while falling, interpolated between snapshots), so it is followed
+ * as is; only a teleport to another floor jumps.
+ */
+const SNAP_LEVELS = 0.75;
 
 export const wrapAngle = (a: number): number => Math.atan2(Math.sin(a), Math.cos(a));
 
@@ -50,6 +56,8 @@ export class BodyMotion {
   vy = 0;
   /** Forward acceleration along the facing (tiles/s^2, smoothed; + = speeding up). */
   accel = 0;
+  /** Vertical speed (levels/s, smoothed; + = up): stairs. */
+  vz = 0;
   private init = false;
 
   /** Drawn speed (tiles/s). */
@@ -75,7 +83,7 @@ export class BodyMotion {
     lockFacing = false,
   ): void {
     const far = Math.hypot(x - this.x, y - this.y) > SNAP_TILES;
-    if (!this.init || z !== this.z || far || dtS > 0.5) {
+    if (!this.init || Math.abs(z - this.z) > SNAP_LEVELS || far || dtS > 0.5) {
       this.init = true;
       this.x = x;
       this.y = y;
@@ -84,9 +92,12 @@ export class BodyMotion {
       this.vx = tvx;
       this.vy = tvy;
       this.accel = 0;
+      this.vz = 0;
       return;
     }
     const dt = Math.max(0, dtS);
+    if (dt > 0) this.vz += ((z - this.z) / dt - this.vz) * (1 - Math.exp(-10 * dt));
+    this.z = z;
     const fx = Math.cos(this.facing);
     const fy = Math.sin(this.facing);
     const before = this.vx * fx + this.vy * fy;

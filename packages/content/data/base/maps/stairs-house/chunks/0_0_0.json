@@ -1,0 +1,532 @@
+{
+  "address": {
+    "cx": 0,
+    "cy": 0,
+    "z": 0
+  },
+  "palette": ["base:grass", "base:asphalt", "base:concrete", "base:kitchen-tiles"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [1, 328],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 22],
+        [4, 4],
+        [3, 6],
+        [1, 28],
+        [3, 1],
+        [1, 31],
+        [3, 1],
+        [1, 31],
+        [3, 1],
+        [1, 31],
+        [3, 1],
+        [1, 17],
+        [2, 128],
+        [1, 192]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 328],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 22],
+        [1, 4],
+        [2, 6],
+        [0, 462]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 8,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:wooden-window"
+    },
+    {
+      "x": 8,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 8,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 9,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 9,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 10,
+      "y": 10,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:wooden-window"
+    },
+    {
+      "x": 10,
+      "y": 18,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:wooden-window"
+    },
+    {
+      "x": 11,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 11,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 14,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:wooden-door"
+    },
+    {
+      "x": 12,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 12,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 13,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 13,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 14,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 14,
+      "y": 18,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:wooden-door"
+    },
+    {
+      "x": 15,
+      "y": 10,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:wooden-window"
+    },
+    {
+      "x": 15,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 16,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 16,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 17,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 17,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 12,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:wooden-window"
+    },
+    {
+      "x": 18,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 18,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:brick-wall"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 13,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 14,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 15,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 16,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 17,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 18,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 19,
+      "side": "w",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 21,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 22,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 23,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 25,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 26,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 27,
+      "y": 20,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:fridge",
+      "x": 8,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 9,
+      "y": 10,
+      "rot": 0
+    }
+  ],
+  "rooms": {
+    "1": {
+      "roomType": "base:room-kitchen",
+      "buildingId": 1
+    },
+    "2": {
+      "roomType": "base:room-living-room",
+      "buildingId": 1
+    }
+  },
+  "stairs": [
+    {
+      "tx": 16,
+      "ty": 16,
+      "dir": "N",
+      "len": 3
+    }
+  ]
+}

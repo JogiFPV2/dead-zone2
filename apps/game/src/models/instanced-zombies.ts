@@ -688,6 +688,7 @@ export class InstancedZombies {
     const ctx = this.ctx;
     ctx.speed = mo.speed;
     ctx.loopTime = st.loopTime;
+    ctx.vz = mo.vz;
     const pose = st.tracker.pose(ps, tickF, ctx, st.pose);
     const g = st.gait;
     const turning = !Number.isNaN(pose.faceTo);
@@ -709,7 +710,7 @@ export class InstancedZombies {
     else go.roll = go.pitch = go.yaw = go.bob = 0;
     this.e.set(pose.roll + go.roll, -(mo.facing + go.yaw), -(pose.pitch + go.pitch), 'YZX');
     this.q.setFromEuler(this.e);
-    this.p.set(mo.x, mo.z * LEVEL_HEIGHT + go.bob, mo.y);
+    this.p.set(mo.x, mo.z * LEVEL_HEIGHT + go.bob + pose.lift, mo.y);
     this.m.compose(this.p, this.q, this.s);
     return pose;
   }

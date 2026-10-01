@@ -11,8 +11,11 @@ export interface BootOptions {
   crowd: number;
   /** `?spawn=inside`: start in the test building (generated test map only). */
   spawnInside: boolean;
-  /** Dev `?spawn=16.5,12.5`: start at this tile point (any map; UI testing next to containers). */
-  spawnAt?: { x: number; y: number };
+  /**
+   * Dev `?spawn=16.5,12.5` or `?spawn=16.5,12.5,1`: start at this tile point (any map; UI
+   * testing next to containers), optionally on floor level z (upper floors, stairs).
+   */
+  spawnAt?: { x: number; y: number; z?: number };
   /** Mock sim only for `?crowd=N` (the sim has no NPCs yet); otherwise the real sim worker. */
   sim: 'worker' | 'mock';
   /** Dev-only `?zones=1`: draw the map's zones (content maps only; the test map has none). */
@@ -81,13 +84,21 @@ export function parseBootOptions(search: string): BootOptions {
   const stress = q.get('stress') === '1';
   const mock = crowd > 0 || stress;
   const time = parseTimeParam(q.get('time'));
-  const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(q.get('spawn') ?? '');
+  const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d{1,2}))?$/.exec(q.get('spawn') ?? '');
   const cam = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/.exec(q.get('cam') ?? '');
   return {
     map,
     crowd,
     spawnInside: spawnInside && map === 'test',
-    ...(at ? { spawnAt: { x: Number(at[1]), y: Number(at[2]) } } : {}),
+    ...(at
+      ? {
+          spawnAt: {
+            x: Number(at[1]),
+            y: Number(at[2]),
+            ...(at[3] !== undefined ? { z: Number(at[3]) } : {}),
+          },
+        }
+      : {}),
     sim: mock ? 'mock' : 'worker',
     zones: q.get('zones') === '1',
     ...(time !== undefined ? { time } : {}),

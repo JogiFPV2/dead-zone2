@@ -12,6 +12,11 @@ import {
 import type { Blueprint, BlueprintStairs, Building } from './blueprint.js';
 import { buildZones } from './zones.js';
 
+type Rooms = Building['rooms'];
+type Opening = Building['openings'][number];
+/** Room ids of upper floors without their own `rooms`: ground id + ROOM_Z_STRIDE * z. */
+export const ROOM_Z_STRIDE = 4096;
+
 type Side = 'n' | 'w';
 interface EdgeCell {
   type: EdgeType;
@@ -41,7 +46,14 @@ class World {
   readonly tiles: string[] = [];
   readonly edges = new Map<string, EdgeCell>();
 
-  constructor(bp: Blueprint) {
+  constructor(
+    bp: Blueprint,
+    /** Level of these layers (0 = ground). */
+    readonly z = 0,
+    /** Tile list shared by all levels (one palette order). */
+    tiles?: string[],
+  ) {
+    if (tiles) this.tiles = tiles;
     const { cx0, cy0, cx1, cy1 } = bp.chunks;
     if (cx1 < cx0 || cy1 < cy0) throw new Error('chunks: pusty zakres');
     this.x0 = cx0 * CHUNK_SIZE;
@@ -67,6 +79,23 @@ class World {
     return i === -1 ? this.tiles.push(id) : i + 1;
   }
 
+  /** Any floor, room or edge in chunk (cx, cy) (upper levels only emit used chunks). */
+  used(cx: number, cy: number): boolean {
+    const ox = cx * CHUNK_SIZE;
+    const oy = cy * CHUNK_SIZE;
+    for (let y = oy; y < oy + CHUNK_SIZE; y++) {
+      for (let x = ox; x < ox + CHUNK_SIZE; x++) {
+        const i = this.index(x, y, '');
+        if (this.floor[i] || this.room[i]) return true;
+      }
+    }
+    for (const k of this.edges.keys()) {
+      const [x, y] = k.split(',').map(Number) as [number, number];
+      if (x >= ox && y >= oy && x < ox + CHUNK_SIZE && y < oy + CHUNK_SIZE) return true;
+    }
+    return false;
+  }
+
   roomAt = (x: number, y: number) =>
     this.inside(x, y) ? (this.room[this.index(x, y, '')] ?? 0) : 0;
 }
@@ -78,20 +107,51 @@ function canonical(x: number, y: number, side: 'n' | 's' | 'e' | 'w'): [number, 
   return [x, y, side];
 }
 
-function paintBuilding(world: World, b: Building): void {
+/** Rooms of floor `z` (its own, or the ground floor's with ids shifted by ROOM_Z_STRIDE · z). */
+export function floorRooms(b: Building, z: number): Rooms {
+  if (z === 0) return b.rooms;
+  const own = b.floors.find((f) => f.z === z)?.rooms;
+  if (own) return own;
+  return Object.fromEntries(
+    Object.entries(b.rooms).map(([k, r]) => [k, { ...r, id: r.id + ROOM_Z_STRIDE * z }]),
+  );
+}
+
+/** Highest floor of a building (its roof sits there). */
+export const topFloor = (b: Building): number => Math.max(0, ...b.floors.map((f) => f.z));
+
+/** World tiles (`x,y`) of flights arriving on level z: no floor there (stair opening). */
+function stairHoles(stairs: readonly BlueprintStairs[], z: number): Set<string> {
+  const holes = new Set<string>();
+  for (const st of stairs) {
+    if (st.zFrom !== z - 1) continue;
+    const [dx, dy] = STAIR_STEP[st.dir];
+    for (let k = 0; k < st.len; k++) holes.add(`${st.at[0] + dx * k},${st.at[1] + dy * k}`);
+  }
+  return holes;
+}
+
+function paintBuilding(world: World, b: Building, holes: ReadonlySet<string>): void {
+  const z = world.z;
+  const level = z === 0 ? undefined : b.floors.find((f) => f.z === z);
+  if (z > 0 && !level) return;
+  const plan = level?.plan ?? b.plan;
+  const rooms = floorRooms(b, z);
+  const openings: Opening[] = level ? level.openings : b.openings;
   const tiles: [number, number][] = [];
   // Palette order = authoring order: room floors, then the roof.
-  for (const r of Object.values(b.rooms)) world.tile(r.floor);
-  const roof = b.roof === undefined ? 0 : world.tile(b.roof);
-  b.plan.forEach((row, py) => {
+  for (const r of Object.values(rooms)) world.tile(r.floor);
+  const roof = b.roof === undefined || z !== topFloor(b) ? 0 : world.tile(b.roof);
+  plan.forEach((row, py) => {
     [...row].forEach((ch, px) => {
       if (ch === '.' || ch === ' ') return;
-      const room = b.rooms[ch];
+      const room = rooms[ch];
       if (!room) throw new Error(`budynek ${b.id}: znak „${ch}” nie ma wpisu w rooms`);
       const x = b.origin[0] + px;
       const y = b.origin[1] + py;
       const i = world.index(x, y, `budynek ${b.id}`);
-      world.floor[i] = world.tile(room.floor);
+      // 0 = no floor: the opening above a flight of stairs.
+      world.floor[i] = holes.has(`${x},${y}`) ? 0 : world.tile(room.floor);
       world.room[i] = room.id;
       if (roof) world.roof[i] = roof;
       tiles.push([x, y]);
@@ -115,7 +175,7 @@ function paintBuilding(world: World, b: Building): void {
       world.edges.set(edgeKey(ex, ey, s), { type: 'wall', contentId: b.wall });
     }
   }
-  for (const o of b.openings) {
+  for (const o of openings) {
     const [ex, ey, s] = canonical(b.origin[0] + o.at[0], b.origin[1] + o.at[1], o.side);
     const key = edgeKey(ex, ey, s);
     if (!world.edges.has(key)) {
@@ -129,7 +189,7 @@ function paintBuilding(world: World, b: Building): void {
   }
 }
 
-/** Stairs tool: the whole flight must lie on the map; no two flights share a tile. */
+/** Stairs tool: the whole flight must lie on the map; no two flights on a level share a tile. */
 function checkStairs(world: World, stairs: readonly BlueprintStairs[]): void {
   const used = new Map<string, number>();
   stairs.forEach((st, i) => {
@@ -138,10 +198,11 @@ function checkStairs(world: World, stairs: readonly BlueprintStairs[]): void {
       const x = st.at[0] + dx * k;
       const y = st.at[1] + dy * k;
       world.index(x, y, `schody ${i}`);
-      const other = used.get(`${x},${y}`);
+      const key = `${x},${y},${st.zFrom}`;
+      const other = used.get(key);
       if (other !== undefined)
         throw new Error(`schody ${i} zachodzą na schody ${other} w (${x}, ${y})`);
-      used.set(`${x},${y}`, i);
+      used.set(key, i);
     }
   });
 }
@@ -157,15 +218,21 @@ export function buildMap(bp: Blueprint): BuiltMap {
     }
   }
   const rooms = new Map<number, { roomType: string; buildingId: number }>();
+  const levels = new Map<number, World>([[0, world]]);
   for (const b of bp.buildings) {
-    for (const r of Object.values(b.rooms)) {
-      const prev = rooms.get(r.id);
-      if (prev && (prev.roomType !== r.type || prev.buildingId !== b.id)) {
-        throw new Error(`roomId ${r.id} użyty z innym typem lub budynkiem`);
+    for (const z of [0, ...b.floors.map((f) => f.z)]) {
+      for (const r of Object.values(floorRooms(b, z))) {
+        if (r.id > 0xffff) throw new Error(`budynek ${b.id}: roomId ${r.id} > 65535`);
+        const prev = rooms.get(r.id);
+        if (prev && (prev.roomType !== r.type || prev.buildingId !== b.id)) {
+          throw new Error(`roomId ${r.id} użyty z innym typem lub budynkiem`);
+        }
+        rooms.set(r.id, { roomType: r.type, buildingId: b.id });
       }
-      rooms.set(r.id, { roomType: r.type, buildingId: b.id });
+      let w = levels.get(z);
+      if (!w) levels.set(z, (w = new World(bp, z, world.tiles)));
+      paintBuilding(w, b, stairHoles(bp.stairs, z));
     }
-    paintBuilding(world, b);
   }
   for (const f of bp.fences) {
     for (let i = 0; i < f.len; i++) {
@@ -181,11 +248,19 @@ export function buildMap(bp: Blueprint): BuiltMap {
   const { cx0, cy0, cx1, cy1 } = bp.chunks;
   const chunks: BuiltMap['chunks'] = [];
   const addresses: MapManifest['chunks'] = [];
-  for (let cy = cy0; cy <= cy1; cy++) {
-    for (let cx = cx0; cx <= cx1; cx++) {
-      const address = { cx, cy, z: 0 };
-      addresses.push(address);
-      chunks.push({ file: chunkFileName(address), json: chunkJson(world, bp, rooms, cx, cy) });
+  for (const st of bp.stairs) {
+    if (st.zFrom > 0 && !levels.has(st.zFrom))
+      throw new Error(`schody w (${st.at.join(', ')}): brak piętra z = ${st.zFrom}`);
+  }
+  for (const [z, w] of [...levels].sort((a, b) => a[0] - b[0])) {
+    for (let cy = cy0; cy <= cy1; cy++) {
+      for (let cx = cx0; cx <= cx1; cx++) {
+        // Upper levels: only chunks with something on them.
+        if (z > 0 && !w.used(cx, cy)) continue;
+        const address = { cx, cy, z };
+        addresses.push(address);
+        chunks.push({ file: chunkFileName(address), json: chunkJson(w, bp, rooms, cx, cy) });
+      }
     }
   }
   chunks.sort((a, b) => a.file.localeCompare(b.file));
@@ -234,19 +309,25 @@ function chunkJson(
     })
     .filter((e) => e.x >= 0 && e.y >= 0 && e.x < CHUNK_SIZE && e.y < CHUNK_SIZE)
     .sort((a, b) => a.x - b.x || a.y - b.y || a.side.localeCompare(b.side));
+  // Map objects stand on the ground level (no `z` in the blueprint yet).
   const objects = bp.objects
+    .filter(() => world.z === 0)
     .filter((o) => o.x >= ox && o.y >= oy && o.x < ox + CHUNK_SIZE && o.y < oy + CHUNK_SIZE)
     .map((o) => ({ ...o, x: o.x - ox, y: o.y - oy }));
   const ids = [...new Set(room)].filter((v) => v !== 0).sort((a, b) => a - b);
   const stairs: Stairs[] = bp.stairs
     .filter(
       (s) =>
-        s.at[0] >= ox && s.at[1] >= oy && s.at[0] < ox + CHUNK_SIZE && s.at[1] < oy + CHUNK_SIZE,
+        s.zFrom === world.z &&
+        s.at[0] >= ox &&
+        s.at[1] >= oy &&
+        s.at[0] < ox + CHUNK_SIZE &&
+        s.at[1] < oy + CHUNK_SIZE,
     )
     .map((s) => ({ tx: s.at[0] - ox, ty: s.at[1] - oy, dir: s.dir, len: s.len }));
 
   return {
-    address: { cx, cy, z: 0 },
+    address: { cx, cy, z: world.z },
     palette: global.map((g) => world.tiles[g - 1] ?? ''),
     layers: {
       floor: encodeLayer(remap(floor)),

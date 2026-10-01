@@ -24,6 +24,28 @@ export const OpeningSchema = z.strictObject({
   contentId: TileRefSchema.optional(),
 });
 
+const RoomsSchema = z.record(
+  z.string().length(1),
+  z.strictObject({
+    /** Map-global `roomId`. */
+    id: Int.min(1).max(0xffff),
+    type: RoomTypeSchema,
+    floor: TileRefSchema,
+  }),
+);
+
+/**
+ * Upper floor (z >= 1) of a building (`building.floors[]`, contract with Physics / Simulation).
+ * `plan` / `rooms` default to the ground floor's (room ids + ROOM_Z_STRIDE * z). Tiles of
+ * flights from z − 1 have no floor (the stair opening). The roof sits on the top floor only.
+ */
+export const FloorSchema = z.strictObject({
+  z: Int.min(1).max(15),
+  plan: z.array(z.string().min(1)).min(1).optional(),
+  rooms: RoomsSchema.optional(),
+  openings: z.array(OpeningSchema).default([]),
+});
+
 export const BuildingSchema = z.strictObject({
   /** Map-global `buildingId` (the renderer hides roof and walls per building). */
   id: Int.min(1).max(0xffff),
@@ -34,21 +56,15 @@ export const BuildingSchema = z.strictObject({
    * outside. Walls are generated on every border between different rooms or room and outside.
    */
   plan: z.array(z.string().min(1)).min(1),
-  rooms: z.record(
-    z.string().length(1),
-    z.strictObject({
-      /** Map-global `roomId`. */
-      id: Int.min(1).max(0xffff),
-      type: RoomTypeSchema,
-      floor: TileRefSchema,
-    }),
-  ),
+  rooms: RoomsSchema,
   wall: TileRefSchema,
   window: TileRefSchema.optional(),
   door: TileRefSchema.optional(),
   /** Roof over every room tile; omit for no roof. */
   roof: TileRefSchema.optional(),
   openings: z.array(OpeningSchema).default([]),
+  /** Upper floors (z = 1, 2, ...); empty = single-storey. */
+  floors: z.array(FloorSchema).default([]),
 });
 
 /** Named map zone (manifest `zones`): explicit world-tile rects plus tiles from `zonePlans`. */
@@ -73,13 +89,15 @@ export const ZonePlanSchema = z.strictObject({
 });
 
 /**
- * Stairs tool: a flight from level 0 to level 1. `at` is the bottom tile (world tiles), the flight
- * climbs `len` tiles in `dir` (N = −y, E = +x, S = +y, W = −x). Saved in the chunk of `at`.
+ * Stairs tool: a flight from level `zFrom` (default 0) to `zFrom + 1`. `at` is the bottom tile
+ * (world tiles), the flight climbs `len` tiles in `dir` (N = −y, E = +x, S = +y, W = −x). Saved
+ * in the chunk of `at` on level `zFrom`; its tiles have no floor on `zFrom + 1`.
  */
 export const BlueprintStairsSchema = z.strictObject({
   at: Xy,
   dir: z.enum(STAIR_DIRS),
   len: Int.min(1).max(STAIR_MAX_LEN),
+  zFrom: Int.min(0).max(14).default(0),
 });
 
 /**
@@ -129,7 +147,7 @@ export const BlueprintSchema = z.strictObject({
       }),
     )
     .default([]),
-  /** Flights of stairs (level 0 → 1). */
+  /** Flights of stairs (level `zFrom` → `zFrom + 1`). */
   stairs: z.array(BlueprintStairsSchema).default([]),
   zones: z.array(BlueprintZoneSchema).default([]),
   zonePlans: z.array(ZonePlanSchema).default([]),

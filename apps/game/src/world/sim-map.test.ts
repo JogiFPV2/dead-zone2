@@ -76,6 +76,26 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(data.chunks[0]?.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);
   });
 
+  it('lists and serializes every floor level (upper floors for the sim)', () => {
+    const level = (z: number) => ({
+      coord: { cx: 0, cy: 0, z },
+      floor: new Uint16Array(CHUNK_TILES).fill(z === 0 ? 1 : 2),
+    });
+    const src: ChunkSource = {
+      tilePalette: [null, 'base:grass', 'base:concrete'],
+      getChunk: (cx, cy, z) => (cx === 0 && cy === 0 && z >= 0 && z <= 2 ? level(z) : undefined),
+    };
+    const range = { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 };
+    expect(chunkSourceToSimMap(src, range).listChunks?.()).toEqual([
+      { cx: 0, cy: 0, z: 0 },
+      { cx: 0, cy: 0, z: 1 },
+      { cx: 0, cy: 0, z: 2 },
+    ]);
+    const data = chunkSourceToSimMapData(src, range);
+    expect(data.chunks.map((c) => c.z)).toEqual([0, 1, 2]);
+    expect(data.chunks[2]?.floor[0]).toBe(2);
+  });
+
   it('serializes the whole test map for the worker', () => {
     expect(chunkSourceToSimMapData(source, TEST_MAP_RANGE).chunks).toHaveLength(16);
   });

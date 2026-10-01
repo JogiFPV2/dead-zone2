@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "name": "map.base.stairs-house.name",
+  "chunkSize": 32,
+  "floorHeight": 3,
+  "chunks": [
+    {
+      "cx": 0,
+      "cy": 0,
+      "z": 0
+    },
+    {
+      "cx": 0,
+      "cy": 0,
+      "z": 1
+    }
+  ],
+  "zones": [
+    {
+      "id": "start",
+      "role": "start",
+      "z": 0,
+      "rects": [
+        {
+          "x": 12,
+          "y": 23,
+          "w": 4,
+          "h": 2
+        }
+      ]
+    }
+  ]
+}

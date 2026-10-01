@@ -162,6 +162,7 @@ export class PlayerView {
         speed: mo.speed,
         clipLen: (a) => this.rig?.length(a) ?? 1,
         loopTime: this.loopTime,
+        vz: mo.vz,
       },
       this.animPose,
     );
@@ -190,8 +191,9 @@ export class PlayerView {
       if (g === 'back' || g === 'strafeLeft' || g === 'strafeRight') pose.anim = g;
     }
     this.loopTime += dt * PoseTracker.loopRate(pose.anim, mo.speed);
-    const w = simToWorld(mo.x, mo.y, state.z);
-    this.root.position.set(w.x, w.y, w.z);
+    // Height = z · floor height of the interpolated sim z (fractional on stairs / falling).
+    const w = simToWorld(mo.x, mo.y, mo.z);
+    this.root.position.set(w.x, w.y + pose.lift, w.z);
     this.root.rotation.y = facingToRotationY(mo.facing + pose.twist);
     const lean = Math.max(-MAX_ACCEL_LEAN, Math.min(MAX_ACCEL_LEAN, mo.accel * ACCEL_LEAN));
     // Body local +X is the facing: -Z rotation leans forward, X rotation rolls.

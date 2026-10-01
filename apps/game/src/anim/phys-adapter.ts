@@ -1,4 +1,5 @@
 import {
+  CHUNK_SIZE,
   SNAPSHOT_ENTITY_STRIDE,
   SnapshotAnim,
   SnapshotEntityKind,
@@ -13,6 +14,7 @@ import {
   type CombatConfig,
 } from '@deadzone/sim';
 import {
+  ACTIVE_CHUNK_RADIUS,
   GETUP_TICKS,
   HIT_TICKS,
   KNOCKDOWN_FALL_TICKS,
@@ -152,6 +154,9 @@ export class PhysAdapter {
     const stride = this.stride;
     const n = Math.floor(buf.length / stride);
     const u32 = this.simPhysics ? new Uint32Array(buf.buffer, buf.byteOffset, buf.length) : null;
+    // Active chunk window of the local player (first record): bodies outside are frozen (#98).
+    const pcx = Math.floor((buf[SnapshotField.x] ?? 0) / CHUNK_SIZE);
+    const pcy = Math.floor((buf[SnapshotField.y] ?? 0) / CHUNK_SIZE);
     for (let e = 0; e < n; e++) {
       const o = e * stride;
       const id = buf[o + SnapshotField.stableId] ?? 0;
@@ -180,6 +185,11 @@ export class PhysAdapter {
       b.y = y;
       b.tick = tick;
       b.seen = gen;
+      if (u32) {
+        p.frozen =
+          Math.abs(Math.floor(x / CHUNK_SIZE) - pcx) > ACTIVE_CHUNK_RADIUS ||
+          Math.abs(Math.floor(y / CHUNK_SIZE) - pcy) > ACTIVE_CHUNK_RADIUS;
+      }
       if (!u32 || !this.readSim(b, buf, u32, o, tick)) this.resolve(id, b, anim, tick);
       b.snapAnim = anim;
     }
@@ -194,19 +204,21 @@ export class PhysAdapter {
           const b = this.bodies.get(ev.entity);
           if (b) b.phys.lastHitTick = ev.tick;
         }
-        // Level events (v8) have no animation event yet; the state is in the snapshot.
-        if (
-          ev.kind === 'startedFalling' ||
-          ev.kind === 'landed' ||
-          ev.kind === 'vaulted' ||
-          ev.kind === 'tripped'
-        )
-          continue;
+        if (ev.kind === 'tripped') {
+          const b = this.bodies.get(ev.entity);
+          if (b) b.phys.tripTick = ev.tick;
+        }
         this.emit(ev.kind, ev.entity, ev.tick);
         continue;
       }
       const e = ev as SimEvent;
-      if (e.type === 'hit' && !this.simPhysics) this.onHit(e);
+      if (e.type === 'fellFromHeight') {
+        this.emit('fellFromHeight', e.entity, e.tick, {
+          levels: e.levels,
+          damage: e.damage,
+          killed: e.killed,
+        });
+      } else if (e.type === 'hit' && !this.simPhysics) this.onHit(e);
       else if (e.type === 'shot' && e.playerId === this.localPlayer) this.onShot(e.tick);
     }
   }
@@ -219,10 +231,8 @@ export class PhysAdapter {
     const si = buf[o + PhysField.state];
     const raw = si === undefined ? undefined : ENTITY_PHYS_STATES[si];
     if (!raw) return false;
-    // Protocol v8/v9 states until the rig has own clips: climbing walks, falling staggers,
-    // vaulting plays the push (arms forward over the fence).
-    const state =
-      raw === 'climb' ? 'walk' : raw === 'fall' ? 'stagger' : raw === 'vault' ? 'push' : raw;
+    // Climb, fall and vault have own poses (pose.ts).
+    const state = raw;
     const seed = u32[o + PhysField.gaitSeed] ?? 0;
     // Zombies always get a gait seed from the physics module: none = no physics body in this
     // record (mock crowd, older data), derive instead.
@@ -296,8 +306,13 @@ export class PhysAdapter {
     p.stateDuration = duration;
   }
 
-  private emit(type: PhysEventType, entityId: number, tick: number): void {
-    this.events.push({ type, entityId, tick });
+  private emit(
+    type: PhysEventType,
+    entityId: number,
+    tick: number,
+    fall?: PhysEvent['fall'],
+  ): void {
+    this.events.push(fall ? { type, entityId, tick, fall } : { type, entityId, tick });
     // Nobody has to drain them: keep only the recent ones.
     if (this.events.length > MAX_EVENTS) this.events.splice(0, this.events.length - MAX_EVENTS);
   }

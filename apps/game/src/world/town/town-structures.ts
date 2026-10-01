@@ -1,6 +1,12 @@
 import { BatchedMesh, Group, Matrix4, Quaternion, Vector3, type BufferGeometry } from 'three';
 import { BuildingLookup } from '../building-lookup.js';
-import { CHUNK_SIZE, type BuildingId, type ChunkRange, type ChunkSource } from '../chunk.js';
+import {
+  CHUNK_SIZE,
+  NO_BUILDING,
+  type BuildingId,
+  type ChunkRange,
+  type ChunkSource,
+} from '../chunk.js';
 import { NO_CUTAWAY, cutawayKey, isEdgeLowered, isRoofHidden, type Cutaway } from '../cutaway.js';
 import { LEVEL_HEIGHT } from '../instances.js';
 import { WALL_HEIGHT } from '../structure-instances.js';
@@ -15,6 +21,7 @@ import {
   type Skin,
 } from './modules.js';
 import { pitchedRoof } from './roof.js';
+import { slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 
 /** A static prop of the town kit (trees, poles, signs...). */
@@ -59,6 +66,10 @@ export class TownStructures {
   private readonly windows: EdgeItem[] = [];
   private readonly windowIndex = new Map<string, EdgeItem>();
   private readonly roofsByBuilding = new Map<BuildingId, { batch: Batch; instance: number }[]>();
+  /** Floor slabs and stair runs of upper levels (hidden with the level). */
+  private readonly slabsByBuilding = new Map<BuildingId, { batch: Batch; instance: number }[]>();
+  /** Level of the loaded range (0 = ground). */
+  z = 0;
   private cut: Cutaway = NO_CUTAWAY;
   private key = '-';
   private litMinute = -1;
@@ -74,6 +85,7 @@ export class TownStructures {
   /** Builds the batches of `range` (+ `props`, placed into the chunk they stand in). */
   loadRange(range: ChunkRange, props: readonly PropPlacement[] = []): void {
     const tiles = new MapTiles(this.source, range.z);
+    this.z = range.z;
     const layout = layoutTown(tiles, range);
     this.layout = layout;
     const baseY = range.z * LEVEL_HEIGHT;
@@ -83,6 +95,7 @@ export class TownStructures {
       variants?: string[];
       edge?: TownEdge;
       roof?: BuildingId;
+      slab?: BuildingId;
     };
     const perChunk = new Map<string, Item[]>();
     const push = (x: number, z: number, item: Item) => {
@@ -163,6 +176,15 @@ export class TownStructures {
           });
       }
     }
+    // Upper levels: floor slab per building and chunk, stair runs of this level.
+    if (range.z > 0) {
+      for (const s of slabGeometry(tiles, range, baseY, this.kit.cells)) {
+        push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
+      }
+    }
+    for (const s of stairsGeometry(tiles, range, baseY, this.kit.cells)) {
+      push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
+    }
     for (const p of props) {
       if (!this.kit.geometries.has(p.name)) continue;
       push(p.x, p.z, { geo: p.name, m: at(p.x, baseY + (p.y ?? 0), p.z, p.rotY, p.scale ?? 1) });
@@ -215,6 +237,11 @@ export class TownStructures {
             this.windowIndex.set(`${e.tx},${e.ty},${e.axis}`, item);
           }
         }
+        if (it.slab !== undefined) {
+          let list = this.slabsByBuilding.get(it.slab);
+          if (!list) this.slabsByBuilding.set(it.slab, (list = []));
+          list.push({ batch, instance });
+        }
         if (it.roof !== undefined) {
           let list = this.roofsByBuilding.get(it.roof);
           if (!list) this.roofsByBuilding.set(it.roof, (list = []));
@@ -238,16 +265,25 @@ export class TownStructures {
     this.key = key;
     this.cut = c;
     const touched = new Set([prev.building, c.building]);
+    const level = c.z ?? 0;
     for (const b of touched) {
+      // Levels above the player's are not drawn in the player's building (spec 3.1).
+      const hidden = b === c.building && b !== NO_BUILDING && this.z > level;
+      const here = this.z === level;
       for (const it of this.edgesByBuilding.get(b) ?? []) {
-        const lowered = isEdgeLowered(c, it.edge.building, it.edge.axis, it.edge.tx, it.edge.ty);
+        it.batch.mesh.setVisibleAt(it.instance, !hidden);
+        const lowered =
+          here && isEdgeLowered(c, it.edge.building, it.edge.axis, it.edge.tx, it.edge.ty);
         if (lowered !== it.lowered) {
           it.lowered = lowered;
           this.apply(it);
         }
       }
       for (const r of this.roofsByBuilding.get(b) ?? []) {
-        r.batch.mesh.setVisibleAt(r.instance, !isRoofHidden(c, b));
+        r.batch.mesh.setVisibleAt(r.instance, !hidden && !isRoofHidden(c, b));
+      }
+      for (const r of this.slabsByBuilding.get(b) ?? []) {
+        r.batch.mesh.setVisibleAt(r.instance, !hidden);
       }
     }
   }
@@ -306,4 +342,30 @@ export class TownStructures {
     const gid = it.batch.ids.get(name);
     if (gid !== undefined) it.batch.mesh.setGeometryIdAt(it.instance, gid);
   }
+}
+
+/** Highest level the client draws (blueprint floors go up to z = 15). */
+export const MAX_LEVEL = 15;
+
+/**
+ * Town batches of the upper levels z = 1.. of `range` (stops at the first level without chunks).
+ * Each level hides itself above the player's floor in the player's building (`setCutaway`).
+ */
+export function loadUpperLevels(
+  source: ChunkSource,
+  range: ChunkRange,
+  kit: TownKit,
+): TownStructures[] {
+  const out: TownStructures[] = [];
+  for (let z = range.z + 1; z <= MAX_LEVEL; z++) {
+    let any = false;
+    for (let cy = range.cy0; cy <= range.cy1 && !any; cy++)
+      for (let cx = range.cx0; cx <= range.cx1 && !any; cx++)
+        any = source.getChunk(cx, cy, z) !== undefined;
+    if (!any) break;
+    const level = new TownStructures(source, kit);
+    level.loadRange({ ...range, z });
+    out.push(level);
+  }
+  return out;
 }

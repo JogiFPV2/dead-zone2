@@ -1,0 +1,212 @@
+{
+  "id": "stairs-house",
+  "name": "map.base.stairs-house.name",
+  "floorHeight": 3,
+  "chunks": {
+    "cx0": 0,
+    "cy0": 0,
+    "cx1": 0,
+    "cy1": 0
+  },
+  "ground": "base:grass",
+  "areas": [
+    {
+      "x": 0,
+      "y": 22,
+      "w": 32,
+      "h": 4,
+      "floor": "base:asphalt"
+    },
+    {
+      "x": 14,
+      "y": 18,
+      "w": 1,
+      "h": 4,
+      "floor": "base:concrete"
+    }
+  ],
+  "buildings": [
+    {
+      "id": 1,
+      "origin": [8, 10],
+      "plan": [
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL",
+        "KKKKLLLLLL"
+      ],
+      "rooms": {
+        "K": {
+          "id": 1,
+          "type": "base:room-kitchen",
+          "floor": "base:kitchen-tiles"
+        },
+        "L": {
+          "id": 2,
+          "type": "base:room-living-room",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:brick-wall",
+      "window": "base:wooden-window",
+      "door": "base:wooden-door",
+      "roof": "base:roof-shingles",
+      "openings": [
+        {
+          "at": [6, 7],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [4, 4],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [2, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [7, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [0, 3],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [9, 2],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [2, 7],
+          "side": "s",
+          "type": "window"
+        }
+      ],
+      "floors": [
+        {
+          "z": 1,
+          "plan": [
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH",
+            "BBBBBHHHHH"
+          ],
+          "rooms": {
+            "B": {
+              "id": 4097,
+              "type": "base:room-bedroom",
+              "floor": "base:concrete"
+            },
+            "H": {
+              "id": 4098,
+              "type": "base:room-living-room",
+              "floor": "base:concrete"
+            }
+          },
+          "openings": [
+            {
+              "at": [5, 2],
+              "side": "w",
+              "type": "door"
+            },
+            {
+              "at": [2, 0],
+              "side": "n",
+              "type": "window"
+            },
+            {
+              "at": [7, 0],
+              "side": "n",
+              "type": "window"
+            },
+            {
+              "at": [0, 3],
+              "side": "w",
+              "type": "window"
+            },
+            {
+              "at": [9, 2],
+              "side": "e",
+              "type": "window"
+            },
+            {
+              "at": [2, 7],
+              "side": "s",
+              "type": "window"
+            },
+            {
+              "at": [7, 7],
+              "side": "s",
+              "type": "window"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:fridge",
+      "x": 8,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 9,
+      "y": 10,
+      "rot": 0
+    }
+  ],
+  "stairs": [
+    {
+      "at": [16, 16],
+      "dir": "N",
+      "len": 3
+    }
+  ],
+  "zones": [
+    {
+      "id": "start",
+      "role": "start",
+      "rects": [
+        {
+          "x": 12,
+          "y": 23,
+          "w": 4,
+          "h": 2
+        }
+      ]
+    }
+  ],
+  "fences": [
+    {
+      "x": 20,
+      "y": 20,
+      "side": "n",
+      "len": 8,
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "side": "w",
+      "len": 8,
+      "contentId": "base:wooden-fence"
+    }
+  ]
+}

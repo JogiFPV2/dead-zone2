@@ -74,9 +74,11 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
     listChunks: () => {
       if (!list) {
         list = [];
-        for (let cy = range.cy0; cy <= range.cy1; cy++) {
-          for (let cx = range.cx0; cx <= range.cx1; cx++) {
-            if (getChunk(cx, cy, range.z)) list.push({ cx, cy, z: range.z });
+        for (const z of levelsOf(getChunk, range)) {
+          for (let cy = range.cy0; cy <= range.cy1; cy++) {
+            for (let cx = range.cx0; cx <= range.cx1; cx++) {
+              if (getChunk(cx, cy, z)) list.push({ cx, cy, z });
+            }
           }
         }
       }
@@ -85,7 +87,34 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
   };
 }
 
-/** Serializable map for `createSimWorkerClient(worker).init(seed, map)`. */
+/** Highest floor level a map may have (blueprint floors go up to z = 15). */
+export const MAX_MAP_LEVEL = 15;
+
+/** Levels `range.z`, `range.z + 1`, ... that have at least one chunk in `range` (stops at a gap). */
+export function levelsOf(
+  getChunk: (cx: number, cy: number, z: number) => unknown,
+  range: SimChunkRange,
+): number[] {
+  const out: number[] = [];
+  for (let z = range.z; z <= MAX_MAP_LEVEL; z++) {
+    let any = false;
+    for (let cy = range.cy0; cy <= range.cy1 && !any; cy++)
+      for (let cx = range.cx0; cx <= range.cx1 && !any; cx++) any = !!getChunk(cx, cy, z);
+    if (!any) break;
+    out.push(z);
+  }
+  return out;
+}
+
+/**
+ * Serializable map for `createSimWorkerClient(worker).init(seed, map)`: every floor level of
+ * `range` (upper floors and stairs; the sim reads chunks by (cx, cy, z)).
+ */
 export function chunkSourceToSimMapData(source: ChunkSource, range: SimChunkRange): SimMapData {
-  return simMapToData(chunkSourceToSimMap(source, range), range);
+  const map = chunkSourceToSimMap(source, range);
+  const levels = levelsOf((cx, cy, z) => map.getChunk(cx, cy, z), range);
+  const first = simMapToData(map, range);
+  if (levels.length <= 1) return first;
+  const upper = levels.slice(1).flatMap((z) => simMapToData(map, { ...range, z }).chunks);
+  return { ...first, chunks: [...first.chunks, ...upper] };
 }

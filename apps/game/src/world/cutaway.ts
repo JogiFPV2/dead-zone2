@@ -39,13 +39,17 @@ export interface Cutaway {
   tx: number;
   ty: number;
   side: CameraSide;
+  /** Player's floor (floor(Position.z)); levels above it are hidden in `building`. Default 0. */
+  z?: number;
 }
 
 export const NO_CUTAWAY: Cutaway = { building: NO_BUILDING, tx: 0, ty: 0, side: { sx: 1, sz: 1 } };
 
 /** Key that changes only when the cutaway needs recomputing. */
 export const cutawayKey = (c: Cutaway): string =>
-  c.building === NO_BUILDING ? '-' : `${c.building}:${c.tx},${c.ty}:${c.side.sx},${c.side.sz}`;
+  c.building === NO_BUILDING
+    ? '-'
+    : `${c.building}:${c.tx},${c.ty}:${c.side.sx},${c.side.sz}:${c.z ?? 0}`;
 
 /** Whether an edge of `building` is lowered under cutaway `c`. */
 export const isEdgeLowered = (
