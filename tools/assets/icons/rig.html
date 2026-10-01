@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../../apps/game/node_modules/three/build/three.module.js",
+          "three/addons/": "../../../apps/game/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body style="margin: 0; background: transparent">
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      // ---- FIXED RIG (do not change per item; per-item only 'rot' = model-space normalisation) ----
+      const RIG = {
+        elev: 30,
+        yaw: 35,
+        pad: 0.1,
+        ss: 2, // supersample factor
+        key: { color: 0xfff0d8, int: 2.4, dir: [-0.6, 1.0, 0.8] }, // camera-relative: x right, y up, z towards camera
+        fill: { color: 0x9fb4c8, int: 0.7, dir: [0.9, 0.2, 0.6] },
+        rim: { color: 0xffffff, int: 2.2, dir: [0.2, 0.6, -1.0] },
+        hemi: { sky: 0xc3ccd2, ground: 0x262b24, int: 0.55 },
+        outline: { px: 2, color: 'rgba(14,17,19,1)' },
+        glow: { px: 2, color: 'rgba(228,230,227,0.28)' },
+      };
+      window.RIG = RIG;
+      const loader = new GLTFLoader();
+      async function renderItem(it, size) {
+        const S = size * RIG.ss;
+        const renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          preserveDrawingBuffer: true,
+        });
+        renderer.setPixelRatio(1);
+        renderer.setSize(S, S);
+        renderer.setClearColor(0x000000, 0);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        const scene = new THREE.Scene();
+        const g = await loader.loadAsync(it.file);
+        const obj = g.scene;
+        const r = it.rot || [0, 0, 0];
+        obj.rotation.set(
+          (r[0] * Math.PI) / 180,
+          (r[1] * Math.PI) / 180,
+          (r[2] * Math.PI) / 180,
+          'XYZ',
+        );
+        const wrap = new THREE.Group();
+        wrap.add(obj);
+        scene.add(wrap);
+        wrap.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(wrap, true);
+        const c = box.getCenter(new THREE.Vector3());
+        obj.position.sub(c);
+        wrap.updateMatrixWorld(true);
+        obj.traverse((o) => {
+          if (o.isMesh) {
+            o.material = o.material.clone();
+            if (o.material.metalness !== undefined) {
+              o.material.metalness = Math.min(o.material.metalness, 0.3);
+              o.material.roughness = Math.max(o.material.roughness ?? 1, 0.55);
+            }
+          }
+        });
+        // camera direction from fixed elevation/yaw
+        const el = (RIG.elev * Math.PI) / 180,
+          yw = (RIG.yaw * Math.PI) / 180;
+        const dir = new THREE.Vector3(
+          Math.sin(yw) * Math.cos(el),
+          Math.sin(el),
+          Math.cos(yw) * Math.cos(el),
+        );
+        const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 1000);
+        const D = box.getSize(new THREE.Vector3()).length() * 2 + 1;
+        cam.position.copy(dir.clone().multiplyScalar(D));
+        cam.lookAt(0, 0, 0);
+        cam.updateMatrixWorld(true);
+        // tight fit: project all vertices to view space
+        let mnx = 1e9,
+          mny = 1e9,
+          mxx = -1e9,
+          mxy = -1e9;
+        const v = new THREE.Vector3();
+        const inv = cam.matrixWorldInverse;
+        obj.traverse((o) => {
+          if (o.isMesh) {
+            const p = o.geometry.attributes.position;
+            for (let i = 0; i < p.count; i++) {
+              v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+              mnx = Math.min(mnx, v.x);
+              mxx = Math.max(mxx, v.x);
+              mny = Math.min(mny, v.y);
+              mxy = Math.max(mxy, v.y);
+            }
+          }
+        });
+        const cx = (mnx + mxx) / 2,
+          cy = (mny + mxy) / 2,
+          h = (Math.max(mxx - mnx, mxy - mny) / 2) * (1 + RIG.pad * 2);
+        cam.left = cx - h;
+        cam.right = cx + h;
+        cam.top = cy + h;
+        cam.bottom = cy - h;
+        cam.updateProjectionMatrix();
+        // lights in camera space
+        const add = (L) => {
+          const d = new THREE.DirectionalLight(L.color, L.int);
+          const w = new THREE.Vector3(...L.dir).normalize().applyQuaternion(cam.quaternion);
+          d.position.copy(w.multiplyScalar(10));
+          scene.add(d);
+          scene.add(d.target);
+        };
+        add(RIG.key);
+        add(RIG.fill);
+        add(RIG.rim);
+        scene.add(new THREE.HemisphereLight(RIG.hemi.sky, RIG.hemi.ground, RIG.hemi.int));
+        renderer.render(scene, cam);
+        // 2D post: outline + glow from alpha mask, then downscale
+        const src = renderer.domElement;
+        const o = document.createElement('canvas');
+        o.width = o.height = S;
+        const ctx = o.getContext('2d');
+        const ring = (px, color) => {
+          const m = document.createElement('canvas');
+          m.width = m.height = S;
+          const mc = m.getContext('2d');
+          for (let a = 0; a < 16; a++) {
+            const t = (a / 16) * Math.PI * 2;
+            mc.drawImage(src, Math.cos(t) * px, Math.sin(t) * px);
+          }
+          mc.globalCompositeOperation = 'source-in';
+          mc.fillStyle = color;
+          mc.fillRect(0, 0, S, S);
+          return m;
+        };
+        const og = RIG.ss * (RIG.outline.px + RIG.glow.px),
+          oo = RIG.ss * RIG.outline.px;
+        ctx.drawImage(ring(og, RIG.glow.color), 0, 0);
+        ctx.drawImage(ring(oo, RIG.outline.color), 0, 0);
+        ctx.drawImage(src, 0, 0);
+        const out = document.createElement('canvas');
+        out.width = out.height = size;
+        const oc = out.getContext('2d');
+        oc.imageSmoothingQuality = 'high';
+        oc.drawImage(o, 0, 0, size, size);
+        renderer.dispose();
+        renderer.forceContextLoss();
+        return out.toDataURL('image/png');
+      }
+      window.renderItem = renderItem;
+      window.__ready = true;
+    </script>
+  </body>
+</html>

@@ -132,6 +132,18 @@ describe('InventorySlot element', () => {
     expect(slotCount(null)).toBe('');
   });
 
+  it('shows the baked raster icon instead of the vector one when set', () => {
+    const slot = createInventorySlot(
+      { item: { ...knife, image: 'icons/kitchen-knife.png' } },
+      document,
+    );
+    expect(slot.el.querySelector('svg')).toBeNull();
+    expect(slot.el.querySelector('img')?.getAttribute('src')).toBe('icons/kitchen-knife.png');
+    slot.update({ item: knife });
+    expect(slot.el.querySelector('img')).toBeNull();
+    expect(slot.el.querySelector('svg')?.dataset.icon).toBe('knife');
+  });
+
   it('selects on click without leaking the click to the game, unless disabled', () => {
     const onSelect = vi.fn();
     const outer = vi.fn();

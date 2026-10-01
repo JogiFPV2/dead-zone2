@@ -2,9 +2,12 @@ import type { ContainerView } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
 import { INITIAL_GAME_STATE, type GameState } from '../state/game-state.js';
 import { EMPTY_HUD_CONTENT } from './content-index.js';
+import { setItemIcons } from './item-icons.js';
 import {
+  equipmentVM,
   formatKg,
   inventoryVM,
+  itemTooltip,
   moveTo,
   putAll,
   quickTransfer,
@@ -44,6 +47,37 @@ const s: GameState = {
 };
 
 describe('inventory model', () => {
+  it('equipment slots carry the equipped item with its baked icon', () => {
+    setItemIcons(new Map([['base:kitchen-knife', '/icons/kitchen-knife.png']]));
+    const eq = equipmentVM(s, EMPTY_HUD_CONTENT);
+    expect(eq.map((e) => e.label)).toEqual([
+      'Prawa ręka',
+      'Lewa ręka',
+      'Plecy',
+      'Tors',
+      'Głowa',
+      'Nogi',
+      'Stopy',
+      'Pas',
+    ]);
+    expect(eq[0]?.item?.image).toBe('/icons/kitchen-knife.png');
+    expect(eq[1]?.item).toBeUndefined();
+    setItemIcons(new Map());
+  });
+  it('tooltip: category, weight, durability, actions', () => {
+    const t = itemTooltip(
+      { id: 1, def: 'base:crowbar', count: 1, weightKg: 1.6, condition: 6 },
+      { id: 'base:crowbar', kind: 'weapon_melee', maxStack: 1, weightKg: 1.6, durabilityMax: 10 },
+      'equip',
+    );
+    expect(t.category).toBe('Broń · Biała');
+    expect(t.stats[0]).toEqual({ label: 'Waga', value: '1,6', unit: 'kg' });
+    expect(t.stats.at(-1)).toMatchObject({ label: 'Trwałość', value: '6/10', bar: 0.6 });
+    expect(t.actions).toEqual([
+      { key: 'LPM', label: 'przenieś' },
+      { key: 'PPM', label: 'załóż' },
+    ]);
+  });
   it('builds panels', () => {
     const vm = inventoryVM(s, EMPTY_HUD_CONTENT);
     expect(vm.own[0]?.title).toBe('Przy sobie');

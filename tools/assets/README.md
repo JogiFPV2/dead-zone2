@@ -18,5 +18,9 @@ pnpm --filter @deadzone/assets assets check   # licencje + obecność plików z 
 - LOD: osobne pliki `<model>.lodN.glb`; poziom, który nie zmniejsza liczby trójkątów o ≥ 15%, jest
   pomijany (low-poly ze szwami UV często już nie da się uprościć).
 - Wyjście: `apps/game/public/models/` (`manifest.json`). Build jest deterministyczny.
+- Ikony przedmiotów: `assets icons [rozmiar]` renderuje `icons/items.json` (modele w `icons/src/`)
+  rigiem Designera `icons/rig.html` w headless Chrome (SwiftShader) do `apps/game/public/icons/`
+  (+ `index.json`). Narzędzie offline: potrzebuje Chrome i playwright-core (`PLAYWRIGHT_CORE`,
+  `CHROME`); PNG są w repo, CI ich nie renderuje.
 - Runtime: `apps/game/src/assets/loader.ts`; strona testowa (tylko dev): `?assettest=1`
   (`&budgetmb=N` pokazuje ostrzeżenie budżetu GPU).

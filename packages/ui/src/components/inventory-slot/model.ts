@@ -15,6 +15,8 @@ export interface SlotItem {
   name: string;
   /** Icon name from `@deadzone/ui` icons; unknown names render no icon. */
   icon: string;
+  /** Raster icon URL (baked from the 3D model); shown instead of `icon` when set. */
+  image?: string;
   count?: number;
   stackable: boolean;
   /** false = no ammo / broken / action in progress → `disabled`. */

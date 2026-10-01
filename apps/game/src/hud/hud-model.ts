@@ -12,6 +12,7 @@ import {
 import type { Bindings } from '../input/bindings.js';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex, HudItemDef } from './content-index.js';
+import { itemImage } from './item-icons.js';
 import { actionKey, moveKeysLabel } from './key-label.js';
 import { humanizeId, moodleName } from './labels.js';
 
@@ -153,6 +154,8 @@ export function itemIcon(def: HudItemDef | undefined): string {
     case 'drink':
       return 'bottle';
     default:
+      if (def.id.endsWith(':duct-tape')) return 'tape';
+      if (def.id.endsWith(':nails')) return 'nails';
       return '';
   }
 }
@@ -172,10 +175,12 @@ export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem |
       continue;
     }
     const def = content.items.get(it.def);
+    const image = itemImage(it.def);
     out.push({
       id: String(it.id),
       name: humanizeId(it.def),
       icon: itemIcon(def),
+      ...(image ? { image } : {}),
       count: it.count,
       stackable: (def?.maxStack ?? 1) > 1,
       usable: true,

@@ -1,7 +1,10 @@
-import type { ContainerId, ContainerView, ItemView } from '@deadzone/protocol';
+import type { ContainerId, ContainerView, EquipSlot, ItemView } from '@deadzone/protocol';
+import { durabilityRow, type StatRowVM, type TooltipItem } from '@deadzone/ui';
 import type { CommandBody } from '../sim/sim-client.js';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex, HudItemDef } from './content-index.js';
+import { itemIcon } from './hud-model.js';
+import { itemImage } from './item-icons.js';
 import { containerName, humanizeId } from './labels.js';
 
 /** Command without the header (the game stamps tick/player). */
@@ -20,6 +23,66 @@ export interface ItemRowVM {
   equipped: boolean;
   /** PPM label: `załóż`, `zdejmij`, `użyj` or none. */
   context?: 'equip' | 'unequip' | 'use';
+  /** Vector icon name (`@deadzone/ui`), used when there is no baked `image`. */
+  icon: string;
+  /** Baked 3D icon URL. */
+  image?: string;
+  /** Durability 0..1 for the small bar (items with durability). */
+  durability?: number;
+  tooltip: TooltipItem;
+}
+
+/** Item category line of the tooltip (uppercased by CSS). */
+const KIND_LABEL: Record<string, string> = {
+  weapon_melee: 'Broń · Biała',
+  weapon_ranged: 'Broń palna',
+  ammo: 'Amunicja',
+  ammo_box: 'Amunicja',
+  magazine: 'Magazynek',
+  food: 'Jedzenie',
+  drink: 'Napój',
+  medical: 'Medyczne',
+  tool: 'Narzędzie',
+  material: 'Materiał',
+  clothing: 'Ubranie',
+  container: 'Torba',
+  literature: 'Książka',
+  vhs: 'Kaseta VHS',
+  lure: 'Wabik',
+  placeable: 'Do postawienia',
+  misc: 'Różne',
+};
+
+const CONTEXT_ACTION = { equip: 'załóż', unequip: 'zdejmij', use: 'użyj' } as const;
+
+/** Tooltip (ItemTooltip from @deadzone/ui) for an inventory row. */
+export function itemTooltip(
+  it: ItemView,
+  def: HudItemDef | undefined,
+  context: ItemRowVM['context'],
+): TooltipItem {
+  const stats: StatRowVM[] = [{ label: 'Waga', value: formatKg(it.weightKg), unit: 'kg' }];
+  if (it.count > 1) stats.push({ label: 'Ilość', value: String(it.count) });
+  if (it.uses !== undefined) stats.push({ label: 'Pozostało', value: String(it.uses) });
+  if (it.freshness) {
+    stats.push({
+      label: 'Świeżość',
+      value: FRESHNESS[it.freshness],
+      ...(it.freshness === 'rotten' ? { tone: 'danger' as const } : {}),
+    });
+  }
+  if (it.condition !== undefined && def?.durabilityMax) {
+    stats.push(durabilityRow(it.condition, def.durabilityMax));
+  }
+  return {
+    name: humanizeId(it.def),
+    category: KIND_LABEL[def?.kind ?? ''] ?? 'Przedmiot',
+    stats,
+    actions: [
+      { key: 'LPM', label: 'przenieś' },
+      ...(context ? [{ key: 'PPM', label: CONTEXT_ACTION[context] }] : []),
+    ],
+  };
 }
 
 export interface PanelVM {
@@ -54,6 +117,11 @@ export function itemRow(it: ItemView, def: HudItemDef | undefined): ItemRowVM {
       : def?.usable
         ? 'use'
         : undefined;
+  const image = itemImage(it.def);
+  const durability =
+    it.condition !== undefined && def?.durabilityMax
+      ? Math.min(1, Math.max(0, it.condition / def.durabilityMax))
+      : undefined;
   return {
     id: it.id,
     name: `${humanizeId(it.def)}${it.count > 1 ? ` ×${it.count}` : ''}`,
@@ -61,7 +129,43 @@ export function itemRow(it: ItemView, def: HudItemDef | undefined): ItemRowVM {
     weight: `${formatKg(it.weightKg)} kg`,
     equipped,
     ...(context ? { context } : {}),
+    icon: itemIcon(def),
+    ...(image ? { image } : {}),
+    ...(durability !== undefined ? { durability } : {}),
+    tooltip: itemTooltip(it, def, context),
   };
+}
+
+/** Equipment slots of the character panel (mockup order: hands, back, torso; head, legs, feet, belt). */
+export const EQUIPMENT_SLOTS: readonly { slot: EquipSlot; label: string; also?: EquipSlot }[] = [
+  { slot: 'hand_primary', label: 'Prawa ręka' },
+  { slot: 'hand_secondary', label: 'Lewa ręka' },
+  { slot: 'back', label: 'Plecy' },
+  { slot: 'torso_outer', label: 'Tors', also: 'torso_inner' },
+  { slot: 'head', label: 'Głowa' },
+  { slot: 'legs', label: 'Nogi' },
+  { slot: 'feet', label: 'Stopy' },
+  { slot: 'belt', label: 'Pas' },
+];
+
+export interface EquipSlotVM {
+  slot: EquipSlot;
+  label: string;
+  item?: ItemRowVM;
+}
+
+/** Character panel slots with the equipped items (empty slots without `item`). */
+export function equipmentVM(s: GameState, content: HudContentIndex): EquipSlotVM[] {
+  const eq = s.inventory?.equipped ?? {};
+  return EQUIPMENT_SLOTS.map(({ slot, label, also }) => {
+    const id = eq[slot] ?? (also ? eq[also] : undefined);
+    const it = id === undefined ? undefined : findItem(s, id);
+    return {
+      slot: it?.equipped?.[0] ?? slot,
+      label,
+      ...(it ? { item: itemRow(it, content.items.get(it.def)) } : {}),
+    };
+  });
 }
 
 function panel(

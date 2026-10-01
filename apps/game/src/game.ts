@@ -55,6 +55,7 @@ import {
   type HudContentIndex,
 } from './hud/content-index.js';
 import { createInventoryWindow } from './hud/inventory-window.js';
+import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
@@ -211,7 +212,9 @@ if (boot.sim === 'worker') {
     hud.setContent(hudContent);
   });
 }
-// Simple inventory window (I / Esc): own inventory and the opened container.
+// Baked item icons (tools/assets `icons`); vector icons until / unless they load.
+void loadItemIcons();
+// Inventory window (I / Esc): character + equipment, bags and the opened container.
 const inventory = createInventoryWindow({
   root: container,
   send: (cmd) => sim.send(stamper.stamp(cmd)),

@@ -14,6 +14,10 @@ export const iconPaths = {
   crowbar: ['M5 20L17 5c1.2-1.4 3.2-.8 3 1.2'],
   bottle: ['M10 2h4v4l2 3v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3z', 'M8 13h8'],
   can: ['M6 8h12M6 16h12'],
+  /** Duct tape roll (vector: no CC0 model for the bake). */
+  tape: ['M12 19h8'],
+  /** Two nails (vector: no CC0 model for the bake). */
+  nails: ['M5 4h6M8 4v14l0 2', 'M13 7h6M16 7v12l0 2'],
 } as const satisfies Record<string, readonly string[]>;
 
 /** Extra primitives that are not paths. */
@@ -24,6 +28,10 @@ export const iconShapes: Partial<Record<IconName, readonly Shape[]>> = {
     { tag: 'circle', attrs: { cx: '12', cy: '12', r: '3' } },
   ],
   can: [{ tag: 'rect', attrs: { x: '6', y: '4', width: '12', height: '16', rx: '2' } }],
+  tape: [
+    { tag: 'circle', attrs: { cx: '12', cy: '12', r: '7' } },
+    { tag: 'circle', attrs: { cx: '12', cy: '12', r: '2.5' } },
+  ],
 };
 
 export type IconName = keyof typeof iconPaths;

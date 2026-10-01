@@ -1,0 +1,19 @@
+[
+  { "items": ["base:kitchen-knife"], "src": "kenney-food-kit/cooking-knife.glb", "rot": [0, 0, 0] },
+  { "items": ["base:baseball-bat"], "src": "polypizza/POXTjdMP2c.glb", "rot": [0, 0, -55] },
+  { "items": ["base:nailed-bat"], "src": "polypizza/HSM4KnggSz.glb", "rot": [0, 0, 0] },
+  { "items": ["base:crowbar"], "src": "polypizza/OS8gAoeDtM.glb", "rot": [0, 35, -40] },
+  { "items": ["base:pistol"], "src": "polypizza/J3i9KDQ3kt.glb", "rot": [0, 0, 0] },
+  { "items": ["base:canned-beans"], "src": "kenney-food-kit/can.glb", "rot": [0, 0, 0] },
+  {
+    "items": ["base:water-bottle", "base:dirty-water-bottle"],
+    "src": "polypizza/KpxDpidn1Z.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:bandage", "base:sterilized-bandage"],
+    "src": "polypizza/Hp80p6148W.glb",
+    "rot": [0, 0, 0]
+  },
+  { "items": ["base:hammer"], "src": "kenney-survival-kit/tool-hammer.glb", "rot": [0, 0, 0] }
+]

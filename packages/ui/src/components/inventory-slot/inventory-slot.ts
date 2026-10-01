@@ -51,11 +51,22 @@ export function createInventorySlot(
     if (p.item) root.title = p.item.name;
     else root.removeAttribute('title');
     key.textContent = p.keybind ?? '';
-    const nextIcon = p.item?.icon;
+    const image = p.item?.image;
+    const nextIcon = image ? `img:${image}` : p.item?.icon;
     if (nextIcon !== iconName) {
       iconName = nextIcon;
-      const svg = nextIcon ? createIcon(doc, nextIcon, 24) : null;
-      icon.replaceChildren(...(svg ? [svg] : []));
+      setData(icon, 'image', Boolean(image));
+      if (image) {
+        const img = doc.createElement('img');
+        img.className = 'dz-slot__img';
+        img.src = image;
+        img.alt = '';
+        img.draggable = false;
+        icon.replaceChildren(img);
+      } else {
+        const svg = nextIcon ? createIcon(doc, nextIcon, 24) : null;
+        icon.replaceChildren(...(svg ? [svg] : []));
+      }
     }
     count.textContent = slotCount(p.item);
   };

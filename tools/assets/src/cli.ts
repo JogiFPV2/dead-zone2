@@ -5,6 +5,7 @@ import { format, resolveConfig } from 'prettier';
 import { buildAll, loadPacks } from './build.js';
 import { checkManifestLicences, updateAssetsMd, type AssetManifest } from './manifest.js';
 import { ALLOWED_LICENCES } from './pack.js';
+import { renderIcons } from './icons.js';
 
 const toolDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(toolDir, '../..');
@@ -13,6 +14,9 @@ const paths = {
   cacheDir: join(toolDir, '.cache'),
   outDir: join(repo, 'apps/game/public/models'),
 };
+
+/** Icon size in px (UI slots are ≤ 64 px; 2× for HiDPI). */
+const ICON_SIZE = 128;
 
 const kb = (n: number) => `${(n / 1024).toFixed(1)} kB`;
 
@@ -51,7 +55,14 @@ async function check(): Promise<void> {
 
 async function main(cmd = 'build'): Promise<void> {
   if (cmd === 'check') return check();
-  if (cmd !== 'build') throw new Error('Użycie: assets build|check');
+  if (cmd === 'icons') {
+    return renderIcons({
+      toolDir,
+      outDir: join(repo, 'apps/game/public/icons'),
+      size: Number(process.argv[3] ?? ICON_SIZE),
+    });
+  }
+  if (cmd !== 'build') throw new Error('Użycie: assets build|check|icons [rozmiar]');
   const m = await buildAll(paths);
   const md = join(repo, 'ASSETS.md');
   const current = await readFile(md, 'utf8').catch(() => '');

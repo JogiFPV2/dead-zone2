@@ -31,9 +31,9 @@
 }
 .dz-inv__cols {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 560px);
+  grid-template-columns: repeat(3, minmax(0, 560px));
   justify-content: center;
-  gap: 72px;
+  gap: calc(48px * var(--ui-scale, 1));
   min-height: 0;
   flex: 1;
   /* Room for the hotbar and stats below. */
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1-5, 6px) var(--space-3);
   background: var(--color-bg-row);
   border: 1px solid var(--color-border-row);
   border-radius: var(--radius-sm);
@@ -108,10 +108,18 @@
 }
 .dz-inv__icon {
   flex: none;
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background: var(--color-neutral-700);
+  color: var(--color-text-secondary, var(--color-neutral-300));
+}
+.dz-inv__icon img,
+.dz-inv__eq-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .dz-inv__row[data-equipped] .dz-inv__icon {
   outline: 1px solid var(--color-accent-base);
@@ -121,7 +129,7 @@
   min-width: 0;
 }
 .dz-inv__row-name {
-  font: var(--font-body-md);
+  font: var(--font-body-sm);
 }
 .dz-inv__row-sub {
   font: var(--font-body-xs);
@@ -162,4 +170,77 @@
   padding: 0 var(--space-1);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
+}
+
+/* Small durability bar before the sub line (mockup: `▬▬▬ 6/10`). */
+.dz-inv__dur {
+  display: inline-block;
+  vertical-align: middle;
+  width: 40px;
+  height: 3px;
+  margin-right: var(--space-2);
+  background: var(--color-bg-track);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.dz-inv__dur > i {
+  display: block;
+  height: 100%;
+  background: var(--color-success-base);
+}
+.dz-inv__dur > i[data-low] {
+  background: var(--color-danger-base);
+}
+
+/* Character panel: total weight + equipment slots (mockup iso-inventory.png). */
+.dz-inv__load {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font: var(--font-body-xs);
+  color: var(--color-text-muted);
+}
+.dz-inv__eq-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4) var(--space-3);
+  margin-top: var(--space-2);
+}
+.dz-inv__eq {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dz-inv__eq-slot {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 56px;
+  height: 56px;
+  padding: var(--space-1);
+  background: var(--color-bg-slot-empty);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-300);
+}
+.dz-inv__eq-slot[data-filled] {
+  background: var(--color-bg-slot-filled);
+  border-color: var(--color-border-strong);
+  cursor: pointer;
+}
+.dz-inv__eq-slot[data-filled]:hover {
+  border-color: var(--color-border-accent);
+}
+.dz-inv__eq-label {
+  font: var(--font-label-xs);
+  letter-spacing: var(--font-tracking-md);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.dz-inv__tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
 }

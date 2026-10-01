@@ -31,6 +31,16 @@
   width: 24px;
   height: 24px;
 }
+/* Baked 3D icon (128 px source, 2 px outline included). */
+.dz-slot__icon[data-image] {
+  width: 48px;
+  height: 48px;
+}
+.dz-slot__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 .dz-slot__key {
   position: absolute;
   left: 6px;
