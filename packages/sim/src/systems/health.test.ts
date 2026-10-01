@@ -69,7 +69,8 @@ describe('health: wounds, bleeding, bandages', () => {
     // A timed action (`medical.durationMin` = 3): still bleeding until it completes.
     expect(sim.getAction()).toMatchObject({ kind: 'bandage', part: 'torso_lower' });
     expect(sim.getSurvival()!.stats.bleeding).toBeGreaterThan(0);
-    runMinutes(sim, 3);
+    // 3 min / (1 − heavy torso actionSpeed 0.15) ≈ 3.5 min (woundPenalties).
+    runMinutes(sim, 3.6);
     expect(sim.getAction()).toBeNull();
     expect(sim.getSurvival()!.stats.bleeding).toBe(0);
     // The bandage was used up.

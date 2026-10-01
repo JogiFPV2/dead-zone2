@@ -1,3 +1,4 @@
+import { Pen, penaltyMul } from '../survival/penalties.js';
 import { EQUIP_SLOTS, GAITS } from '@deadzone/protocol';
 import { gameMinuteAt, minuteOfDay } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
@@ -112,23 +113,11 @@ export function playerVisibility(w: SimWorld, ai: AiWorld, eid: number, day: num
 }
 
 /**
- * Hook: pain and fever narrow the player's sight (× per source, floor `penalties.minMul`).
- * Wound penalties (Stage 4, PR 2) multiply in here too.
+ * Sight loss of the player (`worldSettings.survival.woundPenalties`: head wounds, pain, fever,
+ * bleeding; capped at `maxPenalty`). Without content: 1.
  */
-export function sightPenaltyMul(w: SimWorld, ai: AiWorld, eid: number): number {
-  const s = w.survival;
-  if (!s) return 1;
-  const p = ai.cfg.vision.penalties;
-  let mul = 1;
-  const pain = s.vitals.pain[eid] ?? 0;
-  if (pain > p.painFrom)
-    mul *= 1 - ((1 - p.painMulAt100) * (pain - p.painFrom)) / (100 - p.painFrom);
-  const temp = s.vitals['body-temperature-c'][eid] ?? 0;
-  if (temp > p.feverFromC) {
-    const t = Math.min(1, (temp - p.feverFromC) / (p.feverFullC - p.feverFromC));
-    mul *= 1 - (1 - p.feverMul) * t;
-  }
-  return Math.fround(Math.max(p.minMul, mul));
+export function sightPenaltyMul(w: SimWorld, _ai: AiWorld, eid: number): number {
+  return Math.fround(penaltyMul(w, eid, Pen.vision));
 }
 
 /** Player sight range in tiles at their position (daylight / lights, pain, fever). */

@@ -803,3 +803,15 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
 - **Dla rendera:** zdarzenie `openingChanged {tx, ty, z, side, kind, state, hp, maxHp, by}` przy każdej zmianie i każdym uderzeniu. Widok `openings` to pełna lista krawędzi różnych od domyślnego stanu, wysyłana przy każdej zmianie i po wczytaniu.
 - **Dane:** `worldSettings.openings` (`world-settings/openings.json`): `doorHp` 60, `windowHp` 6, `barricadeHp` 150, `zombieBashMul`, `bashNoise`, `breakNoise`, `toggleNoise`, `windowSpeedMul`, `reachTiles`.
 - **Zadanie Silnika:** adapter `apps/game/src/world/sim-map.ts` nadal usuwa krawędzie drzwi (są przejściem). Żeby drzwi działały w grze, trzeba przekazać je do sim z `edgeKinds` i rysować stan z `openings` / `openingChanged`. Zabijanie deskami przez gracza przyjdzie z craftingiem (na razie tylko `debugOpening`).
+
+### 9.10 Stan po PR „kary z ran”
+- **Dane:** `worldSettings.survival.woundPenalties` (`survival/penalties.ts`, krok pipeline'u `penalties` po `moodles`, co tick, tylko gracze).
+  - W grupie ciała (`bodyGroups`) liczy się najcięższa rana; opatrzona daje × `bandagedFactor`. Grupy się sumują.
+  - Ból, gorączka i krwawienie od progu `conditions.*.from` dodają utratę widzenia i rozmycie. Poziom gorączki = (temperatura − `bodyBaseC`) / `infection.feverMaxC` × 100.
+  - Każda suma jest ucinana do `maxPenalty`, rozmycie do 1.
+- **Skutki:**
+  - `moveSpeed`: prędkość ruchu gracza;
+  - `attackPower`: obrażenia wręcz;
+  - `actionSpeed`: czas akcji czasowych (÷ (1 − kara));
+  - `visionRange`: zasięg wzroku gracza (`sightPenaltyMul`). Zastępuje wcześniejszy hook `vision.penalties` z `ai/config.ts`, który usunięto.
+- **Widok:** `player.penalties {moveSpeed, attackPower, actionSpeed, visionRange, blur}` przy zmianie (nie wysyłamy, dopóki wszystko jest 0). Kary są w stanie (`SurvivalWorld.penalties`), w hashu i w zapisie.

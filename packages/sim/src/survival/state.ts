@@ -79,6 +79,8 @@ export interface SurvivalWorld {
   readonly sleepRecovered: Float32Array;
   readonly sleepTicks: Uint32Array;
   readonly sleepSaved: Uint8Array;
+  /** Wound / condition penalties per entity × 5 (survival/penalties.ts `Pen`). */
+  readonly penalties: Float32Array;
   /** Zombie virus: 0/1, absolute minute of infection, incubation and death delay (minutes). */
   readonly virus: Uint8Array;
   readonly virusStart: Uint32Array;
@@ -120,6 +122,7 @@ export function createSurvivalWorld(
     sleepRecovered: new Float32Array(capacity),
     sleepTicks: new Uint32Array(capacity),
     sleepSaved: new Uint8Array(capacity),
+    penalties: new Float32Array(capacity * 5),
     virus: new Uint8Array(capacity),
     virusStart: new Uint32Array(capacity),
     virusIncubation: new Uint32Array(capacity),
@@ -149,6 +152,7 @@ export function initVitals(s: SurvivalWorld, eid: number): void {
   s.virus[eid] = 0;
   s.carryLoad[eid] = 0;
   s.bagSpeed[eid] = 1;
+  s.penalties.fill(0, eid * 5, eid * 5 + 5);
   for (let i = 0; i < MOD_STATS.length; i++) {
     s.modMul[eid * MOD_STATS.length + i] = 1;
     s.modAdd[eid * MOD_STATS.length + i] = 0;

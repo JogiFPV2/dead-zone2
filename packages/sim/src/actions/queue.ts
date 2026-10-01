@@ -10,6 +10,7 @@ import { playerItems } from '../items/inventory.js';
 import type { ActionState, PlayerItems } from '../items/store.js';
 import { threatNearby } from '../systems/sleep.js';
 import { emitNoise } from '../ai/noise.js';
+import { Pen, penaltyMul } from '../survival/penalties.js';
 
 /**
  * Timed actions (docs 2.5 `actions`), the Stage 6 foundation: one current action per player plus
@@ -71,7 +72,12 @@ export function startAction(
 }
 
 function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: ActionHandler): void {
-  const ticks = Math.max(1, Math.round(h.durationMin(w, eid, a) * ticksPerGameMinute(w.clock)));
+  // Slower with wounds (woundPenalties.actionSpeed, capped at maxPenalty < 1).
+  const speed = Math.max(0.1, penaltyMul(w, eid, Pen.action));
+  const ticks = Math.max(
+    1,
+    Math.round((h.durationMin(w, eid, a) * ticksPerGameMinute(w.clock)) / speed),
+  );
   a.startTick = w.tick;
   a.endTick = w.tick + ticks;
   p.current = a;

@@ -3,6 +3,7 @@ import { DEFAULT_STAGE4_CONFIG } from '../ai/config.js';
 import { ModSlot } from '../content/adapter.js';
 import { atan2Bam } from '../core/dmath.js';
 import { modded } from '../survival/state.js';
+import { Pen, penalty } from '../survival/penalties.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { moveCircle, type Vec2 } from '../world/collision.js';
 import { EF } from '../openings/state.js';
@@ -34,7 +35,11 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
         speed = Math.fround(speed * (gait === 'run' ? g.runSpeedMul : g.sneakSpeedMul));
       }
       if (s) {
-        speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed) * (s.bagSpeed[eid] ?? 1));
+        speed = Math.fround(
+          modded(s, eid, ModSlot['move-speed'], speed) *
+            (s.bagSpeed[eid] ?? 1) *
+            (1 - penalty(s, eid, Pen.move)),
+        );
       }
     }
     // Climbing through an open / broken window: slower (players and zombies).

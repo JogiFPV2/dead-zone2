@@ -263,8 +263,9 @@ describe('survival over the worker protocol', () => {
     h.advance(100);
     client.debugGiveItem('fixture:bandage');
     client.bandage('hand_r', 'fixture:bandage');
-    // Bandaging is a timed action: 3 game minutes = 7.5 s at ×1.
-    h.advance(8000);
+    // Bandaging is a timed action: 3 game minutes = 7.5 s at ×1, slower with the hand wound
+    // (woundPenalties.actionSpeed).
+    h.advance(10000);
     expect(events.map((e) => e.type)).toContain('wounded');
     const woundViews = views.flatMap((v) => (v.player?.wounds ? [v.player.wounds] : []));
     expect(woundViews.at(-1)).toEqual([

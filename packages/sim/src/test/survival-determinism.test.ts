@@ -74,7 +74,7 @@ describe('survival determinism', () => {
   });
 
   it('matches the golden hash (update consciously with `vitest -u` and a note in the PR)', () => {
-    expect(runScript(5, 18_000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"58ba544f"`);
+    expect(runScript(5, 18_000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"b92e4fda"`);
   });
 
   it('the hash covers survival state (stats, wounds, virus) and the seed changes the rolls', () => {

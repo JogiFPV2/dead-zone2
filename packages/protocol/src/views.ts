@@ -70,6 +70,20 @@ export interface PlayerView {
   moodles?: MoodleView[];
   /** Full list when any wound changed. */
   wounds?: WoundView[];
+  /** Current penalties from wounds and pain / fever / bleeding (when any changes). */
+  penalties?: PenaltiesView;
+}
+
+/**
+ * Losses as fractions 0..`woundPenalties.maxPenalty` (0.15 = −15%): movement speed, melee
+ * damage, timed action speed, sight range; `blur` 0..1 = screen blur for the renderer.
+ */
+export interface PenaltiesView {
+  moveSpeed: number;
+  attackPower: number;
+  actionSpeed: number;
+  visionRange: number;
+  blur: number;
 }
 
 /** One item instance (names, icons and kinds come from content by `def`). */

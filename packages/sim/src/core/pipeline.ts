@@ -11,6 +11,7 @@ import { inputSystem } from '../systems/input.js';
 import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { moodlesSystem } from '../systems/moodles.js';
+import { penaltiesSystem } from '../survival/penalties.js';
 import { facingSystem, movementSystem } from '../systems/movement.js';
 import { sleepSystem } from '../systems/sleep.js';
 import { survivalSystem } from '../systems/survival.js';
@@ -51,6 +52,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     },
     { name: 'sleep', run: (w, ctx) => sleepSystem(w, ctx.minutes.first, ctx.minutes.count) },
     { name: 'moodles', run: (w, ctx) => moodlesSystem(w, ctx.minutes.count > 0) },
+    { name: 'penalties', run: (w) => penaltiesSystem(w) },
     { name: 'combat', run: (w, ctx) => combatSystem(w, ctx.grid) },
     { name: 'lifecycle', run: (w) => lifecycleSystem(w) },
   ];

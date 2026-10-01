@@ -15,6 +15,7 @@ import {
 import type { Stage4Config } from './ai/config.js';
 import type { CombatConfig } from './combat/config.js';
 import { hashAi } from './ai/hash.js';
+import { PENALTY_SLOTS } from './survival/penalties.js';
 import { hashCombat } from './combat/hash.js';
 import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
 import { spawnZombies } from './ai/zombies.js';
@@ -297,6 +298,7 @@ export function createSim(input: SimOptions): Sim {
         h.u32(s.asleep[eid] ?? 0).u32(s.sleepStart[eid] ?? 0);
         h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
         h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
+        for (let i = 0; i < PENALTY_SLOTS; i++) h.f32(s.penalties[eid * PENALTY_SLOTS + i] ?? 0);
         h.u32(s.virus[eid] ?? 0)
           .u32(s.virusStart[eid] ?? 0)
           .u32(s.virusIncubation[eid] ?? 0)

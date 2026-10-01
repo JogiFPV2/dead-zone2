@@ -1,3 +1,4 @@
+import { Pen, penaltyMul } from '../survival/penalties.js';
 import { BODY_PARTS, type HitSource } from '@deadzone/protocol';
 import { emitNoise } from '../ai/noise.js';
 import { ZombieState, type AiWorld } from '../ai/state.js';
@@ -137,7 +138,8 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
     let dmg = m.damage.min + rng.nextFloat() * (m.damage.max - m.damage.min);
     if (m.critChance > 0 && rng.chance(m.critChance)) dmg *= cfg.critMul;
     if (exhausted) dmg *= cfg.exhaustedDamageMul;
-    dmg = Math.fround(dmg);
+    // Arm / torso wounds (woundPenalties.attackPower).
+    dmg = Math.fround(dmg * penaltyMul(w, eid, Pen.attack));
     const killed = damageZombie(w, ai, cb, grid, t.eid, eid, dmg, 'melee');
     if (!killed && m.knockback > 0) {
       push(w, grid, eid, t.eid, cfg.knockbackTiles * m.knockback);

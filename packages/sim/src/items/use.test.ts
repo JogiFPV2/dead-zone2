@@ -131,7 +131,8 @@ describe('using items: eat, drink, bandage, unpack (timed actions)', () => {
     runMinutes(sim, 1.1);
     expect(sim.getSurvival()!.stats.hunger).toBeCloseTo(35, 0);
     expect(sim.getAction()).toMatchObject({ kind: 'bandage', part: 'hand_l' });
-    runMinutes(sim, 3);
+    // 3 min, slower with the hand scratch (woundPenalties.actionSpeed).
+    runMinutes(sim, 3.5);
     expect(sim.getSurvival()!.wounds[0]!.bandaged).toBe(true);
     expect(findItem(sim, 'base:bandage')).toBeUndefined();
   });

@@ -24,15 +24,6 @@ export interface VisionConfig {
   /** `vision.fovHalfAngleDeg`: zombie sight cone; closer than `nearSenseTiles` they notice all around. */
   fovHalfAngleDeg: number;
   nearSenseTiles: number;
-  /** `vision.penalties`: pain and fever narrow the player's sight (hook, multiplied, floor `minMul`). */
-  penalties: {
-    painFrom: number;
-    painMulAt100: number;
-    feverFromC: number;
-    feverFullC: number;
-    feverMul: number;
-    minMul: number;
-  };
 }
 
 export interface NoiseConfig {
@@ -110,14 +101,6 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     sneakVisibilityMul: 0.6,
     fovHalfAngleDeg: 70,
     nearSenseTiles: 2.5,
-    penalties: {
-      painFrom: 40,
-      painMulAt100: 0.7,
-      feverFromC: 37.5,
-      feverFullC: 40,
-      feverMul: 0.7,
-      minMul: 0.4,
-    },
   },
   noise: {
     footsteps: {

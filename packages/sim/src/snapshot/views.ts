@@ -1,3 +1,4 @@
+import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
 import { openingView } from '../openings/state.js';
 import {
   BODY_PARTS,
@@ -9,6 +10,7 @@ import {
   type MoodleView,
   type PlayerId,
   type PlayerView,
+  type PenaltiesView,
   type SimViewPatch,
   type ViewStat,
   type WoundView,
@@ -90,6 +92,7 @@ export class ViewTracker {
   private combatKey = '';
   private deathSent = false;
   private openingsVersion = 0;
+  private penaltiesKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -136,6 +139,20 @@ export class ViewTracker {
       if (wk !== this.woundsKey) {
         this.woundsKey = wk;
         p.wounds = wounds;
+      }
+      const o = eid * PENALTY_SLOTS;
+      const pen: PenaltiesView = {
+        moveSpeed: round2(s.penalties[o + Pen.move] ?? 0),
+        attackPower: round2(s.penalties[o + Pen.attack] ?? 0),
+        actionSpeed: round2(s.penalties[o + Pen.action] ?? 0),
+        visionRange: round2(s.penalties[o + Pen.vision] ?? 0),
+        blur: round2(s.penalties[o + Pen.blur] ?? 0),
+      };
+      const pk = JSON.stringify(pen);
+      if (pk !== this.penaltiesKey) {
+        // A fresh tracker sends nothing while there are no penalties.
+        if (this.penaltiesKey !== '' || Object.values(pen).some((v) => v > 0)) p.penalties = pen;
+        this.penaltiesKey = pk;
       }
       if (Object.keys(p).length > 0) patch.player = p;
     }
