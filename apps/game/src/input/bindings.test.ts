@@ -16,7 +16,8 @@ describe('default bindings', () => {
     expect(findConflicts(DEFAULT_BINDINGS)).toEqual([]);
     expect(DEFAULT_BINDINGS.moveUp).toEqual(['KeyW']);
     expect(DEFAULT_BINDINGS.rotateCameraLeft).toEqual(['KeyQ']);
-    expect(DEFAULT_BINDINGS.zoomIn).toEqual(['WheelUp']);
+    expect(DEFAULT_BINDINGS.zoomIn).toEqual(['WheelUp', 'KeyX']);
+    expect(DEFAULT_BINDINGS.zoomOut).toEqual(['WheelDown', 'KeyZ']);
     expect(indexBindings(DEFAULT_BINDINGS).get('Digit3')).toEqual(['quickslot3']);
   });
 });
@@ -37,8 +38,8 @@ describe('rebind', () => {
   it('binds a free input into a slot', () => {
     const r = rebind(DEFAULT_BINDINGS, 'moveUp', 'ArrowUp', { slot: 1 });
     expect(r.ok && r.bindings.moveUp).toEqual(['KeyW', 'ArrowUp']);
-    const s = rebind(DEFAULT_BINDINGS, 'moveUp', 'KeyZ');
-    expect(s.ok && s.bindings.moveUp).toEqual(['KeyZ']);
+    const s = rebind(DEFAULT_BINDINGS, 'moveUp', 'KeyY');
+    expect(s.ok && s.bindings.moveUp).toEqual(['KeyY']);
   });
 
   it('rejects conflicts by default and reports them', () => {
@@ -94,5 +95,12 @@ describe('sanitizeBindings', () => {
     expect(b.pause).toEqual(['Escape']);
     expect(b.inventory).toEqual(['KeyI']);
     expect(sanitizeBindings(null)).toEqual(DEFAULT_BINDINGS);
+  });
+
+  it('defaults of newly added actions do not steal inputs the stored data already uses', () => {
+    // Older save: no `skills` action yet, K rebound to sprint by the player.
+    const b = sanitizeBindings({ ...DEFAULT_BINDINGS, skills: undefined, sprint: ['KeyK'] });
+    expect(b.sprint).toEqual(['KeyK']);
+    expect(b.skills).toEqual([]);
   });
 });

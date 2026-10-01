@@ -1,4 +1,4 @@
-import { Group, WebGLRenderer } from 'three';
+import { Group, Vector3, WebGLRenderer } from 'three';
 import { computeUiScale } from '@deadzone/ui';
 import {
   CAMERA_DISTANCE,
@@ -8,6 +8,8 @@ import {
 import { CameraRig } from './camera/rig.js';
 import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
+import { InteractController } from './hud/v2/interact-controller.js';
+import { QUICK_ACCESS, QUICK_ACCESS_READY, type QuickAccessId } from './hud/v2/quick-access.js';
 import { InputMap } from './input/input-map.js';
 import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
@@ -256,7 +258,7 @@ rig.setZoom(settings.get().view.cameraZoom);
 rig.onZoomTarget = debounced(400, (cameraZoom: number) =>
   settings.update((s) => ({ ...s, view: { ...s.view, cameraZoom } })),
 );
-bindCameraInput(rig, input, () => !!container.dataset.modal);
+const cameraInput = bindCameraInput(rig, input, () => !!container.dataset.modal);
 
 // Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet;
 // they come with zombies); it has no collisions and no survival.
@@ -410,6 +412,7 @@ const hud = createHud({
   minimapZoom: settings.get().view.minimapZoom,
   onMinimapZoom: (minimapZoom) =>
     settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
+  onQuickAccess: (id) => quickAccess(id),
 });
 // Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
 const sendBody = (body: CommandBody) => {
@@ -497,16 +500,35 @@ const workshop = createWorkshopWindow({
   content: () => hudContent,
   position: () => snapshots.sample(performance.now(), TICK_MS),
 });
-input.on('inventory', () => {
+const toggleInventory = () => {
   if (loot.open) loot.hide();
   workshop.close();
   inventory.toggle();
-});
-input.on('crafting', () => {
+};
+const toggleWorkshop = () => {
   if (loot.open) loot.hide();
   inventory.close();
   workshop.toggle();
-});
+};
+input.on('inventory', toggleInventory);
+input.on('crafting', toggleWorkshop);
+/** Screens that do not exist yet: a short „wkrótce” toast (HUD v2 §3). */
+const comingSoon = (id: QuickAccessId) => {
+  const def = QUICK_ACCESS.find((q) => q.id === id);
+  if (def && !QUICK_ACCESS_READY.has(id)) hud.toast(`${def.label} — wkrótce`);
+};
+input.on('character', () => comingSoon('character'));
+input.on('skills', () => comingSoon('skills'));
+input.on('journal', () => comingSoon('journal'));
+input.on('map', () => comingSoon('map'));
+/** Top bar quick access (HUD v2): same as the keys. */
+function quickAccess(id: QuickAccessId): void {
+  if (id === 'inventory') toggleInventory();
+  else if (id === 'crafting') toggleWorkshop();
+  else if (id === 'menu') {
+    handleEscape(escapeWindows, gameState.get().death !== undefined, () => pause.openMenu());
+  } else comingSoon(id);
+}
 // Escape: an open window closes first; with none open, the pause menu (deadzone-menu-spec §6).
 const escapeWindows: readonly Closable[] = [
   // Sleeping: Esc wakes up first (sleep screen).
@@ -705,7 +727,34 @@ function interact(): void {
   else if (intent.type === 'close') sim.send(stamper.stamp({ type: 'closeContainer' }));
   else if (intent.type === 'cancel') sim.send(stamper.stamp({ type: 'cancelAction' }));
 }
-input.on('interact', interact);
+// F: tap opens, hold 3.5 s searches (HUD v2 §6); in windows / during actions the old press.
+const projected = new Vector3();
+const interaction = new InteractController({
+  state: () => gameState.get(),
+  player: () => snapshots.sample(performance.now(), TICK_MS),
+  held: () => input.isDown('interact'),
+  interrupted: () =>
+    (['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const).some((a) => input.isDown(a)) ||
+    input.isDown('primaryAction') ||
+    input.isDown('secondaryAction'),
+  windowOpen: () => inventory.open || loot.open || workshop.open || !!gameState.get().death,
+  legacy: interact,
+  open: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
+  search: (t) => sim.send(stamper.stamp({ type: 'search', ...t })),
+  cancel: () => sim.send(stamper.stamp({ type: 'cancelAction' })),
+  project(x, y, z, h) {
+    const w = simToWorld(x, y, z);
+    projected.set(w.x, w.y + h, w.z).project(camera);
+    if (projected.z > 1 || Math.abs(projected.x) > 1.1 || Math.abs(projected.y) > 1.1) return;
+    return {
+      x: ((projected.x + 1) / 2) * container.clientWidth,
+      y: ((1 - projected.y) / 2) * container.clientHeight,
+    };
+  },
+  key: () => actionKey(settings.get().input.bindings, 'interact'),
+  tickMs: TICK_MS,
+});
+input.on('interact', () => interaction.press(performance.now()));
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death) return;
@@ -961,6 +1010,7 @@ renderer.setAnimationLoop((time) => {
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }
+  cameraInput.update(time);
   if (import.meta.env.DEV && boot.cam) {
     rig.target.set(boot.cam.x, 0, boot.cam.z);
     camera.zoom = VIEW_HEIGHT / boot.cam.viewHeight;
@@ -1010,7 +1060,9 @@ renderer.setAnimationLoop((time) => {
           : gs.clock,
       interactHeld: input.isDown('interact'),
       aiming: isGunAiming(),
+      cameraZoom: rig.zoomTarget,
     });
+    hud.setPrompt(interaction.frame(performance.now(), simTick));
     updateReticle(state.x, state.y, performance.now());
   }
   const t0 = performance.now();

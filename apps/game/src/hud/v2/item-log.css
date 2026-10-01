@@ -1,0 +1,105 @@
+/* Item log (deadzone-hud-v2-spec §5): right 18, top 249, 258 wide, rows 29 px. */
+.dz-itemlog {
+  width: 258px;
+  pointer-events: none;
+}
+.dz-itemlog[hidden] {
+  display: none;
+}
+.dz-itemlog__head {
+  margin-bottom: 6px;
+  color: var(--color-neutral-500);
+  font: 700 9px/1 var(--font-family-mono);
+  letter-spacing: 0.1em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.dz-itemlog__list {
+  overflow: hidden;
+  border: 1px solid var(--color-neutral-700);
+  border-radius: 7px;
+  background: rgba(21, 25, 28, 0.84);
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.27);
+  backdrop-filter: blur(7px);
+}
+.dz-itemlog__list:empty {
+  display: none;
+}
+.dz-itemlog__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 29px;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(44, 51, 55, 0.55);
+  color: var(--color-text-muted);
+  font: 500 11px/1 var(--font-family-mono);
+  transition: opacity var(--motion-base) linear;
+  animation: dz-itemlog-in 200ms var(--motion-ease-out);
+}
+.dz-itemlog__row:last-child {
+  border-bottom: 0;
+}
+.dz-itemlog__row[data-leaving] {
+  animation: dz-itemlog-out 160ms var(--motion-ease-in) forwards;
+}
+@keyframes dz-itemlog-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+@keyframes dz-itemlog-out {
+  to {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+.dz-itemlog__ic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-primary);
+}
+.dz-itemlog__ic img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.dz-itemlog__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dz-itemlog__row[data-kind='gain'] .dz-itemlog__text {
+  color: var(--color-success-text);
+}
+.dz-itemlog__row[data-kind='loss'] .dz-itemlog__text {
+  color: var(--color-danger-text);
+}
+.dz-itemlog__row[data-kind='found'] .dz-itemlog__text {
+  color: var(--color-accent-hi);
+}
+.dz-itemlog__row[data-kind='note'] .dz-itemlog__text {
+  color: var(--color-text-muted);
+}
+/* Newest row: primary text (mockup). */
+.dz-itemlog__row:first-child[data-kind='gain'] .dz-itemlog__text {
+  color: var(--color-text-primary);
+}
+.dz-itemlog__time {
+  margin-left: auto;
+  color: var(--color-neutral-500);
+  font-size: 9px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dz-itemlog__row,
+  .dz-itemlog__row[data-leaving] {
+    animation: none;
+  }
+}

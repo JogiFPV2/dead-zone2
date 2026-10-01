@@ -51,6 +51,13 @@ export class CameraRig {
     this.onZoomTarget?.(this.zoomGoal);
   }
 
+  /** Moves the zoom target by `delta` (Z/X keys, HUD v2 chip: ±0.1), snapped to 0.1. */
+  zoomStep(delta: number): void {
+    const next = Math.round((this.zoomGoal + delta) * 10) / 10;
+    this.zoomGoal = clamp(next, this.zoomLimits.min, this.zoomLimits.max);
+    this.onZoomTarget?.(this.zoomGoal);
+  }
+
   /** Sets the zoom (clamped) right away, e.g. restored from settings. */
   setZoom(zoom: number): void {
     this.zoomGoal = clamp(zoom, this.zoomLimits.min, this.zoomLimits.max);

@@ -25,6 +25,9 @@ export const ACTIONS = [
   'sleep',
   'watchTv',
   'map',
+  'character',
+  'skills',
+  'journal',
   'pause',
   'toggleHints',
 ] as const;

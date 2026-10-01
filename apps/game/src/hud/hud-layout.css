@@ -1,80 +1,99 @@
-/* HUD group anchors (spec §2, 1920×1080 reference; everything scales with --ui-scale). */
+/* HUD v2 group anchors (deadzone-hud-v2-spec §3, 1280×720 reference, safe area 18 px).
+   `--hud2-s` (set on the game root) scales every group from its anchor corner. */
 .dz-g {
   position: absolute;
-  --_s: var(--ui-scale, 1);
-  --_safe: calc(var(--size-safe) * var(--_s));
+  --_s: var(--hud2-s, 1);
+  --_safe: calc(18px * var(--_s));
 }
 .dz-g--objective {
   left: var(--_safe);
-  top: var(--_safe);
+  top: calc(50px * var(--_s));
   transform: scale(var(--_s));
   transform-origin: top left;
 }
 .dz-g--moodles {
   left: var(--_safe);
-  top: calc(150px * var(--_s));
+  top: calc(123px * var(--_s));
   transform: scale(var(--_s));
   transform-origin: top left;
-}
-/* No objective: moodles move up to y 32 (spec §3.1 "none"). */
-.dz-hud[data-objective='none'] .dz-g--moodles {
-  top: var(--_safe);
 }
 .dz-g--hints {
   left: var(--_safe);
-  top: calc(262px * var(--_s));
+  top: calc(164px * var(--_s));
   transform: scale(var(--_s));
   transform-origin: top left;
 }
+/* No objective: moodles and hints move up into its place. */
+.dz-hud[data-objective='none'] .dz-g--moodles {
+  top: calc(50px * var(--_s));
+}
+.dz-hud[data-objective='none'] .dz-g--hints {
+  top: calc(91px * var(--_s));
+}
 .dz-g--threat {
   left: 50%;
-  top: var(--_safe);
+  top: calc(50px * var(--_s));
   transform: translateX(-50%) scale(var(--_s));
   transform-origin: top center;
 }
+/* The top bar is the only clock (spec §2). */
 .dz-g--clock {
-  right: var(--_safe);
-  top: var(--_safe);
-  transform: scale(var(--_s));
-  transform-origin: top right;
+  display: none;
 }
 .dz-g--minimap {
   right: var(--_safe);
-  top: calc(116px * var(--_s));
+  top: calc(54px * var(--_s));
+  width: 182px;
+  height: 182px;
+  transform: scale(var(--_s));
+  transform-origin: top right;
+}
+.dz-g--itemlog {
+  right: var(--_safe);
+  top: calc(249px * var(--_s));
   transform: scale(var(--_s));
   transform-origin: top right;
 }
 .dz-g--toasts {
   right: var(--_safe);
-  top: calc(340px * var(--_s));
+  top: calc(392px * var(--_s));
   transform: scale(var(--_s));
   transform-origin: top right;
 }
-/* Bottom centre column: hotbar (y 834–916), gap 14, StatBars (y 930–970), 110 px free below. */
+/* Bottom column (mockup x: firearm 310, hotbar 460–764, StatBars 385–840 @1280). */
 .dz-g--hotbar {
-  left: 50%;
-  bottom: calc(164px * var(--_s));
-  transform: translateX(-50%) scale(var(--_s));
-  transform-origin: bottom center;
+  left: calc(50% - 180px * var(--_s));
+  bottom: calc(77px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: bottom left;
 }
 .dz-g--stats {
-  left: 50%;
-  bottom: calc(110px * var(--_s));
-  transform: translateX(-50%) scale(var(--_s));
-  transform-origin: bottom center;
+  left: calc(50% - 255px * var(--_s));
+  bottom: calc(24px * var(--_s));
+  transform: scale(var(--_s));
+  transform-origin: bottom left;
 }
 .dz-g--actions {
   right: var(--_safe);
-  bottom: var(--_safe);
+  bottom: calc(68px * var(--_s));
   display: flex;
-  gap: var(--space-3);
+  gap: 7px;
   transform: scale(var(--_s));
   transform-origin: bottom right;
 }
+.dz-g--camera {
+  right: var(--_safe);
+  bottom: var(--_safe);
+  transform: scale(var(--_s));
+  transform-origin: bottom right;
+}
+.dz-g--world {
+  inset: 0;
+}
 .dz-hotbar {
   display: flex;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  gap: 4px;
+  padding: 5px;
 }
 .dz-lowres {
   left: 50%;

@@ -1,0 +1,153 @@
+/* Interaction prompt + search ring (deadzone-hud-v2-spec §6). Children are laid out around the
+   object marker (0, 0); the group scales with the HUD v2 scale. Offsets from the mockup:
+   prompt 230×42 at (−115, +46), ring Ø116 centred at (0, −21), panel 218×40 at (−109, +46). */
+.dz-ip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform: translate(var(--ip-x), var(--ip-y)) scale(var(--hud2-s, 1));
+  pointer-events: none;
+  font-family: var(--font-family-mono);
+  color: var(--color-text-primary);
+}
+.dz-ip[hidden] {
+  display: none;
+}
+.dz-ip__marker {
+  position: absolute;
+  left: -4.5px;
+  top: -4.5px;
+  box-sizing: border-box;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--color-accent-base);
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(224, 162, 58, 0.13);
+}
+.dz-ip__key {
+  padding: 3px 5px;
+  border: 1px solid var(--color-neutral-500);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.9);
+  color: var(--color-text-primary);
+  font: 700 10px/1 var(--font-family-mono);
+}
+.dz-ip__key--primary {
+  border-color: var(--color-accent-base);
+  background: var(--color-accent-base);
+  color: var(--color-neutral-950);
+}
+.dz-ip__prompt,
+.dz-ip__panel {
+  position: absolute;
+  top: 46px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--color-neutral-700);
+  border-radius: 7px;
+  background: rgba(21, 25, 28, 0.84);
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.27);
+  backdrop-filter: blur(7px);
+  white-space: nowrap;
+}
+.dz-ip__prompt {
+  left: -115px;
+  width: 230px;
+  height: 42px;
+  padding: 0 10px;
+  font: 500 11px/1 var(--font-family-mono);
+}
+.dz-ip__prompt [hidden] {
+  display: none;
+}
+.dz-ip__sep {
+  color: var(--color-neutral-500);
+}
+.dz-ip__panel {
+  left: -109px;
+  width: 218px;
+  height: 40px;
+  font: 600 12px/1 var(--font-family-mono);
+}
+.dz-ip__title {
+  color: var(--color-accent-hi);
+  text-transform: uppercase;
+}
+.dz-ip__secs {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.dz-ip__ring {
+  position: absolute;
+  left: -58px;
+  top: -79px;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: rgba(14, 17, 19, 0.66);
+  box-shadow:
+    0 0 0 1px var(--color-neutral-950),
+    0 0 20px rgba(224, 162, 58, 0.19);
+}
+.dz-ip__svg {
+  position: absolute;
+  inset: -2px;
+  width: 120px;
+  height: 120px;
+  overflow: visible;
+  transform: rotate(-90deg);
+}
+.dz-ip__track,
+.dz-ip__arc {
+  fill: none;
+  stroke-width: 3;
+}
+.dz-ip__track {
+  stroke: var(--color-neutral-700);
+}
+.dz-ip__arc {
+  stroke: var(--color-accent-base);
+}
+/* Peak marker: a 10 px diamond on the rim that turns with the progress. */
+.dz-ip__peak {
+  position: absolute;
+  inset: 0;
+}
+.dz-ip__peak::before {
+  content: '';
+  position: absolute;
+  left: 53px;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent-base);
+  transform: rotate(45deg);
+}
+.dz-ip__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.dz-ip__pct {
+  color: var(--color-accent-hi);
+  font: 700 24px/1 var(--font-family-mono);
+}
+.dz-ip__name {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font: 400 10px/1 var(--font-family-mono);
+}
+.dz-ip:not([data-mode='search']) :is(.dz-ip__ring, .dz-ip__panel) {
+  display: none;
+}
+.dz-ip[data-mode='search'] :is(.dz-ip__prompt, .dz-ip__marker) {
+  display: none;
+}

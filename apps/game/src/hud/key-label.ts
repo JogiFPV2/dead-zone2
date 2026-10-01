@@ -44,3 +44,9 @@ export function moveKeysLabel(b: Bindings): string {
   );
   return keys.every((k) => /^[A-Z0-9]$/.test(k)) ? keys.join('') : keys.join('/');
 }
+
+/** Label of an action's first keyboard input (skips mouse / wheel), or `–`. */
+export const keyboardKey = (b: Bindings, action: Action): string => {
+  const code = b[action].find((c) => !/^(Mouse|Wheel)/.test(c));
+  return code ? keyLabel(code) : '–';
+};

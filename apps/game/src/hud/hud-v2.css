@@ -1,0 +1,288 @@
+/* HUD v2 sizes (deadzone-hud-v2-spec §3–§7) over the @deadzone/ui HUD A components. */
+.dz-hud .dz-glass {
+  border-radius: 7px;
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.27);
+}
+/* Objective 242×62, title 12 px, progress 3 px. */
+.dz-hud .dz-objective {
+  box-sizing: border-box;
+  width: 242px;
+  min-height: 62px;
+  padding: 10px 12px;
+}
+.dz-hud .dz-objective__head {
+  height: auto;
+  gap: 7px;
+}
+.dz-hud .dz-objective__marker {
+  width: 3px;
+  height: 12px;
+}
+.dz-hud .dz-objective__label {
+  font: 700 9px/1 var(--font-family-mono);
+  letter-spacing: 0.12em;
+}
+.dz-hud .dz-objective__title {
+  margin-top: 7px;
+  font: 400 12px/1.25 var(--font-family-sans);
+}
+.dz-hud .dz-objective__track {
+  height: 3px;
+  margin-top: 7px;
+}
+/* Moodle chips h 26–30, 9 px mono. */
+.dz-hud .dz-moodle-list {
+  gap: 6px;
+  max-width: 242px;
+}
+.dz-hud .dz-moodle {
+  height: 26px;
+  padding: 0 8px;
+  gap: 6px;
+  font: 700 9px/1 var(--font-family-mono);
+  letter-spacing: 0.05em;
+}
+/* Key hints row h 27, 9 px. */
+.dz-hud .dz-hints {
+  height: 27px;
+  padding: 0 10px;
+  font: 400 9px/1 var(--font-family-mono);
+}
+.dz-hud .dz-hints .dz-key {
+  height: auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+}
+/* Minimap Ø182. */
+.dz-hud .dz-minimap {
+  width: 182px;
+  height: 182px;
+  background: rgba(21, 25, 28, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(14, 17, 19, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.53);
+}
+.dz-hud .dz-noise-ring {
+  width: 182px;
+  height: 182px;
+}
+/* Hotbar 304×64: 5 slots 54×54, gap 4. */
+.dz-hud .dz-hotbar {
+  box-sizing: border-box;
+  width: 304px;
+  height: 64px;
+  align-items: center;
+}
+.dz-hud .dz-slot {
+  width: 54px;
+  height: 54px;
+  border-radius: 6px;
+}
+.dz-hud .dz-slot__icon[data-image] {
+  width: 40px;
+  height: 40px;
+}
+.dz-hud .dz-slot__key {
+  font: 400 9px/1 var(--font-family-mono);
+}
+.dz-hud .dz-slot__count {
+  right: 6px;
+  font: 400 10px/1 var(--font-family-mono);
+}
+/* FirearmWidget 140×64, always left of the hotbar. */
+.dz-hud .dz-fw {
+  width: 140px;
+}
+.dz-hud .dz-fw[data-dock] {
+  left: auto;
+  right: calc(100% + 10px);
+}
+.dz-hud .dz-fw__panel {
+  height: 64px;
+  padding: 9px 10px;
+  border-radius: 7px;
+}
+.dz-hud .dz-fw__name {
+  font: 700 9px/1 var(--font-family-mono);
+  letter-spacing: 0.08em;
+}
+.dz-hud .dz-fw__zl {
+  font: 400 8px/1 var(--font-family-mono);
+}
+.dz-hud .dz-fw__r2 {
+  margin-top: 5px;
+  height: 23px;
+}
+.dz-hud .dz-fw__count {
+  font: 700 23px/1 var(--font-family-mono);
+}
+.dz-hud .dz-fw__cap {
+  font: 400 11px/1 var(--font-family-mono);
+}
+.dz-hud .dz-fw__ammo {
+  width: 20px;
+  height: 20px;
+}
+.dz-hud .dz-fw__r3 {
+  margin-top: 5px;
+  height: 4px;
+}
+.dz-hud .dz-fw__pips {
+  width: 120px;
+  height: 4px;
+}
+/* StatBars pill 455×36: groups 105 wide, icon 15, track 6, value 10 px mono. */
+.dz-hud .dz-statbars {
+  justify-content: space-between;
+  gap: 0;
+  width: 455px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 18px;
+}
+.dz-hud .dz-statbar {
+  gap: 7px;
+  width: 105px;
+}
+.dz-hud .dz-statbar__icon {
+  width: 15px;
+  height: 15px;
+}
+.dz-hud .dz-statbar__icon svg {
+  width: 15px;
+  height: 15px;
+}
+.dz-hud .dz-statbar__track {
+  flex: 1;
+  width: auto;
+  height: 6px;
+}
+.dz-hud .dz-statbar__fill {
+  transition-duration: var(--motion-base);
+}
+.dz-hud .dz-statbar__value {
+  width: auto;
+  min-width: 16px;
+  font: 400 10px/1 var(--font-family-mono);
+}
+/* Action buttons h 36, 10 px. */
+.dz-hud .dz-action {
+  height: 36px;
+  gap: 7px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font: 700 10px/1 var(--font-family-mono);
+}
+.dz-hud .dz-action__icon {
+  width: 14px;
+  height: 14px;
+}
+.dz-hud .dz-action__icon svg {
+  width: 14px;
+  height: 14px;
+}
+.dz-hud .dz-key {
+  font: 700 10px/1 var(--font-family-mono);
+}
+/* Camera zoom chip `KAMERA 1,0× [Z X]` (spec §7), h 40. */
+.dz-camchip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  font-family: var(--font-family-mono);
+}
+.dz-camchip__label {
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+.dz-camchip__value {
+  color: var(--color-accent-hi);
+  font-size: 12px;
+  font-weight: 700;
+}
+.dz-camchip .dz-key {
+  padding: 3px 5px;
+  border: 1px solid var(--color-neutral-500);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.9);
+  color: var(--color-text-primary);
+}
+/* A modal is open: the HUD is dimmed, the top bar stays (spec §2). */
+[data-modal]:not([data-modal='']) .dz-g:not(.dz-g--world) {
+  opacity: 0.35;
+}
+
+/* Loot window under the 36 px top bar (mockup hud-v2-loot.png): head y≈47, panels 28 px from
+   the sides at y 78, 370×594, shortcuts in the bottom-left corner. */
+.dz-loot {
+  --_h: var(--hud2-s, 1);
+}
+.dz-loot .dz-loot__head {
+  left: calc(28px * var(--_h));
+  right: calc(28px * var(--_h));
+  top: calc(36px * var(--_h));
+  height: calc(24px * var(--_h));
+}
+.dz-loot .dz-loot__body {
+  left: calc(28px * var(--_h));
+  right: calc(28px * var(--_h));
+  top: calc(78px * var(--_h));
+  bottom: calc(48px * var(--_h));
+  grid-template-columns:
+    minmax(0, calc(370px * var(--_h)))
+    1fr
+    minmax(0, calc(370px * var(--_h)));
+  gap: calc(16px * var(--_h));
+}
+.dz-loot .dz-loot__shortcuts {
+  left: calc(28px * var(--_h));
+  transform: none;
+  bottom: calc(10px * var(--_h));
+  height: calc(28px * var(--_h));
+  padding: 0;
+}
+/* Inventory window starts below the top bar, which stays visible above modals. */
+.dz-inv {
+  padding-top: calc((36px + var(--size-safe)) * var(--hud2-s, 1));
+}
+/* The top bar is the only clock / date (spec §8). */
+.dz-loot .dz-loot__clock {
+  display: none;
+}
+/* 370 px panels (mockup): tighter padding, the two take buttons fit on one row. */
+.dz-loot .dz-loot__panel {
+  padding: calc(14px * var(--_h));
+}
+.dz-loot .dz-loot__btns {
+  justify-content: flex-end;
+  gap: calc(8px * var(--_h));
+}
+.dz-loot .dz-loot__btn {
+  gap: calc(8px * var(--_h));
+  height: calc(36px * var(--_h));
+  padding: 0 calc(10px * var(--_h));
+  font-size: calc(10px * var(--_h));
+  white-space: nowrap;
+}
+.dz-loot .dz-loot__btn--pri {
+  padding: 0 calc(14px * var(--_h));
+  font-size: calc(13px * var(--_h));
+}
+/* Workshop below the top bar too. */
+.dz-ws {
+  top: calc(36px * var(--hud2-s, 1));
+}
+.dz-loot .dz-loot__btn--sec .dz-loot__svg {
+  display: none;
+}
+.dz-loot .dz-loot__btn--sec {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

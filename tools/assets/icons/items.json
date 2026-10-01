@@ -102,5 +102,25 @@
     "items": ["base:nails"],
     "src": "custom/gwozdzie.glb",
     "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:venison"],
+    "src": "kenney-food-kit/meat-raw.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:venison-steak"],
+    "src": "kenney-food-kit/meat-cooked.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:small-game-meat"],
+    "src": "kenney-food-kit/meat-ribs.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:deer-hide"],
+    "src": "kenney-furniture-kit/rug-rounded.glb",
+    "rot": [0, 0, 0]
   }
 ]

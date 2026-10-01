@@ -15,8 +15,9 @@ export const DEFAULT_BINDINGS: Bindings = {
   vault: ['Space'],
   rotateCameraLeft: ['KeyQ'],
   rotateCameraRight: ['KeyE'],
-  zoomIn: ['WheelUp'],
-  zoomOut: ['WheelDown'],
+  // Camera zoom: wheel, or X / Z held (HUD v2 chip `KAMERA 1,0× [Z X]`).
+  zoomIn: ['WheelUp', 'KeyX'],
+  zoomOut: ['WheelDown', 'KeyZ'],
   interact: ['KeyF'],
   primaryAction: ['Mouse0'],
   secondaryAction: ['Mouse2'],
@@ -31,6 +32,10 @@ export const DEFAULT_BINDINGS: Bindings = {
   sleep: ['KeyN'],
   watchTv: ['KeyT'],
   map: ['KeyM'],
+  // HUD v2 top bar. `C` stays crouch (and combine in the inventory): „Postać i zdrowie” is H.
+  character: ['KeyH'],
+  skills: ['KeyK'],
+  journal: ['KeyJ'],
   pause: ['Escape'],
   toggleHints: ['F1'],
 };
@@ -117,10 +122,17 @@ export function resetAction(b: Bindings, action: Action): Bindings {
 export function sanitizeBindings(raw: unknown): Bindings {
   const out: Record<Action, readonly InputCode[]> = { ...DEFAULT_BINDINGS };
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+  const stored = new Set<Action>();
   for (const [action, codes] of Object.entries(raw)) {
     if (!isAction(action) || !Array.isArray(codes)) continue;
     const valid = codes.filter(isInputCode);
     out[action] = valid.filter((c, i) => valid.indexOf(c) === i).slice(0, MAX_SLOTS);
+    stored.add(action);
+  }
+  // Defaults of actions new to this data must not steal inputs the player already uses.
+  const used = new Set([...stored].flatMap((a) => out[a]));
+  for (const action of ACTIONS) {
+    if (!stored.has(action)) out[action] = out[action].filter((c) => !used.has(c));
   }
   return out;
 }

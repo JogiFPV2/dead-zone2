@@ -1,46 +1,58 @@
-/* Minimap zoom +/− (secondary button tokens, spec §3.10, reduced to 22 px): left of the
-   minimap's lower edge, outside the circle. */
+/* Minimap zoom (HUD v2 spec §4): −/+ 23×23 at the bottom of the Ø182 minimap (gap 3), level
+   `1,0×` at the lower right inside the circle. */
 .dz-mmzoom {
   position: absolute;
-  left: calc(-1 * (22px + var(--space-1-5)));
-  bottom: var(--space-1);
+  inset: 0;
+  pointer-events: none;
+}
+.dz-mmzoom__row {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  gap: 3px;
+  transform: translateX(-50%);
   pointer-events: auto;
 }
 .dz-mmzoom__btn {
   box-sizing: border-box;
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   padding: 0;
   display: grid;
   place-items: center;
-  border: var(--border-1) solid var(--color-border-default);
+  border: 1px solid var(--color-neutral-500);
   border-radius: var(--radius-sm);
-  background: var(--color-bg-button-secondary-default);
-  backdrop-filter: blur(var(--blur-glass));
+  background: var(--color-neutral-900);
   color: var(--color-text-primary);
-  font: var(--font-label-md);
+  font: 700 16px/1 var(--font-family-mono);
   cursor: pointer;
   transition:
     background var(--motion-fast),
-    border-color var(--motion-fast);
+    border-color var(--motion-fast),
+    color var(--motion-fast);
 }
-.dz-mmzoom__btn:hover:not(:disabled) {
-  background: var(--color-bg-button-secondary-hover);
-  border-color: var(--color-border-strong);
+.dz-mmzoom__btn:hover:not(:disabled),
+.dz-mmzoom__btn:focus-visible {
+  border-color: var(--color-accent-base);
+  background: var(--color-neutral-800);
+  color: var(--color-accent-hi);
+  outline: none;
 }
 .dz-mmzoom__btn:active:not(:disabled) {
-  background: var(--color-bg-button-secondary-pressed);
-  border-color: var(--color-border-accent);
   transform: translateY(1px);
 }
 .dz-mmzoom__btn:disabled {
   color: var(--color-text-disabled);
   cursor: default;
 }
-.dz-mmzoom__btn:focus-visible {
-  outline: 2px solid var(--color-accent-hi);
-  outline-offset: 2px;
+.dz-mmzoom__level {
+  position: absolute;
+  right: 11px;
+  bottom: 11px;
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: rgba(14, 17, 19, 0.85);
+  color: var(--color-accent-hi);
+  font: 400 9px/1 var(--font-family-mono);
 }

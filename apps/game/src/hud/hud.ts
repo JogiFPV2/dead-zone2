@@ -1,12 +1,12 @@
 import '@deadzone/ui/hud.css';
 import './hud-layout.css';
+import './hud-v2.css';
 import type { SimEvent } from '@deadzone/protocol';
 import {
   applyUiScale,
   applyVignetteAt,
   computeUiScale,
   createActionButton,
-  createClock,
   createInventorySlot,
   createKeyHints,
   createMinimap,
@@ -57,6 +57,12 @@ import type { Feedback } from './sleep-feedback.js';
 import { createSleepNotice } from './sleep-notice.js';
 import { createMinimapZoomControls } from './minimap-zoom-controls.js';
 import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
+import { createHud2Parts } from './v2/hud2.js';
+import type { PromptVM } from './v2/interact-prompt.js';
+import type { QuickAccessId } from './v2/quick-access.js';
+
+/** The Ø182 minimap draws the Ø200 SVG scaled down; zoom compensates to keep 2.5 px/m at 1,0×. */
+const MINIMAP_FIT = 200 / 182;
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
 export const HUD_UPDATE_MS = 100;
@@ -83,6 +89,8 @@ export interface HudOptions {
   /** Minimap zoom (steps in minimap-zoom.ts) and its change (persist). */
   minimapZoom?: number;
   onMinimapZoom?: (zoom: number) => void;
+  /** Top bar quick access clicked (HUD v2). */
+  onQuickAccess: (id: QuickAccessId) => void;
 }
 
 /** Per-frame inputs; the HUD itself throttles to HUD_UPDATE_MS. */
@@ -103,6 +111,8 @@ export interface HudFrame {
   interactHeld: boolean;
   /** RMB aim with a firearm (minimap noise ring). */
   aiming: boolean;
+  /** Camera zoom target (HUD v2 chip). */
+  cameraZoom: number;
 }
 
 export interface Hud {
@@ -117,6 +127,10 @@ export interface Hud {
   firearm(): FirearmVM | undefined;
   /** LMB on an empty gun: widget shake. */
   dryFire(): void;
+  /** Interaction prompt / search ring at the object (HUD v2 §6). */
+  setPrompt(vm: PromptVM): void;
+  /** Info toast (e.g. „wkrótce” for screens that do not exist yet). */
+  toast(text: string): void;
 }
 
 /** Runs `update` only when the view model's key changes (no DOM writes for equal values). */
@@ -159,9 +173,6 @@ export function createHud(opts: HudOptions): Hud {
   const threat = createThreatBanner({ level: 'low' });
   const setThreat = gated(threat);
   group('threat', threat.el);
-  const clock = createClock({ day: 1, minuteOfDay: 0 });
-  const clockGroup = group('clock', clock.el);
-  clockGroup.hidden = true;
   const minimapVM = (f: Pick<HudFrame, 'px' | 'py' | 'facing' | 'cameraYaw'>): MinimapVM => ({
     player: { x: f.px, z: f.py, heading: f.facing },
     cameraYaw: f.cameraYaw,
@@ -172,12 +183,12 @@ export function createHud(opts: HudOptions): Hud {
   });
   const minimap = createMinimap(minimapVM({ px: 0, py: 0, facing: 0, cameraYaw: 0 }), {
     roadWidth: 1,
-    zoom: opts.minimapZoom ?? 1,
+    zoom: (opts.minimapZoom ?? 1) * MINIMAP_FIT,
   });
   const minimapGroup = group('minimap', minimap.el);
-  const minimapZoom = createMinimapZoomControls(minimap.el, opts.minimapZoom ?? 1, (z) => {
-    minimap.setZoom(z);
-    opts.onMinimapZoom?.(z);
+  const minimapZoom = createMinimapZoomControls(minimap.el, opts.minimapZoom ?? 1, {
+    apply: (z) => minimap.setZoom(z * MINIMAP_FIT),
+    change: (z) => opts.onMinimapZoom?.(z),
   });
   minimapGroup.append(minimapZoom.el);
   // Shot noise radius while aiming a firearm (spec §4): dashed ring around the player.
@@ -193,6 +204,14 @@ export function createHud(opts: HudOptions): Hud {
   minimapGroup.append(noiseRing);
   const toasts = createToastStack();
   group('toasts', toasts.el);
+  const v2 = createHud2Parts({
+    root,
+    group,
+    bindings: opts.bindings,
+    content: () => content,
+    onQuickAccess: opts.onQuickAccess,
+    playerId: opts.playerId,
+  });
   const notice = createSleepNotice(root);
 
   let selected = 0;
@@ -229,7 +248,6 @@ export function createHud(opts: HudOptions): Hud {
   const setMoodles = gated(moodles);
   const setMinimap = (vm: MinimapVM): void => minimap.update(vm);
   const setHints = gated(hintsBase);
-  const setClock = gated(clock);
   const since = new Map<string, number>();
   let hintsSetting: HintsSetting = 'auto';
   const bootMs = performance.now();
@@ -303,10 +321,6 @@ export function createHud(opts: HudOptions): Hud {
         lastMinute = minute;
         applyVignetteAt(root, minute);
       }
-      if (f.clock) {
-        clockGroup.hidden = false;
-        setClock({ day: f.clock.day, minuteOfDay: Math.floor(f.clock.minuteOfDay) });
-      }
       const s = f.state;
       current = s;
       // Firearm widget, slot mini-bar and the minimap noise ring follow every frame (animation).
@@ -322,7 +336,10 @@ export function createHud(opts: HudOptions): Hud {
         noiseRing.removeAttribute('hidden');
         noiseCircle.setAttribute(
           'r',
-          noiseRingRadius(firearm.noiseRadius, MINIMAP_PX_PER_M * minimapZoom.get()).toFixed(1),
+          noiseRingRadius(
+            firearm.noiseRadius,
+            MINIMAP_PX_PER_M * minimapZoom.get() * MINIMAP_FIT,
+          ).toFixed(1),
         );
       } else noiseRing.setAttribute('hidden', '');
       if (s.container?.id !== openContainer) {
@@ -336,6 +353,7 @@ export function createHud(opts: HudOptions): Hud {
       }
       if (f.now - lastUpdate < HUD_UPDATE_MS) return;
       lastUpdate = f.now;
+      v2.frame({ now: f.now, state: s, clock: f.clock, cameraZoom: f.cameraZoom });
       if (s !== lastState) {
         lastState = s;
         // The highlight follows the item in hand (inventory PPM / hotbar alike).
@@ -377,6 +395,7 @@ export function createHud(opts: HudOptions): Hud {
       });
     },
     events(events) {
+      v2.events(events, performance.now());
       for (const e of events) {
         if (e.type === 'shot' && e.playerId === opts.playerId) {
           noiseRing.classList.remove('dz-noise-ring--flash');
@@ -417,8 +436,11 @@ export function createHud(opts: HudOptions): Hud {
     },
     firearm: () => firearm,
     dryFire: () => firearmWidget.dryFire(),
+    setPrompt: (vm) => v2.setPrompt(vm),
+    toast: (text) => toasts.push({ kind: 'info', text }),
     resize(width, height) {
       applyUiScale(hud, computeUiScale(width, height));
+      v2.resize(width, height);
       lowRes.hidden = !isBelowMinResolution(width, height);
     },
   };

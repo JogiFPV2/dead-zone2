@@ -12,7 +12,8 @@ import type { HudContentIndex, HudItemDef } from './content-index.js';
 import { itemIcon } from './hud-model.js';
 import { itemImage } from './item-icons.js';
 import { KIND_LABEL, formatKg } from './item-kinds.js';
-import { containerName, humanizeId } from './labels.js';
+import { craftItemName } from './crafting-labels.js';
+import { containerName } from './labels.js';
 import { combineRowVM, type CombineRowVM } from './combine-model.js';
 
 export { formatKg };
@@ -68,7 +69,7 @@ export function itemTooltip(
     stats.push(durabilityRow(it.condition, def.durabilityMax));
   }
   return {
-    name: humanizeId(it.def),
+    name: craftItemName(it.def),
     category: KIND_LABEL[def?.kind ?? ''] ?? 'Przedmiot',
     stats,
     actions: [
@@ -125,7 +126,7 @@ export function itemRow(
       : undefined;
   return {
     id: it.id,
-    name: `${humanizeId(it.def)}${it.count > 1 ? ` ×${it.count}` : ''}`,
+    name: `${craftItemName(it.def)}${it.count > 1 ? ` ×${it.count}` : ''}`,
     sub: sub.join(' · '),
     weight: `${formatKg(it.weightKg)} kg`,
     equipped,
@@ -200,7 +201,7 @@ export function inventoryVM(s: GameState, content: HudContentIndex): InventoryVM
     for (const c of Object.values(inv.containers)) {
       if (c.id === inv.container) continue;
       const bag = bagItems.get(c.id);
-      own.push(panel(c, bag ? humanizeId(bag.def) : 'Torba', content, s.crafting));
+      own.push(panel(c, bag ? craftItemName(bag.def) : 'Torba', content, s.crafting));
     }
   }
   const open = s.container;

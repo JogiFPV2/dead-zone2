@@ -1,0 +1,153 @@
+/* HUD v2 top bar (deadzone-hud-v2-spec §2): 1280×36 @ref, date/time left, shortcuts right. */
+.dz-topbar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  z-index: calc(var(--z-modal) + 1);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: calc(36px * var(--hud2-s, 1));
+  padding: 0 calc(18px * var(--hud2-s, 1));
+  background: rgba(14, 17, 19, 0.95);
+  border-bottom: 1px solid rgba(91, 100, 105, 0.42);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.dz-topbar > * {
+  zoom: var(--hud2-s, 1);
+}
+.dz-topbar__clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 270px;
+  white-space: nowrap;
+}
+.dz-topbar__clock[hidden] {
+  visibility: hidden;
+}
+.dz-topbar__clock-ic {
+  color: var(--color-accent-hi);
+}
+.dz-topbar__day {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.dz-topbar__date {
+  font-size: 10px;
+}
+.dz-topbar__nav {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  pointer-events: auto;
+}
+.dz-qa {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  min-width: 94px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: 500 9px/1 var(--font-family-mono);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+.dz-qa:hover,
+.dz-qa[data-active],
+.dz-qa:focus-visible {
+  background: rgba(224, 162, 58, 0.14);
+  border-color: var(--color-accent-lo);
+  color: var(--color-text-primary);
+  outline: none;
+}
+.dz-qa:hover .dz-qa__ic,
+.dz-qa[data-active] .dz-qa__ic {
+  color: var(--color-accent-hi);
+}
+.dz-qa__key {
+  padding: 2px 4px;
+  border: 1px solid var(--color-neutral-500);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.9);
+  color: var(--color-text-primary);
+  font: 700 8px/1 var(--font-family-mono);
+}
+.dz-qa__dot {
+  display: none;
+  position: absolute;
+  right: 7px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-danger-text);
+  box-shadow: 0 0 0 2px var(--color-neutral-900);
+}
+.dz-qa[data-notify] .dz-qa__dot {
+  display: block;
+}
+.dz-qa__tip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 32px;
+  z-index: 1;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--color-accent-lo);
+  border-radius: 7px;
+  background: rgba(14, 17, 19, 0.98);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary);
+  font: 500 10px/1 var(--font-family-mono);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.dz-qa__tip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  background: var(--color-accent-lo);
+  transform: translateX(-50%) rotate(45deg);
+}
+.dz-qa[data-tip] .dz-qa__tip {
+  display: flex;
+}
+.dz-qa__tip-ic {
+  color: var(--color-accent-hi);
+}
+.dz-qa__tip-hint {
+  color: var(--color-neutral-500);
+}
+/* The last buttons' tooltips stay on screen. */
+.dz-qa:last-child .dz-qa__tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.dz-qa:last-child .dz-qa__tip::before {
+  left: auto;
+  right: 20px;
+}

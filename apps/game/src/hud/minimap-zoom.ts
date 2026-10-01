@@ -1,8 +1,11 @@
 /**
- * Minimap zoom steps (multiplier over the spec 2.5 px/m; radius ≈ 40 m / zoom): 80 m, 53 m,
- * 40 m (default), 27 m, 20 m.
+ * Minimap zoom steps (HUD v2 spec §4: 0.6×–1.6×, step 0.1; multiplier over 2.5 px/m, radius
+ * ≈ 36 m / zoom on the Ø182 map).
  */
-export const MINIMAP_ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2] as const;
+export const MINIMAP_ZOOM_STEPS = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6] as const;
+
+/** `1,0×` (Polish decimal comma), also used by the camera chip. */
+export const zoomLabel = (zoom: number): string => `${zoom.toFixed(1).replace('.', ',')}×`;
 
 /** Wheel delta (px) that counts as one step; trackpads send many small deltas. */
 export const MINIMAP_WHEEL_STEP_PX = 100;

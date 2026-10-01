@@ -197,8 +197,8 @@ describe('HUD view models', () => {
     expect(moveKeysLabel(r.bindings)).toBe('↑/A/S/D');
     const hints = hintItems(DEFAULT_BINDINGS);
     expect(hints[0]).toEqual({ key: 'WASD', label: 'ruch' });
-    expect(hints).toContainEqual({ key: 'F', label: 'przeszukaj' });
-    expect(hints).toContainEqual({ key: 'F1', label: 'skróty' });
+    expect(hints.map((h) => h.label)).toEqual(['ruch', 'sprint', 'ekwipunek', 'mapa']);
+    expect(hints).toContainEqual({ key: 'I', label: 'ekwipunek' });
   });
 
   it('has Polish labels with plural rules and id fallbacks', () => {
