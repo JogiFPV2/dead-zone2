@@ -1,5 +1,6 @@
 import type { TileGrid } from './grid.js';
 import { EF } from '../openings/state.js';
+import { stairStepAllowed } from './levels.js';
 
 /**
  * Grid ray casts over tile edges (Amanatides–Woo DDA from (x0, y0) to (x1, y1) on level z).
@@ -11,7 +12,8 @@ import { EF } from '../openings/state.js';
  *   do not (holes, outside).
  * - `sound`: returns the number of muffling edges crossed (walls, closed doors / windows),
  *   capped at `cap`; open doors and broken windows do not count.
- * - `walk`: an edge blocking movement or a void tile blocks (straight-line walkability for AI).
+ * - `walk`: an edge blocking movement, a void tile or stepping onto / off a flight of stairs
+ *   other than along it through the entrance blocks (straight-line walkability for AI).
  */
 
 const Mode = { Sight: 0, Sound: 1, Walk: 2 } as const;
@@ -54,7 +56,10 @@ function step(
     return false;
   }
   if (edgeBlocks(f, mode)) return true;
-  return mode === Mode.Walk && grid.isVoid(tx + sx, ty + sy, z);
+  if (mode !== Mode.Walk) return false;
+  if (grid.isVoid(tx + sx, ty + sy, z)) return true;
+  // Flights of stairs: only along them through the entrance (physics blocks the sides).
+  return grid.stairs.length > 0 && !stairStepAllowed(grid, z, tx, ty, sx, sy);
 }
 
 function trace(

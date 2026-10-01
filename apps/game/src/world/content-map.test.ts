@@ -31,3 +31,15 @@ it('converts base:demo-house into a ChunkSource (1-based palettes, sparse edges,
   expect(new BuildingLookup(source).at(12, 12, 0)).toBe(1);
   expect(source.getChunk(1, 0, 0)).toBeUndefined();
 });
+
+it('passes content stairs through to the chunk (for the sim)', async () => {
+  const r = await validatePackDirs([BASE_PACK_DIR]);
+  const data = r.maps.find((m) => m.id === 'base:demo-house');
+  if (!data) throw new Error('demo-house missing');
+  const first = data.chunks[0]!;
+  const stairs = [{ tx: 2, ty: 3, dir: 'N' as const, len: 3 }];
+  const { source } = mapDataToChunkSource({ ...data, chunks: [{ ...first, stairs }] });
+  const { cx, cy, z } = first.address;
+  expect(source.getChunk(cx, cy, z)?.stairs).toEqual(stairs);
+  expect(mapDataToChunkSource(data).source.getChunk(cx, cy, z)?.stairs).toBeUndefined();
+});

@@ -7,6 +7,7 @@ export * from './palette.js';
 export * from './edge.js';
 export * from './map-object.js';
 export * from './room.js';
+export * from './stairs.js';
 export * from './chunk.js';
 export * from './zone.js';
 export * from './manifest.js';

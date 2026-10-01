@@ -84,7 +84,8 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
           }
         }
       }
-      // Goal on another floor: head for the passage there (none yet: the goal's projection).
+      // Goal on another floor: head for the nearest stairs there, then along the flight (none
+      // within reach: the goal's projection on this floor). Physics walks the flight.
       const via = crossFloorWaypoint(w, grid, eid, x, y, z);
       if (via) {
         gx = via.x;
@@ -98,10 +99,11 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
         let wx = gx;
         let wy = gy;
         const stuck = (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks;
-        if (!ai.direct[eid]) {
+        if (!ai.direct[eid] && !via?.direct) {
           const tx = Math.floor(x);
           const ty = Math.floor(y);
-          const f = state === ZombieState.chase ? flowFor(w, eid) : undefined;
+          // The chased player's flow field is on the player's floor: not on the way to stairs.
+          const f = state === ZombieState.chase && !via ? flowFor(w, eid, z) : undefined;
           const step = f ? flowStep(f, grid, tx, ty) : undefined;
           if (step && !stuck) {
             wx = step.x + 0.5;
@@ -246,7 +248,8 @@ function bash(
   damageOpening(w, key, kind, dmg, 'zombie');
 }
 
-function flowFor(w: SimWorld, eid: number) {
+function flowFor(w: SimWorld, eid: number, z: number) {
   const p = findPlayer(w, w.c.Zombie.targetId[eid] ?? 0);
-  return p === undefined ? undefined : w.ai?.flows.get(p);
+  const f = p === undefined ? undefined : w.ai?.flows.get(p);
+  return f && f.z === z ? f : undefined;
 }

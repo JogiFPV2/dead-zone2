@@ -2,7 +2,7 @@ import { atan2Bam } from '../core/dmath.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { lineOfSight, walkableLine } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
-import { floorOf } from './floors.js';
+import { floorOf, onGoalFloor } from './floors.js';
 import { heard } from './noise.js';
 import { ZombieState, type AiWorld, type Noise } from './state.js';
 import { currentDaylight, playerVisibility } from './vision.js';
@@ -230,10 +230,12 @@ function straight(
 
 const ARRIVE = 0.5;
 
-function arrived(w: SimWorld, eid: number, x: number, y: number): boolean {
+/** At the goal in the plane, and on its floor unless no stairs lead there (`ai/floors.ts`). */
+function arrived(w: SimWorld, grid: TileGrid, eid: number, x: number, y: number): boolean {
   const dx = (w.c.Zombie.tx[eid] ?? 0) - x;
   const dy = (w.c.Zombie.ty[eid] ?? 0) - y;
-  return dx * dx + dy * dy <= ARRIVE * ARRIVE;
+  if (dx * dx + dy * dy > ARRIVE * ARRIVE) return false;
+  return onGoalFloor(w, grid, eid, x, y, w.c.Position.z[eid] ?? 0);
 }
 
 /** Picks a wander goal on a floor tile within `radius` of (cx, cy) (RNG `ai`, 3 tries). */
@@ -250,7 +252,8 @@ function pickGoal(
   for (let i = 0; i < 3; i++) {
     const tx = Math.floor(cx) + w.rng.ai.int(-r, r);
     const ty = Math.floor(cy) + w.rng.ai.int(-r, r);
-    if (grid.isVoid(tx, ty, z)) continue;
+    // Not on a flight of stairs (wandering does not change floors).
+    if (grid.isVoid(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
     w.c.Zombie.tx[eid] = Math.fround(tx + 0.5);
     w.c.Zombie.ty[eid] = Math.fround(ty + 0.5);
     w.c.Zombie.tz[eid] = floorOf(z);
@@ -286,7 +289,7 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
       }
       break;
     case ZombieState.wander:
-      if (arrived(w, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
+      if (arrived(w, grid, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
         Zombie.state[eid] = ZombieState.idle;
         Zombie.stateTick[eid] = pause();
         Zombie.stuck[eid] = 0;
@@ -294,7 +297,7 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
       break;
     case ZombieState.investigate:
       if ((Zombie.stateTick[eid] ?? 0) === 0) {
-        if (arrived(w, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
+        if (arrived(w, grid, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
           const linger = Zombie.memoryUntil[eid] ?? 0;
           Zombie.stateTick[eid] =
             w.tick +
@@ -319,7 +322,7 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
       const sensed = w.tick < (Zombie.memoryUntil[eid] ?? 0);
       const close = !dead && onTrail(w, eid, target, x, y);
       if (dead || (!sensed && !close)) loseTrack(w, eid);
-      else if (arrived(w, eid, x, y) && !seesNow(w, eid)) {
+      else if (arrived(w, grid, eid, x, y) && !seesNow(w, eid)) {
         if (close) {
           // Within lostTrackDistTiles the trail goes on: head for the player again.
           const { Position } = w.c;
@@ -333,14 +336,14 @@ function brain(w: SimWorld, ai: AiWorld, grid: TileGrid, eid: number, x: number,
     case ZombieState.search:
       if ((Zombie.stateTick[eid] ?? 0) === 0) {
         // Walking to the last known spot; the look-around timer starts there.
-        if (arrived(w, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
+        if (arrived(w, grid, eid, x, y) || (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks * 3) {
           Zombie.stateTick[eid] = w.tick + secToTicks(cfg.searchSec);
           Zombie.stuck[eid] = 0;
         }
       } else if (w.tick >= (Zombie.stateTick[eid] ?? 0)) {
         Zombie.state[eid] = ZombieState.idle;
         Zombie.stateTick[eid] = pause();
-      } else if (arrived(w, eid, x, y)) {
+      } else if (arrived(w, grid, eid, x, y)) {
         pickGoal(w, grid, eid, x, y, 3);
       }
       break;

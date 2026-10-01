@@ -63,6 +63,7 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
         ...(data.objects?.length
           ? { objects: data.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
           : {}),
+        ...(data.stairs?.length ? { stairs: data.stairs.map((st) => ({ ...st })) } : {}),
       };
     }
     cache.set(key, chunk);

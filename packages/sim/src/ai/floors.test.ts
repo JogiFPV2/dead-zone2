@@ -119,7 +119,7 @@ describe('floors: hearing through ceilings', () => {
     expect(zombie(sim).state).toBe('investigate');
     expect(sim.world.c.Zombie.tz[zombieEid(sim)]).toBe(0);
     expect(eventsOf(sim.drainEvents(), 'zombieAlerted')).toMatchObject([{ reason: 'noise' }]);
-    // No stairs yet: walks below the source on its own floor.
+    // No stairs on this map: walks below the source on its own floor (stairs: stairs-ai.test.ts).
     runTicks(sim, 200);
     expect(zombie(sim).z).toBe(-1);
     expect(Math.abs(zombie(sim).x - 44.5)).toBeLessThan(1.5);
@@ -200,8 +200,8 @@ describe('floors: loot', () => {
   });
 });
 
-describe('floors: goal on another floor (stub)', () => {
-  it('no passage yet: nearestPassage / crossFloorWaypoint return none', () => {
+describe('floors: goal on another floor (map without stairs)', () => {
+  it('no stairs: nearestPassage / crossFloorWaypoint return none', () => {
     const sim = floorsSim({ zombies: [{ x: 40.5, y: 40.5, z: 0 }] });
     const grid = gridOf(sim.world);
     expect(nearestPassage(grid, 0, 40.5, 40.5, 1)).toBeUndefined();

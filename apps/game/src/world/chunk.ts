@@ -38,6 +38,16 @@ export interface ChunkData {
   readonly rooms?: ReadonlyMap<RoomId, RoomInfo>;
   /** Static map objects (furniture, storage, lights) at local tiles. Dynamic state is never here. */
   readonly objects?: readonly MapObjectRef[];
+  /** Flights of stairs from this level to z + 1 (content `stairs`, sim `SimChunk.stairs`). */
+  readonly stairs?: readonly StairsRef[];
+}
+
+/** A flight of stairs: bottom tile (tx, ty) local to the chunk, `len` tiles climbing `dir`. */
+export interface StairsRef {
+  readonly tx: number;
+  readonly ty: number;
+  readonly dir: 'N' | 'E' | 'S' | 'W';
+  readonly len: number;
 }
 
 /** A map object at local tile (x, y) of its chunk (content `objects`). */

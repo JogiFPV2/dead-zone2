@@ -12,6 +12,10 @@ import { STAIR_STEP, type Stair } from './levels.js';
 
 const WALL = EF.present | EF.blocksMove | EF.blocksSight | EF.muffles;
 
+/** Numeric tile key (|tx|, |ty| < 2^20, z in −128..127): no string building on hot paths. */
+const stairKey = (tx: number, ty: number, z: number): number =>
+  ((tx + 0x100000) * 0x200000 + (ty + 0x100000)) * 256 + (z + 128);
+
 /**
  * Resolves world tile coordinates to a chunk and a layer index (floor division for negatives).
  * Doors and windows (`SimMap.edgeKinds`) take their flags from the openings state (world state,
@@ -25,8 +29,8 @@ export class TileGrid {
   readonly openings: OpeningsWorld;
   /** Flights of stairs from `SimChunk.stairs` (world tiles), in chunk list order. */
   readonly stairs: readonly Stair[];
-  /** Tile key (base level) → index in `stairs`. */
-  private readonly stairTiles = new Map<string, number>();
+  /** Tile key (`stairKey`, base level) → index in `stairs`. */
+  private readonly stairTiles = new Map<number, number>();
   /** Chunks on more than one level (`listChunks`). */
   readonly multiLevel: boolean;
 
@@ -53,7 +57,7 @@ export class TileGrid {
         };
         stairs.push(s);
         for (let i = 0; i < s.len; i++) {
-          this.stairTiles.set(`${s.tx + dx * i},${s.ty + dy * i},${s.z}`, s.id);
+          this.stairTiles.set(stairKey(s.tx + dx * i, s.ty + dy * i, s.z), s.id);
         }
       }
     }
@@ -64,7 +68,7 @@ export class TileGrid {
   /** Flight covering tile (tx, ty) of its base level `z` (`world/levels.ts` `stairsAt`). */
   stairAt(tx: number, ty: number, z: number): Stair | undefined {
     if (this.stairs.length === 0) return undefined;
-    const i = this.stairTiles.get(`${tx},${ty},${z}`);
+    const i = this.stairTiles.get(stairKey(tx, ty, z));
     return i === undefined ? undefined : this.stairs[i];
   }
 

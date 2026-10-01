@@ -79,3 +79,26 @@ export function stairZ(s: Stair, along: number): number {
   const p = along <= 0 ? 0 : along >= s.len ? 1 : along / s.len;
   return Math.fround(s.z + p);
 }
+
+/**
+ * Orthogonal tile step (dx, dy) on level `z` for AI navigation and straight-line walkability
+ * (`nav/grid-nav.ts`, `world/los.ts` walk mode), with the flights of their base level: a flight
+ * tile is entered only along the flight, from the tile in front of the entrance or from the
+ * neighbouring tile of the same flight, and left only along it out of the bottom (the top leads
+ * to the next level, outside one-level navigation). No side steps (physics blocks them).
+ */
+export function stairStepAllowed(
+  grid: TileGrid,
+  z: number,
+  tx: number,
+  ty: number,
+  dx: number,
+  dy: number,
+): boolean {
+  const from = grid.stairAt(tx, ty, z);
+  const to = grid.stairAt(tx + dx, ty + dy, z);
+  if (!from && !to) return true;
+  if (from && to) return from === to;
+  if (to) return dx === to.dx && dy === to.dy && tx + dx === to.tx && ty + dy === to.ty;
+  return dx === -from!.dx && dy === -from!.dy && tx === from!.tx && ty === from!.ty;
+}

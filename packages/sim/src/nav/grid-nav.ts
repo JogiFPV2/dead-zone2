@@ -1,5 +1,6 @@
 import type { TileGrid } from '../world/grid.js';
 import { EF } from '../openings/state.js';
+import { stairStepAllowed } from '../world/levels.js';
 
 /** Passable for navigation: no blocking edge, or a door / window (zombies bash closed ones). */
 const navFree = (f: number): boolean => (f & EF.blocksMove) === 0 || (f & EF.opening) !== 0;
@@ -10,6 +11,7 @@ const navFree = (f: number): boolean => (f & EF.blocksMove) === 0 || (f & EF.ope
  */
 function orth(grid: TileGrid, z: number, tx: number, ty: number, dx: number, dy: number): boolean {
   if (grid.isVoid(tx + dx, ty + dy, z)) return false;
+  if (grid.stairs.length > 0 && !stairStepAllowed(grid, z, tx, ty, dx, dy)) return false;
   if (dx > 0) return navFree(grid.flagsW(tx + 1, ty, z));
   if (dx < 0) return navFree(grid.flagsW(tx, ty, z));
   if (dy > 0) return navFree(grid.flagsN(tx, ty + 1, z));
