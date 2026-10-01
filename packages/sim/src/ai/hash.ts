@@ -3,7 +3,8 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 
 /**
  * Stage 4 hash section (only with content, so movement-only golden hashes stay valid): player
- * gaits, the noise buffer, every zombie's brain and its path progress. Derived caches (flow
+ * gaits, the noise buffer, every zombie's brain (goal floor `tz` only when off its own floor) and
+ * its path progress. Derived caches (flow
  * fields, spatial hash, visibility, threat) are not hashed; they follow from this state.
  */
 export function hashAi(w: SimWorld, h: HashWriter): void {
@@ -44,5 +45,8 @@ export function hashAi(w: SimWorld, h: HashWriter): void {
       .u32(p ? p.goalTy >>> 0 : 0)
       .u32(p?.len ?? 0)
       .u32(p?.cursor ?? 0);
+    // Goal floor only when it differs from the zombie's floor (keeps single-floor goldens).
+    const tz = Zombie.tz[eid] ?? 0;
+    if (tz !== Math.floor(w.c.Position.z[eid] ?? 0)) h.u32(0x7f10_0001).u32(tz >>> 0);
   }
 }

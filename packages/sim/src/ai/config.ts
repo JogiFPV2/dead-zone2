@@ -41,6 +41,13 @@ export interface NoiseConfig {
   maxWalls: number;
   /** `noise.referenceHearingTiles`: hearing range at which a noise travels exactly its radius. */
   referenceHearingTiles: number;
+  /**
+   * `worldSettings.noise.floorMul`: effective radius × this for every floor (ceiling) between
+   * source and listener (data wins over this default).
+   */
+  floorMul: number;
+  /** `worldSettings.noise.maxFloors`: farthest floor difference a noise still reaches (0 = same floor only). */
+  maxFloors: number;
 }
 
 export interface AiConfig {
@@ -122,6 +129,8 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     wallMul: 0.5,
     maxWalls: 4,
     referenceHearingTiles: 30,
+    floorMul: 0.5,
+    maxFloors: 2,
   },
   ai: {
     thinkEveryTicks: 4,

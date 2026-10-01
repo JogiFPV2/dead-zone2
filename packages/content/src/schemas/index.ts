@@ -16,6 +16,7 @@ export * from './map/index.js';
 export * from './survival/index.js';
 export * from './crafting-settings.js';
 export * from './vision-settings.js';
+export * from './noise-settings.js';
 export * from './openings-settings.js';
 export * from './firearms-settings.js';
 export * from './palette.js';

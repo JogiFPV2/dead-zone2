@@ -5,6 +5,7 @@ import { CraftingSettingsSchema } from './crafting-settings.js';
 import { LootSettingsSchema } from './loot-rarity.js';
 import { FirearmsSettingsSchema } from './firearms-settings.js';
 import { OpeningsSettingsSchema } from './openings-settings.js';
+import { NoiseSettingsSchema } from './noise-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
@@ -40,6 +41,8 @@ export const WorldSettingsSchema = z.strictObject({
   crafting: CraftingSettingsSchema,
   /** Zasięg widzenia w dzień i w nocy, bonus światła. */
   vision: VisionSettingsSchema,
+  /** Hałas między piętrami: tłumienie przez strop. */
+  noise: NoiseSettingsSchema,
   /** Drzwi i okna: wytrzymałość, hałas, przechodzenie przez okno. */
   openings: OpeningsSettingsSchema,
   /** Broń palna: spadek celności z odległością, rozrzut, ładowanie magazynków. */

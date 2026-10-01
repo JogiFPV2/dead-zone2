@@ -226,6 +226,7 @@ export function damageZombie(
     // Hurt zombies turn on the attacker.
     Zombie.state[zid] = ZombieState.chase;
     Zombie.targetId[zid] = StableId.value[attacker] ?? 0;
+    Zombie.tz[zid] = Math.floor(w.c.Position.z[attacker] ?? 0);
     Zombie.memoryUntil[zid] = w.tick + secToTicks(ai.cfg.ai.memorySec);
     return false;
   }

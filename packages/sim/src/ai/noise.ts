@@ -10,7 +10,9 @@ import { noiseSourceIndex, type AiWorld, type Noise } from './state.js';
  * Noise buffer (docs 2.5 `noise`). Anything that makes a sound calls `emitNoise`; zombies read
  * the buffer when they think (every few ticks), sleeping players when it is emitted. Walls damp
  * the effective radius (× `noise.wallMul` per wall or window on the straight line, DDA over the
- * edges), no propagation through rooms in the demo.
+ * edges), no propagation through rooms in the demo. Between floors (z = floor index, fractional z
+ * on stairs counts as `Math.floor(z)`): × `noise.floorMul` per floor of difference, up to
+ * `noise.maxFloors` floors (`worldSettings.noise`); walls are counted on the listener's floor.
  */
 export function emitNoise(
   w: SimWorld,
@@ -28,7 +30,7 @@ export function emitNoise(
     tick: w.tick,
     x: Math.fround(x),
     y: Math.fround(y),
-    z,
+    z: Math.floor(z),
     radius: Math.fround(radius),
     volume: Math.fround(volume),
     source: noiseSourceIndex(source),
@@ -41,7 +43,7 @@ export function emitNoise(
       tick: w.tick,
       x: n.x,
       y: n.y,
-      z,
+      z: n.z,
       radiusTiles: n.radius,
       volume: n.volume,
       source,
@@ -51,7 +53,8 @@ export function emitNoise(
 
 /**
  * Effective radius of `n` for a listener at (x, y, z) with hearing range `hearing` (tiles):
- * radius × hearing / reference × wallMul^walls; 0 on another floor.
+ * radius × hearing / reference × floorMul^floors × wallMul^walls (walls on the listener's floor);
+ * 0 more than `maxFloors` floors away.
  */
 export function heardRadius(
   ai: AiWorld,
@@ -62,15 +65,20 @@ export function heardRadius(
   z: number,
   hearing: number,
 ): number {
-  if (n.z !== z) return 0;
   const cfg = ai.cfg.noise;
-  const r = (n.radius * hearing) / cfg.referenceHearingTiles;
+  const floor = Math.floor(z);
+  const floors = Math.abs(floor - n.z);
+  if (floors > cfg.maxFloors) return 0;
+  let r = (n.radius * hearing) / cfg.referenceHearingTiles;
+  for (let i = floors; i > 0; i--) r *= cfg.floorMul;
+  if (r <= 0) return 0;
   const dx = x - n.x;
   const dy = y - n.y;
   const d2 = dx * dx + dy * dy;
   if (d2 > r * r) return 0;
   let out = r;
-  for (let i = edgesBetween(grid, z, n.x, n.y, x, y, cfg.maxWalls); i > 0; i--) out *= cfg.wallMul;
+  for (let i = edgesBetween(grid, floor, n.x, n.y, x, y, cfg.maxWalls); i > 0; i--)
+    out *= cfg.wallMul;
   return out;
 }
 

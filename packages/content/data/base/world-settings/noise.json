@@ -1,0 +1,6 @@
+{
+  "noise": {
+    "floorMul": 0.5,
+    "maxFloors": 2
+  }
+}

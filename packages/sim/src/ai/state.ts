@@ -33,6 +33,7 @@ export interface Noise {
   tick: number;
   x: number;
   y: number;
+  /** Floor index of the source (`Math.floor` of the emitter's z). */
   z: number;
   radius: number;
   volume: number;
@@ -141,6 +142,8 @@ export function createAiWorld(
         enabled: v.enabled,
       },
     };
+  const n = content.noise;
+  if (n) cfg = { ...cfg, noise: { ...cfg.noise, floorMul: n.floorMul, maxFloors: n.maxFloors } };
   return {
     cfg,
     types: content.zombieTypes.map((def) => ({

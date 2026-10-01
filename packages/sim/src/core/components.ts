@@ -27,7 +27,8 @@ export function createComponents(capacity: number) {
      * current state (or its timer) ends, `targetId` = StableId of the chased player (0 = none),
      * `tx`/`ty` = goal point (last known position, noise, wander point), `memoryUntil` = tick
      * until which a lost target is still pursued, `alert` = volume of the noise being
-     * investigated, `speedMul` = spawn spread of the type's speeds.
+     * investigated, `speedMul` = spawn spread of the type's speeds, `tz` = floor index of the
+     * goal (another floor than the zombie's: heard through a ceiling, see `ai/floors.ts`).
      */
     Zombie: {
       is: new Uint8Array(capacity),
@@ -43,6 +44,7 @@ export function createComponents(capacity: number) {
       speedMul: f32(),
       /** Ticks with (almost) no progress while trying to move; triggers a re-path. */
       stuck: new Uint16Array(capacity),
+      tz: new Int16Array(capacity),
     },
   };
 }

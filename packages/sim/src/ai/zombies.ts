@@ -3,6 +3,7 @@ import { attach, spawnEntity, type SimWorld } from '../core/world.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { circleOverlaps } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
+import { floorOf } from './floors.js';
 import { ZombieState, type AiWorld } from './state.js';
 import { addPhysicsBody } from '../physics/system.js';
 
@@ -63,6 +64,7 @@ export function spawnZombie(
   z0.targetId[eid] = 0;
   z0.tx[eid] = Math.fround(x);
   z0.ty[eid] = Math.fround(y);
+  z0.tz[eid] = floorOf(z);
   z0.memoryUntil[eid] = 0;
   z0.alert[eid] = 0;
   z0.hp[eid] = Math.fround(t.def.health);

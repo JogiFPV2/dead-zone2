@@ -2,6 +2,7 @@ import { atan2Bam } from '../core/dmath.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { lineOfSight, walkableLine } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
+import { floorOf } from './floors.js';
 import { heard } from './noise.js';
 import { ZombieState, type AiWorld, type Noise } from './state.js';
 import { currentDaylight, playerVisibility } from './vision.js';
@@ -14,7 +15,9 @@ import { secToTicks } from './zombies.js';
  * visibility (daylight / lights / dark zones / sneaking, see vision.ts), a cone around the facing
  * (all around closer than `nearSenseTiles`), line of sight over edges. Hearing: loudest noise of
  * the last think interval within the damped radius (noise.ts). FSM: idle ↔ wander, investigate
- * (noise), chase (sees a player), search (lost the target), then wander again.
+ * (noise), chase (sees a player), search (lost the target), then wander again. Sight stays on
+ * the zombie's floor (no seeing through ceilings); hearing reaches other floors (noise.ts), the
+ * goal floor goes to `Zombie.tz` (ai/floors.ts).
  */
 
 interface Target {
@@ -129,6 +132,7 @@ function think(
     Zombie.targetId[eid] = seen.sid;
     Zombie.tx[eid] = Math.fround(seen.x);
     Zombie.ty[eid] = Math.fround(seen.y);
+    Zombie.tz[eid] = floorOf(seen.z);
     Zombie.memoryUntil[eid] = w.tick + secToTicks(ai.cfg.ai.memorySec);
     Zombie.alert[eid] = 0;
     ai.direct[eid] = straight(w, ai, grid, eid, z, x, y, seen.x, seen.y);
@@ -159,6 +163,8 @@ function think(
       Zombie.targetId[eid] = 0;
       Zombie.tx[eid] = best.x;
       Zombie.ty[eid] = best.y;
+      // The source may be on another floor (heard through a ceiling, ai/floors.ts).
+      Zombie.tz[eid] = best.z;
       Zombie.alert[eid] = best.volume;
       // stateTick 0 = still walking there; the linger timer starts on arrival. While
       // investigating, `memoryUntil` holds the linger length in ticks of a lure (0 = default).
@@ -213,6 +219,7 @@ function pickGoal(
     if (grid.isVoid(tx, ty, z)) continue;
     w.c.Zombie.tx[eid] = Math.fround(tx + 0.5);
     w.c.Zombie.ty[eid] = Math.fround(ty + 0.5);
+    w.c.Zombie.tz[eid] = floorOf(z);
     return true;
   }
   return false;

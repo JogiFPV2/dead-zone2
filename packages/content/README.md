@@ -141,6 +141,8 @@ wartość domyślną, więc mod może zmienić jedno pole, np. `{ "survival": { 
   ułamek utraty, `bandagedFactor`, `maxPenalty` oraz `conditions.<pain|fever|bleeding> { from, visionRange, blur }`.
 
 Poza przetrwaniem: `vision { enabled, dayRangeTiles, nightFactor, lightBonus }` (gracz i zombie),
+`noise { floorMul, maxFloors }` (`world-settings/noise.json`: hałas słychać na innych piętrach, zasięg × `floorMul`
+za każde piętro różnicy, najwyżej `maxFloors` pięter),
 `carry.overloadFatigueMul` oraz czasy akcji w przedmiotach: `food.eatMin` (porcja, 1), `drink.drinkMin` (łyk, 0.5),
 `ammoBox.unpackMin` (0.5). Narzędzie może świecić w ręce: `tool` z `light { radiusTiles, coneDeg, batteryTag,
 batteryLifeMin }` (`base:flashlight`, `base:camping-lantern`).

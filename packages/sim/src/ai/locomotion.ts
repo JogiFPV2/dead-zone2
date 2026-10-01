@@ -4,6 +4,7 @@ import { flowStep } from '../nav/flow.js';
 import type { TileGrid } from '../world/grid.js';
 import { findPlayer } from './brain.js';
 import { ZombieState } from './state.js';
+import { crossFloorWaypoint, floorOf } from './floors.js';
 import { emitNoise } from './noise.js';
 import { secToTicks } from './zombies.js';
 import { damageOpening, edgeCentre } from '../openings/actions.js';
@@ -82,6 +83,13 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
           }
         }
       }
+      // Goal on another floor: head for the passage there (none yet: the goal's projection).
+      const via = crossFloorWaypoint(w, grid, eid, x, y, z);
+      if (via) {
+        gx = via.x;
+        gy = via.y;
+        ai.direct[eid] = 0;
+      }
       const ex = gx - x;
       const ey = gy - y;
       const d2 = ex * ex + ey * ey;
@@ -117,6 +125,7 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
               if (state !== ZombieState.chase) {
                 Zombie.tx[eid] = Math.fround(x);
                 Zombie.ty[eid] = Math.fround(y);
+                Zombie.tz[eid] = floorOf(z);
               }
               ai.paths.delete(eid);
               Zombie.stuck[eid] = 0;

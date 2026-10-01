@@ -107,6 +107,8 @@ export interface ContentIndex {
   openings: ContentBundle['worldSettings']['openings'] | undefined;
   /** `worldSettings.firearms` (optional for older bundles). */
   firearms: ContentBundle['worldSettings']['firearms'] | undefined;
+  /** `worldSettings.noise` (between floors; optional for older bundles). */
+  noise: ContentBundle['worldSettings']['noise'] | undefined;
   /** Skills sorted by id (index = position in `PlayerProgress.level/xp`). */
   skills: SkillDef[];
   skillIndex: ReadonlyMap<string, number>;
@@ -220,6 +222,7 @@ export function compileContent(content: SimContent): ContentIndex {
     vision: content.worldSettings.vision,
     openings: content.worldSettings.openings,
     firearms: content.worldSettings.firearms,
+    noise: content.worldSettings.noise,
     dayLengthMinutes: content.worldSettings.dayLengthMinutes,
     survival: content.worldSettings.survival,
     moodles,

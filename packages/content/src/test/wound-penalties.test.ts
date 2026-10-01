@@ -38,6 +38,7 @@ describe('kary z ran, widzenie i czasy akcji', () => {
       nightFactor: 0.4,
       lightBonus: 0.5,
     });
+    expect(s.noise).toEqual({ floorMul: 0.5, maxFloors: 2 });
   });
 
   it('udźwig nie ma już spowolnienia za kg (liczy je moodle), jest mnożnik zmęczenia', () => {
@@ -58,5 +59,6 @@ describe('kary z ran, widzenie i czasy akcji', () => {
       if (i.kind === 'ammo_box') expect(i.ammoBox.unpackMin, i.id).toBe(0.5);
     }
     expect(b.worldSettings.vision.nightFactor).toBe(0.4);
+    expect(b.worldSettings.noise).toEqual({ floorMul: 0.5, maxFloors: 2 });
   });
 });
