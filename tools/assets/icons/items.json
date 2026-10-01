@@ -1,10 +1,34 @@
 [
-  { "items": ["base:kitchen-knife"], "src": "kenney-food-kit/cooking-knife.glb", "rot": [0, 0, 0] },
-  { "items": ["base:baseball-bat"], "src": "polypizza/POXTjdMP2c.glb", "rot": [0, 0, -55] },
-  { "items": ["base:nailed-bat"], "src": "polypizza/HSM4KnggSz.glb", "rot": [0, 0, 0] },
-  { "items": ["base:crowbar"], "src": "polypizza/OS8gAoeDtM.glb", "rot": [0, 35, -40] },
-  { "items": ["base:pistol"], "src": "polypizza/J3i9KDQ3kt.glb", "rot": [0, 0, 0] },
-  { "items": ["base:canned-beans"], "src": "kenney-food-kit/can.glb", "rot": [0, 0, 0] },
+  {
+    "items": ["base:kitchen-knife"],
+    "src": "kenney-food-kit/cooking-knife.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:baseball-bat"],
+    "src": "polypizza/POXTjdMP2c.glb",
+    "rot": [0, 0, -55]
+  },
+  {
+    "items": ["base:nailed-bat"],
+    "src": "polypizza/HSM4KnggSz.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:crowbar"],
+    "src": "polypizza/OS8gAoeDtM.glb",
+    "rot": [0, 35, -40]
+  },
+  {
+    "items": ["base:pistol", "base:compact-pistol", "base:heavy-pistol"],
+    "src": "polypizza/J3i9KDQ3kt.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:canned-beans"],
+    "src": "kenney-food-kit/can.glb",
+    "rot": [0, 0, 0]
+  },
   {
     "items": ["base:water-bottle", "base:dirty-water-bottle"],
     "src": "polypizza/KpxDpidn1Z.glb",
@@ -12,8 +36,71 @@
   },
   {
     "items": ["base:bandage", "base:sterilized-bandage"],
-    "src": "polypizza/Hp80p6148W.glb",
+    "src": "custom/bandaz.glb",
+    "rot": [0, 240, 0]
+  },
+  {
+    "items": ["base:hammer"],
+    "src": "kenney-survival-kit/tool-hammer.glb",
     "rot": [0, 0, 0]
   },
-  { "items": ["base:hammer"], "src": "kenney-survival-kit/tool-hammer.glb", "rot": [0, 0, 0] }
+  {
+    "items": ["base:revolver", "base:magnum-revolver"],
+    "src": "polypizza/E7IaG9TptR.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:pump-shotgun"],
+    "src": "polypizza/CkSFaW2d7m.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:double-barrel-shotgun"],
+    "src": "custom/dwururka.glb",
+    "rot": [28.31, 35.1, 25.49]
+  },
+  {
+    "items": ["base:hunting-rifle"],
+    "src": "polypizza/lpvx546Djt.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:assault-rifle"],
+    "src": "polypizza/Bgvuu4CUMV.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": [
+      "base:ammo-9mm",
+      "base:ammo-box-9mm",
+      "base:ammo-45",
+      "base:ammo-box-45",
+      "base:ammo-38",
+      "base:ammo-box-38",
+      "base:ammo-44",
+      "base:ammo-box-44"
+    ],
+    "src": "custom/amunicja-9mm.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:shotgun-shell", "base:ammo-box-shells"],
+    "src": "polypizza/btpe2U9ODn.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:ammo-308", "base:ammo-box-308", "base:ammo-556", "base:ammo-box-556"],
+    "src": "custom/amunicja-308.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:duct-tape"],
+    "src": "custom/tasma-klejaca.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:nails"],
+    "src": "custom/gwozdzie.glb",
+    "rot": [0, 0, 0]
+  }
 ]

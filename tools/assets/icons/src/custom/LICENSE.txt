@@ -1,0 +1,7 @@
+gwozdzie.glb: original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/).
+tasma-klejaca.glb: derived from "Duct Tape" by darkrose, https://opengameart.org/content/duct-tape, CC0 1.0.
+bandaz.glb: derived from "Medical Stuff" (Gauze) by FacadeGaikan, https://opengameart.org/content/medical-stuff, CC0 1.0.
+Built by build_items.py (Blender 4.2 LTS headless).
+dwururka.glb: derived from "Shotgun Sawed Off" by Quaternius, https://poly.pizza/m/29FXKu7G91, CC0 1.0 (barrels lengthened, pistol grip replaced by own straight stock, recoloured). Built by build_dwururka.py; icon rotation from rotcalc_dwururka.py.
+amunicja-9mm.glb: derived from "Pistol Ammo" by CreativeTrio, https://poly.pizza/m/Kh2hNjWMXA, CC0 1.0 (palette texture -> flat materials, box recoloured yellow #D9A62B). Built by build_ammo.py.
+amunicja-308.glb: derived from "Ammo Sniper" by CreativeTrio, https://poly.pizza/m/3OsqMhlfd7, CC0 1.0 (palette texture -> flat materials, box recoloured green #3F9A3C). Built by build_ammo.py.

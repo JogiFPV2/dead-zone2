@@ -7,23 +7,34 @@ Pipeline (`tools/assets`) odmawia budowania packa bez wpisu licencji lub z licen
 
 Renderowane z modeli 3D stałym rigiem Designera (`tools/assets/icons/rig.html`: kamera ortho 30°/35°,
 3 światła + hemisphere, 2 px obrys): `pnpm --filter @deadzone/assets assets icons [rozmiar=128]`.
-Modele źródłowe w `tools/assets/icons/src/`, lista w `tools/assets/icons/items.json`. Taśma i gwoździe
-zostają wektorowe (`@deadzone/ui`), bandaż używa ikony apteczki.
+Modele źródłowe w `tools/assets/icons/src/`, lista w `tools/assets/icons/items.json`. Modele w
+`icons/src/custom/` to przeróbki Designera (Blender, skrypty i licencje w `/workspace/assets-src/custom/`,
+kopia `LICENSE.txt` obok modeli). Magazynki nie mają jeszcze modelu (ikona wektorowa).
 
 Te same modele źródłowe są bronią w dłoni / na plecach postaci w grze (`apps/game/src/weapons/weapon-models.ts`,
 import przez Vite z `tools/assets/icons/`, bez kopii); broń bez modelu w `items.json` dostaje prosty placeholder.
 
-| Ikona (przedmioty)                     | Model               | Autor / źródło                                       | Licencja |
-| -------------------------------------- | ------------------- | ---------------------------------------------------- | -------- |
-| kitchen-knife                          | `cooking-knife.glb` | Kenney, Food Kit (kenney.nl/assets/food-kit)         | CC0-1.0  |
-| canned-beans                           | `can.glb`           | Kenney, Food Kit                                     | CC0-1.0  |
-| hammer                                 | `tool-hammer.glb`   | Kenney, Survival Kit (kenney.nl/assets/survival-kit) | CC0-1.0  |
-| pistol                                 | Pistol              | Quaternius, poly.pizza/m/J3i9KDQ3kt                  | CC0-1.0  |
-| water-bottle, dirty-water-bottle       | Water Bottle        | Quaternius, poly.pizza/m/KpxDpidn1Z                  | CC0-1.0  |
-| bandage, sterilized-bandage (apteczka) | First Aid Kit       | Quaternius, poly.pizza/m/Hp80p6148W                  | CC0-1.0  |
-| nailed-bat                             | Wooden Bat Barbed   | Quaternius, poly.pizza/m/HSM4KnggSz                  | CC0-1.0  |
-| baseball-bat                           | Baseball Bat        | Pichuliru, poly.pizza/m/POXTjdMP2c                   | CC0-1.0  |
-| crowbar                                | Crowbar             | Pichuliru, poly.pizza/m/OS8gAoeDtM                   | CC0-1.0  |
+| Ikona (przedmioty)                   | Model                      | Autor / źródło                                                                              | Licencja |
+| ------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------- | -------- |
+| kitchen-knife                        | `cooking-knife.glb`        | Kenney, Food Kit (kenney.nl/assets/food-kit)                                                | CC0-1.0  |
+| canned-beans                         | `can.glb`                  | Kenney, Food Kit                                                                            | CC0-1.0  |
+| hammer                               | `tool-hammer.glb`          | Kenney, Survival Kit (kenney.nl/assets/survival-kit)                                        | CC0-1.0  |
+| pistol, compact-pistol, heavy-pistol | Pistol                     | Quaternius, poly.pizza/m/J3i9KDQ3kt                                                         | CC0-1.0  |
+| water-bottle, dirty-water-bottle     | Water Bottle               | Quaternius, poly.pizza/m/KpxDpidn1Z                                                         | CC0-1.0  |
+| bandage, sterilized-bandage          | `custom/bandaz.glb`        | FacadeGaikan, „Medical Stuff” › Gauze, opengameart.org/content/medical-stuff (przemalowany) | CC0-1.0  |
+| duct-tape                            | `custom/tasma-klejaca.glb` | darkrose, „Duct Tape”, opengameart.org/content/duct-tape (przemalowana)                     | CC0-1.0  |
+| nails                                | `custom/gwozdzie.glb`      | model własny Deadzone (Blender, `build_items.py`)                                           | CC0-1.0  |
+| revolver, magnum-revolver            | Revolver                   | Quaternius, poly.pizza/m/E7IaG9TptR                                                         | CC0-1.0  |
+| pump-shotgun                         | Shotgun                    | CreativeTrio, poly.pizza/m/CkSFaW2d7m                                                       | CC0-1.0  |
+| double-barrel-shotgun                | `custom/dwururka.glb`      | z „Shotgun Sawed Off”, Quaternius, poly.pizza/m/29FXKu7G91 (dłuższe lufy, własna kolba)     | CC0-1.0  |
+| hunting-rifle                        | Sniper                     | CreativeTrio, poly.pizza/m/lpvx546Djt                                                       | CC0-1.0  |
+| assault-rifle                        | Assault Rifle              | Quaternius, poly.pizza/m/Bgvuu4CUMV                                                         | CC0-1.0  |
+| ammo-9mm/-45/-38/-44 + pudełka       | `custom/amunicja-9mm.glb`  | z „Pistol Ammo”, CreativeTrio, poly.pizza/m/Kh2hNjWMXA (pudełko na żółto)                   | CC0-1.0  |
+| shotgun-shell, ammo-box-shells       | Ammo Shotgun               | CreativeTrio, poly.pizza/m/btpe2U9ODn                                                       | CC0-1.0  |
+| ammo-308/-556 + pudełka              | `custom/amunicja-308.glb`  | z „Ammo Sniper”, CreativeTrio, poly.pizza/m/3OsqMhlfd7 (pudełko na zielono)                 | CC0-1.0  |
+| nailed-bat                           | Wooden Bat Barbed          | Quaternius, poly.pizza/m/HSM4KnggSz                                                         | CC0-1.0  |
+| baseball-bat                         | Baseball Bat               | Pichuliru, poly.pizza/m/POXTjdMP2c                                                          | CC0-1.0  |
+| crowbar                              | Crowbar                    | Pichuliru, poly.pizza/m/OS8gAoeDtM                                                          | CC0-1.0  |
 
 ## Dźwięki (`apps/game/public/audio/`)
 
