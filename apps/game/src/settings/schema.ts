@@ -1,10 +1,18 @@
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bindings.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
 
-/** Graphics are placeholders for the settings screen (Designer); not applied yet. */
+/**
+ * „Styl grafiki” (post-process on the same models): classic low-poly, outlines + toon bands,
+ * low-res pixel art. Applied live (`render/graphics-style.ts`).
+ */
+export const GRAPHICS_STYLES = ['classic', 'outline', 'pixel'] as const;
+export type GraphicsStyle = (typeof GRAPHICS_STYLES)[number];
+
+/** Graphics: `style` is applied; the other fields are placeholders for the settings screen. */
 export interface GraphicsSettings {
+  style: GraphicsStyle;
   /** Cap for devicePixelRatio (the game uses 2 today). */
   pixelRatioCap: number;
   antialias: boolean;
@@ -47,7 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS },
   interface: { showZombieHp: false, targetZombieHp: true },
-  graphics: { pixelRatioCap: 2, antialias: true, showFps: false },
+  graphics: { style: 'classic', pixelRatioCap: 2, antialias: true, showFps: false },
   audio: {
     master: 0.8,
     music: 0.45,
@@ -86,6 +94,9 @@ export function sanitizeSettings(raw: unknown): Settings {
       targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
     },
     graphics: {
+      style: (GRAPHICS_STYLES as readonly unknown[]).includes(g.style)
+        ? (g.style as GraphicsStyle)
+        : dg.style,
       pixelRatioCap: range(g.pixelRatioCap, 0.5, 4, dg.pixelRatioCap),
       antialias: bool(g.antialias, dg.antialias),
       showFps: bool(g.showFps, dg.showFps),

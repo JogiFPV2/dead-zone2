@@ -30,7 +30,7 @@ export async function runMenu(root: HTMLElement): Promise<{ mode: GameMode; resu
   let dimmed = false;
   let started = false;
   void import('./menu-scene.js')
-    .then((m) => m.createMenuScene(root))
+    .then((m) => m.createMenuScene(root, () => settings.get().graphics.style))
     .then((s) => {
       if (started) {
         s.dispose();

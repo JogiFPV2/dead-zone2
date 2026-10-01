@@ -29,7 +29,12 @@ describe('sanitizeSettings', () => {
       graphics: { pixelRatioCap: 99, antialias: 'yes' },
       audio: { master: -1, music: 0.3 },
     });
-    expect(s.graphics).toEqual({ pixelRatioCap: 4, antialias: true, showFps: false });
+    expect(s.graphics).toEqual({
+      style: 'classic',
+      pixelRatioCap: 4,
+      antialias: true,
+      showFps: false,
+    });
     expect(s.audio).toEqual({
       master: 0,
       music: 0.3,
@@ -41,6 +46,12 @@ describe('sanitizeSettings', () => {
     });
     expect(s.input.bindings).toEqual(DEFAULT_BINDINGS);
     expect(sanitizeSettings('junk')).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('keeps a known graphics style and drops an unknown one', () => {
+    expect(sanitizeSettings({ graphics: { style: 'pixel' } }).graphics.style).toBe('pixel');
+    expect(sanitizeSettings({ graphics: { style: 'outline' } }).graphics.style).toBe('outline');
+    expect(sanitizeSettings({ graphics: { style: 'vhs' } }).graphics.style).toBe('classic');
   });
 });
 
@@ -88,6 +99,17 @@ describe('loadSettings', () => {
     expect(r.migratedFrom).toBe(1);
     expect(r.settings.audio.muted).toBe(true);
     expect(r.settings.interface).toEqual({ showZombieHp: false, targetZombieHp: true });
+  });
+
+  it('v3 → v4 keeps the data and defaults the graphics style to classic', () => {
+    const r = loadSettings(
+      JSON.stringify({ version: 3, graphics: { pixelRatioCap: 1 }, audio: { muted: true } }),
+    );
+    expect(r.migratedFrom).toBe(3);
+    expect(r.settings.graphics.style).toBe('classic');
+    expect(r.settings.graphics.pixelRatioCap).toBe(1);
+    expect(r.settings.audio.muted).toBe(true);
+    expect(DEFAULT_SETTINGS.graphics.style).toBe('classic');
   });
 
   it('migrates legacy data (hypothetical v0 with a flat `keys` map)', () => {
