@@ -8,7 +8,10 @@ export type SimContent = Pick<
   ContentBundle,
   'worldSettings' | 'moodles' | 'items' | 'containers' | 'lootTables'
 > &
-  Partial<Pick<ContentBundle, 'zombieTypes'>>;
+  Partial<Pick<ContentBundle, 'zombieTypes' | 'recipes' | 'skills' | 'stations'>>;
+export type RecipeDef = ContentBundle['recipes'][string];
+export type SkillDef = ContentBundle['skills'][string];
+export type StationDef = ContentBundle['stations'][string];
 export type ZombieTypeDef = ContentBundle['zombieTypes'][string];
 export type ItemDef = ContentBundle['items'][string];
 export type ContainerTypeDef = ContentBundle['containers'][string];
@@ -87,6 +90,23 @@ export interface ContentIndex {
   openings: ContentBundle['worldSettings']['openings'] | undefined;
   /** `worldSettings.firearms` (optional for older bundles). */
   firearms: ContentBundle['worldSettings']['firearms'] | undefined;
+  /** Skills sorted by id (index = position in `PlayerProgress.level/xp`). */
+  skills: SkillDef[];
+  skillIndex: ReadonlyMap<string, number>;
+  /** Recipes sorted by id (index = `ActionState.recipe − 1`, `PlayerProgress.known`). */
+  recipes: RecipeDef[];
+  recipeIndex: ReadonlyMap<string, number>;
+  stations: ReadonlyMap<string, StationDef>;
+  /** Item index → the station it is when placed (`placeable.station`). */
+  stationOfItem: ReadonlyMap<number, { id: string; level: number }>;
+  crafting: CraftingConfig;
+}
+
+/** `worldSettings.crafting` with defaults (older bundles / fixtures). */
+export interface CraftingConfig {
+  nearbyRadiusTiles: number;
+  timeReductionPerSkillLevel: number;
+  minTimeMultiplier: number;
 }
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -121,11 +141,31 @@ export function compileContent(content: SimContent): ContentIndex {
   const typeIds = Object.keys(content.containers).sort(byId);
   const tableIds = Object.keys(content.lootTables).sort(byId);
   const zombieIds = Object.keys(content.zombieTypes ?? {}).sort(byId);
+  const skillIds = Object.keys(content.skills ?? {}).sort(byId);
+  const recipeIds = Object.keys(content.recipes ?? {}).sort(byId);
+  const itemIndex = new Map(itemIds.map((id, i) => [id, i]));
+  const stationOfItem = new Map<number, { id: string; level: number }>();
+  itemIds.forEach((id, i) => {
+    const d = content.items[id]!;
+    if (d.kind === 'placeable' && d.placeable.station) stationOfItem.set(i, d.placeable.station);
+  });
+  const cs = (content.worldSettings as { crafting?: Partial<CraftingConfig> }).crafting ?? {};
   return {
+    skills: skillIds.map((id) => content.skills![id]!),
+    skillIndex: new Map(skillIds.map((id, i) => [id, i])),
+    recipes: recipeIds.map((id) => content.recipes![id]!),
+    recipeIndex: new Map(recipeIds.map((id, i) => [id, i])),
+    stations: new Map(Object.entries(content.stations ?? {})),
+    stationOfItem,
+    crafting: {
+      nearbyRadiusTiles: cs.nearbyRadiusTiles ?? 3,
+      timeReductionPerSkillLevel: cs.timeReductionPerSkillLevel ?? 0.05,
+      minTimeMultiplier: cs.minTimeMultiplier ?? 0.5,
+    },
     zombieTypes: zombieIds.map((id) => content.zombieTypes![id]!),
     zombieTypeIndex: new Map(zombieIds.map((id, i) => [id, i])),
     items: itemIds.map((id) => content.items[id]!),
-    itemIndex: new Map(itemIds.map((id, i) => [id, i])),
+    itemIndex,
     containerTypes: typeIds.map((id) => content.containers[id]!),
     containerTypeIndex: new Map(typeIds.map((id, i) => [id, i])),
     lootTables: tableIds.map((id) => content.lootTables[id]!),

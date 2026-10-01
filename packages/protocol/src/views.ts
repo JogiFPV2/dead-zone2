@@ -106,6 +106,11 @@ export interface ItemView {
   equipped?: EquipSlot[];
   /** Placed on the ground as storage (render it as furniture). */
   placed?: boolean;
+  /**
+   * Part of a `combine` recipe the player knows (carried items only): recipe ids and whether
+   * one of them can be done right now (all parts, tools, skills at hand).
+   */
+  combine?: { recipes: string[]; ready: boolean };
 }
 
 export type ContainerKind = 'inventory' | 'bag' | 'world' | 'ground';
@@ -196,6 +201,8 @@ export interface ActionView {
   item?: ItemId;
   container?: ContainerId;
   part?: BodyPart;
+  /** `craft`: recipe id. */
+  recipe?: string;
   /** Actions waiting behind this one. */
   queued: number;
 }
@@ -239,6 +246,62 @@ export interface SimViewPatch {
   openings?: OpeningView[];
   /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
   lures?: LureView[];
+  /** Skills of the local player, full list when any changes. */
+  skills?: SkillView[];
+  /** Recipes with their state for the local player and stations nearby, full when it changes. */
+  crafting?: CraftingView;
+}
+
+export interface SkillView {
+  id: string;
+  level: number;
+  xp: number;
+  /** XP needed for the next level (null at max). */
+  next: number | null;
+}
+
+export type RecipeState =
+  | 'available'
+  /** `requiresLearning` and not learned yet. */
+  | 'notLearned'
+  | 'skillLocked'
+  /** Station missing nearby or below `station.minLevel`. */
+  | 'stationLevelLocked'
+  | 'missingParts';
+
+export interface RecipePartView {
+  item?: string;
+  tag?: string;
+  have: number;
+  need: number;
+}
+
+export interface RecipeStatusView {
+  id: string;
+  kind: 'craft' | 'combine';
+  category: string;
+  state: RecipeState;
+  /** Ingredients (consumed) and tools (need 1, not consumed). */
+  parts: RecipePartView[];
+  tools: RecipePartView[];
+  skills: { skill: string; need: number; have: number }[];
+  station?: { id: string; minLevel: number; level: number };
+  /** Game minutes with the current skills and station. */
+  durationMin: number;
+}
+
+export interface StationNearbyView {
+  id: string;
+  level: number;
+  x: number;
+  y: number;
+  /** Upgrade recipe to the next level (null at max or for map objects). */
+  upgrade: string | null;
+}
+
+export interface CraftingView {
+  recipes: RecipeStatusView[];
+  stations: StationNearbyView[];
 }
 
 /** Weapon / hand pose class for attack and hold animations (from item data). */

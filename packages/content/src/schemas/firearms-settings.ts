@@ -6,7 +6,7 @@ const spread = z.number().min(0).max(1);
 /**
  * Broń palna — strojenie Symulacji (statystyki broni są w `ranged` przedmiotu). Trafienie:
  * szansa = `accuracy` × (1 − `hitFalloffAtRange` × odległość / `rangeTiles`) × (1 − kara
- * `attackPower` z ran); każda śrucina losuje osobno. `spread`: odchylenie kierunku strzału
+ * `attackPower` z ran) × (1 + `accuracyPerSkillLevel` × poziom celowania); każda śrucina losuje osobno. `spread`: odchylenie kierunku strzału
  * (≈ radiany) wg kategorii.
  */
 export const FirearmsSettingsSchema = z
@@ -24,6 +24,14 @@ export const FirearmsSettingsSchema = z
     projectileRadiusTiles: TilesSchema.default(0.15),
     /** Ładowanie magazynka: sekundy na nabój. */
     magazineLoadSecPerRound: z.number().min(0).max(10).default(0.4),
+    /** Celność × (1 + to × poziom umiejętności `ranged.skill`). */
+    accuracyPerSkillLevel: z.number().min(0).max(1).default(0.04),
+    /** Czas przeładowania × max(0,5; 1 − to × poziom `base:reloading`). */
+    reloadTimeReductionPerLevel: FractionSchema.default(0.04),
+    /** XP do `ranged.skill` za trafienie (śrucina liczy się raz na strzał). */
+    xpPerHit: z.number().min(0).max(100).default(2),
+    /** XP do `base:reloading` za skończone przeładowanie. */
+    xpPerReload: z.number().min(0).max(100).default(1),
   })
   .prefault({});
 

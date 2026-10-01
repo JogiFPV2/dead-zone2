@@ -22,6 +22,7 @@ import {
   tileInReach,
 } from './inventory.js';
 import { freshness } from './spoilage.js';
+import { combineMarks } from '../crafting/crafting.js';
 import {
   containerWeight,
   defOf,
@@ -91,7 +92,9 @@ export function storagesView(w: SimWorld, eid: number, radius: number): StorageM
 
 const kg = (v: number): number => Math.round(v * 1000) / 1000;
 
-function itemView(st: ItemStore, id: number, minute: number): ItemView | undefined {
+type Marks = ReadonlyMap<number, { recipes: string[]; ready: boolean }>;
+
+function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): ItemView | undefined {
   const item = st.items.get(id);
   if (!item) return undefined;
   const def = defOf(st, item);
@@ -107,10 +110,12 @@ function itemView(st: ItemStore, id: number, minute: number): ItemView | undefin
     for (const [slot, other] of p.slots) if (other === id) slots.push(slot);
   }
   if (slots.length > 0) v.equipped = slots.sort();
+  const mark = marks?.get(item.def);
+  if (mark) v.combine = mark;
   return v;
 }
 
-export function containerView(w: SimWorld, id: number): ContainerView | undefined {
+export function containerView(w: SimWorld, id: number, marks?: Marks): ContainerView | undefined {
   const st = w.items;
   const c = st?.containers.get(id);
   if (!st || !c) return undefined;
@@ -120,7 +125,7 @@ export function containerView(w: SimWorld, id: number): ContainerView | undefine
     kind: c.kind,
     capacityKg: c.capacityKg === Infinity ? null : c.capacityKg,
     weightKg: kg(containerWeight(st, id)),
-    items: c.items.flatMap((i) => itemView(st, i, minute) ?? []),
+    items: c.items.flatMap((i) => itemView(st, i, minute, marks) ?? []),
   };
   if (c.type >= 0) v.type = st.content.containerTypes[c.type]!.id;
   if (c.kind === 'world' || c.kind === 'ground') Object.assign(v, { x: c.x, y: c.y, z: c.z });
@@ -146,6 +151,7 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
   const load = carriedLoad(st, p);
   const equipped: Partial<Record<EquipSlot, number>> = {};
   for (const [slot, id] of [...p.slots].sort((a, b) => (a[0] < b[0] ? -1 : 1))) equipped[slot] = id;
+  const marks = combineMarks(w, eid);
   return {
     container: p.inventory,
     loadKg: kg(load),
@@ -153,7 +159,9 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
     hardLimitKg: kg(hardLimit(w, eid)),
     carryLoad: Math.round((w.survival?.carryLoad[eid] ?? 0) * 10) / 10,
     equipped,
-    containers: carriedContainerIds(st, p.inventory).flatMap((id) => containerView(w, id) ?? []),
+    containers: carriedContainerIds(st, p.inventory).flatMap(
+      (id) => containerView(w, id, marks) ?? [],
+    ),
   };
 }
 
@@ -232,6 +240,7 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
   };
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
+  if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';
   const part = actionPart(a);
   if (part) v.part = part;
   return v;

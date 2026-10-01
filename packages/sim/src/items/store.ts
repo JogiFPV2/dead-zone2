@@ -1,4 +1,5 @@
 import type { LureState } from '../lures/lures.js';
+import { createProgress, type PlayerProgress } from '../progress/skills.js';
 import type { ContainerKind, EquipSlot } from '@deadzone/protocol';
 import type { ContentIndex, ItemDef } from '../content/adapter.js';
 
@@ -76,6 +77,10 @@ export interface ActionState {
   container: number;
   /** Body part index for bandages, −1 otherwise. */
   part: number;
+  /** Craft: recipe index + 1 (0 = none). */
+  recipe: number;
+  /** Craft: items to consume first (`combine` selection, the station being upgraded). */
+  use: number[];
 }
 
 export interface ItemStore {
@@ -96,6 +101,8 @@ export interface ItemStore {
   readonly jammed: Set<number>;
   /** Placed lures by item id (lures/lures.ts). */
   readonly lures: Map<number, LureState>;
+  /** Player StableId → skills and learned recipes (progress/skills.ts). */
+  readonly progress: Map<number, PlayerProgress>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
   powered: boolean;
   /** Bumped on any change (views and carry-load recompute). Not state. */
@@ -113,6 +120,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     ground: new Map(),
     worldByTile: new Map(),
     lures: new Map(),
+    progress: new Map(),
     magOf: new Map(),
     jammed: new Set(),
     nextItemId: 1,
@@ -164,6 +172,7 @@ export function createPlayerItems(st: ItemStore, stableId: number): PlayerItems 
     queue: [],
   };
   st.players.set(stableId, p);
+  st.progress.set(stableId, createProgress(st.content));
   return p;
 }
 

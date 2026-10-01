@@ -3,6 +3,7 @@ import { ModSlot, type ItemDef } from '../content/adapter.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { ACTION_KINDS, registerAction } from '../actions/queue.js';
+import { registerCraftActions } from '../crafting/crafting.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
 import { canReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
@@ -157,6 +158,7 @@ let registered = false;
 export function registerItemActions(): void {
   if (registered) return;
   registered = true;
+  registerCraftActions();
 
   registerAction('search', {
     validate(w, eid, a) {

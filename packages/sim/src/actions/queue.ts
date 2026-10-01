@@ -17,7 +17,15 @@ import { Pen, penaltyMul } from '../survival/penalties.js';
  * a short FIFO queue. The duration is fixed when the action starts; movement, sleep, death or a
  * threat interrupt it and clear the queue. Handlers validate again on completion.
  */
-export const ACTION_KINDS: readonly ActionKind[] = ['search', 'eat', 'drink', 'bandage', 'unpack'];
+export const ACTION_KINDS: readonly ActionKind[] = [
+  'search',
+  'eat',
+  'drink',
+  'bandage',
+  'unpack',
+  'craft',
+  'read',
+];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;
 
@@ -38,7 +46,7 @@ export function registerAction(kind: ActionKind, h: ActionHandler): void {
 
 export function newAction(
   kind: ActionKind,
-  args: { item?: number; container?: number; part?: number } = {},
+  args: { item?: number; container?: number; part?: number; recipe?: number; use?: number[] } = {},
 ): ActionState {
   return {
     kind: actionKindIndex(kind),
@@ -47,6 +55,8 @@ export function newAction(
     item: args.item ?? 0,
     container: args.container ?? 0,
     part: args.part ?? -1,
+    recipe: args.recipe ?? 0,
+    use: args.use ?? [],
   };
 }
 
@@ -82,7 +92,7 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
   a.endTick = w.tick + ticks;
   p.current = a;
   const noise = w.ai?.cfg.noise.actions[kindName(a)];
-  if (noise) {
+  if (noise && noise.radiusTiles > 0) {
     const { Position } = w.c;
     emitNoise(
       w,

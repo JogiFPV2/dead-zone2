@@ -390,6 +390,52 @@ export interface LoadMagazineCommand extends CommandHeader {
   item: ItemId;
 }
 
+/**
+ * Crafts recipe `recipe` (content id) `count` times (each a timed `craft` action, queued).
+ * Parts come from the inventory and from containers within `worldSettings.crafting.
+ * nearbyRadiusTiles` (searched storage, ground piles); tools must be at hand the same way.
+ * Rejects: `not-learned`, `skill-too-low`, `no-station` (missing or too low a level),
+ * `missing-parts`, `missing-tool`.
+ */
+export interface CraftCommand extends CommandHeader {
+  type: 'craft';
+  recipe: string;
+  count?: number | undefined;
+}
+
+/**
+ * Combines 1–4 selected items (`kind: 'combine'` recipe): the first combine recipe (by id) whose
+ * parts the selection covers, or `recipe` when given. Selected items are consumed first.
+ */
+export interface CombineCommand extends CommandHeader {
+  type: 'combine';
+  items: ItemId[];
+  recipe?: string | undefined;
+}
+
+/**
+ * Upgrades the station item lying on tile (x, y) (a ground pile within the crafting radius) to
+ * the next level with that level's recipe; the new station is put on the same tile.
+ */
+export interface UpgradeStationCommand extends CommandHeader {
+  type: 'upgradeStation';
+  x: number;
+  y: number;
+}
+
+/** Dev only: sets a skill level (XP towards the next level reset to 0). */
+export interface DebugSkillCommand extends CommandHeader {
+  type: 'debugSkill';
+  skill: string;
+  level: number;
+}
+
+/** Dev only: learns a recipe (content id). */
+export interface DebugLearnRecipeCommand extends CommandHeader {
+  type: 'debugLearnRecipe';
+  recipe: string;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -424,7 +470,12 @@ export type Command =
   | TriggerLureCommand
   | ThrowCommand
   | ReloadCommand
-  | LoadMagazineCommand;
+  | LoadMagazineCommand
+  | CraftCommand
+  | CombineCommand
+  | UpgradeStationCommand
+  | DebugSkillCommand
+  | DebugLearnRecipeCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

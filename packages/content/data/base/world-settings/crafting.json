@@ -1,0 +1,7 @@
+{
+  "crafting": {
+    "nearbyRadiusTiles": 3,
+    "timeReductionPerSkillLevel": 0.05,
+    "minTimeMultiplier": 0.5
+  }
+}

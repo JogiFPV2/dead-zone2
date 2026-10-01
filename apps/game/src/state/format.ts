@@ -18,6 +18,12 @@ export function describeEvent(e: SimEvent): string {
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
     case 'fellAsleep':
       return 'fell asleep';
+    case 'crafted':
+      return `crafted ${e.recipe} → ${e.results.map((r) => `${r.def}×${r.count}`).join(', ')}`;
+    case 'skillLevelUp':
+      return `skill ${e.skill} → ${e.level}`;
+    case 'recipeLearned':
+      return `learned ${e.recipe}`;
     case 'shot':
       return `shot ${e.weapon} (${e.rays.filter((r) => r.hit).length}/${e.rays.length} hit, ${e.ammo} left${e.jammed ? ', jammed' : ''})`;
     case 'reload':

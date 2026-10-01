@@ -98,6 +98,12 @@ export interface SimWorkerClient {
   reload(): void;
   /** Fill a carried magazine with carried rounds. */
   loadMagazine(item: ItemId): void;
+  /** Craft a recipe `count` times (timed `craft` actions; parts within the crafting radius). */
+  craft(recipe: string, count?: number): void;
+  /** Combine 1–4 selected items (`combine` recipe; `recipe` picks one when several match). */
+  combine(items: ItemId[], recipe?: string): void;
+  /** Upgrade the station item lying on tile (x, y) to its next level. */
+  upgradeStation(x: number, y: number): void;
   placeStorage(item: ItemId, x: number, y: number): void;
   /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
@@ -259,6 +265,9 @@ export function createSimWorkerClient(
     shove: () => cmd({ type: 'shove' }),
     reload: () => cmd({ type: 'reload' }),
     loadMagazine: (item) => cmd({ type: 'loadMagazine', item }),
+    craft: (recipe, count) => cmd({ type: 'craft', recipe, ...(count ? { count } : {}) }),
+    combine: (items, recipe) => cmd({ type: 'combine', items, ...(recipe ? { recipe } : {}) }),
+    upgradeStation: (x, y) => cmd({ type: 'upgradeStation', x, y }),
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
     toggleDoor: (tx, ty, side, lock) =>
       cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),

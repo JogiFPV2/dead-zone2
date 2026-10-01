@@ -3,6 +3,8 @@ import { applyAiCommand, isAiCommand } from '../ai/commands.js';
 import { queueAttack } from '../combat/commands.js';
 import { applyFirearmCommand } from '../combat/firearms.js';
 import type { SimWorld } from '../core/world.js';
+import { applyCraftCommand, isCraftCommand } from '../crafting/crafting.js';
+import { applyProgressCommand } from '../progress/skills.js';
 import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applyLureCommand, isLureCommand } from '../lures/lures.js';
 import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
@@ -49,6 +51,12 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       AimIntent.active[eid] = 1;
     } else if (cmd.type === 'reload' || cmd.type === 'loadMagazine') {
       const reason = applyFirearmCommand(w, eid, cmd);
+      if (reason) reject(w, cmd, reason);
+    } else if (isCraftCommand(cmd)) {
+      const reason = applyCraftCommand(w, eid, cmd);
+      if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'debugSkill' || cmd.type === 'debugLearnRecipe') {
+      const reason = applyProgressCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);
     } else if (isLureCommand(cmd)) {
       const reason = applyLureCommand(w, grid, eid, cmd);

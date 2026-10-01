@@ -255,6 +255,36 @@ export const loadMagazineCommandSchema = z.strictObject({
   item: itemId,
 });
 
+export const craftCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('craft'),
+  recipe: contentId,
+  count: z.number().int().min(1).max(20).optional(),
+});
+export const combineCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('combine'),
+  items: z.array(itemId).min(1).max(4),
+  recipe: contentId.optional(),
+});
+export const upgradeStationCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('upgradeStation'),
+  x: tileCoord,
+  y: tileCoord,
+});
+export const debugSkillCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugSkill'),
+  skill: contentId,
+  level: z.number().int().min(0).max(10),
+});
+export const debugLearnRecipeCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugLearnRecipe'),
+  recipe: contentId,
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
@@ -290,6 +320,11 @@ export const commandSchema = z.discriminatedUnion('type', [
   throwCommandSchema,
   reloadCommandSchema,
   loadMagazineCommandSchema,
+  craftCommandSchema,
+  combineCommandSchema,
+  upgradeStationCommandSchema,
+  debugSkillCommandSchema,
+  debugLearnRecipeCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */

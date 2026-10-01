@@ -33,7 +33,15 @@ export type CommandRejectReason =
   /** Needs a tool the player does not carry (e.g. a can opener, `food.openWith`). */
   | 'missing-tool'
   /** The action queue is full. */
-  | 'busy';
+  | 'busy'
+  /** Crafting: the recipe must be learned first (`requiresLearning`). */
+  | 'not-learned'
+  /** Crafting: a required skill level is not reached. */
+  | 'skill-too-low'
+  /** Crafting: no station of the recipe nearby, or its level is below `station.minLevel`. */
+  | 'no-station'
+  /** Crafting: parts missing (inventory + containers within the crafting radius). */
+  | 'missing-parts';
 
 export type DeathCause =
   | 'bleeding'
@@ -50,7 +58,7 @@ export type DeathCause =
 export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot';
 
 /** Timed actions (docs/sim-architecture.md, `actions`). */
-export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack';
+export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack' | 'craft' | 'read';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -156,6 +164,19 @@ export type SimEvent =
    * `idle` (placed, waiting for the remote), `spent` (used up, item gone) or `removed`
    * (picked up).
    */
+  /** A `craft` action finished: parts consumed, results added (inventory or `container`). */
+  | {
+      type: 'crafted';
+      tick: number;
+      playerId: PlayerId;
+      recipe: string;
+      results: { def: string; count: number }[];
+      /** Results that went to a ground pile (heavy stations, full inventory). */
+      container?: ContainerId;
+    }
+  | { type: 'skillLevelUp'; tick: number; playerId: PlayerId; skill: string; level: number }
+  /** Recipe learned (literature `unlocksRecipes`, profession, dev). */
+  | { type: 'recipeLearned'; tick: number; playerId: PlayerId; recipe: string }
   | {
       type: 'lureChanged';
       tick: number;

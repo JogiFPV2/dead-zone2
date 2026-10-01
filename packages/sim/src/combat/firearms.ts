@@ -15,6 +15,7 @@ import {
   type ItemStore,
 } from '../items/store.js';
 import { Pen, penaltyMul } from '../survival/penalties.js';
+import { addXp, skillLevel } from '../progress/skills.js';
 import type { TileGrid } from '../world/grid.js';
 import { lineOfSight } from '../world/los.js';
 import type { CombatWorld } from './state.js';
@@ -134,7 +135,8 @@ export function applyFirearmCommand(
       if (!jammed && (room <= 0 || countOf(carriedOf(w, eid, g.def.ranged.ammo)) === 0))
         return room <= 0 ? 'invalid-state' : 'no-ammo';
     } else if (!jammed && !bestMagazine(w, eid, feed.magazine)) return 'no-ammo';
-    sec = g.def.ranged.reloadSec;
+    const red = cb.cfg.firearms.reloadTimeReductionPerLevel * skillLevel(w, eid, 'base:reloading');
+    sec = g.def.ranged.reloadSec * Math.max(0.5, 1 - red);
   } else {
     const found = st.items.get(cmd.item);
     const p = playerItems(w, eid)!;
@@ -192,6 +194,7 @@ export function reloadSystem(w: SimWorld, cb: CombatWorld): void {
       if (mag) swapMagazine(w, p.inventory, item, mag);
     }
     st.version++;
+    addXp(w, eid, 'base:reloading', cb.cfg.firearms.xpPerReload);
     reloadEvent(w, eid, item, 'done', 0);
   }
 }
@@ -272,7 +275,9 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
   }
   const ammoDef = st.content.items[st.content.itemIndex.get(r.ammo) ?? -1];
   const ammoMul = ammoDef?.kind === 'ammo' ? ammoDef.ammo.damageMultiplier : 1;
-  const aimMul = penaltyMul(w, eid, Pen.attack);
+  const aimMul =
+    penaltyMul(w, eid, Pen.attack) * (1 + fc.accuracyPerSkillLevel * skillLevel(w, eid, r.skill));
+  let hits = 0;
   const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]).filter(
     (zid) => (Position.z[zid] ?? 0) === z,
   );
@@ -309,6 +314,7 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
       );
       hit = StableId.value[a.zid] ?? 0;
       tEnd = a.t;
+      hits++;
       damageZombie(w, ai, cb, grid, a.zid, eid, dmg, 'shot');
       break;
     }
@@ -318,6 +324,7 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
       hit,
     });
   }
+  if (hits > 0) addXp(w, eid, r.skill, fc.xpPerHit);
   let jammed = false;
   if (r.jamChance > 0 && g.item.uses > 0 && rng.chance(r.jamChance)) {
     st.jammed.add(g.item.id);

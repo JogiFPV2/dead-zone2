@@ -134,6 +134,39 @@ describe('firearms: pump shotgun (internal feed)', () => {
     expect(near).toBeGreaterThan(0);
   });
 
+  it('a hit gives aiming XP; aiming raises the hit chance; reloading gives reloading XP', () => {
+    const xpOf = (s: Sim, id: string) => s.drainView()?.skills?.find((k) => k.id === id)?.xp ?? 0;
+    const s = sim([{ x: 12.5, y: 10.5 }], 2);
+    arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+    reload(s);
+    s.drainView();
+    send(s, { type: 'aim', x: 30, y: 10.5 });
+    send(s, { type: 'attack' });
+    s.step();
+    const hit = eventsOf(s.drainEvents(), 'shot')[0]!.rays.some((x) => x.hit !== 0);
+    const view = s.drainView();
+    expect(view?.skills?.find((k) => k.id === 'base:reloading')?.xp).toBe(1);
+    expect(view?.skills?.find((k) => k.id === 'base:aiming')?.xp ?? 0).toBe(hit ? 2 : 0);
+    expect(xpOf(s, 'base:aiming')).toBe(0); // no change → nothing sent
+    // Same seed, aiming 10: at least as many pellets hit at range.
+    const hitsWith = (level: number): number => {
+      let n = 0;
+      for (let seed = 1; seed <= 6; seed++) {
+        const t = sim([{ x: 18.5, y: 10.5 }], seed);
+        send(t, { type: 'debugSkill', skill: 'base:aiming', level });
+        arm(t, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+        reload(t);
+        t.drainEvents();
+        send(t, { type: 'aim', x: 30, y: 10.5 });
+        send(t, { type: 'attack' });
+        t.step();
+        n += eventsOf(t.drainEvents(), 'shot')[0]!.rays.filter((x) => x.hit !== 0).length;
+      }
+      return n;
+    };
+    expect(hitsWith(10)).toBeGreaterThanOrEqual(hitsWith(0));
+  });
+
   it('save/load keeps loaded rounds', () => {
     const s = sim();
     arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);

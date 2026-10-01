@@ -1,4 +1,6 @@
 import { lureViews } from '../lures/lures.js';
+import { craftingView } from '../crafting/crafting.js';
+import { skillViews } from '../progress/skills.js';
 import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
 import { openingView } from '../openings/state.js';
 import {
@@ -151,6 +153,8 @@ export class ViewTracker {
   private openingsVersion = 0;
   private luresKey = '';
   private penaltiesKey = '';
+  private skillsKey = '';
+  private craftingKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -221,6 +225,20 @@ export class ViewTracker {
       if (lk !== this.luresKey) {
         if (this.luresKey !== '' || lures.length > 0) patch.lures = lures;
         this.luresKey = lk;
+      }
+    }
+    if (w.items && eid !== undefined) {
+      const skills = skillViews(w, eid);
+      const sk = JSON.stringify(skills);
+      if (sk !== this.skillsKey) {
+        this.skillsKey = sk;
+        if (skills.length > 0) patch.skills = skills;
+      }
+      const crafting = craftingView(w, eid);
+      const ck = crafting ? JSON.stringify(crafting) : '';
+      if (ck !== this.craftingKey) {
+        this.craftingKey = ck;
+        if (crafting) patch.crafting = crafting;
       }
     }
     if (w.openings.version !== this.openingsVersion) {

@@ -44,6 +44,10 @@ export interface CombatConfig {
     spread: Record<'pistol' | 'revolver' | 'shotgun' | 'rifle', number>;
     projectileRadiusTiles: number;
     magazineLoadSecPerRound: number;
+    accuracyPerSkillLevel: number;
+    reloadTimeReductionPerLevel: number;
+    xpPerHit: number;
+    xpPerReload: number;
   };
 }
 
@@ -70,5 +74,9 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
     spread: { pistol: 0.03, revolver: 0.03, shotgun: 0.12, rifle: 0.015 },
     projectileRadiusTiles: 0.15,
     magazineLoadSecPerRound: 0.4,
+    accuracyPerSkillLevel: 0.04,
+    reloadTimeReductionPerLevel: 0.04,
+    xpPerHit: 2,
+    xpPerReload: 1,
   },
 };

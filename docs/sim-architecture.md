@@ -837,3 +837,26 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
 - `nearby[].fillPct` i nowy widok `storages` (schowki świata w promieniu `STORAGE_MARKER_TILES` = 24: `fillPct` 0..1 co 0,05, `searched`). Przed przeszukaniem `fillPct` to waga lootu, który wygeneruje przeszukanie (ten sam pochodny RNG, bez zmiany stanu).
 - Ruch (`systems/movement.ts`): gracz rozpędza się w `ACCEL_TICKS` = 4 (0,2 s), hamuje w `DECEL_TICKS` = 3; `Velocity` to bieżąca prędkość (kafle/tick). Obrót gracza najwyżej `TURN_BAM_PER_TICK` (720°/s) do celowania / kierunku ruchu, więc kierunek ruchu i `facingRad` w snapshocie mogą się różnić (animacje przodem / tyłem / bokiem). Zombie: tempo × `zombieWobble` (±20%, gładko co 12 ticków, z seeda i StableId, bez strumienia RNG). Hook `registerMovementModifier({ speedMul, accelMul })` dla fizyki.
 - Widok `characters` (na razie gracz lokalny): `{stableId, equippedPrimary, equippedBack, weaponKind, twoHanded}`. Pola equipped to id contentu albo null. `weaponKind` przyjmuje wartości unarmed / blunt / blade / spear / firearm-short / firearm-long / item i jest liczony z `melee.category` / `ranged.category`.
+
+### 9.14 Stan po PR „crafting, łączenie, warsztaty, umiejętności”
+- **Dane (z PR #32):** `recipes` (`kind: craft | combine`, combine najwyżej 4 części — walidator `check-recipe-kinds`), `stations` (4 stacje, poziomy 1–3, receptury budowy i ulepszeń), `skills`, `placeable.station`, `literature.unlocksRecipes` / `skillBook`. Dopisane pola `worldSettings.crafting`: `timeReductionPerSkillLevel` (0,05) i `minTimeMultiplier` (0,5), plik `world-settings/crafting.json`. Do `worldSettings.firearms` doszły: `accuracyPerSkillLevel`, `reloadTimeReductionPerLevel`, `xpPerHit`, `xpPerReload`.
+- **Umiejętności:** `ItemStore.progress` (StableId → poziomy, XP, mnożniki XP, poznane receptury), w zapisie. Hasz liczy się tylko wtedy, gdy coś odbiega od wartości startowych. `addXp` przechodzi przez `xpPerLevel` i wysyła zdarzenie `skillLevelUp`. Broń palna: celność × (1 + 0,04 × poziom `ranged.skill`), XP za trafienie, przeładowanie szybsze z `base:reloading` (+XP).
+- **Źródła:** ekwipunek (z torbami), potem przeszukane schowki i kupki na ziemi w promieniu `nearbyRadiusTiles` (3, środek kafla, to samo piętro). Stacje to przedmioty stacji leżące na kupce (można je ulepszać) albo obiekty mapy (nie można). Pełne torby nie są zużywane.
+- **Komendy:**
+  - `craft {recipe, count?}`: akcje czasowe `craft` w kolejce.
+  - `combine {items[1..4], recipe?}`: pierwsza receptura combine pokrywająca zaznaczenie; zaznaczone przedmioty idą na pierwszy ogień.
+  - `upgradeStation {x, y}`: receptura następnego poziomu, nowa stacja trafia na ten sam kafel.
+  - Dev: `debugSkill`, `debugLearnRecipe`.
+  - `useItem` na `literature` uruchamia akcję `read`: uczy `unlocksRecipes`, ustawia mnożnik XP książki, zmniejsza nudę i stres.
+  - Odrzucenia: `not-learned`, `skill-too-low`, `no-station`, `missing-parts`, `missing-tool`.
+- **Wykonanie:**
+  - Czas = `durationMin` × `craftTimeMultiplier` poziomu stacji × max(0,5; 1 − 0,05 × poziomy ponad wymagany), ÷ kara action.
+  - Po zakończeniu: zużycie składników, utrata trwałości narzędzi (`durabilityLoss`, przy 0 narzędzie się psuje), naprawa (`repair.restorePct`), wyniki, XP.
+  - Stacje i rzeczy, które się nie mieszczą, lądują na kupce (`crafted.container`). Zdarzenia `crafted`, `recipeLearned`.
+- **Widok:**
+  - `crafting {recipes[], stations[]}` przy każdej zmianie. Receptura ma `state: available | notLearned | skillLocked | stationLevelLocked | missingParts`, a także `parts`/`tools` (have/need), `skills`, `station {minLevel, level}`, `durationMin`. Stacje mają `upgrade` (id receptury albo null).
+  - `skills[]` (`level`, `xp`, `next`).
+  - `ItemView.combine {recipes, ready}` dla noszonych przedmiotów będących częścią poznanej receptury combine.
+  - `ActionView.recipe`.
+  - Widok jest cache'owany po `ItemStore.version` i pozycji (pół kafla).
+- **Odłożone:** zawody i cechy (`knownRecipes`, mnożniki XP) przychodzą z kreatorem postaci. XP z wysiłku dla umiejętności pasywnych. Hałas `craft` jest stały (6 kafli), niezależny od kategorii.
