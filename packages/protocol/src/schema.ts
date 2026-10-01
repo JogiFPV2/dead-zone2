@@ -285,6 +285,44 @@ export const debugLearnRecipeCommandSchema = z.strictObject({
   recipe: contentId,
 });
 
+const colorId = z
+  .string()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+  .max(64);
+const charName = z.string().max(64);
+export const characterSpecSchema = z.strictObject({
+  firstName: charName,
+  lastName: charName,
+  appearance: z.strictObject({
+    skin: colorId,
+    parts: z
+      .record(
+        z
+          .string()
+          .regex(/^[a-z]+$/)
+          .max(32),
+        z.strictObject({
+          part: contentId,
+          colors: z
+            .strictObject({ primary: colorId.optional(), secondary: colorId.optional() })
+            .optional(),
+        }),
+      )
+      .refine((r) => Object.keys(r).length <= 12, 'too many slots'),
+  }),
+  profession: contentId,
+  traits: z.array(contentId).max(32).optional(),
+  skills: z
+    .record(contentId, z.number().int().min(0).max(10))
+    .refine((r) => Object.keys(r).length <= 64, 'too many skills')
+    .optional(),
+});
+export const newCharacterCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('newCharacter'),
+  character: characterSpecSchema,
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
@@ -325,6 +363,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   upgradeStationCommandSchema,
   debugSkillCommandSchema,
   debugLearnRecipeCommandSchema,
+  newCharacterCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */
@@ -430,6 +469,7 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
       .optional(),
     content: simContentSourceSchema.optional(),
     dev: z.boolean().optional(),
+    character: characterSpecSchema.optional(),
   }),
   z.object({ kind: z.literal('cmd'), cmd: commandSchema }),
   z.object({ kind: z.literal('pause') }),

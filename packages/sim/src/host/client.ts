@@ -1,4 +1,5 @@
 import type {
+  CharacterSpec,
   SaveReason,
   BodyPart,
   Command,
@@ -56,6 +57,8 @@ export interface SimWorkerClient {
       floorLoot?: boolean;
       /** Restores a save (`SavedGame.buf`). */
       save?: ArrayBuffer;
+      /** New game: character from the creator (validated by the sim). */
+      character?: CharacterSpec;
     },
   ): void;
   /** Requests a save (`exit` on quit); resolves with the blob. */
@@ -104,6 +107,8 @@ export interface SimWorkerClient {
   combine(items: ItemId[], recipe?: string): void;
   /** Upgrade the station item lying on tile (x, y) to its next level. */
   upgradeStation(x: number, y: number): void;
+  /** Create the character (once; usually via `init({ character })`). */
+  newCharacter(character: CharacterSpec): void;
   placeStorage(item: ItemId, x: number, y: number): void;
   /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
@@ -215,6 +220,7 @@ export function createSimWorkerClient(
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
         ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
         ...(opts?.save ? { save: opts.save } : {}),
+        ...(opts?.character ? { character: opts.character } : {}),
       }),
     save(reason = 'manual') {
       const requestId = nextSaveId++;
@@ -268,6 +274,7 @@ export function createSimWorkerClient(
     craft: (recipe, count) => cmd({ type: 'craft', recipe, ...(count ? { count } : {}) }),
     combine: (items, recipe) => cmd({ type: 'combine', items, ...(recipe ? { recipe } : {}) }),
     upgradeStation: (x, y) => cmd({ type: 'upgradeStation', x, y }),
+    newCharacter: (character) => cmd({ type: 'newCharacter', character }),
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
     toggleDoor: (tx, ty, side, lock) =>
       cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),

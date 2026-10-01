@@ -1,5 +1,6 @@
 import type { LureState } from '../lures/lures.js';
 import { createProgress, type PlayerProgress } from '../progress/skills.js';
+import type { CharacterState } from '../character/character.js';
 import type { ContainerKind, EquipSlot } from '@deadzone/protocol';
 import type { ContentIndex, ItemDef } from '../content/adapter.js';
 
@@ -103,6 +104,8 @@ export interface ItemStore {
   readonly lures: Map<number, LureState>;
   /** Player StableId → skills and learned recipes (progress/skills.ts). */
   readonly progress: Map<number, PlayerProgress>;
+  /** Player StableId → created character (character/character.ts). */
+  readonly characters: Map<number, CharacterState>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
   powered: boolean;
   /** Bumped on any change (views and carry-load recompute). Not state. */
@@ -121,6 +124,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     worldByTile: new Map(),
     lures: new Map(),
     progress: new Map(),
+    characters: new Map(),
     magOf: new Map(),
     jammed: new Set(),
     nextItemId: 1,

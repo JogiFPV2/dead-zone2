@@ -10,6 +10,7 @@ import {
   type InventoryView,
   type SimViewPatch,
   type SimZombieSpawn,
+  type CharacterSpec,
   type WoundView,
 } from '@deadzone/protocol';
 import type { Stage4Config } from './ai/config.js';
@@ -43,6 +44,7 @@ import { threatNearby } from './systems/sleep.js';
 import type { MinuteTicks } from './systems/clock.js';
 import { circleOverlaps } from './world/collision.js';
 import { registerItemActions } from './items/actions.js';
+import { applyNewCharacter } from './character/character.js';
 import { createWorldContainers, scatterFloorLoot } from './items/loot.js';
 import { loadWorld, readSaveHeader, saveWorld } from './save/save.js';
 import { createItemStore, createPlayerItems } from './items/store.js';
@@ -82,6 +84,8 @@ export interface SimOptions {
   floorLoot?: boolean | undefined;
   /** Restore a save from `Sim.save()` (same map, content and options; spawn options are ignored). */
   load?: Uint8Array | undefined;
+  /** New game: player 0's character from the creator (ignored with `load`); invalid → throws. */
+  character?: CharacterSpec | undefined;
   /** Game clock start; default day 1, 09:00. */
   clockStart?: ClockStart | undefined;
   /** Ambient temperature in °C until weather exists; default 20 (comfortable). */
@@ -258,6 +262,10 @@ export function createSim(input: SimOptions): Sim {
     const spawn = opts.spawn ?? findSpawn(ctx.grid);
     spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
     if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
+    if (opts.character) {
+      const r = applyNewCharacter(w, w.players.get(0)!, opts.character);
+      if (r) throw new Error(`character: ${r.detail ?? r.reason}`);
+    }
   }
 
   const hash = (): number => {

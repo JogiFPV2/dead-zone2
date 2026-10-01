@@ -1,4 +1,4 @@
-import type { Command } from './commands.js';
+import type { CharacterSpec, Command } from './commands.js';
 import type { SimEvent } from './events.js';
 import type { SimMapData } from './map.js';
 import type { SimViewPatch } from './views.js';
@@ -40,6 +40,8 @@ export type MainToWorker =
       save?: ArrayBuffer | undefined;
       /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). */
       dev?: boolean | undefined;
+      /** New game: the creator's character, sent as `newCharacter` for player 0 (ignored with `save`). */
+      character?: CharacterSpec | undefined;
     }
   | { kind: 'cmd'; cmd: Command }
   /** Asks for a save; the worker answers with `saved` (same `requestId`). `exit` = on quit. */

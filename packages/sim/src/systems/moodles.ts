@@ -1,6 +1,8 @@
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { MOD_STATS, type CompiledMoodle, type ConditionDef } from '../content/adapter.js';
 import { statValue, type SurvivalWorld } from '../survival/state.js';
+import { characterMods, hasTrait } from '../character/character.js';
+import { skillLevel } from '../progress/skills.js';
 
 /**
  * Next level of one moodle with hysteresis: a level turns on at `enterAt` and off only past
@@ -72,9 +74,18 @@ export function refreshModifiers(w: SimWorld, s: SurvivalWorld, eid: number): vo
       else s.modAdd[at] = Math.fround((s.modAdd[at] ?? 0) + mod.value);
     }
   }
+  // Traits and profession (character creator), after the moodles.
+  const st = w.items;
+  if (!st) return;
+  for (const mod of characterMods(st, w.c.StableId.value[eid] ?? 0)) {
+    if (mod.when && !conditionHolds(w, s, eid, mod.when)) continue;
+    const at = eid * k + mod.slot;
+    if (mod.op === 'mul') s.modMul[at] = Math.fround((s.modMul[at] ?? 1) * mod.value);
+    else s.modAdd[at] = Math.fround((s.modAdd[at] ?? 0) + mod.value);
+  }
 }
 
-/** Declarative conditions from data; skills and traits are not simulated yet (→ false). */
+/** Declarative conditions from data (moodle, stat, skill, trait, all / any / not). */
 export function conditionHolds(
   w: SimWorld,
   s: SurvivalWorld,
@@ -89,6 +100,8 @@ export function conditionHolds(
     const v = statValue(s, eid, c.stat);
     return v !== undefined && (c.op === 'gte' ? v >= c.value : v <= c.value);
   }
+  if ('skill' in c) return skillLevel(w, eid, c.skill) >= c.minLevel;
+  if ('trait' in c) return hasTrait(w, eid, c.trait);
   if ('all' in c) return c.all.every((x) => conditionHolds(w, s, eid, x));
   if ('any' in c) return c.any.some((x) => conditionHolds(w, s, eid, x));
   if ('not' in c) return !conditionHolds(w, s, eid, c.not);

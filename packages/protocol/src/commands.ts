@@ -436,6 +436,45 @@ export interface DebugLearnRecipeCommand extends CommandHeader {
   recipe: string;
 }
 
+/** One appearance slot: part id and a palette color id per tint channel of the part. */
+export interface AppearanceChoiceSpec {
+  part: string;
+  colors?: { primary?: string | undefined; secondary?: string | undefined } | undefined;
+}
+
+/**
+ * Character look: skin color (`characterCreation.skinPalette`) and a part per slot (slot =
+ * the part's `slot`, e.g. face, hair, top, bottom, shoes; or `head` once face+hair merge).
+ */
+export interface AppearanceSpec {
+  skin: string;
+  parts: Record<string, AppearanceChoiceSpec>;
+}
+
+/**
+ * Character creator result. Budget (checked by the sim): `startPoints` + `profession.points` −
+ * Σ `trait.cost` − Σ skill costs (level N bought costs `skillPointCost[0..N-1]`) ≥ 0.
+ */
+export interface CharacterSpec {
+  firstName: string;
+  lastName: string;
+  appearance: AppearanceSpec;
+  profession: string;
+  /** Selectable traits (negative cost = flaw, gives points). Profession `freeTraits` are added. */
+  traits?: string[] | undefined;
+  /** Levels bought per skill on top of starting level and bonuses (≤ `maxSkillLevelAtStart`). */
+  skills?: Record<string, number> | undefined;
+}
+
+/**
+ * Creates the player's character (once, before or right after the start; `init.character`
+ * sends it). Invalid choices: `invalid-character` with `detail` (first problem).
+ */
+export interface NewCharacterCommand extends CommandHeader {
+  type: 'newCharacter';
+  character: CharacterSpec;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -475,7 +514,8 @@ export type Command =
   | CombineCommand
   | UpgradeStationCommand
   | DebugSkillCommand
-  | DebugLearnRecipeCommand;
+  | DebugLearnRecipeCommand
+  | NewCharacterCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

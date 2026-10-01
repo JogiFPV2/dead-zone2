@@ -1,5 +1,6 @@
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
+import type { CharacterProfileView } from './views.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -41,7 +42,9 @@ export type CommandRejectReason =
   /** Crafting: no station of the recipe nearby, or its level is below `station.minLevel`. */
   | 'no-station'
   /** Crafting: parts missing (inventory + containers within the crafting radius). */
-  | 'missing-parts';
+  | 'missing-parts'
+  /** `newCharacter`: invalid choice or over budget (`commandRejected.detail` says what). */
+  | 'invalid-character';
 
 export type DeathCause =
   | 'bleeding'
@@ -100,7 +103,11 @@ export type SimEvent =
       playerId: PlayerId;
       seq: number;
       reason: CommandRejectReason;
+      /** Extra info, e.g. `newCharacter`: `over-budget:-3`, `trait-conflict:base:weak`. */
+      detail?: string;
     }
+  /** The player's character was created (`newCharacter`). */
+  | { type: 'characterCreated'; tick: number; playerId: PlayerId; character: CharacterProfileView }
   /** Player death (permadeath): the death screen reads `day` / `minuteOfDay` from here. */
   | {
       type: 'died';

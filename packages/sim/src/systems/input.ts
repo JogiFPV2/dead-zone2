@@ -3,6 +3,7 @@ import { applyAiCommand, isAiCommand } from '../ai/commands.js';
 import { queueAttack } from '../combat/commands.js';
 import { applyFirearmCommand } from '../combat/firearms.js';
 import type { SimWorld } from '../core/world.js';
+import { applyNewCharacter } from '../character/character.js';
 import { applyCraftCommand, isCraftCommand } from '../crafting/crafting.js';
 import { applyProgressCommand } from '../progress/skills.js';
 import { applyItemCommand, isItemCommand } from '../items/commands.js';
@@ -52,6 +53,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
     } else if (cmd.type === 'reload' || cmd.type === 'loadMagazine') {
       const reason = applyFirearmCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'newCharacter') {
+      const r = applyNewCharacter(w, eid, cmd.character);
+      if (r) reject(w, cmd, r.reason, r.detail);
     } else if (isCraftCommand(cmd)) {
       const reason = applyCraftCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);
@@ -74,12 +78,13 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
   }
 }
 
-function reject(w: SimWorld, cmd: Command, reason: CommandRejectReason): void {
+function reject(w: SimWorld, cmd: Command, reason: CommandRejectReason, detail?: string): void {
   w.events.push({
     type: 'commandRejected',
     tick: w.tick,
     playerId: cmd.playerId,
     seq: cmd.seq,
     reason,
+    ...(detail ? { detail } : {}),
   });
 }

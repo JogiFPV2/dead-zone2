@@ -67,3 +67,9 @@ export { DEFAULT_COMBAT_CONFIG, type CombatConfig } from './combat/config.js';
 export type { AiConfig, GaitConfig, NoiseConfig, Stage4Config, VisionConfig } from './ai/config.js';
 export { ZOMBIE_STATE_NAMES, ZombieState, type ZombieStateName } from './ai/state.js';
 export { daylight } from './ai/vision.js';
+export {
+  checkCharacter,
+  skillCost,
+  type CharacterCheck,
+  type CharacterState,
+} from './character/character.js';

@@ -154,6 +154,7 @@ export class ViewTracker {
   private luresKey = '';
   private penaltiesKey = '';
   private skillsKey = '';
+  private characterKey = '';
   private craftingKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
@@ -228,6 +229,12 @@ export class ViewTracker {
       }
     }
     if (w.items && eid !== undefined) {
+      const ch = w.items.characters.get(w.c.StableId.value[eid] ?? 0);
+      const chk = ch ? JSON.stringify(ch) : '';
+      if (chk !== this.characterKey) {
+        this.characterKey = chk;
+        if (ch) patch.characterProfile = ch;
+      }
       const skills = skillViews(w, eid);
       const sk = JSON.stringify(skills);
       if (sk !== this.skillsKey) {

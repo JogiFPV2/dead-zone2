@@ -122,6 +122,7 @@ export function startSimWorkerHost(
         dev: msg.dev ?? false,
         floorLoot: msg.floorLoot ?? true,
         ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
+        ...(msg.character && !msg.save ? { character: msg.character } : {}),
       });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });

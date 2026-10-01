@@ -18,6 +18,8 @@ export function describeEvent(e: SimEvent): string {
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
     case 'fellAsleep':
       return 'fell asleep';
+    case 'characterCreated':
+      return `character ${e.character.firstName} ${e.character.lastName} (${e.character.profession})`;
     case 'crafted':
       return `crafted ${e.recipe} → ${e.results.map((r) => `${r.def}×${r.count}`).join(', ')}`;
     case 'skillLevelUp':

@@ -246,6 +246,8 @@ export interface SimViewPatch {
   openings?: OpeningView[];
   /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
   lures?: LureView[];
+  /** The local player's character (after `newCharacter`; also the first view after a load). */
+  characterProfile?: CharacterProfileView;
   /** Skills of the local player, full list when any changes. */
   skills?: SkillView[];
   /** Recipes with their state for the local player and stations nearby, full when it changes. */
@@ -379,4 +381,20 @@ export interface DeathView {
   day: number;
   daysSurvived: number;
   zombiesKilled: number;
+}
+
+/** Created character: resolved appearance (every tint channel filled), traits incl. free ones. */
+export interface CharacterProfileView {
+  firstName: string;
+  lastName: string;
+  appearance: {
+    skin: string;
+    parts: Record<string, { part: string; colors: { primary?: string; secondary?: string } }>;
+  };
+  profession: string;
+  traits: string[];
+  /** Levels bought in the creator (on top of starting level and bonuses). */
+  skills: Record<string, number>;
+  /** Unspent creation points (≥ 0). */
+  pointsLeft: number;
 }

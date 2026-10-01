@@ -860,3 +860,23 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
   - `ActionView.recipe`.
   - Widok jest cache'owany po `ItemStore.version` i pozycji (pół kafla).
 - **Odłożone:** zawody i cechy (`knownRecipes`, mnożniki XP) przychodzą z kreatorem postaci. XP z wysiłku dla umiejętności pasywnych. Hałas `craft` jest stały (6 kafli), niezależny od kategorii.
+
+### 9.15 Stan po PR „kreator postaci”
+- **Dane (PR #37):** `worldSettings.characterCreation` (`startPoints`, `maxSkillLevelAtStart`, `skillPointCost`, `name`, `skinPalette`, `defaultAppearance`), `appearanceParts`, `palettes`, `professions`, `traits`. Kod: `character/character.ts`.
+- **Komenda `newCharacter {character}`:** wykonuje się raz na gracza. Ta sama walidacja działa przy `init.character` (worker) i przy `createSim({ character })` (nieprawidłowa postać rzuca wyjątek). `character` to `{firstName, lastName, appearance {skin, parts{slot: {part, colors}}}, profession, traits[], skills{id: kupione poziomy}}`.
+- **Walidacja (`checkCharacter`, eksport pakietu dla podglądu w UI):**
+  - imię i nazwisko (długość po przycięciu);
+  - skóra z `skinPalette`;
+  - wymagane sloty: klucze `defaultAppearance.parts`, a bez nich wszystkie sloty części oprócz `beard`;
+  - slot musi istnieć w danych, część musi pasować do slotu, kolor musi być w palecie kanału, a kanał w `tints` części. Brakujące kolory uzupełnia domyślny wygląd, a w ostateczności pierwszy kolor palety;
+  - cechy: wybieralne, bez duplikatów i konfliktów (także z `freeTraits` zawodu);
+  - umiejętności: nie pasywne, najwyżej `maxSkillLevelAtStart`.
+  - Budżet: `startPoints + profession.points − Σ trait.cost − Σ koszt poziomów ≥ 0` (koszt poziomu N to `skillPointCost[N-1]`, ostatnia wartość się powtarza). Wady (koszt < 0) dodają punkty.
+  - Odrzucenie: `invalid-character`; `commandRejected.detail` to pierwszy błąd, np. `over-budget:-2`, `trait-conflict:a/b`, `missing-slot:shoes`, `color:hair.primary`.
+- **Efekt:**
+  - Poziomy = `startingLevel` + bonusy zawodu i cech + kupione (0–10).
+  - Mnożniki XP z cech, `knownRecipes` zawodu i cech, `startingItems` do ekwipunku.
+  - Modyfikatory statystyk (tylko MOD_STATS) liczone po moodlach. Warunki `skill` i `trait` są już obsługiwane w `conditionHolds`.
+- **Stan i widok:** `ItemStore.characters` (w zapisie; hasz tylko gdy postać istnieje). Zdarzenie `characterCreated {character}`, widok `characterProfile` (wygląd z rozwiązanymi kolorami, zawód, cechy, kupione umiejętności, `pointsLeft`).
+- **PR #38 (głowa jako jeden slot):** sloty i wymagane sloty biorą się z danych, więc `head` zadziała bez zmian w sim.
+- **Odłożone:** modyfikatory spoza MOD_STATS (np. `melee-damage`, `aim-accuracy`, `crafting-speed`) jeszcze nie działają. Cechy zdobywane w grze (`gainedWhen`/`lostWhen`) też jeszcze nie działają.

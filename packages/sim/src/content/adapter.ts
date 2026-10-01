@@ -8,7 +8,24 @@ export type SimContent = Pick<
   ContentBundle,
   'worldSettings' | 'moodles' | 'items' | 'containers' | 'lootTables'
 > &
-  Partial<Pick<ContentBundle, 'zombieTypes' | 'recipes' | 'skills' | 'stations'>>;
+  Partial<
+    Pick<
+      ContentBundle,
+      | 'zombieTypes'
+      | 'recipes'
+      | 'skills'
+      | 'stations'
+      | 'traits'
+      | 'professions'
+      | 'appearanceParts'
+      | 'palettes'
+    >
+  >;
+export type TraitDef = ContentBundle['traits'][string];
+export type ProfessionDef = ContentBundle['professions'][string];
+export type AppearancePartDef = ContentBundle['appearanceParts'][string];
+export type PaletteDef = ContentBundle['palettes'][string];
+export type CharacterCreationSettings = ContentBundle['worldSettings']['characterCreation'];
 export type RecipeDef = ContentBundle['recipes'][string];
 export type SkillDef = ContentBundle['skills'][string];
 export type StationDef = ContentBundle['stations'][string];
@@ -100,6 +117,15 @@ export interface ContentIndex {
   /** Item index → the station it is when placed (`placeable.station`). */
   stationOfItem: ReadonlyMap<number, { id: string; level: number }>;
   crafting: CraftingConfig;
+  traits: ReadonlyMap<string, TraitDef>;
+  professions: ReadonlyMap<string, ProfessionDef>;
+  appearanceParts: ReadonlyMap<string, AppearancePartDef>;
+  palettes: ReadonlyMap<string, PaletteDef>;
+  /** `worldSettings.characterCreation` (undefined in older bundles / fixtures). */
+  characterCreation: CharacterCreationSettings | undefined;
+  /** Rate-stat modifiers (MOD_STATS only) of traits and professions by id. */
+  traitMods: ReadonlyMap<string, CompiledModifier[]>;
+  professionMods: ReadonlyMap<string, CompiledModifier[]>;
 }
 
 /** `worldSettings.crafting` with defaults (older bundles / fixtures). */
@@ -150,7 +176,26 @@ export function compileContent(content: SimContent): ContentIndex {
     if (d.kind === 'placeable' && d.placeable.station) stationOfItem.set(i, d.placeable.station);
   });
   const cs = (content.worldSettings as { crafting?: Partial<CraftingConfig> }).crafting ?? {};
+  const compileMods = (mods: readonly ModifierDef[]): CompiledModifier[] =>
+    mods.flatMap((mod): CompiledModifier[] => {
+      const slot = (ModSlot as Record<string, number | undefined>)[mod.stat];
+      return slot === undefined ? [] : [{ slot, op: mod.op, value: mod.value, when: mod.when }];
+    });
+  const sortedEntries = <T>(r: Readonly<Record<string, T>> | undefined): [string, T][] =>
+    Object.keys(r ?? {})
+      .sort(byId)
+      .map((id) => [id, r![id]!]);
+  const traits = sortedEntries(content.traits);
+  const professions = sortedEntries(content.professions);
   return {
+    traits: new Map(traits),
+    professions: new Map(professions),
+    appearanceParts: new Map(sortedEntries(content.appearanceParts)),
+    palettes: new Map(sortedEntries(content.palettes)),
+    characterCreation: (content.worldSettings as { characterCreation?: CharacterCreationSettings })
+      .characterCreation,
+    traitMods: new Map(traits.map(([id, t]) => [id, compileMods(t.modifiers)])),
+    professionMods: new Map(professions.map(([id, p]) => [id, compileMods(p.modifiers)])),
     skills: skillIds.map((id) => content.skills![id]!),
     skillIndex: new Map(skillIds.map((id, i) => [id, i])),
     recipes: recipeIds.map((id) => content.recipes![id]!),
