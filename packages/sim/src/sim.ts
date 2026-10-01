@@ -15,6 +15,7 @@ import {
 } from '@deadzone/protocol';
 import type { Stage4Config } from './ai/config.js';
 import type { CombatConfig } from './combat/config.js';
+import type { PhysicsConfig } from './physics/constants.js';
 import { hashAi } from './ai/hash.js';
 import { PENALTY_SLOTS } from './survival/penalties.js';
 import { hashCombat } from './combat/hash.js';
@@ -50,6 +51,9 @@ import { loadWorld, readSaveHeader, saveWorld } from './save/save.js';
 import { createItemStore, createPlayerItems } from './items/store.js';
 import { actionView, containerView, inventoryView } from './items/views.js';
 import { hashItems } from './items/hash.js';
+import { addPhysicsBody, physicsMovementModifier } from './physics/system.js';
+import { writePhysicsHash } from './physics/step.js';
+import { registerMovementModifier } from './systems/movement.js';
 import { TileGrid } from './world/grid.js';
 
 export interface SimOptions {
@@ -80,6 +84,8 @@ export interface SimOptions {
   aiConfig?: Stage4Config | undefined;
   /** Combat tuning without data fields yet (combat/config.ts); default DEFAULT_COMBAT_CONFIG. */
   combatConfig?: CombatConfig | undefined;
+  /** Physics tuning (physics/constants.ts); default DEFAULT_PHYSICS_CONFIG. */
+  physicsConfig?: PhysicsConfig | undefined;
   /** Scatter single loot items on room floors and outdoors at init (worker: on). Default false. */
   floorLoot?: boolean | undefined;
   /** Restore a save from `Sim.save()` (same map, content and options; spawn options are ignored). */
@@ -190,6 +196,7 @@ export function createSim(input: SimOptions): Sim {
   const opts = input.load ? { ...input, seed: readSaveHeader(input.load).seed } : input;
   const content = opts.content;
   registerItemActions();
+  registerMovementModifier(physicsMovementModifier);
   const w = createSimWorld({
     seed: opts.seed,
     map: opts.map,
@@ -198,6 +205,7 @@ export function createSim(input: SimOptions): Sim {
     dayLengthMinutes: opts.content?.worldSettings.dayLengthMinutes,
     clockStart: opts.clockStart,
     dev: opts.dev,
+    physicsConfig: opts.physicsConfig,
     survival: content
       ? (clock) =>
           createSurvivalWorld(
@@ -254,6 +262,7 @@ export function createSim(input: SimOptions): Sim {
     w.players.set(playerId, eid);
     if (w.survival) initVitals(w.survival, eid);
     if (w.items) createPlayerItems(w.items, c.StableId.value[eid] ?? 0);
+    addPhysicsBody(w, eid);
     return eid;
   };
 
@@ -327,6 +336,7 @@ export function createSim(input: SimOptions): Sim {
     if (w.items) hashItems(w.items, h);
     hashAi(w, h);
     hashCombat(w, h);
+    writePhysicsHash(w.physics, h);
     // Doors / windows: only when something differs from the map (keeps older goldens).
     const o = w.openings;
     if (o.states.size > 0 || o.bashAt.size > 0) {

@@ -92,7 +92,11 @@ export function resolveHit(
   if (impulse >= cfg.impulse.minReaction) {
     const pKnock = clamp01(
       Math.max(0, impulse - c.knockdownMinImpulse) * c.knockdownPerImpulse +
-        (behind ? c.behindKnockdownBonus + (shove ? c.behindShoveBonus : 0) : 0),
+        (behind
+          ? hit.kind === 'zombie'
+            ? c.behindZombieBonus
+            : c.behindKnockdownBonus + (shove ? c.behindShoveBonus : 0)
+          : 0),
     );
     const pStagger = clamp01(
       c.staggerBase + impulse * c.staggerPerImpulse + (shove ? c.shoveStaggerBonus : 0),
@@ -177,7 +181,7 @@ export function kill(b: PhysicsBody, tick: number, events: PhysicsEvent[]): void
 
 /**
  * Starts an attack (`attack`) or a shove (`push`) of `b`; emits `attackStart`. Returns false when
- * the body cannot act (hit, stagger, knockdown, getup, dead, already attacking).
+ * the body cannot act (hit, stagger, knockdown, getup, dead). A running attack is restarted.
  */
 export function startAttack(
   b: PhysicsBody,

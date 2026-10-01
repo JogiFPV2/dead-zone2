@@ -1,0 +1,209 @@
+import type { SimEvent } from '@deadzone/protocol';
+import { bamToRad } from '../core/dmath.js';
+import { sortedQuery, type SimWorld } from '../core/world.js';
+import { carriedLoad, carryCapacity, playerItems } from '../items/inventory.js';
+import type { MovementModifier } from '../systems/movement.js';
+import { moveCircle } from '../world/collision.js';
+import type { TileGrid } from '../world/grid.js';
+import {
+  canAct,
+  canMove,
+  movementModifiers,
+  physicsAccelMul,
+  physicsSpeedMul,
+} from './modifiers.js';
+import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
+import { addBody, physicsStep } from './step.js';
+import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
+
+/**
+ * Sim adapter of the physics module: bodies live in `w.physics`, keyed by StableId, one per
+ * player and zombie (created at spawn, or lazily for older saves). Pipeline step `physics` runs
+ * right after `movement.facing`; combat reports hits through `physicsHit` (resolved at once,
+ * stream `rng.physics`), and movement reads `physicsMovementModifier`.
+ */
+
+export function bodyOf(w: SimWorld, eid: number): PhysicsBody | undefined {
+  return w.physics.bodies.get(w.c.StableId.value[eid] ?? 0);
+}
+
+const isZombieEid = (w: SimWorld, eid: number): boolean => w.c.Zombie.is[eid] === 1;
+const isPlayerEid = (w: SimWorld, eid: number): boolean =>
+  w.players.get(w.c.Player.id[eid] ?? -1) === eid;
+
+/** Creates the body of a player or zombie (zombies draw `gaitSeed` from `rng.physics`). */
+export function addPhysicsBody(w: SimWorld, eid: number): PhysicsBody {
+  const { Position, Facing, StableId } = w.c;
+  return addBody(w.physics, {
+    id: StableId.value[eid] ?? 0,
+    kind: isZombieEid(w, eid) ? 'zombie' : 'player',
+    x: Position.x[eid] ?? 0,
+    y: Position.y[eid] ?? 0,
+    facing: bamToRad(Facing.angle[eid] ?? 0),
+  });
+}
+
+function ensureBody(w: SimWorld, eid: number): PhysicsBody | undefined {
+  const b = bodyOf(w, eid);
+  if (b) return b;
+  return isZombieEid(w, eid) || isPlayerEid(w, eid) ? addPhysicsBody(w, eid) : undefined;
+}
+
+/** Zombie gait seed (0 before its body exists). */
+export function gaitSeedOf(w: SimWorld, eid: number): number {
+  return bodyOf(w, eid)?.gaitSeed ?? 0;
+}
+
+/** The entity may steer itself (not hit, staggered, down, getting up or dead). */
+export function physicsCanMove(w: SimWorld, eid: number): boolean {
+  const b = bodyOf(w, eid);
+  return !b || canMove(b.state);
+}
+
+/** The entity may start an attack or a shove. */
+export function physicsCanAct(w: SimWorld, eid: number): boolean {
+  const b = bodyOf(w, eid);
+  return !b || canAct(b.state);
+}
+
+/** Running is allowed (PZ: not while exhausted, endurance level 4). */
+export function physicsCanRun(w: SimWorld, eid: number): boolean {
+  const b = bodyOf(w, eid);
+  return !b || movementModifiers(b, w.physics.cfg).canRun;
+}
+
+/** Movement hook: load / endurance on speed, inertia on acceleration, 0 without control. */
+export const physicsMovementModifier: MovementModifier = {
+  speedMul(w, eid) {
+    const b = bodyOf(w, eid);
+    return b ? physicsSpeedMul(b, w.physics.cfg) : 1;
+  },
+  accelMul(w, eid) {
+    const b = bodyOf(w, eid);
+    return b ? physicsAccelMul(b, w.physics.cfg) : 1;
+  },
+};
+
+function emit(w: SimWorld, events: readonly PhysicsEvent[]): void {
+  for (const e of events) {
+    const ev: Extract<SimEvent, { type: 'physics' }> = {
+      type: 'physics',
+      tick: e.tick,
+      kind: e.type,
+      entity: e.entityId,
+    };
+    if (e.sourceId !== undefined) ev.source = e.sourceId;
+    w.events.push(ev);
+  }
+}
+
+/** Starts the attack / shove animation state of `eid` (`attackStart`); false without control. */
+export function physicsBeginAttack(w: SimWorld, eid: number, shove = false): boolean {
+  const b = ensureBody(w, eid);
+  if (!b) return true;
+  const events: PhysicsEvent[] = [];
+  const ok = startAttack(b, w.tick, events, shove, w.physics.cfg);
+  emit(w, events);
+  return ok;
+}
+
+/**
+ * A hit or shove of `attacker` on `target` (entity ids), resolved now with `rng.physics` (2
+ * draws): knock-back, stagger / knockdown, `hitLanded` and friends. `lethal` = combat killed it.
+ */
+export function physicsHit(
+  w: SimWorld,
+  attacker: number,
+  target: number,
+  kind: PhysicsHit['kind'],
+  force?: number,
+  lethal = false,
+): void {
+  const a = ensureBody(w, attacker);
+  const t = ensureBody(w, target);
+  const pw = w.physics;
+  const hit: PhysicsHit = {
+    attackerId: w.c.StableId.value[attacker] ?? 0,
+    targetId: w.c.StableId.value[target] ?? 0,
+    kind,
+    lethal,
+    ...(force === undefined ? {} : { force }),
+  };
+  if (!a || !t) {
+    pw.rng.nextU32();
+    pw.rng.nextU32();
+    return;
+  }
+  // Fresh positions and facing (movement ran this tick, combat may have turned the zombie).
+  for (const [b, eid] of [
+    [a, attacker],
+    [t, target],
+  ] as const) {
+    b.x = w.c.Position.x[eid] ?? 0;
+    b.y = w.c.Position.y[eid] ?? 0;
+    b.facing = bamToRad(w.c.Facing.angle[eid] ?? 0);
+  }
+  const events: PhysicsEvent[] = [];
+  applyHit(t, resolveHit(a, t, hit, pw.rng, pw.cfg), hit, w.tick, events, pw.cfg);
+  emit(w, events);
+}
+
+const eidBySid = new Map<number, number>();
+
+/**
+ * Pipeline `physics` (after `movement.facing`): syncs bodies from the ECS (position, facing,
+ * velocity, load, endurance, deaths), runs `physicsStep` (timers, knock-back slide with
+ * `moveCircle`, idle / walk / run) and writes slid positions back.
+ */
+export function physicsSystem(w: SimWorld, grid: TileGrid): void {
+  const pw = w.physics;
+  const { Position, Facing, Velocity, StableId, Zombie, Collider } = w.c;
+  const s = w.survival;
+  const st = w.items;
+  const events: PhysicsEvent[] = [];
+  eidBySid.clear();
+  for (const eid of sortedQuery(w, 'render', [Position, Facing])) {
+    const b = ensureBody(w, eid);
+    if (!b) continue;
+    eidBySid.set(StableId.value[eid] ?? 0, eid);
+    b.x = Position.x[eid] ?? 0;
+    b.y = Position.y[eid] ?? 0;
+    b.facing = bamToRad(Facing.angle[eid] ?? 0);
+    if (canMove(b.state)) {
+      b.vel.x = Velocity.x[eid] ?? 0;
+      b.vel.y = Velocity.y[eid] ?? 0;
+    }
+    if (b.kind === 'zombie') {
+      if ((Zombie.hp[eid] ?? 0) <= 0) kill(b, w.tick, events);
+    } else if (s) {
+      b.endurance = s.vitals.endurance[eid] ?? 100;
+      if (s.dead[eid]) kill(b, w.tick, events);
+      const p = st ? playerItems(w, eid) : undefined;
+      if (st && p) {
+        b.carriedKg = Math.fround(carriedLoad(st, p));
+        b.capacityKg = Math.fround(carryCapacity(w, eid));
+      }
+    }
+  }
+  events.push(
+    ...physicsStep(pw, {
+      tick: w.tick,
+      collide(b, dx, dy, out) {
+        const eid = eidBySid.get(b.id);
+        if (eid === undefined) {
+          out.x = b.x + dx;
+          out.y = b.y + dy;
+          return;
+        }
+        moveCircle(grid, Position.z[eid] ?? 0, b.x, b.y, dx, dy, Collider.radius[eid] ?? 0, out);
+      },
+    }),
+  );
+  for (const [sid, eid] of eidBySid) {
+    const b = pw.bodies.get(sid)!;
+    if (canMove(b.state)) continue;
+    Position.x[eid] = b.x;
+    Position.y[eid] = b.y;
+  }
+  emit(w, events);
+}

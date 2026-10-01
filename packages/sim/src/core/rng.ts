@@ -110,6 +110,7 @@ export const RNG_STREAMS = [
   'survival',
   'actions',
   'progression',
+  'physics',
 ] as const;
 export type RngStream = (typeof RNG_STREAMS)[number];
 export type RngStreams = Record<RngStream, Rng>;

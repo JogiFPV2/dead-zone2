@@ -4,6 +4,7 @@ import { TICKS_PER_SECOND } from '../core/constants.js';
 import { circleOverlaps } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
 import { ZombieState, type AiWorld } from './state.js';
+import { addPhysicsBody } from '../physics/system.js';
 
 export const secToTicks = (sec: number): number => Math.max(1, Math.round(sec * TICKS_PER_SECOND));
 
@@ -68,6 +69,7 @@ export function spawnZombie(
   z0.speedMul[eid] = Math.fround(1 + cfg.speedSpread * (2 * rng.nextFloat() - 1));
   z0.stuck[eid] = 0;
   ai.zombieCount++;
+  addPhysicsBody(w, eid);
   return eid;
 }
 

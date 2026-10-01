@@ -69,8 +69,9 @@ export interface PhysicsConfig {
     /** knockdown = (impulse − knockdownMinImpulse) × knockdownPerImpulse (+ behind bonus). */
     knockdownMinImpulse: number;
     knockdownPerImpulse: number;
-    /** Added to the knockdown chance for a hit from behind. */
+    /** Added to the knockdown chance for a hit from behind (zombie lunges: `behindZombieBonus`). */
     behindKnockdownBonus: number;
+    behindZombieBonus: number;
     /** Extra knockdown chance of a shove from behind (PZ: shoving from behind floors zombies). */
     behindShoveBonus: number;
     /** stagger = staggerBase + impulse × staggerPerImpulse (+ shoveStaggerBonus). */
@@ -97,7 +98,8 @@ export interface PhysicsConfig {
 }
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
-  bodyMassKg: { player: 80, zombie: 70 },
+  /** Zombies are heavier (dead weight): less inertia multiplier, harder to push over. */
+  bodyMassKg: { player: 80, zombie: 90 },
   refMassKg: 80,
   inertiaMul: { min: 0.35, max: 1.2 },
   accelTicks: 4,
@@ -114,7 +116,7 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   pushTicks: sec(0.4),
   impulse: {
     shoveForce: 0.5,
-    zombieForce: 0.25,
+    zombieForce: 0.15,
     strengthBase: 0.6,
     strengthPerLevel: 0.08,
     minReaction: 0.05,
@@ -123,9 +125,10 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     knockdownMinImpulse: 0.25,
     knockdownPerImpulse: 0.8,
     behindKnockdownBonus: 0.35,
+    behindZombieBonus: 0.1,
     behindShoveBonus: 0.25,
-    staggerBase: 0.3,
-    staggerPerImpulse: 1,
+    staggerBase: 0.1,
+    staggerPerImpulse: 1.2,
     shoveStaggerBonus: 0.2,
   },
   behindHalfArc: Math.PI / 3,
@@ -138,5 +141,5 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     getupZombie: sec(1.5),
     getupPlayer: sec(1),
   },
-  knockback: { maxSpeed: perTick(2.4), friction: 0.75, stopSpeed: perTick(0.04) },
+  knockback: { maxSpeed: perTick(5), friction: 0.75, stopSpeed: perTick(0.04) },
 };

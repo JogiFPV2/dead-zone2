@@ -69,9 +69,20 @@ export function canMove(state: PhysicsState): boolean {
   );
 }
 
-/** The entity may start an attack or a shove. */
+/** The body lost control (hit, stagger, knockdown, getup, dead): no steering, no attacks. */
+export function controlLost(state: PhysicsState): boolean {
+  return (
+    state === 'hit' ||
+    state === 'stagger' ||
+    state === 'knockdown' ||
+    state === 'getup' ||
+    state === 'dead'
+  );
+}
+
+/** The entity may start an attack or a shove (also restarting one that is still playing). */
 export function canAct(state: PhysicsState): boolean {
-  return state === 'idle' || state === 'walk' || state === 'run';
+  return !controlLost(state);
 }
 
 /**

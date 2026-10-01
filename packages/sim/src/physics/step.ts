@@ -231,11 +231,11 @@ export function toSnapshotFields(b: PhysicsBody): PhysicsSnapshotFields {
   };
 }
 
-/** xxhash32 of all bodies (id order) and the RNG state; equal hashes = identical physics. */
-export function physicsHash(pw: PhysicsWorld): number {
-  const h = new HashWriter();
-  for (const v of pw.rng.state()) h.u32(v);
-  for (const b of sortedBodies(pw)) {
+/** Writes all bodies (id order) into `h` (sim state hash). */
+export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
+  const bodies = sortedBodies(pw);
+  h.u32(bodies.length);
+  for (const b of bodies) {
     h.u32(b.id)
       .u32(b.kind === 'zombie' ? 1 : 0)
       .f32(b.x)
@@ -245,6 +245,14 @@ export function physicsHash(pw: PhysicsWorld): number {
     h.u32(PHYSICS_STATES.indexOf(b.state)).u32(b.stateStartTick).u32(b.stateDuration);
     h.f32(b.knockback.dirX).f32(b.knockback.dirY).f32(b.knockback.strength);
     h.u32(b.lastHitTick).f32(b.hitFromDir).u32(b.gaitSeed);
+    h.f32(b.carriedKg).f32(b.capacityKg).f32(b.endurance).f32(b.strength);
   }
+}
+
+/** xxhash32 of all bodies and the RNG state; equal hashes = identical physics. */
+export function physicsHash(pw: PhysicsWorld): number {
+  const h = new HashWriter();
+  for (const v of pw.rng.state()) h.u32(v);
+  writePhysicsHash(pw, h);
   return h.digest();
 }

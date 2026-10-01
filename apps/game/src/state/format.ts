@@ -60,6 +60,8 @@ export function describeEvent(e: SimEvent): string {
       return `zombie ${e.zombie} alerted (${e.reason})`;
     case 'hit':
       return `hit ${e.source} ${e.attacker} → ${e.target} ${e.damage.toFixed(1)}${e.killed ? ' (killed)' : ''}`;
+    case 'physics':
+      return `body ${e.entity} ${e.kind}${e.source !== undefined ? ` (by ${e.source})` : ''}`;
     case 'zombieKilled':
       return `zombie ${e.zombie} killed`;
     case 'weaponBroke':

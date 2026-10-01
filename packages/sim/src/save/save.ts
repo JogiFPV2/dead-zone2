@@ -25,6 +25,7 @@ const SKIP_SURVIVAL = ['content'];
 const SKIP_ITEMS = ['content', 'version'];
 const SKIP_AI = ['cfg', 'types', 'spawnWeights', 'lights', 'darkZones', 'spatial', 'combat'];
 const SKIP_COMBAT = ['cfg'];
+const SKIP_PHYSICS = ['cfg', 'rng', 'order', 'orderSize'];
 
 interface SaveFile {
   format: string;
@@ -46,6 +47,8 @@ interface SaveFile {
   ai?: unknown;
   combat?: unknown;
   openings?: unknown;
+  /** Physics bodies (absent in older saves: bodies are recreated on the next tick). */
+  physics?: unknown;
 }
 
 /** Cheap fingerprint of the compiled content (ids and counts), to refuse foreign saves. */
@@ -98,6 +101,7 @@ export function saveWorld(w: SimWorld): Uint8Array {
         }
       : {}),
     openings: encodeFields(w.openings, ['cfg', 'kinds'], usedOf),
+    physics: encodeFields(w.physics, SKIP_PHYSICS, usedOf),
   };
   return utf8Encode(JSON.stringify(file));
 }
@@ -150,6 +154,9 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
     if (f.combat) restoreInto(w.ai.combat, decode(f.combat));
   }
   if (f.openings) restoreInto(w.openings, decode(f.openings));
+  if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
+  w.physics.rng = w.rng.physics;
+  w.physics.orderSize = -1;
   if (w.items) w.items.version++;
 }
 

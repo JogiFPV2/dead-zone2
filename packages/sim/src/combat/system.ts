@@ -8,10 +8,11 @@ import { detach, sortedQuery, type SimWorld } from '../core/world.js';
 import { defOf, destroyItem } from '../items/store.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
-import { lineOfSight, walkableLine } from '../world/los.js';
+import { lineOfSight } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
 import type { CombatWorld } from './state.js';
 import { fire, firearmOf, reloadSystem } from './firearms.js';
+import { physicsBeginAttack, physicsCanAct, physicsHit } from '../physics/system.js';
 
 /**
  * Pipeline `combat` (docs 2.5): player swings and shoves queued by `attack` / `shove` this tick
@@ -24,6 +25,8 @@ export function combatSystem(w: SimWorld, grid: TileGrid): void {
   reloadSystem(w, cb);
   for (const p of cb.pending) {
     if (w.survival?.dead[p.eid]) continue;
+    // No attacks while hit, staggered, knocked down or getting up (physics).
+    if (!physicsBeginAttack(w, p.eid, p.shove)) continue;
     if (p.shove) shove(w, ai, cb, grid, p.eid);
     else if (firearmOf(w, p.eid)) fire(w, ai, cb, grid, p.eid);
     else swing(w, ai, cb, grid, p.eid);
@@ -144,10 +147,7 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
     // Arm / torso wounds (woundPenalties.attackPower).
     dmg = Math.fround(dmg * penaltyMul(w, eid, Pen.attack));
     const killed = damageZombie(w, ai, cb, grid, t.eid, eid, dmg, 'melee');
-    if (!killed && m.knockback > 0) {
-      push(w, grid, eid, t.eid, cfg.knockbackTiles * m.knockback);
-      cb.staggerUntil[t.eid] = w.tick + secToTicks(cfg.staggerSecPerKnockback * m.knockback);
-    }
+    physicsHit(w, eid, t.eid, 'melee', m.knockback, killed);
   }
   emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack');
   if (targets.length > 0 && m.item !== undefined && m.lossChancePerUse > 0) wear(w, eid, m.item);
@@ -160,32 +160,8 @@ function shove(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   cb.readyTick[eid] = w.tick + secToTicks(sc.cooldownSec);
   cb.swingTick[eid] = w.tick;
   for (const t of targetsInArc(w, ai, cb, grid, eid, sc.rangeTiles)) {
-    push(w, grid, eid, t.eid, sc.pushTiles);
-    cb.staggerUntil[t.eid] = w.tick + secToTicks(sc.staggerSec);
     hitEvent(w, 'shove', eid, t.eid, 0, false);
-  }
-}
-
-/** Pushes `target` away from `from` by up to `dist` tiles along a walkable straight line. */
-function push(w: SimWorld, grid: TileGrid, from: number, target: number, dist: number): void {
-  const { Position, Collider } = w.c;
-  const x = Position.x[target] ?? 0;
-  const y = Position.y[target] ?? 0;
-  const z = Position.z[target] ?? 0;
-  let dx = x - (Position.x[from] ?? 0);
-  let dy = y - (Position.y[from] ?? 0);
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len < 1e-6) return;
-  dx /= len;
-  dy /= len;
-  const r = Collider.radius[target] ?? 0;
-  // Halve the push until the line (plus the collider radius) is free of edges.
-  for (let d = dist; d > 0.05; d *= 0.5) {
-    if (walkableLine(grid, z, x, y, x + dx * (d + r), y + dy * (d + r))) {
-      Position.x[target] = Math.fround(x + dx * d);
-      Position.y[target] = Math.fround(y + dy * d);
-      return;
-    }
+    physicsHit(w, eid, t.eid, 'shove');
   }
 }
 
@@ -275,7 +251,6 @@ function killZombie(w: SimWorld, ai: AiWorld, cb: CombatWorld, zid: number, kill
   if (qi >= 0) ai.pathQueue.splice(qi, 1);
   ai.zombieCount--;
   cb.kills[killer] = (cb.kills[killer] ?? 0) + 1;
-  cb.staggerUntil[zid] = 0;
   cb.zombieReady[zid] = 0;
   w.events.push({
     type: 'zombieKilled',
@@ -295,7 +270,7 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
   for (const zid of sortedQuery(w, 'zombies', [Zombie])) {
     const target = Zombie.state[zid] === ZombieState.chase ? (Zombie.targetId[zid] ?? 0) : 0;
     const pid = target ? playerBySid(w, target) : undefined;
-    if (pid === undefined || s?.dead[pid] || w.tick < (cb.staggerUntil[zid] ?? 0)) {
+    if (pid === undefined || s?.dead[pid] || !physicsCanAct(w, zid)) {
       cb.zombieReady[zid] = 0;
       continue;
     }
@@ -327,6 +302,7 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     cb.zombieReady[zid] = w.tick + secToTicks(t.attackCooldownSec);
     cb.swingTick[zid] = w.tick;
     if (dx !== 0 || dy !== 0) Facing.angle[zid] = atan2Bam(dy, dx);
+    physicsBeginAttack(w, zid);
     const rng = w.rng.combat;
     if (!rng.chance(zc.hitChance)) continue;
     const dmg = Math.fround(t.damage.min + rng.nextFloat() * (t.damage.max - t.damage.min));
@@ -348,6 +324,7 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
       inflictWound(w, pid, part, woundKindIndex(kind), { zombie: true });
     }
     hitEvent(w, 'zombie', zid, pid, dmg, killed);
+    physicsHit(w, zid, pid, 'zombie', undefined, killed);
     void StableId;
   }
 }

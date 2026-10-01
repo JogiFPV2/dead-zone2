@@ -95,6 +95,20 @@ export type NoiseSource = (typeof NOISE_SOURCES)[number];
 /** Why a zombie became alert: heard a noise (investigates) or saw a player (chases). */
 export type ZombieAlertReason = 'noise' | 'sight';
 
+/**
+ * Body events of the physics module (`physics` SimEvent): attack / shove started, hit taken
+ * (`source` = attacker), staggered, knocked down, back on the feet after getting up, died.
+ */
+export const PHYS_EVENT_KINDS = [
+  'attackStart',
+  'hitLanded',
+  'staggered',
+  'fellDown',
+  'gotUp',
+  'died',
+] as const;
+export type PhysEventKind = (typeof PHYS_EVENT_KINDS)[number];
+
 /** Events emitted by the sim for the host (sounds, UI, debug). Never a source of truth. */
 export type SimEvent =
   | {
@@ -106,6 +120,11 @@ export type SimEvent =
       /** Extra info, e.g. `newCharacter`: `over-budget:-3`, `trait-conflict:base:weak`. */
       detail?: string;
     }
+  /**
+   * Physics body event (players and zombies): `entity` = StableId, `source` = attacker StableId
+   * for `hitLanded`. Same tick as the matching snapshot `state` change.
+   */
+  | { type: 'physics'; tick: number; kind: PhysEventKind; entity: number; source?: number }
   /** The player's character was created (`newCharacter`). */
   | { type: 'characterCreated'; tick: number; playerId: PlayerId; character: CharacterProfileView }
   /** Player death (permadeath): the death screen reads `day` / `minuteOfDay` from here. */

@@ -13,6 +13,7 @@ import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { penaltiesSystem } from '../survival/penalties.js';
+import { physicsSystem } from '../physics/system.js';
 import { facingSystem, movementSystem } from '../systems/movement.js';
 import { sleepSystem } from '../systems/sleep.js';
 import { survivalSystem } from '../systems/survival.js';
@@ -44,8 +45,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'ai.locomotion', run: (w, ctx) => aiLocomotionSystem(w, ctx.grid) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
-    // TODO(physics): `physicsStep` (physics/step.ts) goes here once movement exposes its
-    // modifier hook (branch sim/storage-movement); not wired yet, so golden hashes are unchanged.
+    { name: 'physics', run: (w, ctx) => physicsSystem(w, ctx.grid) },
     { name: 'noise.footsteps', run: (w) => footstepSystem(w) },
     { name: 'ai.threat', run: (w, ctx) => threatSystem(w, ctx.grid) },
     { name: 'inventory', run: (w) => inventorySystem(w) },

@@ -43,7 +43,8 @@ describe('combat: player melee', () => {
     expect(sim.getZombies()).toEqual([]);
     const hits = eventsOf(all, 'hit').filter((h) => h.source === 'melee');
     expect(hits.length).toBeGreaterThan(5);
-    expect(hits.every((h) => h.target === sid && h.damage >= 1 && h.damage <= 3)).toBe(true);
+    // Damage 1–3; zombie scratches on the arms (attack penalty) can push it below 1.
+    expect(hits.every((h) => h.target === sid && h.damage > 0 && h.damage <= 3)).toBe(true);
     expect(eventsOf(all, 'zombieKilled')).toEqual([expect.objectContaining({ zombie: sid })]);
     // Cooldown: attacks are rejected as busy between swings.
     expect(eventsOf(all, 'commandRejected').some((e) => e.reason === 'busy')).toBe(true);
@@ -73,7 +74,9 @@ describe('combat: player melee', () => {
     expect(zombie(sim).hp).toBe(20);
     const snap = new Float32Array(sim.snapshot());
     expect(snap[SNAPSHOT_ENTITY_STRIDE + SnapshotField.hpPct]).toBeCloseTo(0.4);
-    expect(zombie(sim).x).toBeGreaterThan(x0 + 0.3);
+    // Knock-back (physics): the zombie slides away over the next ticks.
+    runTicks(sim, 10);
+    expect(zombie(sim).x).toBeGreaterThan(x0 + 0.2);
     // Stamina spent.
     expect(sim.getSurvival()!.stats.endurance).toBeLessThan(100);
     // Durability 2, loss chance 1: the second hit (a kill) breaks it.
@@ -96,9 +99,14 @@ describe('combat: player melee', () => {
     const x0 = zombie(sim).x;
     send(sim, { type: 'shove' });
     sim.step();
-    const hits = eventsOf(sim.drainEvents(), 'hit');
+    const ev = sim.drainEvents();
+    const hits = eventsOf(ev, 'hit');
     expect(hits).toEqual([expect.objectContaining({ source: 'shove', damage: 0 })]);
-    expect(zombie(sim).x).toBeGreaterThan(x0 + 0.5);
+    // Physics: hit on the zombie and a stagger or a knock-down, then a short slide.
+    const phys = eventsOf(ev, 'physics').filter((e) => e.entity === zombie(sim).stableId);
+    expect(phys[0]).toMatchObject({ kind: 'hitLanded', source: sim.getPlayer()!.stableId });
+    runTicks(sim, 10);
+    expect(zombie(sim).x).toBeGreaterThan(x0 + 0.2);
     expect(zombie(sim).hp).toBe(50);
   });
 

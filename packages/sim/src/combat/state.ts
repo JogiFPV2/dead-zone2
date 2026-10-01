@@ -16,8 +16,6 @@ export interface CombatWorld {
   readonly readyTick: Uint32Array;
   /** Player or zombie: tick of the last swing (snapshot `anim = attack`). */
   readonly swingTick: Uint32Array;
-  /** Zombie: staggered (no movement, no attack) until this tick. */
-  readonly staggerUntil: Uint32Array;
   /** Zombie: tick of its next attack while in reach (0 = not in reach). */
   readonly zombieReady: Uint32Array;
   /** Player: zombies killed (`zombies-killed` counter for traits). */
@@ -36,7 +34,6 @@ export function createCombatWorld(
     cfg,
     readyTick: new Uint32Array(capacity),
     swingTick: new Uint32Array(capacity),
-    staggerUntil: new Uint32Array(capacity),
     zombieReady: new Uint32Array(capacity),
     kills: new Uint32Array(capacity),
     reloadUntil: new Uint32Array(capacity),

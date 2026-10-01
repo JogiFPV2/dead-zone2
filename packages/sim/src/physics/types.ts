@@ -1,4 +1,9 @@
-import { ENTITY_PHYS_STATES, type EntityKnockback, type EntityPhysState } from '@deadzone/protocol';
+import {
+  ENTITY_PHYS_STATES,
+  type EntityKnockback,
+  type EntityPhysState,
+  type PhysEventKind,
+} from '@deadzone/protocol';
 import type { Rng } from '../core/rng.js';
 import type { PhysicsConfig } from './constants.js';
 
@@ -55,7 +60,8 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
 /** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
 export interface PhysicsWorld {
   readonly cfg: PhysicsConfig;
-  readonly rng: Rng;
+  /** In the sim: `w.rng.physics` (re-pointed after loading a save). */
+  rng: Rng;
   readonly bodies: Map<number, PhysicsBody>;
   /** Cached `id`-sorted bodies (rebuilt when the map size changes). */
   order: PhysicsBody[];
@@ -89,8 +95,8 @@ export interface HitOutcome {
   duration: number;
 }
 
-export type PhysicsEventType =
-  'attackStart' | 'hitLanded' | 'staggered' | 'fellDown' | 'gotUp' | 'died';
+/** Event kinds (shared with the client as `PhysEventKind`). */
+export type PhysicsEventType = PhysEventKind;
 
 /**
  * Physics event. `hitLanded` is reported on the target with `sourceId` = attacker; `gotUp` when

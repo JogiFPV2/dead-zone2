@@ -26,7 +26,7 @@ export const WorldSettingsSchema = z.strictObject({
     .strictObject({
       /** Bazowy limit udźwigu postaci (stat `carry-capacity-kg` modyfikują cechy i siła). */
       baseCapacityKg: CapacityKgSchema.default(12),
-      /** Mnożnik tempa zmęczenia przy przeciążeniu (spowolnienie ruchu daje moodle `heavy-load`). */
+      /** Mnożnik tempa zmęczenia przy przeciążeniu (spowolnienie ruchu liczy fizyka w sim, moodle `heavy-load` jest tylko wskaźnikiem). */
       overloadFatigueMul: z.number().min(1).max(10).default(1.5),
       /** Twardy limit jako wielokrotność udźwigu — powyżej nie da się podnieść przedmiotu. */
       hardLimitMultiplier: z.number().min(1).max(10).default(2),

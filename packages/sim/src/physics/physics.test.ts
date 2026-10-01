@@ -274,7 +274,7 @@ describe('hits: impulse, stagger, knockdown, getup', () => {
 
   it('player knockdown uses player lengths', () => {
     const cfg = cfgWith((c) => {
-      c.chance.behindKnockdownBonus = 1;
+      c.chance.behindZombieBonus = 1;
       c.durations.knockdownPlayer = { min: 30, max: 30 };
     });
     const pw = createPhysicsWorld(createRng(5), cfg);
@@ -309,17 +309,22 @@ describe('hits: impulse, stagger, knockdown, getup', () => {
     expect(toSnapshotFields(z).state).toBe('dead');
   });
 
-  it('attack and push are timed states that end in idle', () => {
+  it('attack and push are timed states that end in idle; a new attack restarts', () => {
     const pw = createPhysicsWorld(createRng(1));
     const p = addBody(pw, { id: 1, kind: 'player', x: 0, y: 0 });
     const ev: PhysicsEvent[] = [];
     expect(startAttack(p, 3, ev, true)).toBe(true);
     expect(p.state).toBe('push');
-    expect(startAttack(p, 4, ev)).toBe(false);
-    run(pw, 4, 3 + DEFAULT_PHYSICS_CONFIG.pushTicks);
+    const push = DEFAULT_PHYSICS_CONFIG.pushTicks;
+    run(pw, 4, 3 + push);
     expect(p.state).toBe('push');
-    run(pw, 3 + DEFAULT_PHYSICS_CONFIG.pushTicks, 4 + DEFAULT_PHYSICS_CONFIG.pushTicks);
+    run(pw, 3 + push, 4 + push);
     expect(p.state).toBe('idle');
+    expect(startAttack(p, 20, ev)).toBe(true);
+    expect(startAttack(p, 22, ev)).toBe(true);
+    expect(p.state).toBe('attack');
+    expect(p.stateStartTick).toBe(22);
+    expect(ev.map((e) => e.tick)).toEqual([3, 20, 22]);
   });
 });
 

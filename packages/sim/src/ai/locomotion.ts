@@ -8,6 +8,7 @@ import { emitNoise } from './noise.js';
 import { secToTicks } from './zombies.js';
 import { damageOpening, edgeCentre } from '../openings/actions.js';
 import { EF, openingKey, unpackKey } from '../openings/state.js';
+import { physicsCanMove } from '../physics/system.js';
 
 /**
  * Pipeline `ai.locomotion` (docs 2.5): turns the zombie's goal into a move intent for the shared
@@ -45,8 +46,8 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
     ai.lastX[eid] = x;
     ai.lastY[eid] = y;
 
-    // Staggered by a hit or a shove (combat): stands still.
-    if (w.tick < (ai.combat.staggerUntil[eid] ?? 0)) {
+    // Hit, staggered, knocked down or getting up (physics): stands still.
+    if (!physicsCanMove(w, eid)) {
       MoveIntent.dx[eid] = 0;
       MoveIntent.dy[eid] = 0;
       continue;

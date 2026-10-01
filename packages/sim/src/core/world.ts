@@ -12,6 +12,9 @@ import {
 import { createClock, type Clock, type ClockStart } from './clock.js';
 import { createComponents, type Components } from './components.js';
 import { createRngStreams, type RngStreams } from './rng.js';
+import { createPhysicsWorld } from '../physics/step.js';
+import type { PhysicsWorld } from '../physics/types.js';
+import type { PhysicsConfig } from '../physics/constants.js';
 
 export interface SimWorld {
   readonly ecs: World;
@@ -36,6 +39,8 @@ export interface SimWorld {
   readonly ai: AiWorld | undefined;
   /** Door / window state (always present; config from `worldSettings.openings`). */
   readonly openings: OpeningsWorld;
+  /** Physics bodies of players and zombies (`physics/*`, stream `rng.physics`). */
+  readonly physics: PhysicsWorld;
   /** Debug commands allowed (dev builds, tests). Not part of the state. */
   readonly dev: boolean;
   events: SimEvent[];
@@ -53,9 +58,11 @@ export function createSimWorld(opts: {
   items?: ((survival: SurvivalWorld) => ItemStore) | undefined;
   ai?: ((survival: SurvivalWorld) => AiWorld) | undefined;
   dev?: boolean | undefined;
+  physicsConfig?: PhysicsConfig | undefined;
 }): SimWorld {
   const clock = createClock(opts.dayLengthMinutes, opts.clockStart);
   const survival = opts.survival?.(clock);
+  const rng = createRngStreams(opts.seed);
   return {
     ecs: createWorld(),
     c: createComponents(opts.capacity),
@@ -63,7 +70,7 @@ export function createSimWorld(opts: {
     seed: opts.seed | 0,
     map: opts.map,
     tick: 0,
-    rng: createRngStreams(opts.seed),
+    rng,
     nextStableId: 1,
     structureVersion: 0,
     players: new Map(),
@@ -73,6 +80,7 @@ export function createSimWorld(opts: {
     items: survival && opts.items ? opts.items(survival) : undefined,
     ai: survival && opts.ai ? opts.ai(survival) : undefined,
     openings: createOpeningsWorld(opts.map, survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG),
+    physics: createPhysicsWorld(rng.physics, opts.physicsConfig),
     dev: opts.dev ?? false,
     events: [],
     sortedCache: new Map(),

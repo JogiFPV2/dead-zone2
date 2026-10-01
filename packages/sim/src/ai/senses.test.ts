@@ -200,7 +200,10 @@ describe('ai: hearing and noise', () => {
     expect(dist('walk')).toBeCloseTo(full, 3);
     expect(dist('run')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.runSpeedMul, 3);
     expect(dist('sneak')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.sneakSpeedMul, 3);
-    expect(dist('run', 0)).toBeCloseTo(full, 3);
+    // Exhausted: walks, and slower than rested (physics: endurance level 4).
+    const tired = dist('run', 0);
+    expect(tired).toBeLessThan(full * 0.6);
+    expect(tired).toBeGreaterThan(full * 0.5);
   });
 
   it('starting a timed action makes a small noise', () => {

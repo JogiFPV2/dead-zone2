@@ -7,6 +7,7 @@ import { Pen, penalty } from '../survival/penalties.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { moveCircle, type Vec2 } from '../world/collision.js';
 import { EF } from '../openings/state.js';
+import { gaitSeedOf, physicsCanRun } from '../physics/system.js';
 import type { TileGrid } from '../world/grid.js';
 
 const tmp: Vec2 = { x: 0, y: 0 };
@@ -16,7 +17,9 @@ const tmp: Vec2 = { x: 0, y: 0 };
  * stop after `DECEL_TICKS` (0.15 s); facing turns at most `TURN_BAM_PER_TICK` (720°/s) towards
  * the aim / movement direction, so the body can face one way and walk another (backwards,
  * strafing). Zombies: speed × a smooth, deterministic wobble (±`ZOMBIE_WOBBLE`, new key every
- * `WOBBLE_PERIOD_TICKS`) from the seed and StableId (no RNG stream is consumed).
+ * `WOBBLE_PERIOD_TICKS`) from the zombie's physics `gaitSeed`, and the same rise / brake as the
+ * player scaled by their (lower) inertia multiplier. Physics (`physics/system.ts`) plugs in as a
+ * movement modifier: load, endurance and mass, and no control while knocked down.
  */
 export const ACCEL_TICKS = 4;
 export const DECEL_TICKS = 3;
@@ -25,21 +28,21 @@ export const ZOMBIE_WOBBLE = 0.2;
 export const WOBBLE_PERIOD_TICKS = 12;
 
 /** Integer hash → [0, 1). */
-function hash01(a: number, b: number, c: number): number {
+function hash01(a: number, b: number): number {
   let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x7f4a7c15, 0xc2b2ae35);
-  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) ^ Math.imul(c ^ 0x165667b1, 0x27d4eb2f);
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
   h ^= h >>> 13;
   h = Math.imul(h, 0x5bd1e995);
   h ^= h >>> 15;
   return (h >>> 0) / 4294967296;
 }
 
-/** Zombie pace multiplier at `tick`: 1 ± ZOMBIE_WOBBLE, smoothstep between hashed keys. */
-export function zombieWobble(seed: number, sid: number, tick: number): number {
+/** Zombie pace multiplier at `tick`: 1 ± ZOMBIE_WOBBLE, smoothstep between keys of `gaitSeed`. */
+export function zombieWobble(gaitSeed: number, tick: number): number {
   const k = Math.floor(tick / WOBBLE_PERIOD_TICKS);
   const t = (tick - k * WOBBLE_PERIOD_TICKS) / WOBBLE_PERIOD_TICKS;
-  const a = hash01(seed, sid, k);
-  const b = hash01(seed, sid, k + 1);
+  const a = hash01(gaitSeed, k);
+  const b = hash01(gaitSeed, k + 1);
   const s = t * t * (3 - 2 * t);
   return Math.fround(1 + ZOMBIE_WOBBLE * (2 * (a + (b - a) * s) - 1));
 }
@@ -62,8 +65,9 @@ const vel: Vec2 = { x: 0, y: 0 };
 /**
  * Extension point for later systems (physics: mass, load, knock-down, pushing doors): per-entity
  * multipliers applied every tick, in registration order. `speedMul` scales the target speed of
- * players and zombies; `accelMul` scales the player acceleration / braking step (0 = cannot
- * change velocity this tick). Register once at module init (like action handlers).
+ * players and zombies; `accelMul` scales the acceleration / braking step (0 = cannot
+ * change velocity this tick). Register once at module init (like action handlers). Physics
+ * registers `physicsMovementModifier` in `createSim`.
  */
 export interface MovementModifier {
   speedMul?(w: SimWorld, eid: number): number;
@@ -94,7 +98,7 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     const zombie = w.c.Zombie.is[eid] === 1;
     if (zombie) {
       // Zombies: speed set by ai.locomotion, no survival modifiers; a shambling wobble.
-      speed = Math.fround(speed * zombieWobble(w.seed, w.c.StableId.value[eid] ?? 0, w.tick));
+      speed = Math.fround(speed * zombieWobble(gaitSeedOf(w, eid), w.tick));
     } else if (s && (s.asleep[eid] || s.dead[eid])) {
       // Asleep or dead: no movement (the held intent stays for after waking).
       speed = 0;
@@ -119,7 +123,7 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     if (modifiers.length > 0) speed = Math.fround(speed * modMul(w, eid, 'speedMul'));
     let vx = Math.fround((MoveIntent.dx[eid] ?? 0) * speed);
     let vy = Math.fround((MoveIntent.dy[eid] ?? 0) * speed);
-    if (!zombie && speed > 0) {
+    if (speed > 0) {
       const px = Velocity.x[eid] ?? 0;
       const py = Velocity.y[eid] ?? 0;
       const speeding = vx * vx + vy * vy >= px * px + py * py;
@@ -198,9 +202,13 @@ export function facingSystem(w: SimWorld): void {
 const isPlayer = (w: SimWorld, eid: number): boolean =>
   w.players.get(w.c.Player.id[eid] ?? -1) === eid;
 
-/** Gait of a player this tick: `run` needs endurance > 0 (with survival), else walks. */
+/**
+ * Gait of a player this tick: `run` needs endurance > 0 (with survival) and not being exhausted
+ * (physics: endurance level 4), else walks.
+ */
 export function effectiveGait(w: SimWorld, eid: number): (typeof GAITS)[number] {
   const gait = GAITS[w.c.MoveIntent.gait[eid] ?? 1] ?? 'walk';
   if (gait === 'run' && w.survival && (w.survival.vitals.endurance[eid] ?? 0) <= 0) return 'walk';
+  if (gait === 'run' && !physicsCanRun(w, eid)) return 'walk';
   return gait;
 }

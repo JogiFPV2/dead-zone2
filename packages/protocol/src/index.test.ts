@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHUNK_TILES,
+  ENTITY_PHYS_STATES,
+  SNAPSHOT_U32_FIELDS,
+  SnapshotField,
   PROTOCOL_VERSION,
   decodeSnapshot,
   encodeSnapshot,
@@ -117,10 +120,34 @@ describe('parseCommand', () => {
 });
 
 describe('snapshot encoding', () => {
+  const phys = {
+    state: 'idle' as const,
+    stateStartTick: 0,
+    stateDuration: 0,
+    knockback: { dirX: 0, dirY: 0, strength: 0 },
+    hitFromDir: 0,
+    gaitSeed: 0,
+  };
+
   it('round-trips entities and reports count', () => {
     const ents = [
-      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5, kind: 1, anim: 2, hpPct: 0.5 },
-      { stableId: 7, x: -3, y: 4, z: 1, facingRad: 3, kind: 2, anim: 0, hpPct: 0 },
+      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5, kind: 1, anim: 2, hpPct: 0.5, ...phys },
+      {
+        stableId: 7,
+        x: -3,
+        y: 4,
+        z: 1,
+        facingRad: 3,
+        kind: 2,
+        anim: 0,
+        hpPct: 0,
+        state: 'knockdown' as const,
+        stateStartTick: 123_456_789,
+        stateDuration: 60,
+        knockback: { dirX: 1, dirY: 0, strength: 0.5 },
+        hitFromDir: 3,
+        gaitSeed: 0xdeadbeef,
+      },
     ];
     const buf = encodeSnapshot(ents);
     expect(buf.byteLength).toBe(snapshotByteLength(2));
@@ -128,8 +155,9 @@ describe('snapshot encoding', () => {
     expect(decodeSnapshot(buf)).toEqual(ents);
   });
 
-  it('has no header: 8 floats per entity (kind, anim default 0, hpPct 1)', () => {
-    expect(SNAPSHOT_ENTITY_STRIDE).toBe(8);
+  it('has no header: 16 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
+    expect(SNAPSHOT_ENTITY_STRIDE).toBe(16);
+    expect(PROTOCOL_VERSION).toBe(7);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -141,11 +169,27 @@ describe('snapshot encoding', () => {
         kind: SnapshotEntityKind.zombie,
         anim: SnapshotAnim.run,
         hpPct: 0.25,
+        state: 'getup',
+        stateStartTick: 40,
+        stateDuration: 30,
+        knockback: { dirX: 0, dirY: -1, strength: 0.25 },
+        hitFromDir: 1.5,
+        gaitSeed: 7,
       },
     ]);
-    expect(Array.from(new Float32Array(buf))).toEqual([
-      3, 1, 2, 0, 0.25, 0, 0, 1, 4, 1, 2, 0, 0, 2, 2, 0.25,
-    ]);
+    const f = Array.from(new Float32Array(buf));
+    expect(f.slice(0, 16)).toEqual([3, 1, 2, 0, 0.25, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(f.slice(16, 24)).toEqual([4, 1, 2, 0, 0, 2, 2, 0.25]);
+    const o = SNAPSHOT_ENTITY_STRIDE;
+    expect(f[o + SnapshotField.state]).toBe(ENTITY_PHYS_STATES.indexOf('getup'));
+    expect(f[o + SnapshotField.stateDuration]).toBe(30);
+    expect(f[o + SnapshotField.knockbackDirY]).toBe(-1);
+    expect(f[o + SnapshotField.knockbackStrength]).toBe(0.25);
+    expect(f[o + SnapshotField.hitFromDir]).toBe(1.5);
+    const u = new Uint32Array(buf);
+    expect(SNAPSHOT_U32_FIELDS).toEqual([SnapshotField.stateStartTick, SnapshotField.gaitSeed]);
+    expect(u[o + SnapshotField.stateStartTick]).toBe(40);
+    expect(u[o + SnapshotField.gaitSeed]).toBe(7);
   });
 
   it('reuses a buffer only when its size matches exactly', () => {

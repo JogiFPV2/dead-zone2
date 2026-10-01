@@ -9,7 +9,8 @@ import {
 
 /**
  * Pipeline step after movement: stat `carry-load` (carried kg after bag reduction / carry
- * capacity × 100; the `heavy-load` moodle slows movement from data), the worn-bag speed factor,
+ * capacity × 100; the `heavy-load` moodle is only an indicator, physics applies the slowdown),
+ * the worn-bag speed factor,
  * and closing the loot panel when the container went out of reach.
  */
 export function inventorySystem(w: SimWorld): void {

@@ -85,7 +85,7 @@ describe('movement', () => {
   });
 
   it('zombie pace wobbles smoothly and deterministically', () => {
-    const vals = Array.from({ length: 48 }, (_, t) => zombieWobble(3, 7, t));
+    const vals = Array.from({ length: 48 }, (_, t) => zombieWobble(0x9e3779b9, t));
     for (const v of vals) {
       expect(v).toBeGreaterThanOrEqual(0.8);
       expect(v).toBeLessThanOrEqual(1.2);
@@ -93,8 +93,8 @@ describe('movement', () => {
     for (let i = 1; i < vals.length; i++)
       expect(Math.abs(vals[i]! - vals[i - 1]!)).toBeLessThan(0.1);
     expect(new Set(vals.map((v) => v.toFixed(2))).size).toBeGreaterThan(5);
-    expect(zombieWobble(3, 7, 30)).toBe(vals[30]);
-    expect(zombieWobble(3, 8, 30)).not.toBe(vals[30]);
+    expect(zombieWobble(0x9e3779b9, 30)).toBe(vals[30]);
+    expect(zombieWobble(12345, 30)).not.toBe(vals[30]);
   });
 
   it('faces the aim point, independent of movement', () => {
