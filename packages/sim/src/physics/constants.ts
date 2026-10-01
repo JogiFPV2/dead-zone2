@@ -95,7 +95,59 @@ export interface PhysicsConfig {
   };
   /** Knock-back slide: start speed = impulse × maxSpeed, then × friction per tick. */
   knockback: { maxSpeed: number; friction: number; stopSpeed: number };
+  /** Crowd pressure on closed doors / windows / fences and zombie pushing (`crowd.ts`). */
+  crowd: CrowdConfig;
 }
+
+/**
+ * Crowd pressure (PZ: a horde breaks through what a lone zombie only bangs on). Pressure of an
+ * edge = Σ over zombies pressing on it of mass / refMass × rank weight (1 at the edge, down to
+ * `backRankWeight` at `reachTiles`), in "zombie units". Resistance = a player holding it from
+ * the other side (`holdForce` × mass / refMass) + `barricadeResist` for planks. Every
+ * `pulseTicks` the excess over `freeUnits` (a single zombie: none, its blows stay as they were)
+ * damages the edge like `bashesPerUnit` extra zombies each; a window breaks at once from
+ * `windowBreakUnits`. Design factor: 8 zombies (≈ 6 excess units) break a door ≈ 2× faster than
+ * the same 8 only bashing (≈ 10× a lone zombie); tested in `crowd.test.ts`.
+ */
+export interface CrowdConfig {
+  enabled: boolean;
+  /** Zombies whose centre is this close to the edge centre (pressing side) count. */
+  reachTiles: number;
+  /** Rank weight at `reachTiles` (linear from 1 at `frontTiles`). */
+  frontTiles: number;
+  backRankWeight: number;
+  /** Units absorbed for free: one zombie (90 kg = 1.125 units) adds nothing. */
+  freeUnits: number;
+  /** Ticks between pressure pulses (damage, level events). */
+  pulseTicks: number;
+  /**
+   * Damage per excess unit, in lone-zombie blows: unit damage per second = bashesPerUnit × the
+   * average bash damage per second of the pressing zombie type (× `openings.zombieBashMul`).
+   */
+  bashesPerUnit: number;
+  /** Pulse damage × (1 ± jitter), one `rng.physics` draw per damaging pulse. */
+  damageJitter: number;
+  /** Fence damage × this (low fences give way to a crowd quickly). */
+  fenceDamageMul: number;
+  /** Lone zombie blows on a fence × this (it mostly just bangs on it). */
+  fenceBashMul: number;
+  /** A closed window breaks at once at this net pressure (units). */
+  windowBreakUnits: number;
+  /** A player within this distance of the edge centre on the other side holds it. */
+  holdReachTiles: number;
+  holdForce: number;
+  barricadeResist: number;
+  /** Excess units at which the client level (`openingPressure`) is 2 / 3. */
+  levelUnits: readonly [number, number];
+  /**
+   * Zombie–zombie pushing (gentle: zombies still crowd at a door): overlap correction share per
+   * tick, dead zone (tiles), max push per tick.
+   */
+  separation: { stiffness: number; slop: number; maxStep: number };
+}
+
+/** Hit points of a standing low fence (`openings`: `closed` → `broken` = knocked over). */
+export const FENCE_HP = 40;
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   /** Zombies are heavier (dead weight): less inertia multiplier, harder to push over. */
@@ -142,4 +194,22 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     getupPlayer: sec(1),
   },
   knockback: { maxSpeed: perTick(5), friction: 0.75, stopSpeed: perTick(0.04) },
+  crowd: {
+    enabled: true,
+    reachTiles: 1.8,
+    frontTiles: 0.6,
+    backRankWeight: 0.5,
+    freeUnits: 1.25,
+    pulseTicks: sec(0.5),
+    bashesPerUnit: 0.5,
+    damageJitter: 0.2,
+    fenceDamageMul: 2,
+    fenceBashMul: 0.25,
+    windowBreakUnits: 3,
+    holdReachTiles: 1,
+    holdForce: 2.5,
+    barricadeResist: 3,
+    levelUnits: [2, 4],
+    separation: { stiffness: 0.3, slop: 0.02, maxStep: perTick(1) },
+  },
 };

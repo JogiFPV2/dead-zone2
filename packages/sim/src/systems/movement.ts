@@ -61,6 +61,7 @@ function approach(vx: number, vy: number, tx: number, ty: number, step: number, 
   }
 }
 const vel: Vec2 = { x: 0, y: 0 };
+const push: Vec2 = { x: 0, y: 0 };
 
 /**
  * Extension point for later systems (physics: mass, load, knock-down, pushing doors): per-entity
@@ -72,6 +73,8 @@ const vel: Vec2 = { x: 0, y: 0 };
 export interface MovementModifier {
   speedMul?(w: SimWorld, eid: number): number;
   accelMul?(w: SimWorld, eid: number): number;
+  /** Extra displacement this tick (tiles, e.g. a crowd push), swept with the move; false = none. */
+  push?(w: SimWorld, eid: number, out: Vec2): boolean;
 }
 const modifiers: MovementModifier[] = [];
 export function registerMovementModifier(m: MovementModifier): void {
@@ -134,6 +137,12 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     }
     Velocity.x[eid] = vx;
     Velocity.y[eid] = vy;
+    for (const m of modifiers) {
+      if (m.push?.(w, eid, push)) {
+        vx += push.x;
+        vy += push.y;
+      }
+    }
     if (vx === 0 && vy === 0) continue;
     const z = Position.z[eid] ?? 0;
     moveCircle(

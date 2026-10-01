@@ -8,6 +8,7 @@ import { emitNoise } from './noise.js';
 import { secToTicks } from './zombies.js';
 import { damageOpening, edgeCentre } from '../openings/actions.js';
 import { EF, openingKey, unpackKey } from '../openings/state.js';
+import { physicsBashMul, physicsPress } from '../physics/crowd.js';
 import { physicsCanMove } from '../physics/system.js';
 
 /**
@@ -122,7 +123,8 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
             }
           }
         }
-        // A closed door / window on the way: walk into it and bash it (docs 2.5 `openings`).
+        // A closed door / window / fence on the way: walk into it and bash it (docs 2.5
+        // `openings`); pressing on it also counts for crowd pressure (`physics/crowd.ts`).
         const purposeful =
           state === ZombieState.chase ||
           state === ZombieState.investigate ||
@@ -211,6 +213,7 @@ function bash(
   def: { damage: { min: number; max: number }; attackCooldownSec: number },
 ): void {
   const o = w.openings;
+  physicsPress(w, eid, key);
   const at = o.bashAt.get(eid);
   if (at === undefined) {
     o.bashAt.set(eid, w.tick + secToTicks(def.attackCooldownSec));
@@ -223,7 +226,9 @@ function bash(
   const kind = grid.kindOf(id);
   const rng = w.rng.ai;
   const dmg = Math.fround(
-    (def.damage.min + rng.nextFloat() * (def.damage.max - def.damage.min)) * o.cfg.zombieBashMul,
+    (def.damage.min + rng.nextFloat() * (def.damage.max - def.damage.min)) *
+      o.cfg.zombieBashMul *
+      physicsBashMul(w, kind),
   );
   const c = edgeCentre(key % 2, k.tx, k.ty);
   const n = o.cfg.bashNoise;

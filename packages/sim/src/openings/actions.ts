@@ -26,7 +26,7 @@ export function emitOpeningChanged(
   w: SimWorld,
   key: number,
   kind: number,
-  by: 'player' | 'zombie' | 'debug',
+  by: 'player' | 'zombie' | 'crowd' | 'debug',
 ): void {
   w.events.push({
     type: 'openingChanged',
@@ -37,15 +37,16 @@ export function emitOpeningChanged(
 }
 
 /**
- * Damage to a closed / locked / barricaded door or window (zombie blows). Planks go first
- * (door → `closed` with full hp, window → `broken`); a door or a window at 0 hp → `broken`.
+ * Damage to a closed / locked / barricaded door, window or fence (zombie blows, crowd pressure).
+ * Planks go first (door → `closed` with full hp, window → `broken`); at 0 hp → `broken` (a fence:
+ * knocked over).
  */
 export function damageOpening(
   w: SimWorld,
   key: number,
   kind: number,
   dmg: number,
-  by: 'player' | 'zombie',
+  by: 'player' | 'zombie' | 'crowd',
 ): void {
   const o = w.openings;
   const e = o.states.get(key);
@@ -57,7 +58,7 @@ export function damageOpening(
     setOpening(o, key, kind, OS.closed);
   else {
     setOpening(o, key, kind, OS.broken);
-    if (kind === OpeningKind.window) {
+    if (kind === OpeningKind.window || kind === OpeningKind.fence) {
       const k = unpackKey(key);
       const c = edgeCentre(key % 2, k.tx, k.ty);
       const n = o.cfg.breakNoise;
@@ -84,12 +85,14 @@ export function applyOpeningCommand(
     if (kind === OpeningKind.wall) return 'invalid-target';
     const state = OPENING_STATES.indexOf(cmd.state);
     if (state === OS.locked && kind === OpeningKind.window) return 'invalid-state';
+    if (kind === OpeningKind.fence && state !== OS.closed && state !== OS.broken)
+      return 'invalid-state';
     const key = openingKey(side, cmd.tx, cmd.ty, z);
     setOpening(o, key, kind, state);
     emitOpeningChanged(w, key, kind, 'debug');
     return undefined;
   }
-  if (kind === OpeningKind.wall) return 'invalid-target';
+  if (kind === OpeningKind.wall || kind === OpeningKind.fence) return 'invalid-target';
   const c = edgeCentre(side, cmd.tx, cmd.ty);
   const dx = (w.c.Position.x[eid] ?? 0) - c.x;
   const dy = (w.c.Position.y[eid] ?? 0) - c.y;

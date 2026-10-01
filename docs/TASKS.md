@@ -46,7 +46,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] AI: wzrok, słuch, wędrowanie, gonienie (Symulacja)
 - [x] System hałasu (Symulacja)
 - [x] Pathfinding + flow field dla hord (Symulacja)
-- [ ] Walka wręcz, stamina, pchnięcie (Symulacja) — fizyka (masa, bezwładność, obciążenie, odrzut, zachwianie, przewrócenie, wstawanie) w `sim/src/physics`, podpięta do ruchu, walki i snapshotu (protokół v7)
+- [ ] Walka wręcz, stamina, pchnięcie (Symulacja) — fizyka (masa, bezwładność, obciążenie, odrzut, zachwianie, przewrócenie, wstawanie) w `sim/src/physics`, podpięta do ruchu, walki i snapshotu (protokół v7); napór tłumu zombie na drzwi / okna / płoty i odpychanie w tłumie (`physics/crowd.ts`)
 - [ ] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules)
 - [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
 - [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)

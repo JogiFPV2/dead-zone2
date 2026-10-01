@@ -22,7 +22,15 @@ export function createPhysicsWorld(
   rng: Rng,
   cfg: PhysicsConfig = DEFAULT_PHYSICS_CONFIG,
 ): PhysicsWorld {
-  return { cfg, rng, bodies: new Map(), order: [], orderSize: -1 };
+  return {
+    cfg,
+    rng,
+    bodies: new Map(),
+    order: [],
+    orderSize: -1,
+    presses: new Map(),
+    pressure: new Map(),
+  };
 }
 
 export interface BodyInit {
@@ -68,6 +76,8 @@ export function addBody(pw: PhysicsWorld, init: BodyInit): PhysicsBody {
     capacityKg: init.capacityKg ?? 12,
     endurance: init.endurance ?? 100,
     strength: init.strength ?? 5,
+    pushX: 0,
+    pushY: 0,
   };
   pw.bodies.set(b.id, b);
   updateMovementStats(b, pw.cfg);

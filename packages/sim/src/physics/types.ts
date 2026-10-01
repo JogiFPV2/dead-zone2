@@ -55,6 +55,12 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
   endurance: number;
   /** PZ Strength skill 0..10 (impulse of its hits). */
   strength: number;
+  /**
+   * Crowd push (tiles) from zombie–zombie separation (`crowd.ts`), added to the entity's next
+   * movement step (one collision sweep for both); 0 when not pressed.
+   */
+  pushX: number;
+  pushY: number;
 }
 
 /** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
@@ -66,6 +72,13 @@ export interface PhysicsWorld {
   /** Cached `id`-sorted bodies (rebuilt when the map size changes). */
   order: PhysicsBody[];
   orderSize: number;
+  /**
+   * Crowd (`crowd.ts`): edge key → zombie eids pressing on it this tick (filled by
+   * `ai.locomotion`, cleared by the `physics` step; transient, not saved).
+   */
+  readonly presses: Map<number, number[]>;
+  /** Edge key → last pressure level 1..3 sent to the client (`openingPressure`; saved). */
+  readonly pressure: Map<number, number>;
 }
 
 /** Hit or shove of `attackerId` on `targetId`, resolved by `physicsStep` in the given order. */

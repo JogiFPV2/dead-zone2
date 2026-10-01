@@ -1,4 +1,5 @@
 import type { SimZombieSpawn } from '@deadzone/protocol';
+import type { PhysicsConfig } from '../physics/constants.js';
 import { DEFAULT_COMBAT_CONFIG } from '../combat/config.js';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent } from './content-fixtures.js';
@@ -38,7 +39,7 @@ const nextSeq = (sim: Sim): number => {
 };
 
 /** Horde around the player at noon; loud noises at the player (every 5 s) pull everyone in. */
-export function hordeSim(count: number, seed = 5): Sim {
+export function hordeSim(count: number, seed = 5, physicsConfig?: PhysicsConfig): Sim {
   const sim = createSim({
     seed,
     map: townMap(),
@@ -52,6 +53,7 @@ export function hordeSim(count: number, seed = 5): Sim {
       ...DEFAULT_COMBAT_CONFIG,
       zombie: { ...DEFAULT_COMBAT_CONFIG.zombie, hitChance: 0 },
     },
+    ...(physicsConfig ? { physicsConfig } : {}),
   });
   return sim;
 }

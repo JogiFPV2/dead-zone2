@@ -352,7 +352,7 @@ export interface OpeningView {
   ty: number;
   z: number;
   side: EdgeSide;
-  kind: Extract<SimEdgeKind, 'door' | 'window'>;
+  kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
   state: OpeningState;
   hp: number;
   maxHp: number;

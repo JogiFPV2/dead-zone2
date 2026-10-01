@@ -149,7 +149,7 @@ Akumulator i `speed` należą do hosta, nie do stanu symulacji: nie są hashowan
   | `survival` | drobne losowe zdarzenia przetrwania i snu |
   | `actions` | sukces akcji, np. rozbiórki |
   | `progression` | losowe elementy XP i cech dynamicznych |
-  | `physics` | `gaitSeed` zombie przy spawnie, rzuty zachwiania i przewrócenia, czas leżenia (2 losowania na trafienie) |
+  | `physics` | `gaitSeed` zombie przy spawnie, rzuty zachwiania i przewrócenia, czas leżenia (2 losowania na trafienie), rozrzut obrażeń od naporu tłumu (1 losowanie na impuls naporu) |
 - **RNG pochodne** (bezstanowe z punktu widzenia zapisu): `rngFor(seed, 'loot', chunkX, chunkY, containerIndex)`. Loot kontenera zależy tylko od seeda i położenia, a nie od kolejności odwiedzania. Dzięki temu „zapis = seed + diff chunków” działa: nieotwarty kontener nie musi być zapisany.
 - Strumień to obiekt `{ s0, s1, s2, s3 }` przechowywany w `SimWorld.rng`. Zapis gry zapisuje cztery u32 każdego strumienia.
 - API: `nextU32()`, `nextFloat()` (`[0,1)` z 24 bitów przez `fround`), `int(min, max)`, `chance(p)`, `pickWeighted(table)`. Wagi w tablicach lootu są całkowite.
@@ -214,7 +214,7 @@ Jedna lista, wykonywana w każdym ticku:
 | 9 | Nawigacja | `nav` | flow field goniących i A* w limicie budżetu |
 | 10 | Ruch | `ai.locomotion` | cel → intencja ruchu zombie (pole, prosta, ścieżka), rozpychanie; kolizje liczy wspólny `movement` |
 | 10a | Ruch | `movement`, `movement.facing` | gracz i zombie: intencja → prędkość → kolizje z gridem (tu w Etapie 4, bo zombie korzystają z tego samego kroku) |
-| 10a′ | Fizyka | `physics` | ciała graczy i zombie (`physics/*`): timery stanów (trafienie, zachwianie, przewrócenie → wstawanie), odrzut z `moveCircle`, idle/walk/run. Ruch czyta ją przez `registerMovementModifier` (obciążenie, wytrzymałość, bezwładność, brak kontroli), a `combat` zgłasza trafienia przez `physicsHit` |
+| 10a′ | Fizyka | `physics` | ciała graczy i zombie (`physics/*`): timery stanów (trafienie, zachwianie, przewrócenie → wstawanie), odrzut z `moveCircle`, idle/walk/run. Ruch czyta ją przez `registerMovementModifier` (obciążenie, wytrzymałość, bezwładność, brak kontroli), a `combat` zgłasza trafienia przez `physicsHit`. Na końcu: wzajemne odpychanie zombie w tłumie (masa, przesunięcie wykonuje ruch w następnym ticku przez `push`) i napór tłumu na zamknięte drzwi / okna / płoty (`physics/crowd.ts`) |
 | 10b | Hałas | `noise.footsteps` | kroki graczy, którzy się ruszyli (co `footstepEveryTicks`, promień wg chodu) |
 | 10c | AI | `ai.threat` | zagrożenie per gracz (goniące zombie, zombie w promieniu), budzenie hałasem i zombie |
 | 11 | Walka | `combat` | ataki gracza i zombie, trafienia, pchnięcia, pociski, rzuty |
@@ -803,6 +803,8 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
   - `breakWindow {tx, ty, side}`: hałas `break` (`breakNoise`);
   - dev `debugOpening {tx, ty, z?, side, state}`.
 - **Dla rendera:** zdarzenie `openingChanged {tx, ty, z, side, kind, state, hp, maxHp, by}` przy każdej zmianie i każdym uderzeniu. Widok `openings` to pełna lista krawędzi różnych od domyślnego stanu, wysyłana przy każdej zmianie i po wczytaniu.
+- **Płot (`fence`):** niski płot z palety `edgeKinds` (na razie tylko w sim; schemat mapy w content go jeszcze nie zna). `closed` = stoi (blokuje ruch, nie wzrok ani dźwięk), `broken` = przewrócony (przejście jak przez wybite okno, wolniej). Hp `FENCE_HP` 40, pojedynczy zombie bije go z siłą × `crowd.fenceBashMul` (0.25). `toggleDoor` / `breakWindow` → `invalid-target`.
+- **Napór tłumu (`physics/crowd.ts`):** zombie, które uderzają w zamkniętą krawędź, zgłaszają ją (`physicsPress`). Co `crowd.pulseTicks` (0.5 s): napór = Σ masa / refMass × waga szeregu (zombie w promieniu `reachTiles` po tej samej stronie, idące w stronę krawędzi); opór = gracz trzymający od środka (`holdForce`) + deski (`barricadeResist`). Nadwyżka ponad `freeUnits` (jeden zombie: zero, jego uderzenia bez zmian) zadaje obrażenia jak `bashesPerUnit` dodatkowych zombie na jednostkę (`by: 'crowd'`); okno pęka od razu przy `windowBreakUnits`. Zmiana poziomu naporu → zdarzenie `openingPressure {tx, ty, z, side, kind, level 0..3, units, pushers}`. Stałe w `physics/constants.ts` (`crowd`).
 - **Dane:** `worldSettings.openings` (`world-settings/openings.json`): `doorHp` 60, `windowHp` 6, `barricadeHp` 150, `zombieBashMul`, `bashNoise`, `breakNoise`, `toggleNoise`, `windowSpeedMul`, `reachTiles`.
 - **Zadanie Silnika:** adapter `apps/game/src/world/sim-map.ts` nadal usuwa krawędzie drzwi (są przejściem). Żeby drzwi działały w grze, trzeba przekazać je do sim z `edgeKinds` i rysować stan z `openings` / `openingChanged`. Zabijanie deskami przez gracza przyjdzie z craftingiem (na razie tylko `debugOpening`).
 

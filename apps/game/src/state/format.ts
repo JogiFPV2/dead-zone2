@@ -36,6 +36,8 @@ export function describeEvent(e: SimEvent): string {
       return `threw ${e.def} to ${e.x},${e.y}${e.broke ? ' (broke)' : ''}`;
     case 'openingChanged':
       return `${e.kind} ${e.tx},${e.ty}${e.side} ${e.state} (${e.hp}/${e.maxHp}, ${e.by})`;
+    case 'openingPressure':
+      return `${e.kind} ${e.tx},${e.ty}${e.side} pressure ${e.level} (${e.units} u, ${e.pushers} zombies)`;
     case 'sleepSaved':
       return `sleep saved (-${e.fatigueRecovered} fatigue)`;
     case 'wokeUp':

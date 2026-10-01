@@ -19,16 +19,11 @@ export interface CombatConfig {
   exhaustedDamageMul: number;
   /** `combat.critMul`: damage × this on a critical hit (`melee.critChance`). */
   critMul: number;
-  /** `combat.knockbackTiles` / `staggerSecPerKnockback`: push and stagger per `melee.knockback`. */
-  knockbackTiles: number;
-  staggerSecPerKnockback: number;
   /** `combat.shove`. */
   shove: {
     rangeTiles: number;
     cooldownSec: number;
     staminaCost: number;
-    pushTiles: number;
-    staggerSec: number;
   };
   /** `combat.attackNoise`: noise of a swing when the weapon has no `hitNoise`. */
   attackNoise: { radiusTiles: number; volume: number };
@@ -62,9 +57,7 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   arcHalfDeg: 60,
   exhaustedDamageMul: 0.5,
   critMul: 2,
-  knockbackTiles: 0.5,
-  staggerSecPerKnockback: 0.6,
-  shove: { rangeTiles: 1.2, cooldownSec: 0.8, staminaCost: 4, pushTiles: 0.7, staggerSec: 1.2 },
+  shove: { rangeTiles: 1.2, cooldownSec: 0.8, staminaCost: 4 },
   attackNoise: { radiusTiles: 4, volume: 0.3 },
   zombie: { hitChance: 0.7, reachTiles: 0.9, windupSec: 0.5 },
   zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },

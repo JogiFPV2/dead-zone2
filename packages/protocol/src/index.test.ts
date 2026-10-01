@@ -283,7 +283,11 @@ describe('parseMainToWorker', () => {
     ];
     expect(parseMainToWorker({ kind: 'init', seed: 1, map, zombies }).ok).toBe(true);
     expect(
-      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['fence'] } }).ok,
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: [null, 'fence'] } })
+        .ok,
+    ).toBe(true);
+    expect(
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['gate'] } }).ok,
     ).toBe(false);
     expect(
       parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [] }, zombies: [{ x: 1 }] }).ok,

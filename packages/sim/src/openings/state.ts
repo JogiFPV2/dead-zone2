@@ -6,6 +6,7 @@ import {
   type SimEdgeKind,
   type SimMap,
 } from '@deadzone/protocol';
+import { FENCE_HP } from '../physics/constants.js';
 
 /** `worldSettings.openings` (defaults = the schema defaults in packages/content). */
 export interface OpeningsConfig {
@@ -32,8 +33,11 @@ export const DEFAULT_OPENINGS_CONFIG: OpeningsConfig = {
   reachTiles: 1.5,
 };
 
-/** Edge id kind: 0 = wall (or unknown), 1 = door, 2 = window. */
-export const OpeningKind = { wall: 0, door: 1, window: 2 } as const;
+/**
+ * Edge id kind: 0 = wall (or unknown), 1 = door, 2 = window, 3 = low fence (`closed` = standing,
+ * `broken` = knocked over by a crowd, `physics/crowd.ts`).
+ */
+export const OpeningKind = { wall: 0, door: 1, window: 2, fence: 3 } as const;
 
 export const OS = {
   open: OPENING_STATES.indexOf('open'),
@@ -69,7 +73,14 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig): OpeningsW
   const edgeKinds = map.edgeKinds ?? [];
   const kinds = new Uint8Array(Math.max(1, edgeKinds.length));
   edgeKinds.forEach((k: SimEdgeKind | null, id) => {
-    kinds[id] = k === 'door' ? OpeningKind.door : k === 'window' ? OpeningKind.window : 0;
+    kinds[id] =
+      k === 'door'
+        ? OpeningKind.door
+        : k === 'window'
+          ? OpeningKind.window
+          : k === 'fence'
+            ? OpeningKind.fence
+            : 0;
   });
   return { cfg, kinds, states: new Map(), bashAt: new Map(), version: 0 };
 }
@@ -95,6 +106,7 @@ export function unpackKey(key: number): { side: EdgeSide; tx: number; ty: number
 export function maxHp(cfg: OpeningsConfig, kind: number, state: number): number {
   if (state === OS.barricaded) return cfg.barricadeHp;
   if (state === OS.broken) return 0;
+  if (kind === OpeningKind.fence) return FENCE_HP;
   return kind === OpeningKind.door ? cfg.doorHp : cfg.windowHp;
 }
 
@@ -119,6 +131,8 @@ export const EF = {
 export function openingFlags(kind: number, state: number): number {
   let f = EF.present | EF.opening;
   const passable = state === OS.open || state === OS.broken;
+  // Low fence: blocks movement while standing (not sight or sound); knocked over = slow.
+  if (kind === OpeningKind.fence) return f | (passable ? EF.slow : EF.blocksMove);
   if (!passable) f |= EF.blocksMove | EF.muffles;
   if (kind === OpeningKind.door) {
     if (!passable) f |= EF.blocksSight;
@@ -152,7 +166,7 @@ export function openingView(o: OpeningsWorld, key: number, kind: number): Openin
     ty,
     z,
     side,
-    kind: kind === OpeningKind.door ? 'door' : 'window',
+    kind: kind === OpeningKind.door ? 'door' : kind === OpeningKind.fence ? 'fence' : 'window',
     state: OPENING_STATES[state] as OpeningState,
     hp: Math.round((e?.hp ?? maxHp(o.cfg, kind, state)) * 10) / 10,
     maxHp: maxHp(o.cfg, kind, state),

@@ -12,6 +12,7 @@ import {
   physicsAccelMul,
   physicsSpeedMul,
 } from './modifiers.js';
+import { crowdPressureSystem, separateZombies } from './crowd.js';
 import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
 import { addBody, physicsStep } from './step.js';
 import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
@@ -81,6 +82,13 @@ export const physicsMovementModifier: MovementModifier = {
   accelMul(w, eid) {
     const b = bodyOf(w, eid);
     return b ? physicsAccelMul(b, w.physics.cfg) : 1;
+  },
+  push(w, eid, out) {
+    const b = bodyOf(w, eid);
+    if (!b || (!b.pushX && !b.pushY)) return false;
+    out.x = b.pushX;
+    out.y = b.pushY;
+    return true;
   },
 };
 
@@ -153,7 +161,8 @@ const eidBySid = new Map<number, number>();
 /**
  * Pipeline `physics` (after `movement.facing`): syncs bodies from the ECS (position, facing,
  * velocity, load, endurance, deaths), runs `physicsStep` (timers, knock-back slide with
- * `moveCircle`, idle / walk / run) and writes slid positions back.
+ * `moveCircle`, idle / walk / run) and writes slid positions back; then zombies in a crowd push
+ * each other apart and crowd pressure works on closed doors / windows / fences (`crowd.ts`).
  */
 export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   const pw = w.physics;
@@ -206,4 +215,6 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
     Position.y[eid] = b.y;
   }
   emit(w, events);
+  separateZombies(w);
+  crowdPressureSystem(w, grid);
 }

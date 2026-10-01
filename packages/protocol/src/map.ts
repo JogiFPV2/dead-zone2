@@ -38,8 +38,11 @@ export interface SimChunkAddress {
   readonly z: number;
 }
 
-/** Edge kinds (content `map/edge.ts` types). Windows block movement but not sight. */
-export const SIM_EDGE_KINDS = ['wall', 'window', 'door'] as const;
+/**
+ * Edge kinds (content `map/edge.ts` types). Windows block movement but not sight; a low `fence`
+ * blocks movement only (sim-only for now: a crowd can knock it over, state `broken`).
+ */
+export const SIM_EDGE_KINDS = ['wall', 'window', 'door', 'fence'] as const;
 export type SimEdgeKind = (typeof SIM_EDGE_KINDS)[number];
 
 /**

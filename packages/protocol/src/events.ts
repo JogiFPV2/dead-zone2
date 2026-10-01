@@ -258,8 +258,9 @@ export type SimEvent =
       broke: boolean;
     }
   /**
-   * A door / window edge changed state or took damage (renderer: door sprite, broken glass,
-   * planks). `by`: a player's command, a zombie bashing it, or a dev command.
+   * A door / window / fence edge changed state or took damage (renderer: door sprite, broken
+   * glass, planks, a knocked-over fence = `fence` + `broken`). `by`: a player's command, a zombie
+   * bashing it, crowd pressure (`crowd`) or a dev command.
    */
   | {
       type: 'openingChanged';
@@ -268,12 +269,30 @@ export type SimEvent =
       ty: number;
       z: number;
       side: EdgeSide;
-      kind: Extract<SimEdgeKind, 'door' | 'window'>;
+      kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
       state: OpeningState;
       /** Hit points left (0..maxHp of the state). */
       hp: number;
       maxHp: number;
-      by: 'player' | 'zombie' | 'debug';
+      by: 'player' | 'zombie' | 'crowd' | 'debug';
+    }
+  /**
+   * Crowd pressure on a closed door / window / fence changed level (sim `physics/crowd.ts`,
+   * checked every 0.5 s): 0 = none (a lone zombie only bangs), 1..3 = the edge shakes harder.
+   * `units` = net pressure in zombie units (pressing zombies by mass − player holding −
+   * barricade), `pushers` = zombies counted. Client: shake / creak animation and sound.
+   */
+  | {
+      type: 'openingPressure';
+      tick: number;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
+      level: number;
+      units: number;
+      pushers: number;
     }
   /**
    * Uninterrupted sleep long enough (`sleep.saveAfterRealSec`, 2 real minutes at ×1): the host
