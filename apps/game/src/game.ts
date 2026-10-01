@@ -131,14 +131,52 @@ const world: LoadedMap =
     : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
 
 const scene = createScene();
-const terrain = new Terrain(world.source);
+// Town kit (CC0 modules, one atlas material): BatchedMesh per chunk + merged terrain per chunk.
+// `?town=0` or a failed load keeps the grey-box world.
+const townKit = boot.town
+  ? await import('./world/town/kit.js')
+      .then((m) => m.loadTownKit())
+      .catch((e: unknown) => {
+        console.error('Town kit failed to load; grey-box world', e);
+        return undefined;
+      })
+  : undefined;
+const town = townKit ? await import('./world/town/index.js') : undefined;
+// Procedural decor of content maps (lamps, poles, trees); the generated test map has its own lamps.
+const decor =
+  boot.map !== 'test' && town
+    ? town.townDecor(new town.MapTiles(world.source, world.range.z), world.range)
+    : undefined;
+const terrain =
+  townKit && town ? new town.TownTerrain(world.source, townKit) : new Terrain(world.source);
 terrain.loadRange(world.range);
 scene.add(terrain.root);
-const structures = new Structures(world.source);
-structures.loadRange(world.range);
+const townStructures = townKit && town ? new town.TownStructures(world.source, townKit) : undefined;
+const structures = townStructures ?? new Structures(world.source);
+if (townStructures) townStructures.loadRange(world.range, decor?.props);
+else structures.loadRange(world.range);
 scene.add(structures.root);
 // Doors, window panes and fences: sim opening state + shaking under crowd pressure.
-const openings = new OpeningsView(world.source, structures.lookup);
+const openings = new OpeningsView(
+  world.source,
+  structures.lookup,
+  townKit && townStructures && town
+    ? {
+        kit: townKit,
+        leafOf: (e) =>
+          town.doorLeaf(
+            townStructures.doorSkin(e.tx, e.ty, e.side === 'n' ? 'N' : 'W') ?? 'interior',
+          ),
+        onWindow: (e, state) =>
+          townStructures.setWindowBroken(
+            e.tx,
+            e.ty,
+            e.side === 'n' ? 'N' : 'W',
+            state === 'broken',
+          ),
+      }
+    : undefined,
+);
 openings.loadRange(world.range);
 scene.add(openings.root);
 if (import.meta.env.DEV && boot.zones) {
@@ -728,7 +766,7 @@ gameState.subscribe((_next, _prev, action) => {
 const lighting = createWorldLighting(
   scene,
   renderer,
-  boot.map === 'test' ? createTestLamps() : [],
+  boot.map === 'test' ? createTestLamps() : (decor?.lamps ?? []),
   CAMERA_DISTANCE,
 );
 const dayCycle = new DayCycle(DAY_CYCLE);
@@ -839,9 +877,20 @@ renderer.setAnimationLoop((time) => {
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }
+  if (import.meta.env.DEV && boot.cam) {
+    rig.target.set(boot.cam.x, 0, boot.cam.z);
+    camera.zoom = VIEW_HEIGHT / boot.cam.viewHeight;
+    camera.updateProjectionMatrix();
+  }
   rig.update(time);
   lightMinute = currentMinute(performance.now());
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
+  if (townKit && townStructures) {
+    townStructures.setMinute(lightMinute);
+    townKit.material.emissiveIntensity = town?.WINDOW_EMISSIVE_NIGHT
+      ? town.WINDOW_EMISSIVE_NIGHT * dayCycle.lampLevel(lightMinute)
+      : 0;
+  }
   lighting.update(camera, rig.target.x, rig.target.z);
   const gs = gameState.get();
   groundPiles.update(gs.groundPiles, gs.nearby, time);
@@ -898,6 +947,7 @@ if (import.meta.env.DEV) {
       frame: frameSample,
       pass: stylePass,
       calls: () => renderer.info.render.calls,
+      scene,
       /** Stops the loop and draws the current frame once in `style` (same frame per style). */
       still: (style: GraphicsStyle) => {
         renderer.setAnimationLoop(null);

@@ -2,10 +2,11 @@ import { readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
-import { buildAll, loadPacks } from './build.js';
+import { buildAll, createIO, loadPacks } from './build.js';
 import { checkManifestLicences, updateAssetsMd, type AssetManifest } from './manifest.js';
 import { ALLOWED_LICENCES } from './pack.js';
 import { renderIcons } from './icons.js';
+import { bundleTown } from './town.js';
 
 const toolDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(toolDir, '../..');
@@ -62,7 +63,13 @@ async function main(cmd = 'build'): Promise<void> {
       size: Number(process.argv[3] ?? ICON_SIZE),
     });
   }
-  if (cmd !== 'build') throw new Error('Użycie: assets build|check|icons [rozmiar]');
+  if (cmd === 'town') {
+    const src = process.argv[3];
+    if (!src) throw new Error('Użycie: assets town <katalog deadzone-town-assets>');
+    await bundleTown(await createIO(), resolve(src), join(paths.outDir, 'deadzone-town'));
+    return;
+  }
+  if (cmd !== 'build') throw new Error('Użycie: assets build|check|icons [rozmiar]|town <katalog>');
   const m = await buildAll(paths);
   const md = join(repo, 'ASSETS.md');
   const current = await readFile(md, 'utf8').catch(() => '');

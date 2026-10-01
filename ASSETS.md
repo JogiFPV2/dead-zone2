@@ -50,6 +50,27 @@ z oryginałów; sumy SHA-256 dotyczą pobranych oryginałów.
 | `sfx-hit0..2` (trafienie wręcz, pchnięcie, atak zombie)                       | `impactPunch_medium_000..002.ogg` z paczki                              | Kenney, „Impact Sounds”, kenney.nl/assets/impact-sounds (CC0)                                                                 | CC0-1.0  | jak wyżej                                                                                           |
 | `sfx-door-open`, `sfx-door-close`                                             | `doorOpen_1.ogg`, `doorClose_1.ogg` z paczki                            | Kenney, „RPG Audio”, kenney.nl/assets/rpg-audio (`License.txt` w paczce: CC0)                                                 | CC0-1.0  | paczka `kenney_rpg-audio.zip`: 6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b     |
 
+## Miasto: budynki, teren, propsy (`apps/game/public/models/deadzone-town/`)
+
+Moduły 1 kafla (ściany, okna, framugi i skrzydła drzwi, dach płaski i attyka, propsy) skonwertowane przez
+Designera z packów Kenney do jednego atlasu płaskich kolorów 128 px (`palette.png` + maska emisji
+`palette-emissive.png`). `pnpm --filter @deadzone/assets assets town <katalog handoffu>` łączy 64 modele
+w jeden `town.glb` (meshopt, siatka na moduł) i zapisuje `town.json` (komórki atlasu, lista modułów).
+Tekstura detalu terenu `terrain-detail.webp` (512², R asfalt, G trawa, B chodnik, A ziemia; luminancja,
+webp q75) powstała z 4 tekstur ambientCG.
+
+| Źródło                | Autor     | URL                                           | Licencja | Zip (sha256, skrót)                                 | Do czego                                                   |
+| --------------------- | --------- | --------------------------------------------- | -------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| Building Kit 1.0      | Kenney    | https://kenney.nl/assets/building-kit         | CC0-1.0  | `kenney_building-kit.zip` (2740ef57…cf3eec6)        | ściany, okna, framugi, skrzydła drzwi, dach płaski, attyka |
+| City Kit Suburban 2.0 | Kenney    | https://kenney.nl/assets/city-kit-suburban    | CC0-1.0  | `kenney_city-kit-suburban_20.zip` (5869c35c…849a39) | płoty, donice                                              |
+| City Kit Roads 2.1    | Kenney    | https://kenney.nl/assets/city-kit-roads       | CC0-1.0  | `kenney_city-kit-roads.zip` (22058af3…849674e)      | latarnie, słupy energetyczne, kontener, STOP, pachołki     |
+| Survival Kit 2.0      | Kenney    | https://kenney.nl/assets/survival-kit         | CC0-1.0  | jak pack `kenney-survival`                          | drzewa, trawa, kamień                                      |
+| Furniture Kit         | Kenney    | https://kenney.nl/assets/furniture-kit        | CC0-1.0  | jak pack `kenney-furniture`                         | meble w kicie (w grze meble rysuje system obiektów mapy)   |
+| Asphalt031            | ambientCG | https://ambientcg.com/view?id=Asphalt031      | CC0-1.0  | `Asphalt031_1K-JPG.zip` (f98114b8…dbc69f964)        | kanał R detalu terenu                                      |
+| Grass004              | ambientCG | https://ambientcg.com/view?id=Grass004        | CC0-1.0  | `Grass004_1K-JPG.zip` (4b63495f…bb344469)           | kanał G                                                    |
+| PavingStones138       | ambientCG | https://ambientcg.com/view?id=PavingStones138 | CC0-1.0  | `PavingStones138_1K-JPG.zip` (5e2aee8f…d83fdd)      | kanał B                                                    |
+| Ground037             | ambientCG | https://ambientcg.com/view?id=Ground037       | CC0-1.0  | `Ground037_1K-JPG.zip` (4e69db2b…aaead51c2574e)     | kanał A                                                    |
+
 ## Pack testowy pipeline'u (nieużywany w scenie gry)
 
 <!-- assets-pipeline:begin -->

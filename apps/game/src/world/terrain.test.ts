@@ -15,7 +15,8 @@ it('builds one group per chunk and one InstancedMesh per tile type', () => {
       instances += o.count;
     }
   });
-  expect(meshes).toBe(16 * 3);
+  // grass, asphalt, concrete lots and sidewalks in every chunk.
+  expect(meshes).toBe(16 * 4);
   expect(instances).toBe(128 * 128);
   terrain.dispose();
 });

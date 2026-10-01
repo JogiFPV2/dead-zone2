@@ -29,6 +29,10 @@ export interface BootOptions {
   zspawn: number;
   /** `?zombies=0` disables the start zombies on content maps. */
   zombies: boolean;
+  /** `?town=0`: grey-box world instead of the town kit (comparison, fallback). */
+  town: boolean;
+  /** Dev `?cam=x,z,viewH`: camera pinned at a world point with that view height (screenshots). */
+  cam?: { x: number; z: number; viewHeight: number };
 }
 
 const DEBUG_STAT_SET: ReadonlySet<string> = new Set(DEBUG_STATS);
@@ -69,6 +73,7 @@ export function parseBootOptions(search: string): BootOptions {
   const mock = crowd > 0;
   const time = parseTimeParam(q.get('time'));
   const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(q.get('spawn') ?? '');
+  const cam = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/.exec(q.get('cam') ?? '');
   return {
     map,
     crowd,
@@ -81,6 +86,10 @@ export function parseBootOptions(search: string): BootOptions {
     give: parseGiveParam(q.get('give')),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
+    town: q.get('town') !== '0',
+    ...(cam && Number(cam[3]) > 0
+      ? { cam: { x: Number(cam[1]), z: Number(cam[2]), viewHeight: Number(cam[3]) } }
+      : {}),
     zspawn: Math.max(0, Math.min(300, Math.floor(Number(q.get('zspawn')) || 0))),
   };
 }

@@ -14,20 +14,31 @@ export const TEST_MAP_PALETTE = [
   'base:asphalt',
   'base:concrete',
   'base:roof-flat',
+  'base:sidewalk',
 ] as const;
 const GRASS = 1;
 const ASPHALT = 2;
 const CONCRETE = 3;
 const ROOF_FLAT = 4;
+const SIDEWALK = 5;
 
 /** 4x4 chunks (128x128 tiles) centred on the origin. */
 export const TEST_MAP_RANGE: ChunkRange = { cx0: -2, cy0: -2, cx1: 1, cy1: 1, z: 0 };
 
-/** Deterministic placeholder map: grass, a road grid every 32 tiles and concrete lots. */
+/** Last tile of the test map (sidewalks only run along roads inside the map). */
+const MAP_MAX = (TEST_MAP_RANGE.cx1 + 1) * CHUNK_SIZE - 1;
+
+/**
+ * Deterministic placeholder map: grass, a road grid every 32 tiles with 2-tile sidewalks and
+ * concrete lots.
+ */
 function tileAt(wx: number, wy: number): number {
   const lx = ((wx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
   const ly = ((wy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
   if (lx < 4 || ly < 4) return ASPHALT;
+  const walkX = lx < 6 || (lx >= 30 && wx < MAP_MAX - 1);
+  const walkY = ly < 6 || (ly >= 30 && wy < MAP_MAX - 1);
+  if (walkX || walkY) return SIDEWALK;
   if (lx >= 10 && lx < 22 && ly >= 10 && ly < 22) return CONCRETE;
   return GRASS;
 }

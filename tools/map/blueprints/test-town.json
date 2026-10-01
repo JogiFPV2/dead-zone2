@@ -12,6 +12,62 @@
     {
       "x": -64,
       "y": -64,
+      "w": 6,
+      "h": 128,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": -64,
+      "w": 128,
+      "h": 6,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -34,
+      "y": -64,
+      "w": 8,
+      "h": 128,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": -34,
+      "w": 128,
+      "h": 8,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -2,
+      "y": -64,
+      "w": 8,
+      "h": 128,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": -2,
+      "w": 128,
+      "h": 8,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": 30,
+      "y": -64,
+      "w": 8,
+      "h": 128,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": 30,
+      "w": 128,
+      "h": 8,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": -64,
       "w": 4,
       "h": 128,
       "floor": "base:asphalt"

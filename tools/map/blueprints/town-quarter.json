@@ -1,0 +1,623 @@
+{
+  "id": "town-quarter",
+  "floorHeight": 3,
+  "chunks": {
+    "cx0": -2,
+    "cy0": -2,
+    "cx1": 2,
+    "cy1": 2
+  },
+  "ground": "base:grass",
+  "areas": [
+    {
+      "x": -64,
+      "y": -2,
+      "w": 136,
+      "h": 10,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -2,
+      "y": -60,
+      "w": 10,
+      "h": 128,
+      "floor": "base:sidewalk"
+    },
+    {
+      "x": -64,
+      "y": 0,
+      "w": 136,
+      "h": 6,
+      "floor": "base:asphalt"
+    },
+    {
+      "x": 0,
+      "y": -60,
+      "w": 6,
+      "h": 128,
+      "floor": "base:asphalt"
+    },
+    {
+      "x": -13,
+      "y": 9,
+      "w": 11,
+      "h": 20,
+      "floor": "base:parking"
+    },
+    {
+      "x": -26,
+      "y": 9,
+      "w": 13,
+      "h": 2,
+      "floor": "base:concrete"
+    },
+    {
+      "x": 20,
+      "y": 8,
+      "w": 3,
+      "h": 12,
+      "floor": "base:concrete"
+    },
+    {
+      "x": 34,
+      "y": 8,
+      "w": 3,
+      "h": 10,
+      "floor": "base:dirt"
+    },
+    {
+      "x": -24,
+      "y": -22,
+      "w": 14,
+      "h": 12,
+      "floor": "base:dirt"
+    },
+    {
+      "x": -16,
+      "y": -10,
+      "w": 3,
+      "h": 8,
+      "floor": "base:dirt"
+    },
+    {
+      "x": 12,
+      "y": -4,
+      "w": 1,
+      "h": 4,
+      "floor": "base:concrete"
+    }
+  ],
+  "buildings": [
+    {
+      "id": 1,
+      "origin": [10, 11],
+      "plan": [
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB"
+      ],
+      "rooms": {
+        "L": {
+          "id": 11,
+          "type": "base:room-living-room",
+          "floor": "base:concrete"
+        },
+        "K": {
+          "id": 12,
+          "type": "base:room-kitchen",
+          "floor": "base:kitchen-tiles"
+        },
+        "B": {
+          "id": 13,
+          "type": "base:room-bedroom",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:siding-green",
+      "window": "base:window-plain",
+      "door": "base:door-plain",
+      "roof": "base:roof-gable",
+      "openings": [
+        {
+          "at": [2, 7],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [4, 7],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [7, 7],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [8, 7],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [1, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [6, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [9, 2],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [9, 5],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [0, 3],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [0, 6],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [5, 1],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [5, 6],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [7, 4],
+          "side": "n",
+          "type": "door"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "origin": [25, 11],
+      "plan": [
+        "LLLLKKKK",
+        "LLLLKKKK",
+        "LLLLKKKK",
+        "LLLLKKKK",
+        "LLLLBBBB",
+        "LLLLBBBB",
+        "LLLLBBBB",
+        "LLLLBBBB"
+      ],
+      "rooms": {
+        "L": {
+          "id": 21,
+          "type": "base:room-living-room",
+          "floor": "base:concrete"
+        },
+        "K": {
+          "id": 22,
+          "type": "base:room-kitchen",
+          "floor": "base:kitchen-tiles"
+        },
+        "B": {
+          "id": 23,
+          "type": "base:room-bedroom",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:siding-beige",
+      "window": "base:window-plain",
+      "door": "base:door-plain",
+      "roof": "base:roof-shingles",
+      "openings": [
+        {
+          "at": [2, 7],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [5, 7],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [0, 7],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [7, 2],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [7, 5],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [3, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [0, 4],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [4, 1],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [4, 6],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [6, 4],
+          "side": "n",
+          "type": "door"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "origin": [-25, 12],
+      "plan": [
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS",
+        "SSSSSSSSSSSS"
+      ],
+      "rooms": {
+        "S": {
+          "id": 31,
+          "type": "base:room-video-store",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:plaster-wall",
+      "window": "base:window-plain",
+      "door": "base:door-plain",
+      "roof": "base:roof-flat",
+      "openings": [
+        {
+          "at": [11, 1],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 2],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 4],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 5],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 7],
+          "side": "e",
+          "type": "door"
+        },
+        {
+          "at": [11, 8],
+          "side": "e",
+          "type": "door"
+        },
+        {
+          "at": [11, 10],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 11],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 13],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [11, 14],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [3, 15],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [8, 15],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [5, 0],
+          "side": "n",
+          "type": "window"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "origin": [-14, -16],
+      "plan": ["GGGGGGGG", "GGGGGGGG", "GGGGGGGG", "GGGGGGGG", "GGGGGGGG", "GGGGGGGG"],
+      "rooms": {
+        "G": {
+          "id": 41,
+          "type": "base:room-garage",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:siding-blue",
+      "window": "base:window-plain",
+      "door": "base:door-plain",
+      "roof": "base:roof-gable",
+      "openings": [
+        {
+          "at": [3, 5],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [4, 5],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [5, 5],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [7, 3],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [1, 5],
+          "side": "s",
+          "type": "window"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "origin": [10, -14],
+      "plan": [
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLKKKKK",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB",
+        "LLLLLBBBBB"
+      ],
+      "rooms": {
+        "L": {
+          "id": 51,
+          "type": "base:room-living-room",
+          "floor": "base:concrete"
+        },
+        "K": {
+          "id": 52,
+          "type": "base:room-kitchen",
+          "floor": "base:kitchen-tiles"
+        },
+        "B": {
+          "id": 53,
+          "type": "base:room-bedroom",
+          "floor": "base:concrete"
+        }
+      },
+      "wall": "base:brick-wall",
+      "window": "base:wooden-window",
+      "door": "base:wooden-door",
+      "roof": "base:roof-shingles",
+      "openings": [
+        {
+          "at": [2, 9],
+          "side": "s",
+          "type": "door"
+        },
+        {
+          "at": [3, 9],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [7, 9],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [2, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [7, 0],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [0, 6],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [9, 2],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [9, 7],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [5, 2],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [5, 7],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [7, 5],
+          "side": "n",
+          "type": "door"
+        }
+      ]
+    }
+  ],
+  "fences": [
+    {
+      "x": 9,
+      "y": 22,
+      "side": "n",
+      "len": 25,
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 23,
+      "y": -15,
+      "side": "w",
+      "len": 12,
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 9,
+      "y": -17,
+      "side": "n",
+      "len": 13,
+      "contentId": "base:wooden-fence"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:fridge",
+      "x": 16,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 17,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 18,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 19,
+      "y": -5,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 15,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 32,
+      "y": 18,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -24,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -24,
+      "y": 20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -14,
+      "y": -16,
+      "rot": 0
+    }
+  ],
+  "zones": [
+    {
+      "id": "start",
+      "role": "start",
+      "rects": [
+        {
+          "x": 12,
+          "y": -12,
+          "w": 2,
+          "h": 2
+        }
+      ]
+    },
+    {
+      "id": "extraction",
+      "role": "extraction",
+      "rects": [
+        {
+          "x": 64,
+          "y": 0,
+          "w": 6,
+          "h": 6
+        }
+      ]
+    }
+  ]
+}

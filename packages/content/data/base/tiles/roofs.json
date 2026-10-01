@@ -1,4 +1,17 @@
 [
-  { "id": "base:roof-shingles", "name": "tile.base.roof-shingles.name", "category": "roof" },
-  { "id": "base:roof-flat", "name": "tile.base.roof-flat.name", "category": "roof" }
+  {
+    "id": "base:roof-shingles",
+    "name": "tile.base.roof-shingles.name",
+    "category": "roof"
+  },
+  {
+    "id": "base:roof-flat",
+    "name": "tile.base.roof-flat.name",
+    "category": "roof"
+  },
+  {
+    "id": "base:roof-gable",
+    "name": "tile.base.roof-gable.name",
+    "category": "roof"
+  }
 ]

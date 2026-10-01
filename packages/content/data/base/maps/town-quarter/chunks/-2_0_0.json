@@ -1,0 +1,20 @@
+{
+  "address": {
+    "cx": -2,
+    "cy": 0,
+    "z": 0
+  },
+  "palette": ["base:grass", "base:sidewalk", "base:asphalt"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [3, 192],
+        [2, 64],
+        [1, 768]
+      ]
+    }
+  },
+  "edges": [],
+  "objects": [],
+  "rooms": {}
+}

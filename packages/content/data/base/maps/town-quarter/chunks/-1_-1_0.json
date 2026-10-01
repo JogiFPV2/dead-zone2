@@ -1,0 +1,366 @@
+{
+  "address": {
+    "cx": -1,
+    "cy": -1,
+    "z": 0
+  },
+  "palette": ["base:grass", "base:sidewalk", "base:concrete", "base:dirt", "base:roof-gable"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 14],
+        [1, 8],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 8],
+        [4, 10],
+        [3, 8],
+        [1, 4],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 2],
+        [1, 16],
+        [4, 3],
+        [1, 11],
+        [2, 66]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 530],
+        [5, 8],
+        [0, 24],
+        [5, 8],
+        [0, 24],
+        [5, 8],
+        [0, 24],
+        [5, 8],
+        [0, 24],
+        [5, 8],
+        [0, 24],
+        [5, 8],
+        [0, 326]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 530],
+        [41, 8],
+        [0, 24],
+        [41, 8],
+        [0, 24],
+        [41, 8],
+        [0, 24],
+        [41, 8],
+        [0, 24],
+        [41, 8],
+        [0, 24],
+        [41, 8],
+        [0, 326]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 18,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 19,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 20,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 21,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 22,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 21,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 21,
+      "y": 22,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 22,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 22,
+      "y": 22,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 23,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 23,
+      "y": 22,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 24,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 24,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 25,
+      "y": 16,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 25,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 26,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 26,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 26,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 26,
+      "y": 19,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 26,
+      "y": 20,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 26,
+      "y": 21,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:tool-chest",
+      "x": 18,
+      "y": 16,
+      "rot": 0
+    }
+  ],
+  "rooms": {
+    "41": {
+      "roomType": "base:room-garage",
+      "buildingId": 4
+    }
+  }
+}

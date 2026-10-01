@@ -1,9 +1,57 @@
 [
-  { "id": "base:brick-wall", "name": "tile.base.brick-wall.name", "category": "wall" },
-  { "id": "base:wooden-window", "name": "tile.base.wooden-window.name", "category": "window" },
-  { "id": "base:wooden-door", "name": "tile.base.wooden-door.name", "category": "door" },
-  { "id": "base:wall-plain", "name": "tile.base.wall-plain.name", "category": "wall" },
-  { "id": "base:window-plain", "name": "tile.base.window-plain.name", "category": "window" },
-  { "id": "base:door-plain", "name": "tile.base.door-plain.name", "category": "door" },
-  { "id": "base:wooden-fence", "name": "tile.base.wooden-fence.name", "category": "fence" }
+  {
+    "id": "base:brick-wall",
+    "name": "tile.base.brick-wall.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wooden-window",
+    "name": "tile.base.wooden-window.name",
+    "category": "window"
+  },
+  {
+    "id": "base:wooden-door",
+    "name": "tile.base.wooden-door.name",
+    "category": "door"
+  },
+  {
+    "id": "base:wall-plain",
+    "name": "tile.base.wall-plain.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:window-plain",
+    "name": "tile.base.window-plain.name",
+    "category": "window"
+  },
+  {
+    "id": "base:door-plain",
+    "name": "tile.base.door-plain.name",
+    "category": "door"
+  },
+  {
+    "id": "base:wooden-fence",
+    "name": "tile.base.wooden-fence.name",
+    "category": "fence"
+  },
+  {
+    "id": "base:siding-green",
+    "name": "tile.base.siding-green.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:siding-beige",
+    "name": "tile.base.siding-beige.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:siding-blue",
+    "name": "tile.base.siding-blue.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:plaster-wall",
+    "name": "tile.base.plaster-wall.name",
+    "category": "wall"
+  }
 ]

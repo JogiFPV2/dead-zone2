@@ -5,11 +5,37 @@
     "category": "floor",
     "tags": ["base:outdoor"]
   },
-  { "id": "base:concrete", "name": "tile.base.concrete.name", "category": "floor" },
-  { "id": "base:kitchen-tiles", "name": "tile.base.kitchen-tiles.name", "category": "floor" },
+  {
+    "id": "base:concrete",
+    "name": "tile.base.concrete.name",
+    "category": "floor"
+  },
+  {
+    "id": "base:kitchen-tiles",
+    "name": "tile.base.kitchen-tiles.name",
+    "category": "floor"
+  },
   {
     "id": "base:asphalt",
     "name": "tile.base.asphalt.name",
+    "category": "floor",
+    "tags": ["base:outdoor"]
+  },
+  {
+    "id": "base:sidewalk",
+    "name": "tile.base.sidewalk.name",
+    "category": "floor",
+    "tags": ["base:outdoor"]
+  },
+  {
+    "id": "base:dirt",
+    "name": "tile.base.dirt.name",
+    "category": "floor",
+    "tags": ["base:outdoor"]
+  },
+  {
+    "id": "base:parking",
+    "name": "tile.base.parking.name",
     "category": "floor",
     "tags": ["base:outdoor"]
   }

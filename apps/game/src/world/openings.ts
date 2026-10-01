@@ -1,5 +1,14 @@
 import type { EdgeSide, OpeningState, OpeningView, SimEvent } from '@deadzone/protocol';
-import { BoxGeometry, Group, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
+import {
+  BatchedMesh,
+  BoxGeometry,
+  Group,
+  InstancedMesh,
+  Matrix4,
+  Quaternion,
+  Vector3,
+} from 'three';
+import type { TownKit } from './town/kit.js';
 import { placeholderMaterial } from '../lighting/materials.js';
 import type { BuildingLookup } from './building-lookup.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
@@ -122,9 +131,72 @@ export function openingMatrix(
   return out.compose(pos, q, scale);
 }
 
+/** Door leaf model: hinge at the origin, closed leaf along +X (0 … 0.84), 2.1 high. */
+const KIT_LEAF = { width: 0.84, height: 2.1 };
+/** Fence panel model `prop-fence`: centred, 1.9 long along X, 1.08 high. */
+const KIT_FENCE = { length: 1.9, height: 1.08 };
+
+/**
+ * Pose of a town-kit piece (door leaf / fence panel model, no box scaling). Same states as
+ * `openingMatrix`: open doors swing 90°, broken ones lie on the floor, broken fences lie flat,
+ * shake = rattle angle, `lowered` squashes the piece to the cutaway height.
+ */
+export function kitOpeningMatrix(
+  out: Matrix4,
+  e: OpeningEdge,
+  state: OpeningState,
+  shake: number,
+  lowered: boolean,
+): Matrix4 {
+  const baseY = e.z * LEVEL_HEIGHT;
+  const along = e.side === 'n' ? new Vector3(1, 0, 0) : new Vector3(0, 0, 1);
+  const yawAlong = e.side === 'n' ? 0 : -Math.PI / 2;
+  const fallDir = hash(e.tx, e.ty, e.side) < 0.5 ? 1 : -1;
+  const up = new Vector3(0, 1, 0);
+  const local = new Vector3(1, 0, 0);
+  const q = new Quaternion();
+  const tilt = new Quaternion();
+  const pos = new Vector3(e.tx, baseY, e.ty);
+  if (e.kind === 'door') {
+    const sy = lowered ? LOWERED_HEIGHT / KIT_LEAF.height : 1;
+    pos.addScaledVector(along, (1 - KIT_LEAF.width) / 2);
+    if (state === 'broken') {
+      q.setFromAxisAngle(up, yawAlong);
+      tilt.setFromAxisAngle(local, (fallDir * Math.PI) / 2);
+      q.multiply(tilt);
+      pos.y += 0.12;
+      return out.compose(pos, q, new Vector3(1, Math.min(sy, 1), 1));
+    }
+    const swing = state === 'open' ? (Math.PI / 2) * fallDir : shake;
+    q.setFromAxisAngle(up, yawAlong + swing);
+    return out.compose(pos, q, new Vector3(1, sy, 1));
+  }
+  // Fence panel, tilting around its bottom edge.
+  const sy = lowered ? Math.min(1, LOWERED_HEIGHT / KIT_FENCE.height) : 1;
+  const angle = state === 'broken' ? (fallDir * Math.PI) / 2 : shake;
+  q.setFromAxisAngle(up, yawAlong);
+  tilt.setFromAxisAngle(local, -angle);
+  q.multiply(tilt);
+  pos.addScaledVector(along, 0.5);
+  if (state === 'broken') pos.y += 0.08;
+  return out.compose(pos, q, new Vector3(1 / KIT_FENCE.length, sy, 1));
+}
+
+/** Town look of the opening pieces: kit models in one BatchedMesh (windows are wall modules). */
+export interface OpeningsKit {
+  kit: TownKit;
+  /** Leaf model for a door edge (by building skin). */
+  leafOf(e: OpeningEdge): string;
+  /** Window state changes (the glass lives in the wall module). */
+  onWindow?(e: OpeningEdge, state: OpeningState): void;
+}
+
 interface Group3 {
-  mesh: InstancedMesh;
+  /** Grey-box pieces (no kit). */
+  mesh?: InstancedMesh;
   edges: OpeningEdge[];
+  /** Kit mode: instance ids in the shared BatchedMesh (windows: none). */
+  ids?: number[];
 }
 
 /**
@@ -143,9 +215,12 @@ export class OpeningsView {
   private readonly m = new Matrix4();
   private dirty = true;
 
+  private batch: BatchedMesh | undefined;
+
   constructor(
     private readonly source: ChunkSource,
     private readonly lookup: BuildingLookup,
+    private readonly kit?: OpeningsKit,
   ) {
     this.root.name = 'openings';
   }
@@ -173,6 +248,11 @@ export class OpeningsView {
         }
       }
     }
+    if (this.kit) {
+      this.loadKit(lists);
+      this.dirty = true;
+      return;
+    }
     for (const kind of ['door', 'window', 'fence'] as const) {
       const edges = lists[kind];
       if (edges.length === 0) continue;
@@ -190,6 +270,44 @@ export class OpeningsView {
       this.root.add(mesh);
     }
     this.dirty = true;
+  }
+
+  /** Kit mode: door leaves + fence panels in one BatchedMesh (1 draw call). */
+  private loadKit(lists: Record<OpeningKind, OpeningEdge[]>): void {
+    const kit = this.kit;
+    if (!kit) return;
+    const pieces: { kind: OpeningKind; e: OpeningEdge; model: string }[] = [];
+    for (const e of lists.door) pieces.push({ kind: 'door', e, model: kit.leafOf(e) });
+    for (const e of lists.fence) pieces.push({ kind: 'fence', e, model: 'prop-fence' });
+    const models = [...new Set(pieces.map((p) => p.model))].filter((m) =>
+      kit.kit.geometries.has(m),
+    );
+    let verts = 0;
+    let index = 0;
+    for (const m of models) {
+      const g = kit.kit.geometries.get(m);
+      verts += g?.getAttribute('position').count ?? 0;
+      index += g?.index?.count ?? 0;
+    }
+    for (const kind of ['door', 'window', 'fence'] as const) {
+      const edges = lists[kind];
+      edges.forEach((e, i) => this.index.set(openingKey(e.tx, e.ty, e.z, e.side), { kind, i }));
+      if (edges.length) this.groups.set(kind, { edges, ids: [] });
+    }
+    if (!models.length) return;
+    const batch = new BatchedMesh(Math.max(1, pieces.length), verts, index, kit.kit.material);
+    batch.name = 'openings:kit';
+    batch.castShadow = true;
+    batch.receiveShadow = true;
+    const ids = new Map(models.map((m) => [m, batch.addGeometry(kit.kit.geometries.get(m)!)]));
+    for (const p of pieces) {
+      const gid = ids.get(p.model);
+      const g = this.groups.get(p.kind);
+      if (gid === undefined || !g?.ids) continue;
+      g.ids.push(batch.addInstance(gid));
+    }
+    this.batch = batch;
+    this.root.add(batch);
   }
 
   /** Edges of a kind (tests, dev). */
@@ -210,6 +328,10 @@ export class OpeningsView {
     this.states.clear();
     for (const o of list) this.states.set(openingKey(o.tx, o.ty, o.z, o.side), o.state);
     this.dirty = true;
+    if (this.kit?.onWindow) {
+      for (const e of this.edges('window'))
+        this.kit.onWindow(e, this.state(e.tx, e.ty, e.z, e.side));
+    }
   }
 
   /** `openingChanged` / `openingPressure` events. */
@@ -217,6 +339,11 @@ export class OpeningsView {
     for (const e of events) {
       if (e.type === 'openingChanged') {
         this.states.set(openingKey(e.tx, e.ty, e.z, e.side), e.state);
+        const at = this.index.get(openingKey(e.tx, e.ty, e.z, e.side));
+        if (at?.kind === 'window') {
+          const edge = this.groups.get('window')?.edges[at.i];
+          if (edge) this.kit?.onWindow?.(edge, e.state);
+        }
         if (e.state !== 'closed' && e.state !== 'locked' && e.state !== 'barricaded') {
           this.pressure.delete(openingKey(e.tx, e.ty, e.z, e.side));
         }
@@ -240,7 +367,8 @@ export class OpeningsView {
   update(nowS: number): void {
     if (!this.dirty && this.pressure.size === 0) return;
     this.dirty = false;
-    for (const { mesh, edges } of this.groups.values()) {
+    for (const { mesh, edges, ids } of this.groups.values()) {
+      if (!mesh && !ids?.length) continue;
       edges.forEach((e, i) => {
         const key = openingKey(e.tx, e.ty, e.z, e.side);
         const level = this.pressure.get(key) ?? 0;
@@ -251,16 +379,25 @@ export class OpeningsView {
         const shake = s.amp * (0.7 * Math.sin(t) + 0.3 * Math.sin(t * 2.3 + 1.7));
         const axis = e.side === 'n' ? 'N' : 'W';
         const lowered = isEdgeLowered(this.cutaway, e.building, axis, e.tx, e.ty);
-        openingMatrix(this.m, e, this.states.get(key) ?? 'closed', shake, lowered);
-        mesh.setMatrixAt(i, this.m);
+        const state = this.states.get(key) ?? 'closed';
+        if (mesh) {
+          openingMatrix(this.m, e, state, shake, lowered);
+          mesh.setMatrixAt(i, this.m);
+        } else if (this.batch && ids?.[i] !== undefined) {
+          kitOpeningMatrix(this.m, e, state, shake, lowered);
+          this.batch.setMatrixAt(ids[i], this.m);
+        }
       });
-      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh) mesh.instanceMatrix.needsUpdate = true;
     }
   }
 
   dispose(): void {
     this.geometry.dispose();
-    for (const { mesh } of this.groups.values()) (mesh.material as { dispose(): void }).dispose();
+    for (const { mesh } of this.groups.values()) {
+      if (mesh) (mesh.material as { dispose(): void }).dispose();
+    }
+    this.batch?.dispose();
     this.root.clear();
   }
 }

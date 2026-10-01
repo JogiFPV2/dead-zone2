@@ -1,0 +1,1003 @@
+{
+  "address": {
+    "cx": 0,
+    "cy": 0,
+    "z": 0
+  },
+  "palette": [
+    "base:grass",
+    "base:sidewalk",
+    "base:asphalt",
+    "base:concrete",
+    "base:kitchen-tiles",
+    "base:roof-gable",
+    "base:roof-shingles"
+  ],
+  "layers": {
+    "floor": {
+      "rle": [
+        [3, 198],
+        [2, 26],
+        [3, 6],
+        [2, 26],
+        [3, 6],
+        [2, 2],
+        [1, 12],
+        [4, 3],
+        [1, 9],
+        [3, 6],
+        [2, 2],
+        [1, 12],
+        [4, 3],
+        [1, 9],
+        [3, 6],
+        [2, 2],
+        [1, 12],
+        [4, 3],
+        [1, 9],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 5],
+        [5, 5],
+        [4, 3],
+        [1, 2],
+        [4, 4],
+        [5, 3],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 5],
+        [5, 5],
+        [4, 3],
+        [1, 2],
+        [4, 4],
+        [5, 3],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 5],
+        [5, 5],
+        [4, 3],
+        [1, 2],
+        [4, 4],
+        [5, 3],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 5],
+        [5, 5],
+        [4, 3],
+        [1, 2],
+        [4, 4],
+        [5, 3],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 13],
+        [1, 2],
+        [4, 7],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 13],
+        [1, 2],
+        [4, 7],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 13],
+        [1, 2],
+        [4, 7],
+        [3, 6],
+        [2, 2],
+        [1, 2],
+        [4, 13],
+        [1, 2],
+        [4, 7],
+        [3, 6],
+        [2, 2],
+        [1, 12],
+        [4, 3],
+        [1, 9],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24],
+        [3, 6],
+        [2, 2],
+        [1, 24]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 362],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 10],
+        [6, 10],
+        [0, 5],
+        [7, 7],
+        [0, 416]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 362],
+        [11, 5],
+        [12, 5],
+        [0, 5],
+        [21, 4],
+        [22, 3],
+        [0, 10],
+        [11, 5],
+        [12, 5],
+        [0, 5],
+        [21, 4],
+        [22, 3],
+        [0, 10],
+        [11, 5],
+        [12, 5],
+        [0, 5],
+        [21, 4],
+        [22, 3],
+        [0, 10],
+        [11, 5],
+        [12, 5],
+        [0, 5],
+        [21, 4],
+        [22, 3],
+        [0, 10],
+        [11, 5],
+        [13, 5],
+        [0, 5],
+        [21, 4],
+        [23, 3],
+        [0, 10],
+        [11, 5],
+        [13, 5],
+        [0, 5],
+        [21, 4],
+        [23, 3],
+        [0, 10],
+        [11, 5],
+        [13, 5],
+        [0, 5],
+        [21, 4],
+        [23, 3],
+        [0, 10],
+        [11, 5],
+        [13, 5],
+        [0, 5],
+        [21, 4],
+        [23, 3],
+        [0, 416]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 9,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 10,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 10,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 17,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 10,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 10,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 11,
+      "y": 11,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 11,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 11,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 12,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 12,
+      "y": 19,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 12,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 13,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 13,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 13,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 14,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 14,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 14,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 15,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 12,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 15,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 17,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 15,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 15,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 16,
+      "y": 11,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 16,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 16,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 16,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 17,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 17,
+      "y": 15,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 17,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 17,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 18,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 18,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 18,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 18,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 19,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 19,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 19,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 19,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 20,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 16,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-green"
+    },
+    {
+      "x": 20,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 21,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 22,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 23,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 24,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 25,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 15,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 25,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 17,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 25,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 25,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 26,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 26,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 26,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 27,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 27,
+      "y": 19,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 27,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 28,
+      "y": 11,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 28,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 28,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 29,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 12,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 29,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 17,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 29,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 29,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 30,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 30,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 30,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
+      "x": 31,
+      "y": 11,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 31,
+      "y": 15,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 31,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-beige"
+    },
+    {
+      "x": 31,
+      "y": 22,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:fridge",
+      "x": 15,
+      "y": 11,
+      "rot": 0
+    }
+  ],
+  "rooms": {
+    "11": {
+      "roomType": "base:room-living-room",
+      "buildingId": 1
+    },
+    "12": {
+      "roomType": "base:room-kitchen",
+      "buildingId": 1
+    },
+    "13": {
+      "roomType": "base:room-bedroom",
+      "buildingId": 1
+    },
+    "21": {
+      "roomType": "base:room-living-room",
+      "buildingId": 2
+    },
+    "22": {
+      "roomType": "base:room-kitchen",
+      "buildingId": 2
+    },
+    "23": {
+      "roomType": "base:room-bedroom",
+      "buildingId": 2
+    }
+  }
+}
