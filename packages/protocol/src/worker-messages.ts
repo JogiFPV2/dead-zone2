@@ -5,6 +5,8 @@ import type { SimViewPatch } from './views.js';
 
 export type SimSpeed = 1 | 2 | 4;
 
+export type SaveReason = 'manual' | 'exit' | 'autosave' | 'sleep';
+
 /** Spawn point of the local player: tiles (+x east, +y south) and floor level. */
 export interface SimSpawn {
   x: number;
@@ -34,10 +36,14 @@ export type MainToWorker =
       zombies?: readonly SimZombieSpawn[] | undefined;
       /** Single loot items on floors at init (default true). */
       floorLoot?: boolean | undefined;
+      /** Save from a `saved` message: restores the game (spawn, zombies, floorLoot are ignored). */
+      save?: ArrayBuffer | undefined;
       /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). */
       dev?: boolean | undefined;
     }
   | { kind: 'cmd'; cmd: Command }
+  /** Asks for a save; the worker answers with `saved` (same `requestId`). `exit` = on quit. */
+  | { kind: 'save'; requestId: number; reason?: 'manual' | 'exit' | undefined }
   | { kind: 'pause' }
   | { kind: 'resume' }
   | { kind: 'speed'; x: SimSpeed }
@@ -66,6 +72,19 @@ export type WorkerToMain =
   | { kind: 'view'; tick: number; view: SimViewPatch }
   /** Sim events of the last batch of ticks (died, wounded, moodleChanged, timeScaleHint…). */
   | { kind: 'events'; tick: number; events: SimEvent[] }
+  /**
+   * A save game (versioned blob for `init.save`, store it e.g. in IndexedDB). `reason`: answer to
+   * `save` (`manual` / `exit`, with its `requestId`), `autosave` every game day, `sleep` after
+   * an uninterrupted sleep (`sleepSaved`); `requestId` 0 when not requested.
+   */
+  | {
+      kind: 'saved';
+      requestId: number;
+      reason: SaveReason;
+      tick: number;
+      day: number;
+      buf: ArrayBuffer;
+    }
   /** Fatal init error (e.g. content failed validation); the sim does not start. */
   | { kind: 'error'; message: string };
 

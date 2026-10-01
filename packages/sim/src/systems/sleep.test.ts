@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureContent, runMinutes, send, survivalSim } from '../test/content-fixtures.js';
+import { buildMap } from '../test/fixtures.js';
 
 describe('sleep', () => {
   const content = fixtureContent();
   const cfg = content.worldSettings.survival.sleep;
+  const noCapContent = fixtureContent({
+    survival: {
+      sleep: { surfaces: { floor: { fatigueRecoveryPerMin: 0.05, maxRecoveryPerSleep: 100 } } },
+    },
+  });
 
   it('needs fatigue ≥ minFatigueToSleep', () => {
     const sim = survivalSim(content);
@@ -46,8 +52,8 @@ describe('sleep', () => {
   });
 
   it('sleep slows needs (activity.sleeping) and wakes up rested at wakeAtFatigue', () => {
-    const sim = survivalSim(content);
-    const awake = survivalSim(content);
+    const sim = survivalSim(noCapContent);
+    const awake = survivalSim(noCapContent);
     send(sim, { type: 'debugStat', stat: 'fatigue', value: 31 });
     send(sim, { type: 'sleep' });
     const minutes = Math.ceil((31 - cfg.wakeAtFatigue) / cfg.surfaces.floor.fatigueRecoveryPerMin);
@@ -65,7 +71,7 @@ describe('sleep', () => {
   });
 
   it('wakes after maxDurationMin', () => {
-    const sim = survivalSim(content);
+    const sim = survivalSim(noCapContent);
     send(sim, { type: 'debugStat', stat: 'fatigue', value: 100 });
     send(sim, { type: 'sleep' });
     runMinutes(sim, cfg.maxDurationMin + 2);
@@ -85,5 +91,80 @@ describe('sleep', () => {
     runMinutes(hurt, 11);
     const rec = (sim: typeof calm) => 90 - sim.getSurvival()!.stats.fatigue;
     expect(rec(hurt) / rec(calm)).toBeCloseTo(cfg.painQualityMul, 3);
+  });
+});
+
+describe('sleep: place, limit per sleep, save after 2 real minutes', () => {
+  const content = fixtureContent();
+  const cfg = content.worldSettings.survival.sleep;
+  const saveTicks = cfg.saveAfterRealSec * 20;
+  const withObject = (contentId: string) =>
+    survivalSim(content, { map: buildMap({ objects: [{ contentId, x: 11, y: 10 }] }) });
+
+  const recovered = (sim: ReturnType<typeof survivalSim>) => {
+    send(sim, { type: 'debugStat', stat: 'fatigue', value: 100 });
+    send(sim, { type: 'sleep' });
+    for (let i = 0; i < 40; i++) {
+      runMinutes(sim, 60);
+      if (!sim.getSurvival()!.sleeping) break;
+    }
+    return 100 - sim.getSurvival()!.stats.fatigue;
+  };
+
+  it('floor 25, sofa 35, bed 50 fatigue per sleep, then wakes rested', () => {
+    // Net drop: the recovery cap minus the little fatigue gained meanwhile (activity.sleeping).
+    for (const [surf, sim] of [
+      ['floor', survivalSim(content)],
+      ['sofa', withObject('fixture:sofa')],
+      ['bed', withObject('fixture:bed')],
+    ] as const) {
+      const max = cfg.surfaces[surf].maxRecoveryPerSleep;
+      const r = recovered(sim);
+      expect(r).toBeLessThanOrEqual(max);
+      expect(r).toBeGreaterThan(max - 4);
+      expect(sim.getSurvival()!.sleeping).toBe(false);
+    }
+  });
+
+  it('emits sleepSaved once after saveAfterRealSec of uninterrupted sleep', () => {
+    const sim = survivalSim(content);
+    send(sim, { type: 'debugStat', stat: 'fatigue', value: 90 });
+    send(sim, { type: 'sleep' });
+    const saved: number[] = [];
+    for (let i = 0; i < saveTicks + 200; i++) {
+      sim.step();
+      for (const e of sim.drainEvents()) if (e.type === 'sleepSaved') saved.push(e.tick);
+    }
+    expect(saved).toEqual([saveTicks - 1]);
+  });
+
+  it('interrupted sleep: no save, partial rest kept', () => {
+    const sim = survivalSim(content);
+    send(sim, { type: 'debugStat', stat: 'fatigue', value: 90 });
+    send(sim, { type: 'sleep' });
+    let saved = 0;
+    for (let i = 0; i < saveTicks - 100; i++) {
+      sim.step();
+      saved += sim.drainEvents().filter((e) => e.type === 'sleepSaved').length;
+    }
+    send(sim, { type: 'wake' });
+    send(sim, { type: 'sleep' });
+    for (let i = 0; i < 200; i++) {
+      sim.step();
+      saved += sim.drainEvents().filter((e) => e.type === 'sleepSaved').length;
+    }
+    expect(saved).toBe(0);
+    expect(sim.getSurvival()!.stats.fatigue).toBeLessThan(90);
+  });
+
+  it('fever wakes up', () => {
+    const fever = survivalSim(content);
+    send(fever, { type: 'debugStat', stat: 'fatigue', value: 90 });
+    send(fever, { type: 'sleep' });
+    fever.step();
+    send(fever, { type: 'debugStat', stat: 'body-temperature-c', value: cfg.wakeOnFeverC + 0.5 });
+    fever.step();
+    fever.step();
+    expect(fever.drainEvents().some((e) => e.type === 'wokeUp' && e.reason === 'fever')).toBe(true);
   });
 });

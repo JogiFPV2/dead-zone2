@@ -147,6 +147,27 @@ describe('createSimWorkerClient', () => {
     expect(h.host.droppedMessages).toBe(0);
   });
 
+  it('save over the worker: saved blob restores the same game in a new worker', async () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    client.init(3, openMap(), {
+      content: { packs: [fixturePack()] },
+      spawn: { x: 5.5, y: 5.5, z: 0 },
+    });
+    client.move(1, 0);
+    h.advance(500);
+    const save = await client.save('exit');
+    expect(save.reason).toBe('exit');
+    expect(save.tick).toBe(h.host.sim!.tick);
+    const hash = h.host.sim!.hash();
+    const h2 = harness();
+    const c2 = createSimWorkerClient(h2.worker);
+    c2.init(3, openMap(), { content: { packs: [fixturePack()] }, save: save.buf });
+    expect(h2.host.sim!.tick).toBe(save.tick);
+    expect(h2.host.sim!.hash()).toBe(hash);
+    expect(h2.host.droppedMessages).toBe(0);
+  });
+
   it('passes the init spawn to the sim', () => {
     const h = harness();
     const client = createSimWorkerClient(h.worker);

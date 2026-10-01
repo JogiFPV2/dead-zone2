@@ -6,7 +6,11 @@
     "weightKg": 1.5,
     "tags": ["base:light"],
     "placeable": {
-      "light": { "radiusTiles": 6, "intensity": 0.8, "color": "#ffe8c0" }
+      "light": {
+        "radiusTiles": 6,
+        "intensity": 0.8,
+        "color": "#ffe8c0"
+      }
     }
   },
   {
@@ -16,6 +20,26 @@
     "weightKg": 9,
     "placeable": {
       "containerType": "base:wooden-crate"
+    }
+  },
+  {
+    "id": "base:bed",
+    "name": "item.base.bed.name",
+    "kind": "placeable",
+    "weightKg": 40,
+    "tags": ["base:furniture"],
+    "placeable": {
+      "sleepSurface": "bed"
+    }
+  },
+  {
+    "id": "base:sofa",
+    "name": "item.base.sofa.name",
+    "kind": "placeable",
+    "weightKg": 30,
+    "tags": ["base:furniture"],
+    "placeable": {
+      "sleepSurface": "sofa"
     }
   }
 ]

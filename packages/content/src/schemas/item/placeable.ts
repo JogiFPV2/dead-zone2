@@ -22,6 +22,8 @@ export const PlaceableItemSchema = z.strictObject({
     power: PowerConsumerSchema.optional(),
     /** Daje prąd (generator). */
     powerSource: PowerSourceSchema.optional(),
+    /** Miejsce do spania (łóżko, kanapa); bez tego śpi się na podłodze. */
+    sleepSurface: z.enum(['bed', 'sofa']).optional(),
   }),
 });
 

@@ -1,4 +1,5 @@
 import type {
+  SaveReason,
   BodyPart,
   Command,
   ContainerId,
@@ -33,6 +34,14 @@ export interface SimSnapshotMessage {
   buf: ArrayBuffer;
 }
 
+/** A save game from the worker (store `buf`, pass it back as `init(..., { save })`). */
+export interface SavedGame {
+  reason: SaveReason;
+  tick: number;
+  day: number;
+  buf: ArrayBuffer;
+}
+
 export interface SimWorkerClient {
   /** `spawn` places player 0 (e.g. `?spawn=inside`); omitted = the sim's default tile. */
   init(
@@ -44,8 +53,14 @@ export interface SimWorkerClient {
       dev?: boolean;
       zombies?: readonly SimZombieSpawn[];
       floorLoot?: boolean;
+      /** Restores a save (`SavedGame.buf`). */
+      save?: ArrayBuffer;
     },
   ): void;
+  /** Requests a save (`exit` on quit); resolves with the blob. */
+  save(reason?: 'manual' | 'exit'): Promise<SavedGame>;
+  /** Every save the worker posts (requested, daily autosave, after sleep). */
+  onSaved(cb: (save: SavedGame) => void): () => void;
   /** Sends a fully formed command (tick, playerId, seq chosen by the caller). */
   send(cmd: Command): void;
   /** Held movement for the local player; fills tick/playerId/seq. */
@@ -117,6 +132,9 @@ export function createSimWorkerClient(
   const post = (msg: MainToWorker, transfer: ArrayBuffer[] = []): void =>
     worker.postMessage(msg, transfer);
 
+  const savedCbs = new Set<(save: SavedGame) => void>();
+  const saveWaiters = new Map<number, (save: SavedGame) => void>();
+  let nextSaveId = 1;
   const listener = (event: { data: unknown }): void => {
     const msg = event.data as WorkerToMain;
     if (msg.kind === 'ready') {
@@ -129,6 +147,14 @@ export function createSimWorkerClient(
       for (const cb of viewCbs) cb(msg.view, msg.tick);
     } else if (msg.kind === 'events') {
       for (const cb of eventCbs) cb(msg.events, msg.tick);
+    } else if (msg.kind === 'saved') {
+      const save: SavedGame = { reason: msg.reason, tick: msg.tick, day: msg.day, buf: msg.buf };
+      const waiter = saveWaiters.get(msg.requestId);
+      if (waiter) {
+        saveWaiters.delete(msg.requestId);
+        waiter(save);
+      }
+      for (const cb of savedCbs) cb(save);
     } else if (msg.kind === 'error') {
       for (const cb of errorCbs) cb(msg.message);
     }
@@ -156,7 +182,19 @@ export function createSimWorkerClient(
         ...(opts?.dev ? { dev: true } : {}),
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
         ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
+        ...(opts?.save ? { save: opts.save } : {}),
       }),
+    save(reason = 'manual') {
+      const requestId = nextSaveId++;
+      return new Promise<SavedGame>((resolve) => {
+        saveWaiters.set(requestId, resolve);
+        post({ kind: 'save', requestId, reason });
+      });
+    },
+    onSaved(cb) {
+      savedCbs.add(cb);
+      return () => savedCbs.delete(cb);
+    },
     send: (cmd) => post({ kind: 'cmd', cmd }),
     move: (dx, dy, gait) =>
       post({
@@ -249,3 +287,10 @@ export function createSimWorkerClient(
     },
   };
 }
+
+export {
+  createSaveStore,
+  type IdbFactoryLike,
+  type SaveStore,
+  type StoredSave,
+} from './save-store.js';

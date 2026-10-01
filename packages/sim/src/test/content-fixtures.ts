@@ -181,6 +181,20 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
             weightKg: 4,
             placeable: { containerType: 'fixture:crate' },
           },
+          {
+            id: 'fixture:bed',
+            name: 'item.fixture.bed',
+            kind: 'placeable',
+            weightKg: 40,
+            placeable: { sleepSurface: 'bed' },
+          },
+          {
+            id: 'fixture:sofa',
+            name: 'item.fixture.sofa',
+            kind: 'placeable',
+            weightKg: 30,
+            placeable: { sleepSurface: 'sofa' },
+          },
         ],
       },
       {

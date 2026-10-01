@@ -2,6 +2,7 @@ import { buildContentBundle, type PackSource } from '@deadzone/content';
 import {
   simMapFromData,
   type MainToWorker,
+  type SaveReason,
   type SimContentSource,
   type WorkerToMain,
 } from '@deadzone/protocol';
@@ -77,6 +78,22 @@ export function startSimWorkerHost(
     if (view) port.postMessage({ kind: 'view', tick: sim.tick, view }, []);
     const events = sim.drainEvents();
     if (events.length > 0) port.postMessage({ kind: 'events', tick: sim.tick, events }, []);
+    // Autosave once per game day and after an uninterrupted sleep.
+    if (events.some((e) => e.type === 'sleepSaved')) postSave(0, 'sleep');
+    else if (events.some((e) => e.type === 'dayPassed')) postSave(0, 'autosave');
+  };
+
+  const postSave = (requestId: number, reason: SaveReason): void => {
+    if (!sim) return;
+    const bytes = sim.save();
+    const buf = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength,
+    ) as ArrayBuffer;
+    port.postMessage(
+      { kind: 'saved', requestId, reason, tick: sim.tick, day: sim.gameTime().day, buf },
+      [buf],
+    );
   };
 
   // Speed-up is forced back to ×1 while the sim reports a threat (zombie chasing or nearby).
@@ -104,6 +121,7 @@ export function startSimWorkerHost(
         content,
         dev: msg.dev ?? false,
         floorLoot: msg.floorLoot ?? true,
+        ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
       });
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });
@@ -123,6 +141,9 @@ export function startSimWorkerHost(
     switch (msg.kind) {
       case 'cmd':
         if (!sim.enqueue(msg.cmd).ok) dropped++;
+        break;
+      case 'save':
+        postSave(msg.requestId, msg.reason ?? 'manual');
         break;
       case 'pause':
         loop.pause();

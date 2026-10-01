@@ -43,6 +43,7 @@ import type { MinuteTicks } from './systems/clock.js';
 import { circleOverlaps } from './world/collision.js';
 import { registerItemActions } from './items/actions.js';
 import { createWorldContainers, scatterFloorLoot } from './items/loot.js';
+import { loadWorld, readSaveHeader, saveWorld } from './save/save.js';
 import { createItemStore, createPlayerItems } from './items/store.js';
 import { actionView, containerView, inventoryView } from './items/views.js';
 import { hashItems } from './items/hash.js';
@@ -78,6 +79,8 @@ export interface SimOptions {
   combatConfig?: CombatConfig | undefined;
   /** Scatter single loot items on room floors and outdoors at init (worker: on). Default false. */
   floorLoot?: boolean | undefined;
+  /** Restore a save from `Sim.save()` (same map, content and options; spawn options are ignored). */
+  load?: Uint8Array | undefined;
   /** Game clock start; default day 1, 09:00. */
   clockStart?: ClockStart | undefined;
   /** Ambient temperature in °C until weather exists; default 20 (comfortable). */
@@ -163,6 +166,8 @@ export interface Sim {
   getAction(playerId?: PlayerId): ActionView | null;
   /** Escape hatch for tests and tools; systems' internals, not a stable API. */
   readonly world: SimWorld;
+  /** Whole sim state as a versioned save (UTF-8 JSON bytes); `createSim({ load })` restores it. */
+  save(): Uint8Array;
 }
 
 function findSpawn(grid: TileGrid): { x: number; y: number } {
@@ -175,7 +180,9 @@ function findSpawn(grid: TileGrid): { x: number; y: number } {
   return { x: 0.5, y: 0.5 };
 }
 
-export function createSim(opts: SimOptions): Sim {
+export function createSim(input: SimOptions): Sim {
+  // A save overrides the seed (the rest of the options must match the saved game).
+  const opts = input.load ? { ...input, seed: readSaveHeader(input.load).seed } : input;
   const content = opts.content;
   registerItemActions();
   const w = createSimWorld({
@@ -204,7 +211,7 @@ export function createSim(opts: SimOptions): Sim {
         opts.combatConfig,
       ),
   });
-  if (w.items) {
+  if (w.items && !opts.load) {
     createWorldContainers(w.items, opts.map, w.seed);
     if (opts.floorLoot) scatterFloorLoot(w.items, opts.map, w.seed, w.clock.startMinute);
   }
@@ -245,9 +252,12 @@ export function createSim(opts: SimOptions): Sim {
     return eid;
   };
 
-  const spawn = opts.spawn ?? findSpawn(ctx.grid);
-  spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
-  if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
+  if (opts.load) loadWorld(w, opts.load);
+  else {
+    const spawn = opts.spawn ?? findSpawn(ctx.grid);
+    spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
+    if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
+  }
 
   const hash = (): number => {
     const h = new HashWriter();
@@ -285,6 +295,8 @@ export function createSim(opts: SimOptions): Sim {
         h.f32(s.kcal[eid] ?? 0);
         h.u32(s.dead[eid] ?? 0).u32(s.cause[eid] ?? 0);
         h.u32(s.asleep[eid] ?? 0).u32(s.sleepStart[eid] ?? 0);
+        h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
+        h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
         h.u32(s.virus[eid] ?? 0)
           .u32(s.virusStart[eid] ?? 0)
           .u32(s.virusIncubation[eid] ?? 0)
@@ -376,6 +388,7 @@ export function createSim(opts: SimOptions): Sim {
       }));
     },
     drainView: () => views.diff(w),
+    save: () => saveWorld(w),
     getInventory(playerId = 0) {
       const eid = w.players.get(playerId);
       return eid === undefined ? undefined : inventoryView(w, eid);

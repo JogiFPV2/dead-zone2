@@ -58,7 +58,8 @@ export type ActionInterruptReason =
   /** The item or container is gone or out of reach when the action should complete. */
   | 'target-lost';
 
-export type WakeReason = 'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie';
+export type WakeReason =
+  'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie' | 'pain' | 'fever';
 
 /** What made a noise (`noise` event, debug circles). */
 export const NOISE_SOURCES = [
@@ -142,6 +143,11 @@ export type SimEvent =
       y: number;
     }
   | { type: 'fellAsleep'; tick: number; playerId: PlayerId }
+  /**
+   * Uninterrupted sleep long enough (`sleep.saveAfterRealSec`, 2 real minutes at ×1): the host
+   * saves the game now (the worker posts `saved` with reason `sleep`).
+   */
+  | { type: 'sleepSaved'; tick: number; playerId: PlayerId; fatigueRecovered: number }
   | { type: 'wokeUp'; tick: number; playerId: PlayerId; reason: WakeReason }
   /** Moodle level change (0 = hidden). Sound / toast hook; the HUD uses the `view` message. */
   | {

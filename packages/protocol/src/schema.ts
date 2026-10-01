@@ -292,6 +292,7 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
     map: simMapDataSchema,
     spawn: simSpawnSchema.optional(),
     floorLoot: z.boolean().optional(),
+    save: z.instanceof(ArrayBuffer).optional(),
     zombies: z
       .array(
         z.strictObject({
@@ -309,6 +310,11 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('cmd'), cmd: commandSchema }),
   z.object({ kind: z.literal('pause') }),
   z.object({ kind: z.literal('resume') }),
+  z.object({
+    kind: z.literal('save'),
+    requestId: z.number().int().min(0),
+    reason: z.enum(['manual', 'exit']).optional(),
+  }),
   z.object({ kind: z.literal('speed'), x: z.union([z.literal(1), z.literal(2), z.literal(4)]) }),
   z.object({ kind: z.literal('release'), buf: z.instanceof(ArrayBuffer) }),
 ]);

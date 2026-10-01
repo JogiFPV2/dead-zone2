@@ -30,14 +30,17 @@
       "wakeAtFatigue": 2,
       "maxDurationMin": 720,
       "surfaces": {
-        "bed": { "fatigueRecoveryPerMin": 0.1 },
-        "sofa": { "fatigueRecoveryPerMin": 0.075 },
-        "floor": { "fatigueRecoveryPerMin": 0.05 }
+        "bed": { "fatigueRecoveryPerMin": 0.1, "maxRecoveryPerSleep": 50 },
+        "sofa": { "fatigueRecoveryPerMin": 0.075, "maxRecoveryPerSleep": 35 },
+        "floor": { "fatigueRecoveryPerMin": 0.05, "maxRecoveryPerSleep": 25 }
       },
       "painAbove": 35,
       "painQualityMul": 0.7,
       "coldQualityMul": 0.7,
       "healingMul": 1.5,
+      "saveAfterRealSec": 120,
+      "wakeOnPainAbove": 70,
+      "wakeOnFeverC": 38.5,
       "wakeOnNoiseVolume": 0.3,
       "wakeOnZombieTiles": 6,
       "timeScaleHint": 4

@@ -26,6 +26,9 @@ export const VITAL_STATS = [
 ] as const;
 export type VitalStat = (typeof VITAL_STATS)[number];
 
+export const SLEEP_SURFACES = ['floor', 'sofa', 'bed'] as const;
+export type SleepSurface = (typeof SLEEP_SURFACES)[number];
+
 export const DEATH_CAUSES: readonly DeathCause[] = [
   'bleeding',
   'starvation',
@@ -71,6 +74,11 @@ export interface SurvivalWorld {
   readonly asleep: Uint8Array;
   /** Absolute game minute when the current sleep started. */
   readonly sleepStart: Uint32Array;
+  /** Current sleep: surface (SLEEP_SURFACES index), fatigue recovered, ticks asleep, saved flag. */
+  readonly sleepSurface: Uint8Array;
+  readonly sleepRecovered: Float32Array;
+  readonly sleepTicks: Uint32Array;
+  readonly sleepSaved: Uint8Array;
   /** Zombie virus: 0/1, absolute minute of infection, incubation and death delay (minutes). */
   readonly virus: Uint8Array;
   readonly virusStart: Uint32Array;
@@ -108,6 +116,10 @@ export function createSurvivalWorld(
     cause: new Uint8Array(capacity),
     asleep: new Uint8Array(capacity),
     sleepStart: new Uint32Array(capacity),
+    sleepSurface: new Uint8Array(capacity),
+    sleepRecovered: new Float32Array(capacity),
+    sleepTicks: new Uint32Array(capacity),
+    sleepSaved: new Uint8Array(capacity),
     virus: new Uint8Array(capacity),
     virusStart: new Uint32Array(capacity),
     virusIncubation: new Uint32Array(capacity),

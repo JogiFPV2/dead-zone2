@@ -50,4 +50,19 @@ export class CommandQueue {
   seqState(): [PlayerId, number][] {
     return [...this.lastSeq.entries()].sort((a, b) => a[0] - b[0]);
   }
+
+  /** Pending commands and last seqs (save games). */
+  exportState(): { byTick: [number, Command[]][]; lastSeq: [PlayerId, number][] } {
+    return {
+      byTick: [...this.byTick.entries()].map(([t, l]) => [t, l.map((c) => ({ ...c }))]),
+      lastSeq: [...this.lastSeq.entries()],
+    };
+  }
+
+  importState(s: { byTick: [number, Command[]][]; lastSeq: [PlayerId, number][] }): void {
+    this.byTick.clear();
+    this.lastSeq.clear();
+    for (const [t, l] of s.byTick) this.byTick.set(t, l);
+    for (const [p, q] of s.lastSeq) this.lastSeq.set(p, q);
+  }
 }
