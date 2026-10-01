@@ -13,6 +13,8 @@ pnpm --filter @deadzone/map map build <blueprint.json> --check
 pnpm --filter @deadzone/map map build <blueprint.json> --pack <katalog> --schema-only
 # waliduj paczki i wypisz ich mapy (domyślnie paczka base)
 pnpm --filter @deadzone/map map validate [<katalog-paczki>…]
+# widok mapy z blueprintu (ASCII z góry): podłogi, pokoje, obiekty, ściany/okna/drzwi, płoty, schody
+pnpm --filter @deadzone/map map preview <blueprint.json> [--z <piętro>] [--rect x,y,w,h]
 ```
 
 `build` najpierw waliduje wynik razem z paczką docelową (i z base, jeśli paczka docelowa nią nie jest), a zapisuje dopiero bez błędów. Usuwa też nieaktualne pliki chunków tej mapy. Wynik jest deterministyczny i sformatowany Prettierem.
@@ -30,8 +32,17 @@ Schemat jest w `src/blueprint.ts`. Wszystkie współrzędne to kafle świata (+x
   - `openings`: `{at: [x, y] (lokalnie w planie), side: n|s|e|w, type: door|window, contentId?}` zamienia wygenerowaną ścianę w drzwi albo okno; krawędzie `s`/`e` zapisuje jako `n`/`w` sąsiada, także w sąsiednim chunku,
   - dach pokrywa wszystkie kafle pokojów,
 - `objects`: `{contentId, x, y, rot?, offset?}`,
+- `fences` (pędzel płotu): `{x, y, side: n|w, len, contentId}`. `len` krawędzi od kafla (x, y): dla `n` wzdłuż +x
+  (północne krawędzie wiersza), dla `w` wzdłuż +y (zachodnie krawędzie kolumny). Typ `fence` (np. `base:wooden-fence`)
+  nadpisuje inne krawędzie na tej granicy. Płoty maluje się po budynkach,
+- `stairs` (narzędzie schodów): `{at: [x, y], dir: N|E|S|W, len: 1–16}`. `at` to najniższy kafel (kafle świata), bieg
+  prowadzi z poziomu 0 na 1 i ma `len` kafli w kierunku `dir`. Zapisany w chunku kafla `at` jako `stairs`
+  `{tx, ty, dir, len}` (lokalnie). Cały bieg musi leżeć na mapie, a biegi nie mogą zachodzić na siebie,
 - `zones`: nazwane strefy do manifestu (`zones` z `@deadzone/content`): `{id, role, z? (domyślnie 0), rects?, tags?}`; `rects` to `{x, y, w, h}` w kaflach świata (`[x, x + w) × [y, y + h)`), prostokąty jednej strefy się sumują,
 - `zonePlans`: opcjonalna warstwa ASCII stref `{origin, plan, legend}`: znak z `legend` wskazuje `id` strefy z `zones`, `.` i spacja to brak strefy; kafle są łączone w jak najmniej prostokątów i dopisywane do `rects` tej strefy.
+
+Widok `map preview` rysuje każdą krawędź między kaflami (`-`/`|` ściana, `=`/`"` okno, `d` drzwi, `~`/`!` płot) i każdy
+kafel biegu schodów (`S` najniższy, dalej `^ > v <` w kierunku wchodzenia).
 
 Strefy sprawdza walidacja paczki (`zone_duplicate_id`, `zone_empty`, `zone_out_of_bounds`; granice = obrys chunków manifestu na danym `z`), a tryby gry z `map` sprawdzają `requiredZones`.
 

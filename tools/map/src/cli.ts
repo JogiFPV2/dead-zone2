@@ -4,11 +4,13 @@ import { BASE_PACK_DIR, readPackDir, validatePackDirs } from '@deadzone/content/
 import { parseBlueprint } from './blueprint.js';
 import { buildMap } from './build.js';
 import { mapFiles, type MapFile } from './files.js';
+import { PREVIEW_LEGEND, renderPreview } from './preview.js';
 import { formatErrors, validateSchemasOnly, validateWithPack } from './validate.js';
 
 const USAGE = `użycie:
   map build <blueprint.json…> [--pack <katalog>] [--check] [--schema-only]
-  map validate [<katalog-paczki>…]   (domyślnie paczka base)`;
+  map validate [<katalog-paczki>…]   (domyślnie paczka base)
+  map preview <blueprint.json> [--z <piętro>] [--rect x,y,w,h]   (widok mapy: krawędzie, płoty, schody)`;
 
 // pnpm --filter runs scripts in the package dir; INIT_CWD is where the user called it.
 const cwd = process.env['INIT_CWD'] ?? process.cwd();
@@ -115,6 +117,20 @@ async function validateCmd(args: string[]): Promise<number> {
   return r.ok ? 0 : 1;
 }
 
+async function preview(args: string[]): Promise<number> {
+  const z = Number(option(args, '--z') ?? 0);
+  const rectArg = option(args, '--rect');
+  const [file] = args;
+  if (!file || !Number.isInteger(z)) return usage();
+  const nums = rectArg?.split(',').map(Number);
+  if (nums && (nums.length !== 4 || nums.some((n) => !Number.isInteger(n)))) return usage();
+  const rect = nums && { x: nums[0]!, y: nums[1]!, w: nums[2]!, h: nums[3]! };
+  const bp = parseBlueprint(JSON.parse(await readFile(resolve(cwd, file), 'utf8')));
+  console.log(renderPreview(buildMap(bp), z, rect));
+  console.log(PREVIEW_LEGEND);
+  return 0;
+}
+
 function usage(): number {
   console.error(USAGE);
   return 2;
@@ -122,7 +138,13 @@ function usage(): number {
 
 const [cmd, ...rest] = process.argv.slice(2);
 const run =
-  cmd === 'build' ? build(rest) : cmd === 'validate' ? validateCmd(rest) : Promise.resolve(usage());
+  cmd === 'build'
+    ? build(rest)
+    : cmd === 'validate'
+      ? validateCmd(rest)
+      : cmd === 'preview'
+        ? preview(rest)
+        : Promise.resolve(usage());
 run.then(
   (code) => process.exit(code),
   (e: unknown) => {

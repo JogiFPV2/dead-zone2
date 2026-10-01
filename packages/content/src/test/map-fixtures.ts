@@ -43,6 +43,7 @@ export const mapContent = {
     tile('base:roof', 'roof'),
     tile('base:wall', 'wall'),
     tile('base:door', 'door'),
+    tile('base:fence', 'fence'),
   ],
   'containers/c.json': {
     id: 'base:cabinet',

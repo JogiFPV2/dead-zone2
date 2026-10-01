@@ -1,13 +1,15 @@
 import {
   CHUNK_SIZE,
   MAP_FORMAT_VERSION,
+  STAIR_STEP,
   chunkFileName,
   encodeLayer,
   type EdgeType,
   type MapChunkJson,
   type MapManifest,
+  type Stairs,
 } from '@deadzone/content';
-import type { Blueprint, Building } from './blueprint.js';
+import type { Blueprint, BlueprintStairs, Building } from './blueprint.js';
 import { buildZones } from './zones.js';
 
 type Side = 'n' | 'w';
@@ -127,6 +129,23 @@ function paintBuilding(world: World, b: Building): void {
   }
 }
 
+/** Stairs tool: the whole flight must lie on the map; no two flights share a tile. */
+function checkStairs(world: World, stairs: readonly BlueprintStairs[]): void {
+  const used = new Map<string, number>();
+  stairs.forEach((st, i) => {
+    const [dx, dy] = STAIR_STEP[st.dir];
+    for (let k = 0; k < st.len; k++) {
+      const x = st.at[0] + dx * k;
+      const y = st.at[1] + dy * k;
+      world.index(x, y, `schody ${i}`);
+      const other = used.get(`${x},${y}`);
+      if (other !== undefined)
+        throw new Error(`schody ${i} zachodzą na schody ${other} w (${x}, ${y})`);
+      used.set(`${x},${y}`, i);
+    }
+  });
+}
+
 /** Blueprint -> chunked map JSON (content format). Pure and deterministic. */
 export function buildMap(bp: Blueprint): BuiltMap {
   const world = new World(bp);
@@ -156,6 +175,7 @@ export function buildMap(bp: Blueprint): BuiltMap {
       world.edges.set(edgeKey(x, y, f.side), { type: 'fence', contentId: f.contentId });
     }
   }
+  checkStairs(world, bp.stairs);
   for (const o of bp.objects) world.index(o.x, o.y, `obiekt ${o.contentId}`);
 
   const { cx0, cy0, cx1, cy1 } = bp.chunks;
@@ -218,6 +238,12 @@ function chunkJson(
     .filter((o) => o.x >= ox && o.y >= oy && o.x < ox + CHUNK_SIZE && o.y < oy + CHUNK_SIZE)
     .map((o) => ({ ...o, x: o.x - ox, y: o.y - oy }));
   const ids = [...new Set(room)].filter((v) => v !== 0).sort((a, b) => a - b);
+  const stairs: Stairs[] = bp.stairs
+    .filter(
+      (s) =>
+        s.at[0] >= ox && s.at[1] >= oy && s.at[0] < ox + CHUNK_SIZE && s.at[1] < oy + CHUNK_SIZE,
+    )
+    .map((s) => ({ tx: s.at[0] - ox, ty: s.at[1] - oy, dir: s.dir, len: s.len }));
 
   return {
     address: { cx, cy, z: 0 },
@@ -230,5 +256,7 @@ function chunkJson(
     edges,
     objects,
     rooms: Object.fromEntries(ids.map((id) => [String(id), rooms.get(id)!])),
+    // Only when present, so maps without stairs keep byte-identical chunk files.
+    ...(stairs.length > 0 ? { stairs } : {}),
   };
 }

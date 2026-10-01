@@ -3,6 +3,8 @@ import {
   EDGE_TYPES,
   I18nKeySchema,
   RoomTypeSchema,
+  STAIR_DIRS,
+  STAIR_MAX_LEN,
   TagSchema,
   TileRefSchema,
   ZoneNameSchema,
@@ -71,6 +73,16 @@ export const ZonePlanSchema = z.strictObject({
 });
 
 /**
+ * Stairs tool: a flight from level 0 to level 1. `at` is the bottom tile (world tiles), the flight
+ * climbs `len` tiles in `dir` (N = −y, E = +x, S = +y, W = −x). Saved in the chunk of `at`.
+ */
+export const BlueprintStairsSchema = z.strictObject({
+  at: Xy,
+  dir: z.enum(STAIR_DIRS),
+  len: Int.min(1).max(STAIR_MAX_LEN),
+});
+
+/**
  * Human-editable authoring source of a map (`tools/map/blueprints/*.json`). All coordinates are
  * world tiles (+x east, +y south); later entries paint over earlier ones.
  */
@@ -117,6 +129,8 @@ export const BlueprintSchema = z.strictObject({
       }),
     )
     .default([]),
+  /** Flights of stairs (level 0 → 1). */
+  stairs: z.array(BlueprintStairsSchema).default([]),
   zones: z.array(BlueprintZoneSchema).default([]),
   zonePlans: z.array(ZonePlanSchema).default([]),
 });
@@ -124,6 +138,7 @@ export const BlueprintSchema = z.strictObject({
 export type Blueprint = z.output<typeof BlueprintSchema>;
 export type BlueprintInput = z.input<typeof BlueprintSchema>;
 export type Building = z.output<typeof BuildingSchema>;
+export type BlueprintStairs = z.output<typeof BlueprintStairsSchema>;
 
 /** Parses a blueprint; throws with readable zod issues. */
 export function parseBlueprint(input: unknown): Blueprint {

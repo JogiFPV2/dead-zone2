@@ -181,9 +181,15 @@ narzędziem `tools/map` (`pnpm --filter @deadzone/map map build tools/map/bluepr
 - `floor`, `roof`: wartość `v` to `palette[v - 1]`, 0 = pusto; paleta jest lokalna dla chunka i wskazuje `tiles/`.
 - `room`: wartość to `roomId` z `rooms` (0 = na zewnątrz); `rooms: { "1": { roomType, buildingId } }`.
   `roomType` (np. `base:room-kitchen`) musi być w `rooms` jakiejś loot table. `roomId` i `buildingId` są wspólne dla mapy.
-- `edges`: rzadka lista `{ x, y, side: "n" | "w", type: "wall" | "window" | "door", contentId }`. Krawędź
+- `edges`: rzadka lista `{ x, y, side: "n" | "w", type: "wall" | "window" | "door" | "fence", contentId }`. Krawędź
   południowa/wschodnia to `n`/`w` sąsiedniego kafla (na granicy — w sąsiednim chunku). `contentId` wskazuje
-  `tiles/` z `category` równym `type`.
+  `tiles/` z `category` równym `type`. `fence` to niski płot (blokuje ruch, nie wzrok; base: `base:wooden-fence`).
+- `stairs` (opcjonalne, brak = bez schodów): biegi schodów z piętra chunka `z` na `z + 1`,
+  `{ tx, ty, dir: "N" | "E" | "S" | "W", len: 1–16 }`. (`tx`, `ty`) to najniższy kafel (lokalnie w chunku), `dir` to
+  kierunek wchodzenia, bieg ma `len` kafli i może wejść do sąsiedniego chunka. Wejście od dołu (krawędź pierwszego
+  kafla po stronie przeciwnej do `dir`) albo z góry (kafel (tx, ty) + len × dir na `z + 1`). Pierwszy kafel stoi na
+  podłodze, biegi w chunku nie zachodzą na siebie. Kształt jest ten sam co `SimChunk.stairs` w `@deadzone/protocol`. Mapy bez schodów są
+  poprawne bez zmian (`formatVersion` zostaje 1, bo pole jest opcjonalne).
 - `objects`: `{ contentId, x, y, rot: 0–3 (co 90°), offset? }`, `contentId` to typ schowka albo przedmiot
   `placeable`. Światłem jest obiekt z blokiem `placeable.light`.
 - `zones` (opcjonalne, w manifeście): `{ id, role, z, rects: [{ x, y, w, h }], tags? }`. `id` i `role` w kebab-case,
