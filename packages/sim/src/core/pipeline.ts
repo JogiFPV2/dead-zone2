@@ -44,6 +44,8 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'ai.locomotion', run: (w, ctx) => aiLocomotionSystem(w, ctx.grid) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
+    // TODO(physics): `physicsStep` (physics/step.ts) goes here once movement exposes its
+    // modifier hook (branch sim/storage-movement); not wired yet, so golden hashes are unchanged.
     { name: 'noise.footsteps', run: (w) => footstepSystem(w) },
     { name: 'ai.threat', run: (w, ctx) => threatSystem(w, ctx.grid) },
     { name: 'inventory', run: (w) => inventorySystem(w) },

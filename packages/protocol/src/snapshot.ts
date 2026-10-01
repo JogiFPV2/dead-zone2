@@ -38,6 +38,31 @@ export type SnapshotEntityKindValue = (typeof SnapshotEntityKind)[keyof typeof S
 export const SnapshotAnim = { idle: 0, walk: 1, run: 2, attack: 3, dead: 4 } as const;
 export type SnapshotAnimValue = (typeof SnapshotAnim)[keyof typeof SnapshotAnim];
 
+/**
+ * Body state of the physics module (`packages/sim/src/physics`), shared by players and zombies.
+ * Agreed with the client for animations; `knockdown` = lying on the ground, `getup` = standing up.
+ */
+export const ENTITY_PHYS_STATES = [
+  'idle',
+  'walk',
+  'run',
+  'attack',
+  'push',
+  'hit',
+  'stagger',
+  'knockdown',
+  'getup',
+  'dead',
+] as const;
+export type EntityPhysState = (typeof ENTITY_PHYS_STATES)[number];
+
+/** Knock-back of the last hit: unit direction (tiles) and strength 0..1. */
+export interface EntityKnockback {
+  dirX: number;
+  dirY: number;
+  strength: number;
+}
+
 export interface SnapshotEntity {
   stableId: number;
   x: number;
@@ -50,6 +75,24 @@ export interface SnapshotEntity {
   anim?: number;
   /** Health 0–1 (1 when omitted). */
   hpPct?: number;
+  /*
+   * Physics fields (optional, not in the binary layout above yet, so PROTOCOL_VERSION is
+   * unchanged and `encodeSnapshot` ignores them). Facing is `facingRad`.
+   */
+  /** Velocity in tiles per tick. */
+  vel?: { x: number; y: number };
+  /** Current max speed in tiles per tick (after load and endurance). */
+  maxSpeed?: number;
+  state?: EntityPhysState;
+  /** Tick the current `state` started; `stateDuration` in ticks (0 = open-ended). */
+  stateStartTick?: number;
+  stateDuration?: number;
+  knockback?: EntityKnockback;
+  /** Tick of the last hit taken (0 = never) and direction it came from (rad, like facingRad). */
+  lastHitTick?: number;
+  hitFromDir?: number;
+  /** u32 per zombie from the seeded RNG, fixed for life (gait / animation variation). */
+  gaitSeed?: number;
 }
 
 export const snapshotFloatLength = (entityCount: number): number =>

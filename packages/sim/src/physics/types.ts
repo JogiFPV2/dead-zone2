@@ -1,0 +1,122 @@
+import { ENTITY_PHYS_STATES, type EntityKnockback, type EntityPhysState } from '@deadzone/protocol';
+import type { Rng } from '../core/rng.js';
+import type { PhysicsConfig } from './constants.js';
+
+/** Body states (shared with the client through `@deadzone/protocol`). */
+export const PHYSICS_STATES = ENTITY_PHYS_STATES;
+export type PhysicsState = EntityPhysState;
+export type Knockback = EntityKnockback;
+export type PhysicsEntityKind = 'player' | 'zombie';
+
+/**
+ * Fields the client reads (Three.js animations), the same for players and zombies. Angles in
+ * radians [0, 2π) from +x towards +y (like `facingRad`), velocities in tiles per tick, ticks are
+ * absolute sim ticks.
+ */
+export interface PhysicsSnapshotFields {
+  facing: number;
+  vel: { x: number; y: number };
+  maxSpeed: number;
+  state: PhysicsState;
+  stateStartTick: number;
+  /** Length of the current state in ticks; 0 = open-ended (idle / walk / run / dead). */
+  stateDuration: number;
+  /** Last hit's push; reset when the entity is back in control. */
+  knockback: Knockback;
+  /** 0 = never hit. */
+  lastHitTick: number;
+  hitFromDir: number;
+  /** Zombies: u32 from the seeded RNG, fixed for life; players: 0. */
+  gaitSeed: number;
+}
+
+/** One physics body. `accel`, `mass` and the inputs below are internal (not in the snapshot). */
+export interface PhysicsBody extends PhysicsSnapshotFields {
+  /** StableId of the entity. */
+  readonly id: number;
+  readonly kind: PhysicsEntityKind;
+  /** Position in tiles (moved by physics only while knocked back / without control). */
+  x: number;
+  y: number;
+  /** Velocity change per tick at full control (tiles per tick²), after inertia and modifiers. */
+  accel: number;
+  /** Body + carried weight in kg. */
+  mass: number;
+  /** Inputs, set by the caller (inventory / survival) before `physicsStep`. */
+  bodyMassKg: number;
+  carriedKg: number;
+  capacityKg: number;
+  /** 0..100, like `vitals.endurance` (zombies: 100). */
+  endurance: number;
+  /** PZ Strength skill 0..10 (impulse of its hits). */
+  strength: number;
+}
+
+/** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
+export interface PhysicsWorld {
+  readonly cfg: PhysicsConfig;
+  readonly rng: Rng;
+  readonly bodies: Map<number, PhysicsBody>;
+  /** Cached `id`-sorted bodies (rebuilt when the map size changes). */
+  order: PhysicsBody[];
+  orderSize: number;
+}
+
+/** Hit or shove of `attackerId` on `targetId`, resolved by `physicsStep` in the given order. */
+export interface PhysicsHit {
+  attackerId: number;
+  targetId: number;
+  /** `melee` (weapon / fists), `shove` (push, no damage), `zombie` (zombie lunge). */
+  kind: 'melee' | 'shove' | 'zombie';
+  /** Weapon knockback 0..1 (`melee.knockback`, unarmed 0.3); defaults by kind when omitted. */
+  force?: number;
+  /** The hit kills the target (combat decides): state `dead` and `died`, no reaction roll. */
+  lethal?: boolean;
+}
+
+/** Outcome of a hit before it is applied (pure, see `resolveHit`). */
+export interface HitOutcome {
+  reaction: 'hit' | 'stagger' | 'knockdown';
+  /** 0..1 after strength / weapon vs target mass. */
+  impulse: number;
+  behind: boolean;
+  /** Unit push direction (from attacker to target). */
+  dirX: number;
+  dirY: number;
+  /** Direction the hit came from as seen from the target (rad, [0, 2π)). */
+  hitFromDir: number;
+  /** Length of the reaction state in ticks. */
+  duration: number;
+}
+
+export type PhysicsEventType =
+  'attackStart' | 'hitLanded' | 'staggered' | 'fellDown' | 'gotUp' | 'died';
+
+/**
+ * Physics event. `hitLanded` is reported on the target with `sourceId` = attacker; `gotUp` when
+ * the getup state ends (the entity is in control again).
+ */
+export interface PhysicsEvent {
+  type: PhysicsEventType;
+  entityId: number;
+  tick: number;
+  sourceId?: number;
+}
+
+/** Held movement of one body for this tick (standalone mode; see `physicsStep`). */
+export interface PhysicsIntent {
+  /** Direction, length ≤ 1. */
+  dx: number;
+  dy: number;
+  run?: boolean;
+}
+
+/** Speed and acceleration multipliers from load and endurance (see `movementModifiers`). */
+export interface MovementModifiers {
+  loadLevel: number;
+  enduranceLevel: number;
+  speedMul: number;
+  /** Multiplier for the acceleration and braking step (inertia × load × endurance). */
+  accelMul: number;
+  canRun: boolean;
+}
