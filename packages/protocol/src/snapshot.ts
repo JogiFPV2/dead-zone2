@@ -3,7 +3,7 @@
  *
  * Layout (all f32), SNAPSHOT_ENTITY_STRIDE floats per entity:
  * ```
- *   stableId, x, y, z, facingRad, kind, anim
+ *   stableId, x, y, z, facingRad, kind, anim, hpPct
  * ```
  * The first record is always the local player; the other players and the zombies (NPCs) follow
  * in StableId order. `kind` tells them apart (SnapshotEntityKind; 0 = unknown, e.g. mock data),
@@ -12,9 +12,10 @@
  * matches exactly. `stableId` is exact up to 2^24 (f32 mantissa).
  * x/y are in tiles (+x east, +y south), z is the floor level, facingRad is in [0, 2π) measured
  * from +x towards +y (i.e. clockwise on screen when +y points down).
- * PROTOCOL_VERSION 5 added `kind` and `anim` (stride 5 → 7).
+ * PROTOCOL_VERSION 5 added `kind` and `anim` (stride 5 → 7); 6 added `hpPct` (stride 7 → 8):
+ * health 0–1 (player: health / 100, zombie: hp / max hp of its type, dead: 0).
  */
-export const SNAPSHOT_ENTITY_STRIDE = 7;
+export const SNAPSHOT_ENTITY_STRIDE = 8;
 export const SnapshotField = {
   stableId: 0,
   x: 1,
@@ -23,6 +24,7 @@ export const SnapshotField = {
   facingRad: 4,
   kind: 5,
   anim: 6,
+  hpPct: 7,
 } as const;
 
 /** `kind` field values. */
@@ -46,6 +48,8 @@ export interface SnapshotEntity {
   kind?: number;
   /** SnapshotAnim (0 when omitted). */
   anim?: number;
+  /** Health 0–1 (1 when omitted). */
+  hpPct?: number;
 }
 
 export const snapshotFloatLength = (entityCount: number): number =>
@@ -76,6 +80,7 @@ export function encodeSnapshot(
     f[o + 4] = e.facingRad;
     f[o + 5] = e.kind ?? 0;
     f[o + 6] = e.anim ?? 0;
+    f[o + 7] = e.hpPct ?? 1;
     o += SNAPSHOT_ENTITY_STRIDE;
   }
   return out;
@@ -88,7 +93,7 @@ export const snapshotEntityCount = (buf: ArrayBuffer | Float32Array): number =>
 export function readSnapshotEntity(
   view: Float32Array,
   index: number,
-  out: SnapshotEntity = { stableId: 0, x: 0, y: 0, z: 0, facingRad: 0, kind: 0, anim: 0 },
+  out: SnapshotEntity = { stableId: 0, x: 0, y: 0, z: 0, facingRad: 0, kind: 0, anim: 0, hpPct: 1 },
 ): SnapshotEntity {
   const o = index * SNAPSHOT_ENTITY_STRIDE;
   out.stableId = view[o] ?? 0;
@@ -98,6 +103,7 @@ export function readSnapshotEntity(
   out.facingRad = view[o + 4] ?? 0;
   out.kind = view[o + 5] ?? 0;
   out.anim = view[o + 6] ?? 0;
+  out.hpPct = view[o + 7] ?? 0;
   return out;
 }
 

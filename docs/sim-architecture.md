@@ -546,6 +546,8 @@ interface RenderSnapshotHeader {
 
 Stan po Etapie 4 (PR 1, `PROTOCOL_VERSION = 5`): bez nagłówka, `SNAPSHOT_ENTITY_STRIDE = 7` floatów f32 na encję: `stableId, x, y, z, facingRad, kind, anim`. Pierwszy rekord to lokalny gracz, potem pozostali gracze i zombie w kolejności `StableId`. `kind` = `SnapshotEntityKind` (`1` gracz, `2` zombie, `0` nieznany, np. dane mock), `anim` = `SnapshotAnim` (`0` idle, `1` walk, `2` run, `3` attack (zarezerwowane), `4` dead). Zombie: `run` w gonieniu, `walk` w pozostałych stanach ruchu. Gracz: `run` przy chodzie `run`, `dead` po śmierci.
 
+Od `PROTOCOL_VERSION = 6` stride wynosi 8: na końcu rekordu jest `hpPct` (f32, 0–1). Dla gracza to zdrowie / 100 (1 bez contentu), dla zombie HP / `health` jego typu, a martwa encja ma 0 (`SnapshotField.hpPct = 7`).
+
 ### 4.2 Widoki UI (przy zmianie)
 HUD i React UI potrzebują danych bogatszych, ale rzadziej zmiennych: ekwipunek, statystyki, moodle, umiejętności, aktualna akcja, lista przedmiotów otwartego kontenera. `snapshot/views.ts` utrzymuje wersję każdego widoku i wysyła **deltę tylko przy zmianie**, maksymalnie raz na tick:
 ```ts

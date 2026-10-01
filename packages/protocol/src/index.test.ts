@@ -116,8 +116,8 @@ describe('parseCommand', () => {
 describe('snapshot encoding', () => {
   it('round-trips entities and reports count', () => {
     const ents = [
-      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5, kind: 1, anim: 2 },
-      { stableId: 7, x: -3, y: 4, z: 1, facingRad: 3, kind: 2, anim: 0 },
+      { stableId: 1, x: 1.5, y: 2.25, z: 0, facingRad: 0.5, kind: 1, anim: 2, hpPct: 0.5 },
+      { stableId: 7, x: -3, y: 4, z: 1, facingRad: 3, kind: 2, anim: 0, hpPct: 0 },
     ];
     const buf = encodeSnapshot(ents);
     expect(buf.byteLength).toBe(snapshotByteLength(2));
@@ -125,8 +125,8 @@ describe('snapshot encoding', () => {
     expect(decodeSnapshot(buf)).toEqual(ents);
   });
 
-  it('has no header: 7 floats per entity (kind, anim default 0)', () => {
-    expect(SNAPSHOT_ENTITY_STRIDE).toBe(7);
+  it('has no header: 8 floats per entity (kind, anim default 0, hpPct 1)', () => {
+    expect(SNAPSHOT_ENTITY_STRIDE).toBe(8);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -137,10 +137,11 @@ describe('snapshot encoding', () => {
         facingRad: 0,
         kind: SnapshotEntityKind.zombie,
         anim: SnapshotAnim.run,
+        hpPct: 0.25,
       },
     ]);
     expect(Array.from(new Float32Array(buf))).toEqual([
-      3, 1, 2, 0, 0.25, 0, 0, 4, 1, 2, 0, 0, 2, 2,
+      3, 1, 2, 0, 0.25, 0, 0, 1, 4, 1, 2, 0, 0, 2, 2, 0.25,
     ]);
   });
 

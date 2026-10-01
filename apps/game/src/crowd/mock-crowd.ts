@@ -60,7 +60,7 @@ export function stepCrowd(crowd: Crowd, rng: RandomSource, dtSec: number, b: Flo
   }
 }
 
-/** Writes wanderers as snapshot entities [id, x, y, z = 0, facing, kind = zombie, anim = walk] starting at float `offset`. */
+/** Writes wanderers as snapshot entities [id, x, y, z = 0, facing, kind = zombie, anim = walk, hpPct = 1] starting at float `offset`. */
 export function writeCrowd(crowd: Crowd, out: Float32Array, offset: number): void {
   const s = crowd.state;
   for (let i = 0; i < crowd.count; i++) {
@@ -72,6 +72,7 @@ export function writeCrowd(crowd: Crowd, out: Float32Array, offset: number): voi
     out[o + SnapshotField.facingRad] = s[i * W + 2] ?? 0;
     out[o + SnapshotField.kind] = SnapshotEntityKind.zombie;
     out[o + SnapshotField.anim] = SnapshotAnim.walk;
+    out[o + SnapshotField.hpPct] = 1;
   }
 }
 

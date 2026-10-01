@@ -51,6 +51,9 @@ describe('combat: player melee', () => {
     const o = SNAPSHOT_ENTITY_STRIDE;
     expect(snap[o + SnapshotField.stableId]).toBe(sid);
     expect(snap[o + SnapshotField.anim]).toBe(SnapshotAnim.dead);
+    expect(snap[o + SnapshotField.hpPct]).toBe(0);
+    expect(snap[SnapshotField.hpPct]).toBeGreaterThan(0);
+    expect(snap[SnapshotField.hpPct]).toBeLessThanOrEqual(1);
     expect(sim.drainView()?.combat?.zombiesKilled).toBe(1);
   });
 
@@ -68,6 +71,8 @@ describe('combat: player melee', () => {
     const ev = sim.drainEvents();
     expect(eventsOf(ev, 'hit')[0]).toMatchObject({ source: 'melee', damage: 30, killed: false });
     expect(zombie(sim).hp).toBe(20);
+    const snap = new Float32Array(sim.snapshot());
+    expect(snap[SNAPSHOT_ENTITY_STRIDE + SnapshotField.hpPct]).toBeCloseTo(0.4);
     expect(zombie(sim).x).toBeGreaterThan(x0 + 0.3);
     // Stamina spent.
     expect(sim.getSurvival()!.stats.endurance).toBeLessThan(100);

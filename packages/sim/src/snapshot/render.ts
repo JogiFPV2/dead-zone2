@@ -20,7 +20,7 @@ export function renderEntityCount(w: SimWorld): number {
 
 /**
  * Packs visible entities into the protocol snapshot layout. The local player goes first, the
- * rest (other players, zombies) follow in StableId order, with `kind` and `anim`. Reuses `buf`
+ * rest (other players, zombies) follow in StableId order, with `kind`, `anim` and `hpPct`. Reuses `buf`
  * when its size matches exactly.
  */
 export function writeRenderSnapshot(
@@ -56,6 +56,9 @@ export function writeRenderSnapshot(
               : Zombie.state[eid] === ZombieState.chase
                 ? SnapshotAnim.run
                 : SnapshotAnim.walk;
+      const max = w.ai?.types[Zombie.type[eid] ?? 0]?.def.health ?? 0;
+      const hp = Zombie.hp[eid] ?? 0;
+      f[o + 7] = max > 0 && hp > 0 ? Math.min(1, hp / max) : 0;
     } else {
       f[o + 5] = SnapshotEntityKind.player;
       const dead = w.survival?.dead[eid] === 1;
@@ -68,6 +71,8 @@ export function writeRenderSnapshot(
             : GAITS[MoveIntent.gait[eid] ?? 1] === 'run'
               ? SnapshotAnim.run
               : SnapshotAnim.walk;
+      const s = w.survival;
+      f[o + 7] = !s ? 1 : dead ? 0 : Math.min(1, Math.max(0, (s.vitals.health[eid] ?? 0) / 100));
     }
     o += SNAPSHOT_ENTITY_STRIDE;
   };
