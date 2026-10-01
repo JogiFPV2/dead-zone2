@@ -264,7 +264,7 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   brakeTicks: 3,
   speed: {
     walk: perTick(WALK_SPEED_TILES_PER_SECOND),
-    run: perTick(WALK_SPEED_TILES_PER_SECOND * 1.8),
+    run: perTick(WALK_SPEED_TILES_PER_SECOND * 2.5),
     zombieWalk: perTick(0.4),
     zombieRun: perTick(1.1),
   },

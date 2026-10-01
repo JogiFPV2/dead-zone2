@@ -8,6 +8,7 @@ import { OpeningsSettingsSchema } from './openings-settings.js';
 import { NoiseSettingsSchema } from './noise-settings.js';
 import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
+import { MovementSettingsSchema } from './movement-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
 /**
@@ -42,6 +43,8 @@ export const WorldSettingsSchema = z.strictObject({
   crafting: CraftingSettingsSchema,
   /** Zasięg widzenia w dzień i w nocy, bonus światła. */
   vision: VisionSettingsSchema,
+  /** Chód / bieg / skradanie gracza (m/s i mnożniki). */
+  movement: MovementSettingsSchema,
   /** Hałas między piętrami: tłumienie przez strop. */
   noise: NoiseSettingsSchema,
   /** Zombie: gubienie tropu (czas bez wzroku i słuchu, dystans). */

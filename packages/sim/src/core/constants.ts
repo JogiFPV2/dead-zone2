@@ -4,8 +4,11 @@ export const TICKS_PER_SECOND = 20;
 export const TICK_RATE_HZ = TICKS_PER_SECOND;
 export const TICK_MS = 1000 / TICKS_PER_SECOND;
 
-/** Player walking speed in tiles per second (1 tile = 1 m). */
-export const WALK_SPEED_TILES_PER_SECOND = 3;
+/**
+ * Player walking speed in tiles per second (1 tile = 1 m), default of `worldSettings.movement.walkSpeedMps`.
+ * 1.5 m/s: the 8192 m world takes ≈ 91 min to cross on foot (docs/PLAN.md, map 8 × 8 km).
+ */
+export const WALK_SPEED_TILES_PER_SECOND = 1.5;
 /** Player collision capsule radius in tiles (2D circle, the capsule's vertical extent is ignored). */
 export const PLAYER_RADIUS = 0.3;
 /** Commands for ticks further in the future than this are rejected. */

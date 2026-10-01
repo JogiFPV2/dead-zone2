@@ -157,5 +157,5 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     flowEveryTicks: 5,
     stuckTicks: 20,
   },
-  gait: { sneakSpeedMul: 0.5, runSpeedMul: 1.6 },
+  gait: { sneakSpeedMul: 0.5, runSpeedMul: 2.5 },
 };

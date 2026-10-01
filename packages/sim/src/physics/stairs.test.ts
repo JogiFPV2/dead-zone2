@@ -95,7 +95,7 @@ describe('stairs: moving', () => {
     const samples: { x: number; z: number }[] = [];
     let flat = 0;
     let up = 0;
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 240; i++) {
       const x0 = player(sim).x;
       sim.step();
       const p = player(sim);
@@ -116,7 +116,7 @@ describe('stairs: moving', () => {
 
     c.move(-1, 0);
     let down = 0;
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < 320; i++) {
       const x0 = player(sim).x;
       sim.step();
       const p = player(sim);
@@ -229,7 +229,8 @@ function crowdOnStairs(n: number, physicsConfig?: PhysicsConfig, seed = 7) {
     ...(physicsConfig ? { physicsConfig } : {}),
   });
   const c = commander(sim);
-  c.move(1, 0);
+  // Runs up (3.75 m/s) so the crowd starts queueing behind a player already holding the top.
+  c.move(1, 0, 'run');
   while (player(sim).x < 23) sim.step();
   c.move(0, 0);
   return { sim, c };

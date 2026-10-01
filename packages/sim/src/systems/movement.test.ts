@@ -4,20 +4,23 @@ import { BAM_FULL } from '../core/dmath.js';
 import { createSim } from '../sim.js';
 import { buildMap } from '../test/fixtures.js';
 import { aim, move, run } from '../test/helpers.js';
+import { TICKS_PER_SECOND, WALK_SPEED_TILES_PER_SECOND } from '../core/constants.js';
 import { TURN_BAM_PER_TICK, zombieWobble } from './movement.js';
 
-/** Distance lost while accelerating to walk speed (0.15/tick in 4 steps: 0.75+0.5+0.25 ticks). */
-const ACCEL_LAG = 0.15 * 1.5;
+/** Walk distance per tick (1.5 tiles/s → 0.075). */
+const W = WALK_SPEED_TILES_PER_SECOND / TICKS_PER_SECOND;
+/** Distance lost while accelerating to walk speed (W/tick in 4 steps: 0.75+0.5+0.25 ticks). */
+const ACCEL_LAG = W * 1.5;
 
 const open = () => createSim({ seed: 1, map: buildMap(), spawn: { x: 10.5, y: 10.5 } });
 
 describe('movement', () => {
-  it('walks 3 tiles per second after a short acceleration', () => {
+  it('walks 1.5 tiles per second after a short acceleration', () => {
     const sim = open();
     move(sim, 1, 0);
     run(sim, 20);
     const p = sim.getPlayer()!;
-    expect(p.x).toBeCloseTo(13.5 - ACCEL_LAG, 4);
+    expect(p.x).toBeCloseTo(10.5 + WALK_SPEED_TILES_PER_SECOND - ACCEL_LAG, 4);
     expect(p.y).toBe(10.5);
   });
 
@@ -35,14 +38,17 @@ describe('movement', () => {
     move(sim, 1, 1);
     run(sim, 20);
     const p = sim.getPlayer()!;
-    expect(Math.sqrt((p.x - 10.5) ** 2 + (p.y - 10.5) ** 2)).toBeCloseTo(3 - ACCEL_LAG, 3);
+    expect(Math.sqrt((p.x - 10.5) ** 2 + (p.y - 10.5) ** 2)).toBeCloseTo(
+      WALK_SPEED_TILES_PER_SECOND - ACCEL_LAG,
+      3,
+    );
   });
 
   it('allows slower analog movement below length 1', () => {
     const sim = open();
     move(sim, 0.5, 0);
     run(sim, 20);
-    expect(sim.getPlayer()!.x).toBeCloseTo(12 - 0.0375, 4);
+    expect(sim.getPlayer()!.x).toBeCloseTo(10.5 + WALK_SPEED_TILES_PER_SECOND / 2 - W / 4, 4);
   });
 
   it('holds the move intent until the next move command', () => {
@@ -51,8 +57,8 @@ describe('movement', () => {
     run(sim, 10);
     move(sim, 0, 0);
     run(sim, 10);
-    // Accelerates (−0.225), then brakes in 3 ticks (+0.1 + 0.05).
-    expect(sim.getPlayer()!.y).toBeCloseTo(12 - ACCEL_LAG + 0.15, 4);
+    // Accelerates (−1.5 W), then brakes in 3 ticks (+2/3 W + 1/3 W).
+    expect(sim.getPlayer()!.y).toBeCloseTo(10.5 + 10 * W - ACCEL_LAG + W, 4);
   });
 
   it('accelerates in 4 ticks and stops in 3', () => {
@@ -64,7 +70,7 @@ describe('movement', () => {
       xs.push(sim.getPlayer()!.x);
     }
     const steps = xs.map((x, i) => x - (xs[i - 1] ?? 10.5));
-    steps.forEach((d, i) => expect(d).toBeCloseTo([0.0375, 0.075, 0.1125, 0.15, 0.15][i]!, 5));
+    steps.forEach((d, i) => expect(d).toBeCloseTo([0.25, 0.5, 0.75, 1, 1][i]! * W, 5));
     move(sim, 0, 0);
     run(sim, 3);
     const x = sim.getPlayer()!.x;
@@ -125,6 +131,6 @@ describe('movement', () => {
     const [p, ...rest] = decodeSnapshot(sim.snapshot());
     expect(rest).toHaveLength(0);
     expect(p).toMatchObject({ stableId: 1, z: 0, y: 10.5 });
-    expect(p!.x).toBeCloseTo(10.5 + 0.0375 + 0.075, 5);
+    expect(p!.x).toBeCloseTo(10.5 + 0.25 * W + 0.5 * W, 5);
   });
 });

@@ -78,8 +78,16 @@ export function buildLevels(
 export function commander(sim: Sim) {
   let seq = 0;
   return {
-    move(dx: number, dy: number): void {
-      sim.enqueue({ type: 'move', dx, dy, tick: sim.tick, playerId: 0, seq: seq++ });
+    move(dx: number, dy: number, gait?: 'walk' | 'run' | 'sneak'): void {
+      sim.enqueue({
+        type: 'move',
+        dx,
+        dy,
+        ...(gait ? { gait } : {}),
+        tick: sim.tick,
+        playerId: 0,
+        seq: seq++,
+      });
     },
     aim(x: number, y: number): void {
       sim.enqueue({ type: 'aim', x, y, tick: sim.tick, playerId: 0, seq: seq++ });

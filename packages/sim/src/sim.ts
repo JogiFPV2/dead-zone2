@@ -16,7 +16,7 @@ import {
 } from '@deadzone/protocol';
 import type { Stage4Config } from './ai/config.js';
 import type { CombatConfig } from './combat/config.js';
-import type { PhysicsConfig } from './physics/constants.js';
+import { DEFAULT_PHYSICS_CONFIG, type PhysicsConfig } from './physics/constants.js';
 import { hashAi } from './ai/hash.js';
 import { PENALTY_SLOTS } from './survival/penalties.js';
 import { hashCombat } from './combat/hash.js';
@@ -69,7 +69,7 @@ export interface SimOptions {
    * (0, 0, 0). Not checked against walls: the caller picks a free tile.
    */
   spawn?: { x: number; y: number; z?: number };
-  /** Default WALK_SPEED_TILES_PER_SECOND (3). */
+  /** Default `worldSettings.movement.walkSpeedMps`, else WALK_SPEED_TILES_PER_SECOND (1.5). */
   walkSpeedTilesPerSecond?: number;
   maxEntities?: number;
   commandWindowTicks?: number;
@@ -231,6 +231,26 @@ export function createSim(input: SimOptions): Sim {
   const content = opts.content;
   registerItemActions();
   registerMovementModifier(physicsMovementModifier);
+  const movement = (
+    content?.worldSettings as
+      { movement?: { walkSpeedMps: number; runSpeedMul: number } } | undefined
+  )?.movement;
+  const walkSpeed =
+    opts.walkSpeedTilesPerSecond ?? movement?.walkSpeedMps ?? WALK_SPEED_TILES_PER_SECOND;
+  // Physics speed classes (walk / run animation states) follow the data walk speed.
+  const physicsConfig =
+    opts.physicsConfig ??
+    (movement &&
+    (movement.walkSpeedMps !== WALK_SPEED_TILES_PER_SECOND || movement.runSpeedMul !== 2.5)
+      ? {
+          ...DEFAULT_PHYSICS_CONFIG,
+          speed: {
+            ...DEFAULT_PHYSICS_CONFIG.speed,
+            walk: Math.fround(movement.walkSpeedMps / TICKS_PER_SECOND),
+            run: Math.fround((movement.walkSpeedMps * movement.runSpeedMul) / TICKS_PER_SECOND),
+          },
+        }
+      : undefined);
   const w = createSimWorld({
     seed: opts.seed,
     map: opts.map,
@@ -239,7 +259,7 @@ export function createSim(input: SimOptions): Sim {
     dayLengthMinutes: opts.content?.worldSettings.dayLengthMinutes,
     clockStart: opts.clockStart,
     dev: opts.dev,
-    physicsConfig: opts.physicsConfig,
+    physicsConfig,
     survival: content
       ? (clock) =>
           createSurvivalWorld(
@@ -294,9 +314,7 @@ export function createSim(input: SimOptions): Sim {
     c.Position.y[eid] = Math.fround(y);
     c.Position.z[eid] = z;
     c.Collider.radius[eid] = Math.fround(PLAYER_RADIUS);
-    c.MoveStats.speedPerTick[eid] = Math.fround(
-      (opts.walkSpeedTilesPerSecond ?? WALK_SPEED_TILES_PER_SECOND) / TICKS_PER_SECOND,
-    );
+    c.MoveStats.speedPerTick[eid] = Math.fround(walkSpeed / TICKS_PER_SECOND);
     c.Player.id[eid] = playerId;
     w.players.set(playerId, eid);
     if (w.survival) initVitals(w.survival, eid);

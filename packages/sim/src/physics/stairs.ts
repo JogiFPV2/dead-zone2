@@ -113,6 +113,16 @@ function stairMove(
   w.c.Position.z[eid] = Math.fround(z);
 }
 
+/** Another body on flight `s` closer than `stairs.spacing` to its bottom entrance. */
+function entranceBlocked(w: SimWorld, b: PhysicsBody, s: Stair, r: number): boolean {
+  const gap = w.physics.cfg.stairs.spacing;
+  for (const o of sortedBodies(w.physics)) {
+    if (o === b || o.stair !== s.id + 1 || o.state === 'dead') continue;
+    if (stairLocal(s, o.x, o.y).along < gap - r) return true;
+  }
+  return false;
+}
+
 /** Flights on level `z` touching the circle (x, y, r) (≤ 4 tile lookups). */
 function stairsNear(grid: TileGrid, x: number, y: number, z: number, r: number): Stair[] {
   const found: Stair[] = [];
@@ -191,7 +201,13 @@ export function physicsLevelMove(
     const next = stairLocal(s, out.x, out.y);
     if (!inZone(s, next.along, next.across, r) || inZone(s, now.along, now.across, r)) continue;
     if (now.along <= -r && next.across >= 0 && next.across <= 1) {
-      // Through the entrance: onto the flight.
+      // Through the entrance: onto the flight, unless a body is still within `spacing` of the
+      // bottom (two bodies side by side at the entrance would otherwise both get on).
+      if (entranceBlocked(w, b, s, r)) {
+        out.x = Math.fround(x);
+        out.y = Math.fround(y);
+        return true;
+      }
       b.stair = s.id + 1;
       stairMove(w, eid, b, s, x, y, dx, dy, r, true, out);
       return true;

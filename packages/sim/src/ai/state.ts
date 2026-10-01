@@ -159,6 +159,8 @@ export function createAiWorld(
     };
   const n = content.noise;
   if (n) cfg = { ...cfg, noise: { ...cfg.noise, floorMul: n.floorMul, maxFloors: n.maxFloors } };
+  const mv = content.movement;
+  if (mv) cfg = { ...cfg, gait: { sneakSpeedMul: mv.sneakSpeedMul, runSpeedMul: mv.runSpeedMul } };
   const a = content.aiSettings;
   if (a)
     cfg = {

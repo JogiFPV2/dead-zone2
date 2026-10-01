@@ -83,7 +83,7 @@ describe('determinism', () => {
   });
 
   it('matches the golden hash (update consciously with `vitest -u` and a note in the PR)', () => {
-    expect(runScript(3, cmds, 2000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"e6d9e886"`);
+    expect(runScript(3, cmds, 2000).at(-1)?.toString(16)).toMatchInlineSnapshot(`"9cbf6d1f"`);
   });
 
   it('different seed or commands change the hash', () => {

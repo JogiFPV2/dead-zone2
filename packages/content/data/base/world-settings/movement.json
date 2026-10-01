@@ -1,0 +1,7 @@
+{
+  "movement": {
+    "walkSpeedMps": 1.5,
+    "runSpeedMul": 2.5,
+    "sneakSpeedMul": 0.5
+  }
+}

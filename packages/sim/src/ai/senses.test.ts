@@ -196,7 +196,7 @@ describe('ai: hearing and noise', () => {
       return sim.getPlayer()!.x - 10.5;
     };
     // 20 ticks minus 1.5 ticks lost to acceleration (4 ticks to full speed).
-    const full = 3 * (18.5 / 20);
+    const full = 1.5 * (18.5 / 20);
     expect(dist('walk')).toBeCloseTo(full, 3);
     expect(dist('run')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.runSpeedMul, 3);
     expect(dist('sneak')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.sneakSpeedMul, 3);

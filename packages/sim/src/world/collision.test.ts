@@ -44,8 +44,8 @@ describe('collisions with wall edges', () => {
     run(sim, 100);
     const p = sim.getPlayer()!;
     expect(p.x).toBeLessThanOrEqual(12 - R);
-    // Only the y component (1/√2 of 3 tiles/s) remains after hitting the wall.
-    expect(p.y).toBeCloseTo(2.5 + (5 - 0.075) * 3 * Math.SQRT1_2, 2); // − acceleration
+    // Only the y component (1/√2 of 1.5 tiles/s) remains after hitting the wall.
+    expect(p.y).toBeCloseTo(2.5 + (5 - 0.075) * 1.5 * Math.SQRT1_2, 2); // − acceleration
   });
 
   it('does not tunnel through a thin wall at very high speed', () => {

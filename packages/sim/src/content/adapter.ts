@@ -117,6 +117,8 @@ export interface ContentIndex {
   noise: ContentBundle['worldSettings']['noise'] | undefined;
   /** `worldSettings.ai` (losing the track; optional for older bundles). */
   aiSettings: ContentBundle['worldSettings']['ai'] | undefined;
+  /** `worldSettings.movement` (walk speed, gait multipliers; optional for older bundles). */
+  movement: ContentBundle['worldSettings']['movement'] | undefined;
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -241,6 +243,8 @@ export function compileContent(content: SimContent): ContentIndex {
     firearms: content.worldSettings.firearms,
     noise: content.worldSettings.noise,
     aiSettings: (content.worldSettings as { ai?: ContentBundle['worldSettings']['ai'] }).ai,
+    movement: (content.worldSettings as { movement?: ContentBundle['worldSettings']['movement'] })
+      .movement,
     search: {
       searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
       spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,

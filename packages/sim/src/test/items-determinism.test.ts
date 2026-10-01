@@ -94,9 +94,9 @@ describe('items determinism', () => {
     const hashes = run(11, 3000, 1000);
     expect(hashes.map((h) => h.toString(16).padStart(8, '0'))).toMatchInlineSnapshot(`
       [
-        "ebb706f8",
-        "2a92e369",
-        "0c4cfbc4",
+        "abf4fe09",
+        "adc47504",
+        "5f5d5779",
       ]
     `);
   });

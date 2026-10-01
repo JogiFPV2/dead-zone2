@@ -82,6 +82,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 7 — Mapa demo i loot
 - [x] Format mapy w chunkach + narzędzie do budowania mapy (Silnik)
+- [x] Tempo chodu pod mapę 8 × 8 km: chód 1,5 m/s (ok. 91 min przez mapę), bieg × 2,5, `worldSettings.movement` (Symulacja)
 - [ ] Miasteczko demo: około 20 budynków, stacja, sklep, apteka (Designer + Silnik)
 - [ ] Loot tables zależne od pomieszczeń (Modules)
 - [ ] Drzwi i okna: zamykanie, rozbijanie, wchodzenie przez okno (Symulacja)

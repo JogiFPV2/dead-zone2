@@ -139,7 +139,7 @@ describe('createSimWorkerClient', () => {
     client.aim(20, 0.5);
     h.advance(1000);
     expect(client.tick).toBe(seen.at(-1)!.tick);
-    expect(seen.at(-1)!.x - x0).toBeCloseTo(((client.tick - 1.5) * 3) / 20, 3); // − acceleration
+    expect(seen.at(-1)!.x - x0).toBeCloseTo(((client.tick - 1.5) * 1.5) / 20, 3); // − acceleration
     // Every snapshot buffer was handed back with a transfer list.
     const releases = h.toWorker.filter((m) => m.msg.kind === 'release');
     expect(releases.length).toBe(seen.length);
