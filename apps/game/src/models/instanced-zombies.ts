@@ -34,6 +34,13 @@ import { MeshoptSimplifier } from 'three/examples/jsm/libs/meshopt_simplifier.mo
 import { SnapshotAnim } from '@deadzone/protocol';
 import { CROWD_SAMPLE_STRIDE, type CrowdBuffer } from '../crowd/crowd-buffer.js';
 import { LEVEL_HEIGHT } from '../world/instances.js';
+import {
+  hullMaterial,
+  hullsEnabled,
+  registerCharacterMaterial,
+  registerHull,
+  withHullExtrusion,
+} from '../render/style-materials.js';
 import { CHARACTER_CLIPS, clipSource, findClip, type CharacterAnim } from './character-rig.js';
 import type { BodyState, PhysState } from '../anim/contract.js';
 import { gaitOf, gaitOffsets, type Gait, type GaitOffsets } from '../anim/gait.js';
@@ -95,6 +102,8 @@ interface ClipRange {
 interface Part {
   mesh: InstancedMesh;
   frame: InstancedBufferAttribute;
+  /** Inverted-hull outline (same geometry, instances and baked frames), outline styles only. */
+  hull?: InstancedMesh;
 }
 
 interface Template {
@@ -343,6 +352,10 @@ function bakeTemplate(
     tex.needsUpdate = true;
     const material = materials[k]!;
     patch(material, tex);
+    registerCharacterMaterial(material);
+    const hullMat = hullMaterial('character');
+    patch(hullMat, tex);
+    withHullExtrusion(hullMat);
     const depth = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
     patch(depth, tex);
     const make = (geometry: BufferGeometry, mode: 'main' | 'shadow'): Part => {
@@ -358,7 +371,13 @@ function bakeTemplate(
       mesh.frustumCulled = false;
       mesh.count = 0;
       mesh.visible = false;
-      return { mesh, frame };
+      if (mode === 'shadow') return { mesh, frame };
+      const hull = new InstancedMesh(geometry, hullMat, capacity);
+      hull.instanceMatrix = mesh.instanceMatrix;
+      hull.frustumCulled = false;
+      hull.count = 0;
+      hull.visible = false;
+      return { mesh, frame, hull };
     };
     const geometry = geometries[k]!;
     const low = simplified(geometry);
@@ -526,7 +545,13 @@ export class InstancedZombies {
   ) {
     this.templates = templates.map((t) => bakeTemplate(t.object, t.clips, capacity));
     for (const t of this.templates)
-      for (const p of [...t.parts, ...t.far, ...t.shadow]) this.root.add(p.mesh);
+      for (const p of [...t.parts, ...t.far, ...t.shadow]) {
+        this.root.add(p.mesh);
+        if (p.hull) {
+          this.root.add(p.hull);
+          registerHull(p.hull);
+        }
+      }
   }
 
   /**
@@ -605,6 +630,10 @@ export class InstancedZombies {
         for (const part of set) {
           part.mesh.count = n;
           part.mesh.visible = n > 0;
+          if (part.hull) {
+            part.hull.count = n;
+            part.hull.visible = n > 0 && hullsEnabled();
+          }
           part.mesh.instanceMatrix.needsUpdate = true;
           part.frame.needsUpdate = true;
         }

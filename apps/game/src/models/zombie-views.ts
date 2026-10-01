@@ -1,5 +1,6 @@
 import { Mesh, type AnimationClip, type MeshStandardMaterial, type Object3D } from 'three';
 import { PLAYER_HEIGHT } from '../player/player-view.js';
+import { registerCharacterMaterial } from '../render/style-materials.js';
 import { ZOMBIE_MODELS, type ModelKit } from './model-kit.js';
 
 /** Sickly skin for zombies (placeholder tint over the Quaternius characters). */
@@ -18,6 +19,7 @@ function editMaterials(o: Object3D, edit: (m: MeshStandardMaterial) => void): vo
     const next = mats.map((mat) => {
       const c = mat.clone();
       edit(c);
+      registerCharacterMaterial(c);
       return c;
     });
     m.material = Array.isArray(m.material) ? next : next[0]!;

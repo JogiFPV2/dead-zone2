@@ -13,6 +13,9 @@ import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
+import { GraphicsStylePass } from './render/graphics-style.js';
+import { addHulls } from './render/style-materials.js';
+import type { GraphicsStyle } from './settings/schema.js';
 import { debounced } from './settings/debounce.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
@@ -136,6 +139,10 @@ if (import.meta.env.DEV && boot.zones) {
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 const settings = createSettingsStore();
+// „Styl grafiki” (#71): post-process on the same scene, switched live from the settings.
+const stylePass = new GraphicsStylePass(renderer);
+stylePass.setStyle(settings.get().graphics.style);
+settings.subscribe((next) => stylePass.setStyle(next.graphics.style));
 // World one-shots (footsteps, melee hits, doors) on the effects bus of the #63 mixer.
 const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
 audio.setInMenu(false);
@@ -436,6 +443,7 @@ void ModelKit.create(renderer).then(async (kit) => {
   try {
     const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
     brighten(p.object);
+    addHulls(p.object);
     player.setModel(p.object, p.clips);
     dressPlayer = (look) => {
       void import('./creator/player-look.js')
@@ -444,6 +452,8 @@ void ModelKit.create(renderer).then(async (kit) => {
             kit.character(asset, PLAYER_HEIGHT).then((t) => t.object),
           ),
         )
+        // Outlines for the creator parts too (idempotent).
+        .then(() => addHulls(p.object))
         .catch((e: unknown) => console.warn('player look', e));
     };
     // Creator look right away; a loaded save brings its look in view.characterProfile.
@@ -695,7 +705,7 @@ renderer.setAnimationLoop((time) => {
   lastFrameMs = time;
   if (pause.simPaused) {
     // Paused: the world stands still behind the menu (no input, view or HUD updates).
-    renderer.render(scene, camera);
+    stylePass.render(scene, camera);
     return;
   }
   playerInput.update(time, rig.targetYaw, camera);
@@ -759,9 +769,28 @@ renderer.setAnimationLoop((time) => {
     targeting: ui.targetZombieHp,
   });
   const t1 = performance.now();
-  renderer.render(scene, camera);
+  stylePass.render(scene, camera);
   frameSample.updateMs = t1 - t0;
   frameSample.renderMs = performance.now() - t1;
   recordFrame?.(frameSample, renderer);
   afterRender?.(renderer);
 });
+
+// Dev only: switch / freeze the graphics style for screenshots and measurements.
+if (import.meta.env.DEV) {
+  Object.assign(window, {
+    __dzStyle: {
+      set: (style: GraphicsStyle) =>
+        settings.update((s) => ({ ...s, graphics: { ...s.graphics, style } })),
+      frame: frameSample,
+      pass: stylePass,
+      calls: () => renderer.info.render.calls,
+      /** Stops the loop and draws the current frame once in `style` (same frame per style). */
+      still: (style: GraphicsStyle) => {
+        renderer.setAnimationLoop(null);
+        stylePass.setStyle(style);
+        stylePass.render(scene, camera);
+      },
+    },
+  });
+}

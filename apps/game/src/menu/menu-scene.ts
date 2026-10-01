@@ -9,6 +9,9 @@ import { simToWorld } from '../sim/coords.js';
 import type { ChunkRange } from '../world/chunk.js';
 import { Structures } from '../world/structures.js';
 import { Terrain } from '../world/terrain.js';
+import { GraphicsStylePass } from '../render/graphics-style.js';
+import { addHulls } from '../render/style-materials.js';
+import type { GraphicsStyle } from '../settings/schema.js';
 import { menuCameraFrustum, menuDrift, shambleStep, type Shambler } from './menu-scene-model.js';
 
 /** Menu background (spec deadzone-menu-spec §1): test-town crossroads at dusk, no player/HUD. */
@@ -53,8 +56,13 @@ interface ZombieActor extends Shambler {
   object: Object3D;
 }
 
-export async function createMenuScene(container: HTMLElement): Promise<MenuScene> {
+export async function createMenuScene(
+  container: HTMLElement,
+  style: () => GraphicsStyle = () => 'classic',
+): Promise<MenuScene> {
   const renderer = new WebGLRenderer({ antialias: true });
+  // „Styl grafiki” previewed live behind the settings screen.
+  const stylePass = new GraphicsStylePass(renderer);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.domElement.className = 'dzm-canvas';
   container.prepend(renderer.domElement);
@@ -91,6 +99,7 @@ export async function createMenuScene(container: HTMLElement): Promise<MenuScene
         const t = await kit.character(ZOMBIE_MODELS[model] ?? ZOMBIE_MODELS[0]!, PLAYER_HEIGHT);
         if (disposed) return;
         tintZombie(t.object);
+        addHulls(t.object);
         const rig = new CharacterRig(t.object, t.clips);
         scene.add(t.object);
         zombies.push({
@@ -141,7 +150,8 @@ export async function createMenuScene(container: HTMLElement): Promise<MenuScene
       z.object.rotation.y = Math.atan2(Math.cos(z.heading), Math.sin(z.heading));
     }
     lighting.update(camera, target.x, target.z);
-    renderer.render(scene, camera);
+    stylePass.setStyle(style());
+    stylePass.render(scene, camera);
     if (import.meta.env.DEV) {
       (globalThis as { dzMenuDrawCalls?: number }).dzMenuDrawCalls = renderer.info.render.calls;
     }
@@ -156,6 +166,7 @@ export async function createMenuScene(container: HTMLElement): Promise<MenuScene
       disposed = true;
       renderer.setAnimationLoop(null);
       observer.disconnect();
+      stylePass.dispose();
       scene.traverse((o) => {
         const m = o as Partial<{ geometry: { dispose(): void } }>;
         m.geometry?.dispose();
