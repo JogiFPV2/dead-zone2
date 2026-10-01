@@ -259,6 +259,7 @@ const hud = createHud({
   },
   spots: () => spots,
   feedback: (e) => sleep.feedback(e),
+  send: (cmd) => sim.send(stamper.stamp(cmd)),
   playerId: PLAYER_ID,
   tickMs: TICK_MS,
   minimapZoom: settings.get().view.minimapZoom,

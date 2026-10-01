@@ -31,12 +31,15 @@ import {
   type InventorySlotProps,
 } from '@deadzone/ui';
 import type { Bindings } from '../input/bindings.js';
+import type { CommandBody } from '../sim/sim-client.js';
 import type { GameState } from '../state/game-state.js';
 import { EMPTY_HUD_CONTENT, type HudContentIndex } from './content-index.js';
 import {
   HOTBAR_SLOTS,
   actionVMs,
   hintItems,
+  hotbarCommand,
+  hotbarHeldIndex,
   hotbarItems,
   moodleVMs,
   statsVM,
@@ -72,6 +75,8 @@ export interface HudOptions {
   spots: () => readonly LeisureSpot[];
   /** Sleep / leisure feedback for an event; undefined = the default toast mapping. */
   feedback: (e: SimEvent) => Feedback | undefined;
+  /** Hotbar slot → sim command (weapon into / out of the right hand). */
+  send: (cmd: CommandBody) => void;
   playerId: number;
   /** Sim tick length (reload seconds left). */
   tickMs: number;
@@ -233,6 +238,8 @@ export function createHud(opts: HudOptions): Hud {
   let lastMinimapKey = '';
   let openContainer: number | undefined;
   let lastState: GameState | undefined;
+  /** Newest frame state (hotbar commands). */
+  let current: GameState | undefined;
 
   const syncActions = (vms: ActionVM[], held: boolean): void => {
     const ids = new Set(vms.map((v) => v.id));
@@ -301,6 +308,7 @@ export function createHud(opts: HudOptions): Hud {
         setClock({ day: f.clock.day, minuteOfDay: Math.floor(f.clock.minuteOfDay) });
       }
       const s = f.state;
+      current = s;
       // Firearm widget, slot mini-bar and the minimap noise ring follow every frame (animation).
       const b = opts.bindings();
       firearm = firearmVM(s, content, f.tick, opts.tickMs, {
@@ -330,6 +338,8 @@ export function createHud(opts: HudOptions): Hud {
       lastUpdate = f.now;
       if (s !== lastState) {
         lastState = s;
+        // The highlight follows the item in hand (inventory PPM / hotbar alike).
+        selected = hotbarHeldIndex(s) ?? selected;
         setStats(statsVM(s));
         setThreat({ level: threatLevel(s.threat) });
         setMoodles(moodleVMs(s.player.moodles, content, since, f.now));
@@ -396,6 +406,8 @@ export function createHud(opts: HudOptions): Hud {
     },
     selectSlot(index) {
       selected = Math.min(HOTBAR_SLOTS - 1, Math.max(0, index));
+      const cmd = current ? hotbarCommand(current, content, selected) : undefined;
+      if (cmd) opts.send(cmd);
       lastState = undefined;
       lastUpdate = -Infinity;
     },

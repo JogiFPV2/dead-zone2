@@ -9,6 +9,8 @@ export interface WeaponInfo {
   knockback: number;
   /** Drawn length (world units, character = 1.6). */
   length: number;
+  /** `melee.category` (placeholder shape of weapons without a model). */
+  category?: string;
 }
 
 type Obj = Record<string, unknown>;
@@ -56,7 +58,14 @@ export function buildWeaponIndex(files: readonly PackFile[]): Map<string, Weapon
       if (!cls) continue;
       const melee = isObj(i.melee) ? i.melee : {};
       const knockback = typeof melee.knockback === 'number' ? melee.knockback : 0;
-      out.set(i.id, { id: i.id, cls, knockback, length: lengthOf(i, cls) });
+      const category = typeof melee.category === 'string' ? melee.category : undefined;
+      out.set(i.id, {
+        id: i.id,
+        cls,
+        knockback,
+        length: lengthOf(i, cls),
+        ...(category ? { category } : {}),
+      });
     }
   }
   return out;

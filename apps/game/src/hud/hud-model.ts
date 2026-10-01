@@ -10,6 +10,7 @@ import {
   type ThreatLevel,
 } from '@deadzone/ui';
 import type { Bindings } from '../input/bindings.js';
+import type { CommandBody } from '../sim/sim-client.js';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex, HudItemDef } from './content-index.js';
 import { itemImage } from './item-icons.js';
@@ -187,6 +188,37 @@ export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem |
     });
   }
   return out;
+}
+
+/** Main-inventory items behind the hotbar slots (same TEMPORARY rule as `hotbarItems`). */
+function hotbarSource(s: GameState) {
+  const inv = s.inventory;
+  return inv ? (inv.containers[inv.container]?.items ?? []).slice(0, HOTBAR_SLOTS) : [];
+}
+
+/**
+ * Hotbar slot pressed (key 1–5 or click): a weapon / tool goes into the right hand, pressing the
+ * slot of the item already in hand puts it away; other items only move the highlight.
+ */
+export function hotbarCommand(
+  s: GameState,
+  content: HudContentIndex,
+  index: number,
+): CommandBody | undefined {
+  const it = hotbarSource(s)[index];
+  if (!it || s.player.sleeping) return undefined;
+  if (s.inventory?.equipped.hand_primary === it.id)
+    return { type: 'unequip', slot: 'hand_primary' };
+  if (!content.items.get(it.def)?.equipSlots?.includes('hand_primary')) return undefined;
+  return { type: 'equip', item: it.id, slot: 'hand_primary' };
+}
+
+/** Hotbar slot of the item in the right hand, if it is on the hotbar. */
+export function hotbarHeldIndex(s: GameState): number | undefined {
+  const held = s.inventory?.equipped.hand_primary;
+  if (held === undefined) return undefined;
+  const i = hotbarSource(s).findIndex((it) => it.id === held);
+  return i < 0 ? undefined : i;
 }
 
 /** Key hints from the current bindings (spec §3.11 order; only actions the game has). */

@@ -7,6 +7,8 @@ import {
   actionProgress,
   actionVMs,
   hintItems,
+  hotbarCommand,
+  hotbarHeldIndex,
   hotbarItems,
   interactIntent,
   moodleVMs,
@@ -144,6 +146,41 @@ describe('HUD view models', () => {
     expect(slots[0]).toMatchObject({ icon: 'knife', stackable: false, name: 'Kitchen knife' });
     expect(slots[1]).toMatchObject({ icon: 'can', stackable: true, count: 3 });
     expect(slots.slice(2)).toEqual([null, null, null]);
+  });
+
+  it('hotbar key puts the weapon into the hand and away again (regression: no weapon in hand)', () => {
+    const inv = (equipped: Record<string, number>) => ({
+      container: 2,
+      loadKg: 1,
+      capacityKg: 12,
+      hardLimitKg: 18,
+      carryLoad: 8,
+      equipped,
+      containers: {
+        2: {
+          id: 2,
+          kind: 'inventory' as const,
+          capacityKg: null,
+          weightKg: 1,
+          items: [
+            { id: 8, def: 'base:canned-beans', count: 3, weightKg: 1.35 },
+            { id: 7, def: 'base:kitchen-knife', count: 1, weightKg: 0.3 },
+          ],
+        },
+      },
+    });
+    const empty = withState({ inventory: inv({}) });
+    expect(hotbarCommand(empty, content, 1)).toEqual({
+      type: 'equip',
+      item: 7,
+      slot: 'hand_primary',
+    });
+    expect(hotbarCommand(empty, content, 0)).toBeUndefined();
+    expect(hotbarCommand(empty, content, 3)).toBeUndefined();
+    expect(hotbarHeldIndex(empty)).toBeUndefined();
+    const held = withState({ inventory: inv({ hand_primary: 7 }) });
+    expect(hotbarCommand(held, content, 1)).toEqual({ type: 'unequip', slot: 'hand_primary' });
+    expect(hotbarHeldIndex(held)).toBe(1);
   });
 
   it('labels keys from the current bindings', () => {

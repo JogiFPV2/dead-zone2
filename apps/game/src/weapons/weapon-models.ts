@@ -116,25 +116,67 @@ export function normalizeWeapon(o: Object3D, info: WeaponInfo): Group {
   return wrap;
 }
 
-/** Grey stand-in in weapon space (handle + head, or a gun block). */
+/** Placeholder colours: light enough to read against dark clothes in the isometric view. */
+export const PLACEHOLDER_HANDLE = '#9a6a3c';
+export const PLACEHOLDER_STEEL = '#d3d8de';
+const PLACEHOLDER_GUN = '#5d646c';
+
+/** Head shape of a weapon without a model, from its id / `melee.category`. */
+export function placeholderHead(info: WeaponInfo): 'gun' | 'axe' | 'blade' | 'spear' | 'club' {
+  if (info.cls === 'firearm') return 'gun';
+  if (/axe|hatchet|cleaver/.test(info.id)) return 'axe';
+  if (info.category === 'spear') return 'spear';
+  if (info.category === 'blade_short' || info.category === 'blade_long') return 'blade';
+  return 'club';
+}
+
+/**
+ * Stand-in in weapon space for weapons without a source model (22 of 36 melee weapons): wooden
+ * handle + steel head shaped by the weapon kind. Thick and light on purpose; the old 2 cm dark
+ * grey stick vanished against the character in game ("no weapon in hand").
+ */
 export function placeholderWeapon(info: WeaponInfo): Group {
   const g = new Group();
   g.name = `weapon:${info.id}`;
   const L = info.length;
-  const dark = placeholderMaterial('#4a4f55');
-  const light = placeholderMaterial('#9aa0a6');
-  if (info.cls === 'firearm') {
-    const body = new Mesh(new BoxGeometry(0.05, L, 0.08), dark);
-    body.position.y = L * (0.5 - GRIP_FIREARM);
-    const grip = new Mesh(new BoxGeometry(0.04, 0.06, 0.12), dark);
-    grip.position.set(0, -0.02, -0.06);
-    g.add(body, grip);
-  } else {
-    const handle = new Mesh(new CylinderGeometry(0.018, 0.022, L * 0.75, 6), dark);
-    handle.position.y = L * (0.375 - GRIP_MELEE);
-    const head = new Mesh(new BoxGeometry(0.03, L * 0.3, info.cls === 'stab' ? 0.02 : 0.08), light);
-    head.position.y = L * (0.85 - GRIP_MELEE);
-    g.add(handle, head);
+  const wood = placeholderMaterial(PLACEHOLDER_HANDLE);
+  const steel = placeholderMaterial(PLACEHOLDER_STEEL);
+  const head = placeholderHead(info);
+  const handle = (share: number, r: number, mat = wood): void => {
+    const m = new Mesh(new CylinderGeometry(r, r * 1.15, L * share, 8), mat);
+    m.position.y = L * (share / 2 - GRIP_MELEE);
+    g.add(m);
+  };
+  const box = (w: number, h: number, d: number, x: number, y: number, mat = steel): void => {
+    const m = new Mesh(new BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, 0);
+    g.add(m);
+  };
+  switch (head) {
+    case 'gun': {
+      const dark = placeholderMaterial(PLACEHOLDER_GUN);
+      const body = new Mesh(new BoxGeometry(0.06, L, 0.1), dark);
+      body.position.y = L * (0.5 - GRIP_FIREARM);
+      const grip = new Mesh(new BoxGeometry(0.05, 0.07, 0.14), dark);
+      grip.position.set(0, -0.02, -0.07);
+      g.add(body, grip);
+      break;
+    }
+    case 'axe':
+      handle(1, 0.03);
+      box(0.16, Math.max(0.1, L * 0.16), 0.035, 0.07, L * (0.9 - GRIP_MELEE));
+      break;
+    case 'spear':
+      handle(0.85, 0.025);
+      box(0.05, L * 0.15, 0.02, 0, L * (0.92 - GRIP_MELEE));
+      break;
+    case 'blade':
+      handle(0.28, 0.028, placeholderMaterial('#3b3f45'));
+      box(0.07, L * 0.64, 0.015, 0, L * (0.6 - GRIP_MELEE));
+      break;
+    default:
+      handle(0.72, 0.032);
+      box(0.08, L * 0.3, 0.08, 0, L * (0.85 - GRIP_MELEE));
   }
   g.traverse((m) => {
     if (m instanceof Mesh) m.castShadow = true;
