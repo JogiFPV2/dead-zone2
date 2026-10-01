@@ -62,6 +62,8 @@ export interface ItemContainer {
 export interface PlayerItems {
   readonly inventory: number;
   readonly slots: Map<EquipSlot, number>;
+  /** Long/two-handed weapon carried on the back alongside a back slot item (usually a bag). */
+  backWeapon: number;
   /** Open container (loot panel), 0 = none. */
   open: number;
   /** Timed actions: `current` then the queue (see actions/queue.ts). */
@@ -171,6 +173,7 @@ export function createPlayerItems(st: ItemStore, stableId: number): PlayerItems 
   const p: PlayerItems = {
     inventory: inv.id,
     slots: new Map(),
+    backWeapon: 0,
     open: 0,
     current: undefined,
     queue: [],
@@ -299,6 +302,7 @@ export function removeFrom(c: ItemContainer, id: number): void {
 export function unequipEverywhere(st: ItemStore, itemId: number): void {
   for (const p of st.players.values()) {
     for (const [slot, id] of [...p.slots]) if (id === itemId) p.slots.delete(slot);
+    if (p.backWeapon === itemId) p.backWeapon = 0;
   }
 }
 

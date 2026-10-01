@@ -202,12 +202,22 @@ export function moveItem(
 
 const HANDS: readonly EquipSlot[] = ['hand_primary', 'hand_secondary'];
 
-/** Slots an item may go to: bags their `bag.slots`, clothing its slot, anything else the hands. */
+/** Long guns and two-handed melee weapons may be carried on the back alongside a bag. */
+export function backWeapon(st: ItemStore, item: ItemInstance): boolean {
+  const def = defOf(st, item);
+  if (def.kind === 'weapon_melee') return def.melee.twoHanded;
+  return (
+    def.kind === 'weapon_ranged' &&
+    (def.ranged.category === 'shotgun' || def.ranged.category === 'rifle')
+  );
+}
+
+/** Slots an item may go to: bags their `bag.slots`, clothing its slot, weapons the hands/back. */
 export function allowedSlots(st: ItemStore, item: ItemInstance): readonly EquipSlot[] {
   const def = defOf(st, item);
   if (def.kind === 'container') return def.bag.slots;
   if (def.kind === 'clothing') return [def.clothing.slot];
-  return HANDS;
+  return backWeapon(st, item) ? [...HANDS, 'back'] : HANDS;
 }
 
 export function twoHanded(st: ItemStore, item: ItemInstance): boolean {
@@ -220,6 +230,11 @@ export function twoHanded(st: ItemStore, item: ItemInstance): boolean {
 /** Puts an item that lies in the main inventory into `slot` (displacing what was there). */
 export function equip(st: ItemStore, p: PlayerItems, item: ItemInstance, slot: EquipSlot): void {
   unequipEverywhere(st, item.id);
+  if (slot === 'back' && backWeapon(st, item)) {
+    p.backWeapon = item.id;
+    st.version++;
+    return;
+  }
   const slots = twoHanded(st, item) && HANDS.includes(slot) ? HANDS : [slot];
   for (const s of slots) {
     const prev = p.slots.get(s);

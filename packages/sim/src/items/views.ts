@@ -108,6 +108,7 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
   const slots: EquipSlot[] = [];
   for (const p of st.players.values()) {
     for (const [slot, other] of p.slots) if (other === id) slots.push(slot);
+    if (p.backWeapon === id) slots.push('back');
   }
   if (slots.length > 0) v.equipped = slots.sort();
   const mark = marks?.get(item.def);
@@ -151,6 +152,9 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
   const load = carriedLoad(st, p);
   const equipped: Partial<Record<EquipSlot, number>> = {};
   for (const [slot, id] of [...p.slots].sort((a, b) => (a[0] < b[0] ? -1 : 1))) equipped[slot] = id;
+  // The character panel has one back slot; show the weapon there when present while the
+  // backpack remains equipped in the item view as well.
+  if (p.backWeapon) equipped.back = p.backWeapon;
   const marks = combineMarks(w, eid);
   return {
     container: p.inventory,

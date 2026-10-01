@@ -155,6 +155,11 @@ export function applyItemCommand(
       return undefined;
     }
     case 'unequip': {
+      if (cmd.slot === 'back' && p.backWeapon) {
+        p.backWeapon = 0;
+        st.version++;
+        return undefined;
+      }
       const id = p.slots.get(cmd.slot);
       if (id === undefined) return 'invalid-target';
       for (const [slot, other] of [...p.slots]) if (other === id) p.slots.delete(slot);

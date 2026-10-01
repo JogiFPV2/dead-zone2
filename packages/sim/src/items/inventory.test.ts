@@ -154,6 +154,31 @@ describe('inventory: weight, hands, bags, carry-load', () => {
     ]);
   });
 
+  it('long and two-handed weapons fit on the back alongside a bag, but short weapons do not', async () => {
+    const { baseContent } = await import('../test/content-fixtures.js');
+    const sim = itemsSim(await baseContent());
+    send(sim, { type: 'debugGiveItem', itemId: 'base:school-backpack' });
+    send(sim, { type: 'debugGiveItem', itemId: 'base:pump-shotgun' });
+    send(sim, { type: 'debugGiveItem', itemId: 'base:kitchen-knife' });
+    sim.step();
+    const bag = findItem(sim, 'base:school-backpack')!;
+    const shotgun = findItem(sim, 'base:pump-shotgun')!;
+    const knife = findItem(sim, 'base:kitchen-knife')!;
+
+    send(sim, { type: 'equip', item: bag.id, slot: 'back' });
+    send(sim, { type: 'equip', item: shotgun.id, slot: 'back' });
+    sim.step();
+    expect(sim.getInventory()!.equipped.back).toBe(shotgun.id);
+    expect(findItem(sim, 'base:school-backpack')!.equipped).toEqual(['back']);
+    expect(findItem(sim, 'base:pump-shotgun')!.equipped).toEqual(['back']);
+    expect(sim.drainView()!.characters![0]!.equippedBack).toBe('base:pump-shotgun');
+
+    send(sim, { type: 'equip', item: knife.id, slot: 'back' });
+    sim.step();
+    expect(rejectedReasons(sim)).toEqual(['invalid-target']);
+    expect(sim.getInventory()!.equipped.back).toBe(shotgun.id);
+  });
+
   it('two-handed items take both hands; equipping displaces; unequip and drop clear slots', async () => {
     const { baseContent } = await import('../test/content-fixtures.js');
     const sim = itemsSim(await baseContent());

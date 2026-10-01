@@ -64,6 +64,13 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       }
     }
   }
+  const backWeapons = pids
+    .map((sid) => [sid, st.players.get(sid)!.backWeapon] as const)
+    .filter(([, item]) => item !== 0);
+  if (backWeapons.length > 0) {
+    h.u32(0xbac0_0001).u32(backWeapons.length);
+    for (const [sid, item] of backWeapons) h.u32(sid).u32(item);
+  }
   hashLures(st, h);
   hashProgress(st, h);
   hashCharacters(st, h);

@@ -89,7 +89,7 @@ export function characterView(w: SimWorld, eid: number): CharacterView | undefin
   const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
   if (!st || !p) return undefined;
   const at = (slot: 'hand_primary' | 'back') => {
-    const id = p.slots.get(slot);
+    const id = slot === 'back' ? p.backWeapon || p.slots.get(slot) : p.slots.get(slot);
     const item = id === undefined ? undefined : st.items.get(id);
     return item ? defOf(st, item) : undefined;
   };
