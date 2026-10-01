@@ -10,7 +10,7 @@ import { floorZ, hasFloor, stairLocal, stairWorld, stairZ, type Stair } from '..
 import { canAct, canMove, enduranceLevel, loadLevel } from './modifiers.js';
 import { kill, setState } from './reactions.js';
 import { sortedBodies } from './step.js';
-import type { PhysicsBody, PhysicsEvent } from './types.js';
+import type { PhysicsBody, PhysicsEvent, PhysicsWorld } from './types.js';
 
 /**
  * Levels in the physics module: moving on stairs (`physicsLevelMove`, the movement hook),
@@ -29,6 +29,24 @@ const body = (w: SimWorld, eid: number): PhysicsBody | undefined =>
 
 export const stairOf = (w: SimWorld, b: PhysicsBody): Stair | undefined =>
   b.stair > 0 ? w.physics.stairs[b.stair - 1] : undefined;
+
+/**
+ * Positions along a flight already moved this tick (body id → along). Body `x`/`y` are synced
+ * only in the `physics` step, so without this two bodies entering a flight in the same tick see
+ * each other's old (off-flight) position and can end side by side. The movement system moves
+ * bodies in a fixed order, so the first mover claims the entrance and the next one queues
+ * `spacing` behind it (deterministic). Transient per tick (not saved, not hashed).
+ */
+const movedOnStairs = new WeakMap<PhysicsWorld, { tick: number; along: Map<number, number> }>();
+function movedThisTick(w: SimWorld): Map<number, number> {
+  let m = movedOnStairs.get(w.physics);
+  if (!m) movedOnStairs.set(w.physics, (m = { tick: w.tick, along: new Map() }));
+  if (m.tick !== w.tick) {
+    m.tick = w.tick;
+    m.along.clear();
+  }
+  return m.along;
+}
 
 /** The flight's corridor around `along` (with the body radius at both ends). */
 const inZone = (s: Stair, along: number, across: number, r: number): boolean =>
@@ -72,9 +90,10 @@ function stairMove(
   const lo = Math.min(r, 0.5);
   const across = Math.min(1 - lo, Math.max(lo, L.across + dc));
   const gap = w.physics.cfg.stairs.spacing;
+  const moved = movedThisTick(w);
   for (const o of sortedBodies(w.physics)) {
     if (o === b || o.stair !== b.stair || o.state === 'dead') continue;
-    const oa = stairLocal(s, o.x, o.y).along;
+    const oa = moved.get(o.id) ?? stairLocal(s, o.x, o.y).along;
     if (da > 0 && oa >= L.along) along = Math.min(along, Math.max(L.along, oa - gap));
     else if (da < 0 && oa <= L.along) along = Math.max(along, Math.min(L.along, oa + gap));
   }
@@ -86,6 +105,8 @@ function stairMove(
     b.stair = 0;
     z = s.z + 1;
   } else z = stairZ(s, along);
+  if (b.stair > 0) moved.set(b.id, along);
+  else moved.delete(b.id);
   const p = stairWorld(s, along, across);
   out.x = Math.fround(p.x);
   out.y = Math.fround(p.y);
