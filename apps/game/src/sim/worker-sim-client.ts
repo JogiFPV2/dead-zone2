@@ -51,6 +51,11 @@ export class WorkerSimClient implements SimClient {
     return this.client.save(reason);
   }
 
+  /** Every save the worker makes (requested, daily autosave, after sleep). */
+  onSaved(cb: (save: SavedGame) => void): () => void {
+    return this.client.onSaved(cb);
+  }
+
   /** Fatal init error (e.g. invalid content): the sim does not run. */
   onError(cb: (message: string) => void): () => void {
     return this.client.onError(cb);

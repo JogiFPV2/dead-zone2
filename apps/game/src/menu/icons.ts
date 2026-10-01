@@ -16,6 +16,8 @@ const PATHS: Record<string, string> = {
   arrowl: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   reset: '<path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v4h4"/>',
   // Pause / confirm (gen_pause.py).
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"/>',
+  grave: '<path d="M6 21V9a6 6 0 0112 0v12M4 21h16M9 14h6M12 11v6"/>',
   playOutline: '<path d="M8 5l11 7-11 7z"/>',
   save: '<path d="M5 3h12l3 3v15H4V3z"/><path d="M8 3v6h7V3M8 21v-7h8v7"/>',
   warning: '<path d="M12 3l9 17H3z"/><path d="M12 9v5M12 17h.01"/>',

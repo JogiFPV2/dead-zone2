@@ -17,6 +17,10 @@ export interface StartSimOptions {
   zombiesAwayFrom?: { x: number; y: number } | undefined;
   /** New game: the creator's character (`init({ character })` → `newCharacter`). */
   character?: CharacterSpec | undefined;
+  /** Restores this save (the character's slot) instead of a new world. */
+  save?: ArrayBuffer | undefined;
+  /** Uncaught worker error (e.g. a save that no longer loads). */
+  onWorkerError?: ((message: string) => void) | undefined;
 }
 
 /** Starts the sim Web Worker on a map. */
@@ -26,7 +30,12 @@ export function startSimWorker(
   seed: number,
   opts: StartSimOptions = {},
 ): WorkerSimClient {
-  const client = createSimWorkerClient(new SimWorker());
+  const worker = new SimWorker();
+  if (opts.onWorkerError) {
+    const report = opts.onWorkerError;
+    worker.addEventListener('error', (e: ErrorEvent) => report(e.message || 'błąd symulacji'));
+  }
+  const client = createSimWorkerClient(worker);
   const sim = new WorkerSimClient(client);
   const map = chunkSourceToSimMapData(source, range);
   const zombies = opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : [];
@@ -36,6 +45,8 @@ export function startSimWorker(
     ...(opts.dev ? { dev: true } : {}),
     ...(zombies.length ? { zombies } : {}),
     ...(opts.character ? { character: opts.character } : {}),
+    // A copy: the slot's buffer stays intact if the worker takes (transfers) it.
+    ...(opts.save ? { save: opts.save.slice(0) } : {}),
   });
   return sim;
 }

@@ -87,3 +87,6 @@ export function lastSaveLine(meta: WorldSaveMeta | undefined): string {
   const time = meta.minuteOfDay !== undefined ? ` · ${formatMinute(meta.minuteOfDay)}` : '';
   return `Ostatni zapis: Dzień ${meta.day}${time} · zapis świata`;
 }
+
+/** Save refused on purpose (stale tab, dead character): its message is shown as is. */
+export class SaveRefusedError extends Error {}

@@ -11,6 +11,10 @@ export interface ConfirmOptions {
   readonly no?: string;
   /** Initial focus on the confirming button (default: on Anuluj). */
   readonly focusYes?: boolean;
+  /** Destructive action (characters-delete.png): red confirm button and icon. */
+  readonly danger?: boolean;
+  /** Icon name (icons.ts); default `warning`. */
+  readonly icon?: string;
   onAnswer(yes: boolean): void;
 }
 
@@ -23,7 +27,7 @@ export interface ConfirmDialog {
 /** Confirmation dialog (mockup pause-confirm.png) over an overlay stage. */
 export function createConfirm(o: ConfirmOptions): ConfirmDialog {
   const el = document.createElement('div');
-  el.className = 'dzo-confirm';
+  el.className = o.danger ? 'dzo-confirm dzo-confirm--danger' : 'dzo-confirm';
   el.setAttribute('role', 'alertdialog');
   el.setAttribute('aria-label', o.title);
   o.host.appendChild(el);
@@ -38,11 +42,11 @@ export function createConfirm(o: ConfirmOptions): ConfirmDialog {
   };
   const render = (): void => {
     el.innerHTML = `<div class="dzo-panel dzo-confirm-box">
-<div class="dzo-confirm-icon">${icon('warning', 34)}</div>
+<div class="dzo-confirm-icon">${icon(o.icon ?? 'warning', o.danger ? 32 : 34)}</div>
 <div class="dzo-confirm-title">${o.title}</div>
 <div class="dzo-confirm-body">${o.body}</div>
 <div class="dzo-sep"></div>
-<div class="dzo-confirm-foot"><button type="button" class="dzo-btn dzo-btn--sec${focusYes ? '' : ' dzo-btn--focus'}" data-answer="no">${o.no ?? 'ANULUJ'} ${keyBadge('ESC')}</button><button type="button" class="dzo-btn dzo-btn--pri${focusYes ? ' dzo-btn--focus' : ''}" data-answer="yes">${o.yes} ${keyBadge('ENTER', true)}</button></div>
+<div class="dzo-confirm-foot"><button type="button" class="dzo-btn dzo-btn--sec${focusYes ? '' : ' dzo-btn--focus'}" data-answer="no">${o.no ?? 'ANULUJ'} ${keyBadge('ESC')}</button><button type="button" class="dzo-btn ${o.danger ? 'dzo-btn--danger' : 'dzo-btn--pri'}${focusYes ? ' dzo-btn--focus' : ''}" data-answer="yes">${o.yes} ${keyBadge('ENTER', true)}</button></div>
 </div>`;
     el.querySelector<HTMLElement>('.dzo-btn--focus')?.focus({ preventScroll: true });
   };

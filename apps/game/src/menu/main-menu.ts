@@ -5,28 +5,43 @@ import type { SettingsStore } from '../settings/store.js';
 import { WORDMARK, icon } from './icons.js';
 import { firstEnabled, menuScale, stepFocus } from './menu-model.js';
 import { createSettingsScreen, type SettingsScreen } from './settings-screen.js';
+import type { CharacterStore } from '../characters/character-store.js';
+import type { CharacterRecord } from '../characters/schema.js';
+import { createCharactersScreen, type CharactersScreen } from './characters-screen.js';
 
 export type GameMode = 'survive' | 'rescue';
+
+/** What the menu starts: the last living character, a new one (creator), or a chosen one. */
+export type MenuStart =
+  | { kind: 'continue' }
+  | { kind: 'new'; mode: GameMode; from?: 'characters' }
+  | { kind: 'play'; character: CharacterRecord };
 
 export interface MainMenuOptions {
   readonly root: HTMLElement;
   readonly settings: SettingsStore;
   readonly audio: AudioEngine;
   /** „Dzień 4 · Riverside · 2 godz. temu”; undefined = no save → „Kontynuuj” hidden. */
-  readonly continueInfo?: string;
+  readonly continueInfo?: string | undefined;
+  /** Postacie screen; undefined = the item is hidden. */
+  readonly characters?: CharacterStore | undefined;
+  /** All slots taken: Nowa gra opens Postacie instead of the creator. */
+  readonly slotsFull?: boolean;
+  /** Open Postacie right away (back from the creator). */
+  readonly startView?: 'characters';
   readonly version: string;
   readonly track: { readonly title: string; readonly credit: string };
   /** Background blur for sub-screens. */
   setDimmed(dim: boolean): void;
-  onStart(choice: { mode: GameMode; resume: boolean }): void;
+  onStart(choice: MenuStart): void;
 }
 
 export interface MainMenu {
   dispose(): void;
 }
 
-type View = 'main' | 'settings' | 'credits';
-type ItemId = 'continue' | 'new' | 'modes' | 'load' | 'settings' | 'credits' | 'quit';
+type View = 'main' | 'settings' | 'credits' | 'characters';
+type ItemId = 'continue' | 'new' | 'modes' | 'characters' | 'settings' | 'credits' | 'quit';
 
 interface Item {
   id: ItemId;
@@ -72,18 +87,21 @@ export function createMainMenu(o: MainMenuOptions): MainMenu {
       : []),
     { id: 'new', icon: 'plus', label: 'Nowa gra' },
     { id: 'modes', icon: 'layers', label: 'Tryby' },
-    { id: 'load', icon: 'folder', label: 'Wczytaj', sub: 'Wkrótce', disabled: true },
+    ...(o.characters ? [{ id: 'characters' as const, icon: 'user', label: 'Postacie' }] : []),
     { id: 'settings', icon: 'gear', label: 'Ustawienia' },
     { id: 'credits', icon: 'users', label: 'Autorzy' },
     { id: 'quit', icon: 'exit', label: 'Wyjdź' },
   ];
-  let view: View = 'main';
+  let view: View = o.startView ?? 'main';
   let focus = firstEnabled(items);
   let mode: GameMode = 'survive';
   let confirm: { text: string; yes: string; onYes: () => void; focusYes: boolean } | undefined;
   let note = '';
   // Ustawienia: the shared screen (settings-screen.ts) over the dimmed menu.
   let settingsScreen: SettingsScreen | undefined;
+  // Postacie: one card per character slot (characters-screen.ts).
+  let charactersScreen: CharactersScreen | undefined;
+  let charactersNote: string | undefined;
 
   const ui = (id: 'ui-click1' | 'ui-rollover2' | 'ui-switch2'): void => audio.play('ui', id);
   const musicOn = (): boolean => settings.get().audio.menuMusic;
@@ -135,13 +153,39 @@ ${audioChips(false)}`;
 
   function render(): void {
     stage.innerHTML =
-      (view === 'main' ? renderMain() : view === 'settings' ? '' : renderCredits()) +
+      (view === 'main' ? renderMain() : view === 'credits' ? renderCredits() : '') +
       renderConfirm();
     el.dataset.view = view;
     o.setDimmed(view !== 'main');
     const f = stage.querySelector<HTMLElement>('[tabindex="0"]');
     if (f && document.activeElement !== f) f.focus({ preventScroll: true });
     if (view === 'settings' && !settingsScreen) openSettings();
+    if (view === 'characters' && !charactersScreen) openCharacters();
+  }
+
+  function openCharacters(): void {
+    if (!o.characters) return;
+    const note = charactersNote;
+    charactersNote = undefined;
+    charactersScreen = createCharactersScreen({
+      root: el,
+      store: o.characters,
+      audio,
+      note,
+      onPlay(character) {
+        charactersScreen = undefined;
+        o.onStart({ kind: 'play', character });
+      },
+      onNew() {
+        charactersScreen = undefined;
+        o.onStart({ kind: 'new', mode, from: 'characters' });
+      },
+      onClose() {
+        charactersScreen = undefined;
+        view = 'main';
+        render();
+      },
+    });
   }
 
   function setFocus(i: number): void {
@@ -174,8 +218,18 @@ ${audioChips(false)}`;
   function activate(id: ItemId): void {
     ui('ui-click1');
     note = '';
-    if (id === 'continue') o.onStart({ mode, resume: true });
-    else if (id === 'new' || id === 'modes') o.onStart({ mode, resume: false });
+    if (id === 'continue') {
+      o.onStart({ kind: 'continue' });
+      return;
+    }
+    if ((id === 'new' || id === 'modes') && !(o.slotsFull && o.characters)) {
+      o.onStart({ kind: 'new', mode });
+      return;
+    }
+    if (id === 'new' || id === 'modes') {
+      charactersNote = 'Wszystkie miejsca zajęte: usuń postać, aby zacząć nową grę.';
+      view = 'characters';
+    } else if (id === 'characters') view = 'characters';
     else if (id === 'settings') view = 'settings';
     else if (id === 'credits') view = 'credits';
     else if (id === 'quit') {
@@ -227,6 +281,8 @@ ${audioChips(false)}`;
       else handled = false;
     } else if (view === 'settings') {
       handled = settingsScreen?.onKey(e) ?? false;
+    } else if (view === 'characters') {
+      handled = charactersScreen?.onKey(e) ?? false;
     } else {
       if (code === 'Escape' || code === 'Enter') {
         ui('ui-click1');
@@ -299,6 +355,7 @@ ${audioChips(false)}`;
     dispose() {
       unsub();
       settingsScreen?.dispose();
+      charactersScreen?.dispose();
       document.removeEventListener('keydown', onKey, { capture: true });
       window.removeEventListener('resize', resize);
       el.remove();

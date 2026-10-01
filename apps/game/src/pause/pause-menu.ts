@@ -6,6 +6,7 @@ import { MINI_LOGO, keyBadge, mountOverlay } from '../menu/overlay-stage.js';
 import { createSettingsScreen, type SettingsScreen } from '../menu/settings-screen.js';
 import {
   PAUSE_ITEMS,
+  SaveRefusedError,
   lastSaveLine,
   pauseKey,
   pauseSubtitle,
@@ -107,7 +108,10 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
       // No partial exit: the session stays, the reason is shown inline.
       console.error('Zapis świata nie powiódł się', e);
       saving = false;
-      error = 'Nie udało się zapisać świata. Spróbuj ponownie.';
+      error =
+        e instanceof SaveRefusedError
+          ? e.message
+          : 'Nie udało się zapisać świata. Spróbuj ponownie.';
       render();
     }
   }

@@ -45,7 +45,8 @@ import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
 import { parseBootOptions } from './boot-options.js';
 import { startSimWorker } from './sim/start-sim.js';
-import { takeNewCharacter } from './session.js';
+import { takeNewCharacter, takeSession } from './session.js';
+import { CharacterSaver, refusalText } from './characters/session-saver.js';
 import type { RenderLook } from './creator/appearance-map.js';
 import { GameStateStore, connectSimState } from './state/game-state.js';
 import { describeEvent, devStateLine } from './state/format.js';
@@ -87,8 +88,7 @@ import { WeaponModels } from './weapons/weapon-models.js';
 import { weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
-import { handleEscape, type Closable } from './pause/pause-model.js';
-import { lastWorldSave, persistWorldSave } from './pause/world-save.js';
+import { SaveRefusedError, handleEscape, type Closable } from './pause/pause-model.js';
 import type { WorkerSimClient } from './sim/worker-sim-client.js';
 
 const VIEW_HEIGHT = 24;
@@ -106,9 +106,14 @@ const renderer = new WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
-const boot = parseBootOptions(window.location.search);
-/** New game from the creator (menu / `?creator=1`); undefined = default character. */
-const newCharacter = takeNewCharacter();
+/** The character from the menu (its world, its save slot); none for dev/test URLs. */
+const session = takeSession();
+const parsedBoot = parseBootOptions(window.location.search);
+// A character plays in its own world: its map and seed.
+const boot = session ? { ...parsedBoot, map: session.character.worldSettings.map } : parsedBoot;
+const simSeed = session?.character.worldSeed ?? SIM_SEED;
+/** New game from the creator (menu / `?creator=1`); undefined = default character or a save. */
+const newCharacter = session ? session.created : takeNewCharacter();
 // Base pack for the sim (survival content), fetched in parallel with the map/scene setup.
 const simContent =
   boot.sim === 'worker'
@@ -173,14 +178,17 @@ if (boot.sim === 'worker') {
     : import.meta.env.DEV && boot.spawnAt
       ? { ...boot.spawnAt, z: 0 }
       : startSpawn(world.zones);
-  const worker = startSimWorker(world.source, world.range, SIM_SEED, {
+  const worker = startSimWorker(world.source, world.range, simSeed, {
     spawn,
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
     zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
     content: await simContent,
     character: newCharacter?.spec,
+    save: session?.save?.data,
+    onWorkerError: (message) => loadFailed(message),
     dev: import.meta.env.DEV,
   });
+  worker.onError((message) => loadFailed(message));
   connectSimState(gameState, worker);
   sim = worker;
   simWorker = worker;
@@ -190,6 +198,44 @@ if (boot.sim === 'worker') {
     boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
     PLAYER_ID,
     { count: boot.crowd, seed: SIM_SEED },
+  );
+}
+// The character's single save slot: exit, daily autosave and after-sleep saves all go there.
+let saver: CharacterSaver | undefined;
+if (session && simWorker) {
+  const { characterStore } = await import('./characters/open-store.js');
+  const s = session.save;
+  saver = new CharacterSaver(
+    await characterStore(),
+    session.character.id,
+    s?.version ?? 0,
+    s ? { day: s.day, minuteOfDay: s.minuteOfDay ?? undefined, savedAt: s.savedAt } : undefined,
+  );
+  const slot = saver;
+  simWorker.onSaved((save) => {
+    // `exit` is written by Zapisz i wyjdź itself (it waits for the result).
+    if (save.reason === 'exit') return;
+    void slot
+      .write({
+        tick: save.tick,
+        day: save.day,
+        minuteOfDay: lightMinute,
+        reason: save.reason,
+        data: save.buf,
+      })
+      .then((r) => {
+        if (!r.ok) console.warn(`Zapis (${save.reason}) pominięty: ${refusalText(r.reason)}`);
+      })
+      .catch((e: unknown) => console.error('Zapis postaci nie powiódł się', e));
+  });
+}
+let loadFailedShown = false;
+/** The worker failed to start; with a save that means the save did not load. */
+function loadFailed(message: string): void {
+  if (!session?.save || loadFailedShown || gameState.get().clock) return;
+  loadFailedShown = true;
+  void import('./characters/load-error.js').then((m) =>
+    m.showLoadError(container!, session.character.name, message),
   );
 }
 gameState.subscribe((_next, _prev, action) => {
@@ -408,10 +454,20 @@ const pause = new PauseController({
         location: boot.map === 'test' ? 'Mapa testowa' : boot.map,
       };
     },
-    lastSave: lastWorldSave,
+    lastSave: () => saver?.lastSave,
     async saveAndExit() {
-      // Permadeath: the single world save is overwritten, then back to the main menu.
-      if (simWorker) await persistWorldSave(await simWorker.save('exit'), lightMinute);
+      // Permadeath: the character's single slot is overwritten, then back to the main menu.
+      if (simWorker && saver) {
+        const save = await simWorker.save('exit');
+        const r = await saver.write({
+          tick: save.tick,
+          day: save.day,
+          minuteOfDay: lightMinute,
+          reason: 'exit',
+          data: save.buf,
+        });
+        if (!r.ok) throw new SaveRefusedError(refusalText(r.reason));
+      }
       window.location.assign(window.location.pathname);
     },
   },
@@ -481,6 +537,30 @@ function dressFromProfile(): void {
 gameState.subscribe((next) => {
   if (!newCharacter && next.characterProfile) dressFromProfile();
 });
+// A character migrated from the old single save gets its name and portrait from the save.
+if (session && !session.character.appearance.look) {
+  const id = session.character.id;
+  let adopted = false;
+  gameState.subscribe((next) => {
+    const p = next.characterProfile;
+    if (adopted || !p) return;
+    adopted = true;
+    void Promise.all([
+      import('./creator/player-look.js'),
+      import('./characters/portrait.js'),
+      import('./characters/open-store.js'),
+    ])
+      .then(async ([look, portrait, open]) => {
+        const l = look.lookOfProfile(p);
+        const store = await open.characterStore();
+        await store.adoptProfile(id, `${p.firstName} ${p.lastName}`, {
+          portrait: portrait.portraitOf(l),
+          look: l,
+        });
+      })
+      .catch((e: unknown) => console.warn('Postać: profil z zapisu', e));
+  });
+}
 let deathShown = false;
 gameState.subscribe((next) => {
   if (!next.death || deathShown) return;
@@ -489,6 +569,14 @@ gameState.subscribe((next) => {
   inventory.close();
   loot.hide();
   showDeathScreen(container, next.death, boot.map === 'test' ? 'test' : boot.map);
+  // Permadeath: the character becomes a tombstone and its save is deleted.
+  const d = next.death;
+  void saver
+    ?.die(d.cause, d.daysSurvived ?? Math.max(0, d.day - 1))
+    .then((r) => {
+      if (!r.ok) console.warn(`Śmierć nie zapisana: ${refusalText(r.reason)}`);
+    })
+    .catch((e: unknown) => console.error('Zapis śmierci nie powiódł się', e));
 });
 /** Interact key / button: search/open the nearest container, cancel the search, or close. */
 function interact(): void {
