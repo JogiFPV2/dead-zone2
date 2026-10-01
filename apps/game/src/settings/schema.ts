@@ -1,7 +1,7 @@
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bindings.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_VERSION = 2;
 
 /** Graphics/audio are placeholders for the settings screen (Designer); not applied yet. */
 export interface GraphicsSettings {
@@ -19,9 +19,18 @@ export interface AudioSettings {
   muted: boolean;
 }
 
+/** World overlays (zombie health). */
+export interface InterfaceSettings {
+  /** „Pokazuj życie zombie”: small bar over every wounded zombie (off: only the target). */
+  showZombieHp: boolean;
+  /** Shift + LMB on a zombie marks it as the target and shows its health bubble. */
+  targetZombieHp: boolean;
+}
+
 export interface Settings {
   version: typeof SETTINGS_VERSION;
   input: { bindings: Bindings };
+  interface: InterfaceSettings;
   graphics: GraphicsSettings;
   audio: AudioSettings;
 }
@@ -29,6 +38,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS },
+  interface: { showZombieHp: false, targetZombieHp: true },
   graphics: { pixelRatioCap: 2, antialias: true, showFps: false },
   audio: { master: 1, music: 0.6, effects: 0.8, muted: false },
 };
@@ -48,11 +58,17 @@ export function sanitizeSettings(raw: unknown): Settings {
   const r = obj(raw);
   const g = obj(r.graphics);
   const a = obj(r.audio);
+  const ui = obj(r.interface);
+  const di = DEFAULT_SETTINGS.interface;
   const dg = DEFAULT_SETTINGS.graphics;
   const da = DEFAULT_SETTINGS.audio;
   return {
     version: SETTINGS_VERSION,
     input: { bindings: sanitizeBindings(obj(r.input).bindings) },
+    interface: {
+      showZombieHp: bool(ui.showZombieHp, di.showZombieHp),
+      targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
+    },
     graphics: {
       pixelRatioCap: range(g.pixelRatioCap, 0.5, 4, dg.pixelRatioCap),
       antialias: bool(g.antialias, dg.antialias),

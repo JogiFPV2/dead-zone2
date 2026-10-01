@@ -1,0 +1,71 @@
+/* Zombie health over the world (approved mockup zombie-hp.png, HUD A tokens). */
+.dz-zhp-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-label);
+  pointer-events: none;
+  overflow: hidden;
+}
+.dz-zhp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  will-change: transform;
+  --_c: var(--color-success-base);
+}
+.dz-zhp[hidden] {
+  display: none;
+}
+.dz-zhp[data-band='warn'] {
+  --_c: var(--color-warning-base);
+}
+.dz-zhp[data-band='low'] {
+  --_c: var(--color-danger-base);
+}
+/* Boxes are centred on the anchor with their bottom edge on it, sized with --ui-scale. */
+.dz-zhp--bar {
+  width: calc(48px * var(--ui-scale, 1));
+  height: calc(6px * var(--ui-scale, 1));
+  margin-left: calc(-24px * var(--ui-scale, 1));
+  margin-top: calc(-6px * var(--ui-scale, 1));
+  border-radius: 2px;
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-neutral-700);
+  overflow: hidden;
+}
+.dz-zhp--bar > i {
+  display: block;
+  height: 100%;
+  background: var(--_c);
+}
+.dz-zhp--target {
+  width: calc(96px * var(--ui-scale, 1));
+  margin-left: calc(-48px * var(--ui-scale, 1));
+  translate: 0 -100%;
+  padding: calc(4px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1))
+    calc(5px * var(--ui-scale, 1));
+  border-radius: 4px;
+  background: var(--color-bg-tooltip);
+  border: 1px solid var(--color-accent-hi);
+  box-shadow: 0 0 8px rgba(224, 162, 58, 0.4);
+}
+.dz-zhp__label {
+  font: 700 calc(8px * var(--ui-scale, 1)) / calc(9px * var(--ui-scale, 1)) var(--font-family-mono);
+  letter-spacing: 0.04em;
+  color: var(--color-neutral-100);
+  margin-bottom: calc(3px * var(--ui-scale, 1));
+}
+.dz-zhp__segs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: calc(2px * var(--ui-scale, 1));
+  height: calc(4px * var(--ui-scale, 1));
+}
+.dz-zhp__segs > i {
+  border-radius: 1px;
+  background: var(--color-neutral-700);
+}
+.dz-zhp__segs > i.on {
+  background: var(--_c);
+}

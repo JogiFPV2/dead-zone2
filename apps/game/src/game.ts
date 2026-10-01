@@ -45,6 +45,8 @@ import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
+import { ZombieHpLayer } from './hud/zombie-hp.js';
+import { clientToNdc, ndcToFloor } from './input/aim.js';
 import { interactIntent } from './hud/hud-model.js';
 import { minimapGeometry } from './hud/minimap-data.js';
 import {
@@ -192,6 +194,14 @@ const hud = createHud({
     ),
   onInteract: interact,
   playerId: PLAYER_ID,
+});
+// Zombie health (approved mockup): target bubble on Shift + LMB, bars over wounded (setting).
+const zombieHp = new ZombieHpLayer(container, crowd);
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || !e.shiftKey || !settings.get().interface.targetZombieHp) return;
+  const ndc = clientToNdc(e.clientX, e.clientY, renderer.domElement.getBoundingClientRect());
+  const hit = ndcToFloor(camera, ndc.x, ndc.y);
+  if (hit) zombieHp.pickAt(hit.x, hit.z);
 });
 let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
@@ -383,6 +393,11 @@ renderer.setAnimationLoop((time) => {
   const alpha = tickAlpha(t0, crowdArrivedMs, TICK_MS);
   if (zombieViews) zombieViews.update(alpha, t0 / 1000, camera, rig.target.x, rig.target.z);
   else crowdView.update(alpha);
+  const ui = settings.get().interface;
+  zombieHp.update(alpha, camera, container.clientWidth, container.clientHeight, {
+    showWounded: ui.showZombieHp,
+    targeting: ui.targetZombieHp,
+  });
   const t1 = performance.now();
   renderer.render(scene, camera);
   frameSample.updateMs = t1 - t0;

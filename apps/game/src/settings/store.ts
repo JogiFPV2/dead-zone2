@@ -5,9 +5,12 @@ export const SETTINGS_STORAGE_KEY = 'deadzone.settings';
 
 /**
  * Migrations of persisted settings (`MIGRATIONS[n]`: version n → n + 1). Version 1 is the first
- * persisted one, so the chain is empty; add a step here when SETTINGS_VERSION is bumped.
+ * persisted one; add a step here when SETTINGS_VERSION is bumped.
  */
-export const MIGRATIONS: Migrations = {};
+export const MIGRATIONS: Migrations = {
+  // 1 → 2: `interface` (zombie health overlays) added; sanitize fills its defaults.
+  1: (data) => data,
+};
 
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 export type SettingsListener = (next: Settings, prev: Settings) => void;

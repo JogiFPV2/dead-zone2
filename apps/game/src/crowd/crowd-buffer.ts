@@ -15,6 +15,8 @@ export class CrowdBuffer {
   private seen: Uint32Array;
   /** SnapshotAnim of the latest snapshot per slot (4 = dead: corpse lies flat). */
   private animBySlot: Uint8Array;
+  /** Health 0..1 (snapshot `hpPct`) of the latest snapshot per slot. */
+  private hpBySlot: Float32Array;
   private generation = 0;
 
   constructor(initialCapacity = 256, growBy = 256) {
@@ -23,6 +25,12 @@ export class CrowdBuffer {
     this.curr = new Float32Array(this.slots.capacity * S);
     this.seen = new Uint32Array(this.slots.capacity);
     this.animBySlot = new Uint8Array(this.slots.capacity);
+    this.hpBySlot = new Float32Array(this.slots.capacity);
+  }
+
+  /** Health 0..1 per slot (valid for 0..count-1). */
+  get hp(): Float32Array {
+    return this.hpBySlot;
   }
 
   /** SnapshotAnim per slot (valid for 0..count-1). */
@@ -59,6 +67,7 @@ export class CrowdBuffer {
       }
       this.seen[slot] = gen;
       this.animBySlot[slot] = buf[o + SnapshotField.anim] ?? 0;
+      this.hpBySlot[slot] = buf[o + SnapshotField.hpPct] ?? 1;
     }
     // Drop entities missing from this snapshot (iterate backwards: swap-remove moves the tail).
     for (let slot = this.slots.size - 1; slot >= 0; slot--) {
@@ -89,6 +98,7 @@ export class CrowdBuffer {
     this.curr.copyWithin(to * S, from * S, from * S + S);
     this.seen[to] = this.seen[from] ?? 0;
     this.animBySlot[to] = this.animBySlot[from] ?? 0;
+    this.hpBySlot[to] = this.hpBySlot[from] ?? 1;
   };
 
   private write(dst: Float32Array, p: number, buf: Float32Array, o: number): void {
@@ -109,6 +119,9 @@ export class CrowdBuffer {
     const anim = new Uint8Array(cap);
     anim.set(this.animBySlot);
     this.animBySlot = anim;
+    const hp = new Float32Array(cap);
+    hp.set(this.hpBySlot);
+    this.hpBySlot = hp;
   }
 }
 

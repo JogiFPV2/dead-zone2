@@ -3,7 +3,13 @@ import { DEFAULT_BINDINGS } from '../input/bindings.js';
 import { migrate } from './migrate.js';
 import { rebindAction } from './rebind.js';
 import { DEFAULT_SETTINGS, SETTINGS_VERSION, sanitizeSettings, type Settings } from './schema.js';
-import { SETTINGS_STORAGE_KEY, SettingsStore, loadSettings, type StorageLike } from './store.js';
+import {
+  MIGRATIONS,
+  SETTINGS_STORAGE_KEY,
+  SettingsStore,
+  loadSettings,
+  type StorageLike,
+} from './store.js';
 
 function memoryStorage(initial?: string): StorageLike & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -69,9 +75,19 @@ describe('loadSettings', () => {
     );
   });
 
+  it('v1 → v2 keeps the data and adds the zombie health interface defaults', () => {
+    const r = loadSettings(JSON.stringify({ version: 1, audio: { muted: true } }));
+    expect(r.migratedFrom).toBe(1);
+    expect(r.settings.audio.muted).toBe(true);
+    expect(r.settings.interface).toEqual({ showZombieHp: false, targetZombieHp: true });
+  });
+
   it('migrates legacy data (hypothetical v0 with a flat `keys` map)', () => {
     const v0to1 = (d: Record<string, unknown>) => ({ input: { bindings: d.keys } });
-    const r = loadSettings(JSON.stringify({ keys: { moveUp: ['ArrowUp'] } }), { 0: v0to1 });
+    const r = loadSettings(JSON.stringify({ keys: { moveUp: ['ArrowUp'] } }), {
+      ...MIGRATIONS,
+      0: v0to1,
+    });
     expect(r.migratedFrom).toBe(0);
     expect(r.settings.input.bindings.moveUp).toEqual(['ArrowUp']);
     expect(r.settings.input.bindings.moveDown).toEqual(['KeyS']);
@@ -115,7 +131,7 @@ describe('SettingsStore', () => {
 
   it('rewrites migrated data in the current version', () => {
     const storage = memoryStorage(JSON.stringify({ keys: {} }));
-    new SettingsStore(storage, { 0: () => ({}) });
+    new SettingsStore(storage, { ...MIGRATIONS, 0: () => ({}) });
     expect((JSON.parse(storage.data.get(SETTINGS_STORAGE_KEY)!) as Settings).version).toBe(
       SETTINGS_VERSION,
     );
