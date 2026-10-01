@@ -7,7 +7,25 @@ import {
   type Object3D,
   type WebGLRenderer,
 } from 'three';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { AssetLoader } from '../assets/loader.js';
+
+let sharedKtx2: KTX2Loader | undefined;
+
+/**
+ * One KTX2Loader (transcoder workers) for the whole page: menu, creator and game renderers all
+ * run on the same GPU, so the first renderer's format detection holds for the others.
+ */
+export function ktx2For(renderer: WebGLRenderer): KTX2Loader {
+  sharedKtx2 ??= new KTX2Loader()
+    .setTranscoderPath(`${import.meta.env.BASE_URL}basis/`)
+    .detectSupport(renderer);
+  return sharedKtx2;
+}
+
+/** Asset loader with the shared KTX2Loader. */
+export const createAssetLoader = (renderer: WebGLRenderer): AssetLoader =>
+  new AssetLoader({ renderer, ktx2: ktx2For(renderer) });
 
 /** Container / furniture content id → model asset id (CC0 packs, see ASSETS.md). */
 export const CONTAINER_MODELS: Record<string, string> = {
@@ -44,7 +62,7 @@ export class ModelKit {
 
   static async create(renderer: WebGLRenderer): Promise<ModelKit | undefined> {
     try {
-      const loader = new AssetLoader({ renderer });
+      const loader = createAssetLoader(renderer);
       await loader.loadManifest();
       const kit = new ModelKit(loader);
       const ids = new Set([...Object.values(CONTAINER_MODELS), PILE_MODEL]);

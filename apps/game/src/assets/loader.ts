@@ -26,6 +26,11 @@ export interface AssetLoaderOptions {
   budget?: GpuBudget;
   /** See buildLod. */
   lodDistanceBias?: number;
+  /**
+   * Shared KTX2Loader (three.js warns about several active ones; menu, creator and game share
+   * one via `models/model-kit.ts`). Not disposed by this loader when given.
+   */
+  ktx2?: KTX2Loader;
 }
 
 /**
@@ -38,6 +43,7 @@ export class AssetLoader {
   private readonly baseUrl: string;
   private readonly gltf = new GLTFLoader();
   private readonly ktx2: KTX2Loader;
+  private readonly ownsKtx2: boolean;
   private readonly scenes: RefCache<GLTF>;
   private readonly textures = new Map<string, Texture>();
   private readonly palettes = new Map<string, Promise<void>>();
@@ -46,10 +52,12 @@ export class AssetLoader {
   constructor(private readonly opts: AssetLoaderOptions) {
     this.baseUrl = opts.baseUrl ?? `${import.meta.env.BASE_URL}models/`;
     this.budget = opts.budget ?? new GpuBudget();
-    this.ktx2 = new KTX2Loader().setTranscoderPath(
-      opts.transcoderPath ?? `${import.meta.env.BASE_URL}basis/`,
-    );
-    this.ktx2.detectSupport(opts.renderer);
+    this.ownsKtx2 = !opts.ktx2;
+    this.ktx2 =
+      opts.ktx2 ??
+      new KTX2Loader()
+        .setTranscoderPath(opts.transcoderPath ?? `${import.meta.env.BASE_URL}basis/`)
+        .detectSupport(opts.renderer);
     this.gltf.setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(this.ktx2);
     this.scenes = new RefCache<GLTF>((g, url) => {
       // Geometry is owned by the cached glTF; shared materials by the registry.
@@ -118,7 +126,7 @@ export class AssetLoader {
     this.textures.clear();
     this.palettes.clear();
     this.materials.dispose();
-    this.ktx2.dispose();
+    if (this.ownsKtx2) this.ktx2.dispose();
   }
 
   private requireManifest(): AssetManifest {

@@ -9,6 +9,8 @@ import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
 import { InputMap } from './input/input-map.js';
 import { PlayerInput } from './input/player-input.js';
+import { AudioEngine } from './audio/audio-engine.js';
+import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
@@ -118,6 +120,11 @@ if (import.meta.env.DEV && boot.zones) {
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 const settings = createSettingsStore();
+// World one-shots (footsteps, melee hits, doors) on the effects bus of the #63 mixer.
+const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
+audio.setInMenu(false);
+audio.preload(...WORLD_SOUNDS);
+const footsteps = new Footsteps();
 const input = new InputMap(settings.get().input.bindings, {
   window,
   element: renderer.domElement,
@@ -363,6 +370,8 @@ gameState.subscribe((_next, _prev, action) => {
   }
   if (action.type === 'events') {
     hud.events(action.events);
+    const p = snapshots.sample(performance.now(), TICK_MS);
+    if (p) for (const c of eventCues(action.events, p.x, p.y)) audio.play('sfx', c.id, c.volume);
     phys.pushEvents(action.events);
   }
 });
@@ -439,6 +448,9 @@ if (import.meta.env.DEV) {
       slingBack: (def: string | undefined): void => {
         devBack = def;
       },
+      /** Current game state (read-only). */
+      state: () => gameState.get(),
+      shelfFill,
       /** Id of the first carried item of content `def`. */
       itemOf: (def: string): ItemId | undefined => devItemOf(def),
       /** Equips the first carried item of content `def` into `slot` (e.g. 'hand_primary'). */
@@ -472,6 +484,8 @@ renderer.setAnimationLoop((time) => {
     const { tx, ty } = tileOf(state.x, state.y);
     const building = structures.lookup.at(tx, ty, state.z);
     structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
+    const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
+    if (step) audio.play('sfx', step.id, step.volume);
   }
   rig.update(time);
   lightMinute = currentMinute(performance.now());

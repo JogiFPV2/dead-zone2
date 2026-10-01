@@ -19,6 +19,8 @@ export interface ShelfProfile {
   readonly mix: Readonly<Partial<Record<PropKind, number>>>;
   /** Open furniture shows props always; closed only while its loot panel is open (x-ray). */
   readonly open: boolean;
+  /** Prop size multiplier (default 1): big open shelving needs bigger props to read as full. */
+  readonly propScale?: number;
 }
 
 /** Shelf furniture by content id (crates and chests have no shelves). */
@@ -64,12 +66,14 @@ export const SHELF_PROFILES: Readonly<Record<string, ShelfProfile>> = {
     open: true,
   },
   'base:metal-shelf': {
-    size: [0.95, 1.8, 0.45],
+    // Wider than the map box: the Kenney wide bookcase's shelves span more than 78 % of it.
+    size: [1.2, 1.8, 0.45],
     shelves: [0.05, 0.37, 0.69],
     cols: 6,
     rows: 1,
     mix: { box: 3, can: 2, bottle: 1 },
-    open: false,
+    open: true,
+    propScale: 1.7,
   },
   'base:wardrobe': {
     size: [0.95, 1.9, 0.6],
@@ -116,6 +120,22 @@ export function slotCount(p: ShelfProfile): number {
 export function visibleProps(fillPct: number, slots: number): number {
   if (!(fillPct > 0)) return 0;
   return Math.min(slots, Math.max(1, Math.ceil(fillPct * slots - 1e-9)));
+}
+
+/**
+ * Fill shown on the shelf (0..1). The sim's `fillPct` is contents weight / capacity, and the
+ * demo loot (1–3 light items in a 25–70 kg cabinet) lands at 0–0.15, so shelves read empty.
+ * Like PZ, unsearched storage is dressed: at least `DRESSING_MIN..MAX` (stable per id). After a
+ * search the real fill shows on a perceptual curve (a few items already fill a third of it).
+ */
+export const DRESSING_MIN = 0.6;
+export const DRESSING_MAX = 0.95;
+
+export function displayFill(fillPct: number, searched: boolean, id: number): number {
+  const real = fillPct > 0 ? Math.min(1, 0.3 + 2.8 * fillPct) : 0;
+  if (searched) return real;
+  const dressing = DRESSING_MIN + ((hashId(id) % 1000) / 999) * (DRESSING_MAX - DRESSING_MIN);
+  return Math.max(real, dressing);
 }
 
 /** 32-bit hash of a container id (FNV-1a over the decimal string). */

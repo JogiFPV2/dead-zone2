@@ -4,7 +4,16 @@ import { busGains, masterGain, type AudioBus } from './mix.js';
 
 /** CC0 sounds in `public/audio` (licences: ASSETS.md). Each has an .ogg and an .mp3 fallback. */
 export type SoundId =
-  'menu-emptycity' | 'amb-crickets' | 'ui-click1' | 'ui-rollover2' | 'ui-switch2';
+  | 'menu-emptycity'
+  | 'amb-crickets'
+  | 'ui-click1'
+  | 'ui-rollover2'
+  | 'ui-switch2'
+  | `sfx-step-concrete${0 | 1 | 2 | 3}`
+  | `sfx-step-wood${0 | 1 | 2 | 3}`
+  | `sfx-hit${0 | 1 | 2}`
+  | 'sfx-door-open'
+  | 'sfx-door-close';
 
 interface Loop {
   readonly gain: GainNode;

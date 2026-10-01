@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { SHELF_PROFILES, hashId, propSlots, slotCount, visibleProps } from './shelf-fill-model.js';
+import {
+  DRESSING_MAX,
+  DRESSING_MIN,
+  SHELF_PROFILES,
+  displayFill,
+  hashId,
+  propSlots,
+  slotCount,
+  visibleProps,
+} from './shelf-fill-model.js';
 
 describe('shelf fill model', () => {
   it('matches the spec slot counts', () => {
@@ -16,6 +25,19 @@ describe('shelf fill model', () => {
     expect(visibleProps(10 / 24, 12)).toBe(5);
     expect(visibleProps(1, 12)).toBe(12);
     expect(visibleProps(1.4, 12)).toBe(12);
+  });
+
+  it('dresses unsearched storage and shows the real fill after a search', () => {
+    for (const id of [1, 7, 42, 999]) {
+      const f = displayFill(0, false, id);
+      expect(f).toBeGreaterThanOrEqual(DRESSING_MIN);
+      expect(f).toBeLessThanOrEqual(DRESSING_MAX);
+      expect(displayFill(0, false, id)).toBe(f);
+    }
+    expect(displayFill(0, true, 1)).toBe(0);
+    expect(displayFill(0.05, true, 1)).toBeCloseTo(0.44);
+    expect(displayFill(0.5, true, 1)).toBe(1);
+    expect(displayFill(1, false, 1)).toBe(1);
   });
 
   it('keeps a stable seeded slot order per container', () => {

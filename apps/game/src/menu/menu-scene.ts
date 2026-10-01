@@ -44,8 +44,12 @@ export interface MenuScene {
   dispose(): void;
 }
 
+/** Clip playback speed of the shambling menu zombies. */
+const SHAMBLE_SPEED = 0.55;
+
 interface ZombieActor extends Shambler {
   rig: CharacterRig;
+  clipTime: number;
   object: Object3D;
 }
 
@@ -87,11 +91,11 @@ export async function createMenuScene(container: HTMLElement): Promise<MenuScene
         const t = await kit.character(ZOMBIE_MODELS[model] ?? ZOMBIE_MODELS[0]!, PLAYER_HEIGHT);
         if (disposed) return;
         tintZombie(t.object);
-        const rig = new CharacterRig(t.object, t.clips, 0.55);
-        rig.mixer.setTime(phase * 3);
+        const rig = new CharacterRig(t.object, t.clips);
         scene.add(t.object);
         zombies.push({
           rig,
+          clipTime: phase * 3,
           object: t.object,
           x: FOCUS.x + dx,
           y: FOCUS.y + dy,
@@ -128,7 +132,8 @@ export async function createMenuScene(container: HTMLElement): Promise<MenuScene
     camera.updateMatrixWorld();
     for (const z of zombies) {
       const moving = shambleStep(z, dt);
-      z.rig.play(moving ? 'walk' : 'idle');
+      z.clipTime += dt * SHAMBLE_SPEED;
+      z.rig.pose(moving ? 'walk' : 'idle', z.clipTime, true);
       z.rig.update(dt);
       const p = simToWorld(z.x, z.y, 0);
       z.object.position.set(p.x, p.y, p.z);

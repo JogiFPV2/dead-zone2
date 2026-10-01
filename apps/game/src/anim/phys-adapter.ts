@@ -28,6 +28,15 @@ import {
   isPhysicsEvent,
 } from './phys-layout.js';
 
+/**
+ * Visual reaction tuning (the push itself is sim physics since #66, which dropped these fields
+ * from CombatConfig): former combat defaults, used only for the hit-reaction strength.
+ */
+const KNOCKBACK_TILES = 0.5;
+const STAGGER_SEC_PER_KNOCKBACK = 0.6;
+const SHOVE_PUSH_TILES = 0.7;
+const SHOVE_STAGGER_SEC = 1.2;
+
 /** Walk speed in tiles per tick (fallback `maxSpeed`). */
 const WALK_PER_TICK = WALK_SPEED_TILES_PER_SECOND / TICKS_PER_SECOND;
 /** A jump longer than this between two snapshots is a teleport, not motion (tiles). */
@@ -337,12 +346,12 @@ export class PhysAdapter {
     let strength: number;
     let stagger = 0;
     if (e.source === 'shove') {
-      strength = Math.min(1, cfg.shove.pushTiles / (cfg.knockbackTiles * 2));
-      stagger = secToTicks(cfg.shove.staggerSec);
+      strength = Math.min(1, SHOVE_PUSH_TILES / (KNOCKBACK_TILES * 2));
+      stagger = secToTicks(SHOVE_STAGGER_SEC);
     } else if (e.source === 'melee') {
       const kb = this.knockbackOf(e.attacker) ?? cfg.unarmed.knockback;
       strength = Math.min(1, kb);
-      if (kb > 0) stagger = secToTicks(cfg.staggerSecPerKnockback * kb);
+      if (kb > 0) stagger = secToTicks(STAGGER_SEC_PER_KNOCKBACK * kb);
     } else {
       strength = e.source === 'shot' ? 0.4 : 0.2;
     }

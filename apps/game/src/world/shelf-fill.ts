@@ -17,6 +17,7 @@ import { CHUNK_SIZE } from './chunk.js';
 import {
   PROP_KINDS,
   SHELF_PROFILES,
+  displayFill,
   hashId,
   propSlots,
   slotCount,
@@ -143,7 +144,7 @@ export class ShelfFill {
         f.slots = propSlots(f.profile, hashId(s.id));
         f.seededFor = s.id;
       }
-      const n = visibleProps(s.fillPct, f.slots.length);
+      const n = visibleProps(displayFill(s.fillPct, s.searched, s.id), f.slots.length);
       for (let i = 0; i < n; i++) this.place(f, f.slots[i]!, counts, i);
       this.shown += n;
     }
@@ -172,7 +173,7 @@ export class ShelfFill {
       f.origin.z - slot.x * sin + slot.z * cos,
     );
     quat.setFromAxisAngle(UP, f.yaw + slot.rot);
-    m4.compose(pos, quat, ONE);
+    m4.compose(pos, quat, scale.setScalar(f.profile.propScale ?? 1));
     mesh.setMatrixAt(at, m4);
     const colors = PROP_COLORS[slot.kind];
     mesh.setColorAt(at, color.setHex(colors[(i + (f.seededFor ?? 0)) % colors.length]!));
@@ -181,7 +182,7 @@ export class ShelfFill {
 }
 
 const UP = new Vector3(0, 1, 0);
-const ONE = new Vector3(1, 1, 1);
+const scale = new Vector3(1, 1, 1);
 const pos = new Vector3();
 const quat = new Quaternion();
 const m4 = new Matrix4();
