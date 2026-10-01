@@ -129,6 +129,25 @@ export const placeStorageCommandSchema = z.strictObject({
   x: tileCoord,
   y: tileCoord,
 });
+export const takeItemCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('takeItem'),
+  container: containerId,
+  item: itemId,
+  count,
+});
+export const takeAllCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('takeAll'),
+  container: containerId,
+});
+export const putItemCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('putItem'),
+  container: containerId,
+  item: itemId,
+  count,
+});
 export const pickUpStorageCommandSchema = z.strictObject({
   ...header,
   type: z.literal('pickUpStorage'),
@@ -245,6 +264,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   pickUpCommandSchema,
   dropCommandSchema,
   moveItemCommandSchema,
+  takeItemCommandSchema,
+  takeAllCommandSchema,
+  putItemCommandSchema,
   equipCommandSchema,
   unequipCommandSchema,
   openContainerCommandSchema,

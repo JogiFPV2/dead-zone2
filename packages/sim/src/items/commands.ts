@@ -20,6 +20,7 @@ import {
   containerWeight,
   defOf,
   groundPile,
+  isInside,
   placeableType,
   type ItemInstance,
   type PlayerItems,
@@ -32,6 +33,9 @@ export type ItemCommand = Extract<
       | 'pickUp'
       | 'drop'
       | 'moveItem'
+      | 'takeItem'
+      | 'takeAll'
+      | 'putItem'
       | 'equip'
       | 'unequip'
       | 'openContainer'
@@ -49,6 +53,9 @@ const ITEM_COMMANDS = new Set<string>([
   'pickUp',
   'drop',
   'moveItem',
+  'takeItem',
+  'takeAll',
+  'putItem',
   'equip',
   'unequip',
   'openContainer',
@@ -106,6 +113,35 @@ export function applyItemCommand(
       const item = reachable(cmd.item);
       if (typeof item === 'string') return item;
       return move(item, cmd.to, cmd.count);
+    }
+    case 'takeItem': {
+      const item = reachable(cmd.item);
+      if (typeof item === 'string') return item;
+      if (item.loc !== cmd.container) return 'invalid-target';
+      return move(item, p.inventory, cmd.count);
+    }
+    case 'takeAll': {
+      const c = st.containers.get(cmd.container);
+      if (!c || (c.kind === 'world' && !c.searchedBy.includes(stableIdOf(w, eid))))
+        return 'no-item';
+      if (!canReach(w, eid, c.id)) return 'out-of-range';
+      if (c.id === p.inventory || isInside(st, c.id, p.inventory)) return 'invalid-target';
+      if (c.items.length === 0) return 'no-item';
+      const inv = st.containers.get(p.inventory)!;
+      let taken = 0;
+      for (const id of [...c.items]) {
+        const item = st.items.get(id);
+        if (!item || checkFits(w, eid, item, item.count, inv)) continue;
+        moveItem(w, item, inv, item.count);
+        taken++;
+      }
+      return taken > 0 ? undefined : 'no-space';
+    }
+    case 'putItem': {
+      const item = reachable(cmd.item);
+      if (typeof item === 'string') return item;
+      if (!isInside(st, item.loc, p.inventory)) return 'invalid-target';
+      return move(item, cmd.container, cmd.count);
     }
     case 'equip': {
       const item = reachable(cmd.item);

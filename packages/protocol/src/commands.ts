@@ -138,6 +138,34 @@ export interface MoveItemCommand extends CommandHeader {
   count?: number | undefined;
 }
 
+/**
+ * Takes an item (or `count` of a stack) out of `container` (reachable storage, ground pile or bag
+ * there) into the main inventory. Rejected with `no-space` when it does not fit the carry limit.
+ */
+export interface TakeItemCommand extends CommandHeader {
+  type: 'takeItem';
+  container: ContainerId;
+  item: ItemId;
+  count?: number | undefined;
+}
+
+/**
+ * Takes everything from `container` into the main inventory, in container order; items that do
+ * not fit (carry hard limit) stay. Rejected with `no-space` only when nothing could be taken.
+ */
+export interface TakeAllCommand extends CommandHeader {
+  type: 'takeAll';
+  container: ContainerId;
+}
+
+/** Puts a carried item (or `count` of a stack) into `container` (reachable, capacity checked). */
+export interface PutItemCommand extends CommandHeader {
+  type: 'putItem';
+  container: ContainerId;
+  item: ItemId;
+  count?: number | undefined;
+}
+
 /** Equips a reachable item (moved into the main inventory first) into `slot`. */
 export interface EquipCommand extends CommandHeader {
   type: 'equip';
@@ -371,6 +399,9 @@ export type Command =
   | PickUpCommand
   | DropCommand
   | MoveItemCommand
+  | TakeItemCommand
+  | TakeAllCommand
+  | PutItemCommand
   | EquipCommand
   | UnequipCommand
   | OpenContainerCommand

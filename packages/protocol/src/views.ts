@@ -155,6 +155,27 @@ export interface NearbyContainerView {
   z: number;
   /** This player searched it already (opening is instant). */
   searched: boolean;
+  /** Fill 0..1 (see `StorageMarkerView.fillPct`); always set by the sim. */
+  fillPct?: number;
+}
+
+/** Radius (tiles) of `SimViewPatch.storages`. */
+export const STORAGE_MARKER_TILES = 24;
+
+/**
+ * World storage (shelves, cabinets, fridges ...) for rendering how full it looks. `fillPct` 0..1 =
+ * contents weight / `capacityKg` (rounded to 0.05); before the first search it is the weight of
+ * the loot the search will generate (deterministic), so shelves look stocked from afar.
+ */
+export interface StorageMarkerView {
+  id: ContainerId;
+  type?: string;
+  x: number;
+  y: number;
+  z: number;
+  fillPct: number;
+  /** This player searched it already. */
+  searched: boolean;
 }
 
 /** Radius (tiles) of `SimViewPatch.groundPiles`. */
@@ -193,6 +214,13 @@ export interface SimViewPatch {
    * full list when it changes; opening still needs reach (`nearby`).
    */
   groundPiles?: GroundPileView[];
+  /**
+   * World storage within `STORAGE_MARKER_TILES` of the player, full list when any changes (fill
+   * after taking / putting, searched).
+   */
+  storages?: StorageMarkerView[];
+  /** Visible equipment of characters (local player for now, NPCs later), full list on change. */
+  characters?: CharacterView[];
   /** Current timed action; null = none. */
   action?: ActionView | null;
   /**
@@ -211,6 +239,34 @@ export interface SimViewPatch {
   openings?: OpeningView[];
   /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
   lures?: LureView[];
+}
+
+/** Weapon / hand pose class for attack and hold animations (from item data). */
+export const WEAPON_KINDS = [
+  'unarmed',
+  'blunt',
+  'blade',
+  'spear',
+  'firearm-short',
+  'firearm-long',
+  'item',
+] as const;
+export type WeaponKind = (typeof WEAPON_KINDS)[number];
+
+/**
+ * What a character visibly carries (render: model in hand / on the back, animation set). Melee
+ * `blade_short` / `blade_long` → `blade`, `improvised` → `blunt`; ranged `pistol` / `revolver` →
+ * `firearm-short`, `shotgun` / `rifle` → `firearm-long`; any other item in hand → `item`.
+ */
+export interface CharacterView {
+  stableId: number;
+  /** Content id in `hand_primary`, null = empty hand. */
+  equippedPrimary: string | null;
+  /** Content id in `back` (backpack, long gun), null = none. */
+  equippedBack: string | null;
+  weaponKind: WeaponKind;
+  /** The primary item takes both hands. */
+  twoHanded: boolean;
 }
 
 export interface LureView {

@@ -139,7 +139,7 @@ describe('createSimWorkerClient', () => {
     client.aim(20, 0.5);
     h.advance(1000);
     expect(client.tick).toBe(seen.at(-1)!.tick);
-    expect(seen.at(-1)!.x - x0).toBeCloseTo((client.tick * 3) / 20, 3);
+    expect(seen.at(-1)!.x - x0).toBeCloseTo(((client.tick - 1.5) * 3) / 20, 3); // − acceleration
     // Every snapshot buffer was handed back with a transfer list.
     const releases = h.toWorker.filter((m) => m.msg.kind === 'release');
     expect(releases.length).toBe(seen.length);
@@ -297,7 +297,16 @@ describe('survival over the worker protocol', () => {
     h.advance(100);
     const nearby = views.flatMap((v) => v.nearby ?? []);
     expect(nearby).toEqual([
-      { id: 1, kind: 'world', type: 'fixture:cabinet', x: 3, y: 2, z: 0, searched: false },
+      {
+        id: 1,
+        kind: 'world',
+        type: 'fixture:cabinet',
+        x: 3,
+        y: 2,
+        z: 0,
+        searched: false,
+        fillPct: expect.any(Number) as number,
+      },
     ]);
     const inv = views.find((v) => v.inventory)!.inventory!;
     expect(inv).toMatchObject({ container: 2, loadKg: 0, equipped: {} });

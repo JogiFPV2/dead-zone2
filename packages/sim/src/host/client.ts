@@ -76,6 +76,12 @@ export interface SimWorkerClient {
   pickUp(item: ItemId, count?: number): void;
   drop(item: ItemId, count?: number): void;
   moveItem(item: ItemId, to: ContainerId, count?: number): void;
+  /** Takes an item (or `count`) out of a container into the main inventory. */
+  takeItem(container: ContainerId, item: ItemId, count?: number): void;
+  /** Takes everything that fits out of a container. */
+  takeAll(container: ContainerId): void;
+  /** Puts a carried item (or `count`) into a container. */
+  putItem(container: ContainerId, item: ItemId, count?: number): void;
   equip(item: ItemId, slot: EquipSlot): void;
   unequip(slot: EquipSlot): void;
   /** Opens a container (first time for world storage: timed search). */
@@ -238,6 +244,11 @@ export function createSimWorkerClient(
     pickUp: (item, count) => cmd({ type: 'pickUp', item, ...(count ? { count } : {}) }),
     drop: (item, count) => cmd({ type: 'drop', item, ...(count ? { count } : {}) }),
     moveItem: (item, to, count) => cmd({ type: 'moveItem', item, to, ...(count ? { count } : {}) }),
+    takeItem: (container, item, count) =>
+      cmd({ type: 'takeItem', container, item, ...(count ? { count } : {}) }),
+    takeAll: (container) => cmd({ type: 'takeAll', container }),
+    putItem: (container, item, count) =>
+      cmd({ type: 'putItem', container, item, ...(count ? { count } : {}) }),
     equip: (item, slot) => cmd({ type: 'equip', item, slot }),
     unequip: (slot) => cmd({ type: 'unequip', slot }),
     openContainer: (container) => cmd({ type: 'openContainer', container }),

@@ -4,9 +4,12 @@ import { openingView } from '../openings/state.js';
 import {
   BODY_PARTS,
   GROUND_PILE_MARKER_TILES,
+  STORAGE_MARKER_TILES,
   VIEW_STATS,
   WOUND_KINDS,
+  type CharacterView,
   type ClockView,
+  type WeaponKind,
   type CombatView,
   type MoodleView,
   type PlayerId,
@@ -28,6 +31,7 @@ import type { SimWorld } from '../core/world.js';
 import {
   actionView,
   groundPilesView,
+  storagesView,
   inventoryView,
   nearbyView,
   openContainerView,
@@ -37,6 +41,7 @@ import { threatLevel } from '../ai/threat.js';
 import { meleeOf } from '../combat/system.js';
 import { capacityOf, firearmOf } from '../combat/firearms.js';
 import { defOf, maxCondition } from '../items/store.js';
+import type { ItemDef } from '../content/adapter.js';
 import { DEATH_CAUSES } from '../survival/state.js';
 import { bandageDirty, woundBleeding } from '../survival/wounds.js';
 
@@ -61,6 +66,44 @@ function combatView(w: SimWorld, eid: number): CombatView {
   }
   if (cb.reloadUntil[eid]) v.reloadUntil = cb.reloadUntil[eid];
   return v;
+}
+
+function weaponKind(def: ItemDef | undefined): WeaponKind {
+  if (!def) return 'unarmed';
+  if (def.kind === 'weapon_melee') {
+    const c = def.melee.category;
+    return c === 'blade_short' || c === 'blade_long' ? 'blade' : c === 'spear' ? 'spear' : 'blunt';
+  }
+  if (def.kind === 'weapon_ranged') {
+    const c = def.ranged.category;
+    return c === 'pistol' || c === 'revolver' ? 'firearm-short' : 'firearm-long';
+  }
+  return 'item';
+}
+
+/** Visible equipment of a player (hand_primary, back). */
+export function characterView(w: SimWorld, eid: number): CharacterView | undefined {
+  const st = w.items;
+  const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
+  if (!st || !p) return undefined;
+  const at = (slot: 'hand_primary' | 'back') => {
+    const id = p.slots.get(slot);
+    const item = id === undefined ? undefined : st.items.get(id);
+    return item ? defOf(st, item) : undefined;
+  };
+  const primary = at('hand_primary');
+  return {
+    stableId: w.c.StableId.value[eid] ?? 0,
+    equippedPrimary: primary?.id ?? null,
+    equippedBack: at('back')?.id ?? null,
+    weaponKind: weaponKind(primary),
+    twoHanded:
+      primary?.kind === 'weapon_melee'
+        ? primary.melee.twoHanded
+        : primary?.kind === 'weapon_ranged'
+          ? primary.ranged.twoHanded
+          : false,
+  };
 }
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;
@@ -97,6 +140,9 @@ export class ViewTracker {
   private readonly invContainers = new Map<number, string>();
   private openKey = '';
   private pilesKey = '';
+  private storagesKey = '';
+  private charactersKey = '';
+  private storagesVersion = -1;
   private nearbyKey = '';
   private actionKey = '';
   private threat: number | undefined;
@@ -234,6 +280,23 @@ export class ViewTracker {
         this.pilesKey = pilesKey;
         patch.groundPiles = piles;
       }
+    }
+    // Storage fill: on item changes, else twice a second (walking brings new ones into range).
+    if (w.items!.version !== this.storagesVersion || w.tick % 10 === 0) {
+      this.storagesVersion = w.items!.version;
+      const list = storagesView(w, eid, STORAGE_MARKER_TILES);
+      const key = JSON.stringify(list);
+      if (key !== this.storagesKey) {
+        if (this.storagesKey !== '' || list.length > 0) patch.storages = list;
+        this.storagesKey = key;
+      }
+    }
+    const ch = characterView(w, eid);
+    const chars = ch ? [ch] : [];
+    const charKey = JSON.stringify(chars);
+    if (charKey !== this.charactersKey) {
+      this.charactersKey = charKey;
+      patch.characters = chars;
     }
     const action = actionView(w, eid);
     const actionKey = JSON.stringify(action);

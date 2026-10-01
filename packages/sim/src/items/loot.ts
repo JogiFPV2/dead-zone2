@@ -120,6 +120,20 @@ export function generateLoot(st: ItemStore, c: ItemContainer, worldStartMinute: 
   }
 }
 
+/**
+ * Weight (kg) of the loot a first search of `c` will generate, without generating it (same
+ * derived RNG, so the result never changes); 0 for containers without a table.
+ */
+export function previewLootWeight(st: ItemStore, c: ItemContainer): number {
+  const table = lootTableFor(st, c);
+  if (!table) return 0;
+  let kg = 0;
+  rollTable(st, table, Rng.fromSeed(c.lootKey), 0, (def, count) => {
+    kg += st.content.items[def]!.weightKg * count;
+  });
+  return kg;
+}
+
 function rollTable(
   st: ItemStore,
   table: LootTableDef,

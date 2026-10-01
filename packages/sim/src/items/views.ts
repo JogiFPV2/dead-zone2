@@ -6,7 +6,9 @@ import type {
   InventoryView,
   ItemView,
   NearbyContainerView,
+  StorageMarkerView,
 } from '@deadzone/protocol';
+import { previewLootWeight } from './loot.js';
 import { ACTION_KINDS, actionPart } from '../actions/queue.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
@@ -20,7 +22,72 @@ import {
   tileInReach,
 } from './inventory.js';
 import { freshness } from './spoilage.js';
-import { containerWeight, defOf, itemWeight, tileKey, type ItemStore } from './store.js';
+import {
+  containerWeight,
+  defOf,
+  itemWeight,
+  tileKey,
+  type ItemContainer,
+  type ItemStore,
+} from './store.js';
+
+/** Ground piles without a capacity count as full at this many stacks. */
+const PILE_FULL_STACKS = 10;
+const previewCache = new WeakMap<ItemStore, Map<number, number>>();
+
+/**
+ * Fill 0..1 rounded to 0.05: contents weight / capacity (ground piles: stacks / 10). World
+ * storage before its loot is generated: the weight the first search will generate.
+ */
+export function fillPct(st: ItemStore, c: ItemContainer): number {
+  let f: number;
+  if (c.capacityKg === Infinity) f = c.items.length / PILE_FULL_STACKS;
+  else {
+    let kg: number;
+    if (c.lootDone) kg = containerWeight(st, c.id);
+    else {
+      let cache = previewCache.get(st);
+      if (!cache) previewCache.set(st, (cache = new Map<number, number>()));
+      kg = cache.get(c.id) ?? previewLootWeight(st, c);
+      cache.set(c.id, kg);
+      kg += containerWeight(st, c.id);
+    }
+    f = c.capacityKg > 0 ? kg / c.capacityKg : 0;
+  }
+  return Math.round(Math.min(1, f) * 20) / 20;
+}
+
+/** World storage on the player's floor within `radius` tiles (fill markers), by id. */
+export function storagesView(w: SimWorld, eid: number, radius: number): StorageMarkerView[] {
+  const st = w.items;
+  if (!st) return [];
+  const { Position } = w.c;
+  const px = Position.x[eid] ?? 0;
+  const py = Position.y[eid] ?? 0;
+  const z = Position.z[eid] ?? 0;
+  const sid = stableIdOf(w, eid);
+  const out: StorageMarkerView[] = [];
+  for (const ids of st.worldByTile.values()) {
+    for (const id of ids) {
+      const c = st.containers.get(id);
+      if (!c || c.z !== z) continue;
+      const dx = c.x + 0.5 - px;
+      const dy = c.y + 0.5 - py;
+      if (dx * dx + dy * dy > radius * radius) continue;
+      const v: StorageMarkerView = {
+        id,
+        x: c.x,
+        y: c.y,
+        z: c.z,
+        fillPct: fillPct(st, c),
+        searched: c.searchedBy.includes(sid),
+      };
+      if (c.type >= 0) v.type = st.content.containerTypes[c.type]!.id;
+      out.push(v);
+    }
+  }
+  return out.sort((a, b) => a.id - b.id);
+}
 
 const kg = (v: number): number => Math.round(v * 1000) / 1000;
 
@@ -137,6 +204,7 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
           y,
           z,
           searched: c.kind !== 'world' || c.searchedBy.includes(sid),
+          fillPct: fillPct(st, c),
         };
         if (c.type >= 0) v.type = st.content.containerTypes[c.type]!.id;
         out.push(v);
