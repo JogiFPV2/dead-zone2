@@ -37,6 +37,14 @@ export interface CombatConfig {
   firearms: {
     hitFalloffAtRange: number;
     spread: Record<'pistol' | 'revolver' | 'shotgun' | 'rifle', number>;
+    spreadModifiers: {
+      moving: number;
+      running: number;
+      exhaustion: number;
+      fatigue: number;
+      panic: number;
+      max: number;
+    };
     projectileRadiusTiles: number;
     magazineLoadSecPerRound: number;
     accuracyPerSkillLevel: number;
@@ -65,6 +73,7 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   firearms: {
     hitFalloffAtRange: 0.6,
     spread: { pistol: 0.03, revolver: 0.03, shotgun: 0.12, rifle: 0.015 },
+    spreadModifiers: { moving: 0.8, running: 1, exhaustion: 0.6, fatigue: 0.4, panic: 0.6, max: 4 },
     projectileRadiusTiles: 0.15,
     magazineLoadSecPerRound: 0.4,
     accuracyPerSkillLevel: 0.04,

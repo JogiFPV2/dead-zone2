@@ -39,14 +39,19 @@ function arm(s: Sim, gun: string, extra: [string, number][]): void {
   s.drainEvents();
 }
 
+/** Reloads until `done` (single-round loading takes several steps); returns the ticks taken. */
 function reload(s: Sim): number {
   s.drainEvents();
   send(s, { type: 'reload' });
   s.step();
   const started = eventsOf(s.drainEvents(), 'reload')[0]!;
   expect(started.phase).toBe('started');
-  runTicks(s, started.untilTick - s.tick + 1);
-  return started.untilTick - started.tick;
+  for (let i = 0; i < 2000; i++) {
+    s.step();
+    const done = eventsOf(s.drainEvents(), 'reload').find((e) => e.phase === 'done');
+    if (done) return done.tick - started.tick;
+  }
+  throw new Error('reload never finished');
 }
 
 const roundsLeft = (s: Sim, id: string) => {
@@ -59,7 +64,7 @@ const roundsLeft = (s: Sim, id: string) => {
 describe('firearms: pump shotgun (internal feed)', () => {
   const r = ranged('base:pump-shotgun');
 
-  it('empty gun: attack rejected no-ammo; reload takes reloadSec and loads from carried shells', () => {
+  it('empty gun: attack rejected no-ammo; reload loads one shell per loadSecPerRound step', () => {
     const s = sim();
     arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 8]]);
     send(s, { type: 'attack' });
@@ -71,21 +76,35 @@ describe('firearms: pump shotgun (internal feed)', () => {
       capacity: 5,
       jammed: false,
     });
+    const step = Math.round(r.loadSecPerRound! * 20);
     send(s, { type: 'reload' });
     s.step();
-    const ev = s.drainEvents();
-    const started = eventsOf(ev, 'reload')[0]!;
-    expect(started.untilTick - started.tick).toBe(Math.round(r.reloadSec * 20));
-    // Busy while reloading.
-    send(s, { type: 'attack' });
-    s.step();
-    expect(rejectedReasons(s)).toEqual(['busy']);
-    runTicks(s, started.untilTick - s.tick + 1);
-    expect(eventsOf(s.drainEvents(), 'reload')).toEqual([
-      expect.objectContaining({ phase: 'done', ammo: 5 }),
-    ]);
+    const started = eventsOf(s.drainEvents(), 'reload')[0]!;
+    expect(started).toMatchObject({ phase: 'started', kind: 'single', ammo: 0 });
+    expect(started.untilTick - started.tick).toBe(step);
+    expect(s.drainView()?.combat).toMatchObject({
+      reloadKind: 'single',
+      reloadStartTick: started.tick,
+      reloadUntil: started.untilTick,
+      // The view is taken after the tick: one tick into the round.
+      reloadProgress: Math.round((1 / step) * 1000) / 1000,
+    });
+    // Each round is its own step: ammo grows by one per `round` event.
+    const rounds: number[] = [];
+    let done = -1;
+    for (let i = 0; i < step * 6 && done < 0; i++) {
+      s.step();
+      for (const e of eventsOf(s.drainEvents(), 'reload')) {
+        if (e.phase === 'round') {
+          rounds.push(e.ammo);
+          expect(s.drainView()?.combat?.ammo).toBe(e.ammo);
+        }
+        if (e.phase === 'done') done = e.tick;
+      }
+    }
+    expect(rounds).toEqual([1, 2, 3, 4, 5]);
+    expect(done - started.tick).toBe(5 * step);
     expect(roundsLeft(s, 'base:shotgun-shell')).toBe(3);
-    expect(s.drainView()?.combat?.ammo).toBe(5);
     // Full: reload is rejected.
     send(s, { type: 'reload' });
     s.step();
@@ -122,9 +141,15 @@ describe('firearms: pump shotgun (internal feed)', () => {
         reload(s);
         s.drainEvents();
         send(s, { type: 'aim', x: 30, y: 10.5 });
-        send(s, { type: 'attack' });
-        s.step();
-        hits += eventsOf(s.drainEvents(), 'shot')[0]!.rays.filter((x) => x.hit !== 0).length;
+        // A zombie in reach may stagger the player: retry until the shot goes off.
+        for (let t = 0; t < 40; t++) {
+          send(s, { type: 'attack' });
+          s.step();
+          const shot = eventsOf(s.drainEvents(), 'shot')[0];
+          if (!shot) continue;
+          hits += shot.rays.filter((x) => x.hit !== 0).length;
+          break;
+        }
       }
       return hits;
     };
@@ -176,6 +201,267 @@ describe('firearms: pump shotgun (internal feed)', () => {
     expect(b.drainView()?.combat).toMatchObject({ weapon: 'base:pump-shotgun', ammo: 5 });
     s.step();
     expect(b.hash()).toBe(s.hash());
+  });
+});
+
+describe('firearms: single-round loading (pump shotgun)', () => {
+  const step = Math.round(ranged('base:pump-shotgun').loadSecPerRound! * 20);
+
+  it('reloadProgress is the progress of the round being loaded and resets per round', () => {
+    const s = sim();
+    arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+    send(s, { type: 'reload' });
+    s.step();
+    s.drainView();
+    runTicks(s, step / 2);
+    const mid = s.drainView()!.combat!;
+    expect(mid.reloadKind).toBe('single');
+    expect(mid.reloadProgress).toBeCloseTo((s.tick - mid.reloadStartTick!) / step, 3);
+    expect(mid.reloadProgress).toBeGreaterThan(0.3);
+    expect(mid.reloadProgress).toBeLessThan(0.7);
+    // Past the first round: new step, progress back near 0, ammo 1.
+    runTicks(s, step / 2 + 1);
+    const next = s.drainView()!.combat!;
+    expect(next.ammo).toBe(1);
+    expect(next.reloadProgress).toBeLessThan(0.2);
+    expect(next.reloadUntil! - next.reloadStartTick!).toBe(step);
+  });
+
+  it('attack interrupts the loading: cancelled, shot fires with the rounds loaded so far', () => {
+    const s = sim();
+    arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+    send(s, { type: 'reload' });
+    s.step();
+    runTicks(s, step * 2 + 2);
+    expect(s.drainView()?.combat?.ammo).toBe(2);
+    s.drainEvents();
+    send(s, { type: 'attack' });
+    s.step();
+    const ev = s.drainEvents();
+    expect(eventsOf(ev, 'reload')).toEqual([
+      expect.objectContaining({ phase: 'cancelled', kind: 'single', ammo: 2 }),
+    ]);
+    expect(eventsOf(ev, 'shot')[0]).toMatchObject({ ammo: 1 });
+    const v = s.drainView()!.combat!;
+    expect(v.reloadUntil).toBeUndefined();
+    expect(v.reloadKind).toBeUndefined();
+    expect(v.reloadProgress).toBeUndefined();
+    // Nothing else loads afterwards; the 3 shells stay carried.
+    runTicks(s, step * 3);
+    expect(eventsOf(s.drainEvents(), 'reload')).toEqual([]);
+    expect(roundsLeft(s, 'base:shotgun-shell')).toBe(3);
+  });
+
+  it('attack on an empty gun mid-load cancels and is rejected no-ammo; stops when out of shells', () => {
+    const s = sim();
+    arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 2]]);
+    send(s, { type: 'reload' });
+    s.step();
+    s.drainEvents();
+    send(s, { type: 'attack' });
+    s.step();
+    const ev = s.drainEvents();
+    expect(ev.flatMap((e) => (e.type === 'commandRejected' ? [e.reason] : []))).toEqual([
+      'no-ammo',
+    ]);
+    expect(eventsOf(ev, 'reload')).toEqual([
+      expect.objectContaining({ phase: 'cancelled', ammo: 0 }),
+    ]);
+    // Only 2 shells carried: two rounds, then done.
+    send(s, { type: 'reload' });
+    s.step();
+    runTicks(s, step * 4);
+    expect(
+      eventsOf(s.drainEvents(), 'reload').map((e) => [e.phase, e.ammo, e.untilTick > 0]),
+    ).toEqual([
+      ['started', 0, true],
+      ['round', 1, true],
+      ['round', 2, false],
+      ['done', 2, false],
+    ]);
+  });
+
+  it('save/load mid-load keeps the step and the hash', () => {
+    const s = sim();
+    arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+    send(s, { type: 'reload' });
+    s.step();
+    runTicks(s, step + 3);
+    const b = sim([], 3, s.save());
+    for (let i = 0; i < step * 5; i++) {
+      s.step();
+      b.step();
+    }
+    expect(b.hash()).toBe(s.hash());
+    expect(b.drainView()?.combat?.ammo).toBe(5);
+  });
+});
+
+describe('firearms: whole reload and unjam progress', () => {
+  it('double-barrel: kind magazine, busy, reloadProgress 0..1 over reloadSec', () => {
+    const r = ranged('base:double-barrel-shotgun');
+    expect(r.loadSecPerRound).toBeUndefined();
+    const s = sim();
+    arm(s, 'base:double-barrel-shotgun', [['base:shotgun-shell', 4]]);
+    send(s, { type: 'reload' });
+    s.step();
+    const started = eventsOf(s.drainEvents(), 'reload')[0]!;
+    const total = Math.round(r.reloadSec * 20);
+    expect(started).toMatchObject({ kind: 'magazine', untilTick: started.tick + total });
+    send(s, { type: 'attack' });
+    s.step();
+    expect(rejectedReasons(s)).toEqual(['busy']);
+    runTicks(s, total / 2 - 1);
+    const v = s.drainView()!.combat!;
+    expect(v.reloadKind).toBe('magazine');
+    expect(v.reloadProgress).toBeCloseTo(0.5, 1);
+    runTicks(s, total);
+    expect(eventsOf(s.drainEvents(), 'reload').at(-1)).toMatchObject({ phase: 'done', ammo: 2 });
+  });
+
+  it('jammed pistol: reload is kind unjam with progress, clears the jam', () => {
+    const pd = content.items['base:pistol']!;
+    if (pd.kind !== 'weapon_ranged') throw new Error('pistol');
+    const jc = {
+      ...content,
+      items: { ...content.items, [pd.id]: { ...pd, ranged: { ...pd.ranged, jamChance: 1 } } },
+    };
+    const s = createSim({
+      seed: 3,
+      map: buildMap({ width: 64, height: 64 }),
+      spawn: { x: 10.5, y: 10.5 },
+      content: jc,
+      dev: true,
+      clockStart: { day: 1, hour: 12, minute: 0 },
+    });
+    arm(s, 'base:pistol', [
+      ['base:pistol-magazine', 1],
+      ['base:ammo-9mm', 13],
+    ]);
+    send(s, { type: 'loadMagazine', item: findItem(s, 'base:pistol-magazine')!.id });
+    s.step();
+    expect(eventsOf(s.drainEvents(), 'reload')[0]).toMatchObject({ kind: 'loadMagazine' });
+    runTicks(s, 200);
+    reload(s);
+    send(s, { type: 'attack' });
+    s.step();
+    expect(eventsOf(s.drainEvents(), 'shot')[0]).toMatchObject({ jammed: true });
+    expect(s.drainView()?.combat?.jammed).toBe(true);
+    send(s, { type: 'reload' });
+    s.step();
+    const st = eventsOf(s.drainEvents(), 'reload')[0]!;
+    expect(st).toMatchObject({ phase: 'started', kind: 'unjam' });
+    runTicks(s, Math.floor((st.untilTick - st.tick) / 4));
+    const v = s.drainView()!.combat!;
+    expect(v.reloadKind).toBe('unjam');
+    expect(v.reloadProgress).toBeGreaterThan(0);
+    expect(v.reloadProgress).toBeLessThan(0.5);
+    runTicks(s, st.untilTick - s.tick + 1);
+    expect(eventsOf(s.drainEvents(), 'reload').at(-1)).toMatchObject({
+      phase: 'done',
+      kind: 'unjam',
+    });
+    expect(s.drainView()?.combat?.jammed).toBe(false);
+  });
+});
+
+describe('firearms: effective spread', () => {
+  const fs = content.worldSettings.firearms;
+
+  /**
+   * Max |dy/dx| of the pellets from the aim direction (+x) over a few shots: a ray is
+   * (1, off) normalized, so this is the largest |off| (≤ spread).
+   */
+  function maxPelletOffset(s: Sim, shots: number): number {
+    let max = 0;
+    for (let i = 0; i < shots; i++) {
+      runTicks(s, 40);
+      s.drainEvents();
+      send(s, { type: 'attack' });
+      s.step();
+      const shot = eventsOf(s.drainEvents(), 'shot')[0]!;
+      for (const ray of shot.rays) {
+        max = Math.max(max, Math.abs(ray.toY - shot.y) / (ray.toX - shot.x));
+      }
+    }
+    return max;
+  }
+
+  it('view spread = base standing; grows walking, more running, with exhaustion and fatigue', () => {
+    const s = sim();
+    arm(s, 'base:pistol', []);
+    const base = fs.spread.pistol;
+    expect(s.drainView()?.combat?.spread).toBeCloseTo(base, 4);
+    send(s, { type: 'move', dx: 0, dy: 1, gait: 'walk' });
+    runTicks(s, 10);
+    const walking = s.drainView()!.combat!.spread!;
+    expect(walking).toBeCloseTo(base * (1 + fs.spreadModifiers.moving), 3);
+    send(s, { type: 'move', dx: 0, dy: 1, gait: 'run' });
+    runTicks(s, 10);
+    const running = s.drainView()!.combat!.spread!;
+    expect(running).toBeGreaterThan(walking);
+    expect(running).toBeLessThanOrEqual(base * fs.spreadModifiers.max + 1e-4);
+    send(s, { type: 'move', dx: 0, dy: 0 });
+    runTicks(s, 10);
+    expect(s.drainView()!.combat!.spread).toBeCloseTo(base, 4);
+    send(s, { type: 'debugStat', stat: 'endurance', value: 0 });
+    send(s, { type: 'debugStat', stat: 'fatigue', value: 100 });
+    s.step();
+    const tired = s.drainView()!.combat!.spread!;
+    expect(tired).toBeGreaterThan(base * (1 + fs.spreadModifiers.exhaustion));
+    expect(tired).toBeLessThanOrEqual(
+      base * (1 + fs.spreadModifiers.exhaustion + fs.spreadModifiers.fatigue) + 1e-4,
+    );
+    // Melee weapon / bare hands: no spread field.
+    send(s, { type: 'unequip', slot: 'hand_primary' });
+    s.step();
+    expect(s.drainView()?.combat?.spread).toBeUndefined();
+  });
+
+  it('the shot uses the effective spread: pellets stay within it, wider when exhausted', () => {
+    const run = (tired: boolean): number => {
+      const s = sim([], 5);
+      arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 30]]);
+      if (tired) {
+        send(s, { type: 'debugStat', stat: 'endurance', value: 0 });
+        send(s, { type: 'debugStat', stat: 'fatigue', value: 100 });
+        s.step();
+      }
+      reload(s);
+      s.drainView();
+      if (tired) {
+        send(s, { type: 'debugStat', stat: 'endurance', value: 0 });
+        s.step();
+      }
+      const spread = s.drainView()?.combat?.spread ?? fs.spread.shotgun;
+      const off = maxPelletOffset(s, 4);
+      // Ray ends are rounded to 0.01 tiles over ≥ 10 tiles → small tolerance.
+      expect(off).toBeLessThanOrEqual(spread + 2e-3);
+      return off;
+    };
+    const calm = run(false);
+    const tired = run(true);
+    expect(calm).toBeLessThanOrEqual(fs.spread.shotgun + 2e-3);
+    expect(tired).toBeGreaterThan(fs.spread.shotgun + 2e-3);
+  });
+
+  it('is deterministic: same seed and inputs → same rays and spread', () => {
+    const go = () => {
+      const s = sim([{ x: 16.5, y: 11 }], 9);
+      arm(s, 'base:pump-shotgun', [['base:shotgun-shell', 5]]);
+      reload(s);
+      send(s, { type: 'move', dx: 0, dy: 1, gait: 'run' });
+      runTicks(s, 6);
+      send(s, { type: 'attack' });
+      s.step();
+      return {
+        rays: eventsOf(s.drainEvents(), 'shot')[0]?.rays,
+        spread: s.drainView()?.combat?.spread,
+      };
+    };
+    const a = go();
+    expect(a.rays).toHaveLength(ranged('base:pump-shotgun').projectiles);
+    expect(go()).toEqual(a);
   });
 });
 

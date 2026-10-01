@@ -33,6 +33,12 @@ export const RangedStatsSchema = z.strictObject({
   /** Śruciny na strzał (strzelba > 1). */
   projectiles: z.number().int().min(1).default(1),
   reloadSec: RealSecondsSchema,
+  /**
+   * Ładowanie po jednym naboju (tylko `feed.type = internal`, np. pompka): sekundy na nabój,
+   * każdy nabój to osobny krok (przerywa go strzał). Brak = całość naraz po `reloadSec`.
+   * Usuwanie zacięcia zawsze trwa `reloadSec`.
+   */
+  loadSecPerRound: RealSecondsSchema.optional(),
   jamChance: FractionSchema.default(0),
   shotNoise: NoiseSchema,
   twoHanded: z.boolean().default(false),

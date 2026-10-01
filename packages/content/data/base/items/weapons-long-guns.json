@@ -15,6 +15,7 @@
       "accuracy": 0.7,
       "shotsPerSec": 0.9,
       "reloadSec": 5.5,
+      "loadSecPerRound": 0.8,
       "projectiles": 8,
       "twoHanded": true,
       "shotNoise": { "radiusTiles": 70, "volume": 1 },
@@ -59,6 +60,7 @@
       "accuracy": 0.7,
       "shotsPerSec": 0.7,
       "reloadSec": 5,
+      "loadSecPerRound": 0.9,
       "twoHanded": true,
       "shotNoise": { "radiusTiles": 90, "volume": 1 },
       "durability": { "max": 900, "lossChancePerUse": 0.04 }

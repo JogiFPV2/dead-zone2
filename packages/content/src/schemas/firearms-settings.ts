@@ -20,6 +20,22 @@ export const FirearmsSettingsSchema = z
         rifle: spread.default(0.015),
       })
       .prefault({}),
+    /**
+     * Efektywny rozrzut = `spread[kategoria]` × min(`max`, 1 + `moving` × ruch + `running` × bieg
+     * + `exhaustion` × (1 − wytrzymałość/100) + `fatigue` × zmęczenie/100 + `panic` × panika/100).
+     * Ruch = prędkość / prędkość chodu (0..1), bieg = to samo przy chodzie `run` (dokłada się do
+     * ruchu). Ten sam rozrzut idzie do strzału i do widoku `combat.spread`.
+     */
+    spreadModifiers: z
+      .strictObject({
+        moving: z.number().min(0).max(10).default(0.8),
+        running: z.number().min(0).max(10).default(1),
+        exhaustion: z.number().min(0).max(10).default(0.6),
+        fatigue: z.number().min(0).max(10).default(0.4),
+        panic: z.number().min(0).max(10).default(0.6),
+        max: z.number().min(1).max(20).default(4),
+      })
+      .prefault({}),
     /** Promień pocisku przy sprawdzaniu trafienia (dodawany do promienia zombie). */
     projectileRadiusTiles: TilesSchema.default(0.15),
     /** Ładowanie magazynka: sekundy na nabój. */

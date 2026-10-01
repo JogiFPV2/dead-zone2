@@ -1,6 +1,6 @@
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
-import type { CharacterProfileView } from './views.js';
+import type { CharacterProfileView, ReloadKind } from './views.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -232,16 +232,22 @@ export type SimEvent =
       ammo: number;
       jammed: boolean;
     }
-  /** Reload / magazine loading started (`untilTick`) or finished (`done`, `ammo` loaded). */
+  /**
+   * Reload / magazine loading started (`untilTick`) or finished (`done`, `ammo` loaded).
+   * Single-round loading (`kind: 'single'`): `started` (untilTick = end of the first round), one
+   * `round` per loaded round (`ammo` = rounds in the gun now, `untilTick` = end of the next round,
+   * 0 on the last), then `done`; `attack` interrupts it → `cancelled` (rounds loaded so far stay).
+   */
   | {
       type: 'reload';
       tick: number;
       playerId: PlayerId;
       item: ItemId;
       def: string;
-      phase: 'started' | 'done' | 'cancelled';
+      phase: 'started' | 'round' | 'done' | 'cancelled';
       untilTick: number;
       ammo: number;
+      kind: ReloadKind;
     }
   /** A thrown item landed at (x, y). */
   | {

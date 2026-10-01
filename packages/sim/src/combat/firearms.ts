@@ -1,4 +1,10 @@
-import type { Command, CommandRejectReason } from '@deadzone/protocol';
+import {
+  GAITS,
+  RELOAD_KINDS,
+  type Command,
+  type CommandRejectReason,
+  type ReloadKind,
+} from '@deadzone/protocol';
 import { emitNoise } from '../ai/noise.js';
 import type { AiWorld } from '../ai/state.js';
 import { secToTicks } from '../ai/zombies.js';
@@ -18,7 +24,7 @@ import { Pen, penaltyMul } from '../survival/penalties.js';
 import { addXp, skillLevel } from '../progress/skills.js';
 import type { TileGrid } from '../world/grid.js';
 import { lineOfSight } from '../world/los.js';
-import type { CombatWorld } from './state.js';
+import { RK, type CombatWorld } from './state.js';
 import { damageZombie } from './system.js';
 
 type RangedDef = Extract<ItemDef, { kind: 'weapon_ranged' }>;
@@ -80,6 +86,94 @@ function bestMagazine(w: SimWorld, eid: number, magId: string): ItemInstance | u
   return best;
 }
 
+/** Single-round loading step of the gun (ticks before the action-speed penalty), 0 = whole at once. */
+function roundLoadSec(def: RangedDef): number {
+  const r = def.ranged;
+  return r.feed.type === 'internal' && r.loadSecPerRound !== undefined && r.loadSecPerRound > 0
+    ? r.loadSecPerRound
+    : 0;
+}
+
+/** Reload time × skill (`base:reloading`) ÷ action-speed penalty → ticks. */
+function reloadTicks(
+  w: SimWorld,
+  cb: CombatWorld,
+  eid: number,
+  sec: number,
+  skill: boolean,
+): number {
+  const speed = Math.max(0.1, penaltyMul(w, eid, Pen.action));
+  const red = skill
+    ? cb.cfg.firearms.reloadTimeReductionPerLevel * skillLevel(w, eid, 'base:reloading')
+    : 0;
+  return secToTicks((sec * Math.max(0.5, 1 - red)) / speed);
+}
+
+const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+/**
+ * Effective spread (rad) of the firearm `def` held by `eid` right now: category base ×
+ * min(max, 1 + moving × move + running × run + exhaustion × (1 − endurance) + fatigue + panic)
+ * (`worldSettings.firearms.spreadModifiers`). Move = speed / walking speed (0..1, from the
+ * velocity of the last movement step); run = the same while the effective gait is `run`.
+ * Used by `fire` and by the view `combat.spread`.
+ */
+export function effectiveSpread(w: SimWorld, cb: CombatWorld, eid: number, def: RangedDef): number {
+  const fc = cb.cfg.firearms;
+  const m = fc.spreadModifiers;
+  const base = fc.spread[def.ranged.category];
+  const { Velocity, MoveStats, MoveIntent } = w.c;
+  const vx = Velocity.x[eid] ?? 0;
+  const vy = Velocity.y[eid] ?? 0;
+  const walk = MoveStats.speedPerTick[eid] ?? 0;
+  const move = walk > 0 ? clamp01(Math.sqrt(vx * vx + vy * vy) / walk) : 0;
+  const running = GAITS[MoveIntent.gait[eid] ?? 1] === 'run' ? move : 0;
+  let mul = 1 + m.moving * move + m.running * running;
+  const s = w.survival;
+  if (s) {
+    mul += m.exhaustion * clamp01(1 - (s.vitals.endurance[eid] ?? 100) / 100);
+    mul += m.fatigue * clamp01((s.vitals.fatigue[eid] ?? 0) / 100);
+    mul += m.panic * clamp01((s.vitals.panic[eid] ?? 0) / 100);
+  }
+  return Math.fround(base * Math.min(m.max, mul));
+}
+
+/** Reload kind of `eid` (undefined: none in progress). */
+export function reloadKindOf(cb: CombatWorld, eid: number): ReloadKind | undefined {
+  const k = cb.reloadKind[eid] ?? 0;
+  return cb.reloadUntil[eid] && k > 0 ? RELOAD_KINDS[k - 1] : undefined;
+}
+
+/** Progress 0..1 of the current reload step at `tick` (undefined: none). */
+export function reloadProgressOf(cb: CombatWorld, eid: number, tick: number): number | undefined {
+  const until = cb.reloadUntil[eid] ?? 0;
+  if (!until) return undefined;
+  const start = cb.reloadStart[eid] ?? 0;
+  if (until <= start) return 1;
+  return clamp01((tick - start) / (until - start));
+}
+
+function clearReload(cb: CombatWorld, eid: number): void {
+  cb.reloadUntil[eid] = 0;
+  cb.reloadItem[eid] = 0;
+  cb.reloadStart[eid] = 0;
+  cb.reloadKind[eid] = RK.none;
+}
+
+/**
+ * `attack` interrupts single-round loading (rounds loaded so far stay); called before the
+ * shot checks, so the shot then goes through with what is loaded.
+ */
+export function interruptSingleLoad(w: SimWorld, eid: number): void {
+  const cb = w.ai?.combat;
+  const st = w.items;
+  if (!cb || !st || cb.reloadKind[eid] !== RK.single || (cb.reloadUntil[eid] ?? 0) <= w.tick)
+    return;
+  const item = st.items.get(cb.reloadItem[eid] ?? 0);
+  clearReload(cb, eid);
+  if (item) reloadEvent(w, eid, item, 'cancelled', 0, RK.single);
+}
+
 /** `attack` with a firearm: checks before queueing the shot. */
 export function canShoot(w: SimWorld, eid: number): CommandRejectReason | undefined {
   const g = firearmOf(w, eid);
@@ -95,8 +189,9 @@ function reloadEvent(
   w: SimWorld,
   eid: number,
   item: ItemInstance,
-  phase: 'started' | 'done' | 'cancelled',
+  phase: 'started' | 'round' | 'done' | 'cancelled',
   untilTick: number,
+  kind: number,
 ): void {
   w.events.push({
     type: 'reload',
@@ -107,6 +202,7 @@ function reloadEvent(
     phase,
     untilTick,
     ammo: item.uses,
+    kind: RELOAD_KINDS[kind - 1] ?? 'magazine',
   });
 }
 
@@ -121,9 +217,9 @@ export function applyFirearmCommand(
   if (!st || !cb || !playerItems(w, eid)) return 'invalid-state';
   if (w.survival?.asleep[eid]) return 'invalid-state';
   if ((cb.reloadUntil[eid] ?? 0) > w.tick) return 'busy';
-  const speed = Math.max(0.1, penaltyMul(w, eid, Pen.action));
   let item: ItemInstance;
-  let sec: number;
+  let ticks: number;
+  let kind: number;
   if (cmd.type === 'reload') {
     const g = firearmOf(w, eid);
     if (!g) return 'invalid-target';
@@ -135,8 +231,9 @@ export function applyFirearmCommand(
       if (!jammed && (room <= 0 || countOf(carriedOf(w, eid, g.def.ranged.ammo)) === 0))
         return room <= 0 ? 'invalid-state' : 'no-ammo';
     } else if (!jammed && !bestMagazine(w, eid, feed.magazine)) return 'no-ammo';
-    const red = cb.cfg.firearms.reloadTimeReductionPerLevel * skillLevel(w, eid, 'base:reloading');
-    sec = g.def.ranged.reloadSec * Math.max(0.5, 1 - red);
+    const perRound = roundLoadSec(g.def);
+    kind = jammed ? RK.unjam : perRound > 0 ? RK.single : RK.magazine;
+    ticks = reloadTicks(w, cb, eid, kind === RK.single ? perRound : g.def.ranged.reloadSec, true);
   } else {
     const found = st.items.get(cmd.item);
     const p = playerItems(w, eid)!;
@@ -148,12 +245,28 @@ export function applyFirearmCommand(
     const have = countOf(carriedOf(w, eid, def.magazine.ammo));
     if (have === 0) return 'no-ammo';
     item = found;
-    sec = Math.min(room, have) * cb.cfg.firearms.magazineLoadSecPerRound;
+    const sec = Math.min(room, have) * cb.cfg.firearms.magazineLoadSecPerRound;
+    ticks = reloadTicks(w, cb, eid, sec, false);
+    kind = RK.loadMagazine;
   }
-  cb.reloadUntil[eid] = w.tick + secToTicks(sec / speed);
-  cb.reloadItem[eid] = item.id;
-  reloadEvent(w, eid, item, 'started', cb.reloadUntil[eid] ?? 0);
+  startStep(cb, eid, item, w.tick, ticks, kind);
+  reloadEvent(w, eid, item, 'started', cb.reloadUntil[eid] ?? 0, kind);
   return undefined;
+}
+
+function startStep(
+  cb: CombatWorld,
+  eid: number,
+  item: ItemInstance,
+  tick: number,
+  ticks: number,
+  kind: number,
+): void {
+  cb.reloadStart[eid] = tick;
+  // At least one tick, so a step always shows up as "in progress".
+  cb.reloadUntil[eid] = tick + Math.max(1, ticks);
+  cb.reloadItem[eid] = item.id;
+  cb.reloadKind[eid] = kind;
 }
 
 /** Finishes reloads due this tick (combat step). */
@@ -163,29 +276,51 @@ export function reloadSystem(w: SimWorld, cb: CombatWorld): void {
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
     const until = cb.reloadUntil[eid] ?? 0;
     if (until === 0 || w.tick < until) continue;
-    cb.reloadUntil[eid] = 0;
+    const kind = cb.reloadKind[eid] || RK.magazine;
     const item = st.items.get(cb.reloadItem[eid] ?? 0);
-    cb.reloadItem[eid] = 0;
+    clearReload(cb, eid);
     if (!item) continue;
     const def = defOf(st, item);
     const p = playerItems(w, eid);
     if (!p || w.survival?.dead[eid]) continue;
     if (def.kind === 'magazine') {
       if (!carriedItems(st, p.inventory).includes(item)) {
-        reloadEvent(w, eid, item, 'cancelled', 0);
+        reloadEvent(w, eid, item, 'cancelled', 0, kind);
         continue;
       }
       fillMagazine(w, eid, item, def);
-      reloadEvent(w, eid, item, 'done', 0);
+      reloadEvent(w, eid, item, 'done', 0, kind);
       continue;
     }
     const g = firearmOf(w, eid);
     if (!g || g.item !== item) {
-      reloadEvent(w, eid, item, 'cancelled', 0);
+      reloadEvent(w, eid, item, 'cancelled', 0, kind);
       continue;
     }
     st.jammed.delete(item.id);
     const feed = g.def.ranged.feed;
+    if (kind === RK.single && feed.type === 'internal') {
+      const rounds = carriedOf(w, eid, g.def.ranged.ammo);
+      const took = takeRounds(w, rounds, item.uses < feed.capacity ? 1 : 0);
+      item.uses += took;
+      st.version++;
+      const more = item.uses < feed.capacity && countOf(carriedOf(w, eid, g.def.ranged.ammo)) > 0;
+      if (more) {
+        const ticks = reloadTicks(w, cb, eid, roundLoadSec(g.def), true);
+        startStep(cb, eid, item, w.tick, ticks, RK.single);
+      }
+      if (took > 0) reloadEvent(w, eid, item, 'round', cb.reloadUntil[eid] ?? 0, kind);
+      if (more) continue;
+      addXp(w, eid, 'base:reloading', cb.cfg.firearms.xpPerReload);
+      reloadEvent(w, eid, item, 'done', 0, kind);
+      continue;
+    }
+    if (kind === RK.unjam && roundLoadSec(g.def) > 0) {
+      // Single-round guns: clearing the jam is its own step (then `reload` loads rounds).
+      st.version++;
+      reloadEvent(w, eid, item, 'done', 0, kind);
+      continue;
+    }
     if (feed.type === 'internal') {
       const rounds = carriedOf(w, eid, g.def.ranged.ammo);
       item.uses += takeRounds(w, rounds, Math.max(0, feed.capacity - item.uses));
@@ -195,7 +330,7 @@ export function reloadSystem(w: SimWorld, cb: CombatWorld): void {
     }
     st.version++;
     addXp(w, eid, 'base:reloading', cb.cfg.firearms.xpPerReload);
-    reloadEvent(w, eid, item, 'done', 0);
+    reloadEvent(w, eid, item, 'done', 0, kind);
   }
 }
 
@@ -277,13 +412,14 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
   const ammoMul = ammoDef?.kind === 'ammo' ? ammoDef.ammo.damageMultiplier : 1;
   const aimMul =
     penaltyMul(w, eid, Pen.attack) * (1 + fc.accuracyPerSkillLevel * skillLevel(w, eid, r.skill));
+  const spread = effectiveSpread(w, cb, eid, g.def);
   let hits = 0;
   const zombies = sortedQuery(w, 'zombies', [w.c.Zombie]).filter(
     (zid) => (Position.z[zid] ?? 0) === z,
   );
   const rays: { toX: number; toY: number; hit: number }[] = [];
   for (let p = 0; p < r.projectiles; p++) {
-    const off = (rng.nextFloat() * 2 - 1) * fc.spread[r.category];
+    const off = (rng.nextFloat() * 2 - 1) * spread;
     let dx = ax - ay * off;
     let dy = ay + ax * off;
     const len = Math.sqrt(dx * dx + dy * dy);

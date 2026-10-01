@@ -75,4 +75,20 @@ describe('katalog broni', () => {
     }
     expect(guns.some((g) => g.ranged.feed.type === 'magazine')).toBe(true);
   });
+
+  it('ładowanie po jednym naboju tylko przy feed internal; mnożniki rozrzutu w worldSettings', async () => {
+    const b = await baseBundle();
+    const single = Object.values(b.items).flatMap((g) =>
+      g.kind === 'weapon_ranged' && g.ranged.loadSecPerRound !== undefined ? [g] : [],
+    );
+    expect(single.map((g) => g.id).sort()).toEqual(['base:hunting-rifle', 'base:pump-shotgun']);
+    for (const g of single) {
+      expect(g.ranged.feed.type, g.id).toBe('internal');
+      expect(g.ranged.loadSecPerRound, g.id).toBeGreaterThan(0);
+    }
+    const m = b.worldSettings.firearms.spreadModifiers;
+    expect(m.max).toBeGreaterThanOrEqual(1);
+    expect(m.running).toBeGreaterThan(0);
+    expect(m.moving).toBeGreaterThan(0);
+  });
 });

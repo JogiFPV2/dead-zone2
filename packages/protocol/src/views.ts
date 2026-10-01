@@ -372,9 +372,31 @@ export interface CombatView {
   capacity?: number;
   /** Firearm jammed (reload clears it). */
   jammed?: boolean;
-  /** Reload / magazine loading in progress until this tick. */
+  /**
+   * Reload / magazine loading in progress until this tick (single-round loading: end of the
+   * round being loaded now).
+   */
   reloadUntil?: number;
+  /** Firearm in hand: effective spread this tick (rad, ± around the aim), the same the shot uses. */
+  spread?: number;
+  /** Reload in progress: kind (`single` = one round per step, `ammo` grows per round). */
+  reloadKind?: ReloadKind;
+  /** Reload in progress: tick the current step started (with `reloadUntil` → progress locally). */
+  reloadStartTick?: number;
+  /**
+   * Reload in progress: 0..1 = (tick − reloadStartTick) / (reloadUntil − reloadStartTick).
+   * `single`: progress of the round being loaded (resets per round).
+   */
+  reloadProgress?: number;
 }
+
+/**
+ * Kinds of timed reload: `magazine` = whole reload at once (magazine swap or internal feed
+ * filled after `reloadSec`), `single` = internal feed one round per `ranged.loadSecPerRound`,
+ * `unjam` = clearing a jam (`reloadSec`), `loadMagazine` = filling a carried magazine.
+ */
+export const RELOAD_KINDS = ['magazine', 'single', 'unjam', 'loadMagazine'] as const;
+export type ReloadKind = (typeof RELOAD_KINDS)[number];
 
 export interface DeathView {
   cause: DeathCause;

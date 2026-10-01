@@ -41,7 +41,13 @@ import {
 import { threatNearby } from '../systems/sleep.js';
 import { threatLevel } from '../ai/threat.js';
 import { meleeOf } from '../combat/system.js';
-import { capacityOf, firearmOf } from '../combat/firearms.js';
+import {
+  capacityOf,
+  effectiveSpread,
+  firearmOf,
+  reloadKindOf,
+  reloadProgressOf,
+} from '../combat/firearms.js';
 import { defOf, maxCondition } from '../items/store.js';
 import type { ItemDef } from '../content/adapter.js';
 import { DEATH_CAUSES } from '../survival/state.js';
@@ -65,8 +71,15 @@ function combatView(w: SimWorld, eid: number): CombatView {
     v.ammo = gun.item.uses;
     v.capacity = capacityOf(w.items, gun.item, gun.def);
     v.jammed = w.items.jammed.has(gun.item.id);
+    v.spread = Math.round(effectiveSpread(w, cb, eid, gun.def) * 10000) / 10000;
   }
-  if (cb.reloadUntil[eid]) v.reloadUntil = cb.reloadUntil[eid];
+  if (cb.reloadUntil[eid]) {
+    v.reloadUntil = cb.reloadUntil[eid];
+    const kind = reloadKindOf(cb, eid);
+    if (kind) v.reloadKind = kind;
+    v.reloadStartTick = cb.reloadStart[eid] ?? 0;
+    v.reloadProgress = Math.round((reloadProgressOf(cb, eid, w.tick) ?? 0) * 1000) / 1000;
+  }
   return v;
 }
 
