@@ -139,6 +139,10 @@ export const shoveCommandSchema = z.strictObject({
   ...header,
   type: z.literal('shove'),
 });
+export const vaultCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('vault'),
+});
 export const placeStorageCommandSchema = z.strictObject({
   ...header,
   type: z.literal('placeStorage'),
@@ -373,6 +377,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   cancelActionCommandSchema,
   attackCommandSchema,
   shoveCommandSchema,
+  vaultCommandSchema,
   placeStorageCommandSchema,
   pickUpStorageCommandSchema,
   debugWoundCommandSchema,

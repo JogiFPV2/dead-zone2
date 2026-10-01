@@ -82,9 +82,12 @@ export function controlLost(state: PhysicsState): boolean {
   );
 }
 
-/** The entity may start an attack or a shove (also restarting one that is still playing). */
+/**
+ * The entity may start an attack, a shove or a vault (also restarting an attack that is still
+ * playing). Not while vaulting.
+ */
 export function canAct(state: PhysicsState): boolean {
-  return !controlLost(state);
+  return !controlLost(state) && state !== 'vault';
 }
 
 /**

@@ -270,6 +270,17 @@ export interface ShoveCommand extends CommandHeader {
 }
 
 /**
+ * Vault (context key): over the nearest standing low fence, or through the nearest open /
+ * broken window, within reach of the player's tile edges. Takes ~1 s (physics state `vault`),
+ * may trip (knock-down on the far side; more likely running, loaded or tired, less with Nimble /
+ * Fitness); a broken window may cut (laceration). Rejects: `invalid-target` (nothing to vault
+ * or no room on the far side), `invalid-state` (no control, asleep).
+ */
+export interface VaultCommand extends CommandHeader {
+  type: 'vault';
+}
+
+/**
  * Places a storage item (`placeable` with `containerType`, e.g. `base:wooden-crate`) on tile
  * (x, y) of the player's floor, in reach. Its contents stay inside; `pickUp` takes it back.
  */
@@ -563,6 +574,7 @@ export type Command =
   | CancelActionCommand
   | AttackCommand
   | ShoveCommand
+  | VaultCommand
   | PlaceStorageCommand
   | PickUpStorageCommand
   | DebugWoundCommand

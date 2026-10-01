@@ -83,6 +83,12 @@ export function addBody(pw: PhysicsWorld, init: BodyInit): PhysicsBody {
     stair: 0,
     fallFromZ: 0,
     fallToZ: 0,
+    vaultFromX: 0,
+    vaultFromY: 0,
+    vaultToX: 0,
+    vaultToY: 0,
+    vaultTrip: 0,
+    vaultGlass: 0,
   };
   pw.bodies.set(b.id, b);
   updateMovementStats(b, pw.cfg);
@@ -273,6 +279,10 @@ export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
     h.f32(b.carriedKg).f32(b.capacityKg).f32(b.endurance).f32(b.strength);
     // Level state only when used (single-level worlds keep their hashes).
     if (b.stair || b.state === 'fall') h.u32(b.stair).f32(b.fallFromZ).f32(b.fallToZ);
+    if (b.state === 'vault') {
+      h.f32(b.vaultFromX).f32(b.vaultFromY).f32(b.vaultToX).f32(b.vaultToY);
+      h.f32(b.vaultTrip).u32(b.vaultGlass);
+    }
   }
 }
 

@@ -13,6 +13,7 @@ import { applyLureCommand, isLureCommand } from '../lures/lures.js';
 import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 import type { TileGrid } from '../world/grid.js';
+import { startVault } from '../physics/vault.js';
 
 /**
  * Pipeline step 1: applies this tick's commands in (playerId, seq) order. `move` and `aim` are
@@ -44,6 +45,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       MoveIntent.gait[eid] = GAITS.indexOf(cmd.gait ?? 'walk');
     } else if (cmd.type === 'attack' || cmd.type === 'shove') {
       const reason = queueAttack(w, eid, cmd.type === 'shove');
+      if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'vault') {
+      const reason = startVault(w, grid, eid);
       if (reason) reject(w, cmd, reason);
     } else if (isAnimalCommand(cmd)) {
       const reason = applyAnimalCommand(w, cmd);

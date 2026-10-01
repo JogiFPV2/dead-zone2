@@ -12,6 +12,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   moveRight: ['KeyD'],
   sprint: ['ShiftLeft'],
   crouch: ['KeyC'],
+  vault: ['Space'],
   rotateCameraLeft: ['KeyQ'],
   rotateCameraRight: ['KeyE'],
   zoomIn: ['WheelUp'],

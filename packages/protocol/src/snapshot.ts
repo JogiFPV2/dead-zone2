@@ -26,7 +26,8 @@
  * 8 changed the map only (stairs); 9 added `variant` (stride 16 → 17): type index of the entity — animals: index of the animal type
  * in the content ids sorted ascending (`Object.keys(bundle.animalTypes).sort()`, sim helper
  * `animalTypeIds`), zombies: index of the zombie type the same way, players: 0. Kind `animal` (3)
- * and anim `flee` (5) came with it.
+ * and anim `flee` (5) came with it. 10 appended physics state `vault` (index 12; events `vaulted`,
+ * `tripped`; command `vault`), layout unchanged.
  */
 export const SNAPSHOT_ENTITY_STRIDE = 17;
 export const SnapshotField = {
@@ -82,6 +83,12 @@ export const ENTITY_PHYS_STATES = [
   'climb',
   /** Falling down one or more levels (z drops to the landing level, then `knockdown`). */
   'fall',
+  /**
+   * Vaulting over a standing low fence or climbing through an open / broken window (`vault`
+   * command, ~1 s, position moves across the edge); ends in `idle` (`vaulted`) or `knockdown`
+   * (`tripped`) on the far side.
+   */
+  'vault',
 ] as const;
 export type EntityPhysState = (typeof ENTITY_PHYS_STATES)[number];
 

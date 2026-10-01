@@ -109,6 +109,8 @@ export interface SimWorkerClient {
   attack(): void;
   /** Shove zombies in front (stagger, no damage). */
   shove(): void;
+  /** Vault over the nearest standing fence / through the nearest open or broken window. */
+  vault(): void;
   /** Reload the firearm in hand_primary (also clears a jam). */
   reload(): void;
   /** Fill a carried magazine with carried rounds. */
@@ -288,6 +290,7 @@ export function createSimWorkerClient(
     cancelAction: () => cmd({ type: 'cancelAction' }),
     attack: () => cmd({ type: 'attack' }),
     shove: () => cmd({ type: 'shove' }),
+    vault: () => cmd({ type: 'vault' }),
     reload: () => cmd({ type: 'reload' }),
     loadMagazine: (item) => cmd({ type: 'loadMagazine', item }),
     craft: (recipe, count) => cmd({ type: 'craft', recipe, ...(count ? { count } : {}) }),

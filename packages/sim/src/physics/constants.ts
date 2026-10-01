@@ -101,6 +101,59 @@ export interface PhysicsConfig {
   stairs: StairsConfig;
   /** Falling from a level edge (`stairs.ts`). */
   fall: FallConfig;
+  /** Vaulting over low fences / through windows (`vault.ts`). */
+  vault: VaultConfig;
+  /** Knock-back of firearm hits per weapon category (`combat/firearms.ts` → `physicsHit`). */
+  firearms: Record<FirearmCategory, FirearmKnockback>;
+}
+
+/**
+ * Vaulting (PZ: a standing low fence is hopped in about a second, sprinting over it often ends on
+ * the ground; climbing through a window takes longer and broken glass cuts).
+ */
+export interface VaultConfig {
+  /** Max distance from the body centre to the edge to start. */
+  reachTiles: number;
+  /** Landing point: this far beyond the edge (at least radius + 0.05). */
+  landTiles: number;
+  fenceTicks: number;
+  windowTicks: number;
+  /** Base trip chance per vault. */
+  tripFence: number;
+  tripWindow: number;
+  /** Added when the player was running when starting the vault. */
+  tripRun: number;
+  /** Added per load level / endurance level 0..4 (same levels as movement). */
+  tripLoad: readonly number[];
+  tripEndurance: readonly number[];
+  /** Trip chance × max(tripSkillFloor, 1 − nimble × perNimble − fitness × perFitness). */
+  tripPerNimble: number;
+  tripPerFitness: number;
+  tripSkillFloor: number;
+  tripMax: number;
+  /** Lying time after a trip (then getup). */
+  tripKnockdownTicks: number;
+  /**
+   * Chance that a broken window cuts (laceration on a forearm / hand / thigh). There is no
+   * "glass cleared" state yet, so every broken window counts as not cleared.
+   */
+  glassChance: number;
+}
+
+export type FirearmCategory = 'pistol' | 'revolver' | 'shotgun' | 'rifle';
+
+/**
+ * Knock-back "weapon force" of a firearm hit (0..1, like `melee.knockback`, without the
+ * shooter's strength): full up to `closeTiles`, then linearly down to × `minMul` at
+ * `closeTiles + falloffTiles`. Pellets of a shotgun split the force (all pellets = full force).
+ * `maxReaction` caps the reaction (pistols only stagger).
+ */
+export interface FirearmKnockback {
+  force: number;
+  closeTiles: number;
+  falloffTiles: number;
+  minMul: number;
+  maxReaction: 'stagger' | 'knockdown';
 }
 
 /**
@@ -284,5 +337,28 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     deathLevels: 4,
     maxLevels: 8,
     knockdownTicks: { player: sec(2), zombie: sec(3.5) },
+  },
+  vault: {
+    reachTiles: 0.8,
+    landTiles: 0.55,
+    fenceTicks: sec(1),
+    windowTicks: sec(1.5),
+    tripFence: 0.04,
+    tripWindow: 0.08,
+    tripRun: 0.3,
+    tripLoad: [0, 0.08, 0.18, 0.3, 0.45],
+    tripEndurance: [0, 0.03, 0.08, 0.15, 0.25],
+    tripPerNimble: 0.06,
+    tripPerFitness: 0.03,
+    tripSkillFloor: 0.25,
+    tripMax: 0.9,
+    tripKnockdownTicks: sec(1.5),
+    glassChance: 0.5,
+  },
+  firearms: {
+    pistol: { force: 0.3, closeTiles: 2, falloffTiles: 10, minMul: 0.3, maxReaction: 'stagger' },
+    revolver: { force: 0.4, closeTiles: 2, falloffTiles: 10, minMul: 0.3, maxReaction: 'stagger' },
+    rifle: { force: 0.5, closeTiles: 4, falloffTiles: 20, minMul: 0.5, maxReaction: 'knockdown' },
+    shotgun: { force: 1, closeTiles: 2.5, falloffTiles: 6, minMul: 0.15, maxReaction: 'knockdown' },
   },
 };

@@ -715,6 +715,11 @@ input.on('primaryAction', () => {
   sim.send(stamper.stamp({ type: 'attack' }));
   phys.noteLocalAction('attack');
 });
+// Vault (context key): over a standing fence / through an open or broken window in reach.
+input.on('vault', () => {
+  if (inventory.open || gameState.get().death) return;
+  sim.send(stamper.stamp({ type: 'vault' }));
+});
 input.on('secondaryAction', () => {
   if (inventory.open || gameState.get().death) return;
   // Firearm in hand: RMB (held) aims with the reticle instead of shoving.

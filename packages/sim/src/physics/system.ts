@@ -25,6 +25,7 @@ import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
 import { addBody, physicsStep } from './step.js';
 import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
 import { floorZ } from '../world/levels.js';
+import { vaultSystem } from './vault.js';
 
 /**
  * Sim adapter of the physics module: bodies live in `w.physics`, keyed by StableId, one per
@@ -136,6 +137,7 @@ export function physicsHit(
   kind: PhysicsHit['kind'],
   force?: number,
   lethal = false,
+  maxReaction?: PhysicsHit['maxReaction'],
 ): void {
   const a = ensureBody(w, attacker);
   const t = ensureBody(w, target);
@@ -146,6 +148,7 @@ export function physicsHit(
     kind,
     lethal,
     ...(force === undefined ? {} : { force }),
+    ...(maxReaction ? { maxReaction } : {}),
   };
   if (!a || !t) {
     pw.rng.nextU32();
@@ -208,6 +211,7 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   }
   // Falls land before the state timers run (landing → knock-down this tick).
   if (pw.multiLevel) fallSystem(w, eidBySid, events);
+  vaultSystem(w, eidBySid, events);
   events.push(
     ...physicsStep(pw, {
       tick: w.tick,

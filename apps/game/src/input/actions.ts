@@ -6,6 +6,7 @@ export const ACTIONS = [
   'moveRight',
   'sprint',
   'crouch',
+  'vault',
   'rotateCameraLeft',
   'rotateCameraRight',
   'zoomIn',

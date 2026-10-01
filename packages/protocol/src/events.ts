@@ -136,6 +136,10 @@ export const PHYS_EVENT_KINDS = [
   'startedFalling',
   /** Hit the ground after a fall (see `fellFromHeight` for levels and damage). */
   'landed',
+  /** Landed on the far side of a fence / window after `vault` (state back to `idle`). */
+  'vaulted',
+  /** Tripped while vaulting: lies on the far side (`knockdown`, then `getup`). */
+  'tripped',
 ] as const;
 export type PhysEventKind = (typeof PHYS_EVENT_KINDS)[number];
 

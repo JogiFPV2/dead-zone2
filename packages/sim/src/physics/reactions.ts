@@ -31,15 +31,19 @@ export function isFromBehind(
 
 /**
  * Impulse 0..1 of a hit: weapon knockback × (strengthBase + strengthPerLevel × strength) ×
- * refMass / target mass. Heavier targets (big body, heavy backpack) are pushed less.
+ * refMass / target mass (`noStrength`: firearms, strength factor 1). Heavier targets (big body,
+ * heavy backpack) are pushed less.
  */
 export function hitImpulse(
   force: number,
   attackerStrength: number,
   targetMass: number,
   cfg: PhysicsConfig = DEFAULT_PHYSICS_CONFIG,
+  noStrength = false,
 ): number {
-  const str = cfg.impulse.strengthBase + cfg.impulse.strengthPerLevel * attackerStrength;
+  const str = noStrength
+    ? 1
+    : cfg.impulse.strengthBase + cfg.impulse.strengthPerLevel * attackerStrength;
   return Math.fround(clamp01((force * str * cfg.refMassKg) / Math.max(1, targetMass)));
 }
 
@@ -83,6 +87,7 @@ export function resolveHit(
     attacker.strength,
     target.mass,
     cfg,
+    hit.kind === 'shot',
   );
   const shove = hit.kind === 'shove';
   const c = cfg.chance;
@@ -101,9 +106,12 @@ export function resolveHit(
     const pStagger = clamp01(
       c.staggerBase + impulse * c.staggerPerImpulse + (shove ? c.shoveStaggerBonus : 0),
     );
-    if (roll < pKnock) {
+    if (roll < pKnock && hit.maxReaction !== 'stagger') {
       reaction = 'knockdown';
       duration = kdTicks;
+    } else if (roll < pKnock && hit.maxReaction === 'stagger') {
+      reaction = 'stagger';
+      duration = cfg.durations.staggerBase + Math.round(impulse * cfg.durations.staggerPerImpulse);
     } else if (roll < pKnock + (1 - pKnock) * pStagger) {
       reaction = 'stagger';
       duration = cfg.durations.staggerBase + Math.round(impulse * cfg.durations.staggerPerImpulse);
@@ -152,7 +160,14 @@ export function applyHit(
     kill(target, tick, events);
     return;
   }
-  if (target.state === 'knockdown' || target.state === 'getup' || target.state === 'fall') return;
+  // On the ground, falling or mid-vault (over a fence edge): the hit is recorded, no reaction.
+  if (
+    target.state === 'knockdown' ||
+    target.state === 'getup' ||
+    target.state === 'fall' ||
+    target.state === 'vault'
+  )
+    return;
   pushBack(target, out, cfg);
   if (out.reaction === 'knockdown') {
     setState(target, 'knockdown', tick, out.duration);
@@ -225,6 +240,9 @@ export function advanceState(
       return;
     case 'fall':
       // Landing (damage, knock-down) is done by the sim adapter (`stairs.ts` `landFalls`).
+      return;
+    case 'vault':
+      // Landing (trip roll, glass) is done by the sim adapter (`vault.ts`).
       return;
     case 'hit':
     case 'stagger':

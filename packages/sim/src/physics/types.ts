@@ -67,6 +67,13 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
   /** During `fall`: level it fell from and the landing level. */
   fallFromZ: number;
   fallToZ: number;
+  /** During `vault`: start and landing point, trip chance, broken-glass window (0 / 1). */
+  vaultFromX: number;
+  vaultFromY: number;
+  vaultToX: number;
+  vaultToY: number;
+  vaultTrip: number;
+  vaultGlass: number;
 }
 
 /** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
@@ -95,8 +102,13 @@ export interface PhysicsWorld {
 export interface PhysicsHit {
   attackerId: number;
   targetId: number;
-  /** `melee` (weapon / fists), `shove` (push, no damage), `zombie` (zombie lunge). */
-  kind: 'melee' | 'shove' | 'zombie';
+  /**
+   * `melee` (weapon / fists), `shove` (push, no damage), `zombie` (zombie lunge), `shot`
+   * (firearm: the force does not scale with the shooter's strength).
+   */
+  kind: 'melee' | 'shove' | 'zombie' | 'shot';
+  /** Strongest reaction allowed (firearms: pistols only stagger). */
+  maxReaction?: 'stagger' | 'knockdown';
   /** Weapon knockback 0..1 (`melee.knockback`, unarmed 0.3); defaults by kind when omitted. */
   force?: number;
   /** The hit kills the target (combat decides): state `dead` and `died`, no reaction roll. */

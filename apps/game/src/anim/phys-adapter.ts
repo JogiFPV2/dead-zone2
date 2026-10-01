@@ -195,7 +195,13 @@ export class PhysAdapter {
           if (b) b.phys.lastHitTick = ev.tick;
         }
         // Level events (v8) have no animation event yet; the state is in the snapshot.
-        if (ev.kind === 'startedFalling' || ev.kind === 'landed') continue;
+        if (
+          ev.kind === 'startedFalling' ||
+          ev.kind === 'landed' ||
+          ev.kind === 'vaulted' ||
+          ev.kind === 'tripped'
+        )
+          continue;
         this.emit(ev.kind, ev.entity, ev.tick);
         continue;
       }
@@ -213,8 +219,10 @@ export class PhysAdapter {
     const si = buf[o + PhysField.state];
     const raw = si === undefined ? undefined : ENTITY_PHYS_STATES[si];
     if (!raw) return false;
-    // Protocol v8 level states until the rig has own clips: climbing walks, falling staggers.
-    const state = raw === 'climb' ? 'walk' : raw === 'fall' ? 'stagger' : raw;
+    // Protocol v8/v9 states until the rig has own clips: climbing walks, falling staggers,
+    // vaulting plays the push (arms forward over the fence).
+    const state =
+      raw === 'climb' ? 'walk' : raw === 'fall' ? 'stagger' : raw === 'vault' ? 'push' : raw;
     const seed = u32[o + PhysField.gaitSeed] ?? 0;
     // Zombies always get a gait seed from the physics module: none = no physics body in this
     // record (mock crowd, older data), derive instead.

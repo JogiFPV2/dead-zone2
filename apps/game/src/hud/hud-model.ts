@@ -238,6 +238,7 @@ export function hintItems(b: Bindings, firearm = false): KeyHint[] {
     { key: moveKeysLabel(b), label: 'ruch' },
     { key: actionKey(b, 'sprint'), label: 'sprint' },
     { key: actionKey(b, 'crouch'), label: 'skradanie' },
+    { key: actionKey(b, 'vault'), label: 'przeskok' },
     { key: actionKey(b, 'interact'), label: 'przeszukaj' },
     { key: actionKey(b, 'inventory'), label: 'ekwipunek' },
     { key: actionKey(b, 'crafting'), label: 'warsztat' },

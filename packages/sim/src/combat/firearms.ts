@@ -27,11 +27,22 @@ import { lineOfSight } from '../world/los.js';
 import { RK, type CombatWorld } from './state.js';
 import { damageZombie } from './system.js';
 import { floorZ } from '../world/levels.js';
+import { physicsHit } from '../physics/system.js';
+import type { FirearmKnockback } from '../physics/constants.js';
 import { damageAnimal } from '../animals/damage.js';
 import { isLiveAnimal } from '../animals/state.js';
 
 type RangedDef = Extract<ItemDef, { kind: 'weapon_ranged' }>;
 type MagazineDef = Extract<ItemDef, { kind: 'magazine' }>;
+
+/**
+ * Knock-back force of one projectile hit at distance `t` (tiles): full up to `closeTiles`, then
+ * linearly down to × `minMul`; split between the pellets of a shot.
+ */
+export function shotForce(k: FirearmKnockback, t: number, projectiles: number): number {
+  const fall = t <= k.closeTiles ? 1 : Math.max(k.minMul, 1 - (t - k.closeTiles) / k.falloffTiles);
+  return (k.force * fall) / Math.max(1, projectiles);
+}
 
 /** Firearm in `hand_primary` (undefined: none). */
 export function firearmOf(
@@ -425,6 +436,9 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
     }
   }
   const rays: { toX: number; toY: number; hit: number }[] = [];
+  // Knock-back per zombie hit by this shot (pellets add up), applied after all rays.
+  const kb = w.physics.cfg.firearms[r.category];
+  const pushes = new Map<number, { force: number; killed: boolean }>();
   for (let p = 0; p < r.projectiles; p++) {
     const off = (rng.nextFloat() * 2 - 1) * spread;
     let dx = ax - ay * off;
@@ -460,8 +474,16 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
       hit = StableId.value[a.zid] ?? 0;
       tEnd = a.t;
       hits++;
-      if (animal) damageAnimal(w, ai, grid, a.zid, eid, dmg, 'shot');
-      else damageZombie(w, ai, cb, grid, a.zid, eid, dmg, 'shot');
+      if (animal) {
+        // Animals have no physics body (no knock-back).
+        damageAnimal(w, ai, grid, a.zid, eid, dmg, 'shot');
+      } else {
+        const killed = damageZombie(w, ai, cb, grid, a.zid, eid, dmg, 'shot');
+        const p = pushes.get(a.zid) ?? { force: 0, killed: false };
+        p.force += shotForce(kb, a.t, r.projectiles);
+        p.killed ||= killed;
+        pushes.set(a.zid, p);
+      }
       break;
     }
     rays.push({
@@ -469,6 +491,10 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
       toY: Math.round((y + dy * tEnd) * 100) / 100,
       hit,
     });
+  }
+  // Map order = first hit order (deterministic): one physics hit per zombie (2 physics draws).
+  for (const [zid, p] of pushes) {
+    physicsHit(w, eid, zid, 'shot', Math.fround(Math.min(1, p.force)), p.killed, kb.maxReaction);
   }
   if (hits > 0) addXp(w, eid, r.skill, fc.xpPerHit);
   let jammed = false;
