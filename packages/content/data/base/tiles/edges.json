@@ -4,5 +4,6 @@
   { "id": "base:wooden-door", "name": "tile.base.wooden-door.name", "category": "door" },
   { "id": "base:wall-plain", "name": "tile.base.wall-plain.name", "category": "wall" },
   { "id": "base:window-plain", "name": "tile.base.window-plain.name", "category": "window" },
-  { "id": "base:door-plain", "name": "tile.base.door-plain.name", "category": "door" }
+  { "id": "base:door-plain", "name": "tile.base.door-plain.name", "category": "door" },
+  { "id": "base:wooden-fence", "name": "tile.base.wooden-fence.name", "category": "fence" }
 ]

@@ -8,6 +8,7 @@ import { createCombineTooltip, linkIcon } from './combine-tooltip.js';
 import {
   CONTEXT_ACTION,
   contextCommand,
+  equipToSlot,
   equipmentVM,
   findItem,
   formatKg,
@@ -258,6 +259,21 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
       });
       box.addEventListener('click', () => send([{ type: 'unequip', slot: e.slot }]));
     }
+    // Drag an item from a list onto a slot to equip it there (e.g. a rifle on the back).
+    box.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      box.dataset.drop = 'true';
+    });
+    box.addEventListener('dragleave', () => delete box.dataset.drop);
+    box.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      delete box.dataset.drop;
+      const id = Number(ev.dataTransfer?.getData('text/x-dz-item'));
+      const cmd = Number.isInteger(id)
+        ? equipToSlot(opts.state(), opts.content(), id, e.slot)
+        : undefined;
+      if (cmd) send([cmd]);
+    });
     cell.append(box, div('dz-inv__eq-label', e.label));
     return cell;
   };

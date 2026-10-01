@@ -148,6 +148,14 @@ export function buildMap(bp: Blueprint): BuiltMap {
     }
     paintBuilding(world, b);
   }
+  for (const f of bp.fences) {
+    for (let i = 0; i < f.len; i++) {
+      const x = f.side === 'n' ? f.x + i : f.x;
+      const y = f.side === 'n' ? f.y : f.y + i;
+      world.index(x, y, `płot ${f.contentId}`);
+      world.edges.set(edgeKey(x, y, f.side), { type: 'fence', contentId: f.contentId });
+    }
+  }
   for (const o of bp.objects) world.index(o.x, o.y, `obiekt ${o.contentId}`);
 
   const { cx0, cy0, cx1, cy1 } = bp.chunks;

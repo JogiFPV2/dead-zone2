@@ -89,6 +89,13 @@ function durabilityOf(i: Obj): number | undefined {
   return undefined;
 }
 
+/** Two-handed melee weapons, shotguns and rifles may also go on the back (sim #67). */
+function longWeapon(i: Obj, kind: string): boolean {
+  if (kind === 'weapon_melee') return isObj(i.melee) && i.melee.twoHanded === true;
+  if (kind !== 'weapon_ranged' || !isObj(i.ranged)) return false;
+  return i.ranged.category === 'shotgun' || i.ranged.category === 'rifle';
+}
+
 const num = (v: unknown, d = 0): number => (typeof v === 'number' ? v : d);
 
 function rangedOf(i: Obj): HudRangedDef | undefined {
@@ -112,7 +119,9 @@ function equipSlotsOf(i: Obj, kind: string): EquipSlot[] {
   if (isObj(i.clothing) && isSlot(i.clothing.slot)) return [i.clothing.slot];
   if (isObj(i.bag) && Array.isArray(i.bag.slots)) return i.bag.slots.filter(isSlot);
   if (kind === 'weapon_melee' || kind === 'weapon_ranged' || kind === 'tool') {
-    return ['hand_primary', 'hand_secondary'];
+    return longWeapon(i, kind)
+      ? ['hand_primary', 'hand_secondary', 'back']
+      : ['hand_primary', 'hand_secondary'];
   }
   return [];
 }

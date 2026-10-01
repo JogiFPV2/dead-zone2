@@ -40,6 +40,7 @@ import { Terrain } from './world/terrain.js';
 import { tileOf } from './world/building-lookup.js';
 import { cameraSide } from './world/cutaway.js';
 import { Structures } from './world/structures.js';
+import { OpeningsView } from './world/openings.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
@@ -136,6 +137,10 @@ scene.add(terrain.root);
 const structures = new Structures(world.source);
 structures.loadRange(world.range);
 scene.add(structures.root);
+// Doors, window panes and fences: sim opening state + shaking under crowd pressure.
+const openings = new OpeningsView(world.source, structures.lookup);
+openings.loadRange(world.range);
+scene.add(openings.root);
 if (import.meta.env.DEV && boot.zones) {
   void import('./dev/zones-overlay.js').then(({ createZonesOverlay }) =>
     scene.add(createZonesOverlay(world.zones)),
@@ -260,8 +265,6 @@ const phys: PhysAdapter = new PhysAdapter({
 const weaponModels = new WeaponModels();
 /** Visible equipment per character (view `characters[]`, full list on change). */
 const characters = new Map<number, CharacterView>();
-/** Dev only: weapon drawn on the back while the sim allows only bags there (`__dzAnim.slingBack`). */
-let devBack: string | undefined;
 const crowd = new CrowdBuffer();
 let crowdArrivedMs = 0;
 let firstSnapshot = true;
@@ -578,7 +581,22 @@ gameState.subscribe((next) => {
     })
     .catch((e: unknown) => console.error('Zapis śmierci nie powiódł się', e));
 });
-/** Interact key / button: search/open the nearest container, cancel the search, or close. */
+/** A door within this distance (tiles from its centre) wins over a container in reach. */
+const DOOR_FIRST_TILES = 0.9;
+/** Nearest door edge within the sim's reach (1.5 tiles from the edge centre). */
+function nearestDoor(x: number, y: number, z: number) {
+  let best: { tx: number; ty: number; side: 'n' | 'w'; dist: number } | undefined;
+  for (const e of openings.edges('door')) {
+    if (e.z !== z || openings.state(e.tx, e.ty, e.z, e.side) === 'broken') continue;
+    const cx = e.side === 'n' ? e.tx + 0.5 : e.tx;
+    const cy = e.side === 'n' ? e.ty : e.ty + 0.5;
+    const dist = Math.hypot(cx - x, cy - y);
+    if (dist <= 1.4 && (!best || dist < best.dist))
+      best = { tx: e.tx, ty: e.ty, side: e.side, dist };
+  }
+  return best;
+}
+/** Interact key / button: open/close a door, search/open the nearest container, cancel, close. */
 function interact(): void {
   if (inventory.open) {
     inventory.putAll();
@@ -587,6 +605,13 @@ function interact(): void {
   const p = snapshots.sample(performance.now(), TICK_MS);
   if (!p) return;
   const intent = interactIntent(gameState.get(), p.x, p.y);
+  // A door in reach (and no container panel / search to close first) opens or closes.
+  const door =
+    intent.type === 'open' || intent.type === 'none' ? nearestDoor(p.x, p.y, p.z) : undefined;
+  if (door && (intent.type === 'none' || door.dist < DOOR_FIRST_TILES)) {
+    sim.send(stamper.stamp({ type: 'toggleDoor', tx: door.tx, ty: door.ty, side: door.side }));
+    return;
+  }
   if (intent.type === 'open')
     sim.send(stamper.stamp({ type: 'openContainer', container: intent.container }));
   else if (intent.type === 'close') sim.send(stamper.stamp({ type: 'closeContainer' }));
@@ -684,6 +709,8 @@ window.addEventListener('keydown', (e) => {
   if (settings.get().input.bindings.toggleHints.includes(e.code)) e.preventDefault();
 });
 gameState.subscribe((_next, _prev, action) => {
+  if (action.type === 'view' && action.view.openings) openings.setStates(action.view.openings);
+  if (action.type === 'events') openings.applyEvents(action.events);
   if (action.type === 'view' && action.view.characters) {
     characters.clear();
     for (const c of action.view.characters) characters.set(c.stableId, c);
@@ -767,10 +794,6 @@ if (import.meta.env.DEV) {
       /** Sends a stamped (debug) command, e.g. `{ type: 'debugSpawnZombie', x, y, count }`. */
       send: (body: CommandBody) => sim.send(stamper.stamp(body)),
       characters,
-      /** Draws weapon `def` on the back (view only; the sim's back slot holds bags for now). */
-      slingBack: (def: string | undefined): void => {
-        devBack = def;
-      },
       /** Current game state (read-only). */
       state: () => gameState.get(),
       shelfFill,
@@ -800,8 +823,7 @@ renderer.setAnimationLoop((time) => {
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {
-    const { hand, back: simBack } = weaponLoadout(characters.get(phys.localId), weaponIndex);
-    const back = simBack ?? (devBack ? weaponIndex.get(devBack) : undefined);
+    const { hand, back } = weaponLoadout(characters.get(phys.localId), weaponIndex);
     player.aiming = isAiming(performance.now());
     player.setWeapons(hand, back, weaponModels);
     player.apply(state, performance.now(), phys.get(phys.localId), simTick);
@@ -811,7 +833,9 @@ renderer.setAnimationLoop((time) => {
     cameraSnapped = true;
     const { tx, ty } = tileOf(state.x, state.y);
     const building = structures.lookup.at(tx, ty, state.z);
-    structures.setCutaway({ building, tx, ty, side: cameraSide(rig.targetYaw) });
+    const cut = { building, tx, ty, side: cameraSide(rig.targetYaw) };
+    structures.setCutaway(cut);
+    openings.setCutaway(cut);
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }
@@ -826,6 +850,7 @@ renderer.setAnimationLoop((time) => {
   workshop.update();
   sleep.frame(performance.now(), simTick);
   shelfFill.update(gs.storages, gs.container?.id);
+  openings.update(time / 1000);
   inventory.update();
   if (state) {
     hud.frame({

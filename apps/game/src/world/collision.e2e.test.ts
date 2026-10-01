@@ -2,13 +2,26 @@
 import { describe, expect, it } from 'vitest';
 import { PLAYER_RADIUS, createSim } from '@deadzone/sim';
 import { chunkSourceToSimMap } from './sim-map.js';
-import { TEST_BUILDING } from './test-building.js';
+import { TEST_BUILDING, TEST_FENCE } from './test-building.js';
 import { createTestMap } from './test-map.js';
 
-/** Walks player 0 from `spawn` along (dx, dy) for `seconds` and returns where it ended. */
-function walk(spawn: { x: number; y: number }, dx: number, dy: number, seconds: number) {
+/**
+ * Walks player 0 from `spawn` along (dx, dy) for `seconds` and returns where it ended; `door`:
+ * toggles that door (n edge) first.
+ */
+function walk(
+  spawn: { x: number; y: number },
+  dx: number,
+  dy: number,
+  seconds: number,
+  door?: { tx: number; ty: number },
+) {
   const sim = createSim({ seed: 1, map: chunkSourceToSimMap(createTestMap()), spawn });
-  sim.enqueue({ type: 'move', dx, dy, tick: 0, playerId: 0, seq: 1 });
+  if (door) {
+    sim.enqueue({ type: 'toggleDoor', ...door, side: 'n', tick: 0, playerId: 0, seq: 1 });
+    sim.step();
+  }
+  sim.enqueue({ type: 'move', dx, dy, tick: sim.tick, playerId: 0, seq: 2 });
   for (let i = 0; i < seconds * 20; i++) sim.step();
   const p = sim.getPlayer(0);
   if (!p) throw new Error('no player');
@@ -30,8 +43,15 @@ describe('test building collisions (sim + adapter)', () => {
     expect(p.y).toBeGreaterThanOrEqual(south + PLAYER_RADIUS - 1e-3);
   });
 
-  it('doors are passable: walking north through the front door enters the living room', () => {
-    const p = walk({ x: 13.5, y: south + 1.5 }, 0, -1, 1.5);
-    expect(p.y).toBeLessThan(south - 1);
+  it('a closed door blocks; opened (toggleDoor) the player walks into the living room', () => {
+    const shut = walk({ x: 13.5, y: south + 1 }, 0, -1, 1.5);
+    expect(shut.y).toBeGreaterThanOrEqual(south + PLAYER_RADIUS - 1e-3);
+    const open = walk({ x: 13.5, y: south + 1 }, 0, -1, 1.5, { tx: 13, ty: south });
+    expect(open.y).toBeLessThan(south - 1);
+  });
+
+  it('the front-yard fence blocks walking', () => {
+    const p = walk({ x: 12.5, y: TEST_FENCE.y + 1.5 }, 0, -1, 3);
+    expect(p.y).toBeGreaterThanOrEqual(TEST_FENCE.y + PLAYER_RADIUS - 1e-3);
   });
 });

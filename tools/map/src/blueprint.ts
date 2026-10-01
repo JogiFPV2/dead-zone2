@@ -17,7 +17,7 @@ const Xy = z.tuple([Int, Int]);
 export const OpeningSchema = z.strictObject({
   at: Xy,
   side: z.enum(['n', 's', 'e', 'w']),
-  type: z.enum(EDGE_TYPES).exclude(['wall']),
+  type: z.enum(EDGE_TYPES).exclude(['wall', 'fence']),
   /** Default: the building's `door` / `window`. */
   contentId: TileRefSchema.optional(),
 });
@@ -88,6 +88,21 @@ export const BlueprintSchema = z.strictObject({
     .array(z.strictObject({ x: Int, y: Int, w: Int.min(1), h: Int.min(1), floor: TileRefSchema }))
     .default([]),
   buildings: z.array(BuildingSchema).default([]),
+  /**
+   * Free-standing fence runs (after buildings): `len` edges from tile (x, y), along +x for side
+   * `n` (north edges of that row), along +y for side `w` (west edges of that column).
+   */
+  fences: z
+    .array(
+      z.strictObject({
+        x: Int,
+        y: Int,
+        side: z.enum(['n', 'w']),
+        len: Int.min(1),
+        contentId: TileRefSchema,
+      }),
+    )
+    .default([]),
   /** Map objects in world tiles (furniture, containers, lights). */
   objects: z
     .array(

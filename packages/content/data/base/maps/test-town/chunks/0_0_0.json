@@ -143,6 +143,13 @@
   },
   "edges": [
     {
+      "x": 10,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
       "x": 11,
       "y": 11,
       "side": "n",
@@ -213,6 +220,13 @@
       "contentId": "base:wall-plain"
     },
     {
+      "x": 11,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
       "x": 12,
       "y": 11,
       "side": "n",
@@ -225,6 +239,13 @@
       "side": "n",
       "type": "wall",
       "contentId": "base:wall-plain"
+    },
+    {
+      "x": 12,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
     },
     {
       "x": 13,
@@ -241,6 +262,13 @@
       "contentId": "base:door-plain"
     },
     {
+      "x": 13,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
       "x": 14,
       "y": 11,
       "side": "n",
@@ -255,6 +283,13 @@
       "contentId": "base:wall-plain"
     },
     {
+      "x": 14,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
+    },
+    {
       "x": 15,
       "y": 11,
       "side": "n",
@@ -267,6 +302,13 @@
       "side": "n",
       "type": "window",
       "contentId": "base:window-plain"
+    },
+    {
+      "x": 15,
+      "y": 24,
+      "side": "n",
+      "type": "fence",
+      "contentId": "base:wooden-fence"
     },
     {
       "x": 16,

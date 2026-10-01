@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ContentIdSchema, ExtSchema, I18nKeySchema, TagListSchema } from './common/index.js';
 
 /** Rodzaj elementu statycznego mapy: kafel podłogi, dachu albo krawędź (ściana, okno, drzwi). */
-export const TILE_CATEGORIES = ['floor', 'roof', 'wall', 'window', 'door'] as const;
+export const TILE_CATEGORIES = ['floor', 'roof', 'wall', 'window', 'door', 'fence'] as const;
 export const TileCategorySchema = z.enum(TILE_CATEGORIES);
 
 /**

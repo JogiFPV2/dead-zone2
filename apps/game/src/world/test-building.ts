@@ -6,10 +6,14 @@ export const TEST_EDGE_PALETTE: readonly (EdgeDef | null)[] = [
   { id: 'base:wall-plain', kind: 'wall' },
   { id: 'base:window-plain', kind: 'window' },
   { id: 'base:door-plain', kind: 'door' },
+  { id: 'base:wooden-fence', kind: 'fence' },
 ];
 const WALL = 1;
 const WINDOW = 2;
 const DOOR = 3;
+const FENCE = 4;
+/** Front-yard fence south of the house: north edges of row y, x0..x1 (inclusive). */
+export const TEST_FENCE = { y: 24, x0: 10, x1: 15 } as const;
 
 export const TEST_BUILDING_ID = 1;
 /** Building footprint in chunk (0, 0), inclusive tile bounds (world = local there). */
@@ -65,6 +69,7 @@ export function paintTestBuilding(roofTile: number): BuildingLayers {
     w(16, y, y === 13 || y === 17 ? DOOR : WALL); // living room | kitchen, bedroom
   }
   for (let x = 16; x <= x1; x++) n(x, 15, x === 18 ? DOOR : WALL); // kitchen | bedroom
+  for (let x = TEST_FENCE.x0; x <= TEST_FENCE.x1; x++) n(x, TEST_FENCE.y, FENCE); // front yard
 
   return { edgeN, edgeW, roof, room };
 }

@@ -20,14 +20,16 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(map.getChunk(0, 0, 0)).toBe(chunk);
   });
 
-  it('makes door edges passable', () => {
+  it('keeps door / window / fence edges and names their kinds for the sim openings', () => {
     const map = chunkSourceToSimMap(source);
     const chunk = map.getChunk(0, 0, 0)!;
     const raw = source.getChunk(0, 0, 0)!;
     const doorId = source.edgePalette!.findIndex((d) => d?.kind === 'door');
     const doors = [...raw.edgeN!.keys()].filter((i) => raw.edgeN![i] === doorId);
     expect(doors.length).toBeGreaterThan(0);
-    for (const i of doors) expect(chunk.edgeN[i]).toBe(0);
+    for (const i of doors) expect(chunk.edgeN[i]).toBe(doorId);
+    expect(map.edgeKinds).toEqual(source.edgePalette!.map((d) => d?.kind ?? null));
+    expect(map.edgeKinds).toContain('fence');
   });
 
   it('fills missing edge layers with zeros and returns undefined outside the map', () => {

@@ -272,6 +272,15 @@
       ]
     }
   ],
+  "fences": [
+    {
+      "x": 10,
+      "y": 24,
+      "side": "n",
+      "len": 6,
+      "contentId": "base:wooden-fence"
+    }
+  ],
   "zones": [
     {
       "id": "start",

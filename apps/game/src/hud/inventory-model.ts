@@ -265,6 +265,19 @@ export function putAll(s: GameState): InvCommand[] {
 }
 
 /** PPM: equip into the first slot, unequip, or use. */
+/** Equip command for dropping `item` on equipment `slot` (undefined when it can't go there). */
+export function equipToSlot(
+  s: GameState,
+  content: HudContentIndex,
+  item: number,
+  slot: EquipSlot,
+): InvCommand | undefined {
+  const it = findItem(s, item);
+  const def = it ? content.items.get(it.def) : undefined;
+  if (!def?.equipSlots?.includes(slot) || it?.equipped?.includes(slot)) return undefined;
+  return { type: 'equip', item, slot };
+}
+
 export function contextCommand(
   s: GameState,
   content: HudContentIndex,

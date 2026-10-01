@@ -35,11 +35,15 @@ export interface RoofGroup {
 
 type KindOf = (edgeId: number) => EdgeKind | undefined;
 
-/** Groups the chunk's N/W edges by edge id (sorted). Doors are gaps, so they get no group. */
+/** Edges drawn by Structures: doors and fences are separate pieces (world/openings.ts). */
+export const STATIC_EDGE = (k: EdgeKind): boolean => k !== 'door' && k !== 'fence';
+
+/** Groups the chunk's N/W edges of the `include`d kinds by edge id (sorted). */
 export function collectEdges(
   chunk: ChunkData,
   kindOf: KindOf,
   lookup: BuildingLookup,
+  include: (kind: EdgeKind) => boolean = STATIC_EDGE,
 ): EdgeGroup[] {
   const groups = new Map<number, EdgeGroup>();
   const { cx, cy, z } = chunk.coord;
@@ -48,7 +52,7 @@ export function collectEdges(
     for (let i = 0; i < layer.length; i++) {
       const edgeId = layer[i] ?? 0;
       const kind = edgeId === 0 ? undefined : kindOf(edgeId);
-      if (!kind || kind === 'door') continue;
+      if (!kind || !include(kind)) continue;
       let g = groups.get(edgeId);
       if (!g) groups.set(edgeId, (g = { edgeId, kind, edges: [] }));
       const tx = cx * CHUNK_SIZE + (i % CHUNK_SIZE);

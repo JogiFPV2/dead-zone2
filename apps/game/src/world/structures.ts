@@ -19,6 +19,7 @@ const GREYS: Record<EdgeKind | 'roof', string> = {
   wall: '#6b7178',
   window: '#8a9097',
   door: '#6b7178',
+  fence: '#7a6146',
   roof: '#50565e',
 };
 

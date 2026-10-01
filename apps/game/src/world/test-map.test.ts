@@ -50,5 +50,5 @@ it('has one building with rooms, a roof and all edge kinds in chunk (0, 0)', () 
   const kinds = new Set(
     [...(c?.edgeN ?? []), ...(c?.edgeW ?? [])].map((id) => TEST_EDGE_PALETTE[id]?.kind),
   );
-  expect(kinds).toEqual(new Set([undefined, 'wall', 'window', 'door']));
+  expect(kinds).toEqual(new Set([undefined, 'wall', 'window', 'door', 'fence']));
 });

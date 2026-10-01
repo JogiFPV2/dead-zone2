@@ -5,6 +5,7 @@ import {
   type SimChunkAddress,
   type SimChunkRange,
   type SimMap,
+  type SimEdgeKind,
   type SimMapData,
 } from '@deadzone/protocol';
 import type { ChunkData, ChunkSource, EdgeDef } from './chunk.js';
@@ -13,21 +14,13 @@ import type { ChunkData, ChunkSource, EdgeDef } from './chunk.js';
 const NO_EDGES = new Uint16Array(CHUNK_TILES);
 
 /**
- * Keeps blocking edges and drops passable ones. Doors are open until the sim has door state
- * (docs/sim-architecture.md, `doors`), so the house in the test map can be entered.
+ * Sim edge kind per edge palette id: doors, windows and fences become sim openings (state,
+ * crowd pressure, a knocked-over fence); walls stay walls.
  */
-function blockingEdges(
-  layer: Uint16Array | undefined,
+export function edgeKindsOf(
   palette: readonly (EdgeDef | null)[] | undefined,
-): Uint16Array {
-  if (!layer) return NO_EDGES;
-  if (!palette?.some((d) => d?.kind === 'door')) return layer;
-  const out = new Uint16Array(CHUNK_TILES);
-  for (let i = 0; i < CHUNK_TILES; i++) {
-    const id = layer[i] ?? 0;
-    out[i] = palette[id]?.kind === 'door' ? 0 : id;
-  }
-  return out;
+): (SimEdgeKind | null)[] | undefined {
+  return palette?.map((d) => d?.kind ?? null);
 }
 
 /** Room id → room type (keys as strings, the sim's `SimChunk.rooms` shape). */
@@ -40,7 +33,8 @@ function roomTypes(data: ChunkData): Record<string, string> | undefined {
 
 /**
  * Adapter from the renderer's ChunkSource to the sim's SimMap: floor ids unchanged
- * (0 = no floor), missing edge layers become empty, door edges become passable. Rooms (layer +
+ * (0 = no floor), missing edge layers become empty, `edgeKinds` from the edge palette (doors,
+ * windows and fences are sim openings, closed by default; the player opens doors with F). Rooms (layer +
  * room types) and map objects are passed through, so the sim creates world storage with the
  * right loot tables. With `range`, `listChunks` lists its existing chunks (world storage is
  * created from them). Adapted chunks are cached, because ChunkSource implementations may build
@@ -57,8 +51,8 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
       const rooms = roomTypes(data);
       chunk = {
         floor: data.floor,
-        edgeN: blockingEdges(data.edgeN, source.edgePalette),
-        edgeW: blockingEdges(data.edgeW, source.edgePalette),
+        edgeN: data.edgeN ?? NO_EDGES,
+        edgeW: data.edgeW ?? NO_EDGES,
         ...(data.room ? { room: data.room, rooms: rooms ?? {} } : {}),
         ...(data.objects?.length
           ? { objects: data.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
@@ -69,13 +63,14 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
     cache.set(key, chunk);
     return chunk;
   };
+  const kinds = edgeKindsOf(source.edgePalette);
   // Floor palette: the sim picks scattered loot tiles by content tile id (`lootTable.scatter`).
-  const floorTiles = source.tilePalette;
-  if (!range) return { getChunk, floorTiles };
+  const extra = { floorTiles: source.tilePalette, ...(kinds ? { edgeKinds: kinds } : {}) };
+  if (!range) return { getChunk, ...extra };
   let list: SimChunkAddress[] | undefined;
   return {
     getChunk,
-    floorTiles,
+    ...extra,
     listChunks: () => {
       if (!list) {
         list = [];

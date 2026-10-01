@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { TileRefSchema } from '../common/index.js';
 import { LocalTileSchema } from './address.js';
 
-export const EDGE_TYPES = ['wall', 'window', 'door'] as const;
+/** `fence`: low fence (blocks movement only; a crowd can knock it over, sim state `broken`). */
+export const EDGE_TYPES = ['wall', 'window', 'door', 'fence'] as const;
 
 /**
  * Krawędź kafla (rzadka lista, tylko istniejące krawędzie). Każdy kafel ma własne krawędzie
