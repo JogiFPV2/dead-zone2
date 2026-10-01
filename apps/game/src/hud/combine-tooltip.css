@@ -1,0 +1,193 @@
+/* Combine tooltip (mockup combine.png): 380 px panel, accent.lo border. */
+.dz-ct {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg, 8px);
+  background: rgba(14, 17, 19, 0.97);
+  border: 1px solid var(--color-accent-lo);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.dz-ct[hidden] {
+  display: none;
+}
+.dz-ct__head,
+.dz-ct__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dz-ct__head {
+  color: var(--color-accent-base);
+}
+.dz-ct__label {
+  font: 700 11px/1 var(--font-family-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.dz-ct__label--acc {
+  flex: 1;
+  color: var(--color-accent-base);
+}
+.dz-ct__label--sm {
+  font-size: 10px;
+}
+.dz-ct__grow {
+  flex: 1;
+  min-width: 0;
+}
+.dz-ct__key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-key);
+  font: 700 11px/1 var(--font-family-mono);
+  color: var(--color-text-primary);
+}
+.dz-ct__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-neutral-700);
+}
+.dz-ct__ib {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--color-accent-lo);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent-hi);
+}
+.dz-ct__ib img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.dz-ct__rtext {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dz-ct__rname {
+  font: 600 16px/1.2 var(--font-family-sans);
+}
+.dz-ct__rcat {
+  font: 700 10px/1 var(--font-family-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-base);
+}
+.dz-ct__sep {
+  height: 1px;
+  background: var(--color-neutral-700);
+}
+.dz-ct__count {
+  font: 700 11px/1 var(--font-family-mono);
+  color: var(--color-success-text);
+}
+.dz-ct__count[data-miss] {
+  color: var(--color-danger-text);
+}
+.dz-ct__parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dz-ct__part {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-success-tint);
+  border: 1px solid rgba(127, 154, 78, 0.45);
+}
+.dz-ct__part[data-miss] {
+  background: var(--color-danger-tint);
+  border-color: var(--color-danger-base);
+}
+.dz-ct__pname {
+  font: 500 14px/1.2 var(--font-family-sans);
+}
+.dz-ct__part[data-miss] .dz-ct__pname {
+  color: var(--color-text-muted);
+}
+.dz-ct__psrc {
+  margin-top: 2px;
+  font: 400 11px/1.2 var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dz-ct__part[data-miss] .dz-ct__psrc {
+  color: var(--color-danger-text);
+}
+.dz-ct__pcount {
+  font: 700 14px/1 var(--font-family-mono);
+  color: var(--color-success-text);
+}
+.dz-ct__mark {
+  width: 14px;
+  text-align: center;
+  font: 700 13px/1 var(--font-family-mono);
+  color: var(--color-success-text);
+}
+.dz-ct__part[data-miss] .dz-ct__pcount,
+.dz-ct__part[data-miss] .dz-ct__mark {
+  color: var(--color-danger-text);
+}
+.dz-ct__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font: 400 12px/1.2 var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dz-ct__meta b {
+  color: var(--color-success-text);
+}
+.dz-ct__meta b[data-miss] {
+  color: var(--color-danger-text);
+}
+.dz-ct__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-base);
+  color: var(--color-text-inverse);
+  font: 700 13px/1 var(--font-family-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dz-ct__btn[data-disabled] {
+  background: var(--color-bg-button-disabled);
+  color: var(--color-text-disabled);
+}
+.dz-ct__btn[data-disabled] .dz-ct__key {
+  color: var(--color-text-disabled);
+  border-color: var(--color-text-disabled);
+  background: transparent;
+}
+.dz-ct__missing {
+  margin-top: -4px;
+  font: 700 11px/1.3 var(--font-family-mono);
+  color: var(--color-danger-text);
+}

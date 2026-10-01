@@ -1,5 +1,10 @@
 /* Simple inventory window (spec §3.12 tokens): scrim + two columns of panels. */
 .dz-inv {
+  /* Combinable tile (mockup combine.png): accent tint 12% → 3% over the row background. */
+  --bg-combo:
+    linear-gradient(90deg, rgba(224, 162, 58, 0.12), rgba(224, 162, 58, 0.03) 70%),
+    var(--color-bg-row);
+  --acc-lo: var(--color-accent-lo);
   position: absolute;
   inset: 0;
   z-index: var(--z-modal);
@@ -243,4 +248,69 @@
   left: 0;
   top: 0;
   z-index: 1;
+}
+
+/* Combinable items: tile tint + left edge, corner badge (full = ready, outline + red dot = miss). */
+.dz-inv__row[data-combo] {
+  background: var(--bg-combo);
+  box-shadow: inset 2px 0 0 var(--acc-lo);
+}
+.dz-inv__row[data-combo]:hover {
+  background:
+    linear-gradient(90deg, rgba(224, 162, 58, 0.16), rgba(224, 162, 58, 0.04) 70%),
+    var(--color-neutral-800);
+  box-shadow:
+    inset 2px 0 0 var(--acc-lo),
+    0 0 12px var(--color-accent-glow);
+}
+.dz-inv__icon {
+  position: relative;
+}
+.dz-inv__cb {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.dz-inv__cb[data-state='ready'] {
+  background: var(--color-accent-base);
+  color: var(--color-neutral-950);
+  box-shadow:
+    0 0 0 2px var(--color-neutral-900),
+    0 0 8px var(--color-accent-glow);
+}
+.dz-inv__cb[data-state='miss'] {
+  background: var(--color-neutral-950);
+  color: var(--color-accent-base);
+  border: 1.5px solid var(--color-accent-base);
+  box-shadow: 0 0 0 2px var(--color-neutral-900);
+}
+.dz-inv__cb[data-state='miss']::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-danger-base);
+  box-shadow: 0 0 0 1.5px var(--color-neutral-900);
+}
+.dz-inv__combo-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-family-mono);
+  color: var(--color-accent-base);
+}
+.dz-inv__row-sub > .dz-inv__combo-hint:not(:first-child) {
+  margin-left: 6px;
+}
+.dz-inv__combo-hint[data-state='miss'] {
+  color: var(--color-danger-text);
 }

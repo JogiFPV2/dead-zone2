@@ -3,9 +3,12 @@ import type { ContainerId } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex } from './content-index.js';
+import { combineCommand, combineTipVM } from './combine-model.js';
+import { createCombineTooltip, linkIcon } from './combine-tooltip.js';
 import {
   contextCommand,
   equipmentVM,
+  findItem,
   formatKg,
   inventoryVM,
   moveTo,
@@ -24,7 +27,9 @@ export interface InventoryWindowOptions {
   state: () => GameState;
   content: () => HudContentIndex;
   /** Key labels for the buttons (current bindings). */
-  keys: () => { takeAll: string; putAll: string };
+  keys: () => { takeAll: string; putAll: string; combine: string };
+  /** Key codes that combine the hovered item (default binding: crouch, `C`). */
+  isCombineKey: (code: string) => boolean;
 }
 
 export interface InventoryWindow {
@@ -85,7 +90,8 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
     div('dz-inv__title', 'Ekwipunek'),
     div(
       'dz-inv__hint',
-      'Kliknij lub przeciągnij przedmiot, aby przenieść · PPM załóż / użyj · Esc zamknij',
+      'Kliknij lub przeciągnij przedmiot, aby przenieść · PPM załóż / użyj · ' +
+        `${opts.keys().combine} połącz · Esc zamknij`,
     ),
   );
   const cols = div('dz-inv__cols');
@@ -95,18 +101,54 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
   cols.append(character, own, other);
   const tooltip = createItemTooltip();
   tooltip.el.classList.add('dz-inv__tooltip');
-  el.append(head, cols, tooltip.el);
+  const comboTip = createCombineTooltip();
+  el.append(head, cols, tooltip.el, comboTip.el);
   opts.root.append(el);
+  /** Item under the cursor (combine key). */
+  let hovered: number | undefined;
   /** Tooltip to the right of the hovered row (left when it would leave the window). */
-  const showTooltip = (row: HTMLElement, item: ItemRowVM): void => {
-    tooltip.hover(item.tooltip);
+  const placeBeside = (row: HTMLElement, w: number): { left: number; top: number } => {
     const r = row.getBoundingClientRect();
     const host = el.getBoundingClientRect();
-    const w = tooltip.el.offsetWidth || 300;
     const right = r.right + 12;
     const left = right + w > host.right - 16 ? r.left - 12 - w : right;
-    tooltip.place({ left: left - host.left, top: r.top - host.top });
+    const top = Math.max(0, Math.min(r.top - host.top, host.height - 520));
+    return { left: left - host.left, top };
   };
+  const showTooltip = (row: HTMLElement, item: ItemRowVM): void => {
+    hovered = item.id;
+    const s = opts.state();
+    const it = item.combine ? findItem(s, item.id) : undefined;
+    const tip = it ? combineTipVM(it, s.crafting, opts.content()) : undefined;
+    if (tip) {
+      tooltip.hide();
+      comboTip.show(tip, {
+        combine: opts.keys().combine,
+        ...(item.context ? {} : { context: 'PPM' }),
+      });
+      comboTip.place(placeBeside(row, 380));
+      return;
+    }
+    comboTip.hide();
+    tooltip.hover(item.tooltip);
+    tooltip.place(placeBeside(row, tooltip.el.offsetWidth || 300));
+  };
+  const hideTooltips = (): void => {
+    hovered = undefined;
+    tooltip.unhover();
+    comboTip.hide();
+  };
+  const combine = (id: number | undefined): void => {
+    if (id === undefined) return;
+    const s = opts.state();
+    const cmd = combineCommand(findItem(s, id), s.crafting);
+    if (cmd) opts.send(cmd);
+  };
+  window.addEventListener('keydown', (e) => {
+    if (!isOpen || e.repeat || !opts.isCombineKey(e.code)) return;
+    combine(hovered);
+  });
+  const rowEls = new Map<number, { row: HTMLElement; vm: ItemRowVM }>();
   let isOpen = false;
   let last: GameState | undefined;
   let lastContent: HudContentIndex | undefined;
@@ -143,24 +185,42 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
       const row = div('dz-inv__row');
       row.draggable = true;
       if (r.equipped) row.dataset.equipped = 'true';
+      if (r.combine) row.dataset.combo = r.combine.state;
       const txt = div('dz-inv__row-text');
       txt.append(div('dz-inv__row-name', r.name));
       const subText = [r.sub, r.context ? `PPM ${CONTEXT_LABEL[r.context]}` : '']
         .filter(Boolean)
         .join(' · ');
-      if (subText || r.durability !== undefined) {
+      if (subText || r.durability !== undefined || r.combine) {
         const sub = div('dz-inv__row-sub');
         if (r.durability !== undefined) sub.append(durabilityBar(r.durability));
         sub.append(subText);
+        if (r.combine) {
+          const hint = document.createElement('span');
+          hint.className = 'dz-inv__combo-hint';
+          hint.dataset.state = r.combine.state;
+          hint.append(linkIcon(11), r.combine.hint);
+          sub.append(hint);
+        }
         txt.append(sub);
       }
-      row.append(iconCell('dz-inv__icon', r), txt, div('dz-inv__row-weight', r.weight));
+      const icon = iconCell('dz-inv__icon', r);
+      if (r.combine) {
+        const badge = document.createElement('span');
+        badge.className = 'dz-inv__cb';
+        badge.dataset.state = r.combine.state;
+        badge.append(linkIcon(11));
+        icon.append(badge);
+      }
+      row.append(icon, txt, div('dz-inv__row-weight', r.weight));
+      rowEls.set(r.id, { row, vm: r });
       row.addEventListener('pointerenter', () => showTooltip(row, r));
-      row.addEventListener('pointerleave', () => tooltip.unhover());
+      row.addEventListener('pointerleave', hideTooltips);
       row.addEventListener('click', () => send([quickTransfer(opts.state(), r.id)]));
       row.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        send([contextCommand(opts.state(), opts.content(), r.id)]);
+        if (!r.context && r.combine) combine(r.id);
+        else send([contextCommand(opts.state(), opts.content(), r.id)]);
       });
       row.addEventListener('dragstart', (e) => {
         e.dataTransfer?.setData('text/x-dz-item', String(r.id));
@@ -254,7 +314,11 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
     last = s;
     lastContent = content;
     const vm = inventoryVM(s, content);
+    const keep = hovered;
     tooltip.hide();
+    comboTip.hide();
+    hovered = undefined;
+    rowEls.clear();
     const [main, ...bags] = vm.own;
     character.replaceChildren(
       renderCharacter(),
@@ -278,6 +342,13 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
         ),
       );
     }
+    restoreHover(keep);
+  };
+
+  /** Re-renders keep the tooltip of the row still under the cursor. */
+  const restoreHover = (id: number | undefined): void => {
+    const hit = id === undefined ? undefined : rowEls.get(id);
+    if (hit?.row.isConnected) showTooltip(hit.row, hit.vm);
   };
 
   const api: InventoryWindow = {
@@ -287,7 +358,7 @@ export function createInventoryWindow(opts: InventoryWindowOptions): InventoryWi
     toggle() {
       isOpen = !isOpen;
       el.hidden = !isOpen;
-      if (!isOpen) tooltip.hide();
+      if (!isOpen) hideTooltips();
       opts.root.dataset.modal = isOpen ? 'inventory' : '';
       if (isOpen) render();
     },

@@ -1,17 +1,24 @@
-import type { ContainerId, ContainerView, EquipSlot, ItemView } from '@deadzone/protocol';
+import type {
+  ContainerId,
+  ContainerView,
+  CraftingView,
+  EquipSlot,
+  ItemView,
+} from '@deadzone/protocol';
 import { durabilityRow, type StatRowVM, type TooltipItem } from '@deadzone/ui';
 import type { CommandBody } from '../sim/sim-client.js';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex, HudItemDef } from './content-index.js';
 import { itemIcon } from './hud-model.js';
 import { itemImage } from './item-icons.js';
+import { KIND_LABEL, formatKg } from './item-kinds.js';
 import { containerName, humanizeId } from './labels.js';
+import { combineRowVM, type CombineRowVM } from './combine-model.js';
+
+export { formatKg };
 
 /** Command without the header (the game stamps tick/player). */
 export type InvCommand = CommandBody;
-
-/** `8.44` → `8,4`. */
-export const formatKg = (kg: number): string => kg.toFixed(1).replace('.', ',');
 
 const FRESHNESS = { fresh: 'Świeże', stale: 'Nieświeże', rotten: 'Zepsute' } as const;
 
@@ -30,28 +37,9 @@ export interface ItemRowVM {
   /** Durability 0..1 for the small bar (items with durability). */
   durability?: number;
   tooltip: TooltipItem;
+  /** Part of a known combine recipe (tile tint, corner badge, combine tooltip). */
+  combine?: CombineRowVM;
 }
-
-/** Item category line of the tooltip (uppercased by CSS). */
-const KIND_LABEL: Record<string, string> = {
-  weapon_melee: 'Broń · Biała',
-  weapon_ranged: 'Broń palna',
-  ammo: 'Amunicja',
-  ammo_box: 'Amunicja',
-  magazine: 'Magazynek',
-  food: 'Jedzenie',
-  drink: 'Napój',
-  medical: 'Medyczne',
-  tool: 'Narzędzie',
-  material: 'Materiał',
-  clothing: 'Ubranie',
-  container: 'Torba',
-  literature: 'Książka',
-  vhs: 'Kaseta VHS',
-  lure: 'Wabik',
-  placeable: 'Do postawienia',
-  misc: 'Różne',
-};
 
 const CONTEXT_ACTION = { equip: 'załóż', unequip: 'zdejmij', use: 'użyj' } as const;
 
@@ -101,7 +89,12 @@ export interface InventoryVM {
   open?: PanelVM;
 }
 
-export function itemRow(it: ItemView, def: HudItemDef | undefined): ItemRowVM {
+export function itemRow(
+  it: ItemView,
+  def: HudItemDef | undefined,
+  crafting?: CraftingView,
+  content?: HudContentIndex,
+): ItemRowVM {
   const sub: string[] = [];
   if (it.equipped?.length) sub.push('Założone');
   if (it.condition !== undefined && def?.durabilityMax) {
@@ -118,6 +111,7 @@ export function itemRow(it: ItemView, def: HudItemDef | undefined): ItemRowVM {
         ? 'use'
         : undefined;
   const image = itemImage(it.def);
+  const combine = content ? combineRowVM(it, crafting, content) : undefined;
   const durability =
     it.condition !== undefined && def?.durabilityMax
       ? Math.min(1, Math.max(0, it.condition / def.durabilityMax))
@@ -133,6 +127,7 @@ export function itemRow(it: ItemView, def: HudItemDef | undefined): ItemRowVM {
     ...(image ? { image } : {}),
     ...(durability !== undefined ? { durability } : {}),
     tooltip: itemTooltip(it, def, context),
+    ...(combine ? { combine } : {}),
   };
 }
 
@@ -163,7 +158,7 @@ export function equipmentVM(s: GameState, content: HudContentIndex): EquipSlotVM
     return {
       slot: it?.equipped?.[0] ?? slot,
       label,
-      ...(it ? { item: itemRow(it, content.items.get(it.def)) } : {}),
+      ...(it ? { item: itemRow(it, content.items.get(it.def), s.crafting, content) } : {}),
     };
   });
 }
@@ -172,6 +167,7 @@ function panel(
   c: ContainerView,
   title: string,
   content: HudContentIndex,
+  crafting: CraftingView | undefined,
   capacityKg: number | null = c.capacityKg,
   weightKg = c.weightKg,
 ): PanelVM {
@@ -180,7 +176,7 @@ function panel(
     title,
     weightKg,
     capacityKg,
-    rows: c.items.map((it) => itemRow(it, content.items.get(it.def))),
+    rows: c.items.map((it) => itemRow(it, content.items.get(it.def), crafting, content)),
   };
 }
 
@@ -189,7 +185,7 @@ export function inventoryVM(s: GameState, content: HudContentIndex): InventoryVM
   const own: PanelVM[] = [];
   if (inv) {
     const main = inv.containers[inv.container];
-    if (main) own.push(panel(main, 'Przy sobie', content, inv.capacityKg, inv.loadKg));
+    if (main) own.push(panel(main, 'Przy sobie', content, s.crafting, inv.capacityKg, inv.loadKg));
     const bagItems = new Map<ContainerId, ItemView>();
     for (const c of Object.values(inv.containers)) {
       for (const it of c.items) if (it.container !== undefined) bagItems.set(it.container, it);
@@ -197,7 +193,7 @@ export function inventoryVM(s: GameState, content: HudContentIndex): InventoryVM
     for (const c of Object.values(inv.containers)) {
       if (c.id === inv.container) continue;
       const bag = bagItems.get(c.id);
-      own.push(panel(c, bag ? humanizeId(bag.def) : 'Torba', content));
+      own.push(panel(c, bag ? humanizeId(bag.def) : 'Torba', content, s.crafting));
     }
   }
   const open = s.container;
@@ -209,13 +205,14 @@ export function inventoryVM(s: GameState, content: HudContentIndex): InventoryVM
             open,
             `${containerName(open.type, open.kind)}${open.kind === 'ground' ? '' : ' · schowek'}`,
             content,
+            s.crafting,
           ),
         }
       : {}),
   };
 }
 
-const findItem = (s: GameState, id: number): ItemView | undefined => {
+export const findItem = (s: GameState, id: number): ItemView | undefined => {
   for (const c of Object.values(s.inventory?.containers ?? {})) {
     const it = c.items.find((i) => i.id === id);
     if (it) return it;

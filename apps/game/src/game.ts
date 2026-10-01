@@ -266,8 +266,14 @@ const inventory = createInventoryWindow({
   content: () => hudContent,
   keys: () => {
     const b = settings.get().input.bindings;
-    return { takeAll: actionKey(b, 'reload'), putAll: actionKey(b, 'interact') };
+    return {
+      takeAll: actionKey(b, 'reload'),
+      putAll: actionKey(b, 'interact'),
+      combine: actionKey(b, 'crouch'),
+    };
   },
+  // Combine the hovered item: the crouch key (`C`) while the window is open (mockup combine.png).
+  isCombineKey: (code) => settings.get().input.bindings.crouch.includes(code),
 });
 // Loot screen (mockup loot.png): opens by itself once a searched container's content arrives.
 const loot = createLootWindow({
