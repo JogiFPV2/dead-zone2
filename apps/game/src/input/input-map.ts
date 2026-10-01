@@ -35,6 +35,7 @@ function isTextInput(target: EventTarget | null): boolean {
 export class InputMap {
   private index = new Map<InputCode, Action[]>();
   private readonly held = new Set<InputCode>();
+  private suspended = false;
   private readonly handlers = new Map<Action, Set<ActionHandler>>();
   private readonly listeners: [
     EventTarget,
@@ -85,6 +86,19 @@ export class InputMap {
     return () => set.delete(handler);
   }
 
+  /**
+   * Suspends game input (pause menu, modal screens): presses are ignored and everything held is
+   * released; releases still clear held inputs.
+   */
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) this.releaseAll();
+  }
+
+  get isSuspended(): boolean {
+    return this.suspended;
+  }
+
   releaseAll(): void {
     this.held.clear();
   }
@@ -102,6 +116,7 @@ export class InputMap {
   }
 
   private press(code: InputCode, amount: number): void {
+    if (this.suspended) return;
     for (const action of this.index.get(code) ?? []) {
       for (const h of this.handlers.get(action) ?? []) h({ action, code, amount });
     }
@@ -113,7 +128,7 @@ export class InputMap {
       this.held.delete(e.code);
       return;
     }
-    if (isTextInput(e.target)) return;
+    if (isTextInput(e.target) || this.suspended) return;
     const wasHeld = this.held.has(e.code);
     this.held.add(e.code);
     if (!e.repeat && !wasHeld) this.press(e.code, 1);
@@ -125,7 +140,7 @@ export class InputMap {
       this.held.delete(code);
       return;
     }
-    if (this.held.has(code)) return;
+    if (this.held.has(code) || this.suspended) return;
     this.held.add(code);
     this.press(code, 1);
   }

@@ -21,6 +21,25 @@ function setup() {
 }
 
 describe('InputMap', () => {
+  it('ignores presses while suspended (pause menu) and releases held inputs', () => {
+    const { input, key, element } = setup();
+    const h = vi.fn();
+    input.on('inventory', h);
+    key('KeyW');
+    input.setSuspended(true);
+    expect(input.isDown('moveUp')).toBe(false);
+    key('KeyI');
+    key('KeyD');
+    element.dispatchEvent(ev('pointerdown', { button: 0 }));
+    expect(h).not.toHaveBeenCalled();
+    expect(input.isDown('moveRight')).toBe(false);
+    expect(input.isDown('primaryAction')).toBe(false);
+    key('KeyI', false);
+    input.setSuspended(false);
+    key('KeyI');
+    expect(h).toHaveBeenCalledTimes(1);
+  });
+
   it('tracks held actions by physical code', () => {
     const { input, key } = setup();
     key('KeyW');

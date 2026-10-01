@@ -1,5 +1,5 @@
 import type { Command, SimEvent, SimViewPatch } from '@deadzone/protocol';
-import type { SimWorkerClient } from '@deadzone/sim/worker-client';
+import type { SavedGame, SimWorkerClient } from '@deadzone/sim/worker-client';
 import type { SimClient, SnapshotMessage } from './sim-client.js';
 
 /**
@@ -39,6 +39,16 @@ export class WorkerSimClient implements SimClient {
 
   onEvents(cb: (events: SimEvent[], tick: number) => void): () => void {
     return this.client.onEvents(cb);
+  }
+
+  setPaused(paused: boolean): void {
+    if (paused) this.client.pause();
+    else this.client.resume();
+  }
+
+  /** Asks the worker for a save (`exit` on Zapisz i wyjdź); answered even while paused. */
+  save(reason: 'manual' | 'exit' = 'manual'): Promise<SavedGame> {
+    return this.client.save(reason);
   }
 
   /** Fatal init error (e.g. invalid content): the sim does not run. */

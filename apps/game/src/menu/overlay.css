@@ -1,0 +1,547 @@
+/*
+ * Overlays: Ustawienia, pauza, potwierdzenia (Designer mockups pause-menu.png, pause-confirm.png,
+ * pause-settings-graphics.png; generator dz-html/gen_pause.py). Authored in px for the mockups'
+ * 1280×720 and scaled as a whole (overlay-stage.ts). HUD A tokens (deadzone-hud-spec §1).
+ * All overlay styling lives in this file so the look can be revised in one place.
+ */
+.dzo {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-menu, 600);
+  overflow: hidden;
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+  user-select: none;
+  /* Scene behind: dimmed, blurred, vignette (mockup .world/.scrim/.vignette). */
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 36%, rgba(5, 8, 12, 0.64) 100%),
+    rgba(8, 10, 11, 0.42);
+  backdrop-filter: blur(3px) brightness(0.6) saturate(0.8);
+}
+.dzo[hidden] {
+  display: none;
+}
+.dzo-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1280px;
+  height: 720px;
+  transform-origin: 0 0;
+}
+.dzo-logo {
+  position: absolute;
+  left: 42px;
+  top: 26px;
+  font: 900 38px var(--font-family-sans);
+  letter-spacing: 6px;
+  color: var(--color-text-primary);
+  text-shadow: 0 2px 10px #000;
+}
+.dzo-logo i {
+  display: block;
+  width: 26px;
+  height: 2px;
+  margin-top: 6px;
+  background: var(--color-accent-base);
+}
+.dzo-panel {
+  position: absolute;
+  box-sizing: border-box;
+  background: rgba(21, 25, 28, 0.95);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(224, 162, 58, 0.035);
+}
+.dzo-sep {
+  height: 1px;
+  background: var(--color-border-default);
+}
+.dzo-grow {
+  flex: 1;
+}
+.dzo-accent {
+  color: var(--color-accent-hi);
+}
+.dzo-key {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: rgba(14, 17, 19, 0.88);
+  font: 700 11px var(--font-family-mono);
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.dzo-key--accent {
+  color: var(--color-text-inverse);
+  border-color: var(--color-border-inverse);
+  background: transparent;
+}
+.dzo-hints {
+  position: absolute;
+  left: 42px;
+  bottom: 27px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 500 11px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  font: 700 14px var(--font-family-mono);
+  letter-spacing: 0.025em;
+  cursor: pointer;
+  outline: none;
+  transition: background var(--motion-fast) ease-out;
+}
+.dzo-btn--pri {
+  border: 1px solid var(--color-accent-base);
+  background: var(--color-accent-base);
+  color: var(--color-text-inverse);
+}
+.dzo-btn--pri:hover {
+  background: var(--color-accent-hi);
+}
+.dzo-btn--sec {
+  border: 1px solid var(--color-border-default);
+  background: rgba(14, 17, 19, 0.52);
+  color: var(--color-text-primary);
+}
+.dzo-btn--sec:hover {
+  background: var(--color-bg-button-secondary-hover);
+  border-color: var(--color-border-strong);
+}
+.dzo-btn--focus,
+.dzo-btn:focus-visible {
+  outline: 2px solid var(--color-accent-glow);
+  outline-offset: 2px;
+}
+
+/* Pauza (pause-menu.png) */
+.dzo-paused {
+  position: absolute;
+  right: 42px;
+  top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 11px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-pause {
+  left: 390px;
+  top: 70px;
+  width: 500px;
+  min-height: 580px;
+  padding: 28px 34px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.dzo-pause-sep1 {
+  margin: 22px 0 12px;
+}
+.dzo-pause-sep2 {
+  margin: 18px 0 13px;
+}
+.dzo-pause-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.dzo-pause-title {
+  font: 700 30px var(--font-family-mono);
+  letter-spacing: 0.08em;
+}
+.dzo-pause-sub {
+  margin-top: 8px;
+  font: 12px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-badge {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-accent-lo);
+  background: rgba(224, 162, 58, 0.09);
+  font: 700 10px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--color-accent-hi);
+}
+.dzo-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dzo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: rgba(14, 17, 19, 0.52);
+  font: 700 14px var(--font-family-mono);
+  letter-spacing: 0.025em;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: background var(--motion-fast) ease-out;
+}
+.dzo-item .dzm-ic {
+  color: var(--color-text-muted);
+  flex: none;
+}
+.dzo-item--saveExit {
+  min-height: 75px;
+  border-color: var(--color-accent-lo);
+  background: linear-gradient(90deg, rgba(224, 162, 58, 0.1), rgba(14, 17, 19, 0.52));
+}
+.dzo-item--saveExit .dzm-ic {
+  color: var(--color-accent-hi);
+}
+.dzo-item--focus {
+  border-color: var(--color-accent-base);
+  background: var(--color-accent-base);
+  color: var(--color-text-inverse);
+  box-shadow: 0 0 18px rgba(224, 162, 58, 0.12);
+}
+.dzo-item--focus .dzm-ic,
+.dzo-item--focus .dzo-item-sub {
+  color: var(--color-text-inverse);
+}
+.dzo-item:focus-visible {
+  outline: 2px solid var(--color-accent-glow);
+  outline-offset: 2px;
+}
+.dzo-item--busy {
+  cursor: progress;
+  opacity: 0.8;
+}
+.dzo-item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dzo-item-sub {
+  font: 400 10px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-pause-warn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font: 500 11px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-pause-warn .dzm-ic {
+  color: var(--color-accent-hi);
+}
+.dzo-pause-status {
+  margin-top: auto;
+  padding-top: 17px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  font: 500 10px var(--font-family-mono);
+  color: var(--color-text-disabled);
+}
+
+/* Potwierdzenie (pause-confirm.png) */
+.dzo-confirm {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 11, 0.35);
+}
+.dzo-confirm-box {
+  left: 420px;
+  top: 178px;
+  width: 440px;
+  padding: 28px 30px 24px;
+  text-align: center;
+}
+.dzo-confirm-icon {
+  margin: 0 auto 12px;
+  color: var(--color-accent-hi);
+}
+.dzo-confirm-title {
+  font: 700 21px var(--font-family-mono);
+  letter-spacing: 0.06em;
+}
+.dzo-confirm-body {
+  margin: 14px 22px 0;
+  font: 12px/1.6 var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-confirm-box .dzo-sep {
+  margin: 24px 0 18px;
+}
+.dzo-confirm-foot {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Ustawienia (pause-settings-graphics.png) */
+.dzo-settings {
+  left: 100px;
+  top: 78px;
+  width: 1080px;
+  height: 566px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+}
+.dzo-settings-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.dzo-settings-head + .dzo-sep {
+  margin-top: 17px;
+}
+.dzo-title {
+  font: 700 20px var(--font-family-mono);
+  letter-spacing: 0.07em;
+}
+.dzo-tabs {
+  display: flex;
+  gap: 7px;
+}
+.dzo-tab,
+.dzo-opt {
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 5px;
+  border: 1px solid var(--color-border-default);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 12px var(--font-family-sans);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  outline: none;
+  transition:
+    background var(--motion-fast) ease-out,
+    border-color var(--motion-fast) ease-out;
+}
+.dzo-tab:hover,
+.dzo-opt:hover {
+  background: rgba(30, 35, 39, 0.85);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+.dzo-tab--on,
+.dzo-tab--on:hover,
+.dzo-opt--on,
+.dzo-opt--on:hover {
+  border-color: var(--color-accent-base);
+  background: var(--color-neutral-800);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 0 1px rgba(224, 162, 58, 0.12);
+}
+.dzo-tab--focus,
+.dzo-tab:focus-visible {
+  outline: 2px solid var(--color-accent-glow);
+  outline-offset: 2px;
+}
+.dzo-settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dzo-settings-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-default);
+}
+.dzo-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 6px 0 4px;
+  font: 700 13px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-base);
+}
+.dzo-hdr em {
+  font: 400 10px var(--font-family-mono);
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text-disabled);
+}
+.dzo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+.dzo-row--toggle,
+.dzo-row--choice {
+  min-height: 56px;
+  cursor: pointer;
+}
+.dzo-row--focus {
+  background: rgba(224, 162, 58, 0.06);
+  box-shadow: inset 3px 0 0 var(--color-accent-base);
+}
+.dzo-row-label {
+  width: 190px;
+  font: 500 13px var(--font-family-sans);
+  color: var(--color-text-muted);
+}
+.dzo-row--focus .dzo-row-label {
+  color: var(--color-text-primary);
+}
+.dzo-row-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dzo-row-title {
+  font: 600 13px var(--font-family-sans);
+  color: var(--color-text-primary);
+}
+.dzo-row--info .dzo-row-title {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.dzo-row-hint {
+  font: 500 10px var(--font-family-mono);
+  color: var(--color-text-disabled);
+}
+.dzo-row-info {
+  font: 500 12px var(--font-family-mono);
+  color: var(--color-text-primary);
+}
+.dzo-track {
+  position: relative;
+  flex: 1;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+  cursor: pointer;
+}
+.dzo-track::before {
+  content: '';
+  position: absolute;
+  inset: -12px 0;
+}
+.dzo-track i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-base);
+}
+.dzo-track b {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--color-accent-hi);
+  border: 2px solid var(--color-neutral-950);
+  box-shadow: 0 0 0 1px var(--color-accent-base);
+}
+.dzo-row-value {
+  width: 42px;
+  text-align: right;
+  font: 700 13px var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-hi);
+}
+.dzo-row-note {
+  width: 135px;
+  white-space: nowrap;
+  font: 500 10px var(--font-family-mono);
+  color: var(--color-text-disabled);
+}
+.dzo-opts {
+  display: flex;
+  gap: 8px;
+  width: 480px;
+}
+.dzo-opt {
+  flex: 1;
+  height: 44px;
+  flex-direction: column;
+  gap: 3px;
+}
+.dzo-opt em {
+  font: 500 9px var(--font-family-mono);
+  font-style: normal;
+  color: var(--color-text-disabled);
+}
+.dzo-opt--on em {
+  color: var(--color-accent-hi);
+}
+.dzo-toggle {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-track);
+}
+.dzo-toggle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-neutral-500);
+  transition: left var(--motion-fast) ease-out;
+}
+.dzo-toggle--on {
+  background: var(--color-accent-base);
+}
+.dzo-toggle--on::after {
+  left: 17px;
+  background: var(--color-neutral-950);
+}
+.dzo-soon {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  font: 700 10px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dzo * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -15,6 +15,7 @@ export class MockSimClient implements SimClient {
   private readonly timer: ReturnType<typeof setInterval>;
   private readonly crowd: Crowd;
   private readonly rng: Rng;
+  private paused = false;
 
   /** `crowd` = number of wandering placeholder entities appended after the player. */
   constructor(
@@ -44,12 +45,17 @@ export class MockSimClient implements SimClient {
     return () => this.listeners.delete(cb);
   }
 
+  setPaused(paused: boolean): void {
+    this.paused = paused;
+  }
+
   dispose(): void {
     clearInterval(this.timer);
     this.listeners.clear();
   }
 
   private step(): void {
+    if (this.paused) return;
     this.player = stepMockPlayer(this.player, this.input, MOCK_TICK_MS / 1000, this.bounds);
     stepCrowd(this.crowd, this.rng, MOCK_TICK_MS / 1000, this.bounds);
     this.tick++;

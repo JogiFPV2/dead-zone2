@@ -12,6 +12,8 @@ export const MIGRATIONS: Migrations = {
   1: (data) => data,
   // 2 → 3: audio ambience / voice / menuMusic added (menu, Ustawienia › Audio); defaults fill them.
   2: (data) => data,
+  // 3 → 4: graphics.style („Styl grafiki”, #71); sanitize defaults it to classic.
+  3: (data) => data,
 };
 
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

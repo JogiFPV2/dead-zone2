@@ -1,11 +1,10 @@
 import '@deadzone/ui/hud.css';
 import './main-menu.css';
 import type { AudioEngine } from '../audio/audio-engine.js';
-import { percent } from '../audio/mix.js';
-import { DEFAULT_SETTINGS, type AudioSettings } from '../settings/schema.js';
 import type { SettingsStore } from '../settings/store.js';
 import { WORDMARK, icon } from './icons.js';
-import { firstEnabled, menuScale, sliderAt, sliderKey, stepFocus } from './menu-model.js';
+import { firstEnabled, menuScale, stepFocus } from './menu-model.js';
+import { createSettingsScreen, type SettingsScreen } from './settings-screen.js';
 
 export type GameMode = 'survive' | 'rescue';
 
@@ -37,18 +36,6 @@ interface Item {
   disabled?: boolean;
 }
 
-const VOLUMES: readonly {
-  key: keyof Pick<AudioSettings, 'master' | 'music' | 'effects' | 'ambience' | 'voice'>;
-  label: string;
-  note: string;
-}[] = [
-  { key: 'master', label: 'Główna', note: '' },
-  { key: 'music', label: 'Muzyka', note: '' },
-  { key: 'effects', label: 'Efekty', note: 'broń, kroki, zombie' },
-  { key: 'ambience', label: 'Otoczenie', note: 'wiatr, deszcz, miasto' },
-  { key: 'voice', label: 'Głosy/UI', note: 'dialogi, kliknięcia' },
-];
-const TABS = ['Grafika', 'Audio', 'Sterowanie', 'Interfejs', 'Rozgrywka', 'Dostępność'];
 const MODES: readonly { id: GameMode; label: string }[] = [
   { id: 'survive', label: 'Przetrwaj' },
   { id: 'rescue', label: 'Ratunek' },
@@ -95,13 +82,10 @@ export function createMainMenu(o: MainMenuOptions): MainMenu {
   let mode: GameMode = 'survive';
   let confirm: { text: string; yes: string; onYes: () => void; focusYes: boolean } | undefined;
   let note = '';
-  // Settings › Audio draft (applied live via audio.preview, saved on Zastosuj).
-  let draft: AudioSettings = settings.get().audio;
-  let row = 0;
-  let lastPreviewMs = 0;
+  // Ustawienia: the shared screen (settings-screen.ts) over the dimmed menu.
+  let settingsScreen: SettingsScreen | undefined;
 
   const ui = (id: 'ui-click1' | 'ui-rollover2' | 'ui-switch2'): void => audio.play('ui', id);
-  const dirty = (): boolean => JSON.stringify(draft) !== JSON.stringify(settings.get().audio);
   const musicOn = (): boolean => settings.get().audio.menuMusic;
 
   function audioChips(withToggle: boolean): string {
@@ -131,32 +115,6 @@ export function createMainMenu(o: MainMenuOptions): MainMenu {
 ${audioChips(true)}`;
   }
 
-  function renderSettings(): string {
-    const sliders = VOLUMES.map((v, i) => {
-      const p = percent(draft[v.key]);
-      return `<div class="dzm-row${row === i ? ' dzm-row--focus' : ''}" data-row="${i}" role="slider" tabindex="${row === i ? 0 : -1}" aria-label="${v.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><span class="dzm-row-label">${v.label}</span><span class="dzm-track" data-track="${v.key}"><i style="width:${p}%"></i><b style="left:${p}%"></b></span><span class="dzm-row-value">${p}</span><span class="dzm-row-note">${row === i ? '◀ ▶ ±5 · Shift ±1' : v.note}</span></div>`;
-    }).join('');
-    const mm = VOLUMES.length;
-    const tabs = TABS.map(
-      (t) =>
-        `<span class="dzm-tab${t === 'Audio' ? ' dzm-tab--on' : ''}"${t === 'Audio' ? '' : ' aria-disabled="true" title="Wkrótce"'}>${t}</span>`,
-    ).join('');
-    return `<div class="dzm-logo dzm-logo--small">${WORDMARK}<div class="dzm-tag"><i></i><span>PRZETRWAJ. NIC WIĘCEJ.</span></div></div>
-<div class="dzm-panel" role="dialog" aria-label="Ustawienia">
-<div class="dzm-panel-head"><span class="dzm-panel-title">USTAWIENIA</span><span class="dzm-tabs">${tabs}</span></div>
-<div class="dzm-hsep"></div>
-<div class="dzm-hdr"><span>GŁOŚNOŚĆ</span><em>zmiany słychać od razu</em></div>
-<div>${sliders}</div>
-<div class="dzm-hdr"><span>MUZYKA</span></div>
-<div class="dzm-row dzm-row--toggle${row === mm ? ' dzm-row--focus' : ''}" data-row="${mm}" role="switch" tabindex="${row === mm ? 0 : -1}" aria-checked="${draft.menuMusic}"><span class="dzm-row-col"><span class="dzm-row-title">Muzyka w menu</span><span class="dzm-row-hint">Ścieżka gry (CC0) w menu głównym · teraz: „${o.track.title}”</span></span><span class="dzm-toggle${draft.menuMusic ? ' dzm-toggle--on' : ''}"></span></div>
-<div class="dzm-row dzm-row--toggle dzm-row--disabled" aria-disabled="true"><span class="dzm-row-col"><span class="dzm-row-title">${icon('yt', 18)} Własna muzyka (YouTube) <span class="dzm-soon">Wkrótce</span></span><span class="dzm-row-hint">Odtwarzana w widocznym miniplayerze w rogu ekranu (zgodnie z zasadami YouTube, bez ukrytego odtwarzania)</span><span class="dzm-url">https://youtube.com/playlist?list=…</span></span><span class="dzm-toggle"></span></div>
-<div class="dzm-hsep"></div>
-<div class="dzm-foot"><button type="button" class="dzm-btn" data-act="defaults">${icon('reset', 16)} PRZYWRÓĆ DOMYŚLNE</button><span class="dzm-grow"></span><button type="button" class="dzm-btn" data-act="back">${icon('arrowl', 16)} WSTECZ ${key('Esc')}</button><button type="button" class="dzm-btn dzm-btn--pri" data-act="apply">ZASTOSUJ ${key('Enter')}</button></div>
-</div>
-<div class="dzm-version">${o.version}</div>
-${audioChips(false)}`;
-  }
-
   function renderCredits(): string {
     return `<div class="dzm-logo dzm-logo--small">${WORDMARK}<div class="dzm-tag"><i></i><span>PRZETRWAJ. NIC WIĘCEJ.</span></div></div>
 <div class="dzm-panel dzm-panel--credits" role="dialog" aria-label="Autorzy">
@@ -177,12 +135,13 @@ ${audioChips(false)}`;
 
   function render(): void {
     stage.innerHTML =
-      (view === 'main' ? renderMain() : view === 'settings' ? renderSettings() : renderCredits()) +
+      (view === 'main' ? renderMain() : view === 'settings' ? '' : renderCredits()) +
       renderConfirm();
     el.dataset.view = view;
     o.setDimmed(view !== 'main');
     const f = stage.querySelector<HTMLElement>('[tabindex="0"]');
     if (f && document.activeElement !== f) f.focus({ preventScroll: true });
+    if (view === 'settings' && !settingsScreen) openSettings();
   }
 
   function setFocus(i: number): void {
@@ -194,9 +153,22 @@ ${audioChips(false)}`;
 
   function toggleMusic(): void {
     settings.update((s) => ({ ...s, audio: { ...s.audio, menuMusic: !s.audio.menuMusic } }));
-    draft = { ...draft, menuMusic: settings.get().audio.menuMusic };
     ui('ui-switch2');
     render();
+  }
+
+  function openSettings(): void {
+    settingsScreen = createSettingsScreen({
+      root: el,
+      settings,
+      audio,
+      trackTitle: o.track.title,
+      onClose() {
+        settingsScreen = undefined;
+        view = 'main';
+        render();
+      },
+    });
   }
 
   function activate(id: ItemId): void {
@@ -204,11 +176,8 @@ ${audioChips(false)}`;
     note = '';
     if (id === 'continue') o.onStart({ mode, resume: true });
     else if (id === 'new' || id === 'modes') o.onStart({ mode, resume: false });
-    else if (id === 'settings') {
-      view = 'settings';
-      draft = settings.get().audio;
-      row = 0;
-    } else if (id === 'credits') view = 'credits';
+    else if (id === 'settings') view = 'settings';
+    else if (id === 'credits') view = 'credits';
     else if (id === 'quit') {
       confirm = {
         text: 'Wyjść z gry?',
@@ -222,40 +191,6 @@ ${audioChips(false)}`;
         },
       };
     }
-    render();
-  }
-
-  function closeSettings(save: boolean): void {
-    if (save) settings.update((s) => ({ ...s, audio: draft }));
-    audio.preview(null);
-    view = 'main';
-    render();
-  }
-
-  function setDraft(next: AudioSettings, previewKey?: string): void {
-    draft = next;
-    audio.preview(draft);
-    const now = performance.now();
-    if (previewKey && now - lastPreviewMs > 90) {
-      lastPreviewMs = now;
-      if (previewKey === 'effects') audio.play('sfx', 'ui-switch2');
-      else if (previewKey === 'voice' || previewKey === 'master') audio.play('ui', 'ui-click1');
-    }
-    render();
-  }
-
-  function settingsBack(): void {
-    if (!dirty()) {
-      ui('ui-click1');
-      closeSettings(false);
-      return;
-    }
-    confirm = {
-      text: 'Odrzucić zmiany?',
-      yes: 'ODRZUĆ',
-      focusYes: false,
-      onYes: () => closeSettings(false),
-    };
     render();
   }
 
@@ -291,28 +226,7 @@ ${audioChips(false)}`;
       } else if (code === 'KeyM') toggleMusic();
       else handled = false;
     } else if (view === 'settings') {
-      const rows = VOLUMES.length + 1;
-      const vol = VOLUMES[row];
-      const next = vol ? sliderKey(draft[vol.key], code, e.shiftKey) : undefined;
-      if (vol && next !== undefined) setDraft({ ...draft, [vol.key]: next }, vol.key);
-      else if (code === 'ArrowDown' || code === 'KeyS') {
-        row = (row + 1) % rows;
-        ui('ui-rollover2');
-        render();
-      } else if (code === 'ArrowUp' || code === 'KeyW') {
-        row = (row + rows - 1) % rows;
-        ui('ui-rollover2');
-        render();
-      } else if (code === 'Space' && row === VOLUMES.length) {
-        ui('ui-switch2');
-        setDraft({ ...draft, menuMusic: !draft.menuMusic });
-      } else if (code === 'Enter') {
-        ui('ui-click1');
-        closeSettings(true);
-      } else if (code === 'Escape') settingsBack();
-      else if (code === 'KeyQ' || code === 'KeyE' || (code === 'Tab' && e.ctrlKey)) {
-        // Only Audio exists so far; the other tabs are placeholders.
-      } else handled = false;
+      handled = settingsScreen?.onKey(e) ?? false;
     } else {
       if (code === 'Escape' || code === 'Enter') {
         ui('ui-click1');
@@ -331,19 +245,10 @@ ${audioChips(false)}`;
     const act = t.closest<HTMLElement>('[data-act]')?.dataset.act;
     if (act) {
       if (act === 'music') toggleMusic();
-      else if (act === 'apply') {
+      else if (act === 'back') {
         ui('ui-click1');
-        closeSettings(true);
-      } else if (act === 'back') {
-        if (view === 'settings') settingsBack();
-        else {
-          ui('ui-click1');
-          view = 'main';
-          render();
-        }
-      } else if (act === 'defaults') {
-        ui('ui-click1');
-        setDraft({ ...DEFAULT_SETTINGS.audio, muted: draft.muted });
+        view = 'main';
+        render();
       } else if (act === 'yes' || act === 'no') {
         const c = confirm;
         confirm = undefined;
@@ -365,46 +270,13 @@ ${audioChips(false)}`;
       activate(items[Number(item.dataset.i)]!.id);
       return;
     }
-    const r = t.closest<HTMLElement>('.dzm-row[data-row]');
-    if (r && Number(r.dataset.row) === VOLUMES.length) {
-      row = VOLUMES.length;
-      ui('ui-switch2');
-      setDraft({ ...draft, menuMusic: !draft.menuMusic });
-    }
   }
 
   function onOver(e: PointerEvent): void {
     const t = e.target as HTMLElement;
     const item = t.closest<HTMLElement>('.dzm-item');
     if (item && view === 'main' && !confirm) setFocus(Number(item.dataset.i));
-    const r = t.closest<HTMLElement>('.dzm-row[data-row]');
-    if (r && view === 'settings' && !confirm && Number(r.dataset.row) !== row) {
-      row = Number(r.dataset.row);
-      render();
-    }
   }
-
-  let dragKey: (typeof VOLUMES)[number]['key'] | undefined;
-  function dragTo(e: PointerEvent): void {
-    if (!dragKey) return;
-    const track = stage.querySelector<HTMLElement>(`[data-track="${dragKey}"]`);
-    if (!track) return;
-    const b = track.getBoundingClientRect();
-    const v = sliderAt(e.clientX, b.left, b.width);
-    if (v !== draft[dragKey]) setDraft({ ...draft, [dragKey]: v }, dragKey);
-  }
-  function onDown(e: PointerEvent): void {
-    const track = (e.target as HTMLElement).closest<HTMLElement>('[data-track]');
-    if (!track || e.button !== 0) return;
-    dragKey = track.dataset.track as (typeof VOLUMES)[number]['key'];
-    row = VOLUMES.findIndex((v) => v.key === dragKey);
-    dragTo(e);
-    e.preventDefault();
-  }
-  const onMove = (e: PointerEvent): void => dragTo(e);
-  const onUp = (): void => {
-    dragKey = undefined;
-  };
 
   function resize(): void {
     const s = menuScale(window.innerWidth, window.innerHeight);
@@ -419,9 +291,6 @@ ${audioChips(false)}`;
   document.addEventListener('keydown', onKey, { capture: true });
   el.addEventListener('click', onClick);
   el.addEventListener('pointerover', onOver);
-  el.addEventListener('pointerdown', onDown);
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', onUp);
   window.addEventListener('resize', resize);
   resize();
   render();
@@ -429,10 +298,8 @@ ${audioChips(false)}`;
   return {
     dispose() {
       unsub();
-      audio.preview(null);
+      settingsScreen?.dispose();
       document.removeEventListener('keydown', onKey, { capture: true });
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
       window.removeEventListener('resize', resize);
       el.remove();
     },

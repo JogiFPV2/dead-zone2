@@ -81,6 +81,11 @@ import { PhysAdapter } from './anim/phys-adapter.js';
 import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
 import { weaponLoadout } from './weapons/loadout.js';
+import { MENU_TRACK } from './menu/track.js';
+import { PauseController } from './pause/pause-controller.js';
+import { handleEscape, type Closable } from './pause/pause-model.js';
+import { lastWorldSave, persistWorldSave } from './pause/world-save.js';
+import type { WorkerSimClient } from './sim/worker-sim-client.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -147,6 +152,8 @@ bindCameraInput(rig, input);
 // they come with zombies); it has no collisions and no survival.
 const gameState = new GameStateStore();
 let sim: SimClient;
+/** The real sim (saves); undefined with the mock. */
+let simWorker: WorkerSimClient | undefined;
 if (boot.sim === 'worker') {
   const spawn = boot.spawnInside
     ? { ...TEST_BUILDING_INSIDE, z: 0 }
@@ -163,6 +170,7 @@ if (boot.sim === 'worker') {
   });
   connectSimState(gameState, worker);
   sim = worker;
+  simWorker = worker;
 } else {
   sim = new MockSimClient(
     rangeBounds(world.range),
@@ -344,10 +352,55 @@ input.on('crafting', () => {
   inventory.close();
   workshop.toggle();
 });
+// Escape: an open window closes first; with none open, the pause menu (deadzone-menu-spec §6).
+const escapeWindows: readonly Closable[] = [
+  // Sleeping: Esc wakes up first (sleep screen).
+  {
+    get open() {
+      return sleep.sleeping;
+    },
+    close: () => sleep.wake(),
+  },
+  inventory,
+  workshop,
+  {
+    get open() {
+      return loot.open;
+    },
+    close() {
+      loot.hide();
+      sim.send(stamper.stamp({ type: 'closeContainer' }));
+    },
+  },
+];
+const pause = new PauseController({
+  root: container,
+  settings,
+  audio,
+  trackTitle: MENU_TRACK.title,
+  // Single-player: the menu stops the sim. Co-op will pass false (menu only, world runs on).
+  pausesSim: true,
+  host: {
+    setSimPaused: (paused) => sim.setPaused(paused),
+    setInputSuspended: (suspended) => input.setSuspended(suspended),
+    info: () => {
+      const gs = gameState.get();
+      return {
+        day: gs.clock?.day,
+        minuteOfDay: gs.clock ? lightMinute : undefined,
+        location: boot.map === 'test' ? 'Mapa testowa' : boot.map,
+      };
+    },
+    lastSave: lastWorldSave,
+    async saveAndExit() {
+      // Permadeath: the single world save is overwritten, then back to the main menu.
+      if (simWorker) await persistWorldSave(await simWorker.save('exit'), lightMinute);
+      window.location.assign(window.location.pathname);
+    },
+  },
+});
 input.on('pause', () => {
-  if (sleep.sleeping) sleep.wake();
-  inventory.close();
-  workshop.close();
+  handleEscape(escapeWindows, gameState.get().death !== undefined, () => pause.openMenu());
 });
 input.on('reload', () => {
   if (inventory.open) inventory.takeAll();
@@ -630,6 +683,11 @@ let cameraSnapped = false;
 renderer.setAnimationLoop((time) => {
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;
+  if (pause.simPaused) {
+    // Paused: the world stands still behind the menu (no input, view or HUD updates).
+    renderer.render(scene, camera);
+    return;
+  }
   playerInput.update(time, rig.targetYaw, camera);
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);

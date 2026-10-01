@@ -3,9 +3,7 @@ import type { CreatorResult } from '../creator/creator-screen.js';
 import { createSettingsStore } from '../settings/store.js';
 import { createMainMenu, type GameMode } from './main-menu.js';
 import type { MenuScene } from './menu-scene.js';
-
-/** Menu soundtrack (CC0, ASSETS.md). */
-const TRACK = { title: 'EmptyCity', credit: 'yd · OpenGameArt · CC0' };
+import { MENU_TRACK as TRACK } from './track.js';
 
 /** Menu only when the page has no query (dev/test URLs go straight to the game), or `?menu=1`. */
 export function shouldShowMenu(search: string): boolean {
