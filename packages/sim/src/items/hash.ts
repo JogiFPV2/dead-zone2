@@ -59,4 +59,9 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
     }
   }
   hashLures(st, h);
+  if (st.magOf.size > 0 || st.jammed.size > 0) {
+    h.u32(st.magOf.size).u32(st.jammed.size);
+    for (const id of [...st.magOf.keys()].sort(byNumber)) h.u32(id).u32(st.magOf.get(id)!);
+    for (const id of [...st.jammed].sort(byNumber)) h.u32(id);
+  }
 }

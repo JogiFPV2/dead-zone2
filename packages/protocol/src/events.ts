@@ -22,6 +22,8 @@ export type CommandRejectReason =
   | 'unknown-item'
   /** No such item / container, or not usable this way (e.g. eating a hammer). */
   | 'no-item'
+  /** Firearm empty / nothing to load (`attack`, `reload`, `loadMagazine`). */
+  | 'no-ammo'
   /** The door is locked (`toggleDoor` without `lock`). */
   | 'locked'
   /** Target container or item is not within reach (1.5 tiles) of the player. */
@@ -45,7 +47,7 @@ export type DeathCause =
   | 'zombie';
 
 /** What caused a `hit`: a player's melee swing, a shove, or a zombie attack. */
-export type HitSource = 'melee' | 'shove' | 'zombie';
+export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot';
 
 /** Timed actions (docs/sim-architecture.md, `actions`). */
 export type ActionKind = 'search' | 'eat' | 'drink' | 'bandage' | 'unpack';
@@ -166,6 +168,33 @@ export type SimEvent =
       untilTick?: number;
       toX?: number;
       toY?: number;
+    }
+  /**
+   * A firearm shot: one ray per projectile from (x, y) to its end (first zombie hit, a wall or
+   * the range); `hit` = StableId of the zombie hit, 0 = miss. Damage comes as `hit` events
+   * (`source: 'shot'`). `ammo` = rounds left.
+   */
+  | {
+      type: 'shot';
+      tick: number;
+      playerId: PlayerId;
+      weapon: string;
+      x: number;
+      y: number;
+      rays: { toX: number; toY: number; hit: number }[];
+      ammo: number;
+      jammed: boolean;
+    }
+  /** Reload / magazine loading started (`untilTick`) or finished (`done`, `ammo` loaded). */
+  | {
+      type: 'reload';
+      tick: number;
+      playerId: PlayerId;
+      item: ItemId;
+      def: string;
+      phase: 'started' | 'done' | 'cancelled';
+      untilTick: number;
+      ammo: number;
     }
   /** A thrown item landed at (x, y). */
   | {

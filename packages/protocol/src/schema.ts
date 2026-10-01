@@ -229,6 +229,13 @@ export const throwCommandSchema = z.strictObject({
   dirY: unitDir,
 });
 
+export const reloadCommandSchema = z.strictObject({ ...header, type: z.literal('reload') });
+export const loadMagazineCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('loadMagazine'),
+  item: itemId,
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
@@ -259,6 +266,8 @@ export const commandSchema = z.discriminatedUnion('type', [
   placeLureCommandSchema,
   triggerLureCommandSchema,
   throwCommandSchema,
+  reloadCommandSchema,
+  loadMagazineCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */

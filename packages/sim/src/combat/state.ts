@@ -22,6 +22,9 @@ export interface CombatWorld {
   readonly zombieReady: Uint32Array;
   /** Player: zombies killed (`zombies-killed` counter for traits). */
   readonly kills: Uint32Array;
+  /** Player: reload / magazine loading ends at this tick (0 = none), of item `reloadItem`. */
+  readonly reloadUntil: Uint32Array;
+  readonly reloadItem: Uint32Array;
   pending: PendingAttack[];
 }
 
@@ -36,6 +39,8 @@ export function createCombatWorld(
     staggerUntil: new Uint32Array(capacity),
     zombieReady: new Uint32Array(capacity),
     kills: new Uint32Array(capacity),
+    reloadUntil: new Uint32Array(capacity),
+    reloadItem: new Uint32Array(capacity),
     pending: [],
   };
 }

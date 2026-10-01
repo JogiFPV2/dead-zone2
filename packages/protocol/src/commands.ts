@@ -181,6 +181,8 @@ export interface CancelActionCommand extends CommandHeader {
 /**
  * Melee attack with the weapon in `hand_primary` (bare hands without one) towards the aim point
  * (last `aim`), or the facing without aim. Rejected with `busy` while the weapon cools down.
+ * With a firearm in `hand_primary`: a shot towards the aim point (`no-ammo` when empty, `busy`
+ * while reloading, `invalid-state` when jammed).
  */
 export interface AttackCommand extends CommandHeader {
   type: 'attack';
@@ -344,6 +346,22 @@ export interface ThrowCommand extends CommandHeader {
   dirY?: number | undefined;
 }
 
+/**
+ * Reloads the firearm in `hand_primary` (timed, `ranged.reloadSec`, real seconds): internal feed
+ * loads carried rounds of `ranged.ammo` up to capacity; magazine feed swaps in the fullest
+ * carried magazine (the old one goes to the inventory). Also clears a jam. Switching weapons
+ * cancels it. `no-ammo` when there is nothing to load.
+ */
+export interface ReloadCommand extends CommandHeader {
+  type: 'reload';
+}
+
+/** Fills a carried magazine with carried rounds of its `magazine.ammo` (timed, per round). */
+export interface LoadMagazineCommand extends CommandHeader {
+  type: 'loadMagazine';
+  item: ItemId;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -373,7 +391,9 @@ export type Command =
   | DebugOpeningCommand
   | PlaceLureCommand
   | TriggerLureCommand
-  | ThrowCommand;
+  | ThrowCommand
+  | ReloadCommand
+  | LoadMagazineCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

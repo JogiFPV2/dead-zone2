@@ -88,6 +88,10 @@ export interface SimWorkerClient {
   attack(): void;
   /** Shove zombies in front (stagger, no damage). */
   shove(): void;
+  /** Reload the firearm in hand_primary (also clears a jam). */
+  reload(): void;
+  /** Fill a carried magazine with carried rounds. */
+  loadMagazine(item: ItemId): void;
   placeStorage(item: ItemId, x: number, y: number): void;
   /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
@@ -242,6 +246,8 @@ export function createSimWorkerClient(
     cancelAction: () => cmd({ type: 'cancelAction' }),
     attack: () => cmd({ type: 'attack' }),
     shove: () => cmd({ type: 'shove' }),
+    reload: () => cmd({ type: 'reload' }),
+    loadMagazine: (item) => cmd({ type: 'loadMagazine', item }),
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
     toggleDoor: (tx, ty, side, lock) =>
       cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),

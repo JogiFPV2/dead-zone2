@@ -18,6 +18,10 @@ export function describeEvent(e: SimEvent): string {
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
     case 'fellAsleep':
       return 'fell asleep';
+    case 'shot':
+      return `shot ${e.weapon} (${e.rays.filter((r) => r.hit).length}/${e.rays.length} hit, ${e.ammo} left${e.jammed ? ', jammed' : ''})`;
+    case 'reload':
+      return `reload ${e.def} ${e.phase} (${e.ammo})`;
     case 'lureChanged':
       return `lure ${e.def} ${e.phase} at ${e.x},${e.y}`;
     case 'thrown':

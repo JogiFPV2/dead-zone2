@@ -90,6 +90,10 @@ export interface ItemStore {
   readonly worldByTile: Map<string, number[]>;
   nextItemId: number;
   nextContainerId: number;
+  /** Magazine-fed firearms: weapon item id → content index of the inserted magazine. */
+  readonly magOf: Map<number, number>;
+  /** Jammed firearms (item ids); `reload` clears. */
+  readonly jammed: Set<number>;
   /** Placed lures by item id (lures/lures.ts). */
   readonly lures: Map<number, LureState>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
@@ -109,6 +113,8 @@ export function createItemStore(content: ContentIndex): ItemStore {
     ground: new Map(),
     worldByTile: new Map(),
     lures: new Map(),
+    magOf: new Map(),
+    jammed: new Set(),
     nextItemId: 1,
     nextContainerId: 1,
     powered: true,

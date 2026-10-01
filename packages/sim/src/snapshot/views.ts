@@ -35,22 +35,32 @@ import {
 import { threatNearby } from '../systems/sleep.js';
 import { threatLevel } from '../ai/threat.js';
 import { meleeOf } from '../combat/system.js';
+import { capacityOf, firearmOf } from '../combat/firearms.js';
 import { defOf, maxCondition } from '../items/store.js';
 import { DEATH_CAUSES } from '../survival/state.js';
 import { bandageDirty, woundBleeding } from '../survival/wounds.js';
 
 function combatView(w: SimWorld, eid: number): CombatView {
   const cb = w.ai!.combat;
+  const gun = firearmOf(w, eid);
   const m = meleeOf(w, cb, eid);
-  const item = m.item === undefined ? undefined : w.items?.items.get(m.item);
+  const id = gun ? gun.item.id : m.item;
+  const item = id === undefined ? undefined : w.items?.items.get(id);
   const def = item && w.items ? defOf(w.items, item) : undefined;
-  return {
+  const v: CombatView = {
     zombiesKilled: cb.kills[eid] ?? 0,
     weapon: def?.id ?? null,
     condition: item ? item.condition : null,
     maxCondition: def ? maxCondition(def) : null,
     readyTick: cb.readyTick[eid] ?? 0,
   };
+  if (gun && w.items) {
+    v.ammo = gun.item.uses;
+    v.capacity = capacityOf(w.items, gun.item, gun.def);
+    v.jammed = w.items.jammed.has(gun.item.id);
+  }
+  if (cb.reloadUntil[eid]) v.reloadUntil = cb.reloadUntil[eid];
+  return v;
 }
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;

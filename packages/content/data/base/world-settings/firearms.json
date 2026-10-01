@@ -1,0 +1,8 @@
+{
+  "firearms": {
+    "hitFalloffAtRange": 0.6,
+    "spread": { "pistol": 0.03, "revolver": 0.03, "shotgun": 0.12, "rifle": 0.015 },
+    "projectileRadiusTiles": 0.15,
+    "magazineLoadSecPerRound": 0.4
+  }
+}

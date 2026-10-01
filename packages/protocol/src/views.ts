@@ -239,13 +239,20 @@ export interface OpeningView {
 
 export interface CombatView {
   zombiesKilled: number;
-  /** Content id of the melee weapon in `hand_primary`, null = bare hands. */
+  /** Content id of the weapon (melee or firearm) in `hand_primary`, null = bare hands. */
   weapon: string | null;
   /** Weapon condition 0..max (null = bare hands). */
   condition: number | null;
   maxCondition: number | null;
   /** Tick from which the next attack is possible. */
   readyTick: number;
+  /** Firearm in hand: rounds loaded, capacity (magazine feed: of the inserted magazine, 0 = none). */
+  ammo?: number;
+  capacity?: number;
+  /** Firearm jammed (reload clears it). */
+  jammed?: boolean;
+  /** Reload / magazine loading in progress until this tick. */
+  reloadUntil?: number;
 }
 
 export interface DeathView {

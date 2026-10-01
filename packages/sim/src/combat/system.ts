@@ -11,6 +11,7 @@ import { inflictWound } from '../survival/wounds.js';
 import { lineOfSight, walkableLine } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
 import type { CombatWorld } from './state.js';
+import { fire, firearmOf, reloadSystem } from './firearms.js';
 
 /**
  * Pipeline `combat` (docs 2.5): player swings and shoves queued by `attack` / `shove` this tick
@@ -20,9 +21,11 @@ export function combatSystem(w: SimWorld, grid: TileGrid): void {
   const ai = w.ai;
   if (!ai) return;
   const cb = ai.combat;
+  reloadSystem(w, cb);
   for (const p of cb.pending) {
     if (w.survival?.dead[p.eid]) continue;
     if (p.shove) shove(w, ai, cb, grid, p.eid);
+    else if (firearmOf(w, p.eid)) fire(w, ai, cb, grid, p.eid);
     else swing(w, ai, cb, grid, p.eid);
   }
   cb.pending.length = 0;

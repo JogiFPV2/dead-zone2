@@ -9,6 +9,7 @@ import type { ContentIndex, ZombieTypeDef } from '../content/adapter.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { SpatialHash } from '../core/spatial.js';
 import { createCombatWorld, type CombatWorld } from '../combat/state.js';
+import { DEFAULT_COMBAT_CONFIG } from '../combat/config.js';
 import type { CombatConfig } from '../combat/config.js';
 import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from './config.js';
 
@@ -161,7 +162,12 @@ export function createAiWorld(
     lastX: new Float32Array(capacity),
     lastY: new Float32Array(capacity),
     zombieCount: 0,
-    combat: createCombatWorld(capacity, combatCfg),
+    combat: createCombatWorld(
+      capacity,
+      content.firearms
+        ? { ...(combatCfg ?? DEFAULT_COMBAT_CONFIG), firearms: content.firearms }
+        : combatCfg,
+    ),
   };
 }
 

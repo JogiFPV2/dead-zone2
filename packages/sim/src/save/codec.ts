@@ -128,6 +128,9 @@ export function restoreInto(target: object, saved: unknown, skip: readonly strin
     } else if (cur instanceof Map && v instanceof Map) {
       cur.clear();
       for (const [mk, mv] of v) cur.set(mk, mv);
+    } else if (cur instanceof Set && v instanceof Set) {
+      cur.clear();
+      for (const sv of v) cur.add(sv);
     } else if (isPlain(cur) && isPlain(v)) restoreInto(cur, v);
     else t[k] = v;
   }

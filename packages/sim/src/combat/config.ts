@@ -38,6 +38,13 @@ export interface CombatConfig {
   zombieWoundWeights: { scratch: number; laceration: number };
   /** Snapshot `anim = attack` this long after a swing. */
   attackAnimSec: number;
+  /** `worldSettings.firearms` (data wins, see ai/state.ts). */
+  firearms: {
+    hitFalloffAtRange: number;
+    spread: Record<'pistol' | 'revolver' | 'shotgun' | 'rifle', number>;
+    projectileRadiusTiles: number;
+    magazineLoadSecPerRound: number;
+  };
 }
 
 export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
@@ -58,4 +65,10 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   zombie: { hitChance: 0.7, reachTiles: 0.9, windupSec: 0.5 },
   zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },
   attackAnimSec: 0.4,
+  firearms: {
+    hitFalloffAtRange: 0.6,
+    spread: { pistol: 0.03, revolver: 0.03, shotgun: 0.12, rifle: 0.015 },
+    projectileRadiusTiles: 0.15,
+    magazineLoadSecPerRound: 0.4,
+  },
 };

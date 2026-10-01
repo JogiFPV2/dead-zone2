@@ -3,6 +3,7 @@ import { CapacityKgSchema, ExtSchema } from './common/index.js';
 import { CharacterCreationSchema } from './character-creation.js';
 import { CraftingSettingsSchema } from './crafting-settings.js';
 import { LootSettingsSchema } from './loot-rarity.js';
+import { FirearmsSettingsSchema } from './firearms-settings.js';
 import { OpeningsSettingsSchema } from './openings-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
@@ -41,6 +42,8 @@ export const WorldSettingsSchema = z.strictObject({
   vision: VisionSettingsSchema,
   /** Drzwi i okna: wytrzymałość, hałas, przechodzenie przez okno. */
   openings: OpeningsSettingsSchema,
+  /** Broń palna: spadek celności z odległością, rozrzut, ładowanie magazynków. */
+  firearms: FirearmsSettingsSchema,
   ext: ExtSchema,
 });
 
