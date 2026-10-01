@@ -29,7 +29,8 @@ describe('settings rows', () => {
   it('Grafika: style choice cycles and the resolution shows the viewport', () => {
     const style = row('graphics', 'style');
     expect(adjustRow(d, style, 'ArrowRight', false).graphics.style).toBe('outline');
-    expect(adjustRow(d, style, 'ArrowLeft', false).graphics.style).toBe('pixel');
+    expect(adjustRow(d, style, 'ArrowLeft', false).graphics.style).toBe('pixel-fine');
+    expect(JSON.stringify(settingsRows('graphics', d, ctx))).toContain('Pikselowy ostry');
     expect(activateRow(d, style).graphics.style).toBe('outline');
     const q = row('graphics', 'quality');
     expect(adjustRow(d, q, 'ArrowLeft', false).graphics.pixelRatioCap).toBe(1.5);

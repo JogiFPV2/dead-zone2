@@ -45,6 +45,35 @@ function oklabOf(hex: number): Vector3 {
   );
 }
 
+/** Styles drawn through the low-res pixel pass. */
+export type PixelStyle = 'pixel' | 'pixel-fine';
+export const isPixelStyle = (s: GraphicsStyle): s is PixelStyle =>
+  s === 'pixel' || s === 'pixel-fine';
+
+/** Screen height (px) the art-pixel size is measured at (the target has a fixed row count). */
+export const PIXEL_REF_HEIGHT = 720;
+/**
+ * Art-pixel size per pixel style, in px at PIXEL_REF_HEIGHT: the one knob to tune each style.
+ * `pixel` 3 px = 240 rows (427 × 240 at 16:9), `pixel-fine` („Pikselowy ostry”) 2 px = 360 rows
+ * (640 × 360). Palette, dither and outlines are shared.
+ */
+export const PIXEL_SIZE_PX: Record<PixelStyle, number> = { pixel: 3, 'pixel-fine': 2 };
+
+/** Art-pixel rows of the low-res target of a pixel style. */
+export const pixelRows = (style: PixelStyle): number =>
+  Math.round(PIXEL_REF_HEIGHT / PIXEL_SIZE_PX[style]);
+
+/** Low-res target size for a drawing buffer (rows capped at the buffer height, never upsampled). */
+export function pixelTargetSize(
+  style: PixelStyle,
+  width: number,
+  height: number,
+): { w: number; h: number } {
+  const h = Math.max(1, Math.min(pixelRows(style), height));
+  const w = Math.max(1, Math.round((h * width) / Math.max(height, 1)));
+  return { w, h };
+}
+
 /** Tuning of the styles. */
 export const STYLE_TUNING = {
   /**
@@ -53,10 +82,10 @@ export const STYLE_TUNING = {
    */
   outline: { hullPx: 2, toonStep: 1, toonSoft: 1.25 },
   /**
-   * Pixel: art-pixel rows of the target (427 x 240 at 16:9), dither amplitude, depth break
-   * (world units) shaded one palette step down, character lift (extra emissive share).
+   * Pixel styles (size in PIXEL_SIZE_PX): dither amplitude, depth break (world units) shaded one
+   * palette step down, character lift (extra emissive share).
    */
-  pixel: { rows: 240, dither: 0.035, edge: 0.6, shade: 0.62, lift: 0.35 },
+  pixel: { dither: 0.035, edge: 0.6, shade: 0.62, lift: 0.35 },
 } as const;
 
 /**
@@ -64,7 +93,8 @@ export const STYLE_TUNING = {
  * - classic: plain `renderer.render`;
  * - outline: still a plain render, with the 3-band lighting ramp switched on in the lit
  *   materials and inverted-hull ink outlines on characters (see style-materials.ts);
- * - pixel: same ramp, scene into a 240-row target (nearest), one fullscreen pass with grade,
+ * - pixel / pixel-fine: same ramp, scene into a 240- / 360-row target (PIXEL_SIZE_PX 3 / 2,
+ *   nearest), one fullscreen pass with grade,
  *   Bayer 4x4 dither and the 32-colour palette (OKLab nearest), 1-px hull outlines and a lift
  *   on characters; the camera is snapped to the art-pixel grid (view plane) so static
  *   geometry does not shimmer while it follows the player. The HUD (DOM) is untouched.
@@ -117,7 +147,7 @@ export class GraphicsStylePass {
     if (style === this.style) return;
     this.style = style;
     this.targetKey = '';
-    const pixel = style === 'pixel';
+    const pixel = isPixelStyle(style);
     applyStyleMaterials({
       toon: style !== 'classic',
       hulls: style !== 'classic',
@@ -129,14 +159,15 @@ export class GraphicsStylePass {
   render(scene: Object3D, camera: Camera): void {
     const r = this.renderer;
     r.getDrawingBufferSize(this.size);
-    if (this.style !== 'pixel') {
+    const style = this.style;
+    if (!isPixelStyle(style)) {
       setHullSize((STYLE_TUNING.outline.hullPx * this.size.y) / 720, this.size.x, this.size.y);
       r.setRenderTarget(null);
       r.render(scene, camera);
       return;
     }
-    const h = Math.min(STYLE_TUNING.pixel.rows, this.size.y);
-    const w = Math.max(1, Math.round((h * this.size.x) / Math.max(this.size.y, 1)));
+    // The camera snap below uses the same rows, so it follows each style's grid.
+    const { w, h } = pixelTargetSize(style, this.size.x, this.size.y);
     setHullSize(1, w, h);
     const t = this.ensureTarget(w, h);
     const ortho = (camera as OrthographicCamera).isOrthographicCamera

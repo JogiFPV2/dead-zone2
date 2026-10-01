@@ -118,6 +118,9 @@ describe('loadSettings', () => {
     const v4 = loadSettings(JSON.stringify({ version: 4, graphics: { style: 'pixel' } }));
     expect(v4.fallback).toBeUndefined();
     expect(v4.settings.graphics.style).toBe('pixel');
+    const fine = loadSettings(JSON.stringify({ version: 4, graphics: { style: 'pixel-fine' } }));
+    expect(fine.migratedFrom).toBeUndefined();
+    expect(fine.settings.graphics.style).toBe('pixel-fine');
     expect(sanitizeSettings({ graphics: { style: 'vhs' } }).graphics.style).toBe('classic');
   });
 

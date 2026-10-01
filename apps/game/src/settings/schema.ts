@@ -4,10 +4,11 @@ import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bind
 export const SETTINGS_VERSION = 4;
 
 /**
- * „Styl grafiki” (#71): classic low-poly, outlines + toon bands, low-res pixel art. Persisted and
- * shown in Ustawienia › Grafika; the renderer applies it (render/graphics-style.ts).
+ * „Styl grafiki” (#71): classic low-poly, outlines + toon bands, low-res pixel art (3 px) and
+ * the finer „Pikselowy ostry” (2 px). Persisted and shown in Ustawienia › Grafika; the renderer
+ * applies it (render/graphics-style.ts). New ids are appended: stored values keep their meaning.
  */
-export const GRAPHICS_STYLES = ['classic', 'outline', 'pixel'] as const;
+export const GRAPHICS_STYLES = ['classic', 'outline', 'pixel', 'pixel-fine'] as const;
 export type GraphicsStyle = (typeof GRAPHICS_STYLES)[number];
 
 /** Graphics: `style` (renderer); the other fields are stored, not applied by the game yet. */

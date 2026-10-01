@@ -36,6 +36,7 @@ const STYLE_LABELS: Record<GraphicsStyle, string> = {
   classic: 'Klasyczny',
   outline: 'Kontury',
   pixel: 'Pixel',
+  'pixel-fine': 'Pikselowy ostry',
 };
 const STYLES: readonly ChoiceOption[] = GRAPHICS_STYLES.map((id) => ({
   id,

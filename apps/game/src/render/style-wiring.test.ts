@@ -43,8 +43,8 @@ describe('graphics style wiring (regression: style setting had no effect)', () =
     expect(src('../menu/boot-menu.ts')).toContain('settings.get().graphics.style');
   });
 
-  it('keeps the three styles', () => {
-    expect([...GRAPHICS_STYLES]).toEqual(['classic', 'outline', 'pixel']);
+  it('keeps the three styles and appends „Pikselowy ostry”', () => {
+    expect([...GRAPHICS_STYLES]).toEqual(['classic', 'outline', 'pixel', 'pixel-fine']);
   });
 
   it('adds one hull per skinned part, as its child, idempotently', () => {
