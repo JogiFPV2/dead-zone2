@@ -358,6 +358,43 @@ describe('survival over the worker protocol', () => {
     expect(sleep).toMatchObject({ saveReady: true, surface: 'floor', restCap: 25 });
   });
 
+  it.each([
+    ['client.setSpeed only', false],
+    ['plus a game-stamped setTimeScale (PR #81 workaround, idempotent)', true],
+  ])('setSpeed(4) passes with a game stamper ahead of the client seq: %s', (_name, extra) => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const events: SimEvent[] = [];
+    client.onEvents((e) => events.push(...e));
+    client.init(1, openMap(), { content: { packs: [fixturePack()] }, dev: true });
+    // The game's own stamper (apps/game CommandStamper) runs far ahead of the client's seq.
+    let seq = 500;
+    const stamp = <C extends object>(c: C) => ({
+      ...c,
+      tick: client.tick,
+      playerId: 0,
+      seq: seq++,
+    });
+    client.send(stamp({ type: 'debugStat', stat: 'fatigue', value: 90 }));
+    client.send(stamp({ type: 'sleep' }));
+    client.setSpeed(4);
+    if (extra) client.send(stamp({ type: 'setTimeScale', speed: 4 }));
+    h.advance(100);
+    expect(h.host.sim?.timeScale()).toBe(4);
+    expect(h.host.loop?.speed).toBe(4);
+    expect(events.filter((e) => e.type === 'commandRejected')).toEqual([]);
+    // The game's later commands are not blocked by the exempt setTimeScale.
+    client.send(stamp({ type: 'debugStat', stat: 'hunger', value: 10 }));
+    h.advance(121_000);
+    expect(events.filter((e) => e.type === 'commandRejected')).toEqual([]);
+    const asleep = events.find((e) => e.type === 'fellAsleep')!;
+    const saved = events.filter((e) => e.type === 'sleepSaved');
+    expect(saved).toHaveLength(1);
+    // 2 real minutes at ×4 = 120 s × 80 ticks/s = 9600 ticks (×1 would save after 2400).
+    expect(saved[0]!.tick - asleep.tick).toBeGreaterThanOrEqual(9599);
+    expect(saved[0]!.tick - asleep.tick).toBeLessThanOrEqual(9601);
+  });
+
   it('without dev, debug commands are rejected by the sim', () => {
     const h = harness();
     const client = createSimWorkerClient(h.worker);

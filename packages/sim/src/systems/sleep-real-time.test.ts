@@ -186,3 +186,35 @@ describe('sleep: view', () => {
     expect(sim.drainView()!.player!.sleep).toBeUndefined();
   });
 });
+
+describe('setTimeScale is seq-exempt (worker client seq behind the game stamper)', () => {
+  /** Game-stamped commands (seq 500+), then the worker client's setTimeScale with seq 0. */
+  const scripted = (sim: Sim) => {
+    const at = { tick: sim.tick, playerId: 0 } as const;
+    const ok = (r: { ok: boolean }) => expect(r.ok).toBe(true);
+    ok(sim.enqueue({ ...at, seq: 500, type: 'debugStat', stat: 'fatigue', value: 90 }));
+    ok(sim.enqueue({ ...at, seq: 501, type: 'sleep' }));
+    ok(sim.enqueue({ ...at, seq: 0, type: 'setTimeScale', speed: 4 }));
+    ok(sim.enqueue({ ...at, seq: 502, type: 'debugStat', stat: 'hunger', value: 10 }));
+  };
+
+  it('applies, replays to the same hash and survives save / load', () => {
+    const a = survivalSim(content);
+    const b = survivalSim(content);
+    scripted(a);
+    scripted(b);
+    for (let i = 0; i < 50; i++) {
+      a.step();
+      b.step();
+    }
+    expect(a.timeScale()).toBe(4);
+    expect(eventsOf(a.drainEvents(), 'commandRejected')).toEqual([]);
+    expect(a.hash()).toBe(b.hash());
+    const loaded = createSim({ seed: 7, map: buildMap(), content, dev: true, load: a.save() });
+    expect(loaded.hash()).toBe(a.hash());
+    expect(loaded.timeScale()).toBe(4);
+    // 2 real minutes at ×4 = 9600 ticks asleep (the bug saved after 2400 like ×1).
+    expect(savedTicks(a, cfg.saveAfterRealSec * 20 * 4 - 52)).toEqual([]);
+    expect(savedTicks(a, 4)).toHaveLength(1);
+  });
+});

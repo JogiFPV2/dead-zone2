@@ -29,6 +29,24 @@ describe('CommandQueue', () => {
     expect(q.enqueue(mv(0, 0, 1, 1), 0).ok).toBe(true); // other player has its own seq
   });
 
+  it('setTimeScale is seq-exempt: accepted with an old seq and does not advance lastSeq', () => {
+    const q = new CommandQueue(40);
+    const ts = (seq: number, speed: 1 | 2 | 4) =>
+      ({ type: 'setTimeScale', speed, tick: 0, playerId: 0, seq }) as const;
+    expect(q.enqueue(mv(100, 0), 0).ok).toBe(true);
+    expect(q.enqueue(ts(0, 4), 0).ok).toBe(true); // worker client seq, far behind the game's
+    expect(q.enqueue(ts(101, 4), 0).ok).toBe(true); // game-stamped duplicate (PR #81 path)
+    expect(q.seqState()).toEqual([[0, 100]]);
+    expect(q.enqueue(mv(101, 0), 0).ok).toBe(true); // the game's next seq still passes
+    expect(q.enqueue(mv(100, 0), 0)).toMatchObject({ ok: false, reason: 'stale-seq' });
+    expect(q.take(0).map((c) => [c.type, c.seq])).toEqual([
+      ['setTimeScale', 0],
+      ['move', 100],
+      ['setTimeScale', 101],
+      ['move', 101],
+    ]);
+  });
+
   it('moves late commands to the current tick and rejects far-future ones', () => {
     const q = new CommandQueue(40);
     expect(q.enqueue(mv(0, 3), 10)).toEqual({ ok: true, tick: 10 });

@@ -258,15 +258,8 @@ const sleep = createSleepController({
   root: container,
   playerId: PLAYER_ID,
   send: sendBody,
-  // `client.setSpeed` sets the loop speed and sends `setTimeScale` with the worker client's own
-  // seq, which is behind the game's stamper (the sim drops it as `stale-seq`), so the game also
-  // sends a stamped `setTimeScale`: the sleep save then counts real seconds right at ×2 / ×4.
-  setSpeed: sim.setSpeed
-    ? (x) => {
-        sim.setSpeed?.(x);
-        sim.send(stamper.stamp({ type: 'setTimeScale', speed: x }));
-      }
-    : undefined,
+  // `client.setSpeed` sets the loop speed and sends `setTimeScale` (seq-exempt in the sim).
+  setSpeed: sim.setSpeed ? (x) => sim.setSpeed?.(x) : undefined,
   state: () => gameState.get(),
   content: () => hudContent,
   keys: () => {

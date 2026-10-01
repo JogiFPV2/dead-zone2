@@ -310,6 +310,8 @@ export function createSimWorkerClient(
     resume: () => post({ kind: 'resume' }),
     setSpeed: (x) => {
       // The loop speed (worker) and the sim's real-time measure (sleep save) move together.
+      // `setTimeScale` is seq-exempt in the sim queue, so this client's own seq counter (separate
+      // from a game-side stamper) cannot get it dropped as `stale-seq`.
       post({ kind: 'speed', x });
       cmd({ type: 'setTimeScale', speed: x });
     },
