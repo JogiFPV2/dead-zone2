@@ -6,6 +6,7 @@ import {
   Matrix3,
   type Bone,
   DataTexture,
+  Euler,
   FloatType,
   Frustum,
   Group,
@@ -28,11 +29,23 @@ import {
   type SkinnedMesh,
   type WebGLProgramParametersWithUniforms,
 } from 'three';
+import { TICKS_PER_SECOND } from '@deadzone/sim';
 import { MeshoptSimplifier } from 'three/examples/jsm/libs/meshopt_simplifier.module.js';
 import { SnapshotAnim } from '@deadzone/protocol';
 import { CROWD_SAMPLE_STRIDE, type CrowdBuffer } from '../crowd/crowd-buffer.js';
 import { LEVEL_HEIGHT } from '../world/instances.js';
-import type { CharacterAnim } from './character-rig.js';
+import { CHARACTER_CLIPS, clipSource, findClip, type CharacterAnim } from './character-rig.js';
+import type { BodyState, PhysState } from '../anim/contract.js';
+import { gaitOf, gaitOffsets, type Gait, type GaitOffsets } from '../anim/gait.js';
+import { gaitSeedOf } from '../anim/phys-adapter.js';
+import { BodyMotion, ZOMBIE_MOTION } from '../anim/motion.js';
+import {
+  PoseTracker,
+  RUN_CLIP_SPEED,
+  newPose,
+  type AnimPose,
+  type PoseContext,
+} from '../anim/pose.js';
 
 /** Baked animation sample rate (frames per second of clip time). */
 export const BAKE_FPS = 20;
@@ -51,20 +64,14 @@ const SHADOW_RATIO = 0.12;
 const SHADOW_ERROR = 1;
 /** Culling sphere around a character (tiles, centred ~waist height; margin keeps edge shadows). */
 const CULL_RADIUS = 1.6;
-/** Walk / run playback speed (shamble). */
-const LOCO_SPEED = 0.7;
+/** Zombie walk speed (tiles/s) at which the walk clip plays at the gait rate. */
+const ZOMBIE_WALK_REF = 1.2;
 
-/** Zombie clips (baked): no aiming, so no backwards / side gaits. */
-type ZombieAnim = Extract<CharacterAnim, 'idle' | 'walk' | 'run' | 'attack' | 'dead'>;
-const CLIP_NAMES: Record<ZombieAnim, string> = {
-  idle: 'Idle',
-  walk: 'Walk',
-  run: 'Run',
-  attack: 'Punch_Right',
-  dead: 'Death',
-};
-const ANIMS: readonly ZombieAnim[] = ['idle', 'walk', 'run', 'attack', 'dead'];
-const ANIM_OF: Record<number, ZombieAnim> = {
+/** Clips baked for zombies (the rest of CharacterAnim falls back to these, see bakedFrame). */
+type BakedAnim = 'idle' | 'walk' | 'run' | 'attack' | 'dead' | 'hit' | 'stagger';
+const ANIMS: readonly BakedAnim[] = ['idle', 'walk', 'run', 'attack', 'dead', 'hit', 'stagger'];
+const BAKED: ReadonlySet<CharacterAnim> = new Set(ANIMS);
+const ANIM_OF: Record<number, BodyState> = {
   [SnapshotAnim.idle]: 'idle',
   [SnapshotAnim.walk]: 'walk',
   [SnapshotAnim.run]: 'run',
@@ -95,7 +102,23 @@ interface Template {
   far: Part[];
   /** Low-poly shadow casters for every visible zombie (shadow-only layer). */
   shadow: Part[];
-  clips: Record<ZombieAnim, ClipRange>;
+  clips: Record<BakedAnim, ClipRange>;
+}
+
+/** Baked clip that plays `anim` (clips zombies lack fall back to idle). */
+function bakedAnim(anim: CharacterAnim): BakedAnim {
+  const src = clipSource(anim).anim;
+  return BAKED.has(src) ? (src as BakedAnim) : 'idle';
+}
+
+/** Bake texture row of `pose.anim` at clip time `pose.time` (s): loops wrap, one-shots clamp. */
+function bakedFrame(clips: Record<BakedAnim, ClipRange>, pose: AnimPose): number {
+  const src = clipSource(pose.anim);
+  const r = clips[bakedAnim(pose.anim)];
+  const f = Math.floor(pose.time * BAKE_FPS);
+  const last = r.frames - 1;
+  const k = pose.loop ? ((f % r.frames) + r.frames) % r.frames : Math.min(Math.max(f, 0), last);
+  return r.start + (src.reverse ? last - k : k);
 }
 
 /**
@@ -245,16 +268,15 @@ function mergeParts(skinned: readonly SkinnedMesh[]): Merged | undefined {
 
 /** Row layout of the bake texture: one range of frames per animation, clips matched by name. */
 function layoutClips(clips: readonly AnimationClip[]): {
-  ranges: Record<ZombieAnim, ClipRange>;
+  ranges: Record<BakedAnim, ClipRange>;
   rows: number;
   picked: (AnimationClip | undefined)[];
 } {
-  const ranges = {} as Record<ZombieAnim, ClipRange>;
+  const ranges = {} as Record<BakedAnim, ClipRange>;
   const picked: (AnimationClip | undefined)[] = [];
   let rows = 0;
   for (const anim of ANIMS) {
-    const name = CLIP_NAMES[anim];
-    const clip = clips.find((c) => c.name === name || c.name.endsWith(`|${name}`));
+    const clip = findClip(clips, CHARACTER_CLIPS[anim]);
     picked.push(clip);
     const frames = clip ? Math.max(1, Math.ceil(clip.duration * BAKE_FPS)) : 1;
     ranges[anim] = { start: rows, frames };
@@ -417,9 +439,47 @@ function simplified(source: BufferGeometry, sloppy = false): BufferGeometry {
   return out;
 }
 
+/** Physics / animation state source (`anim/phys-adapter.ts`). */
+export interface ZombiePhysSource {
+  get(id: number): PhysState | undefined;
+}
+
+/** Per-zombie view state: smoothed body, pose choice, gait. */
 interface AnimState {
-  anim: ZombieAnim;
-  since: number;
+  motion: BodyMotion;
+  tracker: PoseTracker;
+  pose: AnimPose;
+  gait: Gait;
+  seed: number;
+  /** Locomotion clip time (s). */
+  loopTime: number;
+  lastS: number;
+  /** Fallback state without an adapter (mock crowd). */
+  own: PhysState;
+}
+
+const ownState = (): PhysState => ({
+  facing: 0,
+  vel: { x: 0, y: 0 },
+  maxSpeed: 0,
+  state: 'idle',
+  stateStartTick: 0,
+  stateDuration: 0,
+  knockback: { dirX: 0, dirY: 0, strength: 0 },
+  lastHitTick: -1,
+  hitFromDir: 0,
+  gaitSeed: 0,
+});
+
+/**
+ * Loop playback rate of a zombie: the clip follows the drawn speed (the sim already varies the
+ * pace +-20%); the gait only sets the per-zombie cadence of the shamble (step length look).
+ */
+function zombieLoopRate(anim: CharacterAnim, speed: number, g: Gait): number {
+  const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+  if (anim === 'walk') return g.rate * clamp(speed / ZOMBIE_WALK_REF, 0.6, 1.4);
+  if (anim === 'run') return (0.8 + 0.4 * g.rate) * clamp(speed / RUN_CLIP_SPEED, 0.6, 1.3);
+  return 0.6 + 0.5 * g.rate;
 }
 
 /**
@@ -435,7 +495,15 @@ export class InstancedZombies {
   private readonly q = new Quaternion();
   private readonly p = new Vector3();
   private readonly s = new Vector3(1, 1, 1);
-  private readonly up = new Vector3(0, 1, 0);
+  private readonly e = new Euler();
+  /** Reused pose context (no allocation per zombie). */
+  private readonly ctx: PoseContext = {
+    weapon: 'unarmed',
+    speed: 0,
+    clipLen: (a) => (this.templates[0]?.clips[bakedAnim(a)].frames ?? BAKE_FPS) / BAKE_FPS,
+    loopTime: 0,
+  };
+  private readonly go: GaitOffsets = { roll: 0, pitch: 0, yaw: 0, bob: 0 };
 
   private readonly frustum = new Frustum();
   private readonly sphere = new Sphere(new Vector3(), CULL_RADIUS);
@@ -463,9 +531,18 @@ export class InstancedZombies {
 
   /**
    * Places every zombie in view: frustum-culled per instance, full mesh near the view centre
-   * (`cx`, `cz`), decimated LOD farther out.
+   * (`cx`, `cz`), decimated LOD farther out. `phys` / `tickF`: contract state per zombie and
+   * the fractional sim tick (without them, a minimal state from the snapshot anim).
    */
-  update(alpha: number, nowS: number, camera: Camera, cx: number, cz: number): void {
+  update(
+    alpha: number,
+    nowS: number,
+    camera: Camera,
+    cx: number,
+    cz: number,
+    phys?: ZombiePhysSource,
+    tickF = nowS * TICKS_PER_SECOND,
+  ): void {
     const b = this.buffer;
     if (this.sampled.length < b.capacity * CROWD_SAMPLE_STRIDE) {
       this.sampled = new Float32Array(b.capacity * CROWD_SAMPLE_STRIDE);
@@ -483,15 +560,6 @@ export class InstancedZombies {
     for (let i = 0; i < n; i++) {
       const id = b.slots.idAt(i);
       seen.add(id);
-      const anim = ANIM_OF[b.anim[i] ?? 0] ?? 'idle';
-      let st = this.state.get(id);
-      if (!st) {
-        st = { anim, since: nowS - (id % 17) * 0.13 };
-        this.state.set(id, st);
-      } else if (st.anim !== anim) {
-        st.anim = anim;
-        st.since = nowS;
-      }
       const s = i * CROWD_SAMPLE_STRIDE;
       const x = this.sampled[s] ?? 0;
       const z = this.sampled[s + 1] ?? 0;
@@ -508,12 +576,10 @@ export class InstancedZombies {
     }
     vis.forEach((i, vi) => {
       const id = b.slots.idAt(i);
-      const anim = ANIM_OF[b.anim[i] ?? 0] ?? 'idle';
-      const st = this.state.get(id)!;
       const s = i * CROWD_SAMPLE_STRIDE;
-      const x = this.sampled[s] ?? 0;
-      const z = this.sampled[s + 1] ?? 0;
-      const y = (this.sampled[s + 2] ?? 0) * LEVEL_HEIGHT;
+      const st = this.animState(id, nowS);
+      const ps = phys?.get(id) ?? this.fallback(st, b.anim[i] ?? 0, tickF);
+      const frame = this.posed(st, ps, s, nowS, tickF);
       const ti = id % this.templates.length;
       const t = this.templates[ti]!;
       const lod = (dist[vi] ?? 0) > cutoff ? 1 : 0;
@@ -521,23 +587,16 @@ export class InstancedZombies {
       const k = c[lod]!;
       if (k >= this.capacity) return;
       c[lod] = k + 1;
-      const range = t.clips[anim];
-      const time = (nowS - st.since) * (anim === 'walk' || anim === 'run' ? LOCO_SPEED : 1);
-      const f = Math.floor(time * BAKE_FPS);
-      const frame =
-        range.start + (anim === 'dead' ? Math.min(f, range.frames - 1) : f % range.frames);
-      this.p.set(x, y, z);
-      this.q.setFromAxisAngle(this.up, -(this.sampled[s + 3] ?? 0));
-      this.m.compose(this.p, this.q, this.s);
+      const row = bakedFrame(t.clips, frame);
       for (const part of lod ? t.far : t.parts) {
         part.mesh.setMatrixAt(k, this.m);
-        part.frame.setX(k, frame);
+        part.frame.setX(k, row);
       }
       const ks = c[2]!;
       c[2] = ks + 1;
       for (const part of t.shadow) {
         part.mesh.setMatrixAt(ks, this.m);
-        part.frame.setX(ks, frame);
+        part.frame.setX(ks, row);
       }
     });
     this.templates.forEach((t, ti) => {
@@ -552,5 +611,77 @@ export class InstancedZombies {
       });
     });
     for (const id of this.state.keys()) if (!seen.has(id)) this.state.delete(id);
+  }
+
+  private animState(id: number, nowS: number): AnimState {
+    let st = this.state.get(id);
+    if (!st) {
+      const seed = gaitSeedOf(id);
+      const gait = gaitOf(seed);
+      st = {
+        seed,
+        motion: new BodyMotion(),
+        tracker: new PoseTracker(),
+        pose: newPose(),
+        gait,
+        loopTime: gait.phase * 2,
+        lastS: nowS,
+        own: ownState(),
+      };
+      this.state.set(id, st);
+    }
+    return st;
+  }
+
+  /** Minimal contract state from the snapshot anim (mock crowd, no adapter). */
+  private fallback(st: AnimState, anim: number, tickF: number): PhysState {
+    const o = st.own;
+    const next = ANIM_OF[anim] ?? 'idle';
+    if (o.state !== next) {
+      o.state = next;
+      o.stateStartTick = Math.floor(tickF);
+      o.stateDuration = next === 'attack' ? 8 : 0;
+    }
+    return o;
+  }
+
+  /** Smooths the body, picks the clip and writes the instance matrix into `this.m`. */
+  private posed(st: AnimState, ps: PhysState, s: number, nowS: number, tickF: number): AnimPose {
+    const dt = Math.min(1, Math.max(0, nowS - st.lastS));
+    st.lastS = nowS;
+    const sm = this.sampled;
+    const mo = st.motion;
+    // The contract gait seed wins (same as the client default until the sim sends its own).
+    if (ps.gaitSeed && ps.gaitSeed !== st.seed) {
+      st.seed = ps.gaitSeed;
+      st.gait = gaitOf(ps.gaitSeed);
+    }
+    const ctx = this.ctx;
+    ctx.speed = mo.speed;
+    ctx.loopTime = st.loopTime;
+    const pose = st.tracker.pose(ps, tickF, ctx, st.pose);
+    const g = st.gait;
+    const turning = !Number.isNaN(pose.faceTo);
+    mo.update(
+      sm[s] ?? 0,
+      sm[s + 1] ?? 0,
+      sm[s + 2] ?? 0,
+      turning ? pose.faceTo : (sm[s + 3] ?? 0),
+      ps.vel.x * TICKS_PER_SECOND,
+      ps.vel.y * TICKS_PER_SECOND,
+      dt,
+      ZOMBIE_MOTION,
+      turning ? 10 : g.turnRate,
+      pose.lockFacing,
+    );
+    st.loopTime += dt * zombieLoopRate(pose.anim, mo.speed, g);
+    const go = this.go;
+    if (pose.loop) gaitOffsets(g, nowS, pose.move, go);
+    else go.roll = go.pitch = go.yaw = go.bob = 0;
+    this.e.set(pose.roll + go.roll, -(mo.facing + go.yaw), -(pose.pitch + go.pitch), 'YZX');
+    this.q.setFromEuler(this.e);
+    this.p.set(mo.x, mo.z * LEVEL_HEIGHT + go.bob, mo.y);
+    this.m.compose(this.p, this.q, this.s);
+    return pose;
   }
 }

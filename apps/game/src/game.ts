@@ -23,9 +23,10 @@ import {
 import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
+import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
 import { TICK_MS } from '@deadzone/sim';
 import { MockSimClient } from './sim/mock-sim-client.js';
-import { CommandStamper } from './sim/sim-client.js';
+import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
 import { Terrain } from './world/terrain.js';
@@ -66,6 +67,10 @@ import { CONTAINER_MODELS, ModelKit, PILE_MODEL, PLAYER_MODEL } from './models/m
 import { brighten, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
+import { PhysAdapter } from './anim/phys-adapter.js';
+import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
+import { WeaponModels } from './weapons/weapon-models.js';
+import { weaponLoadout } from './weapons/loadout.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -157,6 +162,21 @@ gameState.subscribe((_next, _prev, action) => {
 const stamper = new CommandStamper(PLAYER_ID);
 const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
 const snapshots = new SnapshotBuffer();
+// Physics / animation state per entity: the snapshot physics body + `physics` events (sim #62),
+// derived on the client only for records without it (see anim/phys-adapter.ts). View only.
+let weaponIndex: ReadonlyMap<string, WeaponInfo> = new Map();
+const phys: PhysAdapter = new PhysAdapter({
+  localPlayer: PLAYER_ID,
+  knockbackOf: (attacker): number | undefined => {
+    const w = gameState.get().combat?.weapon;
+    return attacker === phys.localId && w ? weaponIndex.get(w)?.knockback : undefined;
+  },
+});
+const weaponModels = new WeaponModels();
+/** Visible equipment per character (view `characters[]`, full list on change). */
+const characters = new Map<number, CharacterView>();
+/** Dev only: weapon drawn on the back while the sim allows only bags there (`__dzAnim.slingBack`). */
+let devBack: string | undefined;
 const crowd = new CrowdBuffer();
 let crowdArrivedMs = 0;
 let firstSnapshot = true;
@@ -178,6 +198,7 @@ sim.onSnapshot(({ tick, buf }) => {
   }
   const player = readEntity(buf, 0);
   if (player) snapshots.push(player, performance.now());
+  phys.pushSnapshot(tick, buf);
   crowd.push(buf, 1);
   crowdArrivedMs = performance.now();
 });
@@ -215,6 +236,7 @@ let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
   void import('./content/base-pack.js').then((m) => {
     hudContent = buildHudContentIndex(m.baseFiles);
+    weaponIndex = buildWeaponIndex(m.baseFiles);
     hud.setContent(hudContent);
   });
 }
@@ -311,11 +333,13 @@ input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death) return;
   lastSwingMs = performance.now();
   sim.send(stamper.stamp({ type: 'attack' }));
+  phys.noteLocalAction('attack');
 });
 input.on('secondaryAction', () => {
   if (inventory.open || gameState.get().death) return;
   lastSwingMs = performance.now();
   sim.send(stamper.stamp({ type: 'shove' }));
+  phys.noteLocalAction('shove');
 });
 // Aiming (PZ-like): the body faces the cursor while a mouse action is held and shortly after a
 // swing; otherwise it turns towards the movement (player/locomotion.ts). Shift is sprint.
@@ -333,7 +357,14 @@ window.addEventListener('keydown', (e) => {
   if (settings.get().input.bindings.toggleHints.includes(e.code)) e.preventDefault();
 });
 gameState.subscribe((_next, _prev, action) => {
-  if (action.type === 'events') hud.events(action.events);
+  if (action.type === 'view' && action.view.characters) {
+    characters.clear();
+    for (const c of action.view.characters) characters.set(c.stableId, c);
+  }
+  if (action.type === 'events') {
+    hud.events(action.events);
+    phys.pushEvents(action.events);
+  }
 });
 // Lamps: test map placeholder list. The look follows the sim clock through the day cycle
 // (night approved; dawn/day/dusk are placeholders in lighting/day-cycle-config.ts).
@@ -387,6 +418,38 @@ if (import.meta.env.DEV) {
   );
 }
 const frameSample: FrameSample = { updateMs: 0, renderMs: 0 };
+// Dev hook for headless screenshots / debugging of the animation layer (read-only access).
+if (import.meta.env.DEV) {
+  const devItemOf = (def: string): ItemId | undefined =>
+    Object.values(gameState.get().inventory?.containers ?? {})
+      .flatMap((c) => c.items ?? [])
+      .find((i) => i.def === def)?.id;
+  Object.assign(window, {
+    __dzAnim: {
+      phys,
+      crowd,
+      snapshots,
+      camera,
+      rig,
+      player,
+      /** Sends a stamped (debug) command, e.g. `{ type: 'debugSpawnZombie', x, y, count }`. */
+      send: (body: CommandBody) => sim.send(stamper.stamp(body)),
+      characters,
+      /** Draws weapon `def` on the back (view only; the sim's back slot holds bags for now). */
+      slingBack: (def: string | undefined): void => {
+        devBack = def;
+      },
+      /** Id of the first carried item of content `def`. */
+      itemOf: (def: string): ItemId | undefined => devItemOf(def),
+      /** Equips the first carried item of content `def` into `slot` (e.g. 'hand_primary'). */
+      equip: (def: string, slot: EquipSlot): boolean => {
+        const item = devItemOf(def);
+        if (item !== undefined) sim.send(stamper.stamp({ type: 'equip', item, slot }));
+        return item !== undefined;
+      },
+    },
+  });
+}
 
 let lastFrameMs: number | undefined;
 let cameraSnapped = false;
@@ -395,9 +458,13 @@ renderer.setAnimationLoop((time) => {
   lastFrameMs = time;
   playerInput.update(time, rig.targetYaw, camera);
   const state = snapshots.sample(performance.now(), TICK_MS);
+  const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {
+    const { hand, back: simBack } = weaponLoadout(characters.get(phys.localId), weaponIndex);
+    const back = simBack ?? (devBack ? weaponIndex.get(devBack) : undefined);
     player.aiming = isAiming(performance.now());
-    player.apply(state);
+    player.setWeapons(hand, back, weaponModels);
+    player.apply(state, performance.now(), phys.get(phys.localId), simTick);
     const goal = simToWorld(state.x, state.y, state.z);
     if (!cameraSnapped) rig.target.set(goal.x, goal.y, goal.z);
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
@@ -417,7 +484,6 @@ renderer.setAnimationLoop((time) => {
   shelfFill.update(gs.storages, gs.container?.id);
   inventory.update();
   if (state) {
-    const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
     hud.frame({
       now: performance.now(),
       state: gs,
@@ -436,8 +502,9 @@ renderer.setAnimationLoop((time) => {
   }
   const t0 = performance.now();
   const alpha = tickAlpha(t0, crowdArrivedMs, TICK_MS);
-  if (zombieViews) zombieViews.update(alpha, t0 / 1000, camera, rig.target.x, rig.target.z);
-  else crowdView.update(alpha);
+  if (zombieViews) {
+    zombieViews.update(alpha, t0 / 1000, camera, rig.target.x, rig.target.z, phys, simTick);
+  } else crowdView.update(alpha);
   const ui = settings.get().interface;
   zombieHp.update(alpha, camera, container.clientWidth, container.clientHeight, {
     showWounded: ui.showZombieHp,

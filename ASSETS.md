@@ -10,6 +10,9 @@ Renderowane z modeli 3D stałym rigiem Designera (`tools/assets/icons/rig.html`:
 Modele źródłowe w `tools/assets/icons/src/`, lista w `tools/assets/icons/items.json`. Taśma i gwoździe
 zostają wektorowe (`@deadzone/ui`), bandaż używa ikony apteczki.
 
+Te same modele źródłowe są bronią w dłoni / na plecach postaci w grze (`apps/game/src/weapons/weapon-models.ts`,
+import przez Vite z `tools/assets/icons/`, bez kopii); broń bez modelu w `items.json` dostaje prosty placeholder.
+
 | Ikona (przedmioty)                     | Model               | Autor / źródło                                       | Licencja |
 | -------------------------------------- | ------------------- | ---------------------------------------------------- | -------- |
 | kitchen-knife                          | `cooking-knife.glb` | Kenney, Food Kit (kenney.nl/assets/food-kit)         | CC0-1.0  |
