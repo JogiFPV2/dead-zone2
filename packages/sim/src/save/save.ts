@@ -45,6 +45,7 @@ interface SaveFile {
   items?: unknown;
   ai?: unknown;
   combat?: unknown;
+  openings?: unknown;
 }
 
 /** Cheap fingerprint of the compiled content (ids and counts), to refuse foreign saves. */
@@ -96,6 +97,7 @@ export function saveWorld(w: SimWorld): Uint8Array {
           combat: encodeFields(w.ai.combat, SKIP_COMBAT, usedOf),
         }
       : {}),
+    openings: encodeFields(w.openings, ['cfg', 'kinds'], usedOf),
   };
   return utf8Encode(JSON.stringify(file));
 }
@@ -147,6 +149,7 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
     restoreInto(w.ai, decode(f.ai));
     if (f.combat) restoreInto(w.ai.combat, decode(f.combat));
   }
+  if (f.openings) restoreInto(w.openings, decode(f.openings));
   if (w.items) w.items.version++;
 }
 

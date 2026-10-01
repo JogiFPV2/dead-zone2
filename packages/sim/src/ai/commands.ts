@@ -10,11 +10,11 @@ export const isAiCommand = (cmd: Command): cmd is AiCommand =>
   cmd.type === 'debugSpawnZombie' || cmd.type === 'debugNoise';
 
 const grids = new WeakMap<object, TileGrid>();
-const gridOf = (w: SimWorld): TileGrid => {
-  let g = grids.get(w.map);
+export const gridOf = (w: SimWorld): TileGrid => {
+  let g = grids.get(w.openings);
   if (!g) {
-    g = new TileGrid(w.map);
-    grids.set(w.map, g);
+    g = new TileGrid(w.map, w.openings);
+    grids.set(w.openings, g);
   }
   return g;
 };

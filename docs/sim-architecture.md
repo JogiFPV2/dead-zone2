@@ -785,3 +785,21 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
 - **API:** `sim.save()` i `createSim({ load })`. Worker: `{kind:'save', requestId, reason?}` → `{kind:'saved', requestId, reason, tick, day, buf}`, `init.save` wczytuje zapis. Klient: `client.save(reason)` (Promise<SavedGame>), `client.onSaved(cb)`, `init({ save })`. IndexedDB: `createSaveStore(indexedDB)` → `put/get/remove/slots` (baza `deadzone`, store `saves`), bez UI.
 - **Autozapis (worker):** po `dayPassed` (reason `autosave`), po `sleepSaved` (reason `sleep`). Zapis przy wyjściu robi host: `client.save('exit')`.
 - **Sen:** miejsce wykrywane przy zasypianiu (obiekt mapy z `placeable.sleepSurface` w promieniu 1,5 kafla, inaczej podłoga). Limit odpoczynku na jeden sen: `sleep.surfaces.*.maxRecoveryPerSleep` (łóżko 50, kanapa 35, podłoga 25). Po osiągnięciu limitu następuje `wokeUp {reason:'rested'}`. Po `sleep.saveAfterRealSec` (120 s = 2400 ticków, czyli 2 realne minuty przy ×1; przy przyspieszeniu liczą się ticki symulacji) nieprzerwanego snu leci raz `sleepSaved`. Sen przerwany wcześniej nie daje zapisu, a odpoczynek zostaje częściowy. Budzą: zombie, hałas, ból ≥ `sleep.wakeOnPainAbove` (`'pain'`) i gorączka ≥ `sleep.wakeOnFeverC` (`'fever'`). Zagrożenie blokuje zaśnięcie. Nowe meble: `base:bed`, `base:sofa`.
+
+### 9.9 Stan po PR „drzwi i okna” — kontrakt
+- **Stan (`openings/state.ts`, `w.openings`):** krawędzie `door` / `window` z palety `SimMap.edgeKinds` mają stan `open | closed | locked | barricaded | broken` (`OPENING_STATES` w protocol) i hp. Domyślnie z mapy `closed` z pełnym hp. Zapisywane są tylko różnice (klucz: strona, tx, ty, z). Stan wchodzi do hasha (tylko gdy niepusty) i do zapisu gry.
+- **Skutki (`TileGrid.flagsN/W`):**
+  - drzwi zamknięte, na klucz lub zabite deskami: blokują ruch i wzrok, tłumią dźwięk;
+  - drzwi otwarte lub rozbite: nie blokują;
+  - okno zamknięte: blokuje ruch, nie wzrok;
+  - okno otwarte lub rozbite: przejście z prędkością × `windowSpeedMul` (0,3);
+  - okno zabite deskami: blokuje ruch i wzrok.
+  - Nawigacja (A*, flow field) zawsze traktuje drzwi i okna jako przejście, więc cache masek nie zależy od stanu.
+- **Zombie (`ai.locomotion`):** w stanie pościgu, sprawdzania hałasu lub szukania zombie dochodzi do zamkniętej krawędzi na swojej trasie i uderza co `attackCooldownSec`. Obrażenia typu są mnożone przez `zombieBashMul`, a uderzenie daje hałas `impact` (`bashNoise`). Przy 0 hp: deski → drzwi `closed` albo okno `broken`; drzwi lub okno → `broken` (okno z hałasem `break`). Zamknięte drzwi blokują też atak przez linię wzroku.
+- **Komendy:**
+  - `toggleDoor {tx, ty, side, lock?}`: zasięg `reachTiles` od środka krawędzi; `locked` → odrzucenie `locked`;
+  - `breakWindow {tx, ty, side}`: hałas `break` (`breakNoise`);
+  - dev `debugOpening {tx, ty, z?, side, state}`.
+- **Dla rendera:** zdarzenie `openingChanged {tx, ty, z, side, kind, state, hp, maxHp, by}` przy każdej zmianie i każdym uderzeniu. Widok `openings` to pełna lista krawędzi różnych od domyślnego stanu, wysyłana przy każdej zmianie i po wczytaniu.
+- **Dane:** `worldSettings.openings` (`world-settings/openings.json`): `doorHp` 60, `windowHp` 6, `barricadeHp` 150, `zombieBashMul`, `bashNoise`, `breakNoise`, `toggleNoise`, `windowSpeedMul`, `reachTiles`.
+- **Zadanie Silnika:** adapter `apps/game/src/world/sim-map.ts` nadal usuwa krawędzie drzwi (są przejściem). Żeby drzwi działały w grze, trzeba przekazać je do sim z `edgeKinds` i rysować stan z `openings` / `openingChanged`. Zabijanie deskami przez gracza przyjdzie z craftingiem (na razie tylko `debugOpening`).

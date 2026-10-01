@@ -1,4 +1,5 @@
 import type { TileGrid } from './grid.js';
+import { EF } from '../openings/state.js';
 
 /**
  * Grid ray casts over tile edges (Amanatides–Woo DDA from (x0, y0) to (x1, y1) on level z).
@@ -6,9 +7,11 @@ import type { TileGrid } from './grid.js';
  * crossing y = k crosses `edgeN(tx, k)`. When the ray passes exactly through a corner both
  * orders (x then y, y then x) are checked.
  *
- * - `sight`: walls block, windows (and open doors) do not, void tiles do not (holes, outside).
- * - `sound`: returns the number of edges crossed (walls and windows), capped at `cap`.
- * - `walk`: any edge or a void tile blocks (straight-line walkability for AI steering).
+ * - `sight`: walls, closed doors and barricades block; windows and open doors do not; void tiles
+ *   do not (holes, outside).
+ * - `sound`: returns the number of muffling edges crossed (walls, closed doors / windows),
+ *   capped at `cap`; open doors and broken windows do not count.
+ * - `walk`: an edge blocking movement or a void tile blocks (straight-line walkability for AI).
  */
 
 const Mode = { Sight: 0, Sound: 1, Walk: 2 } as const;
@@ -16,12 +19,11 @@ type Mode = (typeof Mode)[keyof typeof Mode];
 
 let crossed = 0;
 
-function edgeBlocks(grid: TileGrid, id: number, mode: Mode): boolean {
-  if (mode === Mode.Sight) return grid.blocksSight(id);
-  return id !== 0;
+function edgeBlocks(f: number, mode: Mode): boolean {
+  return (f & (mode === Mode.Sight ? EF.blocksSight : EF.blocksMove)) !== 0;
 }
 
-/** Edge crossed when stepping from tile (tx, ty) by (sx, 0) or (0, sy). */
+/** Flags of the edge crossed when stepping from tile (tx, ty) by (sx, 0) or (0, sy). */
 function stepEdge(
   grid: TileGrid,
   z: number,
@@ -30,10 +32,10 @@ function stepEdge(
   sx: number,
   sy: number,
 ): number {
-  if (sx > 0) return grid.edgeW(tx + 1, ty, z);
-  if (sx < 0) return grid.edgeW(tx, ty, z);
-  if (sy > 0) return grid.edgeN(tx, ty + 1, z);
-  return grid.edgeN(tx, ty, z);
+  if (sx > 0) return grid.flagsW(tx + 1, ty, z);
+  if (sx < 0) return grid.flagsW(tx, ty, z);
+  if (sy > 0) return grid.flagsN(tx, ty + 1, z);
+  return grid.flagsN(tx, ty, z);
 }
 
 /** One step; returns true when blocked (walk / sight). Counts edges for sound. */
@@ -46,12 +48,12 @@ function step(
   sy: number,
   mode: Mode,
 ): boolean {
-  const id = stepEdge(grid, z, tx, ty, sx, sy);
+  const f = stepEdge(grid, z, tx, ty, sx, sy);
   if (mode === Mode.Sound) {
-    if (id > 0) crossed++;
+    if (f & EF.muffles) crossed++;
     return false;
   }
-  if (edgeBlocks(grid, id, mode)) return true;
+  if (edgeBlocks(f, mode)) return true;
   return mode === Mode.Walk && grid.isVoid(tx + sx, ty + sy, z);
 }
 

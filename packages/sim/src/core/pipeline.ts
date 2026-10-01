@@ -32,7 +32,7 @@ export interface SystemContext {
  */
 export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemContext) => void }[] =
   [
-    { name: 'commands.apply', run: (w) => inputSystem(w) },
+    { name: 'commands.apply', run: (w, ctx) => inputSystem(w, ctx.grid) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
     { name: 'actions', run: (w) => actionsSystem(w) },
     { name: 'noise.collect', run: (w) => noiseCollectSystem(w) },

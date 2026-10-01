@@ -4,6 +4,10 @@ import { flowStep } from '../nav/flow.js';
 import type { TileGrid } from '../world/grid.js';
 import { findPlayer } from './brain.js';
 import { ZombieState } from './state.js';
+import { emitNoise } from './noise.js';
+import { secToTicks } from './zombies.js';
+import { damageOpening, edgeCentre } from '../openings/actions.js';
+import { EF, openingKey, unpackKey } from '../openings/state.js';
 
 /**
  * Pipeline `ai.locomotion` (docs 2.5): turns the zombie's goal into a move intent for the shared
@@ -117,6 +121,16 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
             }
           }
         }
+        // A closed door / window on the way: walk into it and bash it (docs 2.5 `openings`).
+        const purposeful =
+          state === ZombieState.chase ||
+          state === ZombieState.investigate ||
+          state === ZombieState.search;
+        const door = purposeful
+          ? blockingOpening(grid, x, y, z, wx, wy, Collider.radius[eid] ?? 0)
+          : -1;
+        if (door >= 0) bash(w, eid, door, grid, type.def);
+        else w.openings.bashAt.delete(eid);
         const vx = wx - x;
         const vy = wy - y;
         const len = Math.sqrt(vx * vx + vy * vy);
@@ -157,6 +171,63 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
       (fast ? type.chasePerTick : type.wanderPerTick) * (Zombie.speedMul[eid] ?? 1),
     );
   }
+}
+
+/**
+ * Key of a closed door / window on the edge of the zombie's tile towards the waypoint, when the
+ * zombie touches it (centre within radius + 0.25 of the edge); −1 otherwise.
+ */
+function blockingOpening(
+  grid: TileGrid,
+  x: number,
+  y: number,
+  z: number,
+  wx: number,
+  wy: number,
+  r: number,
+): number {
+  const tx = Math.floor(x);
+  const ty = Math.floor(y);
+  const nx = Math.floor(wx);
+  const ny = Math.floor(wy);
+  const near = r + 0.25;
+  const blocked = (f: number): boolean => (f & EF.opening) !== 0 && (f & EF.blocksMove) !== 0;
+  if (nx > tx && tx + 1 - x <= near && blocked(grid.flagsW(tx + 1, ty, z)))
+    return openingKey(1, tx + 1, ty, z);
+  if (nx < tx && x - tx <= near && blocked(grid.flagsW(tx, ty, z))) return openingKey(1, tx, ty, z);
+  if (ny > ty && ty + 1 - y <= near && blocked(grid.flagsN(tx, ty + 1, z)))
+    return openingKey(0, tx, ty + 1, z);
+  if (ny < ty && y - ty <= near && blocked(grid.flagsN(tx, ty, z))) return openingKey(0, tx, ty, z);
+  return -1;
+}
+
+/** One blow every `attackCooldownSec` (first after one cooldown): damage × `zombieBashMul`. */
+function bash(
+  w: SimWorld,
+  eid: number,
+  key: number,
+  grid: TileGrid,
+  def: { damage: { min: number; max: number }; attackCooldownSec: number },
+): void {
+  const o = w.openings;
+  const at = o.bashAt.get(eid);
+  if (at === undefined) {
+    o.bashAt.set(eid, w.tick + secToTicks(def.attackCooldownSec));
+    return;
+  }
+  if (w.tick < at) return;
+  o.bashAt.set(eid, w.tick + secToTicks(def.attackCooldownSec));
+  const k = unpackKey(key);
+  const id = k.side === 'n' ? grid.edgeN(k.tx, k.ty, k.z) : grid.edgeW(k.tx, k.ty, k.z);
+  const kind = grid.kindOf(id);
+  const rng = w.rng.ai;
+  const dmg = Math.fround(
+    (def.damage.min + rng.nextFloat() * (def.damage.max - def.damage.min)) * o.cfg.zombieBashMul,
+  );
+  const c = edgeCentre(key % 2, k.tx, k.ty);
+  const n = o.cfg.bashNoise;
+  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'impact');
+  damageOpening(w, key, kind, dmg, 'zombie');
 }
 
 function flowFor(w: SimWorld, eid: number) {

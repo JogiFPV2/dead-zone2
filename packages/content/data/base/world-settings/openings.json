@@ -1,0 +1,13 @@
+{
+  "openings": {
+    "doorHp": 60,
+    "windowHp": 6,
+    "barricadeHp": 150,
+    "zombieBashMul": 1,
+    "bashNoise": { "radiusTiles": 14, "volume": 0.8 },
+    "breakNoise": { "radiusTiles": 20, "volume": 1 },
+    "toggleNoise": { "radiusTiles": 3, "volume": 0.3 },
+    "windowSpeedMul": 0.3,
+    "reachTiles": 1.5
+  }
+}

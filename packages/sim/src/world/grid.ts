@@ -1,20 +1,33 @@
-import { CHUNK_SIZE, type SimChunk, type SimEdgeKind, type SimMap } from '@deadzone/protocol';
+import { CHUNK_SIZE, type SimChunk, type SimMap } from '@deadzone/protocol';
+import {
+  createOpeningsWorld,
+  DEFAULT_OPENINGS_CONFIG,
+  EF,
+  openingFlags,
+  openingKey,
+  OS,
+  type OpeningsWorld,
+} from '../openings/state.js';
 
-/** Resolves world tile coordinates to a chunk and a layer index (floor division for negatives). */
+const WALL = EF.present | EF.blocksMove | EF.blocksSight | EF.muffles;
+
+/**
+ * Resolves world tile coordinates to a chunk and a layer index (floor division for negatives).
+ * Doors and windows (`SimMap.edgeKinds`) take their flags from the openings state (world state,
+ * `w.openings`); without one every door / window is in the map default state `closed`.
+ */
 export class TileGrid {
   private lastCx = Number.NaN;
   private lastCy = Number.NaN;
   private lastZ = Number.NaN;
   private lastChunk: SimChunk | undefined;
-  /** Edge ids that let sight through (windows), from `SimMap.edgeKinds`. */
-  private readonly seeThrough: Uint8Array;
+  readonly openings: OpeningsWorld;
 
-  constructor(private readonly map: SimMap) {
-    const kinds = map.edgeKinds ?? [];
-    this.seeThrough = new Uint8Array(Math.max(1, kinds.length));
-    kinds.forEach((k: SimEdgeKind | null, id) => {
-      if (k === 'window' || k === 'door') this.seeThrough[id] = 1;
-    });
+  constructor(
+    private readonly map: SimMap,
+    openings?: OpeningsWorld,
+  ) {
+    this.openings = openings ?? createOpeningsWorld(map, DEFAULT_OPENINGS_CONFIG);
   }
 
   private chunkAt(cx: number, cy: number, z: number): SimChunk | undefined {
@@ -40,17 +53,17 @@ export class TileGrid {
     return this.layer(tx, ty, z, 'floor') <= 0;
   }
 
-  /** Wall on the north edge of the tile (segment y = ty, x ∈ [tx, tx+1]). */
+  /** Edge blocking movement on the north edge of the tile (segment y = ty, x ∈ [tx, tx+1]). */
   hasWallN(tx: number, ty: number, z: number): boolean {
-    return this.layer(tx, ty, z, 'edgeN') > 0;
+    return (this.flagsN(tx, ty, z) & EF.blocksMove) !== 0;
   }
 
-  /** Wall on the west edge of the tile (segment x = tx, y ∈ [ty, ty+1]). */
+  /** Edge blocking movement on the west edge of the tile (segment x = tx, y ∈ [ty, ty+1]). */
   hasWallW(tx: number, ty: number, z: number): boolean {
-    return this.layer(tx, ty, z, 'edgeW') > 0;
+    return (this.flagsW(tx, ty, z) & EF.blocksMove) !== 0;
   }
 
-  /** Edge id on the north / west side (0 = none, -1 = outside the map). */
+  /** Raw edge id on the north / west side (0 = none, -1 = outside the map). */
   edgeN(tx: number, ty: number, z: number): number {
     return this.layer(tx, ty, z, 'edgeN');
   }
@@ -59,8 +72,26 @@ export class TileGrid {
     return this.layer(tx, ty, z, 'edgeW');
   }
 
-  /** Edge id blocks sight: any wall; windows (and doors, open for now) let it through. */
-  blocksSight(edgeId: number): boolean {
-    return edgeId > 0 && this.seeThrough[edgeId] !== 1;
+  /** Door / window kind of an edge id (OpeningKind: 0 = wall or none). */
+  kindOf(edgeId: number): number {
+    return edgeId > 0 ? (this.openings.kinds[edgeId] ?? 0) : 0;
+  }
+
+  /** Flags (EF) of the north edge of (tx, ty); outside the map = wall. */
+  flagsN(tx: number, ty: number, z: number): number {
+    return this.flags(this.layer(tx, ty, z, 'edgeN'), 0, tx, ty, z);
+  }
+
+  flagsW(tx: number, ty: number, z: number): number {
+    return this.flags(this.layer(tx, ty, z, 'edgeW'), 1, tx, ty, z);
+  }
+
+  private flags(id: number, side: number, tx: number, ty: number, z: number): number {
+    if (id === 0) return 0;
+    if (id < 0) return WALL;
+    const kind = this.openings.kinds[id] ?? 0;
+    if (kind === 0) return WALL;
+    const e = this.openings.states.get(openingKey(side, tx, ty, z));
+    return openingFlags(kind, e?.state ?? OS.closed);
   }
 }

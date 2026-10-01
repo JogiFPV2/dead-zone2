@@ -1,12 +1,19 @@
 import type { TileGrid } from '../world/grid.js';
+import { EF } from '../openings/state.js';
 
-/** Orthogonal step from tile (tx, ty) by (dx, 0) or (0, dy): no edge between, target has floor. */
+/** Passable for navigation: no blocking edge, or a door / window (zombies bash closed ones). */
+const navFree = (f: number): boolean => (f & EF.blocksMove) === 0 || (f & EF.opening) !== 0;
+
+/**
+ * Orthogonal step from tile (tx, ty) by (dx, 0) or (0, dy): no wall between, target has floor.
+ * Doors and windows always count as passable, so the cached masks do not depend on their state.
+ */
 function orth(grid: TileGrid, z: number, tx: number, ty: number, dx: number, dy: number): boolean {
   if (grid.isVoid(tx + dx, ty + dy, z)) return false;
-  if (dx > 0) return grid.edgeW(tx + 1, ty, z) === 0;
-  if (dx < 0) return grid.edgeW(tx, ty, z) === 0;
-  if (dy > 0) return grid.edgeN(tx, ty + 1, z) === 0;
-  return grid.edgeN(tx, ty, z) === 0;
+  if (dx > 0) return navFree(grid.flagsW(tx + 1, ty, z));
+  if (dx < 0) return navFree(grid.flagsW(tx, ty, z));
+  if (dy > 0) return navFree(grid.flagsN(tx, ty + 1, z));
+  return navFree(grid.flagsN(tx, ty, z));
 }
 
 /**
@@ -31,8 +38,8 @@ function canStepRaw(
 }
 
 /**
- * Cached step masks: per tile a bit per DIRS entry (bit 8 = computed). The map is static until
- * doors and barricades exist (then the cache is invalidated per chunk). Derived state.
+ * Cached step masks: per tile a bit per DIRS entry (bit 8 = computed). Walls are static and
+ * door / window state does not change navigability (see `orth`). Derived state.
  */
 const masks = new WeakMap<TileGrid, Map<number, Uint16Array>>();
 

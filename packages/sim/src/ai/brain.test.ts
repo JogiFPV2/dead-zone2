@@ -50,7 +50,7 @@ describe('ai: chase and losing the target', () => {
 });
 
 describe('ai: walls and paths', () => {
-  it('zombies never pass walls: a player in a closed room is safe (seen through a window)', () => {
+  it('zombies never pass walls: they see the player through a window, smash it and climb in', () => {
     const sim = aiSim({
       spawn: { x: 25.5, y: 25.5 },
       zombies: [
@@ -65,14 +65,29 @@ describe('ai: walls and paths', () => {
       },
     });
     let chased = false;
+    let broken = false;
+    let hits = 0;
+    let entered = false;
     for (let i = 0; i < 1200; i++) {
       sim.step();
+      for (const e of sim.drainEvents()) {
+        if (e.type !== 'openingChanged') continue;
+        expect(e).toMatchObject({ kind: 'window', tx: 20, ty: 25, side: 'w', by: 'zombie' });
+        hits++;
+        broken ||= e.state === 'broken';
+      }
       for (const z of sim.getZombies()) {
-        expect(inside(z.x, z.y)).toBe(false);
+        if (inside(z.x, z.y)) {
+          // Only through the smashed window.
+          expect(broken).toBe(true);
+          entered = true;
+        }
         chased ||= z.state === 'chase';
       }
     }
     expect(chased).toBe(true);
+    expect(hits).toBeGreaterThan(1);
+    expect(entered).toBe(true);
   });
 
   it('A* / flow field lead through the opening into the room', () => {

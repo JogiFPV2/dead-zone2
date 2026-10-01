@@ -15,7 +15,7 @@ import {
   type Command,
   type CommandParseResult,
 } from './commands.js';
-import { CHUNK_SIZE, CHUNK_TILES, SIM_EDGE_KINDS } from './map.js';
+import { CHUNK_SIZE, CHUNK_TILES, OPENING_STATES, SIM_EDGE_KINDS } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
 const header = {
@@ -177,6 +177,32 @@ export const debugNoiseCommandSchema = z.strictObject({
 });
 
 /** Structural validation at the host boundary (worker, server). Gameplay checks live in sim. */
+const edgeSide = z.enum(['n', 'w']);
+export const toggleDoorCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('toggleDoor'),
+  tx: tileCoord,
+  ty: tileCoord,
+  side: edgeSide,
+  lock: z.boolean().optional(),
+});
+export const breakWindowCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('breakWindow'),
+  tx: tileCoord,
+  ty: tileCoord,
+  side: edgeSide,
+});
+export const debugOpeningCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugOpening'),
+  tx: tileCoord,
+  ty: tileCoord,
+  z: z.number().int().min(-128).max(127).optional(),
+  side: edgeSide,
+  state: z.enum(OPENING_STATES),
+});
+
 export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
@@ -201,6 +227,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugGiveItemCommandSchema,
   debugSpawnZombieCommandSchema,
   debugNoiseCommandSchema,
+  toggleDoorCommandSchema,
+  breakWindowCommandSchema,
+  debugOpeningCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */

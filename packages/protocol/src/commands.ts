@@ -1,3 +1,5 @@
+import type { EdgeSide, OpeningState } from './map.js';
+
 /** Largest value of an unsigned 32-bit integer (ticks, seq). */
 export const U32_MAX = 0xffff_ffff;
 /** Player ids are small integers assigned by the host (singleplayer: 0). */
@@ -270,6 +272,37 @@ export interface DebugNoiseCommand extends CommandHeader {
   volume?: number | undefined;
 }
 
+/**
+ * Opens / closes the door or window on edge (tx, ty, side) of the player's floor, within reach
+ * (1.5 tiles from the edge centre). `lock: true` locks a closed door or unlocks a locked one.
+ * Rejected with `locked` on a locked door, `invalid-state` on barricaded / broken ones.
+ */
+export interface ToggleDoorCommand extends CommandHeader {
+  type: 'toggleDoor';
+  tx: number;
+  ty: number;
+  side: EdgeSide;
+  lock?: boolean | undefined;
+}
+
+/** Smashes the window on edge (tx, ty, side) in reach: becomes `broken`, loud `break` noise. */
+export interface BreakWindowCommand extends CommandHeader {
+  type: 'breakWindow';
+  tx: number;
+  ty: number;
+  side: EdgeSide;
+}
+
+/** Dev only (`init.dev`): sets the state of a door / window edge (hp resets to the state's max). */
+export interface DebugOpeningCommand extends CommandHeader {
+  type: 'debugOpening';
+  tx: number;
+  ty: number;
+  z?: number | undefined;
+  side: EdgeSide;
+  state: OpeningState;
+}
+
 export type Command =
   | MoveCommand
   | AimCommand
@@ -293,7 +326,10 @@ export type Command =
   | DebugStatCommand
   | DebugGiveItemCommand
   | DebugSpawnZombieCommand
-  | DebugNoiseCommand;
+  | DebugNoiseCommand
+  | ToggleDoorCommand
+  | BreakWindowCommand
+  | DebugOpeningCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };

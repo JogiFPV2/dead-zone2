@@ -217,7 +217,7 @@ export function createSim(input: SimOptions): Sim {
   }
   const minutes: MinuteTicks = { first: 0, count: 0 };
   const ctx: SystemContext = {
-    grid: new TileGrid(opts.map),
+    grid: new TileGrid(opts.map, w.openings),
     minutes,
     ambientC: opts.ambientTemperatureC ?? DEFAULT_AMBIENT_C,
   };
@@ -317,6 +317,20 @@ export function createSim(input: SimOptions): Sim {
     if (w.items) hashItems(w.items, h);
     hashAi(w, h);
     hashCombat(w, h);
+    // Doors / windows: only when something differs from the map (keeps older goldens).
+    const o = w.openings;
+    if (o.states.size > 0 || o.bashAt.size > 0) {
+      h.u32(o.states.size).u32(o.bashAt.size);
+      for (const k of [...o.states.keys()].sort((a, b) => a - b)) {
+        const e = o.states.get(k)!;
+        h.u32(k % 0x100000000)
+          .u32(Math.floor(k / 0x100000000))
+          .u32(e.kind)
+          .u32(e.state)
+          .f32(e.hp);
+      }
+      for (const k of [...o.bashAt.keys()].sort((a, b) => a - b)) h.u32(k).u32(o.bashAt.get(k)!);
+    }
     return h.digest();
   };
 

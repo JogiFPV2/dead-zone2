@@ -11,6 +11,7 @@ import type {
   SimZombieSpawn,
   SimEvent,
   SimViewPatch,
+  EdgeSide,
   WoundKind,
   MainToWorker,
   PlayerId,
@@ -88,6 +89,10 @@ export interface SimWorkerClient {
   /** Shove zombies in front (stagger, no damage). */
   shove(): void;
   placeStorage(item: ItemId, x: number, y: number): void;
+  /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
+  toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
+  /** Smash the window on edge (tx, ty, side) — loud. */
+  breakWindow(tx: number, ty: number, side: EdgeSide): void;
   pickUpStorage(container: ContainerId): void;
   /** Dev only (init `dev: true`). */
   debugGiveItem(itemId: string, count?: number): void;
@@ -227,6 +232,9 @@ export function createSimWorkerClient(
     attack: () => cmd({ type: 'attack' }),
     shove: () => cmd({ type: 'shove' }),
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
+    toggleDoor: (tx, ty, side, lock) =>
+      cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),
+    breakWindow: (tx, ty, side) => cmd({ type: 'breakWindow', tx, ty, side }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     debugGiveItem: (itemId, count) =>
       cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),

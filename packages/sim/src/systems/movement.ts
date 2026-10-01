@@ -5,6 +5,7 @@ import { atan2Bam } from '../core/dmath.js';
 import { modded } from '../survival/state.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { moveCircle, type Vec2 } from '../world/collision.js';
+import { EF } from '../openings/state.js';
 import type { TileGrid } from '../world/grid.js';
 
 const tmp: Vec2 = { x: 0, y: 0 };
@@ -36,6 +37,10 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
         speed = Math.fround(modded(s, eid, ModSlot['move-speed'], speed) * (s.bagSpeed[eid] ?? 1));
       }
     }
+    // Climbing through an open / broken window: slower (players and zombies).
+    if (speed > 0 && nearSlowEdge(grid, eid, w)) {
+      speed = Math.fround(speed * w.openings.cfg.windowSpeedMul);
+    }
     const vx = Math.fround((MoveIntent.dx[eid] ?? 0) * speed);
     const vy = Math.fround((MoveIntent.dy[eid] ?? 0) * speed);
     Velocity.x[eid] = vx;
@@ -55,6 +60,24 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
     Position.x[eid] = tmp.x;
     Position.y[eid] = tmp.y;
   }
+}
+
+/** The entity's circle touches an open / broken window edge of its tile. */
+function nearSlowEdge(grid: TileGrid, eid: number, w: SimWorld): boolean {
+  if (w.openings.states.size === 0) return false;
+  const x = w.c.Position.x[eid] ?? 0;
+  const y = w.c.Position.y[eid] ?? 0;
+  const z = w.c.Position.z[eid] ?? 0;
+  const r = (w.c.Collider.radius[eid] ?? 0) + 0.05;
+  const tx = Math.floor(x);
+  const ty = Math.floor(y);
+  const slow = (f: number): boolean => (f & EF.slow) !== 0;
+  return (
+    (x - tx < r && slow(grid.flagsW(tx, ty, z))) ||
+    (tx + 1 - x < r && slow(grid.flagsW(tx + 1, ty, z))) ||
+    (y - ty < r && slow(grid.flagsN(tx, ty, z))) ||
+    (ty + 1 - y < r && slow(grid.flagsN(tx, ty + 1, z)))
+  );
 }
 
 /**

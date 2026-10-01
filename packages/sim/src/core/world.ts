@@ -4,6 +4,11 @@ import { CommandQueue } from '../commands/queue.js';
 import type { AiWorld } from '../ai/state.js';
 import type { ItemStore } from '../items/store.js';
 import type { SurvivalWorld } from '../survival/state.js';
+import {
+  createOpeningsWorld,
+  DEFAULT_OPENINGS_CONFIG,
+  type OpeningsWorld,
+} from '../openings/state.js';
 import { createClock, type Clock, type ClockStart } from './clock.js';
 import { createComponents, type Components } from './components.js';
 import { createRngStreams, type RngStreams } from './rng.js';
@@ -29,6 +34,8 @@ export interface SimWorld {
   readonly items: ItemStore | undefined;
   /** Noise, zombies, vision, navigation (Stage 4); undefined without content. */
   readonly ai: AiWorld | undefined;
+  /** Door / window state (always present; config from `worldSettings.openings`). */
+  readonly openings: OpeningsWorld;
   /** Debug commands allowed (dev builds, tests). Not part of the state. */
   readonly dev: boolean;
   events: SimEvent[];
@@ -65,6 +72,7 @@ export function createSimWorld(opts: {
     survival,
     items: survival && opts.items ? opts.items(survival) : undefined,
     ai: survival && opts.ai ? opts.ai(survival) : undefined,
+    openings: createOpeningsWorld(opts.map, survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG),
     dev: opts.dev ?? false,
     events: [],
     sortedCache: new Map(),

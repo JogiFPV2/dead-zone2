@@ -1,3 +1,4 @@
+import { openingView } from '../openings/state.js';
 import {
   BODY_PARTS,
   GROUND_PILE_MARKER_TILES,
@@ -88,6 +89,7 @@ export class ViewTracker {
   private threat: number | undefined;
   private combatKey = '';
   private deathSent = false;
+  private openingsVersion = 0;
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -138,6 +140,12 @@ export class ViewTracker {
       if (Object.keys(p).length > 0) patch.player = p;
     }
     if (w.items && eid !== undefined) this.diffItems(w, eid, patch);
+    if (w.openings.version !== this.openingsVersion) {
+      this.openingsVersion = w.openings.version;
+      patch.openings = [...w.openings.states.keys()]
+        .sort((a, b) => a - b)
+        .map((k) => openingView(w.openings, k, 0));
+    }
     return Object.keys(patch).length > 0 ? patch : undefined;
   }
 

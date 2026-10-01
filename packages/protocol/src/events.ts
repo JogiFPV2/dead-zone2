@@ -1,4 +1,5 @@
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
+import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -21,6 +22,8 @@ export type CommandRejectReason =
   | 'unknown-item'
   /** No such item / container, or not usable this way (e.g. eating a hammer). */
   | 'no-item'
+  /** The door is locked (`toggleDoor` without `lock`). */
+  | 'locked'
   /** Target container or item is not within reach (1.5 tiles) of the player. */
   | 'out-of-range'
   /** Does not fit: container capacity, bag tags, or the carry hard limit. */
@@ -143,6 +146,24 @@ export type SimEvent =
       y: number;
     }
   | { type: 'fellAsleep'; tick: number; playerId: PlayerId }
+  /**
+   * A door / window edge changed state or took damage (renderer: door sprite, broken glass,
+   * planks). `by`: a player's command, a zombie bashing it, or a dev command.
+   */
+  | {
+      type: 'openingChanged';
+      tick: number;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      kind: Extract<SimEdgeKind, 'door' | 'window'>;
+      state: OpeningState;
+      /** Hit points left (0..maxHp of the state). */
+      hp: number;
+      maxHp: number;
+      by: 'player' | 'zombie' | 'debug';
+    }
   /**
    * Uninterrupted sleep long enough (`sleep.saveAfterRealSec`, 2 real minutes at ×1): the host
    * saves the game now (the worker posts `saved` with reason `sleep`).

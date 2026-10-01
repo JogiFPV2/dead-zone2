@@ -42,6 +42,16 @@ export interface SimChunkAddress {
 export const SIM_EDGE_KINDS = ['wall', 'window', 'door'] as const;
 export type SimEdgeKind = (typeof SIM_EDGE_KINDS)[number];
 
+/**
+ * State of a door or window edge (sim `openings`). Doors: `open` / `closed` / `locked` /
+ * `barricaded` / `broken` (smashed, passable). Windows: `closed` (blocks movement, not sight),
+ * `open` and `broken` (passable slowly), `barricaded` (blocks both). Map default: `closed`.
+ */
+export const OPENING_STATES = ['open', 'closed', 'locked', 'barricaded', 'broken'] as const;
+export type OpeningState = (typeof OPENING_STATES)[number];
+/** Edge side of a tile: `n` = north edge (y = ty), `w` = west edge (x = tx). */
+export type EdgeSide = 'n' | 'w';
+
 /** Rectangle in global tiles (`x = cx * 32 + lx`). */
 export interface SimZoneRect {
   readonly x: number;

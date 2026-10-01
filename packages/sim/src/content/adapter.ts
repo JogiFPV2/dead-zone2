@@ -83,6 +83,8 @@ export interface ContentIndex {
   loot: ContentBundle['worldSettings']['loot'];
   /** `worldSettings.vision` (optional for older bundles). */
   vision: ContentBundle['worldSettings']['vision'] | undefined;
+  /** `worldSettings.openings` (optional for older bundles). */
+  openings: ContentBundle['worldSettings']['openings'] | undefined;
 }
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -129,6 +131,7 @@ export function compileContent(content: SimContent): ContentIndex {
     carry: content.worldSettings.carry,
     loot: content.worldSettings.loot,
     vision: content.worldSettings.vision,
+    openings: content.worldSettings.openings,
     dayLengthMinutes: content.worldSettings.dayLengthMinutes,
     survival: content.worldSettings.survival,
     moodles,

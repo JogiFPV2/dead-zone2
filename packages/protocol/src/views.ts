@@ -1,5 +1,6 @@
 import type { BodyPart, ContainerId, EquipSlot, ItemId, WoundKind } from './commands.js';
 import type { ActionKind, DeathCause, Freshness } from './events.js';
+import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
 
 /**
  * UI views (docs/sim-architecture.md 4.2): sent by the worker as `{ kind: 'view' }` only when
@@ -189,6 +190,22 @@ export interface SimViewPatch {
   combat?: CombatView;
   /** Set once when the local player dies (death screen). */
   death?: DeathView;
+  /**
+   * Door / window edges whose state differs from the map default (`closed`, full hp): full list
+   * whenever any of them changes (also in the first view after a load).
+   */
+  openings?: OpeningView[];
+}
+
+export interface OpeningView {
+  tx: number;
+  ty: number;
+  z: number;
+  side: EdgeSide;
+  kind: Extract<SimEdgeKind, 'door' | 'window'>;
+  state: OpeningState;
+  hp: number;
+  maxHp: number;
 }
 
 export interface CombatView {

@@ -3,6 +3,7 @@ import { CapacityKgSchema, ExtSchema } from './common/index.js';
 import { CharacterCreationSchema } from './character-creation.js';
 import { CraftingSettingsSchema } from './crafting-settings.js';
 import { LootSettingsSchema } from './loot-rarity.js';
+import { OpeningsSettingsSchema } from './openings-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
@@ -38,6 +39,8 @@ export const WorldSettingsSchema = z.strictObject({
   crafting: CraftingSettingsSchema,
   /** Zasięg widzenia w dzień i w nocy, bonus światła. */
   vision: VisionSettingsSchema,
+  /** Drzwi i okna: wytrzymałość, hałas, przechodzenie przez okno. */
+  openings: OpeningsSettingsSchema,
   ext: ExtSchema,
 });
 
