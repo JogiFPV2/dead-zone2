@@ -55,6 +55,7 @@ import {
   type HudContentIndex,
 } from './hud/content-index.js';
 import { createInventoryWindow } from './hud/inventory-window.js';
+import { createLootWindow } from './hud/loot-window.js';
 import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
@@ -124,7 +125,11 @@ bindCameraInput(rig, input);
 const gameState = new GameStateStore();
 let sim: SimClient;
 if (boot.sim === 'worker') {
-  const spawn = boot.spawnInside ? { ...TEST_BUILDING_INSIDE, z: 0 } : startSpawn(world.zones);
+  const spawn = boot.spawnInside
+    ? { ...TEST_BUILDING_INSIDE, z: 0 }
+    : import.meta.env.DEV && boot.spawnAt
+      ? { ...boot.spawnAt, z: 0 }
+      : startSpawn(world.zones);
   const worker = startSimWorker(world.source, world.range, SIM_SEED, {
     spawn,
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
@@ -225,7 +230,22 @@ const inventory = createInventoryWindow({
     return { takeAll: actionKey(b, 'reload'), putAll: actionKey(b, 'interact') };
   },
 });
-input.on('inventory', () => inventory.toggle());
+// Loot screen (mockup loot.png): opens by itself once a searched container's content arrives.
+const loot = createLootWindow({
+  root: container,
+  send: (cmd) => sim.send(stamper.stamp(cmd)),
+  state: () => gameState.get(),
+  content: () => hudContent,
+  onClose: () => {
+    loot.hide();
+    sim.send(stamper.stamp({ type: 'closeContainer' }));
+  },
+  onSwitch: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
+});
+input.on('inventory', () => {
+  if (loot.open) loot.hide();
+  inventory.toggle();
+});
 input.on('pause', () => inventory.close());
 input.on('reload', () => {
   if (inventory.open) inventory.takeAll();
@@ -263,6 +283,7 @@ gameState.subscribe((next) => {
   deathShown = true;
   player.dead = true;
   inventory.close();
+  loot.hide();
   showDeathScreen(container, next.death, boot.map === 'test' ? 'test' : boot.map);
 });
 /** Interact key / button: search/open the nearest container, cancel the search, or close. */
@@ -387,6 +408,7 @@ renderer.setAnimationLoop((time) => {
   const gs = gameState.get();
   groundPiles.update(gs.groundPiles, gs.nearby, time);
   mapObjects.update(gs.nearby, time);
+  if (!inventory.open) loot.update();
   inventory.update();
   if (state) {
     const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);

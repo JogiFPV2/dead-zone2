@@ -11,6 +11,8 @@ export interface BootOptions {
   crowd: number;
   /** `?spawn=inside`: start in the test building (generated test map only). */
   spawnInside: boolean;
+  /** Dev `?spawn=16.5,12.5`: start at this tile point (any map; UI testing next to containers). */
+  spawnAt?: { x: number; y: number };
   /** Mock sim only for `?crowd=N` (the sim has no NPCs yet); otherwise the real sim worker. */
   sim: 'worker' | 'mock';
   /** Dev-only `?zones=1`: draw the map's zones (content maps only; the test map has none). */
@@ -66,10 +68,12 @@ export function parseBootOptions(search: string): BootOptions {
   const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : fallback;
   const mock = crowd > 0;
   const time = parseTimeParam(q.get('time'));
+  const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(q.get('spawn') ?? '');
   return {
     map,
     crowd,
     spawnInside: spawnInside && map === 'test',
+    ...(at ? { spawnAt: { x: Number(at[1]), y: Number(at[2]) } } : {}),
     sim: mock ? 'mock' : 'worker',
     zones: q.get('zones') === '1',
     ...(time !== undefined ? { time } : {}),
