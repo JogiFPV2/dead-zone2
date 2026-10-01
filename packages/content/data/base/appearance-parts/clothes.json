@@ -68,6 +68,13 @@
     "tints": [{ "channel": "primary", "palette": "base:cloth" }]
   },
   {
+    "id": "base:bottom-shorts",
+    "name": "appearance.base.bottom-shorts.name",
+    "slot": "bottom",
+    "modelRef": "char/bottom-shorts",
+    "tints": [{ "channel": "primary", "palette": "base:cloth" }]
+  },
+  {
     "id": "base:bottom-work-pants",
     "name": "appearance.base.bottom-work-pants.name",
     "slot": "bottom",

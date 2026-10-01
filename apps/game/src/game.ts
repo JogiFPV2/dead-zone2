@@ -12,9 +12,6 @@ import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
-import { GraphicsStylePass } from './render/graphics-style.js';
-import { addHulls } from './render/style-materials.js';
-import type { GraphicsStyle } from './settings/schema.js';
 import { PlayerView } from './player/player-view.js';
 import { createScene } from './scene.js';
 import {
@@ -43,6 +40,8 @@ import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { CrowdView } from './crowd/crowd-view.js';
 import { parseBootOptions } from './boot-options.js';
 import { startSimWorker } from './sim/start-sim.js';
+import { takeNewCharacter } from './session.js';
+import type { RenderLook } from './creator/appearance-map.js';
 import { GameStateStore, connectSimState } from './state/game-state.js';
 import { describeEvent, devStateLine } from './state/format.js';
 import type { SimClient } from './sim/sim-client.js';
@@ -93,6 +92,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 container.appendChild(renderer.domElement);
 
 const boot = parseBootOptions(window.location.search);
+/** New game from the creator (menu / `?creator=1`); undefined = default character. */
+const newCharacter = takeNewCharacter();
 // Base pack for the sim (survival content), fetched in parallel with the map/scene setup.
 const simContent =
   boot.sim === 'worker'
@@ -123,10 +124,6 @@ if (import.meta.env.DEV && boot.zones) {
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
 const settings = createSettingsStore();
-// „Styl grafiki”: post-process on the same scene, switched live from the settings.
-const stylePass = new GraphicsStylePass(renderer);
-stylePass.setStyle(settings.get().graphics.style);
-settings.subscribe((next) => stylePass.setStyle(next.graphics.style));
 // World one-shots (footsteps, melee hits, doors) on the effects bus of the #63 mixer.
 const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
 audio.setInMenu(false);
@@ -155,6 +152,7 @@ if (boot.sim === 'worker') {
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
     zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
     content: await simContent,
+    character: newCharacter?.spec,
     dev: import.meta.env.DEV,
   });
   connectSimState(gameState, worker);
@@ -307,8 +305,19 @@ void ModelKit.create(renderer).then(async (kit) => {
   try {
     const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
     brighten(p.object);
-    addHulls(p.object);
     player.setModel(p.object, p.clips);
+    dressPlayer = (look) => {
+      void import('./creator/player-look.js')
+        .then((m) =>
+          m.dressCharacter(p.object, look, (asset) =>
+            kit.character(asset, PLAYER_HEIGHT).then((t) => t.object),
+          ),
+        )
+        .catch((e: unknown) => console.warn('player look', e));
+    };
+    // Creator look right away; a loaded save brings its look in view.characterProfile.
+    if (newCharacter) dressPlayer(newCharacter.look);
+    else if (gameState.get().characterProfile) dressFromProfile();
   } catch (e) {
     console.warn('player model', e);
   }
@@ -318,6 +327,18 @@ void ModelKit.create(renderer).then(async (kit) => {
     scene.add(zombieViews.root);
     crowdView.mesh.visible = false;
   }
+});
+let dressPlayer: ((look: RenderLook) => void) | undefined;
+let dressed = false;
+function dressFromProfile(): void {
+  const profile = gameState.get().characterProfile;
+  if (dressed || !profile || !dressPlayer) return;
+  dressed = true;
+  const look = dressPlayer;
+  void import('./creator/player-look.js').then((m) => look(m.lookOfProfile(profile)));
+}
+gameState.subscribe((next) => {
+  if (!newCharacter && next.characterProfile) dressFromProfile();
 });
 let deathShown = false;
 gameState.subscribe((next) => {
@@ -533,28 +554,9 @@ renderer.setAnimationLoop((time) => {
     targeting: ui.targetZombieHp,
   });
   const t1 = performance.now();
-  stylePass.render(scene, camera);
+  renderer.render(scene, camera);
   frameSample.updateMs = t1 - t0;
   frameSample.renderMs = performance.now() - t1;
   recordFrame?.(frameSample, renderer);
   afterRender?.(renderer);
 });
-
-// Dev only: switch / freeze the graphics style for screenshots and measurements.
-if (import.meta.env.DEV) {
-  Object.assign(window, {
-    __dzStyle: {
-      set: (style: GraphicsStyle) =>
-        settings.update((s) => ({ ...s, graphics: { ...s.graphics, style } })),
-      frame: frameSample,
-      pass: stylePass,
-      calls: () => renderer.info.render.calls,
-      /** Stops the loop and draws the current frame once in `style` (same frame per style). */
-      still: (style: GraphicsStyle) => {
-        renderer.setAnimationLoop(null);
-        stylePass.setStyle(style);
-        stylePass.render(scene, camera);
-      },
-    },
-  });
-}

@@ -1,4 +1,4 @@
-import type { SimContentSource, SimSpawn } from '@deadzone/protocol';
+import type { CharacterSpec, SimContentSource, SimSpawn } from '@deadzone/protocol';
 import { pickZombieSpawns } from '../world/zombie-spawns.js';
 import { createSimWorkerClient } from '@deadzone/sim/worker-client';
 import SimWorker from '@deadzone/sim/worker?worker';
@@ -15,6 +15,8 @@ export interface StartSimOptions {
   dev?: boolean;
   /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
   zombiesAwayFrom?: { x: number; y: number } | undefined;
+  /** New game: the creator's character (`init({ character })` → `newCharacter`). */
+  character?: CharacterSpec | undefined;
 }
 
 /** Starts the sim Web Worker on a map. */
@@ -33,6 +35,7 @@ export function startSimWorker(
     ...(opts.content ? { content: opts.content } : {}),
     ...(opts.dev ? { dev: true } : {}),
     ...(zombies.length ? { zombies } : {}),
+    ...(opts.character ? { character: opts.character } : {}),
   });
   return sim;
 }

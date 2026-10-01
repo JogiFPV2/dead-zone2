@@ -2,7 +2,7 @@ import '@deadzone/ui/hud.css';
 import './main-menu.css';
 import type { AudioEngine } from '../audio/audio-engine.js';
 import { percent } from '../audio/mix.js';
-import { DEFAULT_SETTINGS, type AudioSettings, type GraphicsStyle } from '../settings/schema.js';
+import { DEFAULT_SETTINGS, type AudioSettings } from '../settings/schema.js';
 import type { SettingsStore } from '../settings/store.js';
 import { WORDMARK, icon } from './icons.js';
 import { firstEnabled, menuScale, sliderAt, sliderKey, stepFocus } from './menu-model.js';
@@ -49,16 +49,6 @@ const VOLUMES: readonly {
   { key: 'voice', label: 'Głosy/UI', note: 'dialogi, kliknięcia' },
 ];
 const TABS = ['Grafika', 'Audio', 'Sterowanie', 'Interfejs', 'Rozgrywka', 'Dostępność'];
-/** „Styl grafiki” options (post-process, `render/graphics-style.ts`). */
-const STYLES: readonly { id: GraphicsStyle; label: string; hint: string }[] = [
-  { id: 'classic', label: 'Klasyczny', hint: 'Low-poly jak dotąd' },
-  {
-    id: 'outline',
-    label: 'Kontury',
-    hint: 'Obrys postaci i zombie, cieniowanie w trzech tonach',
-  },
-  { id: 'pixel', label: 'Pixel', hint: 'Niska rozdzielczość, ograniczona paleta' },
-];
 const MODES: readonly { id: GameMode; label: string }[] = [
   { id: 'survive', label: 'Przetrwaj' },
   { id: 'rescue', label: 'Ratunek' },
@@ -160,29 +150,11 @@ ${audioChips(true)}`;
 <div class="dzm-hdr"><span>MUZYKA</span></div>
 <div class="dzm-row dzm-row--toggle${row === mm ? ' dzm-row--focus' : ''}" data-row="${mm}" role="switch" tabindex="${row === mm ? 0 : -1}" aria-checked="${draft.menuMusic}"><span class="dzm-row-col"><span class="dzm-row-title">Muzyka w menu</span><span class="dzm-row-hint">Ścieżka gry (CC0) w menu głównym · teraz: „${o.track.title}”</span></span><span class="dzm-toggle${draft.menuMusic ? ' dzm-toggle--on' : ''}"></span></div>
 <div class="dzm-row dzm-row--toggle dzm-row--disabled" aria-disabled="true"><span class="dzm-row-col"><span class="dzm-row-title">${icon('yt', 18)} Własna muzyka (YouTube) <span class="dzm-soon">Wkrótce</span></span><span class="dzm-row-hint">Odtwarzana w widocznym miniplayerze w rogu ekranu (zgodnie z zasadami YouTube, bez ukrytego odtwarzania)</span><span class="dzm-url">https://youtube.com/playlist?list=…</span></span><span class="dzm-toggle"></span></div>
-<div class="dzm-hdr"><span>GRAFIKA</span><em>zmiana widoczna od razu</em></div>
-${styleRow(mm + 1)}
 <div class="dzm-hsep"></div>
 <div class="dzm-foot"><button type="button" class="dzm-btn" data-act="defaults">${icon('reset', 16)} PRZYWRÓĆ DOMYŚLNE</button><span class="dzm-grow"></span><button type="button" class="dzm-btn" data-act="back">${icon('arrowl', 16)} WSTECZ ${key('Esc')}</button><button type="button" class="dzm-btn dzm-btn--pri" data-act="apply">ZASTOSUJ ${key('Enter')}</button></div>
 </div>
 <div class="dzm-version">${o.version}</div>
 ${audioChips(false)}`;
-  }
-
-  function styleRow(i: number): string {
-    const cur = settings.get().graphics.style;
-    const st = STYLES.find((x) => x.id === cur) ?? STYLES[0]!;
-    const sel = row === i;
-    return `<div class="dzm-row dzm-row--toggle${sel ? ' dzm-row--focus' : ''}" data-row="${i}" data-style-row="1" role="button" tabindex="${sel ? 0 : -1}" aria-label="Styl grafiki: ${st.label}"><span class="dzm-row-col"><span class="dzm-row-title">Styl grafiki</span><span class="dzm-row-hint">${st.hint}</span></span><span class="dzm-row-value" style="width:auto;white-space:nowrap">${sel ? '◀ ' : ''}${st.label.toUpperCase()}${sel ? ' ▶' : ''}</span></div>`;
-  }
-
-  /** Cycles „Styl grafiki” (saved and applied at once, like the music toggle). */
-  function cycleStyle(dir: 1 | -1): void {
-    const cur = STYLES.findIndex((x) => x.id === settings.get().graphics.style);
-    const next = STYLES[(Math.max(0, cur) + dir + STYLES.length) % STYLES.length]!;
-    settings.update((s) => ({ ...s, graphics: { ...s.graphics, style: next.id } }));
-    ui('ui-switch2');
-    render();
   }
 
   function renderCredits(): string {
@@ -319,14 +291,10 @@ ${audioChips(false)}`;
       } else if (code === 'KeyM') toggleMusic();
       else handled = false;
     } else if (view === 'settings') {
-      const rows = VOLUMES.length + 2;
-      const styleRowIndex = VOLUMES.length + 1;
+      const rows = VOLUMES.length + 1;
       const vol = VOLUMES[row];
       const next = vol ? sliderKey(draft[vol.key], code, e.shiftKey) : undefined;
       if (vol && next !== undefined) setDraft({ ...draft, [vol.key]: next }, vol.key);
-      else if (row === styleRowIndex && (code === 'ArrowLeft' || code === 'ArrowRight'))
-        cycleStyle(code === 'ArrowLeft' ? -1 : 1);
-      else if (row === styleRowIndex && code === 'Space') cycleStyle(1);
       else if (code === 'ArrowDown' || code === 'KeyS') {
         row = (row + 1) % rows;
         ui('ui-rollover2');
@@ -398,11 +366,6 @@ ${audioChips(false)}`;
       return;
     }
     const r = t.closest<HTMLElement>('.dzm-row[data-row]');
-    if (r?.dataset.styleRow) {
-      row = Number(r.dataset.row);
-      cycleStyle(1);
-      return;
-    }
     if (r && Number(r.dataset.row) === VOLUMES.length) {
       row = VOLUMES.length;
       ui('ui-switch2');

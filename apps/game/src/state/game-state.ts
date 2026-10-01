@@ -1,4 +1,5 @@
 import type {
+  CharacterProfileView,
   CombatView,
   GroundPileView,
   StorageMarkerView,
@@ -59,6 +60,8 @@ export interface GameState {
   storages: readonly StorageMarkerView[];
   /** Current timed action; absent = none. */
   action?: ActionView;
+  /** The local player's created character (view.characterProfile; look, profession, traits). */
+  characterProfile?: CharacterProfileView;
   death?: {
     cause: DeathCause;
     day: number;
@@ -164,6 +167,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
     ...(view.combat ? { combat: view.combat } : {}),
+    ...(view.characterProfile ? { characterProfile: view.characterProfile } : {}),
     player,
   };
   next = patchNullable(next, 'container', view.container);

@@ -101,7 +101,7 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
     const count = (slot: string) =>
       Object.values(b.appearanceParts).filter((p) => p.slot === slot).length;
     expect([count('face'), count('hair'), count('top'), count('bottom'), count('shoes')]).toEqual([
-      6, 8, 6, 5, 4,
+      6, 8, 6, 6, 4,
     ]);
     expect(count('beard')).toBeGreaterThan(0);
     const colors = (id: string) => b.palettes[id]?.colors.length;
