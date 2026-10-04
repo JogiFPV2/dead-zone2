@@ -82,7 +82,7 @@ export class StressWorldSource implements WorldChunkSource {
   readonly id = 'stress';
   readonly version = STRESS_VERSION;
   readonly chunkSize = CHUNK_SIZE;
-  readonly bounds = { cx0: 0, cy0: 0, cx1: STRESS_WORLD_CHUNKS - 1, cy1: STRESS_WORLD_CHUNKS - 1 };
+  readonly bounds: { cx0: number; cy0: number; cx1: number; cy1: number };
   readonly levels = { min: 0, max: 1 };
   readonly tilePalette = PALETTE;
   readonly edgePalette = EDGES;
@@ -94,14 +94,20 @@ export class StressWorldSource implements WorldChunkSource {
   constructor(
     readonly seed = 1,
     private readonly latencyMs = 0,
+    /** Side in chunks: 250 (8 km, default) or 512 (16 384 m, `?stress=16`: floating origin). */
+    readonly chunks = STRESS_WORLD_CHUNKS,
   ) {
+    this.bounds = { cx0: 0, cy0: 0, cx1: chunks - 1, cy1: chunks - 1 };
     const towns: Town[] = [];
     // One town around the centre (the spawn), the rest scattered.
-    towns.push({ cx: STRESS_WORLD_CHUNKS / 2, cy: STRESS_WORLD_CHUNKS / 2, r: 6 });
+    towns.push({ cx: this.chunks / 2, cy: this.chunks / 2, r: 6 });
+    // 16 km world: a town near the far corner too (floating-origin test spawn ~16 000, 16 000).
+    if (this.chunks !== STRESS_WORLD_CHUNKS)
+      towns.push({ cx: this.chunks - 12, cy: this.chunks - 12, r: 5 });
     for (let i = 0; i < 40; i++) {
       towns.push({
-        cx: Math.floor(unit(seed, 1, i) * STRESS_WORLD_CHUNKS),
-        cy: Math.floor(unit(seed, 2, i) * STRESS_WORLD_CHUNKS),
+        cx: Math.floor(unit(seed, 1, i) * this.chunks),
+        cy: Math.floor(unit(seed, 2, i) * this.chunks),
         r: 2 + Math.floor(unit(seed, 3, i) * 6),
       });
     }
@@ -111,7 +117,8 @@ export class StressWorldSource implements WorldChunkSource {
   /** Centre of the world (tile coords) — the stress spawn. */
   get centre(): { x: number; y: number } {
     // Street corner next to the highway crossing in the central town (open view, houses around).
-    return { x: 131 * CHUNK_SIZE + 2.5, y: 131 * CHUNK_SIZE + 2.5 };
+    const c = (this.chunks / 2 + 6) * CHUNK_SIZE + 2.5;
+    return { x: c, y: c };
   }
 
   isTown(cx: number, cy: number): boolean {
@@ -167,8 +174,7 @@ export class StressWorldSource implements WorldChunkSource {
   }
 
   getSummary(cx: number, cy: number): ChunkSummary | undefined {
-    if (cx < 0 || cy < 0 || cx >= STRESS_WORLD_CHUNKS || cy >= STRESS_WORLD_CHUNKS)
-      return undefined;
+    if (cx < 0 || cy < 0 || cx >= this.chunks || cy >= this.chunks) return undefined;
     const n = SUMMARY_CELLS;
     const cell = CHUNK_SIZE / n;
     const ground = new Uint16Array(n * n);
@@ -194,8 +200,7 @@ export class StressWorldSource implements WorldChunkSource {
 
   /** Pure chunk fill: (seed, version, cx, cy) → chunk. */
   generate(cx: number, cy: number): WorldChunk | undefined {
-    if (cx < 0 || cy < 0 || cx >= STRESS_WORLD_CHUNKS || cy >= STRESS_WORLD_CHUNKS)
-      return undefined;
+    if (cx < 0 || cy < 0 || cx >= this.chunks || cy >= this.chunks) return undefined;
     this.generated++;
     const floor = new Uint16Array(CHUNK_TILES);
     for (let y = 0; y < CHUNK_SIZE; y++) {
@@ -217,7 +222,7 @@ export class StressWorldSource implements WorldChunkSource {
     const baseY = cy * CHUNK_SIZE;
     for (const h of houses) {
       // Map-global building id; room ids are per chunk (see docs/streaming.md).
-      const buildingId = (cy * STRESS_WORLD_CHUNKS + cx) * 4 + h.lot + 1;
+      const buildingId = (cy * this.chunks + cx) * 4 + h.lot + 1;
       const roomId = h.lot + 1;
       buildings.push({
         id: buildingId,

@@ -106,7 +106,7 @@ const finish = (w: MeshWriter): LodGeometry | undefined => {
 };
 
 /**
- * Mid LOD: one merged mesh per chunk (all levels) — floor runs, walls / windows at full height
+ * Mid LOD (vertices relative to the chunk origin `cx · 32, cy · 32`): one merged mesh per chunk (all levels) — floor runs, walls / windows at full height
  * (no cutaway, no doors), roof runs; no map objects or decor. Same placeholder colours as near.
  */
 export function buildMidGeometry(
@@ -114,8 +114,9 @@ export function buildMidGeometry(
   edgePalette: readonly (EdgeDef | null)[] | undefined,
 ): LodGeometry | undefined {
   const w = new MeshWriter();
-  const ox = chunk.cx * CHUNK_SIZE;
-  const oz = chunk.cy * CHUNK_SIZE;
+  // Vertices relative to the chunk origin (the mesh sits at it: floating origin, float32 buffers).
+  const ox = 0;
+  const oz = 0;
   for (const [z, data] of chunk.levels) {
     const y = z * LEVEL_HEIGHT;
     rowRuns(data.floor, (id, x0, x1, row) => {
@@ -205,13 +206,13 @@ export function summarize(chunk: WorldChunk): ChunkSummary {
   return { cx: chunk.cx, cy: chunk.cy, ground, height };
 }
 
-/** Far LOD: coarse ground runs plus one block per built-up cell; a few hundred triangles. */
+/** Far LOD (chunk-relative like mid): coarse ground runs plus one block per built-up cell; a few hundred triangles. */
 export function buildFarGeometry(s: ChunkSummary): LodGeometry | undefined {
   const w = new MeshWriter();
   const n = SUMMARY_CELLS;
   const cell = CHUNK_SIZE / n;
-  const ox = s.cx * CHUNK_SIZE;
-  const oz = s.cy * CHUNK_SIZE;
+  const ox = 0;
+  const oz = 0;
   for (let y = 0; y < n; y++) {
     let start = 0;
     for (let x = 1; x <= n; x++) {

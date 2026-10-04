@@ -1,6 +1,6 @@
 import { Group, InstancedMesh, PlaneGeometry, type BufferGeometry, type Material } from 'three';
 import { placeholderMaterial } from '../lighting/materials.js';
-import type { ChunkRange, ChunkSource, TileId } from './chunk.js';
+import { CHUNK_SIZE, type ChunkRange, type ChunkSource, type TileId } from './chunk.js';
 import { buildTileInstances } from './instances.js';
 
 /** Neutral grey placeholder shades (grey-box stage), cycled by TileId. */
@@ -40,6 +40,8 @@ export class Terrain {
     this.unloadChunk(cx, cy, z);
     const group = new Group();
     group.name = `chunk:${cx},${cy},${z}`;
+    // Instance matrices are chunk-relative (buildTileInstances).
+    group.position.set(cx * CHUNK_SIZE, 0, cy * CHUNK_SIZE);
     for (const { tileId, count, matrices } of buildTileInstances(chunk)) {
       const mesh = new InstancedMesh(this.geometry, this.material(tileId), count);
       mesh.instanceMatrix.array.set(matrices);

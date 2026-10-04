@@ -79,6 +79,7 @@ export class MapObjects {
   private readonly parts = new Map<string, ModelPart[] | undefined>();
   /** Furniture instanced meshes of every loaded chunk (rebuilt when chunks come and go). */
   private instances: InstancedMesh[] = [];
+  private origin = { x: 0, z: 0 };
   private instancesDirty = false;
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
@@ -186,6 +187,7 @@ export class MapObjects {
         return this.partsOf(k.slice(0, i), Number(k.slice(i + 1)));
       },
       this.root,
+      this.origin,
     );
     this.objects.forEach((o, i) => {
       const sl = slots[i];
@@ -196,6 +198,16 @@ export class MapObjects {
       }
     });
     this.instances = meshes;
+  }
+
+  /**
+   * Floating origin (`render/floating-origin.ts`): the instance batches are rebuilt relative to
+   * the new render origin (world X / Z), at most once per frame in `update`.
+   */
+  setOrigin(x: number, z: number): void {
+    if (x === this.origin.x && z === this.origin.z) return;
+    this.origin = { x, z };
+    this.instancesDirty = true;
   }
 
   /** Swaps the grey boxes for models where `model(contentId, height)` has one (also later chunks). */

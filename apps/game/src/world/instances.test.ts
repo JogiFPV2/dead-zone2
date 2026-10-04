@@ -32,7 +32,7 @@ describe('buildTileInstances', () => {
     expect(res[1]?.matrices).toHaveLength(32);
   });
 
-  it('places tile centres in world space (1 tile = 1 unit)', () => {
+  it('places tile centres relative to the chunk origin (1 tile = 1 unit)', () => {
     const [g] = buildTileInstances(
       chunk(1, -2, 1, [
         [0, 0, 5],
@@ -41,8 +41,8 @@ describe('buildTileInstances', () => {
     );
     expect(g).toBeDefined();
     if (!g) return;
-    expect(positionOf(g.matrices, 0).toArray()).toEqual([32.5, LEVEL_HEIGHT, -63.5]);
-    expect(positionOf(g.matrices, 1).toArray()).toEqual([63.5, LEVEL_HEIGHT, -60.5]);
+    expect(positionOf(g.matrices, 0).toArray()).toEqual([0.5, LEVEL_HEIGHT, 0.5]);
+    expect(positionOf(g.matrices, 1).toArray()).toEqual([31.5, LEVEL_HEIGHT, 3.5]);
   });
 
   it('produces pure translation matrices', () => {

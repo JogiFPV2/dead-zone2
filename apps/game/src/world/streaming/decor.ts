@@ -87,10 +87,12 @@ export class DecorLayer {
       const sh = this.sharedFor(shape);
       const mesh = new InstancedMesh(sh.geometry, sh.material, list.length);
       list.forEach((d, i) => {
-        pos.set(cx * CHUNK_SIZE + d.x, d.z * LEVEL_HEIGHT, cy * CHUNK_SIZE + d.y);
+        pos.set(d.x, d.z * LEVEL_HEIGHT, d.y);
         quat.setFromAxisAngle(UP, d.rot);
         mesh.setMatrixAt(i, m4.compose(pos, quat, scale.setScalar(d.scale)));
       });
+      // Instances relative to the chunk origin; the mesh sits at it (floating origin).
+      mesh.position.set(cx * CHUNK_SIZE, 0, cy * CHUNK_SIZE);
       mesh.computeBoundingSphere();
       mesh.castShadow = SHAPES[shape].castShadow;
       mesh.receiveShadow = true;

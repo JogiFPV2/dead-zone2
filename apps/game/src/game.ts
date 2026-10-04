@@ -105,6 +105,7 @@ import { WeaponModels } from './weapons/weapon-models.js';
 import { weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
+import { FloatingOrigin, chunkCorner } from './render/floating-origin.js';
 import { SaveRefusedError, handleEscape, type Closable } from './pause/pause-model.js';
 import type { WorkerSimClient } from './sim/worker-sim-client.js';
 
@@ -115,7 +116,6 @@ const PLAYER_ID = 0;
 const SIM_SEED = 1;
 const FOLLOW_HALF_LIFE_MS = 80;
 /** Stress world edge in tiles (8 km); kept here so the stress module stays lazy. */
-const STRESS_WORLD_TILES = 250 * CHUNK_SIZE;
 
 /** The game itself (the default page); imported by main.ts. */
 const container = document.getElementById('app');
@@ -147,7 +147,7 @@ const simContent =
 // minimap, shelf props and leisure spots see an empty map).
 const stressWorld = boot.stress
   ? await import('./world/streaming/stress-source.js').then(
-      (m) => new m.StressWorldSource(SIM_SEED, boot.stressLatencyMs),
+      (m) => new m.StressWorldSource(SIM_SEED, boot.stressLatencyMs, boot.stressChunks),
     )
   : undefined;
 const world: LoadedMap = stressWorld
@@ -161,7 +161,9 @@ const world: LoadedMap = stressWorld
     : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
 /** Where the player starts (streaming warm-up centre before the first snapshot). */
 const startPoint: { x: number; y: number } = stressWorld
-  ? stressWorld.centre
+  ? import.meta.env.DEV && boot.spawnAt
+    ? boot.spawnAt
+    : stressWorld.centre
   : boot.spawnInside
     ? TEST_BUILDING_INSIDE
     : import.meta.env.DEV && boot.spawnAt
@@ -169,6 +171,12 @@ const startPoint: { x: number; y: number } = stressWorld
       : (startSpawn(world.zones) ?? (boot.sim === 'mock' ? { x: 6.5, y: 6.5 } : { x: 0, y: 0 }));
 
 const scene = createScene();
+// Floating origin (render/floating-origin.ts): world content hangs under `worldRoot`, drawn around
+// a render origin near the player; the camera and the sun work in render space.
+const floating = new FloatingOrigin();
+const worldRoot = floating.root;
+scene.add(worldRoot);
+for (const o of [...scene.children]) if (o !== worldRoot) worldRoot.add(o);
 const settings = createSettingsStore();
 // Town kit (CC0 modules, one atlas material): BatchedMesh per chunk + merged terrain per chunk.
 // `?town=0` or a failed load keeps the grey-box world. The kit lays out the whole authored map at
@@ -205,20 +213,20 @@ settings.subscribe((next, prev) => {
 if (townKit && town) {
   const terrain = new town.TownTerrain(world.source, townKit);
   terrain.loadRange(world.range);
-  scene.add(terrain.root);
+  worldRoot.add(terrain.root);
 }
 const townStructures = townKit && town ? new town.TownStructures(world.source, townKit) : undefined;
 if (townStructures) {
   townStructures.loadRange(world.range, decor?.props);
-  scene.add(townStructures.root);
+  worldRoot.add(townStructures.root);
 }
 const structures = townStructures ?? streaming.structures;
 // Upper floors (z = 1..): one town batch set per level with chunks, drawn at z · floor height
 // (slabs with stair openings, flights of stairs). The sim reads the same chunks by (cx, cy, z).
 const upperTown: NonNullable<typeof townStructures>[] =
   townKit && town ? town.loadUpperLevels(world.source, world.range, townKit) : [];
-for (const level of upperTown) scene.add(level.root);
-for (const root of streaming.roots) scene.add(root);
+for (const level of upperTown) worldRoot.add(level.root);
+for (const root of streaming.roots) worldRoot.add(root);
 await streaming.streamer.warmup([startPoint]);
 // Doors, window panes and fences: sim opening state + shaking under crowd pressure. Not streamed
 // yet: built over the authored map (empty in the stress world), see docs/streaming.md.
@@ -243,14 +251,20 @@ const openings = new OpeningsView(
     : undefined,
 );
 openings.loadRange(world.range);
-scene.add(openings.root);
+worldRoot.add(openings.root);
 if (import.meta.env.DEV && boot.zones) {
   void import('./dev/zones-overlay.js').then(({ createZonesOverlay }) =>
-    scene.add(createZonesOverlay(world.zones)),
+    worldRoot.add(createZonesOverlay(world.zones)),
   );
 }
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
 const rig = new CameraRig(camera);
+rig.origin = floating;
+// The render camera moved by +origin: picking, HUD anchors and culling in world coordinates.
+const worldCamera = camera.clone();
+floating.set(...chunkCorner(startPoint.x, startPoint.y));
+floating.onShift((o) => streaming.mapObjects.setOrigin(o.x, o.z));
+streaming.mapObjects.setOrigin(floating.x, floating.z);
 // „Styl grafiki” (#71): post-process on the same scene, switched live from the settings.
 const stylePass = new GraphicsStylePass(renderer);
 stylePass.setStyle(settings.get().graphics.style);
@@ -302,7 +316,12 @@ if (boot.sim === 'worker') {
 } else {
   sim = new MockSimClient(
     stressWorld
-      ? { minX: 0, minY: 0, maxX: STRESS_WORLD_TILES, maxY: STRESS_WORLD_TILES }
+      ? {
+          minX: 0,
+          minY: 0,
+          maxX: boot.stressChunks * CHUNK_SIZE,
+          maxY: boot.stressChunks * CHUNK_SIZE,
+        }
       : rangeBounds(world.range),
     stressWorld ? startPoint : boot.spawnInside ? TEST_BUILDING_INSIDE : { x: 6.5, y: 6.5 },
     PLAYER_ID,
@@ -395,12 +414,12 @@ sim.onSnapshot(({ tick, buf }) => {
   crowdArrivedMs = performance.now();
 });
 const crowdView = new CrowdView(crowd, (next, prev) => {
-  scene.remove(prev);
-  scene.add(next);
+  worldRoot.remove(prev);
+  worldRoot.add(next);
 });
-scene.add(crowdView.mesh);
+worldRoot.add(crowdView.mesh);
 const player = new PlayerView();
-scene.add(player.root);
+worldRoot.add(player.root);
 
 // HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
 const openingFeedback = new OpeningFeedback(PLAYER_ID);
@@ -465,7 +484,7 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !e.shiftKey || !settings.get().interface.targetZombieHp) return;
   const ndc = clientToNdc(e.clientX, e.clientY, renderer.domElement.getBoundingClientRect());
   // Intersect at waist height: the cursor is on the body, not on the feet behind it.
-  const hit = ndcToFloor(camera, ndc.x, ndc.y, PICK_PLANE_Y);
+  const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, PICK_PLANE_Y);
   if (hit) zombieHp.pickAt(hit.x, hit.z);
 });
 let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
@@ -609,12 +628,12 @@ input.on('reload', () => {
   else if (hud.firearm() && !gameState.get().death) sim.send(stamper.stamp({ type: 'reload' }));
 });
 const groundPiles = new GroundPiles();
-scene.add(groundPiles.root);
+worldRoot.add(groundPiles.root);
 const { mapObjects } = streaming;
 const shelfFill = new ShelfFill(world.source, world.range, (tx, ty, z, on) =>
   mapObjects.setXray(tx, ty, z, on),
 );
-scene.add(shelfFill.root);
+worldRoot.add(shelfFill.root);
 // CC0 models (tools/assets → public/models); grey placeholders stay until/unless they load.
 let zombieViews: InstancedZombies | undefined;
 void ModelKit.create(renderer).then(async (kit) => {
@@ -649,7 +668,7 @@ void ModelKit.create(renderer).then(async (kit) => {
   const templates = await loadZombieTemplates(kit);
   if (templates.length) {
     zombieViews = await InstancedZombies.create(templates, crowd);
-    scene.add(zombieViews.root);
+    worldRoot.add(zombieViews.root);
     crowdView.mesh.visible = false;
   }
 });
@@ -763,7 +782,7 @@ const interaction = new InteractController({
   cancel: () => sim.send(stamper.stamp({ type: 'cancelAction' })),
   project(x, y, z, h) {
     const w = simToWorld(x, y, z);
-    projected.set(w.x, w.y + h, w.z).project(camera);
+    projected.set(w.x, w.y + h, w.z).project(worldCamera);
     if (projected.z > 1 || Math.abs(projected.x) > 1.1 || Math.abs(projected.y) > 1.1) return;
     return {
       x: ((projected.x + 1) / 2) * container.clientWidth,
@@ -844,12 +863,12 @@ function updateReticle(px: number, py: number, now: number): void {
   const w = gameRoot.clientWidth;
   const h = gameRoot.clientHeight;
   const ndc = clientToNdc(cursorPx.x, cursorPx.y, { left: 0, top: 0, width: w, height: h });
-  const floor = ndcToFloor(camera, ndc.x, ndc.y);
+  const floor = ndcToFloor(worldCamera, ndc.x, ndc.y);
   const dist = floor ? Math.hypot(floor.x - px, floor.z - py) : 0;
   // Ortho camera: screen px per world unit (tile = 1 m).
   const pxPerM = (h * camera.zoom) / Math.max(1e-6, camera.top - camera.bottom);
   const spread = gameState.get().combat?.spread ?? 0;
-  const hit = ndcToFloor(camera, ndc.x, ndc.y, PICK_PLANE_Y);
+  const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, PICK_PLANE_Y);
   reticle.update({
     active: true,
     x: cursorPx.x,
@@ -898,6 +917,8 @@ const lighting = createWorldLighting(
   boot.map === 'test' ? createTestLamps() : (decor?.lamps ?? []),
   CAMERA_DISTANCE,
 );
+// Street lamps are world content; the sun / moon light and its shadow fit stay in render space.
+worldRoot.add(lighting.lamps.root);
 const dayCycle = new DayCycle(DAY_CYCLE);
 const timeOverride = import.meta.env.DEV ? boot.time : undefined;
 const bootMs = performance.now();
@@ -984,6 +1005,8 @@ if (import.meta.env.DEV) {
       crowd,
       snapshots,
       camera,
+      worldCamera,
+      floating,
       rig,
       player,
       /** Sends a stamped (debug) command, e.g. `{ type: 'debugSpawnZombie', x, y, count }`. */
@@ -1015,7 +1038,7 @@ renderer.setAnimationLoop((time) => {
     stylePass.render(scene, camera);
     return;
   }
-  playerInput.update(time, rig.targetYaw, camera);
+  playerInput.update(time, rig.targetYaw, worldCamera);
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {
@@ -1044,7 +1067,11 @@ renderer.setAnimationLoop((time) => {
     camera.zoom = VIEW_HEIGHT / boot.cam.viewHeight;
     camera.updateProjectionMatrix();
   }
+  // Recentre the render origin on the camera target (whole chunks, > 1 km away), then place the
+  // camera in render space and mirror it into world space.
+  floating.update(rig.target.x, rig.target.z);
   rig.update(time);
+  floating.syncWorldCamera(camera, worldCamera);
   // Stream around the player and the camera target (they differ while the camera catches up).
   streaming.streamer.update(
     state
@@ -1097,10 +1124,10 @@ renderer.setAnimationLoop((time) => {
   const t0 = performance.now();
   const alpha = tickAlpha(t0, crowdArrivedMs, TICK_MS);
   if (zombieViews) {
-    zombieViews.update(alpha, t0 / 1000, camera, rig.target.x, rig.target.z, phys, simTick);
+    zombieViews.update(alpha, t0 / 1000, worldCamera, rig.target.x, rig.target.z, phys, simTick);
   } else crowdView.update(alpha);
   const ui = settings.get().interface;
-  zombieHp.update(alpha, camera, container.clientWidth, container.clientHeight, {
+  zombieHp.update(alpha, worldCamera, container.clientWidth, container.clientHeight, {
     showWounded: ui.showZombieHp,
     targeting: ui.targetZombieHp,
   });

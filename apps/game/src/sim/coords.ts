@@ -30,3 +30,27 @@ export const worldToSimFloor = (wx: number, wz: number): { x: number; y: number 
  * (radians, measured from +x towards +y, i.e. from world +X towards +Z).
  */
 export const facingToRotationY = (facing: number): number => -facing;
+
+/**
+ * Sim -> render space (floating origin, `render/floating-origin.ts`): `simToWorld` minus the
+ * render origin (world X / Z). For anything placed outside the world root (camera, sun).
+ */
+export function simToRender(
+  x: number,
+  y: number,
+  z: number,
+  origin: { readonly x: number; readonly z: number },
+  out: Vec3 = { x: 0, y: 0, z: 0 },
+): Vec3 {
+  simToWorld(x, y, z, out);
+  out.x -= origin.x;
+  out.z -= origin.z;
+  return out;
+}
+
+/** Render floor point (X, Z) -> sim floor plane (x, y). */
+export const renderToSimFloor = (
+  rx: number,
+  rz: number,
+  origin: { readonly x: number; readonly z: number },
+): { x: number; y: number } => worldToSimFloor(rx + origin.x, rz + origin.z);

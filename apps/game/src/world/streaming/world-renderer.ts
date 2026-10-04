@@ -1,5 +1,5 @@
 import { Group, Mesh, MeshStandardMaterial } from 'three';
-import type { EdgeDef } from '../chunk.js';
+import { CHUNK_SIZE, type EdgeDef } from '../chunk.js';
 import { LOD_MID, LOD_NEAR, type Lod } from './rings.js';
 import type { BuiltChunk, ChunkBuilder } from './streamer.js';
 import { DecorLayer } from './decor.js';
@@ -52,10 +52,10 @@ export class StreamedWorldRenderer implements ChunkBuilder {
   ): BuiltChunk {
     if (lod === LOD_NEAR && data) return this.buildNear(cx, cy, data);
     if (lod === LOD_MID && data) {
-      return this.mesh(buildMidGeometry(data, this.edgePalette), `mid@${cx},${cy}`, true);
+      return this.mesh(buildMidGeometry(data, this.edgePalette), cx, cy, `mid@${cx},${cy}`, true);
     }
     const s = summary ?? (data ? summarize(data) : undefined);
-    return this.mesh(s ? buildFarGeometry(s) : undefined, `far@${cx},${cy}`, false);
+    return this.mesh(s ? buildFarGeometry(s) : undefined, cx, cy, `far@${cx},${cy}`, false);
   }
 
   dispose(): void {
@@ -96,6 +96,8 @@ export class StreamedWorldRenderer implements ChunkBuilder {
 
   private mesh(
     lod: ReturnType<typeof buildMidGeometry>,
+    cx: number,
+    cy: number,
     name: string,
     receiveShadow: boolean,
   ): BuiltChunk {
@@ -104,6 +106,9 @@ export class StreamedWorldRenderer implements ChunkBuilder {
     mesh.name = name;
     mesh.receiveShadow = receiveShadow;
     mesh.castShadow = false;
+    // Chunk-relative geometry: the mesh sits at the chunk origin.
+    mesh.position.set(cx * CHUNK_SIZE, 0, cy * CHUNK_SIZE);
+    mesh.updateMatrix();
     mesh.matrixAutoUpdate = false;
     this.root.add(mesh);
     return {

@@ -37,6 +37,8 @@ export interface BootOptions {
    * `&latency=N` adds N ms per chunk fetch.
    */
   stress: boolean;
+  /** `?stress=16`: the stress world is 512 × 512 chunks (16 384 m, floating-origin test). */
+  stressChunks: number;
   stressLatencyMs: number;
   /** `?perf=1`: perf overlay (fps, frame ms, streamed chunks, draw calls, memory); any build. */
   perf: boolean;
@@ -81,7 +83,7 @@ export function parseBootOptions(search: string): BootOptions {
   // Public build (production): test-town with containers by default; dev: generated test map.
   const fallback: MapChoice = import.meta.env.PROD ? 'test-town' : 'test';
   const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : fallback;
-  const stress = q.get('stress') === '1';
+  const stress = q.get('stress') === '1' || q.get('stress') === '16';
   const mock = crowd > 0 || stress;
   const time = parseTimeParam(q.get('time'));
   const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d{1,2}))?$/.exec(q.get('spawn') ?? '');
@@ -112,6 +114,7 @@ export function parseBootOptions(search: string): BootOptions {
       : {}),
     zspawn: Math.max(0, Math.min(300, Math.floor(Number(q.get('zspawn')) || 0))),
     stress,
+    stressChunks: q.get('stress') === '16' ? 512 : 250,
     stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
     perf: q.get('perf') === '1',
   };

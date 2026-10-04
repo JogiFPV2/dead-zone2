@@ -12,8 +12,9 @@ export interface TileInstances {
 
 /**
  * Groups non-empty floor tiles of a chunk by TileId and builds translation matrices.
- * 1 tile = 1 world unit; tile (x, y) of chunk (cx, cy) is centred at
- * world X = cx*32 + x + 0.5, Z = cy*32 + y + 0.5, Y = z * LEVEL_HEIGHT.
+ * 1 tile = 1 world unit; matrices are relative to the chunk origin (world X = cx*32, Z = cy*32,
+ * where the chunk's group sits — floating origin, float32 instance buffers): tile (x, y) is
+ * centred at local X = x + 0.5, Z = y + 0.5, Y = z * LEVEL_HEIGHT.
  */
 export function buildTileInstances(chunk: ChunkData): TileInstances[] {
   const { floor, coord } = chunk;
@@ -25,8 +26,8 @@ export function buildTileInstances(chunk: ChunkData): TileInstances[] {
     groups.set(tileId, { tileId, count, matrices: new Float32Array(count * 16), next: 0 });
   }
 
-  const ox = coord.cx * CHUNK_SIZE + 0.5;
-  const oz = coord.cy * CHUNK_SIZE + 0.5;
+  const ox = 0.5;
+  const oz = 0.5;
   const y = coord.z * LEVEL_HEIGHT;
 
   for (let i = 0; i < floor.length; i++) {

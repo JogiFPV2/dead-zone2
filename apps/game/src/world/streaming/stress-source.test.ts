@@ -36,4 +36,14 @@ describe('StressWorldSource', () => {
     expect(sum.height.some((h) => h > 0)).toBe(true);
     expect(sum.ground.every((g) => g > 0)).toBe(true);
   });
+
+  it('?stress=16: 512 chunks (16 384 m), centre and a town near the far corner', () => {
+    const s = new StressWorldSource(1, 0, 512);
+    expect(s.bounds).toEqual({ cx0: 0, cy0: 0, cx1: 511, cy1: 511 });
+    expect(s.centre.x).toBe(262 * 32 + 2.5);
+    expect(new StressWorldSource(1).centre.x).toBe(131 * 32 + 2.5);
+    expect(s.isTown(500, 500)).toBe(true);
+    expect(s.generate(511, 511)).toBeDefined();
+    expect(s.generate(512, 0)).toBeUndefined();
+  });
 });

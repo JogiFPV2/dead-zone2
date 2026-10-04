@@ -2,10 +2,15 @@ import { Vector3, type OrthographicCamera } from 'three';
 import { CAMERA_DISTANCE, isometricOffset } from './isometric.js';
 import { ROTATION_MS, sampleYaw, yawForStep, type YawTween } from './rotation.js';
 import { DEFAULT_ZOOM_LIMITS, clamp, smoothZoom, zoomFromWheel, type ZoomLimits } from './zoom.js';
+import { worldToRender, type OriginXZ } from '../render/floating-origin.js';
 
 /** Camera state (target, yaw step, zoom). No DOM: input is wired separately. */
 export class CameraRig {
+  /** Camera target in world space (follows the player). */
   readonly target = new Vector3();
+  /** Render origin (`render/floating-origin.ts`); the camera is placed at target − origin. */
+  origin: OriginXZ = { x: 0, z: 0 };
+  private readonly look = new Vector3();
   private step = 0;
   private tween: YawTween;
   private zoomGoal: number;
@@ -77,8 +82,10 @@ export class CameraRig {
   }
 
   private apply(yaw: number): void {
-    this.camera.position.copy(this.target).add(isometricOffset(this.distance, yaw));
-    this.camera.lookAt(this.target);
+    // `target` is in world space; the camera sits in render space (floating origin).
+    const at = worldToRender(this.origin, this.look.copy(this.target));
+    this.camera.position.copy(at).add(isometricOffset(this.distance, yaw));
+    this.camera.lookAt(at);
     this.camera.updateMatrixWorld();
   }
 }

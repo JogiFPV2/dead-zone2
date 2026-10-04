@@ -105,7 +105,8 @@ function writeBox(
 }
 
 /**
- * Matrix for a unit box (bottom at y = 0) stretched along an edge line. Edges are 1 + thickness
+ * Matrix for a unit box (bottom at y = 0) stretched along an edge line, relative to the world
+ * point (`ox`, `oz`) (the chunk origin for streamed chunks: floating origin). Edges are 1 + thickness
  * long so corners overlap. N edge of tile (tx, ty): centre (tx + 0.5, ty); W edge: (tx, ty + 0.5).
  */
 export function writeEdgeMatrix(
@@ -114,10 +115,14 @@ export function writeEdgeMatrix(
   e: EdgeInstance,
   baseY: number,
   height: number,
+  ox = 0,
+  oz = 0,
 ): void {
   const len = 1 + WALL_THICKNESS;
-  if (e.axis === 'N') writeBox(m, o, len, height, WALL_THICKNESS, e.tx + 0.5, baseY, e.ty);
-  else writeBox(m, o, WALL_THICKNESS, height, len, e.tx, baseY, e.ty + 0.5);
+  const x = e.tx - ox;
+  const z = e.ty - oz;
+  if (e.axis === 'N') writeBox(m, o, len, height, WALL_THICKNESS, x + 0.5, baseY, z);
+  else writeBox(m, o, WALL_THICKNESS, height, len, x, baseY, z + 0.5);
 }
 
 /** Roof slab on top of the walls; `hidden` collapses it to zero scale. */
@@ -127,9 +132,11 @@ export function writeRoofMatrix(
   t: RoofTile,
   baseY: number,
   hidden: boolean,
+  ox = 0,
+  oz = 0,
 ): void {
   const s = hidden ? 0 : 1;
-  writeBox(m, o, s, s * ROOF_THICKNESS, s, t.tx + 0.5, baseY + WALL_HEIGHT, t.ty + 0.5);
+  writeBox(m, o, s, s * ROOF_THICKNESS, s, t.tx - ox + 0.5, baseY + WALL_HEIGHT, t.ty - oz + 0.5);
 }
 
 export const edgeHeight = (kind: EdgeKind, lowered: boolean): number =>

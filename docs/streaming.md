@@ -70,6 +70,32 @@ Presety (ustawienie `graphics.viewDistance`, nadpisanie przez `?view=low|medium|
 
 Przy domyślnym zoomie izometria pokazuje ok. ±1,5 chunka wokół celu (±2 przy maksymalnym oddaleniu), więc **near pokrywa cały ekran**. Mid i far to zapas na oddalenie i prefetch. Wygląd tego, co widać, się nie zmienia.
 
+## Pływający początek układu (`render/floating-origin.ts`)
+
+Światy do 16 384 × 16 384 m: bufory GPU (float32) i obliczenia w przestrzeni świata w shaderach
+(cienie, mgła, światło) tracą precyzję daleko od (0, 0), więc scena jest rysowana wokół
+**początku renderu** blisko gracza.
+
+- **Przestrzeń świata** = współrzędne bezwzględne (`simToWorld`: sim x → X, sim y → Z). Sim,
+  streaming, cutaway, fokus świateł i wszystkie obiekty świata zostają w niej; treść świata wisi
+  pod `FloatingOrigin.root` (`root.position = −origin`).
+- **Przestrzeń renderu** = świat − origin. Kamera (`CameraRig.origin`), słońce / księżyc i
+  dopasowanie cieni działają tutaj. Ekran ↔ świat idzie przez `worldCamera` (kamera renderu
+  przesunięta o +origin): celowanie, F (kotwice HUD), paski HP zombie i culling instancji zombie
+  dalej liczą w świecie. Konwersje: `simToRender` / `renderToSimFloor` (`sim/coords.ts`),
+  `worldToRender` / `renderToWorld`.
+- Origin przesuwa się tylko o całe chunki, gdy cel kamery odejdzie > 1 km (`RECENTER_DISTANCE`,
+  osobno w X i Z) — wtedy na róg chunka celu. Start: róg chunka punktu startu.
+- Geometria i instancje chunków są **względem rogu chunka** (teren, ściany / dachy, dekor,
+  siatki mid / far): mesh / grupa stoi w rogu, więc przesunięcie originu to jedna transformacja
+  korzenia, bez przebudowy. Meble (globalny instancing) są względem originu i przebudowują się
+  przy przesunięciu (`MapObjects.setOrigin`, raz na klatkę).
+- Test: `?stress=16` = świat 512 × 512 chunków (16 384 m, dodatkowe miasto przy dalekim rogu);
+  w DEV `&spawn=16000.5,16000.5` startuje tam. `__dzAnim.floating` / `worldCamera` w konsoli.
+- Ograniczenia: mapy autorskie (kit miasta, drzwi / okna `OpeningsView`) i dynamiczne instancje
+  (tłum, zombie) dalej mają bezwzględne macierze float32 — przy 16 km to ~2 mm kwantyzacji,
+  niewidoczne w izometrii; do przeniesienia, gdy kit i otwory będą streamowane.
+
 ## Narzędzia
 - `?perf=1` (każdy build): nakładka z fps, czasem klatki (średnia i max), CPU klatki, czasem budowania, chunkami per pierścień (zbudowane / limit), kolejką, pobraniami, draw callami, trójkątami, geometriami, teksturami i programami, szacunkiem GPU streamu i stertą JS. Ostatni odczyt trafia do `window.__dzPerf`.
 - `?stress=1[&latency=N]`: proceduralny świat 8 × 8 km (`StressWorldSource`: makroplan z miastami, siecią autostrad i lasami, deterministyczne wypełnienie, dwupiętrowe domy ze schodami, dekoracje, `getSummary`), mock sim bez kolizji. Hooki: `__dzStream.walk(dx, dy)`, `__dzStream.teleport(x, y)`, `__dzStream.stats()`.

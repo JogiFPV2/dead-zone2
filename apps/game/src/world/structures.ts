@@ -1,7 +1,7 @@
 import { BoxGeometry, Group, InstancedMesh, type MeshStandardMaterial } from 'three';
 import { placeholderMaterial } from '../lighting/materials.js';
 import { BuildingLookup } from './building-lookup.js';
-import type { ChunkRange, ChunkSource, EdgeKind } from './chunk.js';
+import { CHUNK_SIZE, type ChunkRange, type ChunkSource, type EdgeKind } from './chunk.js';
 import { NO_CUTAWAY, cutawayKey, isEdgeLowered, isRoofHidden, type Cutaway } from './cutaway.js';
 import { LEVEL_HEIGHT } from './instances.js';
 import {
@@ -29,6 +29,9 @@ interface Part {
   chunk: string;
   mesh: InstancedMesh;
   baseY: number;
+  /** Chunk origin (world X / Z): instance matrices are relative to it, the mesh sits at it. */
+  ox: number;
+  oz: number;
   edges?: EdgeGroup;
   roof?: RoofGroup;
 }
@@ -66,11 +69,13 @@ export class Structures {
     this.unloadChunk(cx, cy, z);
     const key = `${cx},${cy},${z}`;
     const baseY = z * LEVEL_HEIGHT;
+    const ox = cx * CHUNK_SIZE;
+    const oz = cy * CHUNK_SIZE;
     const kindOf = (id: number) => this.source.edgePalette?.[id]?.kind;
     for (const edges of collectEdges(chunk, kindOf, this.lookup)) {
       const name = this.source.edgePalette?.[edges.edgeId]?.id ?? `edge:${edges.edgeId}`;
       this.add(
-        { chunk: key, baseY, edges },
+        { chunk: key, baseY, ox, oz, edges },
         edges.edges.length,
         edges.kind,
         `${name}@${cx},${cy},${z}`,
@@ -78,7 +83,12 @@ export class Structures {
     }
     for (const roof of collectRoofs(chunk, this.lookup)) {
       const name = this.source.tilePalette[roof.roofId] ?? `roof:${roof.roofId}`;
-      this.add({ chunk: key, baseY, roof }, roof.tiles.length, 'roof', `${name}@${cx},${cy},${z}`);
+      this.add(
+        { chunk: key, baseY, ox, oz, roof },
+        roof.tiles.length,
+        'roof',
+        `${name}@${cx},${cy},${z}`,
+      );
     }
   }
 
@@ -127,6 +137,7 @@ export class Structures {
     mesh.name = name;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    mesh.position.set(p.ox, 0, p.oz);
     const part = { ...p, mesh };
     // Bounds from the full (uncut) layout; chunks streamed in later then get the current cutaway.
     this.write(part, NO_CUTAWAY);
@@ -136,14 +147,14 @@ export class Structures {
     this.root.add(mesh);
   }
 
-  private write({ mesh, baseY, edges, roof }: Part, c: Cutaway): void {
+  private write({ mesh, baseY, ox, oz, edges, roof }: Part, c: Cutaway): void {
     const m = mesh.instanceMatrix.array as Float32Array;
     edges?.edges.forEach((e, i) => {
       const lowered = isEdgeLowered(c, e.building, e.axis, e.tx, e.ty);
-      writeEdgeMatrix(m, i * 16, e, baseY, edgeHeight(edges.kind, lowered));
+      writeEdgeMatrix(m, i * 16, e, baseY, edgeHeight(edges.kind, lowered), ox, oz);
     });
     roof?.tiles.forEach((t, i) =>
-      writeRoofMatrix(m, i * 16, t, baseY, isRoofHidden(c, t.building)),
+      writeRoofMatrix(m, i * 16, t, baseY, isRoofHidden(c, t.building), ox, oz),
     );
     mesh.instanceMatrix.needsUpdate = true;
   }

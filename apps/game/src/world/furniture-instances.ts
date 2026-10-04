@@ -68,11 +68,14 @@ const one = new Vector3(1, 1, 1);
  * Furniture (all loaded chunks) as ONE `InstancedMesh` per model part (geometry + material), instead
  * of a cloned model per object: same meshes, same transforms, far fewer draw calls. Geometry and
  * materials stay owned by the model kit; `dispose` frees only the instance buffers.
+ * Instance matrices are relative to `origin` (world X / Z; the meshes sit there), so float32
+ * instance buffers stay small far from (0, 0) — the render origin of the floating origin.
  */
 export function buildInstances(
   placements: readonly Placement[],
   partsOf: (model: string) => readonly ModelPart[] | undefined,
   root: Group,
+  origin: { x: number; z: number } = { x: 0, z: 0 },
 ): { meshes: InstancedMesh[]; slots: (InstanceSlots | undefined)[] } {
   const groups = new Map<string, { part: ModelPart; at: { i: number; m: Matrix4 }[] }>();
   const slots: (InstanceSlots | undefined)[] = [];
@@ -83,7 +86,11 @@ export function buildInstances(
       slots.push(undefined);
       return;
     }
-    base.compose(pos.set(pl.x, pl.y, pl.z), q.setFromAxisAngle(up, pl.rotY), one);
+    base.compose(
+      pos.set(pl.x - origin.x, pl.y, pl.z - origin.z),
+      q.setFromAxisAngle(up, pl.rotY),
+      one,
+    );
     for (const part of parts) {
       const k = partKey(part);
       let g = groups.get(k);
@@ -96,6 +103,7 @@ export function buildInstances(
   for (const { part, at } of groups.values()) {
     const mesh = new InstancedMesh(part.geometry, part.material, at.length);
     mesh.name = 'furniture-instances';
+    mesh.position.set(origin.x, 0, origin.z);
     mesh.castShadow = part.castShadow;
     mesh.receiveShadow = part.receiveShadow;
     at.forEach(({ i, m }, index) => {
