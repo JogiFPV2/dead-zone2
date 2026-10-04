@@ -36,7 +36,7 @@ function fail(error: PgError): never {
 }
 
 const CHARACTER_COLUMNS =
-  'id,user_id,name,appearance,world_seed,worldgen_version,world_settings,status,days_survived,created_at,last_played_at,died_at';
+  'id,user_id,name,appearance,world_seed,worldgen_version,world_settings,status,days_survived,created_at,last_played_at,died_at,last_place,last_x,last_y,last_z,last_day';
 const SAVE_COLUMNS = 'character_id,storage_path,version,size_bytes,checksum,game_day,updated_at';
 
 type Db = SupabaseClient<Database>;
@@ -132,6 +132,11 @@ export function createSupabaseStore(db: Db): GameStore {
           p_size_bytes: c.sizeBytes,
           p_checksum: c.checksum,
           p_game_day: c.gameDay,
+          p_last_place: c.location?.place ?? null,
+          p_last_x: c.location?.x ?? null,
+          p_last_y: c.location?.y ?? null,
+          p_last_z: c.location?.z ?? null,
+          p_last_day: c.location?.day ?? null,
         })
         .single();
       if (error) fail(error);

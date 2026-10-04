@@ -2,6 +2,7 @@ import { randomBytes, randomInt } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type {
   CharacterSummary,
+  LastLocation,
   ListCharactersResponse,
   OpenSaveResponse,
   PutSaveResponse,
@@ -55,6 +56,21 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 const IP_WINDOW_MS = 5 * 60 * 1000;
 
+/** Stored last location; tombstones and characters without a summarized save give null. */
+function lastLocation(c: CharacterRow): LastLocation | null {
+  if (c.status !== 'alive') return null;
+  if (c.last_x === null || c.last_y === null || c.last_z === null || c.last_day === null) {
+    return null;
+  }
+  return { place: c.last_place, x: c.last_x, y: c.last_y, z: c.last_z, day: c.last_day };
+}
+
+/** `world_settings.dayLengthMinutes` when it is a sane number (sim default otherwise). */
+function dayLengthMinutes(c: CharacterRow): number | undefined {
+  const v = c.world_settings.dayLengthMinutes;
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 10_080 ? v : undefined;
+}
+
 function toSummary(c: CharacterRow, save: SaveRow | undefined): CharacterSummary {
   return {
     id: c.id,
@@ -77,6 +93,7 @@ function toSummary(c: CharacterRow, save: SaveRow | undefined): CharacterSummary
             updatedAt: save.updated_at,
           }
         : null,
+    lastLocation: lastLocation(c),
   };
 }
 
@@ -204,6 +221,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
     const env = await validator.validate(bytes, {
       saveFormatVersion: config.saveFormatVersion,
       maxStateBytes: limits.maxStateBytes,
+      dayLengthMinutes: dayLengthMinutes(c),
     });
     if (env.sha256 !== claimed.toLowerCase()) {
       throw new HttpError(400, 'checksum_mismatch', 'SHA-256 does not match the envelope');
@@ -220,18 +238,27 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
   app.get('/v1/characters', async (req): Promise<ListCharactersResponse> => {
     const { userId } = await user(req);
-    const [characters, saves] = await Promise.all([
+    const [characters, saves, usedBytes] = await Promise.all([
       store.listCharacters(userId),
       store.listSaves(userId),
+      store.accountSaveBytes(userId),
     ]);
     const byCharacter = new Map(saves.map((s) => [s.character_id, s]));
+    const alive = characters.filter((c) => c.status === 'alive').length;
     return {
       characters: characters.map((c) => toSummary(c, byCharacter.get(c.id))),
       limits: {
         maxAlive: limits.maxAliveCharacters,
-        alive: characters.filter((c) => c.status === 'alive').length,
+        alive,
         maxSaveBytes: limits.maxAccountSaveBytes,
-        usedSaveBytes: saves.reduce((sum, s) => sum + s.size_bytes, 0),
+        usedSaveBytes: usedBytes,
+      },
+      // `account_save_bytes` (the quota the database enforces) for „12 / 50 MB”.
+      usage: {
+        usedBytes,
+        limitBytes: limits.maxAccountSaveBytes,
+        alive,
+        aliveLimit: limits.maxAliveCharacters,
       },
     };
   });
@@ -302,6 +329,11 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
         throw invalidState('a death snapshot goes to POST /v1/characters/:id/death');
       }
 
+      if (env.summaryFailure) {
+        // A valid save without a usable summary: stored without a new location.
+        req.log.warn({ summary: env.summaryFailure }, 'save summary failed, location not updated');
+      }
+
       // Cheap pre-checks; commit_save repeats both atomically.
       const current = await store.getSave(id);
       if ((current?.version ?? 0) !== expected) throw versionConflict();
@@ -323,6 +355,8 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
           sizeBytes: env.sizeBytes,
           checksum: env.sha256,
           gameDay: env.header.gameDay,
+          // From the validated state in the worker (sim `saveSummary`), never from the client.
+          location: env.location,
         });
       } catch (err) {
         await blobs

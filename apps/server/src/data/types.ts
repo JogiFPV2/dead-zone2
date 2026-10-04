@@ -1,4 +1,4 @@
-import type { CharacterStatus } from '@deadzone/protocol';
+import type { CharacterStatus, LastLocation } from '@deadzone/protocol';
 
 /** `public.characters` row (supabase/migrations). */
 export interface CharacterRow {
@@ -14,6 +14,12 @@ export interface CharacterRow {
   created_at: string;
   last_played_at: string | null;
   died_at: string | null;
+  /** Last location (from the save summary, set by `commit_save`); all null before the first. */
+  last_place: string | null;
+  last_x: number | null;
+  last_y: number | null;
+  last_z: number | null;
+  last_day: number | null;
 }
 
 /** `public.saves` row: exactly one current save per character. */
@@ -45,6 +51,8 @@ export interface CommitSave {
   sizeBytes: number;
   checksum: string;
   gameDay: number;
+  /** Server-derived summary of the validated save; null keeps the stored location. */
+  location: LastLocation | null;
 }
 
 /** Rule violations the database reports (trigger / function exceptions). */

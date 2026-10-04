@@ -106,6 +106,7 @@ Nie ma osobnego rekordu świata ani historii zapisów.
 | `created_at` | czas utworzenia |
 | `last_played_at` | ostatnia gra |
 | `died_at` | czas śmierci; pusty dla `alive`, wymagany dla `dead` |
+| `last_place`, `last_x`, `last_y`, `last_z`, `last_day` | ostatnia lokacja z ostatniego zapisu do karty postaci: miejscowość (`text`, 1–64 znaki, może być pusta), pozycja w metrach (`real`), piętro (`smallint`) i dzień gry; wszystkie puste do pierwszego zapisu z podsumowaniem |
 
 Reguły:
 
@@ -198,6 +199,13 @@ Rozmiar: według pomiaru Symulacji zapis po około 50 h gry ma **0,75–1,96 MiB
 | `POST /v1/characters/:id/death` | Zatwierdzenie śmierci po walidacji stanu, a następnie usunięcie zapisu |
 | `DELETE /v1/characters/:id` | Trwałe usunięcie postaci na żądanie użytkownika, wraz z jej zapisem |
 | `DELETE /v1/me` | Usunięcie konta i wszystkich danych (RODO) |
+
+`GET /v1/characters` zwraca (typy `ListCharactersResponse` i `CharacterSummary` w `packages/protocol`):
+
+- przy każdej postaci `lastLocation: { place, x, y, z, day } | null` — miejscowość (najwyżej 64 znaki albo `null`), pozycja w metrach na mapie (0–16 384), piętro, dzień gry. `null` dla nagrobków i przed pierwszym zapisem z podsumowaniem;
+- `usage: { usedBytes, limitBytes, alive, aliveLimit }` do „12 / 50 MB” i licznika postaci: `usedBytes` z `account_save_bytes` (bieżące zapisy konta), `limitBytes` = 50 MiB, `alive` i `aliveLimit` = 20. Starszy blok `limits` zostaje dla zgodności.
+
+Lokacji nie podaje klient. Przy `PUT .../save` worker walidacji, po pełnej walidacji stanu, wywołuje `saveSummary(state, { dayLengthMinutes })` z lekkiego wejścia `@deadzone/sim/save-summary` (bez bitecs i DOM-u; długość dnia z `world_settings.dayLengthMinutes` postaci). Wynik jest sprawdzany i przycinany (liczby skończone, x/y do mapy, piętro całkowite −128…127, dzień ≥ 0, nazwa bez znaków sterujących, przycięta do 64 znaków). `SaveError` (`not-a-save`, `unsupported-version`, `corrupt`), inny wyjątek albo złe wartości nie blokują zapisu, który przeszedł walidację: serwer loguje ostrzeżenie i nie zmienia lokacji. `commit_save` zapisuje lokację w tej samej transakcji co zapis. `place` jest na razie `null`: lista miejscowości jest w `planWorld` z `tools/map` (narzędzie z całym generatorem), a nie w lekkim pakiecie, który serwer mógłby importować.
 
 Nie ma endpointu do listowania, pobierania ani przywracania starszych zapisów. Nie ma osobnego endpointu „Zapisz”, bo zapis wynika z poniższych wyzwalaczy.
 

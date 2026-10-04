@@ -18,7 +18,17 @@ export type Database = {
         Insert: Plain<
           Omit<
             CharacterRow,
-            'id' | 'status' | 'days_survived' | 'created_at' | 'last_played_at' | 'died_at'
+            | 'id'
+            | 'status'
+            | 'days_survived'
+            | 'created_at'
+            | 'last_played_at'
+            | 'died_at'
+            | 'last_place'
+            | 'last_x'
+            | 'last_y'
+            | 'last_z'
+            | 'last_day'
           >
         >;
         Update: Plain<Partial<Pick<CharacterRow, 'name' | 'appearance' | 'world_settings'>>>;
@@ -51,6 +61,11 @@ export type Database = {
           p_size_bytes: number;
           p_checksum: string;
           p_game_day: number;
+          p_last_place?: string | null;
+          p_last_x?: number | null;
+          p_last_y?: number | null;
+          p_last_z?: number | null;
+          p_last_day?: number | null;
         };
         Returns: { version: number; previous_path: string | null }[];
       };

@@ -105,6 +105,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Tabele profili i zapisów + RLS (Serwer) — `supabase/migrations`, tylko pliki; zastosowanie na produkcji wymaga zgody Pawła
 - [x] API zapisów w chmurze z walidacją i limitami (Serwer) — `apps/server` `/v1/characters…`, rate limit konta/IP (429 + `Retry-After`), `DELETE` postaci i konta (RODO); walidacja DZSV w `worker_threads` (timeout + limit sterty)
 - [ ] Profil i lista zapisów, przycisk „Graj” (Designer + Silnik)
+- [x] Ostatnia lokacja na karcie postaci i zajęte miejsce konta (Serwer) — `lastLocation` z `saveSummary` sima w workerze walidacji, `usage {usedBytes, limitBytes, alive, aliveLimit}` w `GET /v1/characters`; `place` pusty, dopóki serwer nie ma lekkiej listy miejscowości planu świata
+- [ ] Ustawienia gracza w chmurze (Serwer) — `GET`/`PUT /v1/me/settings`: `profiles.settings jsonb`, najwyżej 16 KB, `If-Match` (ETag), walidacja `validatePlayerSettings` z `@deadzone/ui/settings`, 413 `too-large`, 422 `invalid` z `issues`; czeka na #156 (Modules)
 
 ## Etap 9 — Grywalne demo
 - [ ] Dźwięki CC0 (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze brak
@@ -116,3 +118,6 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Sentry i zbieranie błędów (Serwer)
 - [ ] Wdrożenie publiczne (Serwer)
 - [ ] Playtest i zebranie opinii (Szef sztabu)
+
+## Multiplayer
+- [ ] Ostrzeżenie o zagrożeniu przy otwartym menu (Serwer + Symulacja + Silnik) — flaga konfiguracji serwera `menuThreatWarning` (domyślnie wyłączona), wysyłana klientowi w ustawieniach świata przy połączeniu; zagrożenie liczy sim na serwerze jako czas dojścia ≤ 4 s, nigdy klient; gracz z otwartym menu dalej może zostać zaatakowany (online nie ma pauzy); event `menuThreat` przy wyłączeniu z opóźnieniem 1 s; ustawienie klienta „Ogranicz migotanie”

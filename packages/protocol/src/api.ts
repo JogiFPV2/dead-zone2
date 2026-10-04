@@ -73,6 +73,22 @@ export interface SaveEnvelopeHeader {
 
 export type CharacterStatus = 'alive' | 'dead';
 
+/**
+ * Where the character was at the last cloud save (character card). The server derives it from the
+ * validated save (sim `saveSummary`), never from client fields.
+ */
+export interface LastLocation {
+  /** Nearest settlement of the world plan (max 64 characters); null when unknown. */
+  place: string | null;
+  /** Metres on the map (0..MAP_SIZE_M). */
+  x: number;
+  y: number;
+  /** Floor. */
+  z: number;
+  /** Game day of the save. */
+  day: number;
+}
+
 export interface CharacterSummary {
   id: string;
   name: string;
@@ -87,11 +103,26 @@ export interface CharacterSummary {
   diedAt: string | null;
   /** Current save metadata; null for tombstones and characters without a cloud save yet. */
   save: { version: number; sizeBytes: number; gameDay: number; updatedAt: string } | null;
+  /** Last location for the card; null for tombstones and before the first save with a summary. */
+  lastLocation: LastLocation | null;
+}
+
+/** Account storage for „12 / 50 MB” and the alive counter. */
+export interface AccountUsage {
+  /** Bytes of all current saves of the account. */
+  usedBytes: number;
+  /** Save quota of the account (50 MiB). */
+  limitBytes: number;
+  /** Alive characters. */
+  alive: number;
+  /** Alive character limit (20). */
+  aliveLimit: number;
 }
 
 export interface ListCharactersResponse {
   characters: CharacterSummary[];
   limits: { maxAlive: number; alive: number; maxSaveBytes: number; usedSaveBytes: number };
+  usage: AccountUsage;
 }
 
 export interface CreateCharacterRequest {

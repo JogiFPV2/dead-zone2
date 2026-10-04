@@ -58,6 +58,11 @@ export class MemoryStore implements GameStore {
       created_at: this.iso(),
       last_played_at: null,
       died_at: null,
+      last_place: null,
+      last_x: null,
+      last_y: null,
+      last_z: null,
+      last_day: null,
     };
     this.characters.set(row.id, row);
     return { ...row };
@@ -93,6 +98,13 @@ export class MemoryStore implements GameStore {
     });
     ch.last_played_at = this.iso();
     ch.days_survived = Math.max(ch.days_survived, c.gameDay);
+    if (c.location) {
+      ch.last_place = c.location.place;
+      ch.last_x = c.location.x;
+      ch.last_y = c.location.y;
+      ch.last_z = c.location.z;
+      ch.last_day = c.location.day;
+    }
     return { version, previousPath: old?.storage_path ?? null };
   }
   markDead(userId: string, id: string, days: number) {

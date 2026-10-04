@@ -198,6 +198,78 @@ describe('migrations', () => {
     });
   });
 
+  it('commit_save stores the last location from the server summary, optional and checked', async () => {
+    await as('service_role', '', async () => {
+      const c = await newCharacter(B, 'Loc');
+      const loc = (version: number, path: string, args: unknown[]) =>
+        q(`select * from public.commit_save($1, $2, $3, $4, 100, $5, 2, $6, $7, $8, $9, $10)`, [
+          B,
+          c,
+          version,
+          path,
+          SUM,
+          ...args,
+        ]);
+      const row = () =>
+        q(
+          `select last_place, last_x, last_y, last_z, last_day from public.characters where id = $1`,
+          [c],
+        ).then((r) => r[0]);
+      expect(await row()).toEqual({
+        last_place: null,
+        last_x: null,
+        last_y: null,
+        last_z: null,
+        last_day: null,
+      });
+      expect(await loc(0, 'l1', ['Lipowiec', 200.5, 230.25, 1, 2])).toEqual([
+        { version: 1, previous_path: null },
+      ]);
+      expect(await row()).toEqual({
+        last_place: 'Lipowiec',
+        last_x: 200.5,
+        last_y: 230.25,
+        last_z: 1,
+        last_day: 2,
+      });
+      // The 7-argument call (no summary) still works and keeps the location.
+      await commit(B, c, 1, 'l2');
+      expect(await row()).toMatchObject({ last_place: 'Lipowiec', last_day: 2 });
+      // A summary without a place name clears it.
+      await loc(2, 'l3', [null, 10, 20, 0, 3]);
+      expect(await row()).toEqual({
+        last_place: null,
+        last_x: 10,
+        last_y: 20,
+        last_z: 0,
+        last_day: 3,
+      });
+      // Bad values fail the whole commit (the server clamps before calling).
+      for (const bad of [
+        ['x'.repeat(65), 1, 1, 0, 1],
+        ['A', -1, 1, 0, 1],
+        ['A', 1, 'NaN', 0, 1],
+        ['A', 1, 1, 200, 1],
+        ['A', 1, 1, 0, -1],
+      ]) {
+        await expect(loc(3, 'bad', bad), JSON.stringify(bad)).rejects.toThrow();
+      }
+      expect(await q(`select version from public.saves where character_id = $1`, [c])).toEqual([
+        { version: 3 },
+      ]);
+    });
+    await as('authenticated', B, async () => {
+      await expect(
+        q(
+          `select * from public.commit_save($1::uuid, $2::uuid, 3, 'x', 1, $3, 1,
+             'A', 1::real, 1::real, 0::smallint, 1)`,
+          [B, B, SUM],
+        ),
+      ).rejects.toThrow('permission denied');
+    });
+    await as('service_role', '', () => q(`delete from public.characters where user_id = $1`, [B]));
+  });
+
   it('a character for a missing auth user fails with 23503 (server maps it to 401)', async () => {
     await as('service_role', '', async () => {
       const err = await newCharacter('44444444-4444-4444-8444-444444444444', 'Ghost').catch(
