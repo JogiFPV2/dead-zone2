@@ -42,6 +42,13 @@ export interface SimVehicleSpawn {
   heading?: number | undefined;
   type?: string | undefined;
   fuel?: number | undefined;
+  /** Locked (default false: open). */
+  locked?: boolean | undefined;
+  /**
+   * Where its key is (default `ignition`: the car starts when a driver gets in): `glovebox` = a
+   * key item in the glovebox, `none` = no key (hotwire it).
+   */
+  key?: 'ignition' | 'glovebox' | 'none' | undefined;
 }
 
 /** Main thread → sim worker. */

@@ -115,10 +115,20 @@ export interface SimWorkerClient {
   shove(): void;
   /** Vault over the nearest standing fence / through the nearest open or broken window. */
   vault(): void;
-  /** Get into `seat` of a vehicle (instant for now; near its door, car nearly stopped). */
+  /** Get into `seat` of a vehicle (timed action; near its door, car nearly stopped, unlocked). */
   enterVehicle(vehicleId: number, seat: number): void;
-  /** Get out at the seat's door (needs a free spot). */
+  /** Get out at the seat's door (timed action; needs a free spot). */
   exitVehicle(): void;
+  /** Lock / unlock a car (from inside, or at a door with its key). */
+  lockVehicle(vehicleId: number, locked: boolean): void;
+  /** Hotwire the car the player drives (timed action, Electrical/Mechanics, noise). */
+  hotwire(): void;
+  /** Take the key out of the ignition of the car the player drives. */
+  takeVehicleKey(): void;
+  /** Start / stop the engine of the car the player drives (needs a key or hotwire). */
+  vehicleEngine(on: boolean): void;
+  /** Sound the horn of the car the player sits in. */
+  horn(): void;
   /** Driver controls (held until the next call): throttle / brake 0..1, steer −1..1 (+ = right). */
   drive(
     throttle: number,
@@ -351,6 +361,11 @@ export function createSimWorkerClient(
     vault: () => cmd({ type: 'vault' }),
     enterVehicle: (vehicleId, seat) => cmd({ type: 'enterVehicle', vehicleId, seat }),
     exitVehicle: () => cmd({ type: 'exitVehicle' }),
+    lockVehicle: (vehicleId, locked) => cmd({ type: 'lockVehicle', vehicleId, locked }),
+    hotwire: () => cmd({ type: 'hotwire' }),
+    takeVehicleKey: () => cmd({ type: 'takeVehicleKey' }),
+    vehicleEngine: (on) => cmd({ type: 'vehicleEngine', on }),
+    horn: () => cmd({ type: 'horn' }),
     drive: (throttle, brake, steer, handbrake = false, headlights) =>
       cmd({
         type: 'drive',

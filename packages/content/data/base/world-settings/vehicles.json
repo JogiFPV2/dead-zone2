@@ -1,0 +1,24 @@
+{
+  "vehicles": {
+    "enterSec": 1.5,
+    "exitSec": 1,
+    "keyItem": "base:car-key",
+    "trunkContainer": "base:car-trunk",
+    "gloveboxContainer": "base:car-glovebox",
+    "trunkReachTiles": 1.5,
+    "horn": { "noise": { "radiusTiles": 45, "volume": 1 }, "cooldownSec": 0.5 },
+    "hotwire": {
+      "sec": 6,
+      "electricalSkill": "base:electrical",
+      "mechanicsSkill": "base:mechanics",
+      "minElectrical": 1,
+      "minMechanics": 0,
+      "baseChance": 0.2,
+      "chancePerElectrical": 0.1,
+      "chancePerMechanics": 0.05,
+      "maxChance": 0.95,
+      "noise": { "radiusTiles": 6, "volume": 0.35 },
+      "xp": 4
+    }
+  }
+}

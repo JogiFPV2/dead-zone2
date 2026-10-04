@@ -318,6 +318,11 @@ function writeVehicleHash(pw: PhysicsWorld, h: HashWriter): void {
     for (const x of v.doorTicks) h.u32(x);
     for (const x of v.occupants) h.u32(x);
     for (const x of v.containers) h.u32(x);
+    // Locks/keys/hotwire/horn (vehicles/keys.ts): only off the defaults, older hashes stay.
+    if (v.locked || !v.keyIn || v.hotwired || v.hornTick >= 0)
+      h.u32(0x7f20_00b1)
+        .u32((v.locked ? 1 : 0) | (v.keyIn ? 2 : 0) | (v.hotwired ? 4 : 0))
+        .u32(v.hornTick + 1);
     for (const x of v.susp) h.f32(x);
     for (const x of v.zones) h.f32(x);
     h.f32(v.engine);

@@ -43,13 +43,16 @@ export const DUMMY_ZOMBIE = {
   lootTable: 'fixture:zombie',
 };
 
+/** Physics tests get in / out at once (the timed actions are tested in vehicle-gameplay). */
+const INSTANT = { vehicles: { enterSec: 0, exitSec: 0 } };
+
 let cached: ContentBundle | undefined;
 export const vehicleContent = (): ContentBundle =>
   (cached ??= buildContentBundle([
     {
-      ...fixturePack(),
+      ...fixturePack(INSTANT),
       files: [
-        ...fixturePack().files,
+        ...fixturePack(INSTANT).files,
         { path: 'vehicle-types/sedan.json', json: SEDAN },
         { path: 'zombie-types/dummy.json', json: DUMMY_ZOMBIE },
       ],

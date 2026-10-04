@@ -29,6 +29,8 @@ export interface ItemInstance {
   inner: number;
   /** Placed on the ground as storage (furniture), only for items with an inner storage. */
   placed: boolean;
+  /** Car key: StableId of the vehicle it fits (`vehicles/keys.ts`); absent on other items. */
+  vehicle?: number;
 }
 
 /**
@@ -96,6 +98,9 @@ export interface ActionState {
   spot?: { x: number; y: number; z: number } | undefined;
   /** Openings actions (`openings/timed.ts`): the edge (`openingKey`). */
   edge?: number | undefined;
+  /** Vehicle actions (`vehicles/actions.ts`): the vehicle's StableId and the seat / part. */
+  vehicle?: number | undefined;
+  seat?: number | undefined;
 }
 
 export interface ItemStore {

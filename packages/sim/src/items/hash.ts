@@ -7,7 +7,16 @@ import { hashProgress } from '../progress/skills.js';
 import { hashCharacters } from '../character/character.js';
 import { hashVhsWatched } from '../leisure/leisure.js';
 
-const KINDS = ['inventory', 'bag', 'world', 'ground', 'corpse', 'hidden'] as const;
+const KINDS = [
+  'inventory',
+  'bag',
+  'world',
+  'ground',
+  'corpse',
+  'hidden',
+  'vehicle-trunk',
+  'vehicle-glovebox',
+] as const;
 const byNumber = (a: number, b: number): number => a - b;
 
 /** Items section of the state hash: every container, item, equip slot and action, by id. */
@@ -65,6 +74,10 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
         h.u32(0xed6e_0001)
           .u32(a.edge % 0x100000000)
           .u32(Math.floor(a.edge / 0x100000000));
+      if (a.vehicle !== undefined)
+        h.u32(0x7e41_0001)
+          .u32(a.vehicle)
+          .u32((a.seat ?? -1) + 1);
       if (a.recipe) {
         h.u32(a.recipe).u32(a.use.length);
         for (const id of a.use) h.u32(id);
@@ -86,6 +99,12 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   if (st.hidden.size > 0) {
     h.u32(0x41dd_0001).u32(st.hidden.size);
     for (const id of [...st.hidden.values()].sort(byNumber)) h.u32(id);
+  }
+  // Car keys (only when there are any: older goldens stay valid).
+  const keys = iids.filter((id) => st.items.get(id)!.vehicle !== undefined);
+  if (keys.length > 0) {
+    h.u32(0x6e70_0001).u32(keys.length);
+    for (const id of keys) h.u32(id).u32(st.items.get(id)!.vehicle!);
   }
   hashLures(st, h);
   hashProgress(st, h);

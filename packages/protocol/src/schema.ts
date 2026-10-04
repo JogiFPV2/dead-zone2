@@ -155,6 +155,24 @@ export const exitVehicleCommandSchema = z.strictObject({
   ...header,
   type: z.literal('exitVehicle'),
 });
+const vehicleId = z.number().int().min(1).max(U32_MAX);
+export const lockVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('lockVehicle'),
+  vehicleId,
+  locked: z.boolean(),
+});
+export const hotwireCommandSchema = z.strictObject({ ...header, type: z.literal('hotwire') });
+export const takeVehicleKeyCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('takeVehicleKey'),
+});
+export const vehicleEngineCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('vehicleEngine'),
+  on: z.boolean(),
+});
+export const hornCommandSchema = z.strictObject({ ...header, type: z.literal('horn') });
 const unit = z.number().finite().min(0).max(1);
 export const driveCommandSchema = z.strictObject({
   ...header,
@@ -454,6 +472,11 @@ export const commandSchema = z.discriminatedUnion('type', [
   vaultCommandSchema,
   enterVehicleCommandSchema,
   exitVehicleCommandSchema,
+  lockVehicleCommandSchema,
+  hotwireCommandSchema,
+  takeVehicleKeyCommandSchema,
+  vehicleEngineCommandSchema,
+  hornCommandSchema,
   driveCommandSchema,
   placeStorageCommandSchema,
   pickUpStorageCommandSchema,
@@ -624,6 +647,8 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
           heading: z.number().finite().optional(),
           type: contentId.optional(),
           fuel: z.number().finite().min(0).optional(),
+          locked: z.boolean().optional(),
+          key: z.enum(['ignition', 'glovebox', 'none']).optional(),
         }),
       )
       .max(500)

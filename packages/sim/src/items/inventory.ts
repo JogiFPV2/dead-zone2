@@ -20,6 +20,7 @@ import {
   type PlayerItems,
 } from './store.js';
 import { floorZ } from '../world/levels.js';
+import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 
 /** Reach for containers and items (docs 2.4: ≤ 1.5 tiles, same floor). */
 export const INTERACT_RANGE_TILES = 1.5;
@@ -53,9 +54,19 @@ export function canReach(w: SimWorld, eid: number, id: number): boolean {
   if (root.kind === 'inventory') return root.owner === stableIdOf(w, eid);
   // Hidden caches are found by a spot search only (they become ground piles then).
   if (root.kind === 'hidden') return false;
-  if (!tileInReach(w, eid, root.x, root.y, root.z)) return false;
-  const searchable = root.kind === 'world' || root.kind === 'corpse';
+  if (!containerInReach(w, eid, root)) return false;
+  const searchable =
+    root.kind === 'world' || root.kind === 'corpse' || isVehicleContainer(root.kind);
   return !searchable || root.searchedBy.includes(stableIdOf(w, eid));
+}
+
+/**
+ * A placed container (world storage, ground pile, corpse) is within reach of its tile; a vehicle
+ * trunk from behind the unlocked car, a glovebox from a front seat (`vehicles/containers.ts`).
+ */
+export function containerInReach(w: SimWorld, eid: number, c: ItemContainer): boolean {
+  if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c) === undefined;
+  return tileInReach(w, eid, c.x, c.y, c.z);
 }
 
 /** Carry capacity in kg (`worldSettings.carry.baseCapacityKg` × / + `carry-capacity-kg` mods). */

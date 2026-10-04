@@ -283,12 +283,16 @@ export interface VaultCommand extends CommandHeader {
 
 /**
  * Gets into seat `seat` (index in the vehicle type's `seats`) of vehicle `vehicleId`
- * (StableId). Instant for now (a timed action later). The player must stand by that seat's door
- * (within 1.5 tiles), the seat must be free and the car nearly stopped. Seat 0 is the driver:
- * the engine starts (`engineStart`) when there is fuel. The player gets physics state `driving`
- * (also as a passenger) and moves with the car. Rejects: `invalid-target` (no such vehicle or
- * seat, seat taken), `out-of-range` (too far from the door), `invalid-state` (no control, already
- * in a vehicle, the car is moving).
+ * (StableId): a timed action `enterVehicle` (`worldSettings.vehicles.enterSec`, 1.5 s; 0 =
+ * instant). The player must stand by that seat's door (within 1.5 tiles), the seat must be free
+ * and the car nearly stopped (checked at the start and again at the end). A locked car opens
+ * with its key carried (`vehicleLocked {by: 'key'}`) or through a broken window on that door's
+ * side (`by: 'window'`). Seat 0 is the driver: the engine starts (`engineStart`) when there is
+ * fuel, a working engine and a key (in the ignition or carried) or the car is hotwired. The
+ * player gets physics state `driving` (also as a passenger) and moves with the car. Rejects:
+ * `invalid-target` (no such vehicle or seat, seat taken), `out-of-range` (too far from the
+ * door), `locked` (locked, no key), `invalid-state` (no control, already in a vehicle, the car
+ * is moving), `busy`.
  */
 export interface EnterVehicleCommand extends CommandHeader {
   type: 'enterVehicle';
@@ -297,11 +301,65 @@ export interface EnterVehicleCommand extends CommandHeader {
 }
 
 /**
- * Gets out of the current vehicle on the seat's door side (instant for now). Rejects:
- * `invalid-state` (not in a vehicle, the car is moving), `no-space` (no free exit path).
+ * Gets out of the current vehicle on the seat's door side: timed action `exitVehicle`
+ * (`worldSettings.vehicles.exitSec`, 1 s; 0 = instant). Rejects: `invalid-state` (not in a
+ * vehicle, the car is moving), `no-space` (no free exit path; checked again at the end).
  */
 export interface ExitVehicleCommand extends CommandHeader {
   type: 'exitVehicle';
+}
+
+/**
+ * Locks (`locked: true`) / unlocks a vehicle (`vehicleLocked`): from any seat of it always,
+ * from outside only with its key carried and within reach of one of its doors. A locked car
+ * cannot be entered without the key and its trunk does not open. Rejects: `invalid-target` (no
+ * such vehicle), `out-of-range`, `no-key`, `invalid-state` (already locked / unlocked).
+ */
+export interface LockVehicleCommand extends CommandHeader {
+  type: 'lockVehicle';
+  vehicleId: number;
+  locked: boolean;
+}
+
+/**
+ * Driver seat, no key at hand: hotwire the car (timed action `hotwire`, noise of kind
+ * `hotwire`; chance from Electrical and Mechanics, `worldSettings.vehicles.hotwire`). Success
+ * (`hotwired {success: true}`) starts the engine and the car runs without a key from then on.
+ * Rejects: `invalid-state` (not the driver, already hotwired, a key in the ignition or carried,
+ * engine running), `skill-too-low` (`hotwire.minElectrical` / `minMechanics`), `busy`.
+ */
+export interface HotwireCommand extends CommandHeader {
+  type: 'hotwire';
+}
+
+/**
+ * Driver: takes the key out of the ignition into the inventory (`vehicleKeyTaken`; a running
+ * engine stops, `engineStop {reason: 'key'}`). The key item (`worldSettings.vehicles.keyItem`)
+ * fits this vehicle only (`ItemView.vehicle`). Rejects: `invalid-state` (not the driver, no key
+ * in the ignition).
+ */
+export interface TakeVehicleKeyCommand extends CommandHeader {
+  type: 'takeVehicleKey';
+}
+
+/**
+ * Driver: starts (`on: true`, `engineStart`) or stops (`engineStop {reason: 'driver'}`) the
+ * engine. Starting needs the key (ignition or carried) or a hotwired car, fuel and a working
+ * engine. Rejects: `invalid-state` (not the driver, already so, engine broken), `no-key`,
+ * `no-fuel`.
+ */
+export interface VehicleEngineCommand extends CommandHeader {
+  type: 'vehicleEngine';
+  on: boolean;
+}
+
+/**
+ * Driver: sounds the horn — loud noise (`worldSettings.vehicles.horn.noise`, zombies hear it),
+ * `vehicleHorn` and `playerNoise {kind: 'horn'}`; at most once per `horn.cooldownSec` (extra
+ * presses are ignored, not rejected). Rejects: `invalid-state` (not the driver).
+ */
+export interface HornCommand extends CommandHeader {
+  type: 'horn';
 }
 
 /**
@@ -708,6 +766,11 @@ export type Command =
   | VaultCommand
   | EnterVehicleCommand
   | ExitVehicleCommand
+  | LockVehicleCommand
+  | HotwireCommand
+  | TakeVehicleKeyCommand
+  | VehicleEngineCommand
+  | HornCommand
   | DriveCommand
   | PlaceStorageCommand
   | PickUpStorageCommand

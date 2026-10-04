@@ -126,6 +126,8 @@ export interface ContentIndex {
   movement: ContentBundle['worldSettings']['movement'] | undefined;
   /** `worldSettings.simLod` (big-map LOD; optional for older bundles). */
   simLod: ContentBundle['worldSettings']['simLod'] | undefined;
+  /** `worldSettings.vehicles` (vehicle gameplay; optional for older bundles). */
+  vehicles: ContentBundle['worldSettings']['vehicles'] | undefined;
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -256,6 +258,8 @@ export function compileContent(content: SimContent): ContentIndex {
     movement: (content.worldSettings as { movement?: ContentBundle['worldSettings']['movement'] })
       .movement,
     simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,
+    vehicles: (content.worldSettings as { vehicles?: ContentBundle['worldSettings']['vehicles'] })
+      .vehicles,
     search: {
       searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
       spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,

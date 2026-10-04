@@ -197,6 +197,7 @@
     "base:wire": "Drut",
     "base:wooden-crate": "Drewniana skrzynia",
     "base:wooden-stick": "Drewniany kij",
-    "base:workbench": "Stół warsztatowy"
+    "base:workbench": "Stół warsztatowy",
+    "base:car-key": "Kluczyk do auta"
   }
 }

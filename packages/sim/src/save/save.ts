@@ -5,6 +5,9 @@ import { addComponent, addEntity, hasComponent } from 'bitecs';
 import { RNG_STREAMS, Rng } from '../core/rng.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ensureVehicleParts } from '../vehicles/damage.js';
+import { ensureVehicleGameplay } from '../vehicles/keys.js';
+import { createVehicleContainers } from '../vehicles/containers.js';
+import { vehicleTypes } from '../vehicles/seats.js';
 import {
   decode,
   encode,
@@ -300,7 +303,13 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
   w.physics.rng = w.rng.physics;
   w.physics.orderSize = -1;
-  for (const v of w.physics.vehicles.values()) ensureVehicleParts(v);
+  for (const v of w.physics.vehicles.values()) {
+    ensureVehicleParts(v);
+    ensureVehicleGameplay(v);
+    // Cars from saves made before trunks/gloveboxes existed get them now (lazy loot roll).
+    const t = vehicleTypes(w)[v.type];
+    if (v.containers.length === 0 && t) createVehicleContainers(w, v, t);
+  }
   if (w.lod && f.lod) {
     try {
       decodeLod(w.lod, f.lod);

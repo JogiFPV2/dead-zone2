@@ -5,6 +5,8 @@ import type { SimWorld } from '../core/world.js';
 import { ACTION_KINDS, registerAction } from '../actions/queue.js';
 import { registerCraftActions } from '../crafting/crafting.js';
 import { registerLeisureActions } from '../leisure/leisure.js';
+import { registerVehicleActions } from '../vehicles/actions.js';
+import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -164,6 +166,7 @@ export function registerItemActions(): void {
   registerCraftActions();
   registerLeisureActions();
   registerOpeningActions();
+  registerVehicleActions();
 
   registerAction('search', {
     validate(w, eid, a) {
@@ -172,6 +175,7 @@ export function registerItemActions(): void {
       const st = w.items!;
       const c = st.containers.get(a.container);
       if (!c || !searchable(c)) return 'no-item';
+      if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c);
       return tileInReach(w, eid, c.x, c.y, c.z) ? undefined : 'out-of-range';
     },
     durationMin(w, eid, a) {
@@ -179,8 +183,9 @@ export function registerItemActions(): void {
       const c = a.spot ? undefined : st.containers.get(a.container);
       // Storage with its own `searchMin` keeps it; corpses, spots and the rest: `searchSec`.
       const base =
-        (c?.kind === 'world' ? st.content.containerTypes[c.type]?.searchMin : undefined) ??
-        searchSecMin(w);
+        (c && (c.kind === 'world' || isVehicleContainer(c.kind))
+          ? st.content.containerTypes[c.type]?.searchMin
+          : undefined) ?? searchSecMin(w);
       const speed = w.survival ? modded(w.survival, eid, ModSlot['search-speed'], 1) : 1;
       return speed > 0 ? base / speed : base;
     },

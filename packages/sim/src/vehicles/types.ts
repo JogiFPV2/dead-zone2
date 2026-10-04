@@ -39,8 +39,22 @@ export interface Vehicle {
   occupants: number[];
   fuel: number;
   fuelMax: number;
-  /** Container ids (trunk, glovebox): a hook for Symulacja, empty for now. */
+  /**
+   * Item containers of the car (`vehicles/containers.ts`): kind `vehicle-trunk` and / or
+   * `vehicle-glovebox` (ids in that order; empty without content or capacities).
+   */
   containers: number[];
+  /** Locked: no entering without the key, the trunk does not open (`vehicles/keys.ts`). */
+  locked: boolean;
+  /**
+   * A key sits in the ignition (virtual: it becomes a key item on `takeVehicleKey`). A driver can
+   * start the car with it, with the car's key item carried, or when it is `hotwired`.
+   */
+  keyIn: boolean;
+  /** Hotwired (`hotwire`): runs without a key. */
+  hotwired: boolean;
+  /** Tick of the last horn (−1 = never; `horn.cooldownSec`). */
+  hornTick: number;
   /** Sideways slide 0..1, wheel angle (rad), suspension FL, FR, RL, RR 0..1 (0.5 at rest). */
   slip: number;
   wheelSpin: number;

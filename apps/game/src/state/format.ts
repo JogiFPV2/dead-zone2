@@ -95,6 +95,14 @@ export function describeEvent(e: SimEvent): string {
       return `vehicle ${e.vehicleId} engine on`;
     case 'engineStop':
       return `vehicle ${e.vehicleId} engine off (${e.reason})`;
+    case 'vehicleLocked':
+      return `vehicle ${e.vehicleId} ${e.locked ? 'locked' : 'unlocked'} (${e.by})`;
+    case 'hotwired':
+      return `vehicle ${e.vehicleId} hotwire ${e.success ? 'ok' : 'failed'}`;
+    case 'vehicleKeyTaken':
+      return `player ${e.playerId} took the key of vehicle ${e.vehicleId}`;
+    case 'vehicleHorn':
+      return `vehicle ${e.vehicleId} horn`;
     case 'zombieKilled':
       return `zombie ${e.zombie} killed`;
     case 'animalSpawned':

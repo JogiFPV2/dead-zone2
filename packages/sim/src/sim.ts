@@ -7,6 +7,8 @@ import {
   primePlayerMaps,
   type PlayerMapConfig,
 } from './map/player-map.js';
+import { createKey } from './vehicles/keys.js';
+import { playerItems } from './items/inventory.js';
 import { parseCommand } from '@deadzone/protocol/schema';
 import { flushChunkEvents, primeChunkWatch } from './world/chunk-events.js';
 import {
@@ -229,6 +231,10 @@ export interface VehicleInfo {
   fuel: number;
   fuelMax: number;
   containers: number[];
+  /** Gameplay (vehicles/keys.ts): locked doors, key in the ignition, hotwired. */
+  locked: boolean;
+  keyIn: boolean;
+  hotwired: boolean;
   slip: number;
   /** Body zone hp 0..100: front, rear, left, right. */
   zones: number[];
@@ -327,6 +333,11 @@ export interface Sim {
    * 'pulled'}`. False for an empty seat / no free spot. Call from the step owner (hashed state).
    */
   pullOutOfVehicle(vehicleId: number, seat?: number, window?: number): boolean;
+  /**
+   * Puts a new key of `vehicleId` into the inventory of player `playerId` (tools/tests; call
+   * from the step owner). Returns the item id, undefined without the car / player / key item.
+   */
+  giveVehicleKey(vehicleId: number, playerId?: PlayerId): number | undefined;
   /** Vehicle block of the render snapshot (protocol `VehicleField`, stride 21); empty without cars. */
   vehicleSnapshot(buf?: ArrayBuffer): ArrayBuffer;
   vehicleSnapshotByteLength(): number;
@@ -736,6 +747,9 @@ export function createSim(input: SimOptions): Sim {
         fuel: v.fuel,
         fuelMax: v.fuelMax,
         containers: [...v.containers],
+        locked: v.locked,
+        keyIn: v.keyIn,
+        hotwired: v.hotwired,
         slip: v.slip,
         zones: [...v.zones],
         engine: v.engine,
@@ -760,6 +774,12 @@ export function createSim(input: SimOptions): Sim {
     },
     pullOutOfVehicle: (vehicleId, seat = 0, window) =>
       pullOutDriver(w, ctx.grid, vehicleId, seat, window),
+    giveVehicleKey(vehicleId, playerId = 0) {
+      const v = w.physics.vehicles.get(vehicleId);
+      const eid = w.players.get(playerId);
+      const p = eid === undefined ? undefined : playerItems(w, eid);
+      return v && p ? createKey(w, v, p.inventory)?.id : undefined;
+    },
     vehicleSnapshot: (buf) => writeVehicleSnapshot(w, buf),
     vehicleSnapshotByteLength: () => vehicleSnapshotBytes(w),
     drainView: () => views.diff(w),

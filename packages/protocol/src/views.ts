@@ -145,6 +145,8 @@ export interface ItemView {
   equipped?: EquipSlot[];
   /** Placed on the ground as storage (render it as furniture). */
   placed?: boolean;
+  /** Car key: StableId of the only vehicle it fits (`worldSettings.vehicles.keyItem`). */
+  vehicle?: number;
   /**
    * Part of a `combine` recipe the player knows (carried items only): recipe ids and whether
    * one of them can be done right now (all parts, tools, skills at hand).
@@ -156,7 +158,19 @@ export interface ItemView {
  * `corpse` = body of a killed zombie (loot from `zombieType.lootTable`), searched like world
  * storage (`search {container}`), then `takeItem` / `takeAll`.
  */
-export type ContainerKind = 'inventory' | 'bag' | 'world' | 'ground' | 'corpse';
+export type ContainerKind =
+  | 'inventory'
+  | 'bag'
+  | 'world'
+  | 'ground'
+  | 'corpse'
+  /**
+   * Trunk of a vehicle (`ContainerView.vehicle`): reached standing behind the car (unlocked),
+   * searched like world storage; capacity = the vehicle type's `trunkCapacity`.
+   */
+  | 'vehicle-trunk'
+  /** Glovebox: only from a front seat of that vehicle; capacity `gloveboxCapacity`. */
+  | 'vehicle-glovebox';
 
 /** Full content of one container (sent whole when anything in it changes). */
 export interface ContainerView {
@@ -168,6 +182,8 @@ export interface ContainerView {
   x?: number;
   y?: number;
   z?: number;
+  /** Vehicle containers (`vehicle-trunk`, `vehicle-glovebox`): the vehicle's StableId. */
+  vehicle?: number;
   /** Null = no limit (main inventory: see `InventoryView.hardLimitKg`; ground). */
   capacityKg: number | null;
   /** Sum of the items' `weightKg`. */
@@ -207,6 +223,38 @@ export interface NearbyContainerView {
   fillPct?: number;
   /** Kind `corpse`: StableId of the dead zombie (the body in the snapshot). */
   corpse?: number;
+  /**
+   * Vehicle containers: the vehicle's StableId; (x, y) = tile of the access point (behind the
+   * car for the trunk, the seat for the glovebox).
+   */
+  vehicle?: number;
+}
+
+/** Radius (tiles) of `SimViewPatch.vehicles`. */
+export const VEHICLE_VIEW_TILES = 24;
+
+/**
+ * Gameplay state of a vehicle near the local player (the physical state is in the vehicle
+ * snapshot block): lock, key, fuel and its containers.
+ */
+export interface VehicleStateView {
+  vehicleId: number;
+  /** Vehicle type content id. */
+  type: string;
+  locked: boolean;
+  /** A key sits in the ignition (the driver can start the car, `takeVehicleKey` takes it). */
+  keyInIgnition: boolean;
+  /** The local player carries this car's key. */
+  hasKey: boolean;
+  /** Hotwired: runs without a key. */
+  hotwired: boolean;
+  engineOn: boolean;
+  /** Fuel in litres (rounded to 0.1) and the tank size. */
+  fuel: number;
+  fuelMax: number;
+  /** Container ids (absent = the type has none). */
+  trunk?: ContainerId;
+  glovebox?: ContainerId;
 }
 
 /** Radius (tiles) of `SimViewPatch.storages`. */
@@ -256,6 +304,8 @@ export interface ActionView {
   spot?: { x: number; y: number; z: number };
   /** Openings actions (`barricade`, `smashWindow` …): the target edge. */
   edge?: { tx: number; ty: number; z: number; side: EdgeSide };
+  /** Vehicle actions (`enterVehicle`, `hotwire` …): the vehicle and, for `enterVehicle`, the seat. */
+  vehicle?: { vehicleId: number; seat?: number };
 }
 
 export interface SimViewPatch {
@@ -305,6 +355,11 @@ export interface SimViewPatch {
   crafting?: CraftingView;
   /** The character's world map: fog of war, trail and markers (docs 9.29). */
   worldMap?: WorldMapView;
+  /**
+   * Vehicles within `VEHICLE_VIEW_TILES` (and the one the player sits in): lock, key, fuel,
+   * containers; full list (by id) when anything in it changes.
+   */
+  vehicles?: VehicleStateView[];
 }
 
 /** A marker on the player's map (`addMarker`). */

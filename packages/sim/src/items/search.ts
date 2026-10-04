@@ -16,6 +16,7 @@ import { floorZ } from '../world/levels.js';
 import { newAction, startAction } from '../actions/queue.js';
 import { moveItem, stableIdOf, tileInReach } from './inventory.js';
 import { lootWeight } from './loot.js';
+import { isVehicleContainer } from '../vehicles/containers.js';
 import {
   addContainer,
   createItem,
@@ -33,7 +34,8 @@ import {
  */
 
 /** Containers whose contents are only visible after this player's search. */
-export const searchable = (c: ItemContainer): boolean => c.kind === 'world' || c.kind === 'corpse';
+export const searchable = (c: ItemContainer): boolean =>
+  c.kind === 'world' || c.kind === 'corpse' || isVehicleContainer(c.kind);
 
 /** `c` must be searched by `eid` before it can be opened or taken from. */
 export function needsSearch(w: SimWorld, eid: number, c: ItemContainer): boolean {

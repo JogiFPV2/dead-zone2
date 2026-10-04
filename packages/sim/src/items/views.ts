@@ -34,6 +34,7 @@ import {
   type ItemStore,
 } from './store.js';
 import { floorZ } from '../world/levels.js';
+import { accessTile, isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 
 /** Ground piles without a capacity count as full at this many stacks. */
 const PILE_FULL_STACKS = 10;
@@ -108,6 +109,7 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
   if (fr) v.freshness = fr;
   if (item.inner) v.container = item.inner;
   if (item.placed) v.placed = true;
+  if (item.vehicle !== undefined) v.vehicle = item.vehicle;
   const slots: EquipSlot[] = [];
   for (const p of st.players.values()) {
     for (const [slot, other] of p.slots) if (other === id) slots.push(slot);
@@ -134,6 +136,7 @@ export function containerView(w: SimWorld, id: number, marks?: Marks): Container
   if (c.type >= 0) v.type = st.content.containerTypes[c.type]!.id;
   if (c.kind === 'world' || c.kind === 'ground' || c.kind === 'corpse')
     Object.assign(v, { x: c.x, y: c.y, z: c.z });
+  if (isVehicleContainer(c.kind)) v.vehicle = c.owner;
   return v;
 }
 
@@ -242,6 +245,27 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
       corpse: zsid,
     });
   }
+  // Trunks behind unlocked cars and the glovebox of the car the player sits in.
+  const ex = Position.x[eid] ?? 0;
+  const ey = Position.y[eid] ?? 0;
+  for (const v of w.physics.vehicles.values()) {
+    // Cheap distance cut first (a trunk is at most ~3.5 m from the car's centre).
+    if (v.containers.length === 0 || (v.x - ex) ** 2 + (v.y - ey) ** 2 > 64) continue;
+    for (const id of v.containers) {
+      const c = st.containers.get(id);
+      if (!c || vehicleContainerBlock(w, eid, c)) continue;
+      const at = accessTile(w, c)!;
+      out.push({
+        id,
+        kind: viewKind(c),
+        ...at,
+        searched: c.searchedBy.includes(sid),
+        fillPct: c.lootDone ? fillPct(st, c) : 0,
+        vehicle: v.id,
+        ...(c.type >= 0 ? { type: st.content.containerTypes[c.type]!.id } : {}),
+      });
+    }
+  }
   return out.sort((a, b) => a.id - b.id);
 }
 
@@ -266,6 +290,8 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
   };
   if (a.spot) v.spot = { ...a.spot };
   if (a.edge !== undefined) v.edge = unpackKey(a.edge);
+  if (a.vehicle !== undefined)
+    v.vehicle = { vehicleId: a.vehicle, ...(a.seat !== undefined ? { seat: a.seat } : {}) };
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';

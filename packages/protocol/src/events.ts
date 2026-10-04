@@ -57,7 +57,11 @@ export type CommandRejectReason =
   /** `addMarker`: the character already has `worldSettings.mapMarkers.maxMarkers` markers. */
   | 'marker-limit'
   /** `editMarker` / `removeMarker`: no marker with this id. */
-  | 'unknown-marker';
+  | 'unknown-marker'
+  /** Vehicles: the car's key is needed (`lockVehicle` from outside, `vehicleEngine` start). */
+  | 'no-key'
+  /** Vehicles: no fuel (engine start with an empty tank, `refuel` from an empty can). */
+  | 'no-fuel';
 
 /**
  * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
@@ -109,7 +113,13 @@ export type ActionKind =
   /** Pull the top plank off (`removeBarricade`). */
   | 'removeBarricade'
   /** Force a locked door / gate: crowbar or kick (`forceDoor`). */
-  | 'forceDoor';
+  | 'forceDoor'
+  /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
+  | 'enterVehicle'
+  /** Get out of the current seat (`exitVehicle`, 1 s). */
+  | 'exitVehicle'
+  /** Hotwire the car from the driver seat (`hotwire`). */
+  | 'hotwire';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -155,8 +165,8 @@ export type NoiseSource = (typeof NOISE_SOURCES)[number];
  * (`search`, `eat`, `drink`, `bandage`, `unpack`, `craft`, `watch`), openings (`door` = open /
  * close / lock, `window` = smashed glass, `board` = nailing a plank, `pry` / `kick` = forcing a
  * door, `smash` = a fence / gate knocked over by the player or their car), combat (`melee` swing,
- * `shot`), `throw` (thrown item landing, at the impact point) and `vehicle` (running engine of
- * the car the player drives).
+ * `shot`), `throw` (thrown item landing, at the impact point), `vehicle` (running engine of
+ * the car the player drives), `horn` (its horn) and `hotwire` (starting hotwiring).
  */
 export const PLAYER_NOISE_KINDS = [
   'sneak',
@@ -180,6 +190,10 @@ export const PLAYER_NOISE_KINDS = [
   'shot',
   'throw',
   'vehicle',
+  /** Car horn (`horn`). */
+  'horn',
+  /** Hotwiring a car (`hotwire`, on start). */
+  'hotwire',
 ] as const;
 export type PlayerNoiseKind = (typeof PLAYER_NOISE_KINDS)[number];
 /** Continuous `playerNoise` kinds: at most one event per player and kind per this many ticks. */
@@ -315,7 +329,37 @@ export type SimEvent =
       type: 'engineStop';
       tick: number;
       vehicleId: number;
-      reason: 'driver-left' | 'no-fuel' | 'broken';
+      /**
+       * `driver-left`, `no-fuel`, `broken`; `key` = the key was taken out of the ignition,
+       * `driver` = switched off (`vehicleEngine {on: false}`).
+       */
+      reason: 'driver-left' | 'no-fuel' | 'broken' | 'key' | 'driver';
+    }
+  /**
+   * A vehicle was locked / unlocked (`locked`) by player `playerId`: `inside` = from a seat
+   * (`lockVehicle`), `key` = with its key from outside (`lockVehicle`, or entering a locked car
+   * with the key), `window` = reached in through the broken window of the door (entering).
+   */
+  | {
+      type: 'vehicleLocked';
+      tick: number;
+      vehicleId: number;
+      playerId: PlayerId;
+      locked: boolean;
+      by: 'inside' | 'key' | 'window';
+    }
+  /** Hotwiring finished (`hotwire` action): `success` = the car runs without a key from now on. */
+  | { type: 'hotwired'; tick: number; vehicleId: number; playerId: PlayerId; success: boolean }
+  /** The driver took the key out of the ignition (`takeVehicleKey`): `itemId` = the key item. */
+  | { type: 'vehicleKeyTaken'; tick: number; vehicleId: number; playerId: PlayerId; itemId: ItemId }
+  /** The driver sounded the horn (`horn`); also a `playerNoise` of kind `horn`. */
+  | {
+      type: 'vehicleHorn';
+      tick: number;
+      vehicleId: number;
+      playerId: PlayerId;
+      x: number;
+      y: number;
     }
   /** The player's character was created (`newCharacter`). */
   | { type: 'characterCreated'; tick: number; playerId: PlayerId; character: CharacterProfileView }
@@ -701,6 +745,8 @@ export type SimEvent =
       endTick: number;
       item?: ItemId;
       container?: ContainerId;
+      /** Vehicle actions: the vehicle (StableId). */
+      vehicleId?: number;
     }
   | { type: 'actionCompleted'; tick: number; playerId: PlayerId; action: ActionKind }
   | {

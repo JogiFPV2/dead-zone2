@@ -36,6 +36,9 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'barricade',
   'removeBarricade',
   'forceDoor',
+  'enterVehicle',
+  'exitVehicle',
+  'hotwire',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;
@@ -161,6 +164,7 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
     endTick: a.endTick,
     ...(a.item ? { item: a.item } : {}),
     ...(a.container ? { container: a.container } : {}),
+    ...(a.vehicle !== undefined ? { vehicleId: a.vehicle } : {}),
   });
   h.begin?.(w, eid, a);
 }

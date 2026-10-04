@@ -2,15 +2,25 @@ import { CHUNK_SIZE, type SimVehicleSpawn } from '@deadzone/protocol';
 import type { SimWorld } from '../core/world.js';
 import { atan2Bam } from '../core/dmath.js';
 import { dsincos } from './math.js';
+import { createVehicleContainers, vehicleContainer } from './containers.js';
+import { createKey } from './keys.js';
 import { vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
 
 const f = Math.fround;
 
+/** Lock and key of a new vehicle (default: unlocked, key in the ignition). */
+export interface VehicleSpawnOpts {
+  locked?: boolean | undefined;
+  /** `ignition` (default), `glovebox` (a key item there; no glovebox → ignition), `none`. */
+  key?: 'ignition' | 'glovebox' | 'none' | undefined;
+}
+
 /**
  * Adds a parked vehicle (engine off, handbrake on, doors closed). It gets a StableId from the
  * world counter but no ECS entity: vehicles live in `w.physics.vehicles` and the vehicle
- * snapshot block. `fuel` defaults to full. Returns the StableId.
+ * snapshot block. `fuel` defaults to full. With content the trunk / glovebox containers are
+ * created (`vehicles/containers.ts`). Returns the StableId.
  */
 export function spawnVehicle(
   w: SimWorld,
@@ -20,6 +30,7 @@ export function spawnVehicle(
   z = 0,
   headingRad = 0,
   fuel?: number,
+  opts: VehicleSpawnOpts = {},
 ): number {
   const t = vehicleTypes(w)[type];
   if (!t) throw new Error(`spawnVehicle: no vehicle type #${type}`);
@@ -52,6 +63,10 @@ export function spawnVehicle(
     fuel: f(Math.min(fuel ?? t.fuelMax, t.fuelMax)),
     fuelMax: f(t.fuelMax),
     containers: [],
+    locked: opts.locked ?? false,
+    keyIn: (opts.key ?? 'ignition') === 'ignition',
+    hotwired: false,
+    hornTick: -1,
     slip: 0,
     wheelSpin: 0,
     susp: [0.5, 0.5, 0.5, 0.5],
@@ -67,6 +82,11 @@ export function spawnVehicle(
     frozenAt: -1,
   };
   w.physics.vehicles.set(id, v);
+  createVehicleContainers(w, v, t);
+  if (opts.key === 'glovebox') {
+    const box = vehicleContainer(w, v, 'vehicle-glovebox');
+    if (!box || !createKey(w, v, box.id)) v.keyIn = true;
+  }
   return id;
 }
 
@@ -76,6 +96,9 @@ export function spawnVehicles(w: SimWorld, list: readonly SimVehicleSpawn[]): nu
   return list.map((s) => {
     const type = s.type !== undefined ? index?.get(s.type) : 0;
     if (type === undefined) throw new Error(`spawnVehicles: unknown vehicle type ${s.type}`);
-    return spawnVehicle(w, type, s.x, s.y, s.z ?? 0, s.heading ?? 0, s.fuel);
+    return spawnVehicle(w, type, s.x, s.y, s.z ?? 0, s.heading ?? 0, s.fuel, {
+      locked: s.locked,
+      key: s.key,
+    });
   });
 }

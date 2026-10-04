@@ -1,4 +1,5 @@
 import { worldMapPatch } from '../map/player-map.js';
+import { vehicleStateViews } from '../vehicles/views.js';
 import { lureViews } from '../lures/lures.js';
 import { craftingView } from '../crafting/crafting.js';
 import { skillViews } from '../progress/skills.js';
@@ -174,6 +175,7 @@ export class ViewTracker {
   private characterKey = '';
   private craftingKey = '';
   private vehicleKey = '';
+  private vehiclesKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -283,6 +285,14 @@ export class ViewTracker {
       if (ck !== this.craftingKey) {
         this.craftingKey = ck;
         if (crafting) patch.crafting = crafting;
+      }
+    }
+    if (eid !== undefined && w.physics.vehicles.size + (this.vehiclesKey === '' ? 0 : 1) > 0) {
+      const list = vehicleStateViews(w, eid);
+      const key = JSON.stringify(list);
+      if (key !== this.vehiclesKey) {
+        if (this.vehiclesKey !== '' || list.length > 0) patch.vehicles = list;
+        this.vehiclesKey = key;
       }
     }
     if (w.openings.version !== this.openingsVersion) {

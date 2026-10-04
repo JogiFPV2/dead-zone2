@@ -24,6 +24,7 @@ export * from './sim-lod-settings.js';
 export * from './map-markers-settings.js';
 export * from './ai-settings.js';
 export * from './openings-settings.js';
+export * from './vehicles-settings.js';
 export * from './firearms-settings.js';
 export * from './palette.js';
 export * from './tag-def.js';

@@ -126,6 +126,7 @@ export function signature(st: ItemStore, list: readonly ItemContainer[]): number
       h.f32(it.ageMin)
         .u32(it.ageStamp)
         .u32(it.placed ? 1 : 0);
+      if (it.vehicle !== undefined) h.u32(0x6e70_0001).u32(it.vehicle);
       const inner = it.inner ? st.containers.get(it.inner) : undefined;
       if (inner) writeContainer(inner);
       else h.u32(0);

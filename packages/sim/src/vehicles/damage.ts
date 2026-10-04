@@ -3,6 +3,7 @@ import type { SimWorld } from '../core/world.js';
 import type { Impact, UnderBody } from './collide.js';
 import type { VehicleConfig } from './config.js';
 import { NO_MODS, type DriveMods } from './drive.js';
+import { tryStartEngine } from './keys.js';
 import { Zone, type Vehicle } from './types.js';
 
 /**
@@ -187,9 +188,7 @@ export function setVehiclePartHp(w: SimWorld, v: Vehicle, part: VehiclePart, hp:
   else v.engine = value;
   if (part !== 'engine') return true;
   if (value <= 0) stopBroken(w, v);
-  else if (before <= 0 && !v.engineOn && v.fuel > 0 && (v.occupants[0] ?? 0) !== 0) {
-    v.engineOn = true;
-    w.events.push({ type: 'engineStart', tick: w.tick, vehicleId: v.id });
-  }
+  // A key (ignition / carried) or hotwiring is needed too (`vehicles/keys.ts`).
+  else if (before <= 0 && !v.engineOn && (v.occupants[0] ?? 0) !== 0) tryStartEngine(w, v);
   return true;
 }

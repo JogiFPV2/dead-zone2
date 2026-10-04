@@ -12,6 +12,7 @@ import { MovementSettingsSchema } from './movement-settings.js';
 import { SimLodSettingsSchema } from './sim-lod-settings.js';
 import { MapMarkersSettingsSchema, PlayerMapSettingsSchema } from './map-markers-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
+import { VehiclesSettingsSchema } from './vehicles-settings.js';
 
 /**
  * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
@@ -61,6 +62,8 @@ export const WorldSettingsSchema = z.strictObject({
   firearms: FirearmsSettingsSchema,
   /** LOD symulacji dużej mapy: obszar aktywny, komórki zgrubne zombie, leniwy łup. */
   simLod: SimLodSettingsSchema,
+  /** Pojazdy: wsiadanie, zamki i kluczyki, bagażnik / schowek, klakson, kable (Symulacja). */
+  vehicles: VehiclesSettingsSchema,
   ext: ExtSchema,
 });
 

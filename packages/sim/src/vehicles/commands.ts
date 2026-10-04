@@ -9,11 +9,34 @@ import { walkableLine } from '../world/los.js';
 import { circleVsObb, obbOf } from './geometry.js';
 import { doorPoint, seatOf, seatPoint, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
+import type { VehicleTypeDef } from '../content/adapter.js';
+import { newAction, startAction } from '../actions/queue.js';
+import {
+  applyEngine,
+  applyHorn,
+  applyLock,
+  applyTakeKey,
+  carriedKey,
+  drivenBy,
+  setLocked,
+  tryStartEngine,
+} from './keys.js';
+import { vehicleSettings } from './settings.js';
 
-type VehicleCommand = Extract<Command, { type: 'enterVehicle' | 'exitVehicle' | 'drive' }>;
+const VEHICLE_COMMANDS = [
+  'enterVehicle',
+  'exitVehicle',
+  'drive',
+  'lockVehicle',
+  'hotwire',
+  'takeVehicleKey',
+  'vehicleEngine',
+  'horn',
+] as const;
+type VehicleCommand = Extract<Command, { type: (typeof VEHICLE_COMMANDS)[number] }>;
 
 export const isVehicleCommand = (cmd: Command): cmd is VehicleCommand =>
-  cmd.type === 'enterVehicle' || cmd.type === 'exitVehicle' || cmd.type === 'drive';
+  (VEHICLE_COMMANDS as readonly string[]).includes(cmd.type);
 
 const speedOf = (v: Vehicle): number => Math.sqrt(v.vx * v.vx + v.vy * v.vy);
 
@@ -60,7 +83,8 @@ export function pinOccupant(w: SimWorld, eid: number, v: Vehicle, seat: number):
   Facing.angle[eid] = atan2Bam(v.hy, v.hx);
 }
 
-function enter(
+/** Why player `eid` cannot get into `seat` of `vehicleId` now (undefined = it can). */
+export function enterBlock(
   w: SimWorld,
   eid: number,
   vehicleId: number,
@@ -80,6 +104,32 @@ function enter(
   const dy = (w.c.Position.y[eid] ?? 0) - d.y;
   if (dx * dx + dy * dy > cfg.enterRange * cfg.enterRange) return 'out-of-range';
   if (speedOf(v) > cfg.enterMaxSpeed) return 'invalid-state';
+  if (v.locked && !carriedKey(w, eid, v) && !doorWindowBroken(v, t, seat)) return 'locked';
+  return undefined;
+}
+
+/** The window on the side of `seat`'s door is shattered (a hand reaches the lock). */
+function doorWindowBroken(v: Vehicle, t: VehicleTypeDef, seat: number): boolean {
+  const side = t.seats[seat]?.doorSide === 'right' ? 3 : 2;
+  return (v.windows[side] ?? 100) <= 0;
+}
+
+/**
+ * Gets in now (the end of the `enterVehicle` action, or at once with `enterSec` 0): checks
+ * again, unlocks a locked car (key or broken window), seats the player; the driver starts the
+ * engine when it may (key, fuel, working engine).
+ */
+export function enterNow(
+  w: SimWorld,
+  eid: number,
+  vehicleId: number,
+  seat: number,
+): CommandRejectReason | undefined {
+  const reason = enterBlock(w, eid, vehicleId, seat);
+  if (reason) return reason;
+  const v = w.physics.vehicles.get(vehicleId)!;
+  if (v.locked) setLocked(w, eid, v, false, carriedKey(w, eid, v) ? 'key' : 'window');
+  const sid = w.c.StableId.value[eid] ?? 0;
   seatPlayer(w, eid, v, seat);
   openDoor(w, v, seat);
   const playerId = w.c.Player.id[eid] ?? 0;
@@ -93,10 +143,7 @@ function enter(
   });
   if (seat === 0) {
     v.handbrake = false;
-    if (!v.engineOn && v.fuel > 0 && v.engine > 0) {
-      v.engineOn = true;
-      w.events.push({ type: 'engineStart', tick: w.tick, vehicleId: v.id });
-    }
+    tryStartEngine(w, v);
   }
   return undefined;
 }
@@ -141,7 +188,12 @@ export function unseat(
   }
 }
 
-function exit(w: SimWorld, grid: TileGrid, eid: number): CommandRejectReason | undefined {
+/** Where player `eid` would get out (vehicle, seat, door point), or why it cannot. */
+export function exitBlock(
+  w: SimWorld,
+  grid: TileGrid,
+  eid: number,
+): { v: Vehicle; seat: number; x: number; y: number } | CommandRejectReason {
   const sid = w.c.StableId.value[eid] ?? 0;
   const at = seatOf(w, sid);
   if (!at) return 'invalid-state';
@@ -161,7 +213,14 @@ function exit(w: SimWorld, grid: TileGrid, eid: number): CommandRejectReason | u
     if (u !== v && Math.floor(u.z) === z && circleVsObb(obbOf(u, tu), d.x, d.y, r))
       return 'no-space';
   }
-  unseat(w, eid, v, seat, d.x, d.y);
+  return { v, seat, x: d.x, y: d.y };
+}
+
+/** Gets out now (end of the `exitVehicle` action, or at once with `exitSec` 0). */
+export function exitNow(w: SimWorld, grid: TileGrid, eid: number): CommandRejectReason | undefined {
+  const at = exitBlock(w, grid, eid);
+  if (typeof at === 'string') return at;
+  unseat(w, eid, at.v, at.seat, at.x, at.y);
   return undefined;
 }
 
@@ -182,14 +241,53 @@ function drive(
   return undefined;
 }
 
-/** `enterVehicle` / `exitVehicle` (instant stubs, a timed action later) and `drive`. */
+/**
+ * `enterVehicle` / `exitVehicle` (timed actions `enterVehicle` / `exitVehicle`, at once with
+ * `enterSec` / `exitSec` 0; Fizyka's instant stubs `enterNow` / `exitNow` are the final step),
+ * `drive`, `lockVehicle`, `hotwire` (timed), `takeVehicleKey`, `vehicleEngine`, `horn`.
+ */
 export function applyVehicleCommand(
   w: SimWorld,
   grid: TileGrid,
   eid: number,
   cmd: VehicleCommand,
 ): CommandRejectReason | undefined {
-  if (cmd.type === 'enterVehicle') return enter(w, eid, cmd.vehicleId, cmd.seat);
-  if (cmd.type === 'exitVehicle') return exit(w, grid, eid);
-  return drive(w, eid, cmd);
+  const cfg = vehicleSettings(w);
+  switch (cmd.type) {
+    case 'enterVehicle': {
+      const reason = enterBlock(w, eid, cmd.vehicleId, cmd.seat);
+      if (reason) return reason;
+      if (cfg.enterSec <= 0 || !w.items) return enterNow(w, eid, cmd.vehicleId, cmd.seat);
+      const a = newAction('enterVehicle');
+      a.vehicle = cmd.vehicleId;
+      a.seat = cmd.seat;
+      return startAction(w, eid, a);
+    }
+    case 'exitVehicle': {
+      const at = exitBlock(w, grid, eid);
+      if (typeof at === 'string') return at;
+      if (cfg.exitSec <= 0 || !w.items) return exitNow(w, grid, eid);
+      const a = newAction('exitVehicle');
+      a.vehicle = at.v.id;
+      a.seat = at.seat;
+      return startAction(w, eid, a);
+    }
+    case 'drive':
+      return drive(w, eid, cmd);
+    case 'lockVehicle':
+      return applyLock(w, eid, cmd.vehicleId, cmd.locked);
+    case 'hotwire': {
+      const v = drivenBy(w, eid);
+      if (!v) return 'invalid-state';
+      const a = newAction('hotwire');
+      a.vehicle = v.id;
+      return startAction(w, eid, a);
+    }
+    case 'takeVehicleKey':
+      return applyTakeKey(w, eid);
+    case 'vehicleEngine':
+      return applyEngine(w, eid, cmd.on);
+    case 'horn':
+      return applyHorn(w, eid);
+  }
 }

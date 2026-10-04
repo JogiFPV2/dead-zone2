@@ -1,0 +1,9 @@
+[
+  {
+    "id": "base:car-key",
+    "name": "item.base.car-key.name",
+    "kind": "misc",
+    "weightKg": 0.05,
+    "tags": ["base:car-key"]
+  }
+]

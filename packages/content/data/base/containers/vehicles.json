@@ -3,8 +3,16 @@
     "id": "base:car-trunk",
     "name": "container.base.car-trunk.name",
     "category": "trunk",
-    "capacityKg": 50,
+    "capacityKg": 60,
     "searchMin": 1.5,
     "defaultLootTable": "base:car-trunk"
+  },
+  {
+    "id": "base:car-glovebox",
+    "name": "container.base.car-glovebox.name",
+    "category": "other",
+    "capacityKg": 3,
+    "searchMin": 0.5,
+    "defaultLootTable": "base:car-glovebox"
   }
 ]
