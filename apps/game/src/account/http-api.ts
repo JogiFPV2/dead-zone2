@@ -1,4 +1,10 @@
-import type { ApiError, CharacterSummary, PlayerSettingsResponse } from '@deadzone/protocol';
+import type {
+  AccountExport,
+  ApiError,
+  CharacterSummary,
+  PlayerSettingsResponse,
+  SaveConflictError,
+} from '@deadzone/protocol';
 import type {
   AccountApi,
   AccountUser,
@@ -42,33 +48,66 @@ export interface HttpAccountOptions {
 }
 
 /** `ApiError` of `@deadzone/protocol`, read defensively. */
-interface ErrorBody extends Partial<ApiError> {
-  /** [ZAŁ.] newer save named by a 409 (`save_version_conflict`). */
-  server?: { version?: number; gameDay?: number; minuteOfDay?: number; updatedAt?: string };
-}
+type ErrorBody = Partial<ApiError>;
 
 const num = (v: unknown): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 
-/** The newer server save from a 409 body; undefined unless it names a version. */
-export function conflictInfo(body: unknown): ServerSaveInfo | undefined {
-  const s = (body as ErrorBody | undefined)?.server;
-  const version = num(s?.version);
-  if (!s || version === undefined) return undefined;
+/**
+ * `SaveConflictError.server` of a 409 body (Serwer #167): the save on the server, `null` when the
+ * server has none, undefined when the body carries no valid `server` (older server, bad body).
+ */
+export function conflictInfo(body: unknown): ServerSaveInfo | null | undefined {
+  const b = body as Partial<Record<keyof SaveConflictError, unknown>> | undefined;
+  if (!b || typeof b !== 'object' || !('server' in b)) return undefined;
+  const s = b.server as Partial<Record<keyof ServerSaveInfo, unknown>> | null;
+  if (s === null) return null;
+  if (typeof s !== 'object') return undefined;
+  const version = num(s.version);
+  const gameDay = num(s.gameDay);
+  const updatedAt = typeof s.updatedAt === 'string' ? s.updatedAt : undefined;
+  if (version === undefined || gameDay === undefined || updatedAt === undefined) return undefined;
+  const minute = num(s.minuteOfDay);
   return {
     version,
-    day: num(s.gameDay),
-    minuteOfDay: num(s.minuteOfDay),
-    savedAt: typeof s.updatedAt === 'string' ? s.updatedAt : undefined,
+    gameDay,
+    minuteOfDay: minute !== undefined && minute >= 0 && minute < 1440 ? minute : null,
+    updatedAt,
   };
+}
+
+/** `Retry-After`: delay seconds or an HTTP date; undefined when absent / unreadable. */
+export function retryAfterSec(v: string | null, now = Date.now()): number | undefined {
+  if (!v) return undefined;
+  const t = v.trim();
+  if (/^\d+$/.test(t)) return Number(t) > 0 ? Number(t) : undefined;
+  const at = Date.parse(t);
+  return Number.isFinite(at) && at > now ? Math.ceil((at - now) / 1000) : undefined;
+}
+
+/** File name of `Content-Disposition: attachment; filename=…` (plain or quoted). */
+export function attachmentName(v: string | null): string | undefined {
+  const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(v ?? '');
+  const name = m?.[1]?.trim();
+  return name && /^[\w.-]+$/.test(name) ? name : undefined;
+}
+
+/** `GET /v1/me/export` body; undefined unless it is an `AccountExport` (format 1). */
+export function accountExportOf(body: unknown): AccountExport | undefined {
+  const b = body as Partial<AccountExport> | undefined;
+  return b?.format === 'deadzone-account-export' &&
+    b.formatVersion === 1 &&
+    Array.isArray(b.characters)
+    ? (b as AccountExport)
+    : undefined;
 }
 
 /** Common status → failure mapping (401, 429, network). */
 export function failureOf(status: number, body: unknown, retryAfter: string | null): ApiFailure {
   if (status === 401) return { ok: false, reason: 'unauthorized' };
   if (status === 429) {
-    const s = Number(retryAfter);
-    return Number.isFinite(s) && s > 0
+    const s = retryAfterSec(retryAfter);
+    return s !== undefined
       ? { ok: false, reason: 'rate-limited', retryAfterSec: s }
       : { ok: false, reason: 'rate-limited' };
   }
@@ -280,9 +319,18 @@ export function createHttpAccountApi(o: HttpAccountOptions): AccountApi {
       );
     },
     async exportData() {
-      // [ZAŁ.] endpoint name; Serwer has no export route yet.
       const r = await call('GET', '/v1/me/export');
-      return isFailure(r) ? r : okOr(r, () => ({ data: r.body }));
+      if (isFailure(r)) return r;
+      if (r.status >= 200 && r.status < 300) {
+        const data = accountExportOf(r.body);
+        if (!data) return { ok: false, reason: 'error', status: r.status, code: 'invalid_export' };
+        return {
+          ok: true,
+          data,
+          fileName: attachmentName(r.headers.get('content-disposition')),
+        };
+      }
+      return failureOf(r.status, r.body, r.headers.get('retry-after'));
     },
     async deleteAccount() {
       const r = await call('DELETE', '/v1/me');

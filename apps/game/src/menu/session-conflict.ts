@@ -57,7 +57,8 @@ export interface SaveConflictOptions {
   /** What was being saved: daily autosave or „Zapisz i wyjdź”. */
   readonly trigger: 'autosave' | 'exit';
   readonly local: LocalSaveInfo;
-  readonly server?: ServerSaveInfo | undefined;
+  /** `SaveConflictError.server`: null = no save on the server; undefined = no table. */
+  readonly server?: ServerSaveInfo | null | undefined;
   readonly now?: () => number;
   /** Toast auto-hide (default 6 s); previews pin it with 0. */
   readonly toastMs?: number;
@@ -78,18 +79,28 @@ export function toastMeta(trigger: 'autosave' | 'exit', l: LocalSaveInfo): strin
   return `${trigger === 'exit' ? 'Zapisz i wyjdź' : 'autozapis'} · dzień ${l.day}${when} · teraz`;
 }
 
-/** Rows of the comparison table; undefined unless the 409 named the newer save's day and time. */
+/** Game time `dzień 14, 11:04`; a minute the server did not record shows as `—`. */
+const gameTime = (day: number, minute: number | null | undefined): string =>
+  `dzień ${day}, ${minute === null || minute === undefined ? '—' : hhmm(minute)}`;
+
+/**
+ * Rows of the comparison table from `SaveConflictError.server` (Serwer #167):
+ * `dzień 14, 11:04 · dzisiaj, 11:04`; `server` null = no save on the server (`brak zapisu`);
+ * undefined (409 without a valid `server`) or an unreadable `updatedAt` = no table.
+ */
 export function compareRows(
-  server: ServerSaveInfo | undefined,
+  server: ServerSaveInfo | null | undefined,
   local: LocalSaveInfo,
   now: number,
 ): { server: string; local: string } | undefined {
-  if (!server || server.day === undefined || !server.savedAt) return undefined;
-  const t = Date.parse(server.savedAt);
+  if (server === undefined) return undefined;
+  const here = `${gameTime(local.day, local.minuteOfDay)} · ${playedLabel(local.savedAt, now)}`;
+  if (server === null) return { server: 'brak zapisu', local: here };
+  const t = Date.parse(server.updatedAt);
   if (!Number.isFinite(t)) return undefined;
   return {
-    server: `dzień ${server.day} · ${playedLabel(t, now)}`,
-    local: `dzień ${local.day} · ${playedLabel(local.savedAt, now)}`,
+    server: `${gameTime(server.gameDay, server.minuteOfDay)} · ${playedLabel(t, now)}`,
+    local: here,
   };
 }
 

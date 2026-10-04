@@ -63,16 +63,46 @@ describe('mock account', () => {
     expect(await api.putSave(marta.id, v, save)).toMatchObject({
       ok: false,
       reason: 'conflict',
-      server: { day: 14 },
+      server: { gameDay: 14, minuteOfDay: 664 },
+    });
+    api.setSaveMode('conflict-nominute');
+    expect(await api.putSave(marta.id, v + 1, save)).toMatchObject({
+      server: { gameDay: 14, minuteOfDay: null },
     });
     api.setSaveMode('conflict-bare');
     expect(await api.putSave(marta.id, v + 1, save)).toEqual({
       ok: false,
       reason: 'conflict',
-      server: undefined,
+      server: null,
     });
     api.setSaveMode('gone');
     expect(await api.putSave(marta.id, v + 1, save)).toEqual({ ok: false, reason: 'gone' });
+  });
+
+  it('export: AccountExport with 600 s save URLs for living characters; 5/h then 429', async () => {
+    let t = Date.UTC(2026, 9, 4, 20);
+    const api = createMockAccountApi({ latencyMs: 0, signedInAs: 'google', now: () => t });
+    const r = await api.exportData();
+    if (!r.ok) throw new Error('export');
+    expect(r.fileName).toBe('deadzone-export-2026-10-04.json');
+    expect(r.data).toMatchObject({ format: 'deadzone-account-export', formatVersion: 1 });
+    expect(r.data.usage.alive).toBe(3);
+    for (const c of r.data.characters) {
+      if (c.status === 'dead') expect(c.save).toBeNull();
+      else if (c.save) {
+        expect(c.save.expiresInSeconds).toBe(600);
+        expect(c.save.downloadUrl).toMatch(/^mock:\/\/saves\//);
+      }
+    }
+    for (let i = 0; i < 4; i++) expect((await api.exportData()).ok).toBe(true);
+    t += 10 * 60_000;
+    expect(await api.exportData()).toEqual({
+      ok: false,
+      reason: 'rate-limited',
+      retryAfterSec: 50 * 60,
+    });
+    t += 50 * 60_000;
+    expect((await api.exportData()).ok).toBe(true);
   });
 
   it('settings: version check, validation, 16 KB limit; delete account logs out', async () => {

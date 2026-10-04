@@ -1,6 +1,11 @@
-import { MAX_ACCOUNT_SAVE_BYTES, MAX_ALIVE_CHARACTERS } from '@deadzone/protocol';
+import {
+  MAX_ACCOUNT_SAVE_BYTES,
+  MAX_ALIVE_CHARACTERS,
+  MAX_EXPORTS_PER_HOUR,
+} from '@deadzone/protocol';
 import type {
   AccountApi,
+  AccountExport,
   AccountUser,
   ApiResult,
   AuthResult,
@@ -16,8 +21,15 @@ import { validatePlayerSettings } from '@deadzone/ui/settings';
 
 const MB = 1024 * 1024;
 
-/** How the mock answers `PUT …/save` (session-conflict testing). */
-export type MockSaveMode = 'ok' | 'conflict' | 'conflict-bare' | 'gone';
+/**
+ * How the mock answers `PUT …/save` (session-conflict testing): `conflict` names a newer server
+ * save, `conflict-nominute` one stored without `minuteOfDay`, `conflict-bare` `server: null` (no
+ * save on the server), `gone` 410.
+ */
+export type MockSaveMode = 'ok' | 'conflict' | 'conflict-nominute' | 'conflict-bare' | 'gone';
+
+/** Signed export URLs of the mock live as long as the server's (`EXPORT_URL_TTL_SECONDS`). */
+export const MOCK_EXPORT_URL_TTL = 600;
 
 export interface MockAccountOptions {
   /** Answer delay in ms (0 in tests). */
@@ -131,6 +143,8 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
   let saveMode: MockSaveMode = o.save ?? 'ok';
   let failList = o.failList ?? false;
   let settings: RemoteSettings = { version: 0, settings: null, updatedAt: null };
+  /** Times of the exports of the last hour (`MAX_EXPORTS_PER_HOUR`). */
+  let exports: number[] = [];
 
   const googleUser = (): AccountUser => ({
     id: 'mock-user',
@@ -257,15 +271,16 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
         const c = chars.find((x) => x.id === id);
         if (!c || c.status === 'dead' || saveMode === 'gone') return { ok: false, reason: 'gone' };
         const current = c.save?.version ?? 0;
-        if (saveMode === 'conflict' || saveMode === 'conflict-bare' || current !== ifMatch) {
-          const server: ServerSaveInfo | undefined =
+        if (saveMode.startsWith('conflict') || current !== ifMatch) {
+          // `SaveConflictError.server` of Serwer #167.
+          const server: ServerSaveInfo | null =
             saveMode === 'conflict-bare'
-              ? undefined
+              ? null
               : {
                   version: current + 1,
-                  day: 14,
-                  minuteOfDay: 11 * 60 + 4,
-                  savedAt: at(now(), 0, 11, 4),
+                  gameDay: 14,
+                  minuteOfDay: saveMode === 'conflict-nominute' ? null : 11 * 60 + 4,
+                  updatedAt: at(now(), 0, 11, 4),
                 };
           return { ok: false, reason: 'conflict', server };
         }
@@ -307,15 +322,42 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
       });
     },
     exportData() {
-      return authed<ApiResult<{ data: unknown }>>(() => ({
-        ok: true,
-        data: {
-          exportedAt: new Date(now()).toISOString(),
-          account: user,
-          characters: chars,
-          settings: settings.settings,
-        },
-      }));
+      return authed<ApiResult<{ data: AccountExport; fileName?: string }>>(() => {
+        // Serwer #167: 5 exports per hour, then 429 with `Retry-After`.
+        const t = now();
+        exports = exports.filter((x) => t - x < 3_600_000);
+        if (exports.length >= MAX_EXPORTS_PER_HOUR) {
+          const sec = Math.ceil(((exports[0] ?? t) + 3_600_000 - t) / 1000);
+          return { ok: false, reason: 'rate-limited', retryAfterSec: Math.max(1, sec) };
+        }
+        exports.push(t);
+        const iso = new Date(t).toISOString();
+        const u = user as AccountUser;
+        const data: AccountExport = {
+          format: 'deadzone-account-export',
+          formatVersion: 1,
+          exportedAt: iso,
+          profile: { id: u.id, displayName: null, createdAt: u.linkedAt ?? at(t, 30, 9, 0) },
+          settings: { ...settings },
+          usage: usage(),
+          characters: chars.map(({ save, ...c }) => ({
+            ...c,
+            save:
+              save && c.status === 'alive'
+                ? {
+                    ...save,
+                    sha256: '0'.repeat(56) + save.version.toString(16).padStart(8, '0'),
+                    minuteOfDay: 10 * 60 + 58,
+                    downloadUrl: `mock://saves/${c.id}/v${save.version}.dzsv?expires=${
+                      Math.floor(t / 1000) + MOCK_EXPORT_URL_TTL
+                    }`,
+                    expiresInSeconds: MOCK_EXPORT_URL_TTL,
+                  }
+                : null,
+          })),
+        };
+        return { ok: true, data, fileName: `deadzone-export-${iso.slice(0, 10)}.json` };
+      });
     },
     deleteAccount() {
       return authed<ApiResult<object>>(() => {

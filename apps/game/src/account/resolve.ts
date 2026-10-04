@@ -9,13 +9,19 @@ export interface AccountConfig {
   auth?: AuthProvider | undefined;
 }
 
-const SAVE_MODES: readonly MockSaveMode[] = ['ok', 'conflict', 'conflict-bare', 'gone'];
+const SAVE_MODES: readonly MockSaveMode[] = [
+  'ok',
+  'conflict',
+  'conflict-nominute',
+  'conflict-bare',
+  'gone',
+];
 
 /**
  * Which account API the page uses:
  * - `?online=mock` → demo account in memory (review / screenshots; any build, nothing is sent).
  *   Extra params: `as=google|email` (start logged in), `chars=empty`, `save=conflict|
- *   conflict-bare|gone`, `net=down` (Postacie fails like a lost connection).
+ *   conflict-nominute|conflict-bare|gone`, `net=down` (Postacie fails like a lost connection).
  * - a configured server (`apiUrl` + `auth`) → `/v1` over HTTP;
  * - otherwise offline: no account, local saves only (today's behaviour).
  */

@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  accountExportOf,
+  attachmentName,
   conflictInfo,
   createHttpAccountApi,
+  retryAfterSec,
   saveResultOf,
   settingsResultOf,
   versionOf,
@@ -23,7 +26,7 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
   new Response(body === undefined ? null : JSON.stringify(body), { status, headers });
 
 describe('save answers (409 / 410)', () => {
-  it('409 save_version_conflict → conflict, with the newer save only when the server names it', () => {
+  it('409 save_version_conflict → conflict with SaveConflictError.server (null = no save)', () => {
     expect(saveResultOf(409, { error: 'save_version_conflict' })).toEqual({
       ok: false,
       reason: 'conflict',
@@ -36,9 +39,16 @@ describe('save answers (409 / 410)', () => {
     expect(saveResultOf(409, body)).toEqual({
       ok: false,
       reason: 'conflict',
-      server: { version: 15, day: 14, minuteOfDay: 664, savedAt: '2026-10-04T18:04:00Z' },
+      server: { version: 15, gameDay: 14, minuteOfDay: 664, updatedAt: '2026-10-04T18:04:00Z' },
     });
+    expect(
+      saveResultOf(409, { error: 'save_version_conflict', message: 'x', server: null }),
+    ).toEqual({ ok: false, reason: 'conflict', server: null });
+    expect(
+      conflictInfo({ server: { version: 2, gameDay: 3, minuteOfDay: null, updatedAt: 'T' } }),
+    ).toEqual({ version: 2, gameDay: 3, minuteOfDay: null, updatedAt: 'T' });
     expect(conflictInfo({ server: { gameDay: 3 } })).toBeUndefined();
+    expect(conflictInfo({ server: 'x' })).toBeUndefined();
   });
 
   it('dead elsewhere (410, 409 character_dead, 404) → gone; quota, rate limit, 401', () => {
@@ -145,6 +155,46 @@ describe('createHttpAccountApi', () => {
     expect(await down.getSettings()).toEqual({ ok: false, reason: 'network' });
     const anon = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(null), fetch });
     expect(await anon.deleteAccount()).toEqual({ ok: false, reason: 'unauthorized' });
+  });
+
+  it('GET /v1/me/export: AccountExport, file name from Content-Disposition, 429 Retry-After', async () => {
+    const body = {
+      format: 'deadzone-account-export',
+      formatVersion: 1,
+      exportedAt: '2026-10-04T20:00:00Z',
+      characters: [],
+    };
+    const fetch = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(
+        json(200, body, {
+          'content-disposition': 'attachment; filename=deadzone-export-2026-10-04.json',
+        }),
+      ),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(), fetch });
+    expect(await api.exportData()).toEqual({
+      ok: true,
+      data: body,
+      fileName: 'deadzone-export-2026-10-04.json',
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe('https://api.test/v1/me/export');
+    const limited = createHttpAccountApi({
+      baseUrl: 'https://api.test',
+      auth: auth(),
+      fetch: () => Promise.resolve(json(429, { error: 'rate_limited' }, { 'retry-after': '1500' })),
+    });
+    expect(await limited.exportData()).toEqual({
+      ok: false,
+      reason: 'rate-limited',
+      retryAfterSec: 1500,
+    });
+    expect(accountExportOf({ format: 'other' })).toBeUndefined();
+    expect(attachmentName('attachment; filename="a-b.json"')).toBe('a-b.json');
+    expect(attachmentName('attachment; filename="../x"')).toBeUndefined();
+    expect(attachmentName(null)).toBeUndefined();
+    const t = Date.parse('2026-10-04T20:00:00Z');
+    expect(retryAfterSec('Sun, 04 Oct 2026 20:10:00 GMT', t)).toBe(600);
+    expect(retryAfterSec('0')).toBeUndefined();
   });
 
   it('PUT /v1/me/settings sends the whole object with If-Match', async () => {

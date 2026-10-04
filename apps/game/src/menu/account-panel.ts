@@ -42,11 +42,19 @@ export function aliveAccusative(n: number): string {
   return `${n} ${few ? 'żywe postacie' : 'żywych postaci'}`;
 }
 
-/** `deadzone-dane-2026-10-04.json` (local date). */
+/**
+ * Fallback name when the server's `Content-Disposition` is not readable: the server's pattern
+ * `deadzone-export-2026-10-04.json` (UTC date, like the server).
+ */
 export function exportFileName(now: number): string {
-  const d = new Date(now);
-  const p = (n: number): string => String(n).padStart(2, '0');
-  return `deadzone-dane-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
+  return `deadzone-export-${new Date(now).toISOString().slice(0, 10)}.json`;
+}
+
+/** 429 of `GET /v1/me/export` (5/h): `Spróbuj ponownie za 12 min` (rounded up, at least 1). */
+export function exportRetryMessage(retryAfterSec: number | undefined): string {
+  if (retryAfterSec === undefined)
+    return 'Limit eksportów (5 na godzinę). Spróbuj ponownie później.';
+  return `Spróbuj ponownie za ${Math.max(1, Math.ceil(retryAfterSec / 60))} min`;
 }
 
 function browserDownload(name: string, json: string): void {
@@ -154,9 +162,13 @@ ${message ? `<div class="dza-ok" role="status">${esc(message)}</div>` : ''}
     if (disposed) return;
     exporting = false;
     if (r.ok) {
-      (o.download ?? browserDownload)(exportFileName(now()), JSON.stringify(r.data, null, 2));
+      (o.download ?? browserDownload)(
+        r.fileName ?? exportFileName(now()),
+        JSON.stringify(r.data, null, 2),
+      );
       message = 'Plik z danymi pobrany.';
     } else if (r.reason === 'unauthorized') account.expired();
+    else if (r.reason === 'rate-limited') message = exportRetryMessage(r.retryAfterSec);
     else message = 'Nie udało się przygotować danych. Spróbuj ponownie.';
     render();
   }

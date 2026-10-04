@@ -6,6 +6,7 @@
  * Wire types come from `@deadzone/protocol` (Serwer #157 `lastLocation`/`usage`, #164 settings).
  */
 import type {
+  AccountExport,
   AccountUsage,
   ApiError,
   CharacterSummary,
@@ -13,9 +14,10 @@ import type {
   LastLocation,
   ListCharactersResponse,
   PlayerSettingsResponse,
+  SaveConflictServer,
 } from '@deadzone/protocol';
 
-export type { AccountUsage, LastLocation };
+export type { AccountExport, AccountUsage, LastLocation };
 
 /** One character of the account (`GET /v1/characters` → `CharacterSummary`). */
 export type CloudCharacter = CharacterSummary;
@@ -70,14 +72,12 @@ export type ApiFailure =
 
 export type ApiResult<T> = ({ ok: true } & T) | ApiFailure;
 
-/** The newer server save named by a 409 (only when the server sends day and time). */
-export interface ServerSaveInfo {
-  version: number;
-  day?: number | undefined;
-  minuteOfDay?: number | undefined;
-  /** ISO time of the newer save. */
-  savedAt?: string | undefined;
-}
+/**
+ * The save on the server named by a 409 `save_version_conflict` (`SaveConflictError.server` of
+ * `@deadzone/protocol`): `null` = the server has no save of this character, `minuteOfDay` null =
+ * stored before the server recorded it.
+ */
+export type ServerSaveInfo = SaveConflictServer;
 
 /**
  * `PUT /v1/characters/:id/save` with `If-Match`: accepted, refused because another session saved
@@ -86,7 +86,12 @@ export interface ServerSaveInfo {
  */
 export type SaveResult =
   | { ok: true; version: number; sizeBytes: number }
-  | { ok: false; reason: 'conflict'; server?: ServerSaveInfo | undefined }
+  | {
+      ok: false;
+      reason: 'conflict';
+      /** `null`: no save on the server; undefined: the 409 body did not carry a valid `server`. */
+      server: ServerSaveInfo | null | undefined;
+    }
   | { ok: false; reason: 'gone' }
   | { ok: false; reason: 'quota' }
   | ApiFailure;
@@ -152,8 +157,13 @@ export interface AccountApi {
   getSettings(): Promise<ApiResult<RemoteSettings>>;
   putSettings(settings: unknown, ifMatch: number): Promise<SettingsPutResult>;
 
-  /** RODO export: account, characters, saves and tombstones as JSON. */
-  exportData(): Promise<ApiResult<{ data: unknown }>>;
+  /**
+   * `GET /v1/me/export` (RODO): account, settings, characters (tombstones too) and per living save
+   * a signed `downloadUrl` valid for `expiresInSeconds` (600 s). `fileName` from the server's
+   * `Content-Disposition: attachment`. 429 (`MAX_EXPORTS_PER_HOUR` = 5/h) → `rate-limited` with
+   * `retryAfterSec` from `Retry-After`.
+   */
+  exportData(): Promise<ApiResult<{ data: AccountExport; fileName?: string | undefined }>>;
   /** `DELETE /v1/me`: account, characters, saves and tombstones (local offline saves stay). */
   deleteAccount(): Promise<ApiResult<object>>;
 }

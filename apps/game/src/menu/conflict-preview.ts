@@ -2,14 +2,15 @@ import { mountOverlay } from './overlay-stage.js';
 import { showSaveConflict } from './session-conflict.js';
 
 /**
- * `?online=mock&screen=conflict|conflict-bare|conflict-exit|gone`: the session-conflict window
- * with the mockup's data (Marta Nowak, day 12 → server day 14) for review. Resolves on either
+ * `?online=mock&screen=conflict|conflict-nominute|conflict-bare|conflict-exit|gone`: the
+ * session-conflict window with the mockup's data (Marta Nowak, day 12 → server day 14) for review;
+ * `conflict-nominute` = server save without `minuteOfDay`, `conflict-bare` = `server: null`. Resolves on either
  * button; the menu follows.
  */
-export function previewSaveConflict(
-  root: HTMLElement,
-  kind: 'conflict' | 'conflict-bare' | 'conflict-exit' | 'gone',
-): Promise<void> {
+export type ConflictPreview =
+  'conflict' | 'conflict-nominute' | 'conflict-bare' | 'conflict-exit' | 'gone';
+
+export function previewSaveConflict(root: HTMLElement, kind: ConflictPreview): Promise<void> {
   const overlay = mountOverlay(root, 'dzo--conflict');
   const today = (h: number, m: number): Date => {
     const d = new Date();
@@ -31,10 +32,16 @@ export function previewSaveConflict(
       toastMs: 0,
       trigger: kind === 'conflict-exit' ? 'exit' : 'autosave',
       local: { day: 12, minuteOfDay: 6 * 60, savedAt: today(10, 58).getTime() },
+      // `SaveConflictError.server` of Serwer #167.
       server:
-        kind === 'conflict' || kind === 'conflict-exit'
-          ? { version: 15, day: 14, minuteOfDay: 11 * 60 + 4, savedAt: today(11, 4).toISOString() }
-          : undefined,
+        kind === 'conflict-bare'
+          ? null
+          : {
+              version: 15,
+              gameDay: 14,
+              minuteOfDay: kind === 'conflict-nominute' ? null : 11 * 60 + 4,
+              updatedAt: today(11, 4).toISOString(),
+            },
       onLoadNewer: finish,
       onMenu: finish,
     });

@@ -1,3 +1,4 @@
+import type { ConflictPreview } from './conflict-preview.js';
 import { AudioEngine } from '../audio/audio-engine.js';
 import { SlotsFullError } from '../characters/character-store.js';
 import { characterStore } from '../characters/open-store.js';
@@ -114,13 +115,14 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
       });
     });
   const screen = new URLSearchParams(window.location.search).get('screen');
-  if (account.online && screen && /^(conflict|conflict-bare|conflict-exit|gone)$/.test(screen)) {
+  if (
+    account.online &&
+    screen &&
+    /^(conflict|conflict-nominute|conflict-bare|conflict-exit|gone)$/.test(screen)
+  ) {
     // Review: the session-conflict window over the menu scene (in game it follows a 409 / 410).
     const { previewSaveConflict } = await import('./conflict-preview.js');
-    await previewSaveConflict(
-      root,
-      screen as 'conflict' | 'conflict-bare' | 'conflict-exit' | 'gone',
-    );
+    await previewSaveConflict(root, screen as ConflictPreview);
   }
   let session: GameSession | undefined;
   // First start online without a session (and without „Graj offline”): Logowanie.

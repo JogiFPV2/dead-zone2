@@ -2,7 +2,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AccountSession } from '../account/account-session.js';
 import { createMockAccountApi, MOCK_EMAIL } from '../account/mock-api.js';
-import { createAccountPanel, emailMatches, exportFileName } from './account-panel.js';
+import type { AccountExport } from '@deadzone/protocol';
+import {
+  createAccountPanel,
+  emailMatches,
+  exportFileName,
+  exportRetryMessage,
+} from './account-panel.js';
 import { createCloudCharactersScreen } from './cloud-characters-screen.js';
 import { createLoginScreen } from './login-screen.js';
 import { compareRows, showSaveConflict, toastMeta } from './session-conflict.js';
@@ -176,16 +182,28 @@ describe('Konflikt sesji', () => {
   const local = { day: 12, minuteOfDay: 360, savedAt: new Date(2026, 9, 4, 10, 58).getTime() };
   const now = () => new Date(2026, 9, 4, 11, 10).getTime();
 
-  it('table only when the 409 names day and time; toast meta', () => {
+  it('table from SaveConflictError.server: null = brak zapisu, minute null = —; toast meta', () => {
+    const updatedAt = new Date(2026, 9, 4, 11, 4).toISOString();
     expect(compareRows(undefined, local, now())).toBeUndefined();
-    expect(compareRows({ version: 2, day: 14 }, local, now())).toBeUndefined();
     expect(
-      compareRows(
-        { version: 2, day: 14, savedAt: new Date(2026, 9, 4, 11, 4).toISOString() },
-        local,
-        now(),
-      ),
-    ).toEqual({ server: 'dzień 14 · dzisiaj, 11:04', local: 'dzień 12 · dzisiaj, 10:58' });
+      compareRows({ version: 2, gameDay: 14, minuteOfDay: 664, updatedAt: 'x' }, local, now()),
+    ).toBeUndefined();
+    expect(
+      compareRows({ version: 2, gameDay: 14, minuteOfDay: 664, updatedAt }, local, now()),
+    ).toEqual({
+      server: 'dzień 14, 11:04 · dzisiaj, 11:04',
+      local: 'dzień 12, 06:00 · dzisiaj, 10:58',
+    });
+    expect(
+      compareRows({ version: 2, gameDay: 14, minuteOfDay: null, updatedAt }, local, now()),
+    ).toEqual({
+      server: 'dzień 14, — · dzisiaj, 11:04',
+      local: 'dzień 12, 06:00 · dzisiaj, 10:58',
+    });
+    expect(compareRows(null, { day: 12, savedAt: local.savedAt }, now())).toEqual({
+      server: 'brak zapisu',
+      local: 'dzień 12, — · dzisiaj, 10:58',
+    });
     expect(toastMeta('autosave', local)).toBe('autozapis · dzień 12, 06:00 · teraz');
     expect(toastMeta('exit', local)).toBe('Zapisz i wyjdź · dzień 12, 06:00 · teraz');
   });
@@ -210,6 +228,24 @@ describe('Konflikt sesji', () => {
     d.onKey(key('Enter'));
     expect(on.load).toHaveBeenCalled();
     expect(el.querySelector('.dza-toast')).toBeNull();
+  });
+
+  it('409 with server: null → the table names no save on the server', () => {
+    const el = host();
+    showSaveConflict({
+      host: el,
+      kind: 'conflict',
+      name: 'Marta Nowak',
+      female: true,
+      trigger: 'autosave',
+      local,
+      server: null,
+      now,
+      onLoadNewer: vi.fn(),
+      onMenu: vi.fn(),
+    });
+    expect(el.querySelector('.dza-cmp-new')?.textContent).toBe('brak zapisu');
+    expect(el.querySelector('.dza-cmp-old')?.textContent).toBe('dzień 12, 06:00 · dzisiaj, 10:58');
   });
 
   it('410: TA POSTAĆ NIE ŻYJE, one button to the menu', () => {
@@ -260,7 +296,7 @@ describe('Ustawienia › Konto', () => {
     expect(account.pendingToast).toBe('Konto zostało usunięte.');
   });
 
-  it('Pobierz moje dane downloads deadzone-dane-{data}.json', async () => {
+  it('Pobierz moje dane downloads the AccountExport under the server file name', async () => {
     const account = session('email');
     await account.restore();
     const download = vi.fn();
@@ -270,8 +306,31 @@ describe('Ustawienia › Konto', () => {
     expect(p.el.textContent).toContain('E-mail i hasło');
     click(p.el, 'export');
     await flush();
-    expect(download).toHaveBeenCalledWith('deadzone-dane-2026-10-04.json', expect.any(String));
-    expect(exportFileName(new Date(2026, 0, 2).getTime())).toBe('deadzone-dane-2026-01-02.json');
+    const name = `deadzone-export-${new Date(2026, 9, 4).toISOString().slice(0, 10)}.json`;
+    expect(download).toHaveBeenCalledWith(name, expect.any(String));
+    const file = JSON.parse(String(download.mock.calls[0]?.[1])) as AccountExport;
+    expect(file.format).toBe('deadzone-account-export');
+    expect(file.characters.find((c) => c.status === 'alive')?.save?.expiresInSeconds).toBe(600);
+    expect(exportFileName(Date.UTC(2026, 0, 2, 12))).toBe('deadzone-export-2026-01-02.json');
+    expect(emailMatches('', '')).toBe(false);
+  });
+
+  it('export 429 → Spróbuj ponownie za X min (limit 5/h)', async () => {
+    const account = session('email');
+    await account.restore();
+    const download = vi.fn();
+    const p = createAccountPanel({ account, download });
+    host().appendChild(p.el);
+    await flush();
+    for (let i = 0; i < 6; i++) {
+      click(p.el, 'export');
+      await flush();
+    }
+    expect(download).toHaveBeenCalledTimes(5);
+    expect(p.el.textContent).toContain('Spróbuj ponownie za 60 min');
+    expect(exportRetryMessage(61)).toBe('Spróbuj ponownie za 2 min');
+    expect(exportRetryMessage(5)).toBe('Spróbuj ponownie za 1 min');
+    expect(exportRetryMessage(undefined)).toContain('Spróbuj ponownie później');
     expect(emailMatches('', '')).toBe(false);
   });
 
