@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   Group,
+  type InstancedMesh,
   Mesh,
   MeshStandardMaterial,
   type Material,
@@ -11,6 +12,14 @@ import { simToWorld } from '../sim/coords.js';
 import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE } from './chunk.js';
 import { MARKER_GEOMETRY, MARKER_MATERIAL, animateMarker } from './ground-piles.js';
+import {
+  buildInstances,
+  disposeInstances,
+  modelParts,
+  setSlotsVisible,
+  type InstanceSlots,
+  type ModelPart,
+} from './furniture-instances.js';
 
 /** Box size [w, h, d] per content id (PLACEHOLDER shapes until models). */
 const SIZES: Record<string, [number, number, number]> = {
@@ -42,8 +51,13 @@ interface Obj {
   material: MeshStandardMaterial;
   marker: Mesh;
   markerY: number;
-  model?: Object3D;
+  /** This object's instances in its chunk's furniture `InstancedMesh`es (model loaded). */
+  slots?: InstanceSlots;
+  /** Individual clone shown instead of the instances while x-rayed. */
+  xray?: Object3D;
 }
+
+type ModelFn = (contentId: string, height: number) => Object3D | undefined;
 
 /** Opacity of furniture while its contents are shown (shelf fill x-ray, loot panel open). */
 const XRAY_OPACITY = 0.3;
@@ -60,7 +74,12 @@ export class MapObjects {
 
   /** Box geometry per size, shared by every object of that size (streaming-friendly). */
   private readonly boxes = new Map<string, BoxGeometry>();
-  private model: ((contentId: string, height: number) => Object3D | undefined) | undefined;
+  private model: ModelFn | undefined;
+  /** Model parts per `contentId|height` (one clone each, geometry / materials shared). */
+  private readonly parts = new Map<string, ModelPart[] | undefined>();
+  /** Furniture instanced meshes of every loaded chunk (rebuilt when chunks come and go). */
+  private instances: InstancedMesh[] = [];
+  private instancesDirty = false;
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -106,8 +125,8 @@ export class MapObjects {
         markerY,
       };
       this.objects.push(obj);
-      if (this.model) this.attachModel(obj, this.model);
     }
+    this.instancesDirty = true;
     // Markers / searched shades for the new objects on the next update.
     this.lastNearby = undefined;
   }
@@ -120,10 +139,10 @@ export class MapObjects {
       if (o.chunk !== key) continue;
       this.setXray(o.tx, o.ty, o.z, false);
       this.root.remove(o.mesh, o.marker);
-      if (o.model) this.root.remove(o.model);
       o.material.dispose();
       this.objects.splice(i, 1);
     }
+    this.instancesDirty = true;
   }
 
   private box(w: number, h: number, d: number): BoxGeometry {
@@ -133,23 +152,63 @@ export class MapObjects {
     return g;
   }
 
-  private attachModel(
-    o: Obj,
-    model: (contentId: string, height: number) => Object3D | undefined,
-  ): void {
-    const m = model(o.contentId, o.height);
-    if (!m) return;
-    m.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
-    m.rotation.y = o.mesh.rotation.y;
-    o.mesh.visible = false;
-    o.model = m;
-    this.root.add(m);
+  private partsOf(contentId: string, height: number): ModelPart[] | undefined {
+    const key = `${contentId}|${height}`;
+    if (!this.parts.has(key)) {
+      const m = this.model?.(contentId, height);
+      this.parts.set(key, m ? modelParts(m) : undefined);
+    }
+    return this.parts.get(key);
+  }
+
+  /**
+   * (Re)builds the furniture as one `InstancedMesh` per model part (geometry + material) over
+   * all loaded chunks: no visual change against a clone per object, a handful of draw calls
+   * instead of one per part per object. Streaming leaves only a few objects per chunk, so
+   * per-chunk instancing barely helps; a rebuild is O(loaded objects) and runs at most once per
+   * frame (`update`). Grey boxes stay for objects without a model.
+   */
+  private rebuildInstances(): void {
+    this.instancesDirty = false;
+    disposeInstances(this.instances, this.root);
+    this.instances = [];
+    if (!this.model) return;
+    const { meshes, slots } = buildInstances(
+      this.objects.map((o) => ({
+        model: `${o.contentId}|${o.height}`,
+        x: o.mesh.position.x,
+        y: o.mesh.position.y - o.height / 2,
+        z: o.mesh.position.z,
+        rotY: o.mesh.rotation.y,
+      })),
+      (k) => {
+        const i = k.lastIndexOf('|');
+        return this.partsOf(k.slice(0, i), Number(k.slice(i + 1)));
+      },
+      this.root,
+    );
+    this.objects.forEach((o, i) => {
+      const sl = slots[i];
+      if (sl) {
+        o.slots = sl;
+        o.mesh.visible = false;
+        if (o.xray) setSlotsVisible(sl, false);
+      }
+    });
+    this.instances = meshes;
   }
 
   /** Swaps the grey boxes for models where `model(contentId, height)` has one (also later chunks). */
-  applyModels(model: (contentId: string, height: number) => Object3D | undefined): void {
+  applyModels(model: ModelFn): void {
     this.model = model;
-    for (const o of this.objects) if (!o.model) this.attachModel(o, model);
+    this.parts.clear();
+    this.rebuildInstances();
+  }
+
+  /** Furniture `InstancedMesh`es currently in the scene (tests, perf). */
+  get instancedMeshCount(): number {
+    if (this.instancesDirty) this.rebuildInstances();
+    return this.instances.length;
   }
 
   /**
@@ -159,7 +218,19 @@ export class MapObjects {
   setXray(tx: number, ty: number, z: number, on: boolean): void {
     const o = this.objects.find((ob) => ob.tx === tx && ob.ty === ty && ob.z === z);
     if (!o) return;
-    (o.model ?? o.mesh).traverse((node) => {
+    // Instanced furniture: an individual clone stands in while see-through.
+    if (o.slots && on && !o.xray) {
+      const clone = this.model?.(o.contentId, o.height);
+      if (clone) {
+        clone.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
+        clone.rotation.y = o.mesh.rotation.y;
+        this.root.add(clone);
+        o.xray = clone;
+        setSlotsVisible(o.slots, false);
+      }
+    }
+    const target = o.xray ?? (o.slots ? undefined : o.mesh);
+    target?.traverse((node) => {
       if (!(node instanceof Mesh)) return;
       const data = node.userData as { opaqueMaterial?: Material | Material[] };
       if (on) {
@@ -180,6 +251,11 @@ export class MapObjects {
         delete data.opaqueMaterial;
       }
     });
+    if (!on && o.xray) {
+      this.root.remove(o.xray);
+      delete o.xray;
+      if (o.slots) setSlotsVisible(o.slots, true);
+    }
   }
 
   get count(): number {
@@ -187,6 +263,7 @@ export class MapObjects {
   }
 
   update(nearby: readonly NearbyContainerView[], nowMs: number): void {
+    if (this.instancesDirty) this.rebuildInstances();
     if (nearby !== this.lastNearby) {
       this.lastNearby = nearby;
       const unsearched = new Set<string>();
