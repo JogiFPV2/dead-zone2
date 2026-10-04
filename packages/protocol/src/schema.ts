@@ -8,6 +8,7 @@ import {
   DEBUG_STATS,
   EQUIP_SLOTS,
   GAITS,
+  MARKER_COLORS,
   MAX_PLAYER_ID,
   MAX_WORLD_COORD,
   OPENING_ACTION_COMMANDS,
@@ -283,6 +284,37 @@ export const openingActionCommandSchemas = OPENING_ACTION_COMMANDS.map((type) =>
     side: edgeSide,
   }),
 );
+
+const markerCoord = z.number().finite().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
+const markerIcon = z
+  .string()
+  .regex(/^[a-z0-9-]+:[a-z0-9-]+$/)
+  .max(80);
+const markerText = z.string().max(400);
+export const addMarkerCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('addMarker'),
+  x: markerCoord,
+  y: markerCoord,
+  icon: markerIcon,
+  color: z.enum(MARKER_COLORS),
+  text: markerText.optional(),
+});
+export const editMarkerCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('editMarker'),
+  id: z.number().int().min(1).max(0x7fffffff),
+  x: markerCoord.optional(),
+  y: markerCoord.optional(),
+  icon: markerIcon.optional(),
+  color: z.enum(MARKER_COLORS).optional(),
+  text: markerText.optional(),
+});
+export const removeMarkerCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('removeMarker'),
+  id: z.number().int().min(1).max(0x7fffffff),
+});
 export const debugOpeningCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugOpening'),
@@ -445,6 +477,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugLearnRecipeCommandSchema,
   newCharacterCommandSchema,
   setInterestCommandSchema,
+  addMarkerCommandSchema,
+  editMarkerCommandSchema,
+  removeMarkerCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */

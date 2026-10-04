@@ -6,6 +6,7 @@ import { hashString32 } from '../core/rng.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces } from '../items/actions.js';
 import { playerItems, stableIdOf } from '../items/inventory.js';
+import { resetPlayerMap } from '../map/player-map.js';
 import type { ItemStore } from '../items/store.js';
 import { learnRecipe, progressOf, SKILL_MAX } from '../progress/skills.js';
 import { refreshModifiers } from '../systems/moodles.js';
@@ -148,6 +149,8 @@ export function applyCharacter(w: SimWorld, eid: number, ch: CharacterState): vo
   const c = st.content;
   const sid = stableIdOf(w, eid);
   st.characters.set(sid, ch);
+  // A new character starts with an empty world map (fog, trail, markers).
+  resetPlayerMap(w, sid);
   const prog = progressOf(w, eid);
   const prof = c.professions.get(ch.profession);
   const traits = ch.traits.flatMap((id) => c.traits.get(id) ?? []);

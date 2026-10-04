@@ -1,6 +1,7 @@
 import type { PlayerId, SimEvent, SimMap, WorldSource } from '@deadzone/protocol';
 import { createChunkWatch, type ChunkWatch } from '../world/chunk-events.js';
 import type { LodWorld } from '../lod/state.js';
+import type { PlayerMapWorld } from '../map/player-map.js';
 import { addComponent, addEntity, createWorld, query, removeComponent, type World } from 'bitecs';
 import { CommandQueue } from '../commands/queue.js';
 import type { AiWorld } from '../ai/state.js';
@@ -35,6 +36,8 @@ export interface SimWorld {
   readonly source: WorldSource;
   /** Big-map LOD (docs 9.24); undefined on maps that fit the active area (demo maps). */
   lod: LodWorld | undefined;
+  /** Characters' world maps: fog of war, trail, markers (map/player-map.ts; not hashed). */
+  playerMap: PlayerMapWorld | undefined;
   /**
    * Eids of entities removed by the LOD (no components left), reused by the next spawn (LIFO).
    * State: saved, so eids stay identical after a load. Empty without LOD.
@@ -97,6 +100,7 @@ export function createSimWorld(opts: {
     map: opts.map,
     source: opts.source,
     lod: undefined,
+    playerMap: undefined,
     freeEids: [],
     interest: new Map(),
     chunkWatch: createChunkWatch(),

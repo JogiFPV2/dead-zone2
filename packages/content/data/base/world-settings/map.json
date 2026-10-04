@@ -1,0 +1,22 @@
+{
+  "mapMarkers": {
+    "icons": [
+      "base:marker-food",
+      "base:marker-danger",
+      "base:marker-zombies",
+      "base:marker-loot",
+      "base:marker-base",
+      "base:marker-car",
+      "base:marker-water",
+      "base:marker-note"
+    ],
+    "colors": ["red", "yellow", "green", "blue", "white"],
+    "maxMarkers": 200,
+    "maxTextLength": 40
+  },
+  "playerMap": {
+    "discoverEverySec": 1,
+    "trailSpacingM": 16,
+    "trailMaxPoints": 20000
+  }
+}

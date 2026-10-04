@@ -6,7 +6,7 @@ export const TICK_MS = 1000 / TICKS_PER_SECOND;
 
 /**
  * Player walking speed in tiles per second (1 tile = 1 m), default of `worldSettings.movement.walkSpeedMps`.
- * 1.5 m/s: the 8192 m world takes ≈ 91 min to cross on foot (docs/PLAN.md, map 8 × 8 km).
+ * 1.5 m/s: the 16 384 m world (`MAP_CHUNKS` 512) takes ≈ 3 h to cross on foot (8 192 m ≈ 91 min).
  */
 export const WALK_SPEED_TILES_PER_SECOND = 1.5;
 /** Player collision capsule radius in tiles (2D circle, the capsule's vertical extent is ignored). */

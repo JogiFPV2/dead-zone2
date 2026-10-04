@@ -43,6 +43,10 @@ export function describeEvent(e: SimEvent): string {
       return `forced ${e.tx},${e.ty}${e.side} by ${e.method}: ${e.success ? 'broke open' : 'held'}`;
     case 'chunkChanged':
       return `chunk ${e.cx},${e.cy} z${e.z} changed (${e.reason})`;
+    case 'markersChanged':
+      return `markers ${e.change} #${e.changed} (${e.markers.length} total)`;
+    case 'chunksDiscovered':
+      return `discovered ${e.cells.length} chunk(s)`;
     case 'fellFromHeight':
       return `entity ${e.entity} fell ${e.levels} level(s), ${e.damage} damage${e.killed ? ' (killed)' : ''}`;
     case 'openingPressure':

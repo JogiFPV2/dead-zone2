@@ -13,6 +13,7 @@ import { applyLureCommand, isLureCommand } from '../lures/lures.js';
 import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 import type { TileGrid } from '../world/grid.js';
+import { applyMarkerCommand, isMarkerCommand } from '../map/player-map.js';
 import { startVault } from '../physics/vault.js';
 import { applyVehicleCommand, isVehicleCommand } from '../vehicles/commands.js';
 
@@ -33,6 +34,12 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       // Area of interest (docs 9.24): kept per player, used by the LOD; also while dead.
       if (cmd.radiusChunks <= 0) w.interest.delete(cmd.playerId);
       else w.interest.set(cmd.playerId, { cx: cmd.cx, cy: cmd.cy, r: cmd.radiusChunks });
+      continue;
+    }
+    if (isMarkerCommand(cmd)) {
+      // Normally applied at once in `Sim.enqueue`; only reached through the raw queue.
+      const reason = applyMarkerCommand(w, cmd);
+      if (reason) reject(w, cmd, reason);
       continue;
     }
     if (w.survival?.dead[eid]) {

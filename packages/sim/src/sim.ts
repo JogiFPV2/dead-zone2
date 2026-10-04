@@ -1,3 +1,13 @@
+import {
+  applyMarkerCommand,
+  createPlayerMapWorld,
+  DEFAULT_PLAYER_MAP,
+  isMarkerCommand,
+  MARKER_COMMANDS,
+  primePlayerMaps,
+  type PlayerMapConfig,
+} from './map/player-map.js';
+import { parseCommand } from '@deadzone/protocol/schema';
 import { flushChunkEvents, primeChunkWatch } from './world/chunk-events.js';
 import {
   CHUNK_SIZE,
@@ -18,6 +28,7 @@ import {
   type WoundView,
   type WorldSource,
   worldSourceFromMap,
+  MAP_MARKER_ICONS,
 } from '@deadzone/protocol';
 import {
   coarseTotal,
@@ -394,6 +405,35 @@ export function createSim(input: SimOptions): Sim {
     // Loot appears per chunk when players come close (lod/chunks.ts); zombies start as counters.
     if (!opts.load) populateLod(w.lod, w.ai.spawnWeights);
   }
+  {
+    const ws = content?.worldSettings as
+      | {
+          mapMarkers?: Pick<PlayerMapConfig, 'icons' | 'colors' | 'maxMarkers' | 'maxTextLength'>;
+          playerMap?: { discoverEverySec: number; trailSpacingM: number; trailMaxPoints: number };
+        }
+      | undefined;
+    const mk = ws?.mapMarkers;
+    const pmap = ws?.playerMap;
+    w.playerMap = createPlayerMapWorld(w, {
+      ...DEFAULT_PLAYER_MAP,
+      ...(mk
+        ? {
+            // Only icons the server accepts in a save (`MAP_MARKER_ICONS`, protocol).
+            icons: mk.icons.filter((i) => (MAP_MARKER_ICONS as readonly string[]).includes(i)),
+            colors: mk.colors,
+            maxMarkers: mk.maxMarkers,
+            maxTextLength: mk.maxTextLength,
+          }
+        : {}),
+      ...(pmap
+        ? {
+            discoverEveryTicks: Math.max(1, Math.round(pmap.discoverEverySec * TICKS_PER_SECOND)),
+            trailSpacingM: pmap.trailSpacingM,
+            trailMaxPoints: pmap.trailMaxPoints,
+          }
+        : {}),
+    });
+  }
   if (w.items && !opts.load && !w.lod) {
     createWorldContainers(w.items, opts.map, w.seed);
     if (opts.floorLoot) {
@@ -547,13 +587,35 @@ export function createSim(input: SimOptions): Sim {
   };
 
   primeChunkWatch(w);
+  // A loaded save already has its map; priming again would add a trail point the original lacks.
+  if (!opts.load) primePlayerMaps(w);
   return {
     get tick() {
       return w.tick;
     },
     seed: w.seed,
     world: w,
-    enqueue: (cmd) => w.queue.enqueue(cmd, w.tick),
+    enqueue: (cmd) => {
+      // Map markers: system commands applied at once (also while paused), no seq ordering.
+      if (MARKER_COMMANDS.has((cmd as { type?: Command['type'] }).type!)) {
+        const parsed = parseCommand(cmd);
+        if (!parsed.ok) return { ok: false, reason: 'invalid', error: parsed.error };
+        const c = parsed.command;
+        const reason = isMarkerCommand(c) ? applyMarkerCommand(w, c) : 'invalid';
+        if (reason) {
+          w.events.push({
+            type: 'commandRejected',
+            tick: w.tick,
+            playerId: c.playerId,
+            seq: c.seq,
+            reason,
+          });
+          return { ok: false, reason };
+        }
+        return { ok: true, tick: w.tick };
+      }
+      return w.queue.enqueue(cmd, w.tick);
+    },
     step() {
       for (const sys of PIPELINE) sys.run(w, ctx);
       flushChunkEvents(w);

@@ -10,6 +10,7 @@ import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { MovementSettingsSchema } from './movement-settings.js';
 import { SimLodSettingsSchema } from './sim-lod-settings.js';
+import { MapMarkersSettingsSchema, PlayerMapSettingsSchema } from './map-markers-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
 /**
@@ -46,6 +47,10 @@ export const WorldSettingsSchema = z.strictObject({
   vision: VisionSettingsSchema,
   /** Chód / bieg / skradanie gracza (m/s i mnożniki). */
   movement: MovementSettingsSchema,
+  /** Znaczniki na mapie gracza (ikony, kolory, limity). */
+  mapMarkers: MapMarkersSettingsSchema,
+  /** Mapa gracza: odkrywanie chunków i ślad drogi. */
+  playerMap: PlayerMapSettingsSchema,
   /** Hałas między piętrami: tłumienie przez strop. */
   noise: NoiseSettingsSchema,
   /** Zombie: gubienie tropu (czas bez wzroku i słuchu, dystans). */

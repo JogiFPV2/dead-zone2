@@ -1,3 +1,4 @@
+import { worldMapPatch } from '../map/player-map.js';
 import { lureViews } from '../lures/lures.js';
 import { craftingView } from '../crafting/crafting.js';
 import { skillViews } from '../progress/skills.js';
@@ -259,6 +260,10 @@ export class ViewTracker {
         if (this.luresKey !== '' || lures.length > 0) patch.lures = lures;
         this.luresKey = lk;
       }
+    }
+    if (eid !== undefined) {
+      const map = worldMapPatch(w, w.c.StableId.value[eid] ?? 0);
+      if (map) patch.worldMap = map;
     }
     if (w.items && eid !== undefined) {
       const ch = w.items.characters.get(w.c.StableId.value[eid] ?? 0);

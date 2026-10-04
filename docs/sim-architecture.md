@@ -1048,3 +1048,80 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
 - **API dla Symulacji (`Sim`):** `getPartHp(vehicleId, part)` → hp lub `undefined`; `setPartHp(vehicleId, part, hp)` → `true` / `false` (zły pojazd / część), hp przycinane do 0..100. Silnik naprawiony z 0 przy kierowcy i paliwie odpala (`engineStart`); ustawiony na 0 gaśnie (`broken`). Wywoływać z właściciela kroku (stan w hashu). `getVehicles()` ma `engine`, `tires`, `windows`.
 - **Protokół 14 (zmiana układu bloku `vehicles`, stride 19 → 21):** pole 18 `damage` bez zmian (4 × u8 strefy), nowe 19 `tires` (u32, 4 × u8: FL, FR, RL, RR, 0..255 = 0..100 %, `unpackVehicleTires`), 20 `engine` (u32: bity 0–7 hp silnika, bity 8–11 maska pękniętych szyb przód / tył / lewo / prawo, `unpackVehicleEngine`). `SnapshotVehicle` ma `tires`, `engine`, `windowsBroken` (opcjonalne przy kodowaniu, domyślnie całe). Encje i reszta snapshotu bez zmian.
 - **Testy:** `vehicles/damage.test.ts` (kalibracja, strefa wg kierunku: przód, tył, bok prawy / lewy w T-bone, spadek mocy, śmierć silnika od ścian i brak ponownego odpalenia, ściąganie opony FR / FL / RR, 10 zombie zużywa przód, `setPartHp` / `getPartHp`, snapshot, determinizm i zapis / odczyt), `debug-render.test.ts` → `fiz-car-damage.png`.
+
+### 9.29 Stan po PR „mapa świata gracza: mgła, ślad, znaczniki” — kontrakt dla Silnika i Serwera
+
+Mapa należy do **postaci** (klucz = StableId gracza), jest w zapisie, a nowa postać (`newCharacter` / `applyCharacter` po śmierci) dostaje pustą mapę. Nie wchodzi do hasha stanu (nic z niej nie wraca do symulacji); mgła i ślad są mimo to deterministyczne.
+
+**Parametry** (`worldSettings`, `data/base/world-settings/map.json`):
+
+- `playerMap {discoverEverySec 1, trailSpacingM 16, trailMaxPoints 20000}`,
+- `mapMarkers {icons [base:marker-food, -danger, -zombies, -loot, -base, -car, -water, -note], colors [red, yellow, green, blue, white], maxMarkers 200, maxTextLength 40}`.
+
+**Mgła.** Co `discoverEverySec` system `playerMap` (po `lifecycle`) oznacza jako odkryte chunki, których prostokąt przecina koło zasięgu wzroku gracza (`playerSightRange`, czyli noc i pogoda go skracają; bez LOS per kafel). Wymiar bitmapy to `WorldSource.bounds` (chunk bounds włącznie), 1 bit na chunk: bit `i = (cy − cy0) × width + (cx − cx0)`, bajt `i >> 3`, maska `1 << (i & 7)`. Przy 250 × 250 chunkach to 7813 B, przy domyślnym świecie 512 × 512 (`MAP_CHUNKS`) 32 KiB (`EXPLORED_BITMAP_BYTES`). Obszar startowy jest odkryty już przy tworzeniu sima, bez eventu.
+
+**Ślad.** Punkt `[x, y]` (całe metry) dopisywany, gdy gracz jest ≥ `trailSpacingM` od ostatniego punktu. Po przekroczeniu `trailMaxPoints` usuwanych jest 10% najstarszych punktów, a view wysyła wtedy cały ślad od nowa.
+
+**Znaczniki.** `{id, x, y, icon, color, text}`. Komendy są systemowe (jak `setTimeScale`): bez kontroli `seq`, wykonywane od razu w `enqueue`, także w pauzie (worker wysyła view i eventy zaraz po komendzie).
+
+- `addMarker {x, y, icon, color, text?}`,
+- `editMarker {id, x?, y?, icon?, color?, text?}`,
+- `removeMarker {id}`.
+
+`text` jest przycinany do `maxTextLength` punktów kodowych (schema przyjmuje maks. 400). Odrzucenia przez `commandRejected`:
+
+- `invalid-target`: ikona spoza listy, kolor spoza enum albo punkt poza światem,
+- `marker-limit`: postać ma już `maxMarkers` znaczników,
+- `unknown-marker`: nie ma znacznika o tym id.
+
+Klient: `client.addMarker(x, y, icon, color, text?)`, `client.editMarker(id, patch)`, `client.removeMarker(id)`.
+
+**API dla Silnika (duża mapa i minimapa):**
+
+- `SimViewPatch.worldMap: WorldMapView`; brak pola = bez zmian:
+  - `bounds` + `discovered` (base64 bitmapy): w pierwszym view, po wczytaniu zapisu i po resecie (nowa postać),
+  - `trail` (cały ślad `[x0, y0, x1, y1, …]`, od najstarszego): w tych samych sytuacjach i po obcięciu,
+  - `trailAdd`: punkty dopisane od poprzedniego view,
+  - `markers`: cała lista, gdy się zmieni.
+- Eventy:
+  - `chunksDiscovered {tick, playerId, cells: [[cx, cy], …]}`: tylko przyrosty, pełnej bitmapy nie ma co tick,
+  - `markersChanged {tick, playerId, change: 'added' | 'edited' | 'removed', changed, markers}`.
+- Silnik trzyma własną kopię bitmapy: nadpisuje ją z `discovered`, a potem ustawia bity z `chunksDiscovered`.
+
+**Protokół 15** (po 14 z #128): addytywnie komendy znaczników, eventy `markersChanged` / `chunksDiscovered`, `SimViewPatch.worldMap`.
+
+**Zapis (dla Serwera).** `SAVE_VERSION` = **3**: to ostateczny format na start na żywo. Wersje 1 i 2 dalej się wczytują, a brakujące sekcje dostają wartości domyślne. Pole `playerMaps`, per gracz:
+
+- mgła: zero-RLE varint, base64,
+- ślad: delty kwantyzowane do 1 m, zigzag varint, base64,
+- znaczniki: JSON,
+- `nextId`.
+
+Rozmiary z testu `map/player-map.test.ts`:
+
+- najgorszy przypadek (losowa bitmapa 250 × 250, 20 000 punktów błądzenia losowego, 200 znaczników po 40 znaków): **88,3 KiB JSON / 37,2 KiB gzip**, w tym mgła ok. 12,7 KB base64 i ślad ok. 53 KB base64.
+
+**Świat 16 × 16 km (512 × 512 chunków).** Rozmiar świata jest parametrem: sim czyta tylko `WorldSource.bounds`. Domyślne wartości są w `packages/protocol` (`map.ts`, `api.ts`) i używa ich Serwer:
+
+- `MAP_CHUNKS = 512`, `CHUNK_SIZE_M = 32`, `MAP_SIZE_M = 16384` (#122),
+- ikony znaczników `MAP_MARKER_ICONS`; `worldSettings.mapMarkers.icons` domyślnie bierze tę listę.
+
+Pomiary z `src/test/big-world.perf.test.ts` (Node):
+
+| Co | Wynik |
+| --- | --- |
+| Pamięć dalekiej symulacji | ok. 1,5 MiB tablic LOD przy jednym typie zombie (`counts` u16 per komórka i typ, `active`, `epoch`, `chunkLoot`); każdy kolejny typ dodaje 512 KiB. Bitmapa mgły: 32 KiB na postać. |
+| Tick 20 Hz | 200 zombie aktywnych + 210 000 zgrubnych: średnio 2,2 ms/tick, p95 ok. 8 ms (przy 250 × 250 było ok. 2 ms) |
+| Zapis po ok. 50 h, 1000 zmienionych chunków | 7,2 MiB JSON / **0,75 MiB gzip** |
+| Zapis po ok. 50 h, 3000 zmienionych chunków | 20,5 MiB JSON / **1,96 MiB gzip** |
+
+Przyjęty scenariusz zapisu:
+
+- w każdym zmienionym chunku 12 przeszukanych schowków, razem ok. 98 000 przedmiotów,
+- liczniki komórek rozjechane dryfem,
+- mapa postaci w najgorszym przypadku.
+
+Mieści się w budżecie 2–3 MiB na postać. 20 postaci × 2 MiB < 50 MiB na konto, a surowy JSON jest poniżej `maxStateBytes` Serwera (64 MiB).
+
+Nie trzeba było zmieniać algorytmu. Przemiatanie zgrubne już działa round-robin: wszystkie komórki raz na `coarseTickEvery` = 100 ticków (5 s), czyli 2622 komórki na tick. Gdyby było za drogo, wystarczy podnieść `simLod.cellSizeChunks` (np. 4 → regiony 4 × 4 chunki, 16 × mniej komórek) albo `coarseTickEvery`.
+

@@ -21,6 +21,7 @@ export * from './vision-settings.js';
 export * from './noise-settings.js';
 export * from './movement-settings.js';
 export * from './sim-lod-settings.js';
+export * from './map-markers-settings.js';
 export * from './ai-settings.js';
 export * from './openings-settings.js';
 export * from './firearms-settings.js';

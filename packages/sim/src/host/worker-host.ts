@@ -1,3 +1,4 @@
+import { MARKER_COMMANDS } from '../map/player-map.js';
 import { buildContentBundle, type PackSource } from '@deadzone/content';
 import {
   simMapFromData,
@@ -87,6 +88,15 @@ export function startSimWorkerHost(
     else if (events.some((e) => e.type === 'dayPassed')) postSave(0, 'autosave');
   };
 
+  /** View and events without a tick (system commands while paused). */
+  const postUi = (): void => {
+    if (!sim) return;
+    const view = sim.drainView();
+    if (view) port.postMessage({ kind: 'view', tick: sim.tick, view }, []);
+    const events = sim.drainEvents();
+    if (events.length > 0) port.postMessage({ kind: 'events', tick: sim.tick, events }, []);
+  };
+
   const postSave = (requestId: number, reason: SaveReason): void => {
     if (!sim) return;
     const bytes = sim.save();
@@ -165,6 +175,8 @@ export function startSimWorkerHost(
     switch (msg.kind) {
       case 'cmd':
         if (!sim.enqueue(msg.cmd).ok) dropped++;
+        // Map markers apply at once (also paused): send their view and events right away.
+        if (MARKER_COMMANDS.has(msg.cmd.type)) postUi();
         break;
       case 'save':
         postSave(msg.requestId, msg.reason ?? 'manual');

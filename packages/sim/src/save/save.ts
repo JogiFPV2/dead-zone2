@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, type WorldSource } from '@deadzone/protocol';
+import { decodePlayerMaps, encodePlayerMaps, type PlayerMapSave } from '../map/player-map.js';
 import { decodeLod, encodeLod, type LodSave } from './delta.js';
 import { addComponent, addEntity, hasComponent } from 'bitecs';
 import { RNG_STREAMS, Rng } from '../core/rng.js';
@@ -20,9 +21,15 @@ import {
  * a content fingerprint). Round trip: save → load → the same `hash()` after any number of ticks.
  */
 export const SAVE_FORMAT = 'deadzone-save';
-/** 2: world header (`world`), LOD delta (`lod`), pooled eids (`freeEids`). Version 1 still loads. */
-export const SAVE_VERSION = 2;
-const READABLE_VERSIONS = [1, 2];
+/**
+ * Format history (docs 9.29):
+ * - 2: world header (`world`), LOD delta (`lod`), pooled eids (`freeEids`), `interest`.
+ * - 3: the character's map (`playerMaps`), plus the additive fields of #106 (planks, glass) and
+ *   #114 (vehicles) and #128 (vehicle parts). The format the live server starts with.
+ * Versions 1 and 2 still load (missing sections = their defaults).
+ */
+export const SAVE_VERSION = 3;
+const READABLE_VERSIONS = [1, 2, 3];
 
 /** Why a save cannot be loaded (`SaveError.code`, worker `error.code`). */
 export type SaveErrorCode =
@@ -97,6 +104,8 @@ interface SaveFile {
   lod?: LodSave;
   /** Version 2: eids freed by the LOD (reused LIFO by spawns). */
   freeEids?: number[];
+  /** Version 2: characters' world maps (fog bitmap, trail, markers; map/player-map.ts). */
+  playerMaps?: PlayerMapSave[];
   /** Version 2: `setInterest` areas `[playerId, cx, cy, radiusChunks]` (absent = none). */
   interest?: [number, number, number, number][];
 }
@@ -163,6 +172,10 @@ export function saveWorld(w: SimWorld): Uint8Array {
     },
     ...(w.lod ? { lod: encodeLod(w.lod) } : {}),
     ...(w.freeEids.length > 0 ? { freeEids: [...w.freeEids] } : {}),
+    ...(() => {
+      const maps = encodePlayerMaps(w.playerMap);
+      return maps ? { playerMaps: maps } : {};
+    })(),
     ...(w.interest.size > 0
       ? {
           interest: [...w.interest.entries()]
@@ -252,6 +265,7 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   while (last < maxFree) last = addEntity(w.ecs);
   w.freeEids.length = 0;
   w.freeEids.push(...free);
+  decodePlayerMaps(w.playerMap, f.playerMaps);
   w.interest.clear();
   for (const [id, cx, cy, r] of f.interest ?? []) w.interest.set(id, { cx, cy, r });
   w.structureVersion++;

@@ -1,4 +1,11 @@
-import type { BodyPart, ContainerId, EquipSlot, ItemId, WoundKind } from './commands.js';
+import type {
+  BodyPart,
+  ContainerId,
+  EquipSlot,
+  ItemId,
+  MarkerColor,
+  WoundKind,
+} from './commands.js';
 import type { ActionKind, DeathCause, Freshness, LurePhase } from './events.js';
 import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
 
@@ -296,6 +303,44 @@ export interface SimViewPatch {
   skills?: SkillView[];
   /** Recipes with their state for the local player and stations nearby, full when it changes. */
   crafting?: CraftingView;
+  /** The character's world map: fog of war, trail and markers (docs 9.29). */
+  worldMap?: WorldMapView;
+}
+
+/** A marker on the player's map (`addMarker`). */
+export interface MapMarkerView {
+  id: number;
+  /** Tiles (metres), as given (f32). */
+  x: number;
+  y: number;
+  /** Content id from `worldSettings.mapMarkers.icons`, e.g. `base:marker-food`. */
+  icon: string;
+  color: MarkerColor;
+  /** At most `worldSettings.mapMarkers.maxTextLength` characters. */
+  text: string;
+}
+
+/**
+ * Patch of the player's world map (docs/sim-architecture.md 9.29). Missing field = unchanged.
+ * - `bounds` + `discovered`: in the first view, after a load and after a reset (new
+ *   character); later increments come as `chunksDiscovered` events.
+ * - `trail`: full trail (first view, load, reset, and after the oldest points were dropped at
+ *   `trailMaxPoints`), `trailAdd`: points appended since the last view.
+ * - `markers`: full list when it changes.
+ */
+export interface WorldMapView {
+  /** Chunk bounds of the bitmap, inclusive (the world source's bounds). */
+  bounds?: { cx0: number; cy0: number; cx1: number; cy1: number };
+  /**
+   * Discovered chunks: base64 of a bitmap, one bit per chunk, row-major from (cx0, cy0), width
+   * cx1 − cx0 + 1, bit i = byte i >> 3, mask 1 << (i & 7). 250 × 250 chunks = 7813 bytes.
+   */
+  discovered?: string;
+  /** Whole trail as points [x0, y0, x1, y1, …] in whole metres (tiles), oldest first. */
+  trail?: number[];
+  /** Points appended since the last view, same layout. */
+  trailAdd?: number[];
+  markers?: MapMarkerView[];
 }
 
 export interface SkillView {

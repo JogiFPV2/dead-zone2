@@ -13,6 +13,7 @@ import { lureSystem } from '../lures/lures.js';
 import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { lodSystem } from '../lod/system.js';
+import { playerMapSystem } from '../map/player-map.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { penaltiesSystem } from '../survival/penalties.js';
 import { physicsSystem } from '../physics/system.js';
@@ -65,4 +66,5 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'penalties', run: (w) => penaltiesSystem(w) },
     { name: 'combat', run: (w, ctx) => combatSystem(w, ctx.grid) },
     { name: 'lifecycle', run: (w) => lifecycleSystem(w) },
+    { name: 'playerMap', run: (w) => playerMapSystem(w) },
   ];

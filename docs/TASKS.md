@@ -93,6 +93,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Zapis świata jako delta: `deadzone-save` v2 = seed + `generatorVersion` + zmienione chunki + liczniki komórek + encje aktywne; ok. 230 KiB gzip przy 300 odwiedzonych chunkach; kody błędów wczytania (Symulacja) — 9.24
 - [x] Interfejs `WorldSource` dla generatora świata + adapter mapy demo (Symulacja); generator (Silnik 2)
 - [x] Streaming dla sim: `setInterest {cx, cy, radiusChunks}`, event `chunkChanged {cx, cy, z, reason}`, pokoje lokalne w chunku + globalny `buildingId` (`roomBuildings`) (Symulacja) — 9.24
+- [x] Mapa świata gracza per postać: mgła (bitmapa chunków, odkrywanie w zasięgu wzroku), ślad co 16 m (limit 20 000), znaczniki `addMarker` / `editMarker` / `removeMarker` (także w pauzie, limit 200), `worldSettings.mapMarkers` / `playerMap`, view `worldMap`, eventy `chunksDiscovered` / `markersChanged`, zapis `playerMaps` (Symulacja) — [sim-architecture.md 9.29](sim-architecture.md)
 - [ ] Generator świata 8×8 km wg `WorldSource` (`chunkKind`, `generatorVersion`) (Silnik 2)
 - [x] Tryby gry jako dane: „Przetrwaj” i „Ratunek” (Modules)
 - [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)

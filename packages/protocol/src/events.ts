@@ -1,7 +1,13 @@
 import type { VehicleImpactTarget, VehiclePart } from './vehicles.js';
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState } from './map.js';
-import type { CharacterProfileView, ContainerKind, OpeningEdgeKind, ReloadKind } from './views.js';
+import type {
+  CharacterProfileView,
+  ContainerKind,
+  MapMarkerView,
+  OpeningEdgeKind,
+  ReloadKind,
+} from './views.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -47,7 +53,11 @@ export type CommandRejectReason =
   /** `newCharacter`: invalid choice or over budget (`commandRejected.detail` says what). */
   | 'invalid-character'
   /** `watchTv` / VHS: no TV within `leisure.tvRadiusTiles` (`no-station`) or it has no power. */
-  | 'no-power';
+  | 'no-power'
+  /** `addMarker`: the character already has `worldSettings.mapMarkers.maxMarkers` markers. */
+  | 'marker-limit'
+  /** `editMarker` / `removeMarker`: no marker with this id. */
+  | 'unknown-marker';
 
 /**
  * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
@@ -464,6 +474,29 @@ export type SimEvent =
       /** Window: glass in the frame (false after `removeGlass`). */
       glass: boolean;
       by: 'player' | 'zombie' | 'crowd' | 'debug' | 'vehicle';
+    }
+  /**
+   * The character's map markers changed (`addMarker` / `editMarker` / `removeMarker`, also in
+   * pause): full list (at most `maxMarkers`). `changed` = id added / edited / removed.
+   */
+  | {
+      type: 'markersChanged';
+      tick: number;
+      playerId: PlayerId;
+      change: 'added' | 'edited' | 'removed';
+      changed: number;
+      markers: MapMarkerView[];
+    }
+  /**
+   * Chunks newly discovered by the player (fog of war; checked every
+   * `worldSettings.playerMap.discoverEverySec` within the current sight range). Increments only:
+   * the full bitmap is in `SimViewPatch.worldMap.discovered`.
+   */
+  | {
+      type: 'chunksDiscovered';
+      tick: number;
+      playerId: PlayerId;
+      cells: [number, number][];
     }
   /**
    * Visible state of chunk (cx, cy) on level z changed (docs/sim-architecture.md 9.24): the

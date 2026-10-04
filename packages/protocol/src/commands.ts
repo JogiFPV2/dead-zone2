@@ -1,3 +1,4 @@
+import { SAVE_MARKER_COLORS, type SaveMarkerColor } from './api.js';
 import type { EdgeSide, OpeningState } from './map.js';
 
 /** Largest value of an unsigned 32-bit integer (ticks, seq). */
@@ -483,6 +484,45 @@ export const OPENING_ACTION_COMMANDS = [
 ] as const;
 export type OpeningActionType = (typeof OPENING_ACTION_COMMANDS)[number];
 
+/** Marker colours on the player's map (`worldSettings.mapMarkers.colors` picks from these). */
+export const MARKER_COLORS = SAVE_MARKER_COLORS;
+export type MarkerColor = SaveMarkerColor;
+
+/**
+ * Map markers (docs/sim-architecture.md 9.29), per character. System commands like
+ * `setTimeScale`: no `seq` ordering (any seq, not advancing the player's), applied at once in
+ * `enqueue` — also while the sim is paused — and answered with `markersChanged` (or
+ * `commandRejected`). `x`, `y` in tiles (metres); `icon` from `worldSettings.mapMarkers.icons`,
+ * `color` from `.colors`; `text` is cut to `.maxTextLength` (40) characters. Rejections:
+ * `invalid-target` (icon / colour not allowed, position outside the world), `marker-limit`
+ * (`maxMarkers`, 200), `unknown-marker` (edit / remove of a missing id).
+ */
+export interface AddMarkerCommand extends CommandHeader {
+  type: 'addMarker';
+  x: number;
+  y: number;
+  icon: string;
+  color: MarkerColor;
+  text?: string | undefined;
+}
+
+/** Changes the given fields of marker `id` (see `AddMarkerCommand`). */
+export interface EditMarkerCommand extends CommandHeader {
+  type: 'editMarker';
+  id: number;
+  x?: number | undefined;
+  y?: number | undefined;
+  icon?: string | undefined;
+  color?: MarkerColor | undefined;
+  text?: string | undefined;
+}
+
+/** Removes marker `id`. */
+export interface RemoveMarkerCommand extends CommandHeader {
+  type: 'removeMarker';
+  id: number;
+}
+
 /** Dev only (`init.dev`): sets the state of a door / window edge (hp resets to the state's max). */
 export interface DebugOpeningCommand extends CommandHeader {
   type: 'debugOpening';
@@ -689,7 +729,10 @@ export type Command =
   | DebugSkillCommand
   | DebugLearnRecipeCommand
   | NewCharacterCommand
-  | SetInterestCommand;
+  | SetInterestCommand
+  | AddMarkerCommand
+  | EditMarkerCommand
+  | RemoveMarkerCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };
