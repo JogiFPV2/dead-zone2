@@ -1,9 +1,13 @@
 name: CI
 
+# Self-hosted runner `deadzone` (box, Node 22 + corepack w PATH) - bez minut GitHub Actions.
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
   pull_request:
+    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,17 +19,16 @@ permissions:
 jobs:
   ci:
     name: lint, typecheck, test, build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: [self-hosted, deadzone]
+    timeout-minutes: 20
+    env:
+      # Testy wydajności sima (packages/sim *.perf / *-perf) tylko na push do main i workflow_dispatch.
+      SKIP_PERF: ${{ github.event_name == 'pull_request' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
+      - name: Node i pnpm (z runnera)
+        run: node -v && pnpm -v
 
       - run: pnpm install --frozen-lockfile
 

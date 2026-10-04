@@ -6,6 +6,7 @@ name: Publiczny build
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
   workflow_dispatch:
 
 concurrency:
@@ -18,17 +19,13 @@ permissions:
 jobs:
   deploy:
     name: build i publikacja
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deadzone]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
+      - name: Node i pnpm (z runnera)
+        run: node -v && pnpm -v
 
       - run: pnpm install --frozen-lockfile
 
@@ -43,12 +40,16 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-          git config --global user.name "deadzone-bot"
-          git config --global user.email "deadzone-bot@users.noreply.github.com"
+          # Self-hosted: klucz tylko w katalogu tymczasowym joba, usuwany na końcu; bez zmian w ~/.ssh i globalnym gitconfig.
+          keydir=$(mktemp -d "$RUNNER_TEMP/deploy-key.XXXXXX")
+          trap 'rm -rf "$keydir"' EXIT
+          printf '%s\n' "$DEPLOY_KEY" > "$keydir/id_ed25519"
+          chmod 600 "$keydir/id_ed25519"
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$keydir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $keydir/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=$keydir/known_hosts -o StrictHostKeyChecking=yes"
+          export GIT_AUTHOR_NAME=deadzone-bot GIT_COMMITTER_NAME=deadzone-bot
+          export GIT_AUTHOR_EMAIL=deadzone-bot@users.noreply.github.com GIT_COMMITTER_EMAIL=deadzone-bot@users.noreply.github.com
+          rm -rf site
 
           repo=git@github.com:JogiFPV2/deadzone-play.git
           if git ls-remote --exit-code --heads "$repo" gh-pages >/dev/null; then

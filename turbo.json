@@ -14,7 +14,8 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["CI", "SKIP_PERF", "PERF_TOLERANCE"]
     },
     "dev": {
       "dependsOn": ["^build"],
