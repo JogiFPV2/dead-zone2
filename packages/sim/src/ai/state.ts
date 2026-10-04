@@ -12,6 +12,7 @@ import { createCombatWorld, type CombatWorld } from '../combat/state.js';
 import { DEFAULT_COMBAT_CONFIG } from '../combat/config.js';
 import type { CombatConfig } from '../combat/config.js';
 import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from './config.js';
+import type { WindowGoal } from './vehicle-window.js';
 
 /** Zombie FSM (docs 2.5 `ai`). Values are stored in `Zombie.state` and hashed. */
 export const ZombieState = {
@@ -123,6 +124,8 @@ export interface AiWorld {
    * the last event of a continuous kind (ai/noise.ts).
    */
   readonly playerNoiseTick: Map<number, number>;
+  /** Zombie eid → `vehicle window` target this tick (derived, `ai/vehicle-window.ts`). */
+  readonly windowGoals: Map<number, WindowGoal>;
   /** Per zombie eid (derived): straight line to the goal is walkable (checked when thinking). */
   readonly direct: Uint8Array;
   /** Per zombie eid: position before the last movement (progress check for `stuck`). */
@@ -190,6 +193,7 @@ export function createAiWorld(
     threat: new Map(),
     visibility: new Map(),
     playerNoiseTick: new Map(),
+    windowGoals: new Map(),
     direct: new Uint8Array(capacity),
     lastX: new Float32Array(capacity),
     lastY: new Float32Array(capacity),

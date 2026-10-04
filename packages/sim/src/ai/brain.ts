@@ -7,6 +7,7 @@ import { heard } from './noise.js';
 import { ZombieState, type AiWorld, type Noise } from './state.js';
 import { currentDaylight, playerVisibility } from './vision.js';
 import { secToTicks } from './zombies.js';
+import { assignVehicleWindows } from './vehicle-window.js';
 import { floorZ } from '../world/levels.js';
 
 /**
@@ -87,6 +88,8 @@ export function aiThinkSystem(w: SimWorld, grid: TileGrid): void {
     if ((w.tick + sid) % every === 0) think(w, ai, grid, eid, x, y, z, near, every);
     brain(w, ai, grid, eid, x, y);
   }
+  // Chasers of a player in a slow car with a broken window: stand points at the openings.
+  assignVehicleWindows(w, ai, grid);
 }
 
 function think(

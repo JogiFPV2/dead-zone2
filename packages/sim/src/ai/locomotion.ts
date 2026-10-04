@@ -4,6 +4,7 @@ import { flowStep } from '../nav/flow.js';
 import type { TileGrid } from '../world/grid.js';
 import { findPlayer } from './brain.js';
 import { ZombieState } from './state.js';
+import { WINDOW_ARRIVE } from './vehicle-window.js';
 import { crossFloorWaypoint, floorOf } from './floors.js';
 import { emitNoise } from './noise.js';
 import { secToTicks } from './zombies.js';
@@ -66,7 +67,24 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
       state === ZombieState.search ||
       (state === ZombieState.investigate && (Zombie.stateTick[eid] ?? 0) === 0);
     if (moving) {
-      if (state === ZombieState.chase) {
+      // `vehicle window` target (ai/vehicle-window.ts): to the stand point, then face the seat.
+      const win = state === ZombieState.chase ? ai.windowGoals.get(eid) : undefined;
+      let straightTo = false;
+      if (win) {
+        const qx = win.sx - x;
+        const qy = win.sy - y;
+        if (qx * qx + qy * qy <= WINDOW_ARRIVE * WINDOW_ARRIVE) {
+          AimIntent.x[eid] = win.ax;
+          AimIntent.y[eid] = win.ay;
+          AimIntent.active[eid] = 1;
+          gx = x;
+          gy = y;
+        } else if (win.local) {
+          gx = win.x;
+          gy = win.y;
+          straightTo = true;
+        }
+      } else if (state === ZombieState.chase) {
         const p = findPlayer(w, Zombie.targetId[eid] ?? 0);
         if (p !== undefined) {
           const px = Position.x[p] ?? 0;
@@ -86,7 +104,7 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
       }
       // Goal on another floor: head for the nearest stairs there, then along the flight (none
       // within reach: the goal's projection on this floor). Physics walks the flight.
-      const via = crossFloorWaypoint(w, grid, eid, x, y, z);
+      const via = straightTo ? undefined : crossFloorWaypoint(w, grid, eid, x, y, z);
       if (via) {
         gx = via.x;
         gy = via.y;
@@ -99,7 +117,7 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
         let wx = gx;
         let wy = gy;
         const stuck = (Zombie.stuck[eid] ?? 0) >= cfg.stuckTicks;
-        if (!ai.direct[eid] && !via?.direct) {
+        if (!straightTo && !ai.direct[eid] && !via?.direct) {
           const tx = Math.floor(x);
           const ty = Math.floor(y);
           // The chased player's flow field is on the player's floor: not on the way to stairs.
