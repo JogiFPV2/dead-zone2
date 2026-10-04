@@ -15,6 +15,10 @@
     "./worker-client": {
       "types": "./dist/host/client.d.ts",
       "default": "./dist/host/client.js"
+    },
+    "./save-summary": {
+      "types": "./dist/save/summary.d.ts",
+      "default": "./dist/save/summary.js"
     }
   },
   "files": [

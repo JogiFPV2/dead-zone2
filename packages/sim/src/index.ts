@@ -163,6 +163,13 @@ export { despawnZombie } from './lod/system.js';
 export { decodeZeroRle, encodeZeroRle, zeroRleStats, type LodSave } from './save/delta.js';
 export { decodeTrail, encodeTrail, type PlayerMapSave } from './map/player-map.js';
 export {
+  nearestPlace,
+  saveSummary,
+  type SaveSummary,
+  type SaveSummaryOptions,
+  type SummaryPlace,
+} from './save/summary.js';
+export {
   checkSave,
   SAVE_FORMAT,
   SAVE_READABLE_VERSIONS,
