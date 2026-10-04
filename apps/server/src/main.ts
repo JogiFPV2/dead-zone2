@@ -15,6 +15,7 @@ const db = createServiceClient(config);
 
 const app = buildApp({
   trustProxyHops: config.trustProxyHops,
+  corsOrigins: config.corsOrigins,
   characters: {
     config,
     verifier: createJwksVerifier(config.jwksUrl, config.jwtIssuer, config.jwtAudience),

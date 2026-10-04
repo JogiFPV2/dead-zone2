@@ -42,7 +42,7 @@ export async function token(
 
 export function setup(
   limits: Partial<Limits> = {},
-  opts: { trustProxyHops?: number; validator?: SaveValidator } = {},
+  opts: { trustProxyHops?: number; validator?: SaveValidator; corsOrigins?: string[] } = {},
 ) {
   const l = { ...DEFAULT_LIMITS, ...limits };
   const store = new MemoryStore(l.maxAliveCharacters, l.maxAccountSaveBytes);
@@ -58,6 +58,7 @@ export function setup(
   let seed = 1000;
   const app = buildApp({
     trustProxyHops: opts.trustProxyHops ?? 0,
+    ...(opts.corsOrigins ? { corsOrigins: opts.corsOrigins } : {}),
     characters: {
       config: {
         limits: l,

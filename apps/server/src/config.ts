@@ -8,6 +8,7 @@ import {
   MAX_UPLOAD_BYTES_PER_DAY,
 } from '@deadzone/protocol';
 import { SAVE_VERSION } from '@deadzone/sim';
+import { parseCorsOrigins } from './cors.js';
 
 /** Server limits (docs/backend.md §5.5). Env can only lower the product values. */
 export interface Limits {
@@ -43,6 +44,8 @@ export interface ServerConfig {
   signedUrlTtlSeconds: number;
   /** Proxy hops in front of the server (X-Forwarded-For); 0 = direct, use the socket IP. */
   trustProxyHops: number;
+  /** CORS allowlist of browser origins (`CORS_ORIGINS`, comma-separated). */
+  corsOrigins: readonly string[];
   /** Current deterministic world generator, stored on new characters. */
   worldgenVersion: number;
   /** Newest accepted sim save format (default `SAVE_VERSION` of packages/sim); 1…it accepted. */
@@ -112,6 +115,7 @@ export function loadConfig(env: Env): ServerConfig {
     storageBucket: env.SAVES_BUCKET?.trim() || 'saves',
     signedUrlTtlSeconds: int(env, 'SIGNED_URL_TTL_SECONDS', 60, 10, 3600),
     trustProxyHops: int(env, 'TRUST_PROXY_HOPS', 0, 0, 10),
+    corsOrigins: parseCorsOrigins(env.CORS_ORIGINS),
     worldgenVersion: int(env, 'WORLDGEN_VERSION', 1, 1, 0xffff_ffff),
     // Newest sim save version accepted; never above what this server's sim can read.
     saveFormatVersion: int(env, 'SAVE_FORMAT_VERSION', SAVE_VERSION, 1, SAVE_VERSION),
