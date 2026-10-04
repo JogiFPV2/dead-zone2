@@ -8,6 +8,8 @@
  * (KNOCKDOWN_FALL_TICKS); the adapter converts the sim's total length.
  */
 
+import type { Gait } from '@deadzone/protocol';
+
 /** Entity body state (one at a time; timed states end after `stateDuration` ticks). */
 export const BODY_STATES = [
   'idle',
@@ -64,6 +66,14 @@ export interface PhysState {
   hitFromDir: number;
   /** Zombies: per-body gait seed (uint32); 0 for players. */
   gaitSeed: number;
+  /**
+   * Locomotion of the sim body (protocol v13, undefined before): real ground speed (tiles = m
+   * per second, after collisions), longitudinal acceleration (m/s², + speeding up, − braking)
+   * and the gait profile used this tick.
+   */
+  speed?: number;
+  accel?: number;
+  gait?: Gait;
   /** Tick of the last `tripped` (vault ending in a knock-down); -1 / undefined = none. */
   tripTick?: number;
   /**

@@ -19,7 +19,15 @@ import { PoseTracker, newPose, type WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
-import { gaitClip, targetYaw } from './locomotion.js';
+import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
+import {
+  LocoBlend,
+  RUN_CLIP,
+  WALK_CLIP,
+  clipTime,
+  type LocoPose,
+} from '../anim/locomotion-blend.js';
+import { LegPose } from '../anim/leg-pose.js';
 import { ArmPose, GRIP_SPECS, armBones } from '../anim/arm-pose.js';
 import type { BodyState } from '../anim/contract.js';
 
@@ -37,9 +45,6 @@ const GRIP_STATES: ReadonlySet<BodyState> = new Set([
 export const PLAYER_HEIGHT = 1.6;
 const BODY_GREY = '#8a9098';
 const INDICATOR_GREY = '#3a3f45';
-/** Lean per tiles/s^2 of forward acceleration (rad), capped. */
-const ACCEL_LEAN = 0.012;
-const MAX_ACCEL_LEAN = 0.12;
 /** Firearm kick of the held gun (rad at recoil 1). */
 const RECOIL_KICK = 0.7;
 /** Turn rate while falling to face the hit (rad/s). */
@@ -54,6 +59,10 @@ export class PlayerView {
   private readonly motion = new BodyMotion();
   private readonly tracker = new PoseTracker();
   private readonly animPose = newPose();
+  private readonly loco = new LocoBlend();
+  private legs: LegPose | undefined;
+  private lastFacing: number | undefined;
+  private yawRate = 0;
   private loopTime = 0;
   private lastMs: number | undefined;
   private mounts: WeaponMounts | undefined;
@@ -102,6 +111,8 @@ export class PlayerView {
     for (const m of this.meshes) m.visible = false;
     object.rotation.y = Math.PI / 2;
     this.body.add(object);
+    // Rest pose for the stride scaling, before any clip moves the bones.
+    this.legs = new LegPose(object);
     this.rig = new CharacterRig(object, clips);
     this.rig.pose('idle', 0, true);
     // Mounts are placed from the first animated pose (clips rescale some bones vs. bind pose).
@@ -176,12 +187,21 @@ export class PlayerView {
     const p = phys ?? this.ownState(state, dt);
     const shown = this.dead && p.state !== 'dead' ? { ...p, state: 'dead' as const } : p;
     const mo = this.motion;
+    // Locomotion from the sim's real speed / acceleration / gait (v13); older data: the drawn
+    // body's own (position deltas).
+    const loco = this.loco.update({
+      speed: p.speed ?? mo.speed,
+      accel: p.accel ?? mo.accel,
+      gait: p.gait ?? (p.state === 'run' ? 'run' : 'walk'),
+      yawRate: this.yawRate,
+      dt,
+    });
     const pose = this.tracker.pose(
       shown,
       phys ? tickF : nowMs / (1000 / TICKS_PER_SECOND),
       {
         weapon: this.weapon,
-        speed: mo.speed,
+        speed: loco.speed,
         clipLen: (a) => this.rig?.length(a) ?? 1,
         loopTime: this.loopTime,
         vz: mo.vz,
@@ -207,23 +227,47 @@ export class PlayerView {
       turning ? FALL_TURN : PLAYER_MOTION.turnRate,
       pose.lockFacing,
     );
+    if (this.lastFacing !== undefined && dt > 0) {
+      const w = wrapAngle(mo.facing - this.lastFacing) / dt;
+      this.yawRate += (w - this.yawRate) * (1 - Math.exp(-8 * dt));
+    }
+    this.lastFacing = mo.facing;
     // Movement direction (position deltas) vs. the body: forward, backwards or sideways gait.
+    let forward = false;
     if (pose.anim === 'walk' || pose.anim === 'run') {
       const g = gaitClip(mo.facing, mo.vx, mo.vy);
       if (g === 'back' || g === 'strafeLeft' || g === 'strafeRight') pose.anim = g;
+      else forward = true;
     }
-    this.loopTime += dt * PoseTracker.loopRate(pose.anim, mo.speed);
+    this.loopTime += dt * PoseTracker.loopRate(pose.anim, loco.speed);
     // Height = z · floor height of the interpolated sim z (fractional on stairs / falling).
     const w = simToWorld(mo.x, mo.y, mo.z);
     this.root.position.set(w.x, w.y + pose.lift, w.z);
     this.root.rotation.y = facingToRotationY(mo.facing + pose.twist);
-    const lean = Math.max(-MAX_ACCEL_LEAN, Math.min(MAX_ACCEL_LEAN, mo.accel * ACCEL_LEAN));
-    // Body local +X is the facing: -Z rotation leans forward, X rotation rolls.
-    this.body.rotation.set(pose.roll, 0, -(pose.pitch + lean));
+    // Body local +X is the facing: -Z rotation leans forward (accel lean, sprint), X rotation
+    // rolls (into turns). Timed states (hits, falls, vaults) bring their own offsets.
+    const free = pose.loop && pose.state !== 'climb' && pose.state !== 'driving';
+    this.body.rotation.set(
+      pose.roll + (free ? loco.roll : 0),
+      0,
+      -(pose.pitch + (free ? loco.pitch : 0)),
+    );
     if (this.held) this.held.object.rotation.x = -pose.recoil * RECOIL_KICK;
     if (!this.rig) return;
-    this.rig.pose(pose.anim, pose.time, pose.loop);
+    if (forward) {
+      // Walk / run at one gait phase; cadence × stride = real speed (anim/locomotion-blend.ts).
+      this.rig.locomote(clipTime(WALK_CLIP, loco.phase), clipTime(RUN_CLIP, loco.phase), loco.run);
+    } else this.rig.pose(pose.anim, pose.time, pose.loop);
     this.rig.update(dt);
+    if (this.legs) {
+      this.root.updateMatrixWorld(true);
+      this._right.set(0, 0, 1).transformDirection(this.body.matrixWorld);
+      this.legs.apply({
+        gain: forward ? loco.gain : 1,
+        crouch: free ? loco.crouch : 0,
+        right: this._right,
+      });
+    }
     if (!this.mounts) {
       this.root.updateMatrixWorld(true);
       this.mounts = createWeaponMounts(this.rig.object);
@@ -279,6 +323,12 @@ export class PlayerView {
     };
   }
   private lastBodyState = '';
+  private readonly _right = new Vector3();
+
+  /** Locomotion blend of the last frame (dev hook, tests, screenshots). */
+  debugLoco(): Readonly<LocoPose> {
+    return this.loco.pose;
+  }
 
   /** Minimal state from the snapshot alone (no adapter): locomotion from position deltas. */
   private last: { x: number; y: number } | undefined;

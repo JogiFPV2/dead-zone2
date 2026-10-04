@@ -44,9 +44,10 @@ export class PlayerInput {
 
   update(nowMs: number, cameraYaw: number, camera: Camera): void {
     const move = moveDirection(moveKeys(this.input), cameraYaw);
-    // Hold sprint = run, hold crouch = sneak (sim gaits: speed, noise, needs).
+    // Hold sprint = sprint (sim #126: endurance checks may drop it to run), hold crouch =
+    // sneak (sim gaits: speed, noise, needs).
     const gait: Gait = this.input.isDown('sprint')
-      ? 'run'
+      ? 'sprint'
       : this.input.isDown('crouch')
         ? 'sneak'
         : 'walk';

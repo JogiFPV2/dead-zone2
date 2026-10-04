@@ -1,5 +1,6 @@
 import {
   CHUNK_SIZE,
+  GAITS,
   SNAPSHOT_ENTITY_STRIDE,
   SnapshotAnim,
   SnapshotEntityKind,
@@ -25,6 +26,7 @@ import {
 } from './contract.js';
 import {
   ENTITY_PHYS_STATES,
+  LOCO_SNAPSHOT_STRIDE,
   PHYS_SNAPSHOT_STRIDE,
   PhysField,
   isPhysicsEvent,
@@ -258,6 +260,11 @@ export class PhysAdapter {
     p.knockback.strength = buf[o + PhysField.knockbackStrength] ?? 0;
     p.hitFromDir = buf[o + PhysField.hitFromDir] ?? 0;
     p.gaitSeed = seed;
+    if (this.stride >= LOCO_SNAPSHOT_STRIDE) {
+      p.speed = buf[o + PhysField.speed] ?? 0;
+      p.accel = buf[o + PhysField.accel] ?? 0;
+      p.gait = GAITS[buf[o + PhysField.gait] ?? 1] ?? 'walk';
+    }
     if (
       state !== prev &&
       (state === 'hit' || state === 'stagger' || state === 'knockdown') &&

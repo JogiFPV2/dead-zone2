@@ -18,7 +18,13 @@ export const PhysField = {
   knockbackStrength: SnapshotField.knockbackStrength,
   hitFromDir: SnapshotField.hitFromDir,
   gaitSeed: SnapshotField.gaitSeed,
+  speed: SnapshotField.speed,
+  accel: SnapshotField.accel,
+  gait: SnapshotField.gait,
 } as const;
+
+/** Entity stride that carries the locomotion fields `speed`, `accel`, `gait` (v13). */
+export const LOCO_SNAPSHOT_STRIDE = 20;
 
 /** Fields stored as uint32 bits in the float32 record (read through a Uint32Array view). */
 export const PHYS_U32_FIELDS: readonly number[] = SNAPSHOT_U32_FIELDS;
