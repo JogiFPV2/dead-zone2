@@ -122,5 +122,10 @@
     "items": ["base:deer-hide"],
     "src": "kenney-furniture-kit/rug-rounded.glb",
     "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:glass-shards"],
+    "src": "custom/glass-shards.glb",
+    "rot": [0, 0, 0]
   }
 ]

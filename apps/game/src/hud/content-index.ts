@@ -66,6 +66,8 @@ export interface HudContentIndex {
   items: ReadonlyMap<string, HudItemDef>;
   stations?: ReadonlyMap<string, HudStationDef>;
   recipes?: ReadonlyMap<string, HudRecipeDef>;
+  /** Tag → item whose icon stands in for the tag in recipes (`tags/*.json`, `iconItem`). */
+  tagIcons?: ReadonlyMap<string, string>;
   /** `worldSettings.survival.sleep` / `leisure` (sleep screen, leisure buttons). */
   sleep?: HudSleepSettings;
 }
@@ -135,6 +137,7 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
   const items = new Map<string, HudItemDef>();
   const stations = new Map<string, HudStationDef>();
   const recipes = new Map<string, HudRecipeDef>();
+  const tagIcons = new Map<string, string>();
   let sleep: HudSleepSettings | undefined;
   for (const f of files) {
     if (!('json' in f)) continue;
@@ -160,6 +163,11 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
             count: typeof x.count === 'number' ? x.count : 1,
           }));
         recipes.set(r.id, { id: r.id, results, ...(isObj(r.repair) ? { repair: true } : {}) });
+      }
+    } else if (f.path.startsWith('tags/')) {
+      for (const t of list(f.json)) {
+        if (typeof t.id === 'string' && typeof t.iconItem === 'string')
+          tagIcons.set(t.id, t.iconItem);
       }
     } else if (f.path.startsWith('world-settings/')) {
       sleep = readSleepSettings(f.json) ?? sleep;
@@ -205,5 +213,5 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
       }
     }
   }
-  return { moodles, items, stations, recipes, ...(sleep ? { sleep } : {}) };
+  return { moodles, items, stations, recipes, tagIcons, ...(sleep ? { sleep } : {}) };
 }

@@ -1,0 +1,23 @@
+[
+  { "id": "base:wood-plank", "iconItem": "base:plank" },
+  { "id": "base:wood-log", "iconItem": "base:log" },
+  { "id": "base:rag", "iconItem": "base:rag" },
+  { "id": "base:fabric", "iconItem": "base:sheet" },
+  { "id": "base:clothing", "iconItem": "base:t-shirt" },
+  { "id": "base:clothing-rippable", "iconItem": "base:t-shirt" },
+  { "id": "base:metal-scrap", "iconItem": "base:scrap-metal" },
+  { "id": "base:tape", "iconItem": "base:duct-tape" },
+  { "id": "base:vegetable", "iconItem": "base:carrot" },
+  { "id": "base:spear-blade", "iconItem": "base:kitchen-knife" },
+  { "id": "base:disinfectant-liquid", "iconItem": "base:vodka" },
+  { "id": "base:cooking-pot", "iconItem": "base:cooking-pot" },
+  { "id": "base:weapon-crafted", "iconItem": "base:nailed-bat" },
+  { "id": "base:tool-fire-starter", "iconItem": "base:matches" },
+  { "id": "base:tool-hammer", "iconItem": "base:hammer" },
+  { "id": "base:tool-knife", "iconItem": "base:kitchen-knife" },
+  { "id": "base:tool-needle", "iconItem": "base:sewing-needle" },
+  { "id": "base:tool-saw", "iconItem": "base:saw" },
+  { "id": "base:tool-screwdriver", "iconItem": "base:screwdriver" },
+  { "id": "base:tool-welding", "iconItem": "base:welding-torch" },
+  { "id": "base:tool-wrench", "iconItem": "base:pipe-wrench" }
+]

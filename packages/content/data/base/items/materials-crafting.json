@@ -38,6 +38,14 @@
     "tags": ["base:metal-sheet"]
   },
   {
+    "id": "base:glass-shards",
+    "name": "item.base.glass-shards.name",
+    "kind": "material",
+    "weightKg": 0.05,
+    "maxStack": 20,
+    "tags": ["base:glass", "base:sharp"]
+  },
+  {
     "id": "base:scrap-metal",
     "name": "item.base.scrap-metal.name",
     "kind": "material",

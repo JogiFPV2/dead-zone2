@@ -10,6 +10,7 @@ import {
 import { collectGameModeRefs } from './refs-game-mode.js';
 import { collectItemRefs } from './refs-item.js';
 import { collectRecipeRefs } from './refs-recipe.js';
+import { collectTagDefRefs } from './refs-tag.js';
 import {
   collectContainerTypeRefs,
   collectLootTableRefs,
@@ -58,6 +59,9 @@ export function collectRefs(def: IndexedDefinition): RefList {
       break;
     case 'appearancePart':
       collectAppearanceRefs(d.data, r);
+      break;
+    case 'tag':
+      collectTagDefRefs(d.data, r);
       break;
     case 'skill':
     case 'tile':

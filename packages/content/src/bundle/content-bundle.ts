@@ -10,6 +10,7 @@ import type { Profession } from '../schemas/profession.js';
 import type { Recipe } from '../schemas/recipe/recipe.js';
 import type { Skill } from '../schemas/skill.js';
 import type { Station } from '../schemas/station.js';
+import type { TagDef } from '../schemas/tag-def.js';
 import type { Tile } from '../schemas/tile.js';
 import type { Trait } from '../schemas/trait/trait.js';
 import type { WorldSettings } from '../schemas/world-settings.js';
@@ -42,6 +43,8 @@ export type ContentBundle = DeepReadonly<{
   /** Części wyglądu do tworzenia postaci (slot, modelRef, kanały barwienia). */
   appearanceParts: Record<string, AppearancePart>;
   palettes: Record<string, ColorPalette>;
+  /** Definicje tagów przedmiotów (ikona w UI receptur: `iconItem`). */
+  tags: Record<string, TagDef>;
   worldSettings: WorldSettings;
   /** Mody w kolejności wczytywania. */
   mods: ModManifest[];

@@ -15,6 +15,7 @@ import {
   stationName,
 } from './crafting-labels.js';
 import type { HudContentIndex, HudStationDef } from './content-index.js';
+import { partIconItem } from './part-icon.js';
 
 /**
  * Workshop window view models (mockup workshop.png): stations on the left, the selected station's
@@ -67,6 +68,7 @@ export interface RecipeGroupVM {
 
 export interface PartVM {
   name: string;
+  /** Item whose icon is shown (the part's item, or a tag's `iconItem`). */
   item?: string;
   have: number;
   need: number;
@@ -132,13 +134,18 @@ export function maxCraftable(r: RecipeStatusView): number {
   return Math.max(0, n === 99 ? 1 : n);
 }
 
-const partVM = (p: RecipePartView): PartVM => ({
-  name: partName(p),
-  ...(p.item ? { item: p.item } : {}),
-  have: p.have,
-  need: p.need,
-  ok: p.have >= p.need,
-});
+const partVM =
+  (content: HudContentIndex) =>
+  (p: RecipePartView): PartVM => {
+    const item = partIconItem(p, content);
+    return {
+      name: partName(p),
+      ...(item ? { item } : {}),
+      have: p.have,
+      need: p.need,
+      ok: p.have >= p.need,
+    };
+  };
 
 const stationKey = (r: RecipeStatusView): string => r.station?.id ?? HAND;
 
@@ -338,8 +345,8 @@ export function recipeDetailVM(
     stateLabel: STATE_LABEL[r.state],
     ...(res ? { item: res.item } : {}),
     resultCount: res?.count ?? 1,
-    parts: r.parts.map(partVM),
-    tools: r.tools.map(partVM),
+    parts: r.parts.map(partVM(content)),
+    tools: r.tools.map(partVM(content)),
     skills: skillsVM(r),
     minutes: r.durationMin,
     max: maxCraftable(r),
@@ -375,8 +382,8 @@ export function upgradeVM(
     x: near.x,
     y: near.y,
     recipe: r.id,
-    parts: r.parts.map(partVM),
-    tools: r.tools.map(partVM),
+    parts: r.parts.map(partVM(content)),
+    tools: r.tools.map(partVM(content)),
     skills: skillsVM(r),
     minutes: r.durationMin,
     ready: r.state === 'available',

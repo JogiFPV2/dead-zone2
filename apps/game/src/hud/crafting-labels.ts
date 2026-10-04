@@ -154,6 +154,7 @@ const ITEMS: Record<string, string> = {
   'base:nailed-bat': 'Kij z gwoździami',
   'base:scrap-metal': 'Złom',
   'base:metal-sheet': 'Blacha',
+  'base:glass-shards': 'Kawałki szkła',
   'base:wire': 'Drut',
   'base:battery': 'Bateria',
   'base:thread': 'Nici',

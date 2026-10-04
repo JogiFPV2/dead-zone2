@@ -35,6 +35,7 @@ import przez Vite z `tools/assets/icons/`, bez kopii); broń bez modelu w `items
 | nailed-bat                           | Wooden Bat Barbed          | Quaternius, poly.pizza/m/HSM4KnggSz                                                         | CC0-1.0  |
 | baseball-bat                         | Baseball Bat               | Pichuliru, poly.pizza/m/POXTjdMP2c                                                          | CC0-1.0  |
 | crowbar                              | Crowbar                    | Pichuliru, poly.pizza/m/OS8gAoeDtM                                                          | CC0-1.0  |
+| glass-shards                         | `custom/glass-shards.glb`  | model własny Deadzone (Blender, `build_batch4.py`)                                          | CC0-1.0  |
 
 ## Dźwięki (`apps/game/public/audio/`)
 

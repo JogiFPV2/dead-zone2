@@ -8,6 +8,7 @@ import { checkModeMaps } from './checks/check-mode-maps.js';
 import { checkRecipeKinds } from './checks/check-recipe-kinds.js';
 import { checkRecipeLearning } from './checks/check-recipe-learning.js';
 import { checkStations } from './checks/check-stations.js';
+import { checkTagIcons } from './checks/check-tag-icons.js';
 import { checkVhs } from './checks/check-vhs.js';
 import { checkAppearance } from './checks/check-appearance.js';
 import { checkCharacterCreation } from './checks/check-character-creation.js';
@@ -69,6 +70,7 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   checkRecipeLearning(index, sink);
   checkRecipeKinds(index, sink);
   checkStations(index, sink);
+  checkTagIcons(index, sink);
   checkVhs(index, sink);
   const ccDoc = [...worldDocs]
     .reverse()

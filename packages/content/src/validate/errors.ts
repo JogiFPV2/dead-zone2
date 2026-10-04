@@ -34,7 +34,8 @@ export type ContentErrorCode =
   | 'zone_out_of_bounds'
   | 'mode_map_missing'
   | 'mode_zone_role_missing'
-  | 'mode_zone_id_missing';
+  | 'mode_zone_id_missing'
+  | 'tag_icon_item_mismatch';
 
 export interface ContentError {
   code: ContentErrorCode;

@@ -23,6 +23,7 @@ export const BUNDLE_KEYS = {
   station: 'stations',
   appearancePart: 'appearanceParts',
   palette: 'palettes',
+  tag: 'tags',
 } as const satisfies Record<ContentType, keyof ContentBundle>;
 
 export class ContentValidationError extends Error {

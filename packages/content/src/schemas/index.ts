@@ -24,6 +24,7 @@ export * from './ai-settings.js';
 export * from './openings-settings.js';
 export * from './firearms-settings.js';
 export * from './palette.js';
+export * from './tag-def.js';
 export * from './appearance-part.js';
 export * from './character-creation.js';
 export * from './world-settings.js';

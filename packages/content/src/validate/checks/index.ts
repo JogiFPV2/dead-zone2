@@ -7,6 +7,7 @@ export * from './check-recipe-learning.js';
 export * from './check-mode-maps.js';
 export * from './check-recipe-kinds.js';
 export * from './check-stations.js';
+export * from './check-tag-icons.js';
 export * from './check-vhs.js';
 export * from './check-appearance.js';
 export * from './check-character-creation.js';

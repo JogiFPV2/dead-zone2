@@ -15,6 +15,7 @@ export const CONTENT_TYPES = [
   'station',
   'appearancePart',
   'palette',
+  'tag',
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
@@ -35,6 +36,7 @@ export const CONTENT_FOLDERS: Record<ContentType, string> = {
   station: 'stations',
   appearancePart: 'appearance-parts',
   palette: 'palettes',
+  tag: 'tags',
 };
 
 export const OVERRIDES_FOLDER = 'overrides';
