@@ -643,6 +643,10 @@ export function partHp(car: SnapshotVehicle, part: VehiclePart): number {
       const bit = ['windowFront', 'windowRear', 'windowLeft', 'windowRight'].indexOf(part);
       return ((car.windowsBroken ?? 0) & (1 << bit)) !== 0 ? 0 : 100;
     }
+    // Not in the snapshot (protocol 19): their hp comes in `VehicleStateView.parts`.
+    case 'battery':
+    case 'fuelTank':
+      return 100;
   }
 }
 
