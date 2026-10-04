@@ -57,6 +57,17 @@ describe('settings rows', () => {
     expect(isDirty(d, d)).toBe(false);
   });
 
+  it('Interfejs: Pokazuj hałas is the first row, Tylko głośne by default, ←/→ steps', () => {
+    const rows = settingsRows('interface', d, ctx).filter(isFocusable);
+    expect(rows[0]).toMatchObject({ id: 'noiseDisplay', label: 'Pokazuj hałas', value: 'loud' });
+    const n = rows[0]!;
+    expect(adjustRow(d, n, 'ArrowLeft', false).interface.noiseDisplay).toBe('off');
+    expect(adjustRow(d, n, 'ArrowRight', false).interface.noiseDisplay).toBe('always');
+    expect(adjustRow(d, n, 'Home', false).interface.noiseDisplay).toBe('off');
+    expect(isDirty(adjustRow(d, n, 'End', false), d)).toBe(true);
+    expect(JSON.stringify(n)).toContain('Ściany i piętra go skracają');
+  });
+
   it('Sterowanie lists the current bindings', () => {
     const text = JSON.stringify(settingsRows('controls', d, ctx));
     expect(text).toContain('W · A · S · D');

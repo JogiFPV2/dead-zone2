@@ -44,8 +44,17 @@ export interface AudioSettings {
   muted: boolean;
 }
 
-/** World overlays (zombie health). */
+/**
+ * „Pokazuj hałas”: the noise circle of the own character (hud/noise). `loud` = radius ≥ 10 m.
+ * Added without a version bump (older files lack it, sanitize fills the default).
+ */
+export const NOISE_DISPLAYS = ['off', 'loud', 'always'] as const;
+export type NoiseDisplay = (typeof NOISE_DISPLAYS)[number];
+
+/** World overlays (zombie health, noise circle). */
 export interface InterfaceSettings {
+  /** „Pokazuj hałas”: Wył. / Tylko głośne (default) / Zawsze. */
+  noiseDisplay: NoiseDisplay;
   /** „Pokazuj życie zombie”: small bar over every wounded zombie (off: only the target). */
   showZombieHp: boolean;
   /** Shift + LMB on a zombie marks it as the target and shows its health bubble. */
@@ -78,7 +87,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS },
-  interface: { showZombieHp: false, targetZombieHp: true },
+  interface: { noiseDisplay: 'loud', showZombieHp: false, targetZombieHp: true },
   view: {
     cameraZoom: 1,
     minimapZoom: 1,
@@ -128,6 +137,9 @@ export function sanitizeSettings(raw: unknown): Settings {
     version: SETTINGS_VERSION,
     input: { bindings: sanitizeBindings(obj(r.input).bindings) },
     interface: {
+      noiseDisplay: (NOISE_DISPLAYS as readonly unknown[]).includes(ui.noiseDisplay)
+        ? (ui.noiseDisplay as NoiseDisplay)
+        : di.noiseDisplay,
       showZombieHp: bool(ui.showZombieHp, di.showZombieHp),
       targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
     },

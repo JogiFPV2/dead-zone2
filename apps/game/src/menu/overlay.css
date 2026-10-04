@@ -835,3 +835,121 @@
   color: var(--color-text-muted);
   cursor: pointer;
 }
+
+/* Ustawienia › Interfejs: Pokazuj hałas card + preview (settings-noise.png) */
+.dzo-cols {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.dzo-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dzo-row--card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 10px 12px 12px;
+  background: rgba(30, 35, 39, 0.55);
+  border-radius: var(--radius-sm);
+}
+.dzo-card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+}
+.dzo-opts--card {
+  width: auto;
+}
+.dzo-opts--card .dzo-opt {
+  flex: none;
+  min-width: 118px;
+  height: 38px;
+}
+.dzo-legend {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  row-gap: 9px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-default);
+  font: 500 11px var(--font-family-sans);
+}
+.dzo-legend-k {
+  color: var(--color-text-muted);
+}
+.dzo-legend-v {
+  color: var(--color-text-disabled);
+}
+.dzo-legend--on.dzo-legend-k {
+  color: var(--color-accent-hi);
+}
+.dzo-legend--on.dzo-legend-v {
+  color: var(--color-text-primary);
+}
+.dzo-warn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 6px 0 10px;
+  padding: 0 12px 12px;
+  border-bottom: 1px solid var(--color-border-default);
+  font: 500 11px var(--font-family-sans);
+  color: var(--color-text-muted);
+}
+.dzo-warn svg {
+  flex: none;
+  color: var(--color-text-muted);
+}
+.dzo-preview {
+  flex: none;
+  width: 380px;
+  margin: 0;
+}
+.dzo-preview-box {
+  position: relative;
+  width: 380px;
+  height: 214px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-default);
+  background: #15191c center / cover no-repeat;
+  overflow: hidden;
+}
+.dzo-preview-box svg {
+  position: absolute;
+  inset: 0;
+}
+.dzo-preview-badge {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(8, 10, 11, 0.72);
+  font: 700 9px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--color-text-primary);
+}
+.dzo-preview-tag {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgba(8, 10, 11, 0.72);
+  font: 500 10px var(--font-family-mono);
+  color: var(--color-text-muted);
+}
+.dzo-preview-tag b {
+  font-weight: 700;
+}
+.dzo-preview-note {
+  margin: 8px 0 0;
+  font: 500 10px/1.5 var(--font-family-mono);
+  color: var(--color-text-disabled);
+}

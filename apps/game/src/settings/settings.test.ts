@@ -113,7 +113,11 @@ describe('loadSettings', () => {
     const r = loadSettings(JSON.stringify({ version: 1, audio: { muted: true } }));
     expect(r.migratedFrom).toBe(1);
     expect(r.settings.audio.muted).toBe(true);
-    expect(r.settings.interface).toEqual({ showZombieHp: false, targetZombieHp: true });
+    expect(r.settings.interface).toEqual({
+      noiseDisplay: 'loud',
+      showZombieHp: false,
+      targetZombieHp: true,
+    });
   });
 
   it('v3 → v4 keeps the data and defaults the graphics style; v4 data loads (#71 builds)', () => {

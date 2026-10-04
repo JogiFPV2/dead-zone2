@@ -20,7 +20,9 @@ import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
 import { displayName } from './characters/display-name.js';
-import { GraphicsStylePass } from './render/graphics-style.js';
+import { GraphicsStylePass, isPixelStyle, pixelRows } from './render/graphics-style.js';
+import { NoiseRingModel } from './hud/noise/noise-model.js';
+import { NoiseRingView } from './hud/noise/noise-ring.js';
 import { addHulls } from './render/style-materials.js';
 import type { GraphicsStyle } from './settings/schema.js';
 import { debounced } from './settings/debounce.js';
@@ -991,7 +993,28 @@ input.on('toggleHints', () => hud.toggleHints(performance.now()));
 window.addEventListener('keydown', (e) => {
   if (settings.get().input.bindings.toggleHints.includes(e.code)) e.preventDefault();
 });
+// Noise circle (HUD v2 spec „Okrąg hałasu”): the own character's latest `playerNoise`, drawn on
+// the ground in world space; filtered by Ustawienia › Interfejs › Pokazuj hałas.
+const noise = new NoiseRingModel();
+const noiseRing = new NoiseRingView(worldRoot);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+settings.subscribe((next) => noise.setDisplay(next.interface.noiseDisplay));
+/** Drawing-buffer px per CSS px for the ring's stroke (pixel styles draw at a lower res). */
+function noisePixelScale(): number {
+  const style = settings.get().graphics.style;
+  const h = Math.max(1, renderer.domElement.clientHeight);
+  return isPixelStyle(style)
+    ? Math.min(pixelRows(style), h * renderer.getPixelRatio()) / h
+    : renderer.getPixelRatio();
+}
 gameState.subscribe((_next, _prev, action) => {
+  if (action.type === 'events') {
+    const display = settings.get().interface.noiseDisplay;
+    for (const e of action.events) {
+      if (e.type === 'playerNoise' && e.playerId === PLAYER_ID)
+        noise.push(e, performance.now(), display);
+    }
+  }
   if (action.type === 'view' && action.view.openings) openings.setStates(action.view.openings);
   if (action.type === 'events') openings.applyEvents(action.events);
   if (action.type === 'view' && action.view.characters) {
@@ -1111,6 +1134,9 @@ if (import.meta.env.DEV) {
       characters,
       /** Current game state (read-only). */
       state: () => gameState.get(),
+      /** Feeds a fake own `playerNoise` to the noise circle (screenshots of the tiers). */
+      noise: (e: Parameters<NoiseRingModel['push']>[0]) =>
+        noise.push(e, performance.now(), settings.get().interface.noiseDisplay),
       shelfFill,
       animals: () => animalViews,
       groundPiles,
@@ -1228,6 +1254,14 @@ renderer.setAnimationLoop((time) => {
     });
     hud.setPrompt(interaction.frame(performance.now(), simTick));
     bigMap.frame(performance.now(), { x: state.x, y: state.y, heading: state.facing });
+    noiseRing.setPixelScale(noisePixelScale());
+    noiseRing.update(
+      noise.sample(performance.now(), reducedMotion.matches, {
+        x: state.x,
+        y: state.y,
+        z: state.z,
+      }),
+    );
     updateReticle(state.x, state.y, performance.now());
   }
   const t0 = performance.now();

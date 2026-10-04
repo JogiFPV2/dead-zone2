@@ -4,8 +4,10 @@ import { keyLabel } from '../hud/key-label.js';
 import { percent } from '../audio/mix.js';
 import {
   GRAPHICS_STYLES,
+  NOISE_DISPLAYS,
   VIEW_DISTANCE_SETTINGS,
   type GraphicsStyle,
+  type NoiseDisplay,
   type Settings,
   type ViewDistance,
 } from '../settings/schema.js';
@@ -28,6 +30,10 @@ export type SettingsRow =
       hint: string;
       options: readonly ChoiceOption[];
       value: string;
+      /** Caption of the active option (default `AKTYWNY`). */
+      activeLabel?: string;
+      /** Card row: one line per option under the options, a warning note and a side preview. */
+      card?: { legend: readonly (ChoiceOption & { text: string })[]; warn: string };
     }
   | { kind: 'info'; label: string; value: string; soon?: boolean };
 
@@ -36,7 +42,7 @@ export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 
 type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice';
 type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
-type ChoiceId = 'style' | 'quality' | 'viewDistance';
+type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay';
 
 const STYLE_LABELS: Record<GraphicsStyle, string> = {
   classic: 'Klasyczny',
@@ -64,6 +70,25 @@ const VIEW: readonly ChoiceOption[] = VIEW_DISTANCE_SETTINGS.map((id) => ({
   id,
   label: VIEW_LABELS[id],
 }));
+/** „Pokazuj hałas” (HUD v2 spec „Okrąg hałasu”, settings-noise.png). */
+const NOISE_LABELS: Record<NoiseDisplay, string> = {
+  off: 'Wył.',
+  loud: 'Tylko głośne',
+  always: 'Zawsze',
+};
+const NOISE: readonly ChoiceOption[] = NOISE_DISPLAYS.map((id) => ({
+  id,
+  label: NOISE_LABELS[id],
+}));
+const NOISE_LEGEND: readonly (ChoiceOption & { text: string })[] = [
+  { id: 'off', label: 'Wył.', text: 'brak okręgu' },
+  {
+    id: 'loud',
+    label: 'Tylko głośne',
+    text: 'od 10 m: bieg, wyważanie, rozbita szyba, barykadowanie, strzał, silnik',
+  },
+  { id: 'always', label: 'Zawsze', text: 'także chodzenie, skradanie, przeszukiwanie, jedzenie' },
+];
 const qualityOf = (cap: number): string =>
   QUALITY.reduce((best, q) => (Math.abs(q.cap - cap) < Math.abs(best.cap - cap) ? q : best)).id;
 
@@ -177,7 +202,20 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
       ];
     case 'interface':
       return [
-        { kind: 'header', label: 'Interfejs' },
+        { kind: 'header', label: 'Interfejs', note: 'Q / E zmień zakładkę' },
+        {
+          kind: 'choice',
+          id: 'noiseDisplay',
+          label: 'Pokazuj hałas',
+          hint: 'Okrąg wokół postaci: jak daleko słychać Twoją ostatnią akcję.',
+          options: NOISE,
+          value: d.interface.noiseDisplay,
+          activeLabel: 'AKTYWNE',
+          card: {
+            legend: NOISE_LEGEND,
+            warn: 'Okrąg pokazuje zasięg na otwartej przestrzeni. Ściany i piętra go skracają.',
+          },
+        },
         {
           kind: 'toggle',
           id: 'showZombieHp',
@@ -220,6 +258,10 @@ export function chooseRow(d: Settings, id: ChoiceId, value: string): Settings {
   if (id === 'style') {
     const style = GRAPHICS_STYLES.find((s) => s === value);
     return style ? { ...d, graphics: { ...d.graphics, style } } : d;
+  }
+  if (id === 'noiseDisplay') {
+    const noiseDisplay = NOISE_DISPLAYS.find((v) => v === value);
+    return noiseDisplay ? { ...d, interface: { ...d.interface, noiseDisplay } } : d;
   }
   if (id === 'viewDistance') {
     const viewDistance = VIEW_DISTANCE_SETTINGS.find((v) => v === value);

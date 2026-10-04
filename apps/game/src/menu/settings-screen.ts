@@ -1,5 +1,6 @@
 import type { AudioEngine } from '../audio/audio-engine.js';
 import { DEFAULT_SETTINGS, type Settings } from '../settings/schema.js';
+import { noisePreview } from './noise-preview.js';
 import type { SettingsStore } from '../settings/store.js';
 import { createConfirm, type ConfirmDialog } from './confirm-dialog.js';
 import { icon } from './icons.js';
@@ -85,9 +86,18 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
         const opts = r.options
           .map((op) => {
             const on = op.id === r.value;
-            return `<button type="button" class="dzo-opt${on ? ' dzo-opt--on' : ''}" data-opt="${op.id}" aria-pressed="${on}" tabindex="-1"><span>${op.label}</span><em>${on ? 'AKTYWNY' : '—'}</em></button>`;
+            return `<button type="button" class="dzo-opt${on ? ' dzo-opt--on' : ''}" data-opt="${op.id}" aria-pressed="${on}" tabindex="-1"><span>${op.label}</span><em>${on ? (r.activeLabel ?? 'AKTYWNY') : '—'}</em></button>`;
           })
           .join('');
+        if (r.card) {
+          const legend = r.card.legend
+            .map(
+              (l) =>
+                `<span class="dzo-legend-k${l.id === r.value ? ' dzo-legend--on' : ''}">${l.label}</span><span class="dzo-legend-v${l.id === r.value ? ' dzo-legend--on' : ''}">${l.text}</span>`,
+            )
+            .join('');
+          return `<div class="${cls} dzo-row--card"${attrs} role="radiogroup" aria-label="${r.label}"><div class="dzo-card-top"><span class="dzo-row-col"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span></span><span class="dzo-opts dzo-opts--card">${opts}</span></div><div class="dzo-legend">${legend}</div></div><div class="dzo-warn">${icon('warning', 15)}<span>${r.card.warn}</span></div>`;
+        }
         return `<div class="${cls}"${attrs} role="radiogroup" aria-label="${r.label}"><span class="dzo-row-col"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span></span><span class="dzo-opts">${opts}</span></div>`;
       }
       case 'info':
@@ -103,9 +113,13 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       return `<button type="button" class="dzo-tab${on ? ' dzo-tab--on' : ''}${tf ? ' dzo-tab--focus' : ''}" role="tab" id="dzo-tab-${t.id}" data-tab="${t.id}" aria-selected="${on}" aria-controls="dzo-tabpanel" tabindex="${tf ? 0 : -1}">${t.label}</button>`;
     }).join('');
     let fi = 0;
-    const body = rows()
+    const list = rows()
       .map((r) => renderRow(r, isFocusable(r) ? fi++ : undefined))
       .join('');
+    const body =
+      tab === 'interface'
+        ? `<div class="dzo-cols"><div class="dzo-col">${list}</div>${noisePreview(draft.interface.noiseDisplay)}</div>`
+        : list;
     // The confirm dialog (if any) lives in the stage too: keep it on top.
     const keep = stage.querySelector('.dzo-confirm');
     stage.innerHTML = `${MINI_LOGO}
