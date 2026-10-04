@@ -50,13 +50,22 @@ describe('sanitizeSettings', () => {
   });
 
   it('keeps view zoom (clamped) and defaults it for files without it', () => {
+    const layers = { markers: true, trail: true, grid: false };
     expect(sanitizeSettings({ version: SETTINGS_VERSION }).view).toEqual({
       cameraZoom: 1,
       minimapZoom: 1,
+      bigMapZoom: 1,
+      bigMapLayers: layers,
     });
-    expect(sanitizeSettings({ view: { cameraZoom: 1.4, minimapZoom: 99 } }).view).toEqual({
+    expect(
+      sanitizeSettings({
+        view: { cameraZoom: 1.4, minimapZoom: 99, bigMapZoom: 0.1, bigMapLayers: { grid: true } },
+      }).view,
+    ).toEqual({
       cameraZoom: 1.4,
       minimapZoom: 4,
+      bigMapZoom: 0.25,
+      bigMapLayers: { ...layers, grid: true },
     });
   });
 });

@@ -9,6 +9,10 @@ import { CameraRig } from './camera/rig.js';
 import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
 import { InteractController } from './hud/v2/interact-controller.js';
+import { createBigMap } from './bigmap/bigmap-view.js';
+import { renderPaper } from './bigmap/paper.js';
+import { SimBigMapSource } from './bigmap/sim-source.js';
+import { NO_BUILDING } from './world/chunk.js';
 import { QUICK_ACCESS, QUICK_ACCESS_READY, type QuickAccessId } from './hud/v2/quick-access.js';
 import { InputMap } from './input/input-map.js';
 import { PlayerInput } from './input/player-input.js';
@@ -329,6 +333,15 @@ if (boot.sim === 'worker') {
     { count: boot.crowd, seed: SIM_SEED },
   );
 }
+// Big map (M) data: the sim's player map (fog bitmap, trail, markers). Subscribed right after the
+// sim starts so the first view (bounds + discovered + trail + markers) is not missed.
+const bigMapSource = new SimBigMapSource(
+  (cmd) => sendBody(cmd).seq,
+  () => PLAYER_ID,
+  (text) => hud.toast(text),
+);
+simWorker?.onView((view) => bigMapSource.applyView(view.worldMap));
+simWorker?.onEvents((events) => bigMapSource.applyEvents(events));
 // The character's single save slot: exit, daily autosave and after-sleep saves all go there.
 let saver: CharacterSaver | undefined;
 if (session && simWorker) {
@@ -565,10 +578,45 @@ const comingSoon = (id: QuickAccessId) => {
 input.on('character', () => comingSoon('character'));
 input.on('skills', () => comingSoon('skills'));
 input.on('journal', () => comingSoon('journal'));
-input.on('map', () => comingSoon('map'));
+// Big map (M), HUD v2 spec §11. The world keeps running while it is open (no pause).
+const bigMap = createBigMap({
+  root: container,
+  source: bigMapSource,
+  toast: (text) => hud.toast(text),
+  paper: () =>
+    renderPaper(
+      world.source,
+      world.range,
+      (x, y) => structures.lookup.at(x, y, world.range.z) !== NO_BUILDING,
+    ),
+  zoom: settings.get().view.bigMapZoom,
+  layers: settings.get().view.bigMapLayers,
+  onView: debounced(400, (bigMapZoom: number, bigMapLayers) =>
+    settings.update((s) => ({ ...s, view: { ...s.view, bigMapZoom, bigMapLayers } })),
+  ),
+  info: () => ({
+    day: gameState.get().clock?.day,
+    minuteOfDay: gameState.get().clock ? lightMinute : undefined,
+    location: boot.map === 'test' ? 'Mapa testowa' : boot.map,
+  }),
+});
+const bigMapPlayer = () => {
+  const p = snapshots.sample(performance.now(), TICK_MS);
+  return p ? { x: p.x, y: p.y, heading: p.facing } : { x: 0, y: 0, heading: 0 };
+};
+const toggleBigMap = () => {
+  if (!bigMap.open) {
+    if (loot.open) loot.hide();
+    inventory.close();
+    workshop.close();
+  }
+  bigMap.toggle(bigMapPlayer());
+};
+input.on('map', toggleBigMap);
 /** Top bar quick access (HUD v2): same as the keys. */
 function quickAccess(id: QuickAccessId): void {
-  if (id === 'inventory') toggleInventory();
+  if (id === 'map') toggleBigMap();
+  else if (id === 'inventory') toggleInventory();
   else if (id === 'crafting') toggleWorkshop();
   else if (id === 'menu') {
     handleEscape(escapeWindows, gameState.get().death !== undefined, () => pause.openMenu());
@@ -576,6 +624,12 @@ function quickAccess(id: QuickAccessId): void {
 }
 // Escape: an open window closes first; with none open, the pause menu (deadzone-menu-spec §6).
 const escapeWindows: readonly Closable[] = [
+  {
+    get open() {
+      return bigMap.open;
+    },
+    close: () => bigMap.escape(),
+  },
   // Sleeping: Esc wakes up first (sleep screen).
   {
     get open() {
@@ -1138,6 +1192,7 @@ renderer.setAnimationLoop((time) => {
       cameraZoom: rig.zoomTarget,
     });
     hud.setPrompt(interaction.frame(performance.now(), simTick));
+    bigMap.frame(performance.now(), { x: state.x, y: state.y, heading: state.facing });
     updateReticle(state.x, state.y, performance.now());
   }
   const t0 = performance.now();

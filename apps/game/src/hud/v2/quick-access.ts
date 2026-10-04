@@ -53,6 +53,7 @@ export const QUICK_ACCESS: readonly QuickAccessDef[] = [
 export const QUICK_ACCESS_READY: ReadonlySet<QuickAccessId> = new Set([
   'inventory',
   'crafting',
+  'map',
   'menu',
 ]);
 
@@ -60,6 +61,7 @@ export const QUICK_ACCESS_READY: ReadonlySet<QuickAccessId> = new Set([
 export function activeQuickAccess(modal: string | undefined): QuickAccessId | undefined {
   if (modal === 'inventory' || modal === 'loot') return 'inventory';
   if (modal === 'workshop') return 'crafting';
+  if (modal === 'map') return 'map';
   return undefined;
 }
 

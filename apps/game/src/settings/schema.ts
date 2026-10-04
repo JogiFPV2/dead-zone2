@@ -61,6 +61,9 @@ export interface ViewSettings {
   cameraZoom: number;
   /** Minimap scale multiplier (1 = spec 2.5 px/m; steps in hud/minimap-zoom.ts). */
   minimapZoom: number;
+  /** Big map (M): last zoom (0.25–4) and layer toggles (HUD v2 spec §11). */
+  bigMapZoom: number;
+  bigMapLayers: { markers: boolean; trail: boolean; grid: boolean };
 }
 
 export interface Settings {
@@ -76,7 +79,12 @@ export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS },
   interface: { showZombieHp: false, targetZombieHp: true },
-  view: { cameraZoom: 1, minimapZoom: 1 },
+  view: {
+    cameraZoom: 1,
+    minimapZoom: 1,
+    bigMapZoom: 1,
+    bigMapLayers: { markers: true, trail: true, grid: false },
+  },
   graphics: {
     style: 'classic',
     pixelRatioCap: 2,
@@ -126,6 +134,12 @@ export function sanitizeSettings(raw: unknown): Settings {
     view: {
       cameraZoom: range(v.cameraZoom, 0.25, 4, dv.cameraZoom),
       minimapZoom: range(v.minimapZoom, 0.25, 4, dv.minimapZoom),
+      bigMapZoom: range(v.bigMapZoom, 0.25, 4, dv.bigMapZoom),
+      bigMapLayers: {
+        markers: bool(obj(v.bigMapLayers).markers, dv.bigMapLayers.markers),
+        trail: bool(obj(v.bigMapLayers).trail, dv.bigMapLayers.trail),
+        grid: bool(obj(v.bigMapLayers).grid, dv.bigMapLayers.grid),
+      },
     },
     graphics: {
       style: (GRAPHICS_STYLES as readonly unknown[]).includes(g.style)

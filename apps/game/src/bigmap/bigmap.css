@@ -1,0 +1,610 @@
+/* Big map (M), deadzone-hud-v2-spec §11 / mockups bigmap*.png. */
+.dz-bm {
+  --bm-n950: #0e1113;
+  --bm-n900: #15191c;
+  --bm-n800: #1e2327;
+  --bm-n700: #2c3337;
+  --bm-n500: #5b6469;
+  --bm-n300: #9aa3a7;
+  --bm-n100: #e4e6e3;
+  --bm-acc: #e0a23a;
+  --bm-acc-hi: #f0c06a;
+  --bm-acc-lo: #c78b2a;
+  --bm-dan-t: #e8766c;
+  --bm-mono: var(--font-family-mono, ui-monospace, monospace);
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-modal, 50) + 2);
+  overflow: hidden;
+  color: var(--bm-n100);
+  font-family: var(--bm-mono);
+  user-select: none;
+  pointer-events: auto;
+}
+.dz-bm[hidden] {
+  display: none;
+}
+/* The map has its own bars: HUD and the HUD v2 top bar step aside. */
+[data-modal='map'] .dz-hud,
+[data-modal='map'] .dz-topbar {
+  visibility: hidden;
+}
+.dz-bm button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.dz-bm__stage {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+.dz-bm__stage:active {
+  cursor: grabbing;
+}
+.dz-bm__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.dz-bm__edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(8, 10, 11, 0.35) 100%);
+}
+.dz-bm__pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dz-bm__mark {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.dz-bm__pin {
+  position: absolute;
+  left: -15px;
+  top: -15px;
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--c);
+  background: rgba(21, 25, 28, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.dz-bm__pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: var(--c);
+  border-bottom: 0;
+}
+.dz-bm__mark.deleting .dz-bm__pin {
+  animation: dz-bm-del 0.5s linear forwards;
+}
+@keyframes dz-bm-del {
+  to {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+}
+.dz-bm__tag {
+  position: absolute;
+  white-space: nowrap;
+  font: 600 11px var(--bm-mono);
+  color: var(--bm-n100);
+  background: rgba(21, 25, 28, 0.9);
+  border: 1px solid var(--bm-n700);
+  border-left: 3px solid var(--bm-n700);
+  border-radius: 4px;
+  padding: 4px 7px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.dz-bm__tag--r {
+  left: 22px;
+  top: -12px;
+}
+.dz-bm__tag--l {
+  right: 22px;
+  top: -12px;
+}
+.dz-bm__tag--b {
+  left: 0;
+  top: 22px;
+  transform: translateX(-50%);
+}
+.dz-bm__tag--t {
+  left: 0;
+  bottom: 22px;
+  transform: translateX(-50%);
+}
+.dz-bm__player {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.dz-bm__glow {
+  position: absolute;
+  left: -26px;
+  top: -26px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 162, 58, 0.35), rgba(224, 162, 58, 0) 70%);
+}
+.dz-bm__arrow {
+  position: absolute;
+  left: -14px;
+  top: -14px;
+}
+.dz-bm__tag--you {
+  left: 18px;
+  top: 8px;
+  color: var(--bm-acc-hi);
+  border-color: var(--bm-acc-lo);
+  border-left-width: 1px;
+}
+.dz-bm__dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 11, 0.18);
+  pointer-events: none;
+  display: none;
+}
+.dz-bm.editing .dz-bm__dim {
+  display: block;
+}
+.dz-bm__temp {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.dz-bm__temp .dz-bm__pin {
+  pointer-events: none;
+}
+.dz-bm__ring {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px dashed var(--bm-acc-hi);
+  opacity: 0.9;
+}
+/* 24 px connector from the pin to the panel. */
+.dz-bm__temp::after {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: -1px;
+  width: 24px;
+  height: 1.5px;
+  background: var(--bm-acc-lo);
+}
+.dz-bm__temp.flipped::after {
+  left: -46px;
+}
+
+/* Top bar 1280×52 */
+.dz-bm__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  background: rgba(14, 17, 19, 0.93);
+  border-bottom: 1px solid rgba(91, 100, 105, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.dz-bm__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dz-bm__h1 {
+  font: 700 19px/1 var(--bm-mono);
+  letter-spacing: 0.12em;
+}
+.dz-bm__sub {
+  margin-top: 4px;
+  font-size: 9.5px;
+  color: var(--bm-n300);
+  white-space: nowrap;
+  white-space: nowrap;
+}
+.dz-bm__vsep {
+  width: 1px;
+  height: 28px;
+  background: var(--bm-n700);
+}
+.dz-bm__grp {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(30, 35, 39, 0.8);
+  border: 1px solid var(--bm-n700);
+  border-radius: 6px;
+}
+.dz-bm__ib {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-bm__ib:hover {
+  background: rgba(224, 162, 58, 0.14);
+}
+.dz-bm__ib--box {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--bm-n700) !important;
+  border-radius: 6px;
+}
+.dz-bm__zoom {
+  width: 52px;
+  text-align: center;
+  font: 700 12px var(--bm-mono);
+  color: var(--bm-acc-hi);
+}
+.dz-bm__h6 {
+  font: 700 10px var(--bm-mono);
+  letter-spacing: 0.1em;
+  color: var(--bm-n500);
+}
+.dz-bm__chip {
+  height: 30px;
+  padding: 0 10px !important;
+  border-radius: 5px;
+  border: 1px solid var(--bm-n700) !important;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 11px var(--bm-mono) !important;
+  letter-spacing: 0.03em;
+  color: var(--bm-n300) !important;
+}
+.dz-bm__chip.on {
+  border-color: var(--bm-acc-lo) !important;
+  background: rgba(224, 162, 58, 0.12) !important;
+  color: var(--bm-n100) !important;
+}
+.dz-bm__bx {
+  width: 13px;
+  height: 13px;
+  box-sizing: border-box;
+  border-radius: 3px;
+  border: 1px solid var(--bm-n500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-bm__chip.on .dz-bm__bx,
+.dz-bm__edit.mini-on .dz-bm__mini .dz-bm__bx {
+  background: var(--bm-acc);
+  border-color: var(--bm-acc);
+}
+.dz-bm__cnt {
+  color: var(--bm-n500);
+}
+.dz-bm__flex {
+  flex: 1;
+}
+.dz-bm__scale {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dz-bm__scale-lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--bm-n300);
+}
+.dz-bm__scale-bar {
+  display: flex;
+  height: 6px;
+  border: 1px solid var(--bm-n300);
+}
+.dz-bm__scale-bar span {
+  flex: 1;
+}
+.dz-bm__scale-bar span.on {
+  background: var(--bm-n100);
+}
+.dz-bm__close {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dz-bm__key {
+  font: 700 11px var(--bm-mono);
+  letter-spacing: 0.03em;
+  color: var(--bm-n300);
+  border: 1px solid var(--bm-n500);
+  background: rgba(14, 17, 19, 0.88);
+  border-radius: 4px;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+.dz-bm__key--acc {
+  color: var(--bm-n950);
+  border-color: var(--bm-n950);
+  background: transparent;
+  padding: 1px 5px;
+  font-size: 9px;
+}
+
+/* Footer 1280×38 */
+.dz-bm__foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 38px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  background: rgba(14, 17, 19, 0.93);
+  border-top: 1px solid rgba(91, 100, 105, 0.45);
+  font: 500 10px var(--bm-mono);
+  color: var(--bm-n300);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.dz-bm__k {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
+}
+.dz-bm__cur {
+  color: var(--bm-n100);
+}
+.dz-bm__dot {
+  color: var(--bm-n500);
+}
+.dz-bm__disc {
+  color: var(--bm-acc-hi);
+}
+
+/* North, legend */
+.dz-bm__north {
+  position: absolute;
+  left: 30px;
+  top: 70px;
+  width: 38px;
+  height: 52px;
+  box-sizing: border-box;
+  padding-top: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(21, 25, 28, 0.82);
+  border: 1px solid var(--bm-n700);
+  border-radius: 6px;
+  font: 700 11px var(--bm-mono);
+  pointer-events: none;
+}
+.dz-bm__legend {
+  position: absolute;
+  right: 18px;
+  bottom: 56px;
+  width: 214px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: rgba(21, 25, 28, 0.96);
+  border: 1px solid var(--bm-n700);
+  border-radius: 8px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.58);
+  font: 500 11px var(--bm-mono);
+  color: var(--bm-n300);
+}
+.dz-bm__legend-head {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+  color: var(--bm-n500) !important;
+}
+.dz-bm__legend.collapsed .dz-bm__legend-body {
+  display: none;
+}
+.dz-bm__legend.collapsed .dz-bm__legend-head {
+  margin-bottom: 0;
+}
+.dz-bm__lrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 22px;
+  white-space: nowrap;
+}
+.dz-bm__sep {
+  height: 1px;
+  margin: 8px 0;
+  background: var(--bm-n700);
+}
+.dz-bm__sep--wide {
+  margin: 12px 0;
+}
+.dz-bm__fogsw {
+  width: 26px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #5c5344, #d9ccaa);
+}
+
+/* Marker edit panel (318 px) */
+.dz-bm__edit {
+  position: absolute;
+  width: 318px;
+  box-sizing: border-box;
+  padding: 16px 18px;
+  background: rgba(21, 25, 28, 0.96);
+  border: 1px solid var(--bm-n700);
+  border-radius: 8px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.58);
+  cursor: default;
+}
+.dz-bm__edit[hidden] {
+  display: none;
+}
+.dz-bm__edit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.dz-bm__edit-title {
+  font: 700 15px var(--bm-mono);
+  letter-spacing: 0.08em;
+}
+.dz-bm__edit-info {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--bm-n300);
+}
+.dz-bm__icons {
+  display: grid;
+  grid-template-columns: repeat(5, 46px);
+  gap: 6px 7px;
+  margin-top: 7px;
+}
+.dz-bm__icon {
+  width: 46px;
+  height: 42px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bm-n700) !important;
+  background: rgba(14, 17, 19, 0.5) !important;
+}
+.dz-bm__icon.on {
+  border-color: var(--bm-acc) !important;
+  background: rgba(224, 162, 58, 0.14) !important;
+}
+.dz-bm__h6--gap {
+  margin: 14px 0 8px;
+}
+.dz-bm__colors {
+  display: flex;
+  gap: 12px;
+  padding-left: 2px;
+}
+.dz-bm__color {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.dz-bm__color.on {
+  box-shadow:
+    0 0 0 2px #15191c,
+    0 0 0 4px var(--bm-acc-hi);
+}
+.dz-bm__desc-head {
+  display: flex;
+  justify-content: space-between;
+  margin: 14px 0 7px;
+}
+.dz-bm__count {
+  font-size: 10px;
+  color: var(--bm-n500);
+}
+.dz-bm__text {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--bm-acc-lo);
+  border-radius: 5px;
+  background: rgba(14, 17, 19, 0.8);
+  color: var(--bm-n100);
+  font: 500 12px var(--bm-mono);
+  box-shadow: 0 0 0 2px rgba(224, 162, 58, 0.12);
+  outline: none;
+  user-select: text;
+}
+.dz-bm__mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font: 500 10px var(--bm-mono);
+  color: var(--bm-n300);
+  cursor: pointer;
+}
+.dz-bm__mini input {
+  display: none;
+}
+.dz-bm__btns {
+  display: flex;
+  gap: 7px;
+}
+.dz-bm__btn {
+  height: 36px;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px !important;
+  font: 700 12px var(--bm-mono) !important;
+  letter-spacing: 0.025em;
+}
+.dz-bm__btn--pri {
+  flex: 1.25;
+  gap: 7px;
+  background: var(--bm-acc) !important;
+  color: var(--bm-n950) !important;
+}
+.dz-bm__btn--dan {
+  border: 1px solid rgba(200, 69, 60, 0.45) !important;
+  background: rgba(200, 69, 60, 0.08) !important;
+  color: var(--bm-dan-t) !important;
+}
+.dz-bm__btn--sec {
+  border: 1px solid var(--bm-n700) !important;
+  background: rgba(14, 17, 19, 0.52) !important;
+}
+.dz-bm__btn--sec .dz-bm__key {
+  padding: 1px 5px;
+  font-size: 9px;
+}
