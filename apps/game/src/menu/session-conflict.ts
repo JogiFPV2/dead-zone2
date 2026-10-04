@@ -125,16 +125,20 @@ export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
   el.className = 'dza-conflict-layer';
   el.setAttribute('role', 'alertdialog');
   const gone = o.kind === 'gone';
+  // 409 with `server: null`: the server has no save of this character, nothing to load.
+  const canLoad = !gone && o.server !== null;
   // „Zapisz i wyjdź” → 409: the player wanted to leave, so WYJDŹ DO MENU is the primary [ZAŁ.].
-  const menuFirst = gone || o.trigger === 'exit';
+  const menuFirst = !canLoad || o.trigger === 'exit';
   const rows = gone ? undefined : compareRows(o.server, o.local, now);
   const title = gone ? 'TA POSTAĆ NIE ŻYJE' : 'TA POSTAĆ BYŁA GRANA<br>NA INNYM URZĄDZENIU';
   el.setAttribute('aria-label', title.replace('<br>', ' '));
   const body = gone
     ? `${esc(o.name)} ${o.female ? 'zginęła' : 'zginął'} na innym urządzeniu. Zostaje nagrobek.`
-    : `${esc(o.name)} ma na serwerze nowszy stan. Wczytaj go, żeby grać dalej. Postęp z tego komputera od ostatniego zapisu przepadnie.`;
+    : canLoad
+      ? `${esc(o.name)} ma na serwerze nowszy stan. Wczytaj go, żeby grać dalej. Postęp z tego komputera od ostatniego zapisu przepadnie.`
+      : `Na serwerze nie ma zapisu postaci ${esc(o.name)}, więc nie ma czego wczytać.`;
   const menuBtn = `<button type="button" class="dza-btn ${menuFirst ? 'dza-btn--pri dza-btn--focus' : 'dza-btn--sec'}" data-act="menu">${icon('exit', 15)}WYJDŹ DO MENU</button>`;
-  const loadBtn = gone
+  const loadBtn = !canLoad
     ? ''
     : `<button type="button" class="dza-btn ${menuFirst ? 'dza-btn--sec' : 'dza-btn--pri dza-btn--focus'}" data-act="load">${icon('download', 15)}WCZYTAJ NOWSZY STAN</button>`;
   const hints = gone

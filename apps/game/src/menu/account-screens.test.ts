@@ -230,9 +230,10 @@ describe('Konflikt sesji', () => {
     expect(el.querySelector('.dza-toast')).toBeNull();
   });
 
-  it('409 with server: null → the table names no save on the server', () => {
+  it('409 with server: null → brak zapisu, no WCZYTAJ NOWSZY STAN; Enter goes to the menu', () => {
     const el = host();
-    showSaveConflict({
+    const on = { load: vi.fn(), menu: vi.fn() };
+    const d = showSaveConflict({
       host: el,
       kind: 'conflict',
       name: 'Marta Nowak',
@@ -241,11 +242,18 @@ describe('Konflikt sesji', () => {
       local,
       server: null,
       now,
-      onLoadNewer: vi.fn(),
-      onMenu: vi.fn(),
+      onLoadNewer: on.load,
+      onMenu: on.menu,
     });
     expect(el.querySelector('.dza-cmp-new')?.textContent).toBe('brak zapisu');
+    expect(el.querySelector('[data-act="load"]')).toBeNull();
+    expect(el.textContent).not.toContain('WCZYTAJ NOWSZY STAN');
+    expect(el.querySelectorAll('.dza-btn')).toHaveLength(1);
+    expect(el.querySelector('[data-act="menu"]')?.classList.contains('dza-btn--pri')).toBe(true);
     expect(el.querySelector('.dza-cmp-old')?.textContent).toBe('dzień 12, 06:00 · dzisiaj, 10:58');
+    d.onKey(key('Enter'));
+    expect(on.menu).toHaveBeenCalled();
+    expect(on.load).not.toHaveBeenCalled();
   });
 
   it('410: TA POSTAĆ NIE ŻYJE, one button to the menu', () => {
