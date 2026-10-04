@@ -1,6 +1,6 @@
 import { GroundField } from './ground.js';
 import { polyLength } from './geom.js';
-import type { RoadClass, WorldPlan } from './plan.js';
+import type { Area, RoadClass, WorldPlan } from './plan.js';
 import { RoadIndex } from './plan.js';
 
 export interface PlanStats {
@@ -28,6 +28,8 @@ export function planStats(plan: WorldPlan): PlanStats {
   for (const r of plan.roads)
     roadKm[r.cls] = Math.round(((roadKm[r.cls] ?? 0) + polyLength(r.pts) / 1000) * 10) / 10;
   const field = new GroundField(plan);
+  // Lakes and ponds are areas over the ground: they count as water.
+  const wet = plan.areas.filter((a) => a.kind === 'lake' || a.kind === 'pond');
   const cover: Record<string, number> = {};
   const N = 6000;
   let s = plan.seed * 7 + 1;
@@ -38,7 +40,7 @@ export function planStats(plan: WorldPlan): PlanStats {
   for (let i = 0; i < N; i++) {
     const x = rnd() * plan.size;
     const y = rnd() * plan.size;
-    const g = field.at(x, y);
+    const g = wet.some((a) => inArea(a, x, y)) ? 'water' : field.at(x, y);
     const k = g === 'forest' || g === 'water' || g === 'urban' ? g : 'fields/meadows';
     cover[k] = (cover[k] ?? 0) + 1 / N;
     dists.push(index.nearest(x, y, 3000)?.d ?? 3000);
@@ -78,4 +80,13 @@ export function planStats(plan: WorldPlan): PlanStats {
     emptyCells: Math.round((empty / (n * n)) * 1000) / 1000,
     p95RoadDist: Math.round(dists[Math.floor(N * 0.95)] ?? 0),
   };
+}
+
+/** Point inside an area (ellipse when `round`). */
+export function inArea(a: Area, x: number, y: number): boolean {
+  const dx = x - a.x;
+  const dy = y - a.y;
+  const u = (dx * Math.cos(a.a) + dy * Math.sin(a.a)) / (a.w / 2);
+  const v = (-dx * Math.sin(a.a) + dy * Math.cos(a.a)) / (a.h / 2);
+  return a.round ? u * u + v * v <= 1 : Math.abs(u) <= 1 && Math.abs(v) <= 1;
 }

@@ -32,6 +32,9 @@ const save = (
   h: number,
   chunkGrid = false,
 ) => {
+  // DZ_ONLY=overview,v4-water renders just those views (quick iteration).
+  const only = process.env.DZ_ONLY?.split(',');
+  if (only && !only.includes(name)) return;
   const img = renderMap(plan, { x0, y0, mpp, w, h, chunkGrid });
   writeFileSync(join(out, `${prefix}-${name}.png`), encodePng(w, h, img));
   const inView = (x: number, y: number) =>
@@ -46,8 +49,26 @@ const save = (
       .filter((a) => a.kind === 'lake' && a.name)
       .map((a) => ({ text: a.name ?? '', kind: 'lake', x: a.x, y: a.y })),
     ...plan.complexes
-      .filter((c) => c.name && (c.kind === 'military' || c.kind === 'resort' || c.kind === 'farm'))
+      .filter(
+        (c) =>
+          c.name &&
+          (c.kind === 'military' ||
+            c.kind === 'resort' ||
+            c.kind === 'farm' ||
+            c.kind === 'sawmill' ||
+            c.kind === 'gravel' ||
+            c.kind === 'sugar' ||
+            c.kind === 'ponds' ||
+            (c.kind === 'station' && mpp <= 3)),
+      )
       .map((c) => ({ text: c.name ?? '', kind: c.kind, x: c.x, y: c.y })),
+    ...plan.hills.map((h) => ({ text: `▲ ${h.name}`, kind: 'hill', x: h.x, y: h.y })),
+    ...plan.waterways
+      .filter((w) => w.name)
+      .map((w) => {
+        const m = w.pts[Math.floor(w.pts.length / 2)] ?? { x: -1, y: -1 };
+        return { text: w.name ?? '', kind: 'river', x: m.x, y: m.y };
+      }),
   ]
     .filter((l) => inView(l.x, l.y))
     .map(({ text, kind, x, y }) => ({ text, kind, ...px(x, y) }));
@@ -124,7 +145,9 @@ if (main) {
   const cx = main.x + Math.cos(ang) * main.r * 1.2;
   const cy = main.y + Math.sin(ang) * main.r * 1.2;
   save('v3-suburbs', cx - 1200, cy - 1200, 2400 / 1600, 1600, 1600);
-  const inCity = plan.bridges.filter((b) => Math.hypot(b.x - main.x, b.y - main.y) < main.r * 1.2);
+  const inCity = plan.bridges.filter(
+    (b) => b.over === 'river' && Math.hypot(b.x - main.x, b.y - main.y) < main.r * 1.2,
+  );
   if (inCity.length) {
     const bx = inCity.reduce((s, b) => s + b.x, 0) / inCity.length;
     const by = inCity.reduce((s, b) => s + b.y, 0) / inCity.length;
@@ -157,6 +180,33 @@ save('v3-overview', 0, 0, size / 2048, 2048, 2048);
 {
   const b = plan.settlements.find((s) => s.name === 'Borowiec');
   if (b) save('v3-borowiec', b.x - 2000, b.y - 2000, 4000 / 1600, 1600, 1600);
+}
+// v4 review views: water (lakes, tributaries, ponds, wetlands), the countryside (fields of
+// every size, orchards, wasteland, hills, a PGR), industry (Lipowiec, the branch line, the
+// sugar factory), and close-ups of the fish ponds, the sawmill and the gravel pit.
+save('v4-overview', 0, 0, size / 2048, 2048, 2048);
+{
+  const lakes = plan.areas.filter((a) => a.kind === 'lake' && a.name).sort((a, b) => b.w - a.w);
+  const l = lakes[0];
+  if (l) save('v4-water', l.x - 2600, l.y - 2600, 5200 / 1600, 1600, 1600);
+  const pgr = plan.complexes.find((c) => c.name === 'PGR Olszynki');
+  if (pgr) save('v4-country', pgr.x - 1800, pgr.y - 1800, 3600 / 1600, 1600, 1600);
+  const sugar = plan.complexes.find((c) => c.kind === 'sugar');
+  const lip = plan.settlements.find((s) => s.name === 'Lipowiec');
+  if (sugar && lip) {
+    const mx = (sugar.x + lip.x) / 2;
+    const my = (sugar.y + lip.y) / 2;
+    const half = Math.max(1300, Math.hypot(sugar.x - lip.x, sugar.y - lip.y) / 2 + 600);
+    save('v4-lipowiec', mx - half, my - half, (2 * half) / 1600, 1600, 1600);
+    save('v4-cukrownia', sugar.x - 350, sugar.y - 350, 700 / 1200, 1200, 1200);
+  }
+  const close = (name: string, kind: string, half: number) => {
+    const c = plan.complexes.find((k) => k.kind === kind);
+    if (c) save(name, c.x - half, c.y - half, (2 * half) / 1200, 1200, 1200);
+  };
+  close('v4-stawy', 'ponds', 450);
+  close('v4-tartak', 'sawmill', 350);
+  close('v4-zwirownia', 'gravel', 500);
 }
 const mil = plan.complexes.find((c) => c.kind === 'military');
 if (mil) save('military', mil.x - 768, mil.y - 768, 0.75, 2048, 2048);

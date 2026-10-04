@@ -95,8 +95,8 @@ describe('old town (irregular core of every city and town)', { timeout: 60_000 }
       )
       .digest('hex');
     expect({ version: WORLD_PLAN_VERSION, digest: d }).toEqual({
-      version: 'plan-3',
-      digest: 'a76897856eecf3e06398ef89a0ff804427cf1803',
+      version: 'plan-4',
+      digest: 'be0d9b32dbfb1053250e4b912f28ceb7eea1cc09',
     });
   });
 });

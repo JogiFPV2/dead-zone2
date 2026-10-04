@@ -1,4 +1,4 @@
-import { segDist, type Pt } from './geom.js';
+import { PolylineIndex, segDist, type Pt } from './geom.js';
 import { forestNoise, type WorldPlan } from './plan.js';
 import { hash3, valueNoise } from './rng.js';
 
@@ -14,7 +14,9 @@ export type Ground =
   | 'plowed'
   | 'corn'
   | 'fallow'
-  | 'hedge';
+  | 'hedge'
+  /** Flood meadows (łąki zalewowe) on the valley floors by the river and its tributaries. */
+  | 'floodmeadow';
 
 const CROPS: Ground[] = [
   'wheat',
@@ -34,7 +36,7 @@ export const isFarmland = (g: Ground): boolean => g !== 'water' && g !== 'urban'
 /** What the land cover needs from a plan (it also runs on a plan still being built). */
 export type GroundPlan = Pick<
   WorldPlan,
-  'seed' | 'size' | 'river' | 'riverWidth' | 'settlements' | 'forestThreshold'
+  'seed' | 'size' | 'river' | 'riverWidth' | 'settlements' | 'forestThreshold' | 'waterways'
 >;
 
 /** Field region at a point (jittered Voronoi, 1.4 km): its id hash and strip angle. */
@@ -58,11 +60,52 @@ export function fieldRegion(seed: number, x: number, y: number): { id: number; a
   return { id: rid, ang: ((rid % 360) / 360) * Math.PI };
 }
 
+/** How a field region is cut: peasant strips, medium plots, or big state-farm (PGR) fields. */
+export type FieldStyle = 'strips' | 'plots' | 'pgr';
+
+/**
+ * The field parcel at a point: its region's style, the parcel's width across / length along
+ * the furrows, its id (crop) and the position inside it (0–1). Columns are staggered so the
+ * parcels do not line up into a chessboard.
+ */
+export function fieldParcel(
+  seed: number,
+  x: number,
+  y: number,
+): { style: FieldStyle; w: number; l: number; id: number; fu: number; fv: number } {
+  const { id: rid, ang } = fieldRegion(seed, x, y);
+  const roll = rid % 10;
+  const style: FieldStyle = roll < 5 ? 'strips' : roll < 8 ? 'plots' : 'pgr';
+  const r1 = (rid >>> 9) % 1000;
+  const r2 = (rid >>> 17) % 1000;
+  const W =
+    style === 'strips' ? 18 + (r1 % 28) : style === 'plots' ? 60 + (r1 % 80) : 250 + (r1 % 300);
+  const L0 =
+    style === 'strips' ? 150 + (r2 % 300) : style === 'plots' ? 120 + (r2 % 180) : 300 + (r2 % 350);
+  const u = x * Math.cos(ang) + y * Math.sin(ang);
+  const v = -x * Math.sin(ang) + y * Math.cos(ang);
+  const cu = Math.floor(u / W);
+  const hc = hash3(seed + 17, cu, rid & 0xffff);
+  const L = L0 * (0.7 + ((hc % 1000) / 1000) * 0.6);
+  const vv = v + ((hc >>> 10) % 1000) * 0.001 * L;
+  const cv = Math.floor(vv / L);
+  return {
+    style,
+    w: W,
+    l: L,
+    id: hash3(seed + 13, cu, cv ^ (rid & 0xfff)),
+    fu: u / W - cu,
+    fv: vv / L - cv,
+  };
+}
+
 /** Precomputed lookups for fast per-point land cover. */
 export class GroundField {
   private readonly riverCell = 256;
   private readonly riverCells = new Map<number, number[]>();
+  private readonly ways: PolylineIndex[];
   constructor(readonly plan: GroundPlan) {
+    this.ways = plan.waterways.map((w) => new PolylineIndex(w.pts));
     const r = plan.river;
     for (let i = 1; i < r.length; i++) {
       const a = r[i - 1] as Pt;
@@ -106,6 +149,15 @@ export class GroundField {
     const rd = this.riverDist(x, y);
     const wobble = (valueNoise(p.seed + 3, x / 40, y / 40) - 0.5) * 6;
     if (rd < p.riverWidth / 2 + wobble) return 'water';
+    // Tributaries and streams: water, and flood meadows along the tributaries.
+    let wd = Infinity;
+    let trib = Infinity;
+    p.waterways.forEach((w, i) => {
+      const d = (this.ways[i] as PolylineIndex).distNear(x, y) - w.width / 2;
+      wd = Math.min(wd, d);
+      if (w.kind === 'tributary') trib = Math.min(trib, d);
+    });
+    if (wd < wobble * 0.15) return 'water';
     let nearTown = false;
     for (const s of p.settlements) {
       const pad = s.kind === 'village' ? s.r * 1.8 + 120 : s.r + 260;
@@ -113,26 +165,21 @@ export class GroundField {
     }
     const f = forestNoise(p.seed, x, y, p.size);
     if (!nearTown && f > p.forestThreshold && rd > 70) return 'forest';
-    if (rd < 220) return valueNoise(p.seed + 5, x / 90, y / 90) < 0.6 ? 'meadow' : 'pasture';
+    if (rd < 220) {
+      const n = valueNoise(p.seed + 5, x / 90, y / 90);
+      return n < 0.45 ? 'floodmeadow' : n < 0.7 ? 'meadow' : 'pasture';
+    }
+    if (trib < 90 && !nearTown)
+      return valueNoise(p.seed + 6, x / 70, y / 70) < 0.6 ? 'floodmeadow' : 'meadow';
     if (f > p.forestThreshold - 0.03 && !nearTown) return 'meadow';
     return this.field(x, y);
   }
 
-  /** Field patchwork: regions (jittered Voronoi, 1.4 km) of parallel strips with crops. */
+  /** Field patchwork: regions (jittered Voronoi, 1.4 km) of crops (see `fieldParcel`). */
   private field(x: number, y: number): Ground {
-    const seed = this.plan.seed;
-    const { id: rid, ang } = fieldRegion(seed, x, y);
-    const W = 30 + ((rid >>> 9) % 90); // strip width (Polish fields are narrow)
-    const L = 160 + ((rid >>> 17) % 300);
-    const u = x * Math.cos(ang) + y * Math.sin(ang);
-    const v = -x * Math.sin(ang) + y * Math.cos(ang);
-    const cu = Math.floor(u / W);
-    const cv = Math.floor(v / L);
-    const ph = hash3(seed + 13, cu, cv ^ (rid & 0xfff));
-    const fu = u / W - cu;
-    const fv = v / L - cv;
+    const q = fieldParcel(this.plan.seed, x, y);
     // Hedgerows / balks on some parcel borders.
-    if (ph % 7 === 0 && (fu < 3 / W || fv < 3 / L)) return 'hedge';
-    return CROPS[ph % CROPS.length] ?? 'meadow';
+    if (q.id % 7 === 0 && (q.fu * q.w < 3 || q.fv * q.l < 3)) return 'hedge';
+    return CROPS[q.id % CROPS.length] ?? 'meadow';
   }
 }

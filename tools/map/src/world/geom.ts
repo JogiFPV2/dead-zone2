@@ -202,6 +202,17 @@ export class PolylineIndex {
     return d;
   }
 
+  /** Distance if within about one grid cell, else `Infinity` (cheap test far from the line). */
+  distNear(x: number, y: number): number {
+    let d = Infinity;
+    for (const i of this.near(x, y, 1)) {
+      const a = this.pts[i - 1] as Pt;
+      const b = this.pts[i] as Pt;
+      d = Math.min(d, segDist(x, y, a.x, a.y, b.x, b.y).d);
+    }
+    return d;
+  }
+
   /** Every crossing of segment ab with the polyline (`seg` = index of its segment end point). */
   crossings(a: Pt, b: Pt): { x: number; y: number; t: number; seg: number }[] {
     const l = dist(a, b);

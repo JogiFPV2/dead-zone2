@@ -18,7 +18,7 @@ import { frontage, planOldTown, ringHit, squareEdges, type OldTown } from './old
 import { fbm, hash3, rand3, rng, valueNoise } from './rng.js';
 import { fieldRegion, GroundField, isFarmland } from './ground.js';
 import { clearFeatures, farmlandMask, largestOpenSquare, OPEN_CELL } from './openland.js';
-import { baseHeight, traceRiver } from './terrain.js';
+import { baseHeight, hillsOf, traceRiver, traceStream, type Hill } from './terrain.js';
 
 /**
  * World macro plan (Silnik 2 generator, step 1): from (seed, size) the whole map's layout —
@@ -33,7 +33,9 @@ import { baseHeight, traceRiver } from './terrain.js';
  *
  * Pure: depends only on (seed, size, WORLD_PLAN_VERSION).
  */
-export const WORLD_PLAN_VERSION = 'plan-3';
+/** State farms: PGR Borki by the start town, then two in the open country. */
+const PGR_NAMES = ['PGR Borki', 'PGR Olszynki', 'PGR Zagrodno'];
+export const WORLD_PLAN_VERSION = 'plan-4';
 /** Target world: 16 384 m = 512 × 512 chunks. */
 export const DEFAULT_WORLD_SIZE = 16384;
 /** Fallback when the sim's save can't hold the big world. */
@@ -93,7 +95,11 @@ export type BuildingKind =
   | 'bar'
   | 'garage'
   | 'station'
-  | 'hut';
+  | 'hut'
+  /** Sugar-factory silo (round on the map). */
+  | 'silo'
+  /** Factory chimney. */
+  | 'chimney';
 export interface Footprint extends ORect {
   kind: BuildingKind;
   floors: number;
@@ -118,7 +124,17 @@ export type AreaKind =
   /** Sand beach of a lake resort. */
   | 'beach'
   /** Copse (zagajnik) or clump of trees (kępa śródpolna) among the fields. */
-  | 'copse';
+  | 'copse'
+  /** Fish pond (staw hodowlany), in groups along a stream, dykes between. */
+  | 'pond'
+  /** Wetland (mokradło, bagno) with reeds by the water. */
+  | 'marsh'
+  /** Wasteland (nieużytek): scrub and weeds among the fields. */
+  | 'wasteland'
+  /** Gravel pit (żwirownia) by the river: bare sand and gravel. */
+  | 'gravel'
+  /** Log yard of a sawmill (plac tartaczny). */
+  | 'lumber';
 export interface Area extends ORect {
   kind: AreaKind;
   /** Lakes: their name. */
@@ -128,7 +144,18 @@ export interface Area extends ORect {
 }
 
 export type ComplexKind =
-  'hospital' | 'police' | 'military' | 'industrial' | 'gas' | 'station' | 'resort' | 'farm';
+  | 'hospital'
+  | 'police'
+  | 'military'
+  | 'industrial'
+  | 'gas'
+  | 'station'
+  | 'resort'
+  | 'farm'
+  | 'sawmill'
+  | 'gravel'
+  | 'sugar'
+  | 'ponds';
 export interface Complex {
   kind: ComplexKind;
   /** Proper name where it has one (Szpital powiatowy, JW 2417, PGR Borki, …). */
@@ -144,6 +171,8 @@ export interface Bridge extends ORect {
   cls: RoadClass;
   /** Index into `roads`. */
   road: number;
+  /** What it spans: Sołwia itself, a tributary or a stream (culvert-sized bridge). */
+  over: 'river' | Waterway['kind'];
 }
 
 /** A row of trees along a road (aleja) or of shrubs on a field balk (miedza z krzakami). */
@@ -151,6 +180,14 @@ export interface TreeLine {
   kind: 'avenue' | 'balk';
   /** One point per tree / bush. */
   pts: Pt[];
+}
+
+/** A tributary of the river (dopływ) or a stream (strumień): centre line and width. */
+export interface Waterway {
+  kind: 'tributary' | 'stream';
+  name?: string;
+  pts: Pt[];
+  width: number;
 }
 
 export interface WorldPlan {
@@ -164,6 +201,10 @@ export interface WorldPlan {
   /** Where the river leaves the map (terrain tilts toward it, `terrain.ts`). */
   riverMouth: Pt;
   bridges: Bridge[];
+  /** Tributaries and streams (they end in the river, another waterway or a lake). */
+  waterways: Waterway[];
+  /** Named hills (the terrain's bumps, `terrain.ts`). */
+  hills: Hill[];
   /** Settlement the player starts in (Lipowiec). */
   start: number;
   settlements: Settlement[];
@@ -480,6 +521,12 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
       const a = pts[k - 1] as Pt;
       const b = pts[k] as Pt;
       if (riverIndex.crossings(a, b).length > 0) return true;
+      for (let w = 0; w < waterways.length; w++)
+        if (
+          (waterways[w] as Waterway).kind === 'tributary' &&
+          (wayIndex[w] as PolylineIndex).crossings(a, b).length > 0
+        )
+          return true;
       if (lakes.length === 0) continue;
       const n = Math.ceil(dist(a, b) / 8);
       for (let i = 0; i <= n; i++)
@@ -613,6 +660,247 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
         const score = forestNoise(seed, x, y, size);
         if (!base || score > base.score) base = { x, y, score };
       }
+  }
+
+  // ---- terrain basins (lakes sit in them) ----
+  const hgt = (x: number, y: number) => baseHeight(seed, size, x, y, traced.mouth);
+  const basins: { x: number; y: number; depth: number }[] = [];
+  {
+    const G = 200;
+    for (let y = G * 3; y < size - G * 3; y += G)
+      for (let x = G * 3; x < size - G * 3; x += G) {
+        const h0 = hgt(x, y);
+        let ring = 0;
+        let lowest = true;
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          const hq = hgt(x + Math.cos(a) * G * 1.6, y + Math.sin(a) * G * 1.6);
+          if (hq < h0) lowest = false;
+          ring += hq;
+        }
+        if (lowest) basins.push({ x, y, depth: ring / 8 - h0 });
+      }
+    basins.sort((a, b) => b.depth - a.depth || a.y - b.y || a.x - b.x);
+  }
+  // Finer hollows (between the hills) for the small lakes, after the big basins.
+  const hollows: { x: number; y: number; depth: number }[] = [];
+  {
+    const G = 120;
+    for (let y = G * 4; y < size - G * 4; y += G)
+      for (let x = G * 4; x < size - G * 4; x += G) {
+        const h0 = hgt(x, y);
+        let ring = 0;
+        let lowest = true;
+        for (let k = 0; k < 8 && lowest; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          const hq = hgt(x + Math.cos(a) * G * 1.8, y + Math.sin(a) * G * 1.8);
+          if (hq < h0) lowest = false;
+          ring += hq;
+        }
+        if (lowest) hollows.push({ x, y, depth: ring / 8 - h0 });
+      }
+    hollows.sort((a, b) => b.depth - a.depth || a.y - b.y || a.x - b.x);
+  }
+
+  // ---- the two big lakes (2–3 km), before any road: roads go round them ----
+  const bigLakes: Area[] = [];
+  {
+    const lr = rng(hash3(seed, 0x1a4e, 5));
+    const LAKE_NAMES = ['Jezioro Czarne', 'Jezioro Białe'];
+    const villages = settlements.filter((v) => v.kind === 'village');
+    const L0 = Math.min(3000, size * 0.18);
+    // Passes: in a forest / by a village at full size, then smaller, then anywhere.
+    for (const pass of [0, 1, 2, 3])
+      for (const b of basins) {
+        if (bigLakes.length >= 2) break;
+        const L = L0 * (pass % 2 === 1 ? 0.75 : 1);
+        if (bigLakes.some((l) => dist(l, b) < Math.min(4500, size * 0.35))) continue;
+        if (Math.min(b.x, b.y, size - b.x, size - b.y) < L / 2 + 300) continue;
+        if (riverDist(b.x, b.y) < L / 2 + 250) continue;
+        if (base && dist(base, b) < L / 2 + 900) continue;
+        if (pass < 2 && !isForest(b.x, b.y, -0.05) && !villages.some((v) => dist(v, b) < 1700))
+          continue;
+        const a = lr() * Math.PI;
+        const ratio = 0.38 + lr() * 0.17;
+        for (let w = L; w >= L * 0.66; w -= L * 0.06) {
+          const h = w * ratio;
+          const clear = settlements.every(
+            (t) => dist(t, b) > w / 2 + t.r * (t.kind === 'village' ? 1.8 : 1.3) + 150,
+          );
+          const cand: Area = { x: b.x, y: b.y, w, h, a, kind: 'lake', round: true };
+          let dry = clear;
+          for (let k = 0; k < 24 && dry; k++) {
+            const t = (k / 24) * Math.PI * 2;
+            const u = (Math.cos(t) * w) / 2;
+            const v = (Math.sin(t) * h) / 2;
+            const q = {
+              x: b.x + u * Math.cos(a) - v * Math.sin(a),
+              y: b.y + u * Math.sin(a) + v * Math.cos(a),
+            };
+            if (riverDist(q.x, q.y) < riverWidth / 2 + 120) dry = false;
+          }
+          if (!dry) continue;
+          cand.name = LAKE_NAMES[bigLakes.length] ?? 'Jezioro';
+          bigLakes.push(cand);
+          areas.push(cand);
+          lakes.push(cand);
+          occ.mark(cand, 10);
+          // Bays and coves (zatoki): lobes on the long shores, so the lake is no plain ellipse.
+          const nLobes = 4 + Math.floor(lr() * 3);
+          for (let k = 0; k < nLobes; k++) {
+            const t =
+              (k % 2 ? Math.PI / 2 : -Math.PI / 2) + (lr() - 0.5) * 2.2 + (k > 3 ? Math.PI / 2 : 0);
+            const f = 0.82 + lr() * 0.12;
+            const u = (Math.cos(t) * w * f) / 2;
+            const v = (Math.sin(t) * h * f) / 2;
+            const lobe: Area = {
+              x: b.x + u * Math.cos(a) - v * Math.sin(a),
+              y: b.y + u * Math.sin(a) + v * Math.cos(a),
+              w: w * (0.16 + lr() * 0.16),
+              h: h * (0.3 + lr() * 0.3),
+              a: a + (lr() - 0.5) * 1.2,
+              kind: 'lake',
+              round: true,
+            };
+            if (riverDist(lobe.x, lobe.y) < lobe.w / 2 + riverWidth / 2 + 120) continue;
+            // Keep the four axis shores clear (a resort's beach goes on one of them).
+            const axisClear = [0, 1, 2, 3].every((q) => {
+              const r = q % 2 === 0 ? w / 2 : h / 2;
+              const qa = a + (q * Math.PI) / 2;
+              const sp = { x: b.x + Math.cos(qa) * r, y: b.y + Math.sin(qa) * r };
+              return dist(sp, lobe) > Math.max(lobe.w, lobe.h) / 2 + 160;
+            });
+            if (!axisClear) continue;
+            if (dist(lobe, b) + lobe.w / 2 > w / 2 + 60) continue;
+            if (settlements.some((t2) => dist(t2, lobe) < lobe.w / 2 + t2.r * 1.5 + 150)) continue;
+            areas.push(lobe);
+            lakes.push(lobe);
+            occ.mark(lobe, 10);
+          }
+          break;
+        }
+      }
+  }
+
+  // ---- tributaries of the river (dopływy) and streams (strumienie) down the terrain ----
+  const waterways: Waterway[] = [];
+  const wayIndex: PolylineIndex[] = [];
+  /** Distance past the bank of the nearest tributary / stream (negative: in the water). */
+  const wayDist = (x: number, y: number): number => {
+    let d = Infinity;
+    waterways.forEach((w, i) => {
+      d = Math.min(d, (wayIndex[i] as PolylineIndex).distNear(x, y) - w.width / 2);
+    });
+    return d;
+  };
+  {
+    const wr = rng(hash3(seed, 0x77a7, 1));
+    const blocked = (p: Pt) =>
+      settlements.some((t) => dist(t, p) < t.r * (t.kind === 'village' ? 1.6 : 1.25) + 60) ||
+      (base !== undefined && dist(base, p) < 700);
+    const nearestRiver = (p: Pt): Pt => {
+      let best = river[0] as Pt;
+      let bd = Infinity;
+      for (let k = 0; k < river.length; k += 3) {
+        const q = river[k] as Pt;
+        const d = dist(q, p);
+        if (d < bd) {
+          bd = d;
+          best = q;
+        }
+      }
+      return best;
+    };
+    const TRIB_NAMES = ['Wierzbianka', 'Bystrzyca', 'Młynówka'];
+    const wantTrib = size >= DEFAULT_WORLD_SIZE ? 3 : 2;
+    const mouthEdge = traced.mouth.y > size ? 's' : 'e';
+    for (let k = 0; k < 300 && waterways.length < wantTrib; k++) {
+      // Sources on the west / east / south edges (not the mouth's), well apart.
+      const edges = ['w', 'e', 's'].filter((e) => e !== mouthEdge);
+      const e = edges[k % edges.length] as string;
+      const t = 0.12 + wr() * 0.76;
+      const start =
+        e === 'w'
+          ? { x: 1, y: size * t }
+          : e === 'e'
+            ? { x: size - 1, y: size * t }
+            : { x: size * t, y: size - 1 };
+      if (waterways.some((w) => dist(w.pts[0] as Pt, start) < size * 0.25)) continue;
+      if (riverDist(start.x, start.y) < size * 0.15) continue;
+      const pts = traceStream(
+        seed,
+        size,
+        traced.mouth,
+        start,
+        nearestRiver,
+        (p) => riverDist(p.x, p.y) < riverWidth / 2 || inLake(p.x, p.y, 0),
+        blocked,
+        wr,
+        70,
+      );
+      if (!pts || polyLength(pts) < size * 0.18) continue;
+      const end = pts[pts.length - 1] as Pt;
+      if (waterways.some((w) => dist(w.pts[w.pts.length - 1] as Pt, end) < 1500)) continue;
+      waterways.push({
+        kind: 'tributary',
+        name: TRIB_NAMES[waterways.length] ?? 'Struga',
+        pts,
+        width: 14,
+      });
+      wayIndex.push(new PolylineIndex(pts));
+    }
+    // Streams from the hills (and other high ground) down to the nearest water.
+    const hills = hillsOf(seed, size);
+    const wantStreams = Math.max(4, Math.round(8 * A));
+    let streams = 0;
+    for (let k = 0; k < 120 && streams < wantStreams; k++) {
+      const h = hills[k % Math.max(1, hills.length)];
+      if (!h) break;
+      const a = wr() * Math.PI * 2;
+      const start = { x: h.x + Math.cos(a) * h.r * 0.5, y: h.y + Math.sin(a) * h.r * 0.5 };
+      if (start.x < 50 || start.y < 50 || start.x > size - 50 || start.y > size - 50) continue;
+      if (blocked(start) || riverDist(start.x, start.y) < 600 || inLake(start.x, start.y, 100))
+        continue;
+      if (waterways.some((w) => w.kind === 'stream' && dist(w.pts[0] as Pt, start) < 1200))
+        continue;
+      const goal = (p: Pt): Pt => {
+        let best = nearestRiver(p);
+        let bd = dist(best, p);
+        for (const w of waterways)
+          for (let j = 0; j < w.pts.length; j += 3) {
+            const q = w.pts[j] as Pt;
+            const d = dist(q, p);
+            if (d < bd) {
+              bd = d;
+              best = q;
+            }
+          }
+        for (const l of lakes)
+          if (dist(l, p) - l.w / 2 < bd) {
+            bd = dist(l, p) - l.w / 2;
+            best = l;
+          }
+        return best;
+      };
+      const pts = traceStream(
+        seed,
+        size,
+        traced.mouth,
+        start,
+        goal,
+        (p) => riverDist(p.x, p.y) < riverWidth / 2 || inLake(p.x, p.y, 0) || wayDist(p.x, p.y) < 0,
+        blocked,
+        wr,
+        40,
+      );
+      if (!pts || polyLength(pts) < 900) continue;
+      waterways.push({ kind: 'stream', pts, width: 5 });
+      wayIndex.push(new PolylineIndex(pts));
+      streams++;
+    }
+    for (const w of waterways)
+      for (let k = 1; k < w.pts.length; k++)
+        occ.markSegment(w.pts[k - 1] as Pt, w.pts[k] as Pt, w.width + 12);
   }
 
   // ---- urban layout: blocks inside a noisy outline, streets along the block edges ----
@@ -1070,6 +1358,7 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
     id: s.id,
   }));
   if (base) obstacles.push({ x: base.x, y: base.y, R: 450, id: -2 });
+  bigLakes.forEach((l, k) => obstacles.push({ x: l.x, y: l.y, R: l.w / 2 + 90, id: -10 - k }));
   const avoid = (a: Pt, b: Pt, skip: ReadonlySet<number>, depth = 0): Pt[] => {
     if (depth > 5) return [a, b];
     for (const o of obstacles) {
@@ -1166,6 +1455,50 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
     for (let k = 1; k < chain.length; k++)
       pts.push(...route(chain[k - 1] as Pt, chain[k] as Pt, 0.015, 200, new Set()).slice(1));
     addRoad('rail', pts);
+  }
+  // Branch line (linia lokalna): off the main line to Lipowiec (its station, Lipowiec PKP) and
+  // on to the map edge beyond it — the sugar factory sits on it (below).
+  let branch: { s: Settlement; station: Pt; road: number } | undefined;
+  {
+    const towns = settlements.filter((s) => s.kind === 'town');
+    const railD = (s: Settlement) => index.nearest(s.x, s.y, size * 2, (k) => k === 'rail')?.d ?? 0;
+    const lip =
+      towns.find((s) => s.name === 'Lipowiec') ?? [...towns].sort((p, q) => railD(q) - railD(p))[0];
+    const hit = lip && index.nearest(lip.x, lip.y, size * 2, (k) => k === 'rail');
+    if (lip && hit && hit.d > lip.r * 2) {
+      const ux = (lip.x - hit.x) / hit.d;
+      const uy = (lip.y - hit.y) / hit.d;
+      // Station on the near side of the town, turned until dry.
+      const R = lip.r * 1.14 + 40;
+      const a0 = Math.atan2(-uy, -ux);
+      let st = { x: lip.x + Math.cos(a0) * R, y: lip.y + Math.sin(a0) * R };
+      for (let k = 1; k < 16 && riverDist(st.x, st.y) < riverWidth / 2 + 120; k++) {
+        const a = a0 + Math.ceil(k / 2) * 0.3 * (k % 2 ? 1 : -1);
+        st = { x: lip.x + Math.cos(a) * R, y: lip.y + Math.sin(a) * R };
+      }
+      // Past the town on its side (the line skirts it) to the edge straight on.
+      const side = { x: -uy, y: ux };
+      const skirt = {
+        x: lip.x + side.x * (lip.r * 1.14 + 160) + ux * lip.r * 0.6,
+        y: lip.y + side.y * (lip.r * 1.14 + 160) + uy * lip.r * 0.6,
+      };
+      let tEdge = Infinity;
+      if (ux > 1e-6) tEdge = Math.min(tEdge, (size - skirt.x) / ux);
+      if (ux < -1e-6) tEdge = Math.min(tEdge, -skirt.x / ux);
+      if (uy > 1e-6) tEdge = Math.min(tEdge, (size - skirt.y) / uy);
+      if (uy < -1e-6) tEdge = Math.min(tEdge, -skirt.y / uy);
+      const edge = {
+        x: Math.min(size, Math.max(0, skirt.x + ux * tEdge)),
+        y: Math.min(size, Math.max(0, skirt.y + uy * tEdge)),
+      };
+      const j = { x: hit.x, y: hit.y };
+      const pts: Pt[] = [j, ...route(j, st, 0.015, 160, new Set()).slice(1)];
+      pts.push(...route(st, skirt, 0.01, 120, new Set()).slice(1));
+      pts.push(...route(skirt, edge, 0.015, 160, new Set()).slice(1));
+      const road = addRoad('rail', pts);
+      stations.push({ s: lip, p: st });
+      branch = { s: lip, station: st, road };
+    }
   }
   for (const c of cities) {
     const hit = index.nearest(c.x, c.y, c.r * 3, (k) => k === 'highway');
@@ -1303,38 +1636,29 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
   // resorts, smaller ones after them ----
   {
     const lr = rng(hash3(seed, 0x1a4e, 3));
-    const hgt = (x: number, y: number) => baseHeight(seed, size, x, y, traced.mouth);
-    const G = 200;
-    const basins: { x: number; y: number; depth: number }[] = [];
-    for (let y = G * 3; y < size - G * 3; y += G)
-      for (let x = G * 3; x < size - G * 3; x += G) {
-        const h0 = hgt(x, y);
-        let ring = 0;
-        let lowest = true;
-        for (let k = 0; k < 8; k++) {
-          const a = (k / 8) * Math.PI * 2;
-          const hq = hgt(x + Math.cos(a) * G * 1.6, y + Math.sin(a) * G * 1.6);
-          if (hq < h0) lowest = false;
-          ring += hq;
-        }
-        if (lowest) basins.push({ x, y, depth: ring / 8 - h0 });
-      }
-    basins.sort((a, b) => b.depth - a.depth || a.y - b.y || a.x - b.x);
     const villages = settlements.filter((v) => v.kind === 'village');
     const nearVillage = (x: number, y: number) => villages.some((v) => dist(v, { x, y }) < 1800);
     const LAKE_NAMES = ['Jezioro Czarne', 'Jezioro Białe'];
     const RESORT_NAMES = ['Ośrodek wypoczynkowy „Zacisze”', 'Ośrodek wypoczynkowy „Słoneczko”'];
     const smallWanted = Math.max(3, Math.round(6 * A));
-    let big = 0;
+    let big = 2;
     let small = 0;
+    bigLakes.forEach((l, k) => resort(l, RESORT_NAMES[k] ?? 'Ośrodek wypoczynkowy', lr));
     for (const pass of [0, 1])
-      for (const b of basins) {
+      for (const b of [...basins, ...hollows]) {
         if (big >= 2 && small >= smallWanted) break;
         if (riverDist(b.x, b.y) < 550) continue;
         if (base && dist(base, b) < 1000) continue;
         if (settlements.some((t) => dist(t, b) < t.r * (t.kind === 'village' ? 1.7 : 1.3) + 250))
           continue;
-        if (pass === 0 && !isForest(b.x, b.y, -0.05) && !nearVillage(b.x, b.y)) continue;
+        // In a forest, by a village, or on a stream (plan-4: a lake the stream runs through).
+        if (
+          pass === 0 &&
+          !isForest(b.x, b.y, -0.05) &&
+          !nearVillage(b.x, b.y) &&
+          wayDist(b.x, b.y) > 300
+        )
+          continue;
         if (lakes.some((l) => dist(l, b) < 900)) continue;
         const farFromNamed = lakes.every((l) => !l.name || dist(l, b) > Math.min(3500, size * 0.3));
         const isBig = big < 2 && farFromNamed;
@@ -1956,6 +2280,328 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
   // ---- open country: farms, roadside stops, field tracks ----
   const inSettlement = (x: number, y: number, pad: number) =>
     settlements.some((s) => dist(s, { x, y }) < s.r * (s.kind === 'village' ? 1.8 : 1) + pad);
+  // ---- plan-4: fish ponds, wetlands, wasteland, orchards; sawmill, gravel pit, sugar factory ----
+  {
+    const lr = rng(hash3(seed, 0x9e4d, 4));
+    const A = (size * size) / (16384 * 16384);
+    const roadNear = (p: Pt, max: number) =>
+      index.nearest(p.x, p.y, max, (c) => c !== 'rail' && c !== 'highway');
+    const dry = (p: Pt, pad: number) =>
+      riverDist(p.x, p.y) > riverWidth / 2 + pad &&
+      !inLake(p.x, p.y, pad) &&
+      wayDist(p.x, p.y) > pad;
+    const nearestName = (p: Pt) =>
+      [...settlements].sort((a, b) => dist(a, p) - dist(b, p))[0]?.name ?? '';
+    /** A track from `p` to the nearest road (if it stays dry). */
+    const access = (p: Pt, max = 900) => {
+      const h = roadNear(p, max);
+      if (h && h.d > 8) addRoad('track', [{ x: h.x, y: h.y }, { ...p }]);
+    };
+    const local = (p: Pt, u: number, v: number, a: number): Pt => ({
+      x: p.x + u * Math.cos(a) - v * Math.sin(a),
+      y: p.y + u * Math.sin(a) + v * Math.cos(a),
+    });
+
+    // Fish ponds (stawy hodowlane): a grid of 3–8 ponds beside a stream, dykes between,
+    // the keeper's house (gajówka stawowa) at the corner.
+    const pondGroups = Math.max(2, Math.round(5 * A));
+    let groups = 0;
+    const order = waterways.map((w, i) => ({ w, i, k: lr() })).sort((p, q) => p.k - q.k);
+    for (const { w } of order) {
+      if (groups >= pondGroups) break;
+      const L = polyLength(w.pts);
+      for (let t = 200 + lr() * 200; t < L - 200 && groups < pondGroups; t += 90 + lr() * 60) {
+        const { p, dx, dy } = pointAt(w.pts, t);
+        const side = lr() < 0.5 ? -1 : 1;
+        const cols = 2 + Math.floor(lr() * 3);
+        const rows = 1 + Math.floor(lr() * 2);
+        const pw = 60 + lr() * 50;
+        const ph = 45 + lr() * 35;
+        const gap = 8;
+        const ang = Math.atan2(dy, dx);
+        const off = w.width / 2 + 45 + (rows * (ph + gap)) / 2;
+        const c = { x: p.x - dy * side * off, y: p.y + dx * side * off };
+        const all = { ...c, w: cols * (pw + gap) + 30, h: rows * (ph + gap) + 30, a: ang };
+        const bad =
+          inSettlement(c.x, c.y, 250) ||
+          isForest(c.x, c.y, 0.04) ||
+          !occ.free(all, 2) ||
+          !dry(c, all.h / 2 - 10) ||
+          riverDist(c.x, c.y) < 200;
+        if (bad || complexes.some((k) => k.kind === 'ponds' && dist(k, c) < 2000)) continue;
+        for (let i = 0; i < cols; i++)
+          for (let j = 0; j < rows; j++) {
+            const q = local(
+              c,
+              (i - (cols - 1) / 2) * (pw + gap),
+              (j - (rows - 1) / 2) * (ph + gap),
+              ang,
+            );
+            areas.push({ ...q, w: pw, h: ph, a: ang, kind: 'pond' });
+          }
+        occ.mark(all);
+        let hp: Pt | undefined;
+        for (const end of [1, -1]) {
+          const q = local(c, end * ((cols * (pw + gap)) / 2 + 34), 0, ang);
+          if (place({ ...q, w: 11, h: 9, a: ang, kind: 'house', floors: 1 }, 0)) {
+            hp = q;
+            break;
+          }
+        }
+        if (!hp) {
+          areas.splice(areas.length - cols * rows, cols * rows);
+          continue;
+        }
+        place({ ...local(hp, 0, 14, ang), w: 8, h: 6, a: ang, kind: 'shed', floors: 1 }, 0);
+        complexes.push({ kind: 'ponds', name: 'Stawy rybne', x: c.x, y: c.y, settlement: -1 });
+        access(hp);
+        groups++;
+      }
+    }
+    // Wetlands (mokradła): where streams meet the river or a lake, low and wet.
+    const marshes = Math.max(3, Math.round(7 * A));
+    let nm = 0;
+    const marshAt: Pt[] = [
+      ...waterways.map((w) => w.pts.at(-1) as Pt),
+      ...waterways.map((w) => pointAt(w.pts, polyLength(w.pts) * (0.3 + lr() * 0.4)).p),
+    ];
+    for (const m of marshAt) {
+      if (nm >= marshes) break;
+      for (let k = 0; k < 6; k++) {
+        const r0 = 80 + lr() * 140;
+        const a = lr() * Math.PI * 2;
+        const c = { x: m.x + Math.cos(a) * r0, y: m.y + Math.sin(a) * r0 };
+        const ar: Area = {
+          ...c,
+          w: 160 + lr() * 260,
+          h: 100 + lr() * 150,
+          a: lr() * Math.PI,
+          kind: 'marsh',
+          round: true,
+        };
+        if (inSettlement(c.x, c.y, 200) || !dry(c, 10)) continue;
+        if (!occ.free({ ...ar, w: ar.w * 0.7, h: ar.h * 0.7 }, 0)) continue;
+        areas.push(ar);
+        occ.mark({ ...ar, w: ar.w * 0.7, h: ar.h * 0.7 });
+        nm++;
+        break;
+      }
+    }
+
+    // Wasteland (nieużytki): rough scrub among the fields, ~1 per 12 km².
+    const waste = Math.round((size * size) / 12e6);
+    for (let k = 0, n = 0; k < waste * 20 && n < waste; k++) {
+      const c = { x: 300 + lr() * (size - 600), y: 300 + lr() * (size - 600) };
+      const ar: Area = {
+        ...c,
+        w: 120 + lr() * 220,
+        h: 90 + lr() * 140,
+        a: lr() * Math.PI,
+        kind: 'wasteland',
+        round: true,
+      };
+      if (isForest(c.x, c.y) || inSettlement(c.x, c.y, 250) || !dry(c, ar.w / 2)) continue;
+      if (!occ.free({ ...ar, w: ar.w * 0.7, h: ar.h * 0.7 }, 0)) continue;
+      areas.push(ar);
+      occ.mark({ ...ar, w: ar.w * 0.7, h: ar.h * 0.7 });
+      n++;
+    }
+
+    // Orchards (sady): a big plot on the edge of most villages.
+    for (const v of settlements.filter((t) => t.kind === 'village')) {
+      if (lr() < 0.2) continue;
+      for (let k = 0; k < 16; k++) {
+        const a = lr() * Math.PI * 2;
+        const rr = v.r * (1.25 + lr() * 0.5) + 60;
+        const c = { x: v.x + Math.cos(a) * rr, y: v.y + Math.sin(a) * rr };
+        const ar: Area = {
+          ...c,
+          w: 90 + lr() * 120,
+          h: 60 + lr() * 80,
+          a: a + Math.PI / 2,
+          kind: 'orchard',
+        };
+        if (isForest(c.x, c.y) || !dry(c, 60) || !occ.free(ar, 2)) continue;
+        areas.push(ar);
+        occ.mark(ar);
+        break;
+      }
+    }
+
+    // Sawmill (tartak): a yard at the forest edge by a road, log piles, the hall.
+    const sawmills = Math.max(1, Math.round(2 * A));
+    let ns = 0;
+    for (const rd of [...roads].filter((r) => r.cls !== 'rail' && r.cls !== 'street')) {
+      if (ns >= sawmills) break;
+      const L = polyLength(rd.pts);
+      for (let t = 100; t < L - 100 && ns < sawmills; t += 120) {
+        const { p, dx, dy } = pointAt(rd.pts, t);
+        for (const side of [-1, 1]) {
+          const nx = -dy * side;
+          const ny = dx * side;
+          const c = { x: p.x + nx * 60, y: p.y + ny * 60 };
+          const deep = { x: p.x + nx * 200, y: p.y + ny * 200 };
+          if (isForest(c.x, c.y) || !isForest(deep.x, deep.y)) continue;
+          if (inSettlement(c.x, c.y, 300) || !dry(c, 80)) continue;
+          if (complexes.some((k) => k.kind === 'sawmill' && dist(k, c) < size * 0.3)) continue;
+          const ang = Math.atan2(dy, dx);
+          const yard = { ...c, w: 130, h: 80, a: ang };
+          if (!occ.free(yard, 2)) continue;
+          areas.push({ ...yard, kind: 'industrial' });
+          areas.push({ ...local(c, 30, 10, ang), w: 60, h: 40, a: ang, kind: 'lumber' });
+          occ.mark(yard);
+          buildings.push({
+            ...local(c, -30, 12, ang),
+            w: 44,
+            h: 18,
+            a: ang,
+            kind: 'hangar',
+            floors: 1,
+          });
+          buildings.push({
+            ...local(c, -40, -22, ang),
+            w: 14,
+            h: 10,
+            a: ang,
+            kind: 'shed',
+            floors: 1,
+          });
+          buildings.push({
+            ...local(c, 0, -26, ang),
+            w: 12,
+            h: 9,
+            a: ang,
+            kind: 'house',
+            floors: 1,
+          });
+          complexes.push({
+            kind: 'sawmill',
+            name: `Tartak ${nearestName(c)}`,
+            ...c,
+            settlement: -1,
+          });
+          addRoad('track', [{ ...p }, local(c, 0, -side * 10, ang)]);
+          ns++;
+          break;
+        }
+      }
+    }
+
+    // Gravel pit (żwirownia): 300–900 m from the river, a flooded hole, the crusher shed.
+    for (let k = 0; k < 400; k++) {
+      const { p, dx, dy } = pointAt(river, polyLength(river) * (0.1 + lr() * 0.8));
+      const side = lr() < 0.5 ? -1 : 1;
+      const off = 350 + lr() * 450;
+      const c = { x: p.x - dy * side * off, y: p.y + dx * side * off };
+      const ar: Area = {
+        ...c,
+        w: 240 + lr() * 140,
+        h: 160 + lr() * 100,
+        a: lr() * Math.PI,
+        kind: 'gravel',
+        round: true,
+      };
+      const rd = riverDist(c.x, c.y);
+      if (rd < 300 + ar.w / 2 || rd > 900) continue;
+      if (isForest(c.x, c.y) || inSettlement(c.x, c.y, 400) || !dry(c, ar.w / 2 + 20)) continue;
+      if (!occ.free(ar, 4) || !roadNear(c, 900)) continue;
+      areas.push(ar);
+      areas.push({
+        ...local(c, ar.w * 0.12, 0, ar.a),
+        w: ar.w * 0.45,
+        h: ar.h * 0.5,
+        a: ar.a,
+        kind: 'pond',
+        round: true,
+      });
+      occ.mark(ar, 4);
+      const hp = local(c, -ar.w / 2 - 16, 0, ar.a);
+      place({ ...hp, w: 18, h: 10, a: ar.a, kind: 'warehouse', floors: 1 }, 0);
+      place({ ...local(hp, 0, 16, ar.a), w: 8, h: 6, a: ar.a, kind: 'hut', floors: 1 }, 0);
+      complexes.push({ kind: 'gravel', name: 'Żwirownia nad Sołwią', ...c, settlement: -1 });
+      access(local(hp, -10, 0, ar.a));
+      break;
+    }
+
+    // Sugar factory (cukrownia) by the branch line past Lipowiec: halls, silos, chimney, siding.
+    const sugarRail = branch ? roads[branch.road] : undefined;
+    if (branch && sugarRail && branch.road >= 0) {
+      const L = polyLength(sugarRail.pts);
+      let done = false;
+      for (let t = 200; t < L - 200 && !done; t += 60) {
+        const { p, dx, dy } = pointAt(sugarRail.pts, t);
+        const dl = dist(p, branch.s);
+        if (dl < branch.s.r * 1.3 + 150 || dl > branch.s.r * 1.3 + 2500) continue;
+        for (const side of [-1, 1]) {
+          const nx = -dy * side;
+          const ny = dx * side;
+          const c = { x: p.x + nx * 120, y: p.y + ny * 120 };
+          const ang = Math.atan2(dy, dx);
+          const lot = { ...c, w: 240, h: 160, a: ang };
+          if (inSettlement(c.x, c.y, 200) || isForest(c.x, c.y) || !dry(c, 160)) continue;
+          if (!occ.free(lot, 2)) continue;
+          areas.push({ ...lot, kind: 'industrial' });
+          occ.mark(lot);
+          const toRail = -side;
+          buildings.push(
+            {
+              ...local(c, -40, 10 * toRail, ang),
+              w: 96,
+              h: 40,
+              a: ang,
+              kind: 'industrial',
+              floors: 3,
+            },
+            {
+              ...local(c, 70, 20 * toRail, ang),
+              w: 70,
+              h: 26,
+              a: ang,
+              kind: 'warehouse',
+              floors: 2,
+            },
+            { ...local(c, 40, -45 * toRail, ang), w: 18, h: 18, a: ang, kind: 'silo', floors: 6 },
+            { ...local(c, 62, -45 * toRail, ang), w: 18, h: 18, a: ang, kind: 'silo', floors: 6 },
+            {
+              ...local(c, -95, -40 * toRail, ang),
+              w: 6,
+              h: 6,
+              a: ang,
+              kind: 'chimney',
+              floors: 12,
+            },
+            {
+              ...local(c, -60, -50 * toRail, ang),
+              w: 30,
+              h: 14,
+              a: ang,
+              kind: 'industrial',
+              floors: 1,
+            },
+          );
+          complexes.push({
+            kind: 'sugar',
+            name: `Cukrownia ${branch.s.name}`,
+            ...c,
+            settlement: -1,
+          });
+          // Siding (bocznica) off the branch into the yard, a road gate on the far side.
+          const s0 = pointAt(sugarRail.pts, t - 160).p;
+          addRoad('rail', [
+            { ...s0 },
+            local(c, -60, 62 * toRail, ang),
+            local(c, 100, 62 * toRail, ang),
+          ]);
+          const gate = local(c, 0, -side * -90, ang);
+          const h = roadNear(gate, 1500);
+          const lane = h ? [{ ...gate }, { x: h.x, y: h.y }] : [];
+          if (h && laneFree(lane, 4)) addRoad('local', lane);
+          done = true;
+          break;
+        }
+      }
+    }
+  }
   const countryRoads = roads
     .map((rd, i) => ({ rd, i }))
     .filter(({ rd }) => rd.cls === 'highway' || rd.cls === 'main' || rd.cls === 'local');
@@ -2031,13 +2677,21 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
     ];
     if (r() < 0.6) items.push([18, toRoad * 12, 14, 9, 'shed']);
     if (r() < 0.3) items.push([0, -toRoad * 30, 40, 12, 'barn']);
-    // The state farm by the start town (PGR Borki): bigger, two more barns.
+    // State farms (PGR): bigger, two more barns. PGR Borki by the start town, then up to
+    // two more in the open country, well apart.
+    const farms = complexes.filter((k) => k.kind === 'farm');
+    const pgrName = PGR_NAMES[farms.length];
     const pgr =
-      !complexes.some((k) => k.kind === 'farm') &&
-      dist(settlements[start] as Settlement, { x: fx, y: fy }) < 3500;
+      pgrName !== undefined &&
+      (farms.length === 0
+        ? dist(settlements[start] as Settlement, { x: fx, y: fy }) < 3500
+        : farms.every((k) => dist(k, { x: fx, y: fy }) > size * 0.3) &&
+          !inSettlement(fx, fy, 600) &&
+          r() < 0.35);
     if (pgr) {
       items.push([-4, -toRoad * 32, 44, 14, 'barn'], [30, -toRoad * 30, 30, 14, 'barn']);
-      complexes.push({ kind: 'farm', name: 'PGR Borki', x: fx, y: fy, settlement: -1 });
+      if (farms.length > 0) items.push([-36, -toRoad * 30, 44, 14, 'barn']);
+      complexes.push({ kind: 'farm', name: pgrName, x: fx, y: fy, settlement: -1 });
     }
     areas.push(yard);
     for (const [u, v, w, h, kind] of items) {
@@ -2196,7 +2850,7 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
   const treeLines: TreeLine[] = [];
   {
     const cr = rng(hash3(seed, 0xc0, 0x5e));
-    const gplan = { seed, size, river, riverWidth, settlements, forestThreshold };
+    const gplan = { seed, size, river, riverWidth, settlements, forestThreshold, waterways };
     const ground = new GroundField(gplan);
     const farmland = (x: number, y: number) =>
       x > 20 &&
@@ -2362,8 +3016,28 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
           a: ang,
           cls: rd.cls,
           road: ri,
+          over: 'river',
         });
       }
+      waterways.forEach((w, wi) => {
+        for (const h of (wayIndex[wi] as PolylineIndex).crossings(a, b)) {
+          const wa = w.pts[h.seg - 1] as Pt;
+          const wb = w.pts[h.seg] as Pt;
+          const ang = Math.atan2(b.y - a.y, b.x - a.x);
+          const wAng = Math.atan2(wb.y - wa.y, wb.x - wa.x);
+          const sin = Math.max(0.45, Math.abs(Math.sin(ang - wAng)));
+          bridges.push({
+            x: h.x,
+            y: h.y,
+            w: w.width / sin + (w.kind === 'tributary' ? 10 : 6),
+            h: ROAD_WIDTH[rd.cls] + 2,
+            a: ang,
+            cls: rd.cls,
+            road: ri,
+            over: w.kind,
+          });
+        }
+      });
     }
   });
 
@@ -2377,6 +3051,8 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
     riverName: 'Sołwia',
     riverMouth: traced.mouth,
     bridges,
+    waterways,
+    hills: hillsOf(seed, size),
     start,
     settlements,
     roads,

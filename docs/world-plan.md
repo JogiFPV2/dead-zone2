@@ -5,7 +5,7 @@
 - **Rozmiar jest parametrem:** domyślnie 16 384 m (512 × 512 chunków), `FALLBACK_WORLD_SIZE` = 8192 m, gdy zapis Symulacji nie zmieści dużego świata. Liczba osad skaluje się z powierzchnią.
 - **Czysta funkcja** `(seed, size, WORLD_PLAN_VERSION)`; test sprawdza determinizm.
 - **Zawartość:**
-  - rzeka i jeziora;
+  - rzeka z dopływami i strumieniami, jeziora, stawy, mokradła, wzgórza;
   - miasta (2 na 16 km), miasteczka (5) i wsie (40): wsie są ulicówkami z działkami wzdłuż dróg, z kościołem, sklepem i remizą;
   - hierarchia dróg: ekspresówka W→E z obwodnicami i zjazdami, wojewódzkie (MST + graf Gabriela między miastami), lokalne, ulice, drogi polne i leśne, ścieżki, kolej ze stacjami;
   - kwartały miejskie: kamienice, bloki, domy, biurowce, sklepy, przemysł;
@@ -28,5 +28,14 @@
     - Drzewa i krzaki są w `plan.treeLines`, po jednym punkcie na sztukę.
   - **Wsie:** ulicówki wzdłuż dróg. Test wymaga, by > 85 % domów stało ≤ 30 m od drogi.
   - **Pierzeje:** `frontage()` kładzie działki osobno na każdym prostym odcinku ulicy. Szerokości sumują się dokładnie do długości odcinka, więc kamienice stoją ściana w ścianę, bez dziur i bez nakładania się (test). Na zakręcie przycina się tylko wewnętrzną stronę. Tam, gdzie działkę przecina przecznica, stają węższe kamienice narożne z obu stron, aż do jej chodnika; test wymaga, by linia zabudowy wzdłuż promienistych ulic i obwodnicy starego miasta była zabudowana w > 70 %. Obwód kwartału jest wypełniony tak samo.
-- **Podgląd:** `pnpm --filter @deadzone/map exec tsx src/world-preview.ts [seed] [size] [outDir] [prefix]` zapisuje PNG z góry: przegląd, miasto, centrum z siatką chunków, miasteczko, wieś z polami, bazę wojskową, widoki v3 (`v3-overview`, `v3-suburbs`, `v3-river`, `v3-village`, `v3-pierzeje`, `v3-borowiec`) z plikami `.labels.json` (nazwy i pozycje w pikselach, do opisania obrazka), plus statystyki JSON.
+- **Mapa v4 (`plan-4`), według propozycji Designera:**
+  - **Teren:** wzgórza z nazwami (`hillsOf`: ~1 na 22 km², np. Łysa Góra, Kamienna Góra) jako garby 16–38 m na `baseHeight`; drobne niecki między nimi (`hollows`) przyjmują małe jeziora. Rzeka liczy się już na nowym terenie, więc jej bieg różni się od v3 (w Wolnogrodzie bulwar został na wschodnim brzegu).
+  - **Woda (~2,4 % mapy, test ≥ 2 %):**
+    - dopływy Sołwii (`plan.waterways`, `kind: 'tributary'`: Wierzbianka, Bystrzyca, trzecia Młynówka, jeśli się zmieści; na seedzie 1993 dwa) od krawędzi mapy w dół terenu do rzeki lub jeziora, oraz strumienie (`'stream'`, ≥ 4) ze zboczy wzgórz do najbliższej wody (`traceStream` w `terrain.ts`); omijają osady i bazę;
+    - Jezioro Czarne i Jezioro Białe mają 2–3 km i zatoki (płaty na długich brzegach), stoją przed drogami, więc drogi je omijają;
+    - stawy rybne (`'pond'`): grupy 2–8 prostokątnych stawów z groblami przy strumieniu, z domem stawowego i dojazdem; mokradła (`'marsh'`) przy ujściach strumieni; łąki zalewowe (`'floodmeadow'`) w dolinie rzeki i wzdłuż dopływów;
+    - każda droga i kolej nad dopływem lub strumieniem ma most (`Bridge.over`: `'river' | 'tributary' | 'stream'`); drogi polne i ścieżki nie przecinają dopływów (test).
+  - **Wieś:** pola różnej wielkości (`fieldParcel`: wąskie chłopskie pasy 18–45 m, średnie działki, wielkie pola PGR 250–550 m), kolumny pasów przesunięte i o różnej długości, bez szachownicy; duże sady przy ~80 % wsi; nieużytki (`'wasteland'`, ~1 na 12 km²); PGR Borki, PGR Olszynki i PGR Zagrodno.
+  - **Przemysł i kolej:** bocznica od głównej linii do Lipowca (stacja Lipowiec PKP) i dalej do krawędzi mapy; przy niej Cukrownia Lipowiec (hale, magazyn, dwa silosy `'silo'`, komin `'chimney'`, bocznica na plac); tartak na skraju lasu przy drodze (plac z kłodami `'lumber'`); żwirownia 300–900 m od rzeki z zalanym wyrobiskiem. Testy w `world-v4.test.ts`.
+- **Podgląd:** `pnpm --filter @deadzone/map exec tsx src/world-preview.ts [seed] [size] [outDir] [prefix]` zapisuje PNG z góry: przegląd, miasto, centrum z siatką chunków, miasteczko, wieś z polami, bazę wojskową, widoki v3 (`v3-overview`, `v3-suburbs`, `v3-river`, `v3-village`, `v3-pierzeje`, `v3-borowiec`), widoki v4 (`v4-overview`, `v4-water`, `v4-country`, `v4-lipowiec`, `v4-cukrownia`, `v4-stawy`, `v4-tartak`, `v4-zwirownia`; `DZ_ONLY=v4-water,...` renderuje tylko wybrane) z plikami `.labels.json` (nazwy i pozycje w pikselach, do opisania obrazka), plus statystyki JSON.
 - **Kolejny krok** (po akceptacji): wypełnianie chunka z planu. Geometria i instancje są względne do origin chunka (cx·32, cy·32), bo Silnik przesuwa origin co 1 km. `getSummary` czyta z samego planu, a wersja generatora trafia do zapisu.

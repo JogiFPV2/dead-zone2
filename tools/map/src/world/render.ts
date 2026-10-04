@@ -41,6 +41,7 @@ export const GROUND_COLOR: Record<Ground, RGB> = {
   corn: hex('#a6b45a'),
   fallow: hex('#a2a16a'),
   hedge: hex('#4d6b35'),
+  floodmeadow: hex('#86ae7a'),
 };
 export const AREA_COLOR: Record<AreaKind, RGB> = {
   yard: hex('#94a865'),
@@ -59,6 +60,11 @@ export const AREA_COLOR: Record<AreaKind, RGB> = {
   allotment: hex('#7fa24f'),
   beach: hex('#e2d39c'),
   copse: hex('#3d6534'),
+  pond: hex('#46799a'),
+  marsh: hex('#6f8a62'),
+  wasteland: hex('#a5a173'),
+  gravel: hex('#cdbf9a'),
+  lumber: hex('#a88a5c'),
 };
 export const BUILDING_COLOR: Record<BuildingKind, RGB> = {
   house: hex('#b4634c'),
@@ -85,6 +91,8 @@ export const BUILDING_COLOR: Record<BuildingKind, RGB> = {
   garage: hex('#9a9a9a'),
   station: hex('#b7a48a'),
   hut: hex('#6e5338'),
+  silo: hex('#d8d4ca'),
+  chimney: hex('#7a3b2c'),
 };
 const ROAD_COLOR: Record<RoadClass, RGB> = {
   highway: hex('#efe6cf'),
@@ -176,11 +184,36 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
       fillRect({ ...ar, w: ar.w + 3 * v.mpp, h: ar.h + 3 * v.mpp }, hex('#3b3b30'));
     fillRect(
       ar,
-      AREA_COLOR[ar.kind],
+      ar.kind === 'pond' && !ar.round && v.mpp <= 2 ? hex('#7f9c58') : AREA_COLOR[ar.kind],
       ar.round === true,
-      ar.kind === 'lake' || ar.kind === 'base' ? 1 : 0.85,
+      ar.kind === 'lake' || ar.kind === 'base' || ar.kind === 'pond' ? 1 : 0.85,
     );
+    // Dykes round the fish ponds.
+    if (ar.kind === 'pond' && !ar.round && v.mpp <= 2)
+      fillRect(
+        { ...ar, w: ar.w - 2 * Math.max(2.5, v.mpp), h: ar.h - 2 * Math.max(2.5, v.mpp) },
+        hex('#3b6c8c'),
+      );
   }
+  // Wetlands: reed tufts and open pools; wasteland: scrub; log yard: stacks.
+  if (v.mpp <= 2)
+    for (const ar of plan.areas) {
+      if (ar.kind !== 'marsh' && ar.kind !== 'wasteland' && ar.kind !== 'lumber') continue;
+      const stepM = ar.kind === 'lumber' ? 7 : 6;
+      for (let u = -ar.w / 2 + 2; u < ar.w / 2; u += stepM)
+        for (let w = -ar.h / 2 + 2; w < ar.h / 2; w += stepM) {
+          if (ar.round && (u / (ar.w / 2)) ** 2 + (w / (ar.h / 2)) ** 2 > 0.9) continue;
+          const x = ar.x + u * Math.cos(ar.a) - w * Math.sin(ar.a);
+          const y = ar.y + u * Math.sin(ar.a) + w * Math.cos(ar.a);
+          const n = valueNoise(plan.seed + 41, x / 14, y / 14);
+          if (ar.kind === 'lumber') {
+            fillRect({ x, y, w: 5, h: 2.2, a: ar.a }, hex('#7b5a36'));
+          } else if (ar.kind === 'marsh') {
+            if (n < 0.3) fillRect({ x, y, w: 7, h: 7, a: 0 }, AREA_COLOR.pond, true, 0.9);
+            else if (n > 0.5) fillRect({ x, y, w: 2.5, h: 2.5, a: 0 }, hex('#56703f'), true);
+          } else if (n > 0.55) fillRect({ x, y, w: 4, h: 4, a: 0 }, hex('#5f7a3d'), true, 0.9);
+        }
+    }
   // Orchard trees: dots.
   if (v.mpp <= 2)
     for (const ar of plan.areas) {
@@ -250,6 +283,9 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
       acc += segLen;
     }
   };
+  // Tributaries and streams (thin ones still show when zoomed out).
+  for (const w of plan.waterways)
+    drawLine(w.pts, w.width, GROUND_COLOR.water, w.kind === 'tributary' ? 2.2 : 1.3);
   for (const cls of ROAD_ORDER) {
     const w = ROAD_WIDTH[cls];
     for (const r of plan.roads) {
