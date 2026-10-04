@@ -25,7 +25,8 @@ export function renderEntityCount(w: SimWorld): number {
  * Packs visible entities into the protocol snapshot layout. The local player goes first, the
  * rest (other players, zombies, animals) follow in StableId order, with `kind`, `anim`, `hpPct`,
  * the physics body (state, timers, knockback, hit direction, gait seed; zero for animals) and
- * `variant` (zombie / animal type index). Reuses `buf`
+ * `variant` (zombie / animal type index), then the locomotion fields (speed m/s, longitudinal
+ * acceleration m/s², gait index; protocol 13). Reuses `buf`
  * when its size matches exactly.
  */
 export function writeRenderSnapshot(
@@ -33,7 +34,7 @@ export function writeRenderSnapshot(
   localPlayer: PlayerId,
   buf?: ArrayBuffer,
 ): ArrayBuffer {
-  const { Position, Facing, StableId, Velocity, Zombie, MoveIntent, Animal } = w.c;
+  const { Position, Facing, StableId, Velocity, Zombie, MoveStats, Animal } = w.c;
   const eids = sortedQuery(w, 'render', [Position, Facing]);
   const out = ensureSnapshotBuffer(eids.length, buf);
   const f = new Float32Array(out);
@@ -91,7 +92,7 @@ export function writeRenderSnapshot(
           ? SnapshotAnim.attack
           : !moving
             ? SnapshotAnim.idle
-            : GAITS[MoveIntent.gait[eid] ?? 1] === 'run'
+            : (MoveStats.gait[eid] ?? 1) >= GAITS.indexOf('run')
               ? SnapshotAnim.run
               : SnapshotAnim.walk;
       const s = w.survival;
@@ -107,6 +108,12 @@ export function writeRenderSnapshot(
     f[o + 14] = b?.hitFromDir ?? 0;
     u[o + 15] = b?.gaitSeed ?? 0;
     f[o + 16] = variant;
+    // Locomotion for animation blending (v13): actual speed (m/s), longitudinal accel (m/s²), gait.
+    const vx = Velocity.x[eid] ?? 0;
+    const vy = Velocity.y[eid] ?? 0;
+    f[o + 17] = Math.sqrt(vx * vx + vy * vy) * TICKS_PER_SECOND;
+    f[o + 18] = MoveStats.longAccel[eid] ?? 0;
+    f[o + 19] = MoveStats.gait[eid] ?? 1;
     o += SNAPSHOT_ENTITY_STRIDE;
   };
   if (first !== undefined) put(first);

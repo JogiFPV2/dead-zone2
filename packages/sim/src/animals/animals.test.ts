@@ -59,7 +59,8 @@ describe('animals: content and spawn', () => {
     expect(s.variant).toBe(3);
     expect(s.anim).toBe(SnapshotAnim.idle);
     expect(s.hpPct).toBe(1);
-    expect(SnapshotField.variant).toBe(SNAPSHOT_ENTITY_STRIDE - 1);
+    expect(SnapshotField.variant).toBe(16);
+    expect(SnapshotField.gait).toBe(SNAPSHOT_ENTITY_STRIDE - 1);
   });
 
   it('debugSpawnAnimal: count on free tiles, unknown type and non-dev rejected', () => {

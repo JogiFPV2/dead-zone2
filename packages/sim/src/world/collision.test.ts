@@ -41,11 +41,15 @@ describe('collisions with wall edges', () => {
   it('slides along a wall made of many segments without snagging', () => {
     const sim = createSim({ seed: 1, map, spawn: { x: 11.5, y: 2.5 } });
     move(sim, 1, 1);
-    run(sim, 100);
+    run(sim, 60);
+    const y = sim.getPlayer()!.y;
+    run(sim, 40);
     const p = sim.getPlayer()!;
     expect(p.x).toBeLessThanOrEqual(12 - R);
-    // Only the y component (1/√2 of 1.5 tiles/s) remains after hitting the wall.
-    expect(p.y).toBeCloseTo(2.5 + (5 - 0.075) * 1.5 * Math.SQRT1_2, 2); // − acceleration
+    // Only the y component (1/√2 of 1.5 tiles/s) remains after hitting the wall, at full rate.
+    expect(p.y - y).toBeCloseTo(2 * 1.5 * Math.SQRT1_2, 4);
+    // − the jerk-limited start (2.5 ticks).
+    expect(p.y).toBeCloseTo(2.5 + (5 - 0.125) * 1.5 * Math.SQRT1_2, 1);
   });
 
   it('does not tunnel through a thin wall at very high speed', () => {

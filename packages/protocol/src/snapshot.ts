@@ -5,7 +5,7 @@
  * ```
  *   stableId, x, y, z, facingRad, kind, anim, hpPct,
  *   state, stateStartTick*, stateDuration, knockbackDirX, knockbackDirY, knockbackStrength,
- *   hitFromDir, gaitSeed*, variant
+ *   hitFromDir, gaitSeed*, variant, speed, accel, gait
  * ```
  * All words are f32 except the ones marked `*` (SNAPSHOT_U32_FIELDS): those are u32 bit patterns,
  * read them through a `Uint32Array` over the same buffer (`readSnapshotEntity` does this).
@@ -29,9 +29,14 @@
  * and anim `flee` (5) came with it. 10 appended physics state `vault` (index 12; events `vaulted`,
  * `tripped`; command `vault`), layout unchanged. 11 changed the world interface only (LOD,
  * `WorldSource`, `setInterest`, `chunkChanged`). 12 appended `driving` (index 13) and added the
- * vehicle block (`vehicles.ts`), layout unchanged.
+ * vehicle block (`vehicles.ts`), layout unchanged. 13 added locomotion for animation blending
+ * (stride 17 → 20): `speed` = actual ground speed in m/s (after collisions and wall sliding),
+ * `accel` = longitudinal acceleration in m/s² (+ speeding up, − braking; jerk-limited for
+ * players), `gait` = index in GAITS of the profile used this tick (players: sneak / walk / run /
+ * sprint after endurance checks; zombies: walk, or run while chasing; animals: walk). GAITS got
+ * `sprint` (index 3).
  */
-export const SNAPSHOT_ENTITY_STRIDE = 17;
+export const SNAPSHOT_ENTITY_STRIDE = 20;
 export const SnapshotField = {
   stableId: 0,
   x: 1,
@@ -50,6 +55,9 @@ export const SnapshotField = {
   hitFromDir: 14,
   gaitSeed: 15,
   variant: 16,
+  speed: 17,
+  accel: 18,
+  gait: 19,
 } as const;
 
 /** Fields stored as u32 bit patterns (not f32). */
@@ -138,6 +146,10 @@ export interface SnapshotEntity {
   gaitSeed?: number;
   /** Type index (`SnapshotField.variant`): animal / zombie type in sorted content ids, 0 when omitted. */
   variant?: number;
+  /** Actual ground speed (m/s), longitudinal acceleration (m/s²), gait index in GAITS (v13). */
+  speed?: number;
+  accel?: number;
+  gait?: number;
 }
 
 export const snapshotFloatLength = (entityCount: number): number =>
@@ -186,6 +198,9 @@ export function encodeSnapshot(
     f[o + 14] = e.hitFromDir ?? 0;
     u[o + 15] = (e.gaitSeed ?? 0) >>> 0;
     f[o + 16] = e.variant ?? 0;
+    f[o + 17] = e.speed ?? 0;
+    f[o + 18] = e.accel ?? 0;
+    f[o + 19] = e.gait ?? 1;
     o += SNAPSHOT_ENTITY_STRIDE;
   }
   return out;
@@ -224,6 +239,9 @@ export function readSnapshotEntity(
   out.hitFromDir = view[o + 14] ?? 0;
   out.gaitSeed = u32[o + 15] ?? 0;
   out.variant = view[o + 16] ?? 0;
+  out.speed = view[o + 17] ?? 0;
+  out.accel = view[o + 18] ?? 0;
+  out.gait = view[o + 19] ?? 1;
   return out;
 }
 

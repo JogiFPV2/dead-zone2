@@ -126,11 +126,17 @@ describe('inventory: weight, hands, bags, carry-load', () => {
     for (const sim of [empty, full]) send(sim, { type: 'move', dx: 1, dy: 0 });
     runMinutes(empty, 0.2);
     runMinutes(full, 0.2);
-    const dEmpty = empty.getPlayer()!.x - x0;
-    const dFull = full.getPlayer()!.x - x0;
-    // Bag penalty × 0.8; the 6 kg also add a little inertia (slower start, physics).
-    expect(dFull / dEmpty).toBeLessThanOrEqual(0.8);
-    expect(dFull / dEmpty).toBeGreaterThan(0.77);
+    // Steady speed over the next 10 ticks (the 6 kg only add inertia to the start, physics).
+    const at = { empty: empty.getPlayer()!.x, full: full.getPlayer()!.x };
+    for (let i = 0; i < 10; i++) {
+      empty.step();
+      full.step();
+    }
+    expect(at.empty).toBeGreaterThan(x0);
+    const dEmpty = empty.getPlayer()!.x - at.empty;
+    const dFull = full.getPlayer()!.x - at.full;
+    // Bag penalty × 0.8.
+    expect(dFull / dEmpty).toBeCloseTo(0.8, 3);
   });
 
   it('bag tags (acceptsTags) and no bag inside itself', () => {

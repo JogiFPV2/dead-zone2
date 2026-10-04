@@ -16,11 +16,22 @@ export function createComponents(capacity: number) {
     /** Binary angle (u16, 65536 = 360°) from +x towards +y. */
     Facing: { angle: new Uint16Array(capacity) },
     Collider: { radius: f32() },
-    /** Held movement direction, length ≤ 1; `gait` = index in GAITS (0 sneak, 1 walk, 2 run). */
+    /** Held movement direction, length ≤ 1; `gait` = index in GAITS (0 sneak, 1 walk, 2 run, 3 sprint). */
     MoveIntent: { dx: f32(), dy: f32(), gait: new Uint8Array(capacity).fill(1) },
     /** World point the entity aims at; `active` = 0 until the first aim command. */
     AimIntent: { x: f32(), y: f32(), active: new Uint8Array(capacity) },
-    MoveStats: { speedPerTick: f32() },
+    /**
+     * `speedPerTick` = walk speed (tiles per tick). Locomotion (players, `physics/locomotion.ts`):
+     * `accel` = acceleration state along the movement direction (m/s²), `longAccel` = realised
+     * longitudinal acceleration of the last tick (m/s², snapshot), `gait` = index in GAITS of the
+     * profile used last tick (snapshot; zombies: walk / run while chasing).
+     */
+    MoveStats: {
+      speedPerTick: f32(),
+      accel: f32(),
+      longAccel: f32(),
+      gait: new Uint8Array(capacity).fill(1),
+    },
     Player: { id: new Uint16Array(capacity) },
     /**
      * Zombie brain and body (Stage 4, `ai/*`). `state` = ZombieState, `stateTick` = tick when the

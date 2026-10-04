@@ -402,7 +402,7 @@ describe('firearms: effective spread', () => {
     expect(running).toBeGreaterThan(walking);
     expect(running).toBeLessThanOrEqual(base * fs.spreadModifiers.max + 1e-4);
     send(s, { type: 'move', dx: 0, dy: 0 });
-    runTicks(s, 10);
+    runTicks(s, 20); // braking from a run takes ~0.6 s (jerk-limited)
     expect(s.drainView()!.combat!.spread).toBeCloseTo(base, 4);
     send(s, { type: 'debugStat', stat: 'endurance', value: 0 });
     send(s, { type: 'debugStat', stat: 'fatigue', value: 100 });

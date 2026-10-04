@@ -460,7 +460,7 @@ export function createSim(input: SimOptions): Sim {
       h.f32(c.AimIntent.x[eid] ?? 0)
         .f32(c.AimIntent.y[eid] ?? 0)
         .u32(c.AimIntent.active[eid] ?? 0);
-      h.f32(c.MoveStats.speedPerTick[eid] ?? 0);
+      h.f32(c.MoveStats.speedPerTick[eid] ?? 0).f32(c.MoveStats.accel[eid] ?? 0);
     }
     const s = w.survival;
     if (s) {

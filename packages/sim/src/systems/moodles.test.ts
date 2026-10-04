@@ -76,7 +76,14 @@ describe('moodles', () => {
       tired.step();
     }
     expect(tired.getSurvival()!.moodles['fixture:fatigue']).toBe(2);
-    const dx = (sim: typeof rested) => sim.getPlayer()!.x - (sim === tired ? x0.tired : x0.rested);
+    expect(tired.getPlayer()!.x).toBeGreaterThan(x0.tired);
+    // Steady speeds (the jerk-limited start takes a different time to each target speed).
+    const at = { rested: rested.getPlayer()!.x, tired: tired.getPlayer()!.x };
+    for (let i = 0; i < 10; i++) {
+      rested.step();
+      tired.step();
+    }
+    const dx = (sim: typeof rested) => sim.getPlayer()!.x - (sim === tired ? at.tired : at.rested);
     expect(dx(tired) / dx(rested)).toBeCloseTo(0.5, 4);
   });
 

@@ -1,3 +1,4 @@
+import { SPRINT_NOISE_MUL } from '../physics/constants.js';
 import { GAITS, type NoiseSource } from '@deadzone/protocol';
 import { ModSlot } from '../content/adapter.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
@@ -122,8 +123,9 @@ export function footstepSystem(w: SimWorld): void {
     if ((Velocity.x[eid] ?? 0) === 0 && (Velocity.y[eid] ?? 0) === 0) continue;
     if ((w.tick + (StableId.value[eid] ?? 0)) % cfg.footstepEveryTicks !== 0) continue;
     const gait = GAITS[MoveIntent.gait[eid] ?? 1] ?? 'walk';
-    const f = cfg.footsteps[gait];
-    const radius = s ? modded(s, eid, ModSlot['footstep-noise'], f.radiusTiles) : f.radiusTiles;
+    const f = cfg.footsteps[gait === 'sprint' ? 'run' : gait];
+    const base = gait === 'sprint' ? f.radiusTiles * SPRINT_NOISE_MUL : f.radiusTiles;
+    const radius = s ? modded(s, eid, ModSlot['footstep-noise'], base) : base;
     emitNoise(
       w,
       Position.x[eid] ?? 0,

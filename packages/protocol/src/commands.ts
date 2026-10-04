@@ -24,7 +24,7 @@ export interface CommandHeader {
  * `move`. The vector length is clamped to 1 by the sim, so analog input is allowed.
  */
 /** Movement gait: speed, footstep noise and needs (`worldSettings.survival.activity`). */
-export const GAITS = ['sneak', 'walk', 'run'] as const;
+export const GAITS = ['sneak', 'walk', 'run', 'sprint'] as const;
 export type Gait = (typeof GAITS)[number];
 
 export interface MoveCommand extends CommandHeader {

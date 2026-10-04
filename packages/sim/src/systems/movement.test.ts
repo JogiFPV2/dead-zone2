@@ -9,8 +9,11 @@ import { TURN_BAM_PER_TICK, zombieWobble } from './movement.js';
 
 /** Walk distance per tick (1.5 tiles/s → 0.075). */
 const W = WALK_SPEED_TILES_PER_SECOND / TICKS_PER_SECOND;
-/** Distance lost while accelerating to walk speed (W/tick in 4 steps: 0.75+0.5+0.25 ticks). */
-const ACCEL_LAG = W * 1.5;
+/**
+ * Distance lost while accelerating to walk speed: the jerk-limited S-curve (jerk 60 m/s³,
+ * accel 6 m/s²) reaches 1.5 m/s in 6 ticks and loses 2.5 ticks of walking on the way.
+ */
+const ACCEL_LAG = W * 2.5;
 
 const open = () => createSim({ seed: 1, map: buildMap(), spawn: { x: 10.5, y: 10.5 } });
 
@@ -48,37 +51,54 @@ describe('movement', () => {
     const sim = open();
     move(sim, 0.5, 0);
     run(sim, 20);
-    expect(sim.getPlayer()!.x).toBeCloseTo(10.5 + WALK_SPEED_TILES_PER_SECOND / 2 - W / 4, 4);
+    const x = sim.getPlayer()!.x;
+    run(sim, 10);
+    // Half the walk speed once at speed.
+    expect(sim.getPlayer()!.x - x).toBeCloseTo(5 * W, 4);
   });
 
   it('holds the move intent until the next move command', () => {
     const sim = open();
     move(sim, 0, 1);
     run(sim, 10);
+    // Still walking at full speed 10 ticks later (no repeated command needed).
+    const y = sim.getPlayer()!.y;
+    run(sim, 1);
+    expect(sim.getPlayer()!.y - y).toBeCloseTo(W, 5);
     move(sim, 0, 0);
     run(sim, 10);
-    // Accelerates (−1.5 W), then brakes in 3 ticks (+2/3 W + 1/3 W).
-    expect(sim.getPlayer()!.y).toBeCloseTo(10.5 + 10 * W - ACCEL_LAG + W, 4);
+    const stopped = sim.getPlayer()!.y;
+    run(sim, 5);
+    expect(sim.getPlayer()!.y).toBe(stopped);
   });
 
-  it('accelerates in 4 ticks and stops in 3', () => {
+  it('accelerates along a jerk-limited S-curve and brakes without overshoot', () => {
     const sim = open();
     move(sim, 1, 0);
     const xs: number[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       run(sim, 1);
       xs.push(sim.getPlayer()!.x);
     }
     const steps = xs.map((x, i) => x - (xs[i - 1] ?? 10.5));
-    steps.forEach((d, i) => expect(d).toBeCloseTo([0.25, 0.5, 0.75, 1, 1][i]! * W, 5));
+    // Speed rises monotonically to walk speed in 6 ticks and stays there.
+    for (let i = 1; i < steps.length; i++) expect(steps[i]!).toBeGreaterThanOrEqual(steps[i - 1]!);
+    expect(steps[0]!).toBeCloseTo(60 / 20 ** 3, 6); // first tick: accel built up at the jerk
+    expect(steps[5]!).toBeCloseTo(W, 5);
+    expect(steps[9]!).toBeCloseTo(W, 5);
     move(sim, 0, 0);
-    run(sim, 3);
-    const x = sim.getPlayer()!.x;
+    let last = sim.getPlayer()!.x;
+    for (let i = 0; i < 10; i++) {
+      run(sim, 1);
+      const x = sim.getPlayer()!.x;
+      expect(x).toBeGreaterThanOrEqual(last); // never backs up
+      last = x;
+    }
     run(sim, 2);
-    expect(sim.getPlayer()!.x).toBe(x);
+    expect(sim.getPlayer()!.x).toBe(last);
   });
 
-  it('turns at a limited angular speed (720°/s)', () => {
+  it('turns the facing at a limited angular speed (720°/s)', () => {
     const sim = open();
     aim(sim, 20.5, 10.5);
     run(sim, 1);
@@ -131,6 +151,10 @@ describe('movement', () => {
     const [p, ...rest] = decodeSnapshot(sim.snapshot());
     expect(rest).toHaveLength(0);
     expect(p).toMatchObject({ stableId: 1, z: 0, y: 10.5 });
-    expect(p!.x).toBeCloseTo(10.5 + 0.25 * W + 0.5 * W, 5);
+    expect(p!.x).toBe(sim.getPlayer()!.x);
+    // Locomotion fields (protocol 13): speed m/s, longitudinal accel m/s², gait walk.
+    expect(p!.speed).toBeGreaterThan(0);
+    expect(p!.accel).toBeGreaterThan(0);
+    expect(p!.gait).toBe(1);
   });
 });

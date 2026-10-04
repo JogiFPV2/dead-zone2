@@ -1,3 +1,4 @@
+import { SPRINT_ENDURANCE_MUL } from '../physics/constants.js';
 import { effectiveGait } from './movement.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
@@ -20,6 +21,12 @@ export function survivalSystem(w: SimWorld, first: number, count: number, ambien
   }
 }
 
+/** Sprinting: the running activity with `SPRINT_ENDURANCE_MUL` × its endurance drain. */
+function sprintActivity<T extends { endurancePerMin: number }>(run: T): T {
+  const e = run.endurancePerMin;
+  return { ...run, endurancePerMin: e < 0 ? e * SPRINT_ENDURANCE_MUL : e };
+}
+
 function survivalMinute(w: SimWorld, s: SurvivalWorld, eid: number, ambientC: number): void {
   const cfg = s.content.survival;
   const v = s.vitals;
@@ -31,11 +38,13 @@ function survivalMinute(w: SimWorld, s: SurvivalWorld, eid: number, ambientC: nu
     ? cfg.activity.sleeping
     : !moving
       ? cfg.activity.idle
-      : gait === 'run'
-        ? cfg.activity.running
-        : gait === 'sneak'
-          ? cfg.activity.sneaking
-          : cfg.activity.walking;
+      : gait === 'sprint'
+        ? sprintActivity(cfg.activity.running)
+        : gait === 'run'
+          ? cfg.activity.running
+          : gait === 'sneak'
+            ? cfg.activity.sneaking
+            : cfg.activity.walking;
 
   // Needs.
   const satiety = v.satiety[eid] ?? 0;

@@ -163,17 +163,23 @@ describe('snapshot encoding', () => {
         hitFromDir: 3,
         gaitSeed: 0xdeadbeef,
         variant: 2,
+        speed: 3.75,
+        accel: -4.5,
+        gait: 3,
       },
     ];
     const buf = encodeSnapshot(ents);
     expect(buf.byteLength).toBe(snapshotByteLength(2));
     expect(snapshotEntityCount(buf)).toBe(2);
-    expect(decodeSnapshot(buf)).toEqual([{ ...ents[0], variant: 0 }, ents[1]]);
+    expect(decodeSnapshot(buf)).toEqual([
+      { ...ents[0], variant: 0, speed: 0, accel: 0, gait: 1 },
+      ents[1],
+    ]);
   });
 
-  it('has no header: 17 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
-    expect(SNAPSHOT_ENTITY_STRIDE).toBe(17);
-    expect(PROTOCOL_VERSION).toBe(12);
+  it('has no header: 20 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0, gait walk)', () => {
+    expect(SNAPSHOT_ENTITY_STRIDE).toBe(20);
+    expect(PROTOCOL_VERSION).toBe(13);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -194,8 +200,8 @@ describe('snapshot encoding', () => {
       },
     ]);
     const f = Array.from(new Float32Array(buf));
-    expect(f.slice(0, 17)).toEqual([3, 1, 2, 0, 0.25, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-    expect(f.slice(17, 25)).toEqual([4, 1, 2, 0, 0, 2, 2, 0.25]);
+    expect(f.slice(0, 20)).toEqual([3, 1, 2, 0, 0.25, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+    expect(f.slice(20, 28)).toEqual([4, 1, 2, 0, 0, 2, 2, 0.25]);
     const o = SNAPSHOT_ENTITY_STRIDE;
     expect(f[o + SnapshotField.state]).toBe(ENTITY_PHYS_STATES.indexOf('getup'));
     expect(f[o + SnapshotField.stateDuration]).toBe(30);

@@ -231,8 +231,10 @@ function crowdOnStairs(n: number, physicsConfig?: PhysicsConfig, seed = 7) {
   const c = commander(sim);
   // Runs up (3.75 m/s) so the crowd starts queueing behind a player already holding the top.
   c.move(1, 0, 'run');
-  while (player(sim).x < 23) sim.step();
+  // Releases early: braking from a run is jerk-limited, so the player coasts to x ≈ 23.
+  while (player(sim).x < 22.6) sim.step();
   c.move(0, 0);
+  for (let i = 0; i < 20; i++) sim.step();
   return { sim, c };
 }
 

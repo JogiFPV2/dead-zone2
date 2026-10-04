@@ -186,24 +186,29 @@ describe('ai: hearing and noise', () => {
     expect(radii('sneak')[0]).toEqual(['footstep', f.sneak.radiusTiles]);
   });
 
-  it('gait: run is faster, sneak slower; running needs endurance', () => {
-    const dist = (gait: 'sneak' | 'walk' | 'run', endurance?: number) => {
+  it('gait: run is faster, sneak slower, sprint fastest; running needs endurance', () => {
+    /** Steady speed (m/s) between ticks 30 and 40 (after the jerk-limited start). */
+    const speed = (gait: 'sneak' | 'walk' | 'run' | 'sprint', endurance?: number) => {
       const sim = aiSim();
       if (endurance !== undefined)
         send(sim, { type: 'debugStat', stat: 'endurance', value: endurance });
       send(sim, { type: 'move', dx: 1, dy: 0, gait });
-      runTicks(sim, 20);
-      return sim.getPlayer()!.x - 10.5;
+      runTicks(sim, 30);
+      const x = sim.getPlayer()!.x;
+      runTicks(sim, 10);
+      return (sim.getPlayer()!.x - x) * 2;
     };
-    // 20 ticks minus 1.5 ticks lost to acceleration (4 ticks to full speed).
-    const full = 1.5 * (18.5 / 20);
-    expect(dist('walk')).toBeCloseTo(full, 3);
-    expect(dist('run')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.runSpeedMul, 3);
-    expect(dist('sneak')).toBeCloseTo(full * DEFAULT_STAGE4_CONFIG.gait.sneakSpeedMul, 3);
+    const g = DEFAULT_STAGE4_CONFIG.gait;
+    expect(speed('walk')).toBeCloseTo(1.5, 3);
+    expect(speed('run')).toBeCloseTo(1.5 * g.runSpeedMul, 3);
+    expect(speed('sneak')).toBeCloseTo(1.5 * g.sneakSpeedMul, 3);
+    expect(speed('sprint')).toBeCloseTo(1.5 * g.runSpeedMul * 1.3, 3);
     // Exhausted: walks, and slower than rested (physics: endurance level 4).
-    const tired = dist('run', 0);
-    expect(tired).toBeLessThan(full * 0.6);
-    expect(tired).toBeGreaterThan(full * 0.5);
+    const tired = speed('run', 0);
+    expect(tired).toBeLessThan(1.5 * 0.6);
+    expect(tired).toBeGreaterThan(1.5 * 0.5);
+    // Sprint below 25 endurance: only runs.
+    expect(speed('sprint', 20)).toBeLessThan(1.5 * g.runSpeedMul + 1e-3);
   });
 
   it('starting a timed action makes a small noise', () => {

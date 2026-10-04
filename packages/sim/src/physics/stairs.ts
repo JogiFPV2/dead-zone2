@@ -4,7 +4,7 @@ import { killZombieByWorld } from '../combat/system.js';
 import type { SimWorld } from '../core/world.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
-import { moveCircle } from '../world/collision.js';
+import { moveCircle, slideCircle } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
 import { floorZ, hasFloor, stairLocal, stairWorld, stairZ, type Stair } from '../world/levels.js';
 import { canAct, canMove, enduranceLevel, loadLevel } from './modifiers.js';
@@ -195,7 +195,9 @@ export function physicsLevelMove(
     stairMove(w, eid, b, top, x, y, dx, dy, r, true, out);
     return true;
   }
-  moveCircle(grid, z, x, y, dx, dy, r, out);
+  // Players slide along walls (substeps, rounded corners), others use the per-axis sweep.
+  if (b.kind === 'player') slideCircle(grid, z, x, y, dx, dy, r, out);
+  else moveCircle(grid, z, x, y, dx, dy, r, out);
   for (const s of stairsNear(grid, out.x, out.y, z, r)) {
     const now = stairLocal(s, x, y);
     const next = stairLocal(s, out.x, out.y);

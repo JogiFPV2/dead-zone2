@@ -141,7 +141,8 @@ export function effectiveSpread(w: SimWorld, cb: CombatWorld, eid: number, def: 
   const vy = Velocity.y[eid] ?? 0;
   const walk = MoveStats.speedPerTick[eid] ?? 0;
   const move = walk > 0 ? clamp01(Math.sqrt(vx * vx + vy * vy) / walk) : 0;
-  const running = GAITS[MoveIntent.gait[eid] ?? 1] === 'run' ? move : 0;
+  const g = GAITS[MoveIntent.gait[eid] ?? 1];
+  const running = g === 'run' || g === 'sprint' ? move : 0;
   let mul = 1 + m.moving * move + m.running * running;
   const s = w.survival;
   if (s) {

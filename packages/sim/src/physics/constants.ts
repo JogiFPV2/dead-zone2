@@ -371,3 +371,54 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     shotgun: { force: 1, closeTiles: 2.5, falloffTiles: 6, minMul: 0.15, maxReaction: 'knockdown' },
   },
 };
+
+/**
+ * Character locomotion (players, `physics/locomotion.ts`): gait profiles, turning and the
+ * sprint cost. Units: m/s, m/s², m/s³ (1 tile = 1 m), rad/s. Target speeds are walk ×
+ * gait multiplier: walk 1.5 m/s (`worldSettings.movement.walkSpeedMps`, #99), run × 2.5
+ * (`movement.runSpeedMul`) = 3.75 m/s, sneak × 0.5 (`movement.sneakSpeedMul`) = 0.75 m/s,
+ * sprint = run × `SPRINT_SPEED_MUL` = 4.875 m/s.
+ */
+export const LOCO_SPEED_MPS = { sneak: 0.75, walk: 1.5, run: 3.75, sprint: 4.875 } as const;
+/** Sprint speed × run speed. */
+export const SPRINT_SPEED_MUL = 1.3;
+
+/**
+ * Per gait: `accel` / `brake` = max longitudinal acceleration / deceleration (m/s²), `jerk` =
+ * how fast the acceleration may build up (m/s³; it falls back to 0 twice as fast). The speed
+ * follows a jerk-limited S-curve that lands on the target without overshoot (critically damped).
+ */
+export interface GaitProfile {
+  accel: number;
+  brake: number;
+  jerk: number;
+}
+export const GAIT_PROFILES: Record<'sneak' | 'walk' | 'run' | 'sprint', GaitProfile> = {
+  sneak: { accel: 4, brake: 6, jerk: 60 },
+  walk: { accel: 6, brake: 8, jerk: 60 },
+  run: { accel: 7, brake: 9, jerk: 45 },
+  sprint: { accel: 5, brake: 8, jerk: 30 },
+};
+
+/**
+ * Turning of the movement direction (not the facing, which turns on its own towards the aim):
+ * max rate = `TURN_RATE_MAX` / (1 + (speed / `TURN_SPEED_REF`)²) rad/s × inertia. Walk ≈ 630°/s,
+ * run ≈ 265°/s, sprint ≈ 180°/s.
+ */
+export const TURN_RATE_MAX = 15;
+export const TURN_SPEED_REF = 2.5;
+/** Below this speed the direction snaps to the input (turning on the spot). */
+export const PIVOT_SPEED_MPS = 0.35;
+/**
+ * Input more than this far from the movement direction (cos < −0.5 = 120°) is a reversal: the
+ * body brakes to `PIVOT_SPEED_MPS` first, then turns (180° goes through braking).
+ */
+export const REVERSE_COS = -0.5;
+/** Target speed in a turn × (min + (1 − min) × cos of the angle still to turn). */
+export const CORNER_SPEED_MIN = 0.6;
+
+/** Sprint needs endurance ≥ this (else run); costs `SPRINT_ENDURANCE_MUL` × the running drain. */
+export const SPRINT_MIN_ENDURANCE = 25;
+export const SPRINT_ENDURANCE_MUL = 2;
+/** Sprint footsteps: the run noise radius × this. */
+export const SPRINT_NOISE_MUL = 1.3;

@@ -118,3 +118,161 @@ export function circleOverlaps(
   }
   return false;
 }
+
+/**
+ * Character movement with smooth wall sliding (players, `systems/movement.ts`): the move is cut
+ * into substeps of at most `r / 2` (a wall edge has no thickness, so a centre can never cross
+ * one unnoticed: no tunnelling), and after each substep the circle is pushed out of the deepest
+ * overlap along the normal from the closest obstacle point, up to 4 times. Against a straight
+ * wall that keeps the tangential part of the move unchanged; around a wall end or the corner of
+ * a void tile the normal is radial, so the circle rounds the corner instead of snagging on it.
+ * It rests `SKIN` outside every obstacle, so standing in a corner gives the same position every
+ * tick (no jitter). Obstacles the circle already overlapped at the start (a bad spawn, a door
+ * closed on it) are ignored, as in `moveCircle`.
+ *
+ * `normals` (optional) receives the unit contact normals (flat nx, ny pairs, out of the
+ * obstacles) of everything within `CONTACT_EPS` of the circle at the end.
+ */
+export const CONTACT_EPS = 4 * SKIN;
+const MAX_PUSHES = 4;
+
+/** Closest obstacle sink: visits void rects and wall edges around (x, y) in a fixed order. */
+function forObstacles(
+  grid: TileGrid,
+  z: number,
+  x: number,
+  y: number,
+  reach: number,
+  voidBlocks: boolean,
+  fn: (key: number, x0: number, x1: number, y0: number, y1: number) => void,
+): void {
+  const ty0 = Math.floor(y - reach) - 1;
+  const ty1 = Math.floor(y + reach) + 1;
+  const tx0 = Math.floor(x - reach) - 1;
+  const tx1 = Math.floor(x + reach) + 1;
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const k = (tx * 65536 + ty) * 4;
+      if (voidBlocks && grid.isVoid(tx, ty, z)) fn(k, tx, tx + 1, ty, ty + 1);
+      if (grid.hasWallN(tx, ty, z)) fn(k + 1, tx, tx + 1, ty, ty);
+      if (grid.hasWallW(tx, ty, z)) fn(k + 2, tx, tx, ty, ty + 1);
+    }
+  }
+}
+
+const ignored: number[] = [];
+
+export function slideCircle(
+  grid: TileGrid,
+  z: number,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  r: number,
+  out: Vec2 = { x: 0, y: 0 },
+  normals?: number[],
+  voidBlocks = true,
+): Vec2 {
+  ignored.length = 0;
+  forObstacles(grid, z, x, y, r, voidBlocks, (k, x0, x1, y0, y1) => {
+    const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0;
+    const ey = y < y0 ? y0 - y : y > y1 ? y - y1 : 0;
+    if (ex * ex + ey * ey < (r - SKIN) * (r - SKIN)) ignored.push(k);
+  });
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const n = len > 0 ? Math.max(1, Math.ceil(len / (r * 0.5))) : 0;
+  const sx = n > 0 ? dx / n : 0;
+  const sy = n > 0 ? dy / n : 0;
+  let px = x;
+  let py = y;
+  for (let i = 0; i < n; i++) {
+    px += sx;
+    py += sy;
+    for (let it = 0; it < MAX_PUSHES; it++) {
+      let best = 0;
+      let bnx = 0;
+      let bny = 0;
+      let bcx = 0;
+      let bcy = 0;
+      forObstacles(grid, z, px, py, r, voidBlocks, (k, x0, x1, y0, y1) => {
+        if (ignored.length > 0 && ignored.includes(k)) return;
+        const cx = px < x0 ? x0 : px > x1 ? x1 : px;
+        const cy = py < y0 ? y0 : py > y1 ? y1 : py;
+        const ex = px - cx;
+        const ey = py - cy;
+        const d2 = ex * ex + ey * ey;
+        if (d2 >= r * r) return;
+        const d = Math.sqrt(d2);
+        let nx: number;
+        let ny: number;
+        if (d > 0) {
+          nx = ex / d;
+          ny = ey / d;
+        } else if (x0 === x1 || y0 === y1) {
+          // Centre exactly on an edge: back along the substep.
+          nx = -sx / (len / n);
+          ny = -sy / (len / n);
+        } else return;
+        const pen = r - d;
+        if (pen > best) {
+          best = pen;
+          bnx = nx;
+          bny = ny;
+          bcx = cx;
+          bcy = cy;
+        }
+      });
+      if (best <= 0) break;
+      px = bcx + bnx * (r + SKIN);
+      py = bcy + bny * (r + SKIN);
+    }
+  }
+  out.x = Math.fround(px);
+  out.y = Math.fround(py);
+  if (normals) circleContacts(grid, z, out.x, out.y, r, normals, voidBlocks);
+  return out;
+}
+
+/** Unit normals (flat nx, ny pairs) of obstacles within `CONTACT_EPS` of the circle. */
+export function circleContacts(
+  grid: TileGrid,
+  z: number,
+  x: number,
+  y: number,
+  r: number,
+  normals: number[],
+  voidBlocks = true,
+): number[] {
+  normals.length = 0;
+  const lim = r + CONTACT_EPS;
+  forObstacles(grid, z, x, y, lim, voidBlocks, (_k, x0, x1, y0, y1) => {
+    const cx = x < x0 ? x0 : x > x1 ? x1 : x;
+    const cy = y < y0 ? y0 : y > y1 ? y1 : y;
+    const ex = x - cx;
+    const ey = y - cy;
+    const d2 = ex * ex + ey * ey;
+    if (d2 >= lim * lim || d2 < (r - SKIN) * (r - SKIN)) return;
+    const d = Math.sqrt(d2);
+    const nx = ex / d;
+    const ny = ey / d;
+    // Nearly parallel normals (the end of the next segment of a straight wall, a joint between
+    // two void tiles) are one contact: keep the closer one, so joints add no sideways push.
+    for (let i = 0; i < normals.length; i += 2) {
+      if (nx * normals[i]! + ny * normals[i + 1]! > MERGE_COS) {
+        if (d < contactDist[i >> 1]!) {
+          normals[i] = nx;
+          normals[i + 1] = ny;
+          contactDist[i >> 1] = d;
+        }
+        return;
+      }
+    }
+    contactDist[normals.length >> 1] = d;
+    normals.push(nx, ny);
+  });
+  return normals;
+}
+
+const MERGE_COS = 0.9;
+const contactDist: number[] = [];

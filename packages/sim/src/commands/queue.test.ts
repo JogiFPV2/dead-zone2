@@ -3,6 +3,7 @@ import { createSim } from '../sim.js';
 import { buildMap } from '../test/fixtures.js';
 import { run } from '../test/helpers.js';
 import { CommandQueue } from './queue.js';
+import { GAIT_PROFILES } from '../physics/constants.js';
 
 const mv = (seq: number, tick: number, dx = 1, playerId = 0) =>
   ({ type: 'move', dx, dy: 0, tick, playerId, seq }) as const;
@@ -71,6 +72,9 @@ describe('CommandQueue', () => {
   });
 });
 
+/** First tick of walking: the acceleration builds up at the walk jerk (jerk · dt³ tiles). */
+const FIRST_STEP = GAIT_PROFILES.walk.jerk / 20 ** 3;
+
 describe('commands in the sim', () => {
   const sim = () => createSim({ seed: 1, map: buildMap(), spawn: { x: 10.5, y: 10.5 } });
 
@@ -79,7 +83,7 @@ describe('commands in the sim', () => {
     s.enqueue(mv(0, 0, 1));
     s.enqueue(mv(1, 0, -1));
     run(s, 1);
-    expect(s.getPlayer()!.x).toBeCloseTo(10.5 - 0.01875, 5);
+    expect(s.getPlayer()!.x).toBeCloseTo(10.5 - FIRST_STEP, 5);
   });
 
   it('applies future commands at their tick', () => {
@@ -88,7 +92,7 @@ describe('commands in the sim', () => {
     run(s, 5);
     expect(s.getPlayer()!.x).toBe(10.5);
     run(s, 1);
-    expect(s.getPlayer()!.x).toBeCloseTo(10.5 + 0.01875, 5);
+    expect(s.getPlayer()!.x).toBeCloseTo(10.5 + FIRST_STEP, 5);
   });
 
   it('rejects commands for unknown players with an event (gameplay validation)', () => {
