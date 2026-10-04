@@ -318,6 +318,8 @@ export interface MapMarkerView {
   color: MarkerColor;
   /** At most `worldSettings.mapMarkers.maxTextLength` characters. */
   text: string;
+  /** Shown on the minimap too (default true; the sim always sets it). */
+  showOnMinimap?: boolean;
 }
 
 /**

@@ -495,7 +495,8 @@ export type MarkerColor = SaveMarkerColor;
  * `commandRejected`). `x`, `y` in tiles (metres); `icon` from `worldSettings.mapMarkers.icons`,
  * `color` from `.colors`; `text` is cut to `.maxTextLength` (40) characters. Rejections:
  * `invalid-target` (icon / colour not allowed, position outside the world), `marker-limit`
- * (`maxMarkers`, 200), `unknown-marker` (edit / remove of a missing id).
+ * (`maxMarkers`, 200), `unknown-marker` (edit / remove of a missing id). `showOnMinimap`
+ * (default true) is kept with the marker and saved; it does not affect the simulation.
  */
 export interface AddMarkerCommand extends CommandHeader {
   type: 'addMarker';
@@ -504,6 +505,7 @@ export interface AddMarkerCommand extends CommandHeader {
   icon: string;
   color: MarkerColor;
   text?: string | undefined;
+  showOnMinimap?: boolean | undefined;
 }
 
 /** Changes the given fields of marker `id` (see `AddMarkerCommand`). */
@@ -515,6 +517,7 @@ export interface EditMarkerCommand extends CommandHeader {
   icon?: string | undefined;
   color?: MarkerColor | undefined;
   text?: string | undefined;
+  showOnMinimap?: boolean | undefined;
 }
 
 /** Removes marker `id`. */

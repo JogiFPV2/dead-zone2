@@ -113,6 +113,7 @@ function reject(w: SimWorld, cmd: Command, reason: CommandRejectReason, detail?:
     tick: w.tick,
     playerId: cmd.playerId,
     seq: cmd.seq,
+    command: cmd.type,
     reason,
     ...(detail ? { detail } : {}),
   });

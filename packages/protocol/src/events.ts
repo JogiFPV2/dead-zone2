@@ -1,5 +1,5 @@
 import type { VehicleImpactTarget, VehiclePart } from './vehicles.js';
-import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
+import type { BodyPart, Command, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState } from './map.js';
 import type {
   CharacterProfileView,
@@ -61,8 +61,9 @@ export type CommandRejectReason =
 
 /**
  * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
- * damage, `object` = storage placed on or picked up from the ground (furniture-like), `loot` =
- * items on the ground appeared, changed or disappeared (drop, pick-up, throw, spot search).
+ * damage, `object` = storage placed on or picked up from the ground (furniture-like). `loot` is
+ * kept for compatibility but no longer emitted: ground piles reach the client in the view
+ * (`nearby`), and a loot change still marks the chunk for the save delta internally.
  */
 export type ChunkChangeReason = 'opening' | 'object' | 'loot';
 export const CHUNK_CHANGE_REASONS: readonly ChunkChangeReason[] = ['opening', 'object', 'loot'];
@@ -228,7 +229,10 @@ export type SimEvent =
       type: 'commandRejected';
       tick: number;
       playerId: PlayerId;
+      /** `seq` of the rejected command (system commands like markers: as sent, not ordered). */
       seq: number;
+      /** Type of the rejected command, e.g. `addMarker` (reasons like `invalid-target` are shared). */
+      command: Command['type'];
       reason: CommandRejectReason;
       /** Extra info, e.g. `newCharacter`: `over-budget:-3`, `trait-conflict:base:weak`. */
       detail?: string;

@@ -129,7 +129,7 @@ describe('chunkChanged events', () => {
     expect(chunkEvents(sim.drainEvents())).toEqual([]);
   });
 
-  it('ground loot (drop, pick up) and placed storage (place, pick up) mark their chunk', () => {
+  it('ground loot (drop, pick up) emits nothing; placed storage marks its chunk', () => {
     const sim = itemsSim(undefined, { spawn: { x: 32.5, y: 10.5 } });
     send(sim, { type: 'debugGiveItem', itemId: 'fixture:brick', count: 5 });
     send(sim, { type: 'debugGiveItem', itemId: 'fixture:crate-item' });
@@ -139,12 +139,13 @@ describe('chunkChanged events', () => {
     const brick = mainItems(sim).find((i) => i.def === 'fixture:brick')!;
     send(sim, { type: 'drop', item: brick.id, count: 2 });
     sim.step();
-    const loot = { type: 'chunkChanged', tick: 0, cx: 1, cy: 0, z: 0, reason: 'loot' };
-    expect(chunkEvents(sim.drainEvents())).toEqual([loot]);
+    // Loose loot reaches the client in the view (`nearby`), not as a chunk rebuild.
+    expect(chunkEvents(sim.drainEvents())).toEqual([]);
     const pile = sim.drainView()!.nearby!.find((c) => c.kind === 'ground')!;
     send(sim, { type: 'pickUp', item: sim.getContainer(pile.id)!.items[0]!.id });
     sim.step();
-    expect(chunkEvents(sim.drainEvents())).toEqual([loot]);
+    expect(chunkEvents(sim.drainEvents())).toEqual([]);
+    const object = { type: 'chunkChanged', tick: 0, cx: 0, cy: 0, z: 0, reason: 'object' };
     // Crate placed west of the chunk line: chunk (0, 0), reason object.
     send(sim, {
       type: 'placeStorage',
@@ -153,6 +154,58 @@ describe('chunkChanged events', () => {
       y: 10,
     });
     sim.step();
-    expect(chunkEvents(sim.drainEvents())).toEqual([{ ...loot, cx: 0, reason: 'object' }]);
+    expect(chunkEvents(sim.drainEvents())).toEqual([object]);
+  });
+
+  it('a loot change still goes into the save delta (dirty chunk) without a loot event', () => {
+    const run = (drop: boolean): Sim => {
+      const sim = lodSim(gridWorld({ w: 40, h: 12 }), 6, 6, {
+        walkSpeedTilesPerSecond: 16,
+        lod: { defaultZombiesPerChunk: 0 },
+      });
+      sim.step();
+      if (drop) {
+        send(sim, { type: 'debugGiveItem', itemId: 'fixture:brick', count: 3 });
+        sim.step();
+        const brick = mainItems(sim).find((i) => i.def === 'fixture:brick')!;
+        send(sim, { type: 'drop', item: brick.id, count: 2 });
+        sim.step();
+      }
+      expect(chunkEvents(sim.drainEvents())).toEqual([]);
+      send(sim, { type: 'move', dx: 1, dy: 0 });
+      for (let i = 0; i < 20 * 20 + 20; i++) sim.step(); // ~16 chunks east: (6, 6) released
+      expect(sim.drainEvents().some((e) => e.type === 'chunkChanged' && e.reason === 'loot')).toBe(
+        false,
+      );
+      return sim;
+    };
+    const lodOf = (sim: Sim) => sim.world.lod!;
+    const control = run(false);
+    expect(lodOf(control).chunkLoot[chunkIndex(lodOf(control), 6, 6)]).toBe(ChunkLoot.none);
+    const sim = run(true);
+    expect(lodOf(sim).chunkLoot[chunkIndex(lodOf(sim), 6, 6)]).toBe(ChunkLoot.dirty);
+    // The dropped pile is part of the save and comes back after a load.
+    const b = lodSim(gridWorld({ w: 40, h: 12 }), 6, 6, {
+      walkSpeedTilesPerSecond: 16,
+      lod: { defaultZombiesPerChunk: 0 },
+      load: sim.save(),
+    });
+    expect(lodOf(b).chunkLoot[chunkIndex(lodOf(b), 6, 6)]).toBe(ChunkLoot.dirty);
+    const groundIn66 = (x: Sim) =>
+      [...x.world.items!.containers.values()]
+        .filter(
+          (c) =>
+            c.kind === 'ground' &&
+            Math.floor(c.x / CHUNK_SIZE) === 6 &&
+            Math.floor(c.y / CHUNK_SIZE) === 6,
+        )
+        .flatMap((c) =>
+          c.items.map((id) => {
+            const it = x.world.items!.items.get(id)!;
+            return [c.x, c.y, it.def, it.count];
+          }),
+        );
+    expect(groundIn66(sim)).toContainEqual([208, 208, expect.any(Number), 2]);
+    expect(groundIn66(b)).toEqual(groundIn66(sim));
   });
 });

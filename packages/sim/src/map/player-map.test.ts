@@ -7,6 +7,7 @@ import {
   simMapFromWorldSource,
   type SimEvent,
 } from '@deadzone/protocol';
+import { saveMarkersSchema } from '@deadzone/protocol/schema';
 import {
   MapMarkersSettingsSchema,
   MAX_TRAIL_POINTS,
@@ -188,8 +189,24 @@ describe('player map: markers', () => {
       ['added', 2],
     ]);
     expect(ev[1]!.markers).toEqual([
-      { id: 1, x: 50, y: 60, icon: 'base:marker-food', color: 'red', text: 'Sklep' },
-      { id: 2, x: 70, y: 60, icon: 'base:marker-car', color: 'blue', text: '' },
+      {
+        id: 1,
+        x: 50,
+        y: 60,
+        icon: 'base:marker-food',
+        color: 'red',
+        text: 'Sklep',
+        showOnMinimap: true,
+      },
+      {
+        id: 2,
+        x: 70,
+        y: 60,
+        icon: 'base:marker-car',
+        color: 'blue',
+        text: '',
+        showOnMinimap: true,
+      },
     ]);
     expect(
       marker(sim, { type: 'editMarker', id: 2, text: 'x'.repeat(100), color: 'white' }),
@@ -197,7 +214,15 @@ describe('player map: markers', () => {
     expect(marker(sim, { type: 'removeMarker', id: 1 })).toMatchObject({ ok: true });
     ev = of(sim.drainEvents(), 'markersChanged');
     expect(ev.at(-1)!.markers).toEqual([
-      { id: 2, x: 70, y: 60, icon: 'base:marker-car', color: 'white', text: 'x'.repeat(40) },
+      {
+        id: 2,
+        x: 70,
+        y: 60,
+        icon: 'base:marker-car',
+        color: 'white',
+        text: 'x'.repeat(40),
+        showOnMinimap: true,
+      },
     ]);
     expect(sim.tick).toBe(0);
     expect(sim.drainView()!.worldMap!.markers).toHaveLength(1);
@@ -230,13 +255,64 @@ describe('player map: markers', () => {
     });
     for (let i = 0; i < 200; i++) expect(add({}).ok).toBe(true);
     expect(add({})).toMatchObject({ ok: false, reason: 'marker-limit' });
-    expect(of(sim.drainEvents(), 'commandRejected').map((e) => e.reason)).toEqual([
-      'invalid-target',
-      'invalid-target',
-      'unknown-marker',
-      'unknown-marker',
-      'marker-limit',
+    expect(
+      of(sim.drainEvents(), 'commandRejected').map((e) => [e.command, e.reason, e.seq]),
+    ).toEqual([
+      ['addMarker', 'invalid-target', 0],
+      ['addMarker', 'invalid-target', 0],
+      ['removeMarker', 'unknown-marker', 0],
+      ['editMarker', 'unknown-marker', 0],
+      ['addMarker', 'marker-limit', 0],
     ]);
+  });
+
+  it('commandRejected names the command and keeps its seq (also in pause)', () => {
+    const sim = big();
+    sim.enqueue({ type: 'editMarker', tick: 0, playerId: 0, seq: 41, id: 7, text: 'a' });
+    expect(sim.tick).toBe(0);
+    expect(of(sim.drainEvents(), 'commandRejected')).toEqual([
+      {
+        type: 'commandRejected',
+        tick: 0,
+        playerId: 0,
+        seq: 41,
+        command: 'editMarker',
+        reason: 'unknown-marker',
+      },
+    ]);
+  });
+
+  it('showOnMinimap: default true, set on add, patched by edit (other fields kept)', () => {
+    const sim = big();
+    const base = { type: 'addMarker', x: 5, y: 5, icon: 'base:marker-note', color: 'red' };
+    marker(sim, base);
+    marker(sim, { ...base, showOnMinimap: false });
+    expect(
+      of(sim.drainEvents(), 'markersChanged')
+        .at(-1)!
+        .markers.map((m) => m.showOnMinimap),
+    ).toEqual([true, false]);
+    marker(sim, { type: 'editMarker', id: 1, showOnMinimap: false });
+    marker(sim, { type: 'editMarker', id: 2, text: 'Auto' });
+    const last = of(sim.drainEvents(), 'markersChanged').at(-1)!.markers;
+    expect(last).toEqual([
+      { id: 1, x: 5, y: 5, icon: 'base:marker-note', color: 'red', text: '', showOnMinimap: false },
+      {
+        id: 2,
+        x: 5,
+        y: 5,
+        icon: 'base:marker-note',
+        color: 'red',
+        text: 'Auto',
+        showOnMinimap: false,
+      },
+    ]);
+    marker(sim, { type: 'editMarker', id: 2, showOnMinimap: true });
+    expect(myMap(sim).markers.get(2)!.showOnMinimap).toBe(true);
+    expect(marker(sim, { ...base, showOnMinimap: 'no' })).toMatchObject({
+      ok: false,
+      reason: 'invalid',
+    });
   });
 });
 
@@ -314,6 +390,43 @@ describe('player map: save, character', () => {
       `[size] player map worst case: ${(bytes.length / 1024).toFixed(1)} KiB JSON, ${(gz / 1024).toFixed(1)} KiB gzip\n`,
     );
     expect(bytes.length).toBeLessThan(120 * 1024);
+  });
+
+  it('showOnMinimap is saved only when false; saves without it load as shown; server schema', () => {
+    const a = big();
+    const base = { type: 'addMarker', x: 5, y: 5, icon: 'base:marker-note', color: 'red' };
+    marker(a, base);
+    marker(a, { ...base, showOnMinimap: false });
+    const json = JSON.parse(utf8Decode(a.save())) as {
+      version: number;
+      playerMaps: { markers: unknown[][] }[];
+    };
+    expect(json.version).toBe(3);
+    const saved = json.playerMaps[0]!.markers;
+    expect(saved).toEqual([
+      [1, 5, 5, 'base:marker-note', 'red', ''],
+      [2, 5, 5, 'base:marker-note', 'red', '', false],
+    ]);
+    // The server validates markers with this schema (apps/server save/state.ts).
+    expect(saveMarkersSchema.safeParse(saved).success).toBe(true);
+    expect(saveMarkersSchema.safeParse([[...saved[0]!, true]]).success).toBe(true);
+    expect(saveMarkersSchema.safeParse([[...saved[0]!, 'no']]).success).toBe(false);
+    expect(saveMarkersSchema.safeParse([[...saved[1]!, 1]]).success).toBe(false);
+    const load = (bytes: Uint8Array) =>
+      createSim({
+        seed: 7,
+        map: buildMap({ width: 8 * CHUNK_SIZE, height: 8 * CHUNK_SIZE }),
+        content: fixtureContent(),
+        dev: true,
+        load: bytes,
+      });
+    const b = load(a.save());
+    expect([...myMap(b).markers.values()].map((m) => m.showOnMinimap)).toEqual([true, false]);
+    // A save written before the field (6-element markers only): every marker is shown.
+    const old = { ...json, playerMaps: [{ ...json.playerMaps[0]!, markers: [saved[0]] }] };
+    const c = load(utf8Encode(JSON.stringify(old)));
+    expect(myMap(c).markers.get(1)!.showOnMinimap).toBe(true);
+    expect(c.drainView()!.worldMap!.markers![0]!.showOnMinimap).toBe(true);
   });
 
   it('a new character starts with an empty map', () => {

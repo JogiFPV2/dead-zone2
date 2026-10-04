@@ -145,11 +145,28 @@ export interface SimWorkerClient {
    * in detail (e.g. the streamer's near ring around the camera target); 0 clears it.
    */
   setInterest(cx: number, cy: number, radiusChunks: number): void;
-  /** Map marker (docs 9.29): applied at once, also in pause; answered by `markersChanged`. */
-  addMarker(x: number, y: number, icon: string, color: MarkerColor, text?: string): void;
+  /**
+   * Map marker (docs 9.29): applied at once, also in pause; answered by `markersChanged`.
+   * `showOnMinimap` defaults to true.
+   */
+  addMarker(
+    x: number,
+    y: number,
+    icon: string,
+    color: MarkerColor,
+    text?: string,
+    showOnMinimap?: boolean,
+  ): void;
   editMarker(
     id: number,
-    patch: { x?: number; y?: number; icon?: string; color?: MarkerColor; text?: string },
+    patch: {
+      x?: number;
+      y?: number;
+      icon?: string;
+      color?: MarkerColor;
+      text?: string;
+      showOnMinimap?: boolean;
+    },
   ): void;
   removeMarker(id: number): void;
   /** Open / close the door, window or gate on edge (tx, ty, side); `lock` locks / unlocks. */
@@ -364,8 +381,16 @@ export function createSimWorkerClient(
     throwItem: (item, x, y, opts) => cmd({ type: 'throw', item, x, y, ...opts }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     setInterest: (cx, cy, radiusChunks) => cmd({ type: 'setInterest', cx, cy, radiusChunks }),
-    addMarker: (x, y, icon, color, text) =>
-      cmd({ type: 'addMarker', x, y, icon, color, ...(text !== undefined ? { text } : {}) }),
+    addMarker: (x, y, icon, color, text, showOnMinimap) =>
+      cmd({
+        type: 'addMarker',
+        x,
+        y,
+        icon,
+        color,
+        ...(text !== undefined ? { text } : {}),
+        ...(showOnMinimap !== undefined ? { showOnMinimap } : {}),
+      }),
     editMarker: (id, patch) => cmd({ type: 'editMarker', id, ...patch }),
     removeMarker: (id) => cmd({ type: 'removeMarker', id }),
     debugGiveItem: (itemId, count) =>

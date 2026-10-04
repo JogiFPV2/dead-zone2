@@ -54,7 +54,11 @@ export const saveEnvelopeHeaderSchema: z.ZodType<SaveEnvelopeHeader> = z.strictO
   createdAt: z.iso.datetime({ offset: true }),
 });
 
-/** One map marker as saved by the sim: `[id, x, y, icon, color, text]`. */
+/**
+ * One map marker as saved by the sim: `[id, x, y, icon, color, text, showOnMinimap?]`. The 7th
+ * element is written only when false (hidden from the minimap); missing = true, so older saves
+ * and markers shown on the minimap keep the 6-element form.
+ */
 export const saveMarkerSchema = z.tuple([
   z.number().int().min(0).max(U32),
   z.number().finite(),
@@ -70,6 +74,7 @@ export const saveMarkerSchema = z.tuple([
     })
     // eslint-disable-next-line no-control-regex
     .refine((t) => !/[\u0000-\u001f\u007f]/.test(t), { message: 'control characters' }),
+  z.boolean().optional(),
 ]);
 
 export const saveMarkersSchema = z.array(saveMarkerSchema).max(MAX_MAP_MARKERS);

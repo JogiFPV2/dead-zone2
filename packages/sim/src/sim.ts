@@ -624,6 +624,7 @@ export function createSim(input: SimOptions): Sim {
             tick: w.tick,
             playerId: c.playerId,
             seq: c.seq,
+            command: c.type,
             reason,
           });
           return { ok: false, reason };

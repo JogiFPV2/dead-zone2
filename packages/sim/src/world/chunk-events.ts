@@ -5,15 +5,17 @@ import type { ItemStore } from '../items/store.js';
 /**
  * `chunkChanged` events (docs 9.24): tells the client streamer which chunks changed visibly, so
  * it rebuilds them (`streamer.invalidate(cx, cy)`). Openings mark their chunk directly
- * (`markChunk`); ground piles (loot on the ground, placed storage) are diffed at the end of a
- * tick against the previous one, only when the item store changed (`ItemStore.version`). Not
- * state: not saved, not hashed, rebuilt by `primeChunkWatch` after creation or a load.
+ * (`markChunk`); placed storage in ground piles is diffed at the end of a tick against the
+ * previous one, only when the item store changed (`ItemStore.version`). Loose loot on the ground
+ * emits nothing (the client gets piles in the view); the save delta does not depend on these
+ * events (`releaseChunks` compares chunk signatures). Not state: not saved, not hashed, rebuilt
+ * by `primeChunkWatch` after creation or a load.
  */
 export interface ChunkWatch {
   /** Pending marks: chunk key → reason bits. */
   readonly marks: Map<number, number>;
-  /** Ground pile id → [x, y, z, loot signature, placed signature] at the last diff. */
-  piles: Map<number, [number, number, number, number, number]>;
+  /** Ground pile id → [x, y, z, placed signature] at the last diff. */
+  piles: Map<number, [number, number, number, number]>;
   /** `ItemStore.version` at the last diff (−1 = not primed). */
   version: number;
   /** Chunk columns (`colKey`) the LOD loaded or released this tick: generated state, no events. */
@@ -55,15 +57,11 @@ function snapshotPiles(st: ItemStore): ChunkWatch['piles'] {
   const out: ChunkWatch['piles'] = new Map();
   for (const c of st.containers.values()) {
     if (c.kind !== 'ground') continue;
-    let loot = 1;
     let placed = 1;
     for (const id of c.items) {
-      const it = st.items.get(id);
-      if (!it) continue;
-      if (it.placed) placed = mix(placed, id);
-      else loot = mix(mix(loot, id), it.count);
+      if (st.items.get(id)?.placed) placed = mix(placed, id);
     }
-    out.set(c.id, [c.x, c.y, c.z, loot, placed]);
+    out.set(c.id, [c.x, c.y, c.z, placed]);
   }
   return out;
 }
@@ -92,13 +90,10 @@ export function flushChunkEvents(w: SimWorld): void {
     };
     for (const [id, n] of next) {
       const o = cw.piles.get(id);
-      if (!o) note(n[0], n[1], n[2], (n[3] !== 1 ? BIT.loot : 0) | (n[4] !== 1 ? BIT.object : 0));
-      else
-        note(n[0], n[1], n[2], (o[3] !== n[3] ? BIT.loot : 0) | (o[4] !== n[4] ? BIT.object : 0));
+      note(n[0], n[1], n[2], (o ? o[3] !== n[3] : n[3] !== 1) ? BIT.object : 0);
     }
     for (const [id, o] of cw.piles) {
-      if (next.has(id)) continue;
-      note(o[0], o[1], o[2], (o[3] !== 1 ? BIT.loot : 0) | (o[4] !== 1 ? BIT.object : 0));
+      if (!next.has(id)) note(o[0], o[1], o[2], o[3] !== 1 ? BIT.object : 0);
     }
     cw.piles = next;
     cw.version = st.version;

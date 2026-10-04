@@ -67,6 +67,7 @@ describe('SimBigMapSource (protocol)', () => {
       tick: 3,
       playerId: 0,
       seq: seqNo,
+      command: 'removeMarker',
       reason,
     });
     s.applyEvents([reject(2, 'unknown-marker'), reject(42, 'unknown-marker')]);

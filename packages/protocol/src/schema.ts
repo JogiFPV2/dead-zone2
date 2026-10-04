@@ -299,6 +299,7 @@ export const addMarkerCommandSchema = z.strictObject({
   icon: markerIcon,
   color: z.enum(MARKER_COLORS),
   text: markerText.optional(),
+  showOnMinimap: z.boolean().optional(),
 });
 export const editMarkerCommandSchema = z.strictObject({
   ...header,
@@ -309,6 +310,7 @@ export const editMarkerCommandSchema = z.strictObject({
   icon: markerIcon.optional(),
   color: z.enum(MARKER_COLORS).optional(),
   text: markerText.optional(),
+  showOnMinimap: z.boolean().optional(),
 });
 export const removeMarkerCommandSchema = z.strictObject({
   ...header,

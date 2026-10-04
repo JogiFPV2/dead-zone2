@@ -245,8 +245,9 @@ export function applyMarkerCommand(
       return 'invalid-target';
     const text =
       cmd.text !== undefined ? cleanText(cmd.text, cfg.maxTextLength) : (old?.text ?? '');
+    const showOnMinimap = cmd.showOnMinimap ?? old?.showOnMinimap ?? true;
     const id = old ? old.id : m.nextId++;
-    m.markers.set(id, { id, x, y, icon, color, text });
+    m.markers.set(id, { id, x, y, icon, color, text, showOnMinimap });
     changed = id;
     change = old ? 'edited' : 'added';
   }
@@ -299,13 +300,18 @@ export function worldMapPatch(w: SimWorld, sid: number): WorldMapView | undefine
 
 // --- save ----------------------------------------------------------------------------------
 
+export type SavedMarker =
+  | [number, number, number, string, MarkerColor, string]
+  | [number, number, number, string, MarkerColor, string, boolean];
+
 export interface PlayerMapSave {
   sid: number;
   /** Bitmap bytes, `encodeZeroRle` (runs of zero bytes folded). */
   discovered: string;
   /** Trail: zigzag varint deltas of whole metres, base64 (`encodeTrail`). */
   trail: string;
-  markers: [number, number, number, string, MarkerColor, string][];
+  /** `[id, x, y, icon, color, text]`, plus `false` when hidden from the minimap (missing = shown). */
+  markers: SavedMarker[];
   nextId: number;
 }
 
@@ -367,7 +373,11 @@ export function encodePlayerMaps(pm: PlayerMapWorld | undefined): PlayerMapSave[
       sid,
       discovered: encodeZeroRle(m.bits),
       trail: encodeTrail(m.trail),
-      markers: sortedMarkers(m).map((k) => [k.id, k.x, k.y, k.icon, k.color, k.text]),
+      markers: sortedMarkers(m).map((k): SavedMarker =>
+        k.showOnMinimap === false
+          ? [k.id, k.x, k.y, k.icon, k.color, k.text, false]
+          : [k.id, k.x, k.y, k.icon, k.color, k.text],
+      ),
       nextId: m.nextId,
     }));
 }
@@ -383,8 +393,8 @@ export function decodePlayerMaps(
     const m = newMap(pm);
     decodeZeroRle(s.discovered, m.bits);
     m.trail = decodeTrail(s.trail);
-    for (const [id, x, y, icon, color, text] of s.markers)
-      m.markers.set(id, { id, x, y, icon, color, text });
+    for (const [id, x, y, icon, color, text, mini] of s.markers)
+      m.markers.set(id, { id, x, y, icon, color, text, showOnMinimap: mini !== false });
     m.nextId = s.nextId;
     pm.maps.set(s.sid, m);
   }

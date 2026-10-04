@@ -100,7 +100,14 @@ describe('commands in the sim', () => {
     expect(s.enqueue(mv(0, 0, 1, 7)).ok).toBe(true);
     run(s, 1);
     expect(s.drainEvents()).toEqual([
-      { type: 'commandRejected', tick: 0, playerId: 7, seq: 0, reason: 'unknown-player' },
+      {
+        type: 'commandRejected',
+        tick: 0,
+        playerId: 7,
+        seq: 0,
+        command: 'move',
+        reason: 'unknown-player',
+      },
     ]);
     expect(s.drainEvents()).toEqual([]);
     expect(s.getPlayer()!.x).toBe(10.5);

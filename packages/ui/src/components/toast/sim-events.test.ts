@@ -52,6 +52,7 @@ describe('sim events → toasts', () => {
       tick: 1,
       playerId: 0,
       seq: 3,
+      command: 'sleep',
       reason,
     });
     expect(at(rej('invalid-state'))?.kind).toBe('warning');
