@@ -17,7 +17,8 @@
   },
   "files": [
     "dist",
-    "data"
+    "data",
+    "places"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

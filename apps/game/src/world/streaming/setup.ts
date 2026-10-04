@@ -52,14 +52,27 @@ export function wholeWorldNear(cfg: StreamConfig, b: ChunkBounds): StreamConfig 
 export function createWorldStreaming(
   source: WorldChunkSource,
   cfg: StreamConfig,
-  /** `greyBox: false`: terrain / structures come from elsewhere (town kit); only map objects. */
-  opts: { greyBox?: boolean } = {},
+  opts: {
+    /** `greyBox: false`: terrain / structures come from elsewhere (town kit); only map objects. */
+    greyBox?: boolean;
+    /**
+     * Big streamed world drawn by streamed near layers of its own (generated maps + town kit):
+     * rings as configured, no whole-map near ring.
+     */
+    streamed?: boolean;
+    /** `false`: decor instances are drawn by another layer (town kit trees). */
+    decor?: boolean;
+  } = {},
 ): WorldStreaming {
   const greyBox = opts.greyBox ?? true;
-  const lod = new StreamedWorldRenderer(source.edgePalette);
+  const lod = new StreamedWorldRenderer(source.edgePalette, opts.decor ?? true);
   // Town kit maps are laid out whole by the kit: keep every map object loaded too (as before
   // streaming) and no grey mid / far LOD over the kit's meshes.
-  const fitted = greyBox ? fitSmallWorld(cfg, source.bounds) : wholeWorldNear(cfg, source.bounds);
+  const fitted = opts.streamed
+    ? cfg
+    : greyBox
+      ? fitSmallWorld(cfg, source.bounds)
+      : wholeWorldNear(cfg, source.bounds);
   const streamer = new ChunkStreamer(source, lod, fitted);
   const terrain = new Terrain(streamer.loaded);
   const structures = new Structures(streamer.loaded, false);

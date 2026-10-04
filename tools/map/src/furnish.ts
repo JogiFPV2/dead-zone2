@@ -139,8 +139,30 @@ const SIDES: { s: Side; dx: number; dy: number; rot: number }[] = [
 ];
 const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
 
+/**
+ * What the furnishing rules read: floors, rooms, edges and stairs in world tiles. `MapView` (a
+ * built blueprint) and the lazy world generator's per-building view (`world-source/`) implement
+ * it, so both furnish with exactly the same rules.
+ */
+export interface FurnishView {
+  readonly rooms: ReadonlyMap<number, { roomType: string; buildingId: number }>;
+  readonly levels: ReadonlySet<number>;
+  readonly stairs: readonly {
+    x: number;
+    y: number;
+    z: number;
+    dir: 'N' | 'E' | 'S' | 'W';
+    len: number;
+  }[];
+  floor(x: number, y: number, z: number): string | undefined;
+  room(x: number, y: number, z: number): number;
+  edge(x: number, y: number, z: number, s: Side): string | undefined;
+  open(x: number, y: number, z: number, s: Side): boolean;
+  tiles(z: number): Iterable<[number, number]>;
+}
+
 /** Decoded chunks of a built map, looked up in world tiles. */
-export class MapView {
+export class MapView implements FurnishView {
   private readonly chunks = new Map<string, MapChunk>();
   private readonly edges = new Map<string, string>();
   readonly rooms = new Map<number, { roomType: string; buildingId: number }>();
@@ -221,9 +243,24 @@ function rng(seed: number): () => number {
 
 /** Furniture and outdoor props for `bp` (its own `objects` stay and are avoided). */
 export function furnish(bp: Blueprint, opt: FurnishOptions): PlacedObject[] {
+  return furnishView(
+    new MapView(buildMap(bp).chunks),
+    bp.objects.map((o) => key(o.x, o.y, o.z)),
+    opt,
+  );
+}
+
+/**
+ * Furniture and outdoor props over any `FurnishView`; `occupied` = `x,y,z` keys of objects already
+ * there (avoided). Deterministic for (view, occupied, seed).
+ */
+export function furnishView(
+  view: FurnishView,
+  occupied: Iterable<string>,
+  opt: FurnishOptions,
+): PlacedObject[] {
   const seed = opt.seed ?? 1;
-  const view = new MapView(buildMap(bp).chunks);
-  const taken = new Set<string>(bp.objects.map((o) => key(o.x, o.y, o.z)));
+  const taken = new Set<string>(occupied);
   const keepFree = reservedTiles(view);
   const out: PlacedObject[] = [];
   const rotAt = new Map<string, number>();
@@ -386,7 +423,7 @@ export function furnish(bp: Blueprint, opt: FurnishOptions): PlacedObject[] {
 const opposite = (s: Side): Side => ({ n: 's', s: 'n', e: 'w', w: 'e' })[s] as Side;
 
 /** Door tiles (both sides), stair runs, their foot and their landing: never furnished. */
-function reservedTiles(view: MapView): Set<string> {
+function reservedTiles(view: FurnishView): Set<string> {
   const res = new Set<string>();
   for (const z of view.levels) {
     for (const [x, y] of view.tiles(z)) {
@@ -417,7 +454,7 @@ function reservedTiles(view: MapView): Set<string> {
 
 /** Connected components of the free (not taken) indoor tiles of a room. */
 export function components(
-  view: MapView,
+  view: FurnishView,
   tiles: readonly [number, number][],
   z: number,
   room: number,

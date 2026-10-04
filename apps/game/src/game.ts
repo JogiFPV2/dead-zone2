@@ -57,7 +57,9 @@ import {
   streamConfigFor,
   wholeWorldNear,
 } from './world/streaming/setup.js';
-import { chunkSourceToWorld } from './world/streaming/source.js';
+import { chunkSourceToWorld, type LoadedChunks } from './world/streaming/source.js';
+import type { OpeningsLike } from './world/gen/streamed-town.js';
+import { genStartRange, nearestPlace } from './world/gen/maps.js';
 import { CHUNK_SIZE } from './world/chunk.js';
 import { OpeningsView } from './world/openings.js';
 import {
@@ -68,6 +70,7 @@ import {
   type DoorTarget,
   type OpeningCmd,
   doorCentre,
+  type DoorEdge,
 } from './world/door-target.js';
 import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
@@ -181,15 +184,36 @@ const stressWorld = boot.stress
       (m) => new m.StressWorldSource(SIM_SEED, boot.stressLatencyMs, boot.stressChunks),
     )
   : undefined;
-const loadedWorld: LoadedMap = stressWorld
+// Generated maps (`?map=osm-stw`, `?map=plan-4`; tools/map/src/world-source/README.md): chunks generated lazily
+// from a world plan in a worker, streamed with the town kit; the sim runs on the same plan.
+const genWorld = stressWorld
+  ? undefined
+  : await import('./world/gen/open.js').then((m) =>
+      m.openGeneratedWorld(boot.map, window.location.search, import.meta.env.BASE_URL),
+    );
+/** The streamer's loaded chunks (generated maps: the synchronous view of the world). */
+const loadedChunks: { current?: LoadedChunks } = {};
+const loadedWorld: LoadedMap = genWorld
   ? {
-      source: { tilePalette: [null], getChunk: () => undefined },
-      range: { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 },
+      source: {
+        tilePalette: genWorld.source.tilePalette,
+        edgePalette: genWorld.source.edgePalette,
+        getChunk: (cx, cy, z) => loadedChunks.current?.getChunk(cx, cy, z),
+      },
+      // Whole-map consumers (minimap, paper map, beds / sofas, shelf fill) read the loaded
+      // chunks inside this window around the start; the world itself streams without limits.
+      range: genStartRange(genWorld.source.bounds, genWorld.source.info.start, 12),
       zones: [],
     }
-  : boot.map !== 'test'
-    ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
-    : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
+  : stressWorld
+    ? {
+        source: { tilePalette: [null], getChunk: () => undefined },
+        range: { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 },
+        zones: [],
+      }
+    : boot.map !== 'test'
+      ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
+      : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
 // OSM scenes (`?map=osm-okulickiego`): parked cars, framed zombies and trees from the scene file.
 const osm = stressWorld ? undefined : osmScene(boot.map);
 const sceneWorld: LoadedMap = osm
@@ -201,10 +225,10 @@ const world: LoadedMap =
     ? { ...sceneWorld, source: withPumps(sceneWorld.source, boot.pumps) }
     : sceneWorld;
 // OSM maps: ODbL attribution always on screen (over the world, the minimap and the big map).
-if (osm) {
+if (osm || genWorld?.source.info.attribution) {
   const attribution = document.createElement('div');
   attribution.className = 'dz-osm-attribution';
-  attribution.textContent = OSM_ATTRIBUTION;
+  attribution.textContent = genWorld?.source.info.attribution ?? OSM_ATTRIBUTION;
   Object.assign(attribution.style, {
     position: 'fixed',
     right: '8px',
@@ -222,11 +246,15 @@ const startPoint: { x: number; y: number } = stressWorld
   ? import.meta.env.DEV && boot.spawnAt
     ? boot.spawnAt
     : stressWorld.centre
-  : boot.spawnInside
-    ? TEST_BUILDING_INSIDE
-    : import.meta.env.DEV && boot.spawnAt
+  : genWorld
+    ? import.meta.env.DEV && boot.spawnAt
       ? boot.spawnAt
-      : (startSpawn(world.zones) ?? (boot.sim === 'mock' ? { x: 6.5, y: 6.5 } : { x: 0, y: 0 }));
+      : genWorld.source.info.start
+    : boot.spawnInside
+      ? TEST_BUILDING_INSIDE
+      : import.meta.env.DEV && boot.spawnAt
+        ? boot.spawnAt
+        : (startSpawn(world.zones) ?? (boot.sim === 'mock' ? { x: 6.5, y: 6.5 } : { x: 0, y: 0 }));
 
 const scene = createScene();
 // Floating origin (render/floating-origin.ts): world content hangs under `worldRoot`, drawn around
@@ -256,64 +284,101 @@ const townKit =
 const town = townKit ? await import('./world/town/index.js') : undefined;
 // Procedural decor of content maps (lamps, poles, trees); the generated test map has its own lamps.
 const decor =
-  boot.map !== 'test' && town
+  boot.map !== 'test' && town && !genWorld
     ? town.townDecor(new town.MapTiles(world.source, world.range.z), world.range, osm?.trees)
     : undefined;
 // Chunk streaming (docs/streaming.md): grey-box terrain / structures and map objects load per
 // chunk around the player / camera target; mid and far rings get merged LOD meshes.
 const streaming = createWorldStreaming(
-  stressWorld ?? chunkSourceToWorld(world.source, world.range, `content:${boot.map}`, SIM_SEED),
+  stressWorld ??
+    genWorld?.source ??
+    chunkSourceToWorld(world.source, world.range, `content:${boot.map}`, SIM_SEED),
   streamConfigFor(settings.get().graphics.viewDistance, window.location.search),
-  { greyBox: !townKit },
+  { greyBox: !townKit, streamed: !!genWorld, decor: !(genWorld && townKit) },
 );
+loadedChunks.current = streaming.streamer.loaded;
+// Perf probe of generated maps (chunk generation / round-trip times, streamer stats).
+if (genWorld) {
+  (globalThis as Record<string, unknown>).__dzWorldGen = {
+    info: genWorld.source.info,
+    chunkStats: genWorld.source.stats,
+    streamStats: () => streaming.streamer.stats(),
+    townBuildMs: () => streamedTown?.buildMs ?? [],
+  };
+}
 settings.subscribe((next, prev) => {
   if (next.graphics.viewDistance !== prev.graphics.viewDistance) {
     const cfg = streamConfigFor(next.graphics.viewDistance, window.location.search);
     const b = streaming.streamer.source.bounds;
-    streaming.streamer.setConfig(townKit ? wholeWorldNear(cfg, b) : fitSmallWorld(cfg, b));
+    streaming.streamer.setConfig(
+      genWorld ? cfg : townKit ? wholeWorldNear(cfg, b) : fitSmallWorld(cfg, b),
+    );
   }
 });
-if (townKit && town) {
+// Generated maps with the town kit: kit terrain / walls / roofs / doors per streamed chunk.
+const genLayers = genWorld ? await import('./world/gen/streamed-town.js') : undefined;
+const streamedTown =
+  genLayers && townKit ? new genLayers.StreamedTown(streaming.streamer.loaded, townKit) : undefined;
+if (streamedTown) {
+  streaming.lod.addNearLayer({
+    loadChunk: (cx, cy, z) => streamedTown.loadChunk(cx, cy, z),
+    unloadChunk: (cx, cy, z) => streamedTown.unloadChunk(cx, cy, z),
+  });
+  worldRoot.add(streamedTown.root);
+}
+const streamedOpenings = genLayers
+  ? new genLayers.StreamedOpenings(streaming.streamer.loaded, streamedTown, townKit)
+  : undefined;
+if (streamedOpenings) {
+  streaming.lod.addNearLayer({
+    loadChunk: (cx, cy, z) => streamedOpenings.loadChunk(cx, cy, z),
+    unloadChunk: (cx, cy, z) => streamedOpenings.unloadChunk(cx, cy, z),
+  });
+}
+if (townKit && town && !genWorld) {
   const terrain = new town.TownTerrain(world.source, townKit);
   terrain.loadRange(world.range);
   worldRoot.add(terrain.root);
 }
-const townStructures = townKit && town ? new town.TownStructures(world.source, townKit) : undefined;
+const townStructures =
+  townKit && town && !genWorld ? new town.TownStructures(world.source, townKit) : undefined;
 if (townStructures) {
   townStructures.loadRange(world.range, decor?.props);
   worldRoot.add(townStructures.root);
 }
-const structures = townStructures ?? streaming.structures;
+const structures = townStructures ?? streamedTown ?? streaming.structures;
 // Upper floors (z = 1..): one town batch set per level with chunks, drawn at z · floor height
 // (slabs with stair openings, flights of stairs). The sim reads the same chunks by (cx, cy, z).
 const upperTown: NonNullable<typeof townStructures>[] =
-  townKit && town ? town.loadUpperLevels(world.source, world.range, townKit) : [];
+  townKit && town && !genWorld ? town.loadUpperLevels(world.source, world.range, townKit) : [];
 for (const level of upperTown) worldRoot.add(level.root);
 for (const root of streaming.roots) worldRoot.add(root);
 await streaming.streamer.warmup([startPoint]);
 // Doors, window panes and fences: sim opening state + shaking under crowd pressure. Not streamed
 // yet: built over the authored map (empty in the stress world), see docs/streaming.md.
-const openings = new OpeningsView(
-  world.source,
-  townStructures?.lookup ?? new BuildingLookup(world.source),
-  townKit && townStructures && town
-    ? {
-        kit: townKit,
-        leafOf: (e) =>
-          town.doorLeaf(
-            townStructures.doorSkin(e.tx, e.ty, e.side === 'n' ? 'N' : 'W') ?? 'interior',
-          ),
-        onWindow: (e, state) =>
-          townStructures.setWindowBroken(
-            e.tx,
-            e.ty,
-            e.side === 'n' ? 'N' : 'W',
-            state === 'broken',
-          ),
-      }
-    : undefined,
-);
-openings.loadRange(world.range);
+const openings: OpeningsLike =
+  streamedOpenings ??
+  new OpeningsView(
+    world.source,
+    townStructures?.lookup ?? new BuildingLookup(world.source),
+    townKit && townStructures && town
+      ? {
+          kit: townKit,
+          leafOf: (e) =>
+            town.doorLeaf(
+              townStructures.doorSkin(e.tx, e.ty, e.side === 'n' ? 'N' : 'W') ?? 'interior',
+            ),
+          onWindow: (e, state) =>
+            townStructures.setWindowBroken(
+              e.tx,
+              e.ty,
+              e.side === 'n' ? 'N' : 'W',
+              state === 'broken',
+            ),
+        }
+      : undefined,
+  );
+if (openings instanceof OpeningsView) openings.loadRange(world.range);
 worldRoot.add(openings.root);
 if (import.meta.env.DEV && boot.zones) {
   void import('./dev/zones-overlay.js').then(({ createZonesOverlay }) =>
@@ -361,14 +426,28 @@ if (boot.sim === 'worker') {
     ? { ...TEST_BUILDING_INSIDE, z: 0 }
     : import.meta.env.DEV && boot.spawnAt
       ? { x: boot.spawnAt.x, y: boot.spawnAt.y, z: boot.spawnAt.z ?? 0 }
-      : startSpawn(world.zones);
+      : genWorld
+        ? { x: genWorld.source.info.start.x, y: genWorld.source.info.start.y, z: 0 }
+        : startSpawn(world.zones);
   const worker = startSimWorker(world.source, world.range, simSeed, {
     spawn,
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
     zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
     ...(osm && boot.zombies ? { zombies: sceneZombies(osm) } : {}),
+    // Generated maps: zombies framed around the start; the sim's LOD fills every chunk it wakes
+    // (zombies on every floor, loot, crates, parked cars).
+    ...(genWorld
+      ? {
+          world: genWorld.spec,
+          zombies: boot.zombies
+            ? genWorld.source.info.zombies.map((z) => ({ x: z.x, y: z.y, z: 0 }))
+            : [],
+        }
+      : {}),
     // Content maps get animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits).
-    populateAnimals: boot.map !== 'test' ? startAnimalCount(world.range, boot.animals) : 0,
+    // Generated worlds: not yet (populating walks the whole map).
+    populateAnimals:
+      boot.map !== 'test' && !genWorld ? startAnimalCount(world.range, boot.animals) : 0,
     content: await simContent,
     character: newCharacter?.spec,
     save: session?.save?.data,
@@ -684,6 +763,13 @@ input.on('character', () => {
 });
 input.on('skills', () => comingSoon('skills'));
 input.on('journal', () => comingSoon('journal'));
+/** Where the player is (big map, pause): nearest named place of a generated world, else the map. */
+const locationName = (): string => {
+  if (boot.map === 'test') return 'Mapa testowa';
+  if (!genWorld) return boot.map;
+  const p = bigMapPlayer();
+  return nearestPlace(genWorld.source.info.places, p.x, p.y) ?? boot.map;
+};
 // Big map (M), HUD v2 spec §11. The world keeps running while it is open (no pause).
 const bigMap = createBigMap({
   root: container,
@@ -703,7 +789,7 @@ const bigMap = createBigMap({
   info: () => ({
     day: gameState.get().clock?.day,
     minuteOfDay: gameState.get().clock ? lightMinute : undefined,
-    location: boot.map === 'test' ? 'Mapa testowa' : boot.map,
+    location: locationName(),
   }),
 });
 const bigMapPlayer = () => {
@@ -778,7 +864,7 @@ const pause = new PauseController({
       return {
         day: gs.clock?.day,
         minuteOfDay: gs.clock ? lightMinute : undefined,
-        location: boot.map === 'test' ? 'Mapa testowa' : boot.map,
+        location: locationName(),
       };
     },
     lastSave: () => saver?.lastSave,
@@ -923,13 +1009,22 @@ gameState.subscribe((next) => {
     })
     .catch((e: unknown) => console.error('Zapis śmierci nie powiódł się', e));
 });
-/** Doors, gates and windows F can act on (`world/door-target.ts`). */
-const targetEdges = (['door', 'gate', 'window'] as const).flatMap((kind) =>
-  openings.edges(kind).map((e) => ({ tx: e.tx, ty: e.ty, z: e.z, side: e.side, kind })),
-);
+/** Doors, gates and windows F can act on (`world/door-target.ts`); rebuilt when chunks stream. */
+let targetEdgesRev = -1;
+let targetEdgesList: DoorEdge[] = [];
+const targetEdges = () => {
+  const rev = openings.revision ?? 0;
+  if (rev !== targetEdgesRev) {
+    targetEdgesRev = rev;
+    targetEdgesList = (['door', 'gate', 'window'] as const).flatMap((kind) =>
+      openings.edges(kind).map((e) => ({ tx: e.tx, ty: e.ty, z: e.z, side: e.side, kind })),
+    );
+  }
+  return targetEdgesList;
+};
 /** Nearest door / gate / window in reach of the player. */
 const doorInReach = (x: number, y: number, z: number): DoorTarget | undefined =>
-  nearestDoor(targetEdges, (e) => openings.info(e.tx, e.ty, e.z, e.side), x, y, z);
+  nearestDoor(targetEdges(), (e) => openings.info(e.tx, e.ty, e.z, e.side), x, y, z);
 /** Sim command on an opening edge (`toggleDoor`, `barricade`, `forceDoor` …). */
 const openingCommand = (door: DoorTarget, cmd: OpeningCmd): void => {
   const c = stamper.stamp({ type: cmd, tx: door.tx, ty: door.ty, side: door.side });
@@ -1416,6 +1511,7 @@ renderer.setAnimationLoop((time) => {
   simStreamSync?.update({ x: rig.target.x, y: rig.target.z }, streaming.streamer.config);
   lightMinute = currentMinute(performance.now());
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
+  streamedTown?.setMinute(lightMinute);
   if (townKit && townStructures) {
     townStructures.setMinute(lightMinute);
     for (const l of upperTown) l.setMinute(lightMinute);

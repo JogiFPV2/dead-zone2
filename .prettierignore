@@ -4,3 +4,5 @@ coverage/
 .turbo/
 # Dokumenty planu prowadzi Szef sztabu, nie formatujemy ich automatycznie.
 docs/
+# Dane OSM (ODbL): plik danych w formacie narzędzia, bez formatowania.
+apps/game/public/osm/*.json

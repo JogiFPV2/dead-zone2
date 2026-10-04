@@ -2,7 +2,9 @@ import { MARKER_COMMANDS } from '../map/player-map.js';
 import { buildContentBundle, type PackSource } from '@deadzone/content';
 import {
   simMapFromData,
+  simMapFromWorldSource,
   type MainToWorker,
+  type WorldSource,
   type SaveReason,
   type SimContentSource,
   type WorkerToMain,
@@ -29,6 +31,12 @@ export interface WorkerHostOptions {
   intervalMs?: number;
   /** Max snapshot buffers kept for reuse. */
   poolSize?: number;
+  /**
+   * Big generated world (docs/sim-architecture.md 9.24): chunks come from this source lazily
+   * (`simMapFromWorldSource`) and `init.map` is ignored. The game's own worker entry builds it
+   * (world plan + chunk generator) before starting the host.
+   */
+  world?: WorldSource | undefined;
 }
 
 export interface WorkerHost {
@@ -131,7 +139,9 @@ export function startSimWorkerHost(
       try {
         s = createSim({
           seed: msg.seed,
-          map: simMapFromData(msg.map),
+          ...(opts.world
+            ? { map: simMapFromWorldSource(opts.world), world: opts.world }
+            : { map: simMapFromData(msg.map) }),
           ...(msg.spawn ? { spawn: msg.spawn } : {}),
           ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
           ...(msg.animals ? { spawnAnimals: msg.animals } : {}),

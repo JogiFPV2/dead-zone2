@@ -2,7 +2,11 @@ import { DEBUG_STATS, type DebugStat, type SimVehicleSpawn } from '@deadzone/pro
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
 
-/** `test` = generated test map; anything else = a map folder of the base pack (`base:<name>`). */
+/**
+ * `test` = generated test map; a generated world (`world/gen/maps.ts`: `osm-stw` = OSM map of
+ * Stalowa Wola, `plan-4` = plan-4 generator); anything else = a map folder of the base pack
+ * (`base:<name>`).
+ */
 export type MapChoice = 'test' | (string & {});
 
 export interface BootOptions {

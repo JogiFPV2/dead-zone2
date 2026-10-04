@@ -13,13 +13,13 @@
   },
   "dependencies": {
     "@deadzone/content": "workspace:*",
+    "@deadzone/map": "workspace:*",
     "@deadzone/protocol": "workspace:*",
     "@deadzone/sim": "workspace:*",
     "@deadzone/ui": "workspace:*",
     "three": "^0.186.1"
   },
   "devDependencies": {
-    "@deadzone/map": "workspace:*",
     "@types/three": "^0.186.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.14.5",

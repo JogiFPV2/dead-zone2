@@ -27,6 +27,8 @@ const OUTDOOR: Record<string, FloorLook> = {
   'base:dirt': { cell: 'dirt', mask: [0, 0, 0, 1] },
   // Track ballast (OSM rails); sleepers and rails are drawn on top.
   'base:rail': { cell: 'asphalt', mask: [0.3, 0, 0, 0.7], jitter: 0.16 },
+  // Rivers and ponds (OSM water): flat dark water, no detail texture; the sim blocks it.
+  'base:water': { cell: 'water', mask: NONE, y: -0.04, jitter: 0.05 },
   'base:kitchen-tiles': { cell: 'kitchen-tiles', mask: NONE, y: 0.02, jitter: 0.08 },
 };
 

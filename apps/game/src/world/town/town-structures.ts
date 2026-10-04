@@ -32,6 +32,17 @@ import { pitchedRoof } from './roof.js';
 import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 
+export interface TownStructuresOptions {
+  /** Shared building lookup (streamed chunks: one over the loaded chunks). */
+  lookup?: BuildingLookup | undefined;
+  /**
+   * Streamed worlds: whole footprint of a rectangular building (pitched roof over chunk
+   * borders), undefined = flat roof. Without it the range's own roof footprint decides.
+   */
+  footprintOf?:
+    ((b: BuildingId) => { x0: number; z0: number; x1: number; z1: number } | undefined) | undefined;
+}
+
 /** A static prop of the town kit (trees, poles, signs...). */
 export interface PropPlacement {
   name: string;
@@ -92,9 +103,10 @@ export class TownStructures {
   constructor(
     private readonly source: ChunkSource,
     private readonly kit: TownKit,
+    private readonly opts: TownStructuresOptions = {},
   ) {
     this.root.name = 'town-structures';
-    this.lookup = new BuildingLookup(source);
+    this.lookup = opts.lookup ?? new BuildingLookup(source);
   }
 
   /** Builds the batches of `range` (+ `props`, placed into the chunk they stand in). */
@@ -142,18 +154,27 @@ export class TownStructures {
     }
     for (const r of layout.roofs) {
       const y = baseY + WALL_HEIGHT;
-      if (r.style !== 'flat' && r.rect) {
+      // Streamed chunks see only their part of a building: the whole footprint comes from the
+      // building metadata, and only the chunk holding its centre draws the pitched roof.
+      const whole = r.style !== 'flat' ? this.opts.footprintOf?.(r.building) : undefined;
+      if (whole) {
+        const mx = Math.floor((whole.x0 + whole.x1 + 1) / 2 / CHUNK_SIZE);
+        const mz = Math.floor((whole.z0 + whole.z1 + 1) / 2 / CHUNK_SIZE);
+        if (mx < range.cx0 || mx > range.cx1 || mz < range.cy0 || mz > range.cy1) continue;
+      }
+      if (r.style !== 'flat' && (whole || (r.rect && !this.opts.footprintOf))) {
         const skin: Skin = layout.skins.get(r.building) ?? 'green';
+        const fp = whole ?? r.footprint;
         const geo = pitchedRoof(
-          r.footprint,
+          fp,
           r.style,
           roofColour(r.building, r.content),
           WALL_CELL[skin],
           this.kit.cells,
           y,
         );
-        const cx = (r.footprint.x0 + r.footprint.x1 + 1) / 2;
-        const cz = (r.footprint.z0 + r.footprint.z1 + 1) / 2;
+        const cx = (fp.x0 + fp.x1 + 1) / 2;
+        const cz = (fp.z0 + fp.z1 + 1) / 2;
         push(cx, cz, { geo, m: new Matrix4(), roof: r.building });
         continue;
       }

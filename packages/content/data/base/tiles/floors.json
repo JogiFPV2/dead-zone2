@@ -44,5 +44,11 @@
     "name": "tile.base.rail.name",
     "category": "floor",
     "tags": ["base:outdoor"]
+  },
+  {
+    "id": "base:water",
+    "name": "tile.base.water.name",
+    "category": "floor",
+    "tags": ["base:outdoor"]
   }
 ]

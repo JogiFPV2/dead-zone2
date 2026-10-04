@@ -9,7 +9,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./blueprints/*": "./blueprints/*"
+    "./blueprints/*": "./blueprints/*",
+    "./world-source": {
+      "types": "./dist/world-source/index.d.ts",
+      "default": "./dist/world-source/index.js"
+    }
   },
   "files": [
     "dist",
@@ -23,7 +27,9 @@
     "map": "tsx src/cli.ts",
     "osm:convert": "tsx src/osm/cli-convert.ts",
     "osm:scene": "tsx src/osm/cli-scene.ts",
-    "osm:plan-png": "tsx src/osm/cli-plan-png.ts"
+    "osm:plan-png": "tsx src/osm/cli-plan-png.ts",
+    "osm:crop": "tsx src/world-source/cli-crop.ts",
+    "osm:places": "tsx src/world-source/cli-places.ts"
   },
   "dependencies": {
     "@deadzone/content": "workspace:*",

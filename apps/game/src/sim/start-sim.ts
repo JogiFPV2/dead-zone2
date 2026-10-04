@@ -11,6 +11,9 @@ import SimWorker from '@deadzone/sim/worker?worker';
 import type { ChunkRange, ChunkSource } from '../world/chunk.js';
 import { chunkSourceToSimMapData } from '../world/sim-map.js';
 import { WorkerSimClient } from './worker-sim-client.js';
+import type { GeneratedMapSpec } from '../world/gen/maps.js';
+import type { SimWorldMessage } from '../world/gen/protocol.js';
+import SimWorldWorker from '../world/gen/sim-world-worker.ts?worker';
 
 export interface StartSimOptions {
   /** Player 0 spawn; omitted = the sim's default tile. */
@@ -31,6 +34,12 @@ export interface StartSimOptions {
   save?: ArrayBuffer | undefined;
   /** Parked cars at start (dev `?car=`); ignored with `save`. */
   vehicles?: readonly SimVehicleSpawn[] | undefined;
+  /**
+   * Generated map (`osm-stw`, `plan-4`): the sim runs on the lazy `WorldSource` of the same world
+   * plan (its own worker entry); `source` / `range` are ignored and the sim's LOD populates
+   * zombies, loot, crates and cars per chunk.
+   */
+  world?: GeneratedMapSpec | undefined;
   /** Uncaught worker error (e.g. a save that no longer loads). */
   onWorkerError?: ((message: string) => void) | undefined;
 }
@@ -42,17 +51,19 @@ export function startSimWorker(
   seed: number,
   opts: StartSimOptions = {},
 ): WorkerSimClient {
-  const worker = new SimWorker();
+  const worker = opts.world ? new SimWorldWorker() : new SimWorker();
+  if (opts.world)
+    worker.postMessage({ kind: 'dz-world', spec: opts.world } satisfies SimWorldMessage);
   if (opts.onWorkerError) {
     const report = opts.onWorkerError;
     worker.addEventListener('error', (e: ErrorEvent) => report(e.message || 'błąd symulacji'));
   }
   const client = createSimWorkerClient(worker);
   const sim = new WorkerSimClient(client, worker);
-  const map = chunkSourceToSimMapData(source, range);
+  const map = opts.world ? { chunks: [] } : chunkSourceToSimMapData(source, range);
   const zombies = [
     ...(opts.zombies ?? []),
-    ...(opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : []),
+    ...(opts.zombiesAwayFrom && !opts.world ? pickZombieSpawns(map, opts.zombiesAwayFrom) : []),
   ];
   client.init(seed, map, {
     ...(opts.spawn ? { spawn: opts.spawn } : {}),

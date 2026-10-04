@@ -30,7 +30,10 @@ export class StreamedWorldRenderer implements ChunkBuilder {
     flatShading: true,
   });
 
-  constructor(private readonly edgePalette: readonly (EdgeDef | null)[] | undefined) {
+  constructor(
+    private readonly edgePalette: readonly (EdgeDef | null)[] | undefined,
+    private readonly drawDecor = true,
+  ) {
     this.root.name = 'streamed-lod';
     this.root.add(this.decor.root);
   }
@@ -76,7 +79,7 @@ export class StreamedWorldRenderer implements ChunkBuilder {
         }
       }
     }
-    if (data.decor?.length) {
+    if (this.drawDecor && data.decor?.length) {
       const s = this.decor.load(cx, cy, data.decor);
       bytes += s.bytes;
       triangles += s.triangles;

@@ -12,6 +12,10 @@
       "types": "./dist/host/worker-entry.d.ts",
       "default": "./dist/host/worker-entry.js"
     },
+    "./worker-host": {
+      "types": "./dist/host/worker-host.d.ts",
+      "default": "./dist/host/worker-host.js"
+    },
     "./worker-client": {
       "types": "./dist/host/client.d.ts",
       "default": "./dist/host/client.js"

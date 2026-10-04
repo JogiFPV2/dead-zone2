@@ -1,0 +1,91 @@
+import type { SimChunk } from '@deadzone/protocol';
+import type { GenColumn, GenLevel } from '@deadzone/map/world-source';
+import type { ChunkData, ContentId, RoomInfo, TileId } from '../chunk.js';
+import type { BuildingMeta, DecorInstance, WorldChunk } from '../streaming/source.js';
+
+/** Decor kind of plan trees (the town kit draws its tree props for it). */
+export const TREE_DECOR: ContentId = 'base:tree';
+
+/** Building render metadata (`BuildingMeta`) plus what the streamed town needs (pitched roofs). */
+export interface GenBuildingInfo extends BuildingMeta {
+  /** Footprint fills its bounding box: a pitched roof may span the whole building. */
+  readonly rect: boolean;
+}
+
+function levelData(cx: number, cy: number, l: GenLevel): ChunkData {
+  const rooms = new Map<number, RoomInfo>();
+  for (const [id, type, buildingId] of l.rooms)
+    rooms.set(id, { type: type as ContentId, buildingId });
+  return {
+    coord: { cx, cy, z: l.z },
+    floor: l.floor,
+    edgeN: l.edgeN,
+    edgeW: l.edgeW,
+    ...(l.roof ? { roof: l.roof } : {}),
+    ...(l.room ? { room: l.room, rooms } : {}),
+    ...(l.objects.length
+      ? { objects: l.objects.map((o) => ({ ...o, contentId: o.contentId as ContentId })) }
+      : {}),
+    ...(l.stairs.length ? { stairs: l.stairs } : {}),
+    ...(l.vehicles?.length ? { vehicles: l.vehicles } : {}),
+  };
+}
+
+/** Generator column → the streamer's `WorldChunk` (levels, trees as decor, building metadata). */
+export function columnToWorldChunk(col: GenColumn): WorldChunk {
+  const levels = new Map<number, ChunkData>();
+  for (const l of col.levels) levels.set(l.z, levelData(col.cx, col.cy, l));
+  const decor: DecorInstance[] = [];
+  for (let i = 0; i + 1 < col.trees.length; i += 2) {
+    const x = col.trees[i]!;
+    const y = col.trees[i + 1]!;
+    decor.push({ kind: TREE_DECOR, x, y, z: 0, rot: 0, scale: 1 });
+  }
+  const buildings: GenBuildingInfo[] = col.buildings.map((b) => ({
+    id: b.id,
+    x0: b.x0,
+    y0: b.y0,
+    x1: b.x1,
+    y1: b.y1,
+    floors: b.floors,
+    rect: b.rect,
+  }));
+  return { cx: col.cx, cy: col.cy, levels, decor, buildings };
+}
+
+/** Array buffers of a column (transferred from the worker, zero copy). */
+export function columnBuffers(col: GenColumn): ArrayBuffer[] {
+  const out = new Set<ArrayBuffer>();
+  for (const l of col.levels)
+    for (const a of [l.floor, l.edgeN, l.edgeW, l.roof, l.room])
+      if (a) out.add(a.buffer as ArrayBuffer);
+  return [...out];
+}
+
+/**
+ * One storey of a column as the sim's `SimChunk`: water has no floor (0 = blocked: you cannot
+ * walk into the river), room ids stay chunk-local with `roomBuildings` → global building id.
+ */
+export function levelToSimChunk(l: GenLevel, waterTile: TileId): SimChunk {
+  let floor = l.floor;
+  if (waterTile > 0 && l.z === 0 && l.floor.includes(waterTile)) {
+    floor = Uint16Array.from(l.floor, (v) => (v === waterTile ? 0 : v));
+  }
+  const rooms: Record<string, string> = {};
+  const roomBuildings: Record<string, number> = {};
+  for (const [id, type, b] of l.rooms) {
+    rooms[String(id)] = type;
+    roomBuildings[String(id)] = b;
+  }
+  return {
+    floor,
+    edgeN: l.edgeN,
+    edgeW: l.edgeW,
+    ...(l.room ? { room: l.room, rooms, roomBuildings } : {}),
+    ...(l.objects.length
+      ? { objects: l.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
+      : {}),
+    ...(l.stairs.length ? { stairs: l.stairs } : {}),
+    ...(l.vehicles?.length ? { vehicles: l.vehicles } : {}),
+  };
+}

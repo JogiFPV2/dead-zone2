@@ -35,6 +35,7 @@ export const EXT_CELLS: readonly (readonly [string, string])[] = [
   ['char', '#3b3632'],
   ['char-dark', '#2c2826'],
   ['rail', '#3c4446'],
+  ['water', '#2c4650'],
 ];
 
 /** Catalogue skin -> wall cells replacing `wall-plaster` / `wall-plaster-dark`. */

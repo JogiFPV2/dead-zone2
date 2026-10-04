@@ -1,0 +1,696 @@
+import { CHUNK_SIZE } from '@deadzone/content';
+import { solveBuilding, type SolvedBuilding } from './building.js';
+import {
+  EDGE_PALETTE,
+  G_ASPHALT,
+  G_CONCRETE,
+  G_DIRT,
+  G_GRASS,
+  G_PARKING,
+  G_SIDEWALK,
+  G_WATER,
+  GROUND_TILE_IDS,
+  TILE_PALETTE,
+  edgeId,
+} from './palette.js';
+import { AREA_ORDER, PlanIndex, type IBuilding } from './plan-index.js';
+import { generatorVersionNumber, type WorldPlanInput } from './plan.js';
+import { AREA_TREES, fillRings, rasterGround, type Raster } from './raster.js';
+
+const C = CHUNK_SIZE;
+const CT = C * C;
+
+/** One storey of a generated chunk (renderer `ChunkData` / sim `SimChunk` layers). */
+export interface GenLevel {
+  z: number;
+  floor: Uint16Array;
+  edgeN: Uint16Array;
+  edgeW: Uint16Array;
+  roof?: Uint16Array;
+  room?: Uint16Array;
+  /** Chunk-local room id → [room type, global building id]. */
+  rooms: [number, string, number][];
+  objects: { contentId: string; x: number; y: number; rot: number }[];
+  stairs: { tx: number; ty: number; dir: 'N' | 'E' | 'S' | 'W'; len: number }[];
+  /** Parked cars (level 0): centre in local tiles. */
+  vehicles?: { x: number; y: number; heading: number; type: string }[];
+}
+
+/** Render metadata of a building touching the chunk (`BuildingMeta`). */
+export interface GenBuildingMeta {
+  id: number;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  floors: number;
+  /** Footprint is its full bounding box (pitched roof over the whole building). */
+  rect: boolean;
+  type: string;
+  kind: string;
+}
+
+export interface GenColumn {
+  cx: number;
+  cy: number;
+  levels: GenLevel[];
+  /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
+  trees: number[];
+  buildings: GenBuildingMeta[];
+}
+
+export const VEHICLE_TYPE = 'base:sedan';
+export const FUEL_PUMP = 'base:fuel-pump';
+/** Max parked cars per chunk (`SimChunk.vehicles`). */
+const MAX_CARS = 64;
+const RASTER_MARGIN = 12;
+
+/** Deterministic 0..1 hash of integer coordinates. */
+export function hash01(x: number, y: number, salt: number): number {
+  let h = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ Math.imul(salt, 0x9e3779b9);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/** Small LRU (Map order). */
+class Lru<K, V> {
+  private readonly m = new Map<K, V>();
+  constructor(private readonly cap: number) {}
+  get(k: K): V | undefined {
+    const v = this.m.get(k);
+    if (v !== undefined) {
+      this.m.delete(k);
+      this.m.set(k, v);
+    }
+    return v;
+  }
+  set(k: K, v: V): void {
+    this.m.delete(k);
+    this.m.set(k, v);
+    if (this.m.size > this.cap) this.m.delete(this.m.keys().next().value as K);
+  }
+}
+
+interface Car {
+  x: number;
+  y: number;
+  heading: number;
+  h: number;
+}
+
+/**
+ * Lazy chunk generator over a world plan (OSM Stalowa Wola, plan-4): the spatial index is built
+ * once; `column(cx, cy)` rasterises ground, roads, rails, water and bridge decks for the chunk,
+ * stamps the buildings touching it (each solved once — interior, storeys, stairwell, furniture —
+ * and kept in an LRU) and places trees, parked cars and fuel pumps. Pure: the result depends only
+ * on (plan, cx, cy); caches only memoise.
+ */
+export class PlanChunkGenerator {
+  readonly index: PlanIndex;
+  readonly id: string;
+  readonly version: string;
+  readonly generatorVersion: number;
+  readonly seed: number;
+  readonly bounds: { cx0: number; cy0: number; cx1: number; cy1: number };
+  readonly tilePalette = TILE_PALETTE;
+  readonly edgePalette = EDGE_PALETTE;
+  /** Highest storey any building may have (z of the top floor). */
+  readonly maxLevel = 15;
+  private readonly solved = new Lru<number, SolvedBuilding | null>(768);
+  private readonly pumpsByArea = new Map<number, [number, number][]>();
+  private kinds: Uint8Array | undefined;
+  private readonly tx0: number;
+  private readonly ty0: number;
+  private readonly tx1: number;
+  private readonly ty1: number;
+  /** Building solve / column timings (ms), for the perf report. */
+  readonly timings = { columns: 0, columnMs: 0, solves: 0, solveMs: 0 };
+
+  constructor(readonly plan: WorldPlanInput) {
+    this.index = new PlanIndex(plan);
+    this.id = plan.id;
+    this.version = plan.version;
+    this.generatorVersion = generatorVersionNumber(plan.version);
+    this.seed = plan.seed;
+    this.bounds = { ...plan.bounds };
+    this.tx0 = plan.bounds.cx0 * C;
+    this.ty0 = plan.bounds.cy0 * C;
+    this.tx1 = (plan.bounds.cx1 + 1) * C;
+    this.ty1 = (plan.bounds.cy1 + 1) * C;
+  }
+
+  inBounds(cx: number, cy: number): boolean {
+    const b = this.bounds;
+    return cx >= b.cx0 && cx <= b.cx1 && cy >= b.cy0 && cy <= b.cy1;
+  }
+
+  /** Solved building (memoised), undefined when the building is dropped. */
+  building(ib: IBuilding): SolvedBuilding | undefined {
+    const hit = this.solved.get(ib.gid);
+    if (hit !== undefined) return hit ?? undefined;
+    const t0 = performance.now();
+    const s = solveBuilding(this.index, ib, {
+      tx0: this.tx0,
+      ty0: this.ty0,
+      tx1: this.tx1,
+      ty1: this.ty1,
+    });
+    this.timings.solves++;
+    this.timings.solveMs += performance.now() - t0;
+    this.solved.set(ib.gid, s ?? null);
+    return s;
+  }
+
+  /** Union of raw building fills on a raster (cars and trees keep off buildings). */
+  private occupied(r: Raster): Uint8Array {
+    const occ = new Uint8Array(r.w * r.h);
+    for (const i of this.index.buildings.query({
+      x0: r.x0,
+      y0: r.y0,
+      x1: r.x0 + r.w,
+      y1: r.y0 + r.h,
+    })) {
+      fillRings(this.index.buildings.items[i]!.rings, r.x0, r.y0, r.w, r.h, (j) => {
+        occ[j] = 1;
+      });
+    }
+    return occ;
+  }
+
+  column(cx: number, cy: number): GenColumn | undefined {
+    if (!this.inBounds(cx, cy)) return undefined;
+    const t0 = performance.now();
+    const X0 = cx * C;
+    const Y0 = cy * C;
+    const M = RASTER_MARGIN;
+    const r = rasterGround(this.index, X0 - M, Y0 - M, C + 2 * M, C + 2 * M);
+    const ri = (lx: number, ly: number) => (ly + M) * r.w + (lx + M);
+    const occ = this.occupied(r);
+    // Buildings touching the chunk (outdoor props reach 2 tiles out of the footprint).
+    const list: SolvedBuilding[] = [];
+    for (const i of this.index.buildings.query({
+      x0: X0 - 3,
+      y0: Y0 - 3,
+      x1: X0 + C + 3,
+      y1: Y0 + C + 3,
+    })) {
+      const s = this.building(this.index.buildings.items[i]!);
+      if (!s) continue;
+      if (s.x0 > X0 + C + 2 || s.y0 > Y0 + C + 2 || s.x0 + s.w < X0 - 2 || s.y0 + s.h < Y0 - 2)
+        continue;
+      list.push(s);
+    }
+    list.sort((a, b) => a.gid - b.gid);
+    const zs = new Set<number>([0]);
+    for (const s of list) for (const z of s.levels.keys()) zs.add(z);
+    const levels: GenLevel[] = [];
+    /** Tiles of level 0 under a building room (gid). */
+    const owner = new Int32Array(CT);
+    for (const z of [...zs].sort((a, b) => a - b)) {
+      const floor = new Uint16Array(CT);
+      const edgeN = new Uint16Array(CT);
+      const edgeW = new Uint16Array(CT);
+      const roof = new Uint16Array(CT);
+      const room = new Uint16Array(CT);
+      if (z === 0)
+        for (let i = 0; i < CT; i++) floor[i] = GROUND_TILE_IDS[r.g[ri(i % C, (i / C) | 0)]!]!;
+      const localRoom = new Map<string, number>();
+      const rooms: [number, string, number][] = [];
+      const stairs: GenLevel['stairs'] = [];
+      let any = z === 0;
+      for (const s of list) {
+        const L = s.levels.get(z);
+        if (!L) continue;
+        const W = s.w + 1;
+        const xa = Math.max(X0, s.x0);
+        const ya = Math.max(Y0, s.y0);
+        const xb = Math.min(X0 + C, s.x0 + W);
+        const yb = Math.min(Y0 + C, s.y0 + s.h + 1);
+        for (let y = ya; y < yb; y++)
+          for (let x = xa; x < xb; x++) {
+            const k = (y - s.y0) * W + (x - s.x0);
+            const i = (y - Y0) * C + (x - X0);
+            const rm = L.room[k]!;
+            if (rm) {
+              floor[i] = L.floor[k]!;
+              if (L.roof[k]) roof[i] = L.roof[k]!;
+              const key = `${s.gid}:${rm}`;
+              let id = localRoom.get(key);
+              if (id === undefined) {
+                id = rooms.length + 1;
+                localRoom.set(key, id);
+                rooms.push([id, s.rooms.get(rm) ?? 'base:room-hall', s.gid]);
+              }
+              room[i] = id;
+              if (z === 0) owner[i] = s.gid;
+              any = true;
+            }
+            if (L.edgeN[k]) {
+              edgeN[i] = L.edgeN[k]!;
+              any = true;
+            }
+            if (L.edgeW[k]) {
+              edgeW[i] = L.edgeW[k]!;
+              any = true;
+            }
+          }
+        for (const st of s.stairs) {
+          if (st.z !== z || st.x < X0 || st.y < Y0 || st.x >= X0 + C || st.y >= Y0 + C) continue;
+          stairs.push({ tx: st.x - X0, ty: st.y - Y0, dir: st.dir, len: st.len });
+        }
+      }
+      if (!any) continue;
+      // Objects of this level: furniture inside, props outside (first building wins a tile).
+      const objects: GenLevel['objects'] = [];
+      const taken = new Set<number>();
+      for (const s of list) {
+        for (const o of s.objects) {
+          if (o.z !== z || o.x < X0 || o.y < Y0 || o.x >= X0 + C || o.y >= Y0 + C) continue;
+          const i = (o.y - Y0) * C + (o.x - X0);
+          if (taken.has(i)) continue;
+          // An outdoor prop never stands in another building.
+          if (z === 0 && !room[i] && occ[ri(o.x - X0, o.y - Y0)]) continue;
+          if (z === 0 && room[i] && owner[i] !== s.gid) continue;
+          taken.add(i);
+          objects.push({ contentId: o.contentId, x: o.x - X0, y: o.y - Y0, rot: o.rot });
+        }
+      }
+      const level: GenLevel = { z, floor, edgeN, edgeW, rooms, objects, stairs };
+      if (rooms.length) level.room = room;
+      if (roof.some((v) => v !== 0)) level.roof = roof;
+      if (z === 0) {
+        this.railings(r, M, owner, edgeN, edgeW);
+        for (const [x, y] of this.pumpsNear(X0, Y0)) {
+          const i = (y - Y0) * C + (x - X0);
+          if (taken.has(i) || owner[i]) continue;
+          taken.add(i);
+          objects.push({ contentId: FUEL_PUMP, x: x - X0, y: y - Y0, rot: 0 });
+        }
+        const cars = this.cars(r, M, occ, X0, Y0);
+        if (cars.length) level.vehicles = cars;
+      }
+      objects.sort((a, b) => a.y - b.y || a.x - b.x);
+      levels.push(level);
+    }
+    const ground = levels[0]!;
+    const trees = this.trees(r, M, occ, ground, X0, Y0);
+    const buildings: GenBuildingMeta[] = list
+      .filter((s) => s.bx1 >= X0 && s.by1 >= Y0 && s.bx0 < X0 + C && s.by0 < Y0 + C)
+      .map((s) => ({
+        id: s.gid,
+        x0: s.bx0,
+        y0: s.by0,
+        x1: s.bx1,
+        y1: s.by1,
+        floors: s.floors,
+        rect: s.rect,
+        type: s.type,
+        kind: s.kind,
+      }));
+    this.timings.columns++;
+    this.timings.columnMs += performance.now() - t0;
+    return { cx, cy, levels, trees, buildings };
+  }
+
+  /** Railings on bridge-deck edges over the railway (deck at level 0, as in the OSM scene). */
+  private railings(
+    r: Raster,
+    M: number,
+    owner: Int32Array,
+    edgeN: Uint16Array,
+    edgeW: Uint16Array,
+  ) {
+    const rail = edgeId('base:railing');
+    const at = (lx: number, ly: number) => (ly + M) * r.w + (lx + M);
+    const free = (lx: number, ly: number) =>
+      lx < 0 || ly < 0 || lx >= C || ly >= C ? true : !owner[ly * C + lx];
+    const edge = (ax: number, ay: number, bx: number, by: number) => {
+      const a = at(ax, ay);
+      const b = at(bx, by);
+      if (!free(ax, ay) || !free(bx, by)) return false;
+      return (r.deck[a] && !r.deck[b] && r.rail[b]) || (r.deck[b] && !r.deck[a] && r.rail[a]);
+    };
+    for (let ly = 0; ly < C; ly++)
+      for (let lx = 0; lx < C; lx++) {
+        const i = ly * C + lx;
+        if (!edgeN[i] && edge(lx, ly, lx, ly - 1)) edgeN[i] = rail;
+        if (!edgeW[i] && edge(lx, ly, lx - 1, ly)) edgeW[i] = rail;
+      }
+  }
+
+  /** Fuel pumps of fuel areas near the chunk (2 per station, on free concrete by its centre). */
+  private pumpsNear(X0: number, Y0: number): [number, number][] {
+    const out: [number, number][] = [];
+    const q = { x0: X0 - 1, y0: Y0 - 1, x1: X0 + C + 1, y1: Y0 + C + 1 };
+    for (const i of this.index.areas.query(q)) {
+      const a = this.index.areas.items[i]!;
+      if (a.kind !== 'fuel') continue;
+      let pumps = this.pumpsByArea.get(i);
+      if (!pumps) {
+        pumps = this.stationPumps(i);
+        this.pumpsByArea.set(i, pumps);
+      }
+      for (const p of pumps)
+        if (p[0] >= X0 && p[1] >= Y0 && p[0] < X0 + C && p[1] < Y0 + C) out.push(p);
+    }
+    return out;
+  }
+
+  private stationPumps(areaIndex: number): [number, number][] {
+    const box = this.index.areas.boxes[areaIndex]!;
+    const x0 = Math.floor(box.x0) - 1;
+    const y0 = Math.floor(box.y0) - 1;
+    const w = Math.ceil(box.x1) - x0 + 2;
+    const h = Math.ceil(box.y1) - y0 + 2;
+    if (w * h > 40000) return [];
+    const r = rasterGround(this.index, x0, y0, w, h);
+    const occ = this.occupied(r);
+    const ok = (x: number, y: number) => {
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const lx = x + dx;
+          const ly = y + dy;
+          if (lx < 0 || ly < 0 || lx >= w || ly >= h) return false;
+          const j = ly * w + lx;
+          if (occ[j] || (r.g[j] !== G_CONCRETE && r.g[j] !== G_ASPHALT && r.g[j] !== G_PARKING))
+            return false;
+        }
+      return r.g[y * w + x] === G_CONCRETE;
+    };
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    const cands: [number, number][] = [];
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        if (r.area[y * w + x] === AREA_ORDER.indexOf('fuel') + 1) {
+          sx += x;
+          sy += y;
+          n++;
+          if (ok(x, y)) cands.push([x, y]);
+        }
+    if (!n) return [];
+    const mx = sx / n;
+    const my = sy / n;
+    cands.sort(
+      (a, b) =>
+        Math.hypot(a[0] - mx, a[1] - my) - Math.hypot(b[0] - mx, b[1] - my) ||
+        a[1] - b[1] ||
+        a[0] - b[0],
+    );
+    const out: [number, number][] = [];
+    for (const c of cands) {
+      if (out.some((o) => Math.abs(o[0] - c[0] - x0) + Math.abs(o[1] - c[1] - y0) < 5)) continue;
+      out.push([c[0] + x0, c[1] + y0]);
+      if (out.length >= 2) break;
+    }
+    return out;
+  }
+
+  /**
+   * Parked cars: kerbside on streets with a sidewalk and in parking-lot bays. Candidates sit on a
+   * global lattice and win over conflicting candidates with a higher hash, so neighbouring chunks
+   * agree without seeing each other's result (no overlaps across chunk borders).
+   */
+  private cars(
+    r: Raster,
+    M: number,
+    occ: Uint8Array,
+    X0: number,
+    Y0: number,
+  ): GenLevel['vehicles'] & object {
+    const g = (x: number, y: number) => {
+      const lx = x - r.x0;
+      const ly = y - r.y0;
+      return lx < 0 || ly < 0 || lx >= r.w || ly >= r.h ? -1 : r.g[ly * r.w + lx]!;
+    };
+    const blocked = (x: number, y: number) => {
+      const lx = x - r.x0;
+      const ly = y - r.y0;
+      if (lx < 0 || ly < 0 || lx >= r.w || ly >= r.h) return true;
+      const j = ly * r.w + lx;
+      return !!(occ[j] || r.deck[j]);
+    };
+    const fits = (x: number, y: number, alongX: boolean, floor: number) => {
+      for (let a = -2; a <= 2; a++)
+        for (let b = -1; b <= 1; b++) {
+          const tx = alongX ? x + a : x + b;
+          const ty = alongX ? y + b : y + a;
+          if (blocked(tx, ty) || g(tx, ty) !== floor) return false;
+        }
+      return true;
+    };
+    /** Candidate car centred on tile (x, y), or undefined. */
+    const cand = (x: number, y: number): Car | undefined => {
+      // Parking bays: every 5 tiles across, 6 along.
+      if (((x % 5) + 5) % 5 === 3 && ((y % 6) + 6) % 6 === 3 && g(x, y) === G_PARKING) {
+        const h = hash01(x, y, 41);
+        if (h < 0.55 && fits(x, y, false, G_PARKING))
+          return { x: x + 0.5, y: y + 0.5, heading: h < 0.27 ? Math.PI / 2 : -Math.PI / 2, h };
+        return undefined;
+      }
+      if (g(x, y) !== G_ASPHALT) return undefined;
+      const h = hash01(x, y, 43);
+      if (h > 0.05) return undefined;
+      // Kerb lane: sidewalk 2 tiles to the north / south (car along x) or west / east (along y).
+      if ((g(x, y - 2) === G_SIDEWALK || g(x, y + 2) === G_SIDEWALK) && fits(x, y, true, G_ASPHALT))
+        return { x: x + 0.5, y: y + 0.5, heading: h < 0.025 ? 0 : Math.PI, h };
+      if (
+        (g(x - 2, y) === G_SIDEWALK || g(x + 2, y) === G_SIDEWALK) &&
+        fits(x, y, false, G_ASPHALT)
+      )
+        return { x: x + 0.5, y: y + 0.5, heading: h < 0.025 ? Math.PI / 2 : -Math.PI / 2, h };
+      return undefined;
+    };
+    const R = 6; // conflict radius (Chebyshev, tiles): footprints 5 × 3 plus a gap
+    const memo = new Map<number, Car | null>();
+    const at = (x: number, y: number) => {
+      const k = (y - Y0 + 64) * 256 + (x - X0 + 64);
+      let c = memo.get(k);
+      if (c === undefined) memo.set(k, (c = cand(x, y) ?? null));
+      return c ?? undefined;
+    };
+    const out: Car[] = [];
+    for (let y = Y0; y < Y0 + C; y++)
+      for (let x = X0; x < X0 + C; x++) {
+        const c = at(x, y);
+        if (!c) continue;
+        let win = true;
+        for (let dy = -R; dy <= R && win; dy++)
+          for (let dx = -R; dx <= R && win; dx++) {
+            if (!dx && !dy) continue;
+            const o = at(x + dx, y + dy);
+            if (o && (o.h < c.h || (o.h === c.h && (dy < 0 || (dy === 0 && dx < 0))))) win = false;
+          }
+        if (win) out.push(c);
+      }
+    void M;
+    return out
+      .sort((a, b) => a.h - b.h)
+      .slice(0, MAX_CARS)
+      .sort((a, b) => a.y - b.y || a.x - b.x)
+      .map((c) => ({ x: c.x - X0, y: c.y - Y0, heading: c.heading, type: VEHICLE_TYPE }));
+  }
+
+  /** Trees: OSM single trees and avenues, woods (5 m jitter grid) and parks (9 m), off paved ground. */
+  private trees(
+    r: Raster,
+    M: number,
+    occ: Uint8Array,
+    ground: GenLevel,
+    X0: number,
+    Y0: number,
+  ): number[] {
+    const objAt = new Set(ground.objects.map((o) => o.y * C + o.x));
+    const ok = (x: number, y: number) => {
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const lx = x + dx - r.x0;
+          const ly = y + dy - r.y0;
+          if (lx < 0 || ly < 0 || lx >= r.w || ly >= r.h) return false;
+          const j = ly * r.w + lx;
+          const g = r.g[j]!;
+          if (occ[j] || r.deck[j] || (g !== G_GRASS && g !== G_DIRT)) return false;
+        }
+      const lx = x - X0;
+      const ly = y - Y0;
+      return !objAt.has(ly * C + lx);
+    };
+    const out: number[] = [];
+    const osm = this.index.trees.query({ x0: X0 - 3, y0: Y0 - 3, x1: X0 + C + 3, y1: Y0 + C + 3 });
+    const pts = osm.map((i) => this.index.trees.items[i]!);
+    for (const [x, y] of pts) {
+      if (x < X0 || y < Y0 || x >= X0 + C || y >= Y0 + C) continue;
+      if (ok(Math.floor(x), Math.floor(y))) out.push(x - X0, y - Y0);
+    }
+    for (const [step, kind, salt] of [
+      [5, 1, 51],
+      [9, 2, 53],
+    ] as const) {
+      for (let gy = Math.floor(Y0 / step); gy <= Math.floor((Y0 + C - 1) / step); gy++)
+        for (let gx = Math.floor(X0 / step); gx <= Math.floor((X0 + C - 1) / step); gx++) {
+          const x = gx * step + 0.5 + hash01(gx, gy, salt) * (step - 1);
+          const y = gy * step + 0.5 + hash01(gx, gy, salt + 1) * (step - 1);
+          if (x < X0 || y < Y0 || x >= X0 + C || y >= Y0 + C) continue;
+          const tx = Math.floor(x);
+          const ty = Math.floor(y);
+          const j = (ty - r.y0) * r.w + (tx - r.x0);
+          if (r.tree[j] !== kind || !ok(tx, ty)) continue;
+          if (pts.some(([px, py]) => Math.abs(px - x) < 2.5 && Math.abs(py - y) < 2.5)) continue;
+          out.push(Math.round((x - X0) * 100) / 100, Math.round((y - Y0) * 100) / 100);
+        }
+    }
+    void M;
+    return out;
+  }
+
+  /**
+   * Zone kind of a chunk for the sim's coarse zombie density (`simLod.zombiesPerChunk`): from
+   * building counts by kind and the area under the chunk centre, computed once for the whole world
+   * on a chunk-resolution grid (cheap: no chunk is generated).
+   */
+  chunkKind(cx: number, cy: number): string | undefined {
+    if (!this.inBounds(cx, cy)) return undefined;
+    const k = (this.kinds ??= this.computeKinds());
+    const b = this.bounds;
+    return CHUNK_KINDS[k[(cy - b.cy0) * (b.cx1 - b.cx0 + 1) + (cx - b.cx0)]!];
+  }
+
+  private computeKinds(): Uint8Array {
+    const b = this.bounds;
+    const W = b.cx1 - b.cx0 + 1;
+    const H = b.cy1 - b.cy0 + 1;
+    const area = new Uint8Array(W * H);
+    for (const a of this.index.areas.items) {
+      const rings = a.rings.map((ring) => {
+        const out = new Float64Array(ring.length);
+        for (let i = 0; i < ring.length; i += 2) {
+          out[i] = ring[i]! / C - b.cx0;
+          out[i + 1] = ring[i + 1]! / C - b.cy0;
+        }
+        return out;
+      });
+      fillRings(rings, 0, 0, W, H, (i) => {
+        area[i] = a.rank + 1;
+      });
+    }
+    const counts = new Map<number, Record<string, number>>();
+    for (const ib of this.index.buildings.items) {
+      const x = Math.floor((ib.box.x0 + ib.box.x1) / 2 / C) - b.cx0;
+      const y = Math.floor((ib.box.y0 + ib.box.y1) / 2 / C) - b.cy0;
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      const k = y * W + x;
+      const c = counts.get(k) ?? {};
+      c[ib.b.kind] = (c[ib.b.kind] ?? 0) + 1;
+      counts.set(k, c);
+    }
+    const out = new Uint8Array(W * H);
+    const id = (s: string) => (CHUNK_KINDS as readonly string[]).indexOf(s);
+    for (let i = 0; i < W * H; i++) {
+      const c = counts.get(i);
+      const ak = AREA_ORDER[(area[i] ?? 0) - 1];
+      let kind = 'pola';
+      if (c) {
+        const n = (k: string) => c[k] ?? 0;
+        const services =
+          n('shop') +
+          n('office') +
+          n('pharmacy') +
+          n('school') +
+          n('hospital') +
+          n('police') +
+          n('station') +
+          n('church');
+        if (n('industrial') > 0 && n('industrial') >= n('house')) kind = 'przemysl';
+        else if (n('block') >= 2) kind = services >= 3 ? 'centrum' : 'bloki';
+        else if (services >= 3) kind = 'uslugi';
+        else if (n('house') + n('kostka') >= 2)
+          kind = ak === 'farmland' || ak === 'meadow' || !ak ? 'wies' : 'domy';
+        else kind = ak === 'military' ? 'wojsko' : 'farma';
+      } else if (ak === 'water') kind = 'woda';
+      else if (ak && AREA_TREES[ak] === 1) kind = 'las';
+      else if (ak === 'military') kind = 'wojsko';
+      else if (ak === 'industrial') kind = 'przemysl';
+      else if (ak === 'residential') kind = 'domy';
+      out[i] = id(kind);
+    }
+    return out;
+  }
+
+  /**
+   * Player start near `plan.start`: the closest sidewalk tile off bridge decks and buildings
+   * (heading towards the hint), searching up to 96 tiles away.
+   */
+  start(): { x: number; y: number; heading: number } {
+    const s = this.plan.start;
+    const R = 96;
+    const x0 = Math.floor(s.x) - R;
+    const y0 = Math.floor(s.y) - R;
+    const r = rasterGround(this.index, x0, y0, 2 * R, 2 * R);
+    const occ = this.occupied(r);
+    let best = Infinity;
+    let out = { x: s.x, y: s.y, heading: 0 };
+    for (let y = 0; y < r.h; y++)
+      for (let x = 0; x < r.w; x++) {
+        const j = y * r.w + x;
+        if (r.g[j] !== G_SIDEWALK || occ[j] || r.deck[j]) continue;
+        const d = Math.hypot(x0 + x + 0.5 - s.x, y0 + y + 0.5 - s.y);
+        if (d < best) {
+          best = d;
+          out = { x: x0 + x + 0.5, y: y0 + y + 0.5, heading: 0 };
+        }
+      }
+    out.heading = Math.atan2(s.y - out.y, s.x - out.x);
+    return out;
+  }
+
+  /** Zombies framed around the start: open ground 11–24 tiles from the player (deterministic). */
+  startZombies(p: { x: number; y: number }, n = 8): { x: number; y: number; heading: number }[] {
+    const R = 26;
+    const x0 = Math.floor(p.x) - R;
+    const y0 = Math.floor(p.y) - R;
+    const r = rasterGround(this.index, x0, y0, 2 * R, 2 * R);
+    const occ = this.occupied(r);
+    const out: { x: number; y: number; heading: number }[] = [];
+    for (let k = 0; k < 4000 && out.length < n; k++) {
+      const a = hash01(k, 1, 61) * Math.PI * 2;
+      const d = 11 + hash01(k, 2, 61) * 13;
+      const x = Math.floor(p.x + Math.cos(a) * d);
+      const y = Math.floor(p.y + Math.sin(a) * d);
+      const j = (y - y0) * r.w + (x - x0);
+      const g = r.g[j];
+      if (occ[j] || r.deck[j] || (g !== G_ASPHALT && g !== G_SIDEWALK && g !== G_GRASS)) continue;
+      if (out.some((z) => Math.hypot(z.x - x, z.y - y) < 3)) continue;
+      out.push({ x: x + 0.5, y: y + 0.5, heading: Math.atan2(p.y - y, p.x - x) });
+    }
+    return out;
+  }
+
+  /** Named places (`saveSummary.place`, world-map.json shape: name + centre in tiles). */
+  places(): { name: string; kind: string; x: number; y: number }[] {
+    return this.plan.features.places.map((p) => ({
+      name: p.name,
+      kind: p.kind,
+      x: p.x / 10,
+      y: p.y / 10,
+    }));
+  }
+}
+
+export const CHUNK_KINDS = [
+  'centrum',
+  'uslugi',
+  'bloki',
+  'domy',
+  'przemysl',
+  'wies',
+  'farma',
+  'pola',
+  'las',
+  'woda',
+  'wojsko',
+  'ruiny',
+] as const;
+
+void G_WATER;
