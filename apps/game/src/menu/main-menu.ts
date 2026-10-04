@@ -8,6 +8,7 @@ import { createSettingsScreen, type SettingsScreen } from './settings-screen.js'
 import type { CharacterStore } from '../characters/character-store.js';
 import { MAX_LIVING_CHARACTERS, type CharacterRecord } from '../characters/schema.js';
 import { createCharactersScreen, type CharactersScreen } from './characters-screen.js';
+import { uiScale } from '../ui/ui-scale.js';
 
 export type GameMode = 'survive' | 'rescue';
 
@@ -335,7 +336,7 @@ ${audioChips(false)}`;
   }
 
   function resize(): void {
-    const s = menuScale(window.innerWidth, window.innerHeight);
+    const s = menuScale(window.innerWidth, window.innerHeight) * uiScale();
     stage.style.width = `${window.innerWidth / s}px`;
     stage.style.height = `${window.innerHeight / s}px`;
     stage.style.transform = `scale(${s})`;

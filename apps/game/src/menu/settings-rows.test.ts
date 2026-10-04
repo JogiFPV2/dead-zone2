@@ -5,6 +5,7 @@ import {
   adjustRow,
   isDirty,
   isFocusable,
+  setSlider,
   settingsRows,
   type FocusableRow,
 } from './settings-rows.js';
@@ -55,6 +56,21 @@ describe('settings rows', () => {
     expect(activateRow(d, hp).interface.showZombieHp).toBe(true);
     expect(isDirty(activateRow(d, hp), d)).toBe(true);
     expect(isDirty(d, d)).toBe(false);
+  });
+
+  it('Grafika: Skala interfejsu 60–120 % in 5 % steps, shown as a percentage', () => {
+    const r = row('graphics', 'uiScale');
+    expect(r).toMatchObject({ kind: 'slider', display: '90%' });
+    expect(r.kind === 'slider' && r.value).toBeCloseTo(0.5);
+    expect(adjustRow(d, r, 'ArrowRight', false).graphics.uiScale).toBe(0.95);
+    expect(adjustRow(d, r, 'ArrowLeft', true).graphics.uiScale).toBe(0.85);
+    expect(adjustRow(d, r, 'Home', false).graphics.uiScale).toBe(0.6);
+    expect(adjustRow(d, r, 'End', false).graphics.uiScale).toBe(1.2);
+    const max = adjustRow(d, r, 'End', false);
+    expect(adjustRow(max, r, 'ArrowRight', false)).toBe(max);
+    expect(setSlider(d, 'uiScale', 0).graphics.uiScale).toBe(0.6);
+    expect(setSlider(d, 'uiScale', 2 / 3).graphics.uiScale).toBe(1);
+    expect(isDirty(setSlider(d, 'uiScale', 1), d)).toBe(true);
   });
 
   it('Interfejs: Pokazuj hałas is the first row, Tylko głośne by default, ←/→ steps', () => {

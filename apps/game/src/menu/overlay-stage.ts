@@ -1,4 +1,5 @@
 import './overlay.css';
+import { uiScale } from '../ui/ui-scale.js';
 
 /** Overlays (Ustawienia, pauza, potwierdzenia) are authored at the mockups' 1280×720. */
 export const OVERLAY_W = 1280;
@@ -27,7 +28,7 @@ export function mountOverlay(root: HTMLElement, className: string): OverlayStage
   const resize = (): void => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const s = overlayScale(w, h);
+    const s = overlayScale(w, h) * uiScale();
     stage.style.transform = `translate(${(w - OVERLAY_W * s) / 2}px, ${(h - OVERLAY_H * s) / 2}px) scale(${s})`;
   };
   window.addEventListener('resize', resize);

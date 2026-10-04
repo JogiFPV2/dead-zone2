@@ -1,4 +1,5 @@
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bindings.js';
+import { UI_SCALE_DEFAULT, snapUiScale } from '../ui/ui-scale.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
 export const SETTINGS_VERSION = 4;
@@ -23,6 +24,11 @@ export interface GraphicsSettings {
    * Ustawienia › Grafika › Zasięg widzenia; `?view=` overrides it.
    */
   viewDistance: ViewDistance;
+  /**
+   * „Skala interfejsu”: 0.6–1.2 in 5 % steps, multiplies every UI layer (ui/ui-scale.ts). Added
+   * without a version bump: older files lack it and get the default.
+   */
+  uiScale: number;
 }
 
 export const VIEW_DISTANCE_SETTINGS = ['low', 'medium', 'high'] as const;
@@ -129,6 +135,7 @@ export const DEFAULT_SETTINGS: Settings = {
     antialias: true,
     showFps: false,
     viewDistance: 'medium',
+    uiScale: UI_SCALE_DEFAULT,
   },
   audio: {
     master: 0.8,
@@ -204,6 +211,7 @@ export function sanitizeSettings(raw: unknown): Settings {
       viewDistance: (VIEW_DISTANCE_SETTINGS as readonly unknown[]).includes(g.viewDistance)
         ? (g.viewDistance as ViewDistance)
         : dg.viewDistance,
+      uiScale: typeof g.uiScale === 'number' ? snapUiScale(g.uiScale) : dg.uiScale,
     },
     audio: {
       master: range(a.master, 0, 1, da.master),

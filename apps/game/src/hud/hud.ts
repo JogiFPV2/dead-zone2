@@ -67,6 +67,7 @@ import {
   createShowTimer,
   problemMoodles,
 } from './v3/hud3-model.js';
+import { scaledUi } from '../ui/ui-scale.js';
 
 /** The Ø136 minimap (HUD v3) draws the Ø200 SVG scaled down; zoom keeps 2.5 px/m at 1,0×. */
 const MINIMAP_FIT = 200 / 136;
@@ -465,7 +466,7 @@ export function createHud(opts: HudOptions): Hud {
     onPromptMenu: (fn) => v2.onPromptMenu(fn),
     toast: (text) => toasts.push({ kind: 'info', text }),
     resize(width, height) {
-      applyUiScale(hud, computeUiScale(width, height));
+      applyUiScale(hud, scaledUi(computeUiScale(width, height)));
       v2.resize(width, height);
       lowRes.hidden = !isBelowMinResolution(width, height);
     },

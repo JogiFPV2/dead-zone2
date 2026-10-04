@@ -120,6 +120,7 @@ import { PauseController } from './pause/pause-controller.js';
 import { FloatingOrigin, chunkCorner } from './render/floating-origin.js';
 import { SaveRefusedError, handleEscape, type Closable } from './pause/pause-model.js';
 import type { WorkerSimClient } from './sim/worker-sim-client.js';
+import { bindUiScale, scaledUi } from './ui/ui-scale.js';
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;
@@ -190,6 +191,8 @@ const worldRoot = floating.root;
 scene.add(worldRoot);
 for (const o of [...scene.children]) if (o !== worldRoot) worldRoot.add(o);
 const settings = createSettingsStore();
+// „Skala interfejsu” for every UI layer, following the stored setting.
+bindUiScale(settings);
 // Town kit (CC0 modules, one atlas material): BatchedMesh per chunk + merged terrain per chunk.
 // `?town=0` or a failed load keeps the grey-box world. The kit lays out the whole authored map at
 // once, so it is not streamed yet; the stress world always uses the streamed grey-box layers.
@@ -1073,7 +1076,7 @@ function resize(): void {
   resizeIsometricCamera(camera, width / Math.max(height, 1), VIEW_HEIGHT);
   hud.resize(width, height);
   // Sleep screen and notices live outside the HUD layer: same scale as the HUD (1920×1080 ref).
-  container?.style.setProperty('--dz-sleep-scale', String(computeUiScale(width, height)));
+  container?.style.setProperty('--dz-sleep-scale', String(scaledUi(computeUiScale(width, height))));
 }
 
 new ResizeObserver(resize).observe(container);

@@ -4,6 +4,7 @@ import { noisePreview } from './noise-preview.js';
 import type { SettingsStore } from '../settings/store.js';
 import { createConfirm, type ConfirmDialog } from './confirm-dialog.js';
 import { icon } from './icons.js';
+import { setUiScale } from '../ui/ui-scale.js';
 import { sliderAt } from './menu-model.js';
 import { MINI_LOGO, keyBadge, mountOverlay } from './overlay-stage.js';
 import {
@@ -78,7 +79,8 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
         return `<div class="dzo-hdr"><span>${r.label}</span>${r.note ? `<em>${r.note}</em>` : ''}</div>`;
       case 'slider': {
         const p = sliderPercent(r.value);
-        return `<div class="${cls}"${attrs} role="slider" aria-label="${r.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><span class="dzo-row-label">${r.label}</span><span class="dzo-track" data-track="${r.id}"><i style="width:${p}%"></i><b style="left:${p}%"></b></span><span class="dzo-row-value">${p}</span><span class="dzo-row-note">${sel ? '◀ ▶ ±5 · Shift ±1' : r.note}</span></div>`;
+        const shown = r.display ?? String(p);
+        return `<div class="${cls}"${attrs} role="slider" aria-label="${r.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-valuetext="${shown}"><span class="dzo-row-label">${r.label}</span><span class="dzo-track" data-track="${r.id}"><i style="width:${p}%"></i><b style="left:${p}%"></b></span><span class="dzo-row-value">${shown}</span><span class="dzo-row-note">${sel ? (r.keys ?? '◀ ▶ ±5 · Shift ±1') : r.note}</span></div>`;
       }
       case 'toggle':
         return `<div class="${cls}"${attrs} role="switch" aria-checked="${r.on}" aria-label="${r.label}"><span class="dzo-row-col"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span></span><span class="dzo-toggle${r.on ? ' dzo-toggle--on' : ''}"></span></div>`;
@@ -147,6 +149,8 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
     const audioChanged = next.audio !== draft.audio;
     draft = next;
     if (audioChanged) audio.preview(draft.audio);
+    // Skala interfejsu previews live (this screen too); Wstecz restores the saved one.
+    setUiScale(draft.graphics.uiScale);
     const now = performance.now();
     if (previewKey && now - lastPreviewMs > 90) {
       lastPreviewMs = now;
@@ -338,6 +342,8 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       disposed = true;
       confirm?.dispose();
       audio.preview(null);
+      // Saved on Zastosuj (the store applies it), otherwise back to the stored scale.
+      setUiScale(settings.get().graphics.uiScale);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       overlay.dispose();

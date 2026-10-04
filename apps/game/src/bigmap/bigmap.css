@@ -608,3 +608,12 @@
   padding: 1px 5px;
   font-size: 9px;
 }
+
+/* „Skala interfejsu” / HUD scale: the chrome keeps its screen edges (offsets scale along) and
+   re-lays out its text. Pins and tags stay map-sized. */
+.dz-bm__bar,
+.dz-bm__foot,
+.dz-bm__north,
+.dz-bm__legend {
+  zoom: var(--hud2-s, 1);
+}

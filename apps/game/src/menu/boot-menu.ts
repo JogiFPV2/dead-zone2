@@ -9,6 +9,7 @@ import { createSettingsStore } from '../settings/store.js';
 import { createMainMenu, type GameMode, type MenuStart } from './main-menu.js';
 import type { MenuScene } from './menu-scene.js';
 import { MENU_TRACK as TRACK } from './track.js';
+import { bindUiScale } from '../ui/ui-scale.js';
 
 /** Menu only when the page has no query (dev/test URLs go straight to the game), or `?menu=1`. */
 export function shouldShowMenu(search: string): boolean {
@@ -32,6 +33,8 @@ const MODE_LABELS: Record<GameMode, string> = { survive: 'Przetrwaj', rescue: 'R
 export async function runMenu(root: HTMLElement): Promise<GameSession> {
   const store = await characterStore();
   const settings = createSettingsStore();
+  // The menu store applies „Skala interfejsu” until the game binds its own.
+  const unbindUiScale = bindUiScale(settings);
   const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
   audio.preload('ui-click1', 'ui-rollover2', 'ui-switch2');
   audio.playLoop('music', 'menu-emptycity');
@@ -112,6 +115,7 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
   }
   started = true;
   scene?.dispose();
+  unbindUiScale();
   audio.setInMenu(false);
   audio.stopLoop('music');
   audio.stopLoop('ambience');

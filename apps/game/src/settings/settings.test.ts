@@ -35,6 +35,7 @@ describe('sanitizeSettings', () => {
       antialias: true,
       showFps: false,
       viewDistance: 'medium',
+      uiScale: 0.9,
     });
     expect(s.audio).toEqual({
       master: 0,
@@ -224,5 +225,19 @@ describe('SettingsStore', () => {
     });
     expect(rebindAction(store, 'interact', 'KeyG').ok).toBe(true);
     expect(new SettingsStore(storage).get().input.bindings.interact).toEqual(['KeyG']);
+  });
+});
+
+describe('Skala interfejsu (graphics.uiScale)', () => {
+  it('defaults to 90 %, clamps to 60–120 % and snaps to 5 % steps', () => {
+    expect(DEFAULT_SETTINGS.graphics.uiScale).toBe(0.9);
+    const ui = (v: unknown): number =>
+      sanitizeSettings({ graphics: { uiScale: v } }).graphics.uiScale;
+    expect(ui(undefined)).toBe(0.9);
+    expect(ui('big')).toBe(0.9);
+    expect(ui(0.3)).toBe(0.6);
+    expect(ui(2)).toBe(1.2);
+    expect(ui(0.83)).toBe(0.85);
+    expect(ui(1.0000001)).toBe(1);
   });
 });

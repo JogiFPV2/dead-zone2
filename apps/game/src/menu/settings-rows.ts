@@ -11,6 +11,7 @@ import {
   type Settings,
   type ViewDistance,
 } from '../settings/schema.js';
+import { UI_SCALE_MAX, UI_SCALE_MIN, UI_SCALE_STEP, snapUiScale } from '../ui/ui-scale.js';
 import { sliderKey } from './menu-model.js';
 import type { SettingsTab } from './settings-tabs.js';
 
@@ -21,7 +22,18 @@ export interface ChoiceOption {
 
 export type SettingsRow =
   | { kind: 'header'; label: string; note?: string }
-  | { kind: 'slider'; id: SliderId; label: string; value: number; note: string }
+  | {
+      kind: 'slider';
+      id: SliderId;
+      label: string;
+      /** Track position 0..1. */
+      value: number;
+      note: string;
+      /** Shown value when it is not the 0–100 of the track (Skala interfejsu: `90%`). */
+      display?: string;
+      /** Hint while focused (default `◀ ▶ ±5 · Shift ±1`). */
+      keys?: string;
+    }
   | { kind: 'toggle'; id: ToggleId; label: string; hint: string; on: boolean }
   | {
       kind: 'choice';
@@ -40,7 +52,8 @@ export type SettingsRow =
 export type FocusableRow = Extract<SettingsRow, { id: string }>;
 export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 
-type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice';
+type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice' | 'uiScale';
+type VolumeId = Exclude<SliderId, 'uiScale'>;
 type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
 type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay';
 
@@ -92,7 +105,7 @@ const NOISE_LEGEND: readonly (ChoiceOption & { text: string })[] = [
 const qualityOf = (cap: number): string =>
   QUALITY.reduce((best, q) => (Math.abs(q.cap - cap) < Math.abs(best.cap - cap) ? q : best)).id;
 
-const VOLUMES: readonly { id: SliderId; label: string; note: string }[] = [
+const VOLUMES: readonly { id: VolumeId; label: string; note: string }[] = [
   { id: 'master', label: 'Główna', note: '' },
   { id: 'music', label: 'Muzyka', note: '' },
   { id: 'effects', label: 'Efekty', note: 'broń, kroki, zombie' },
@@ -150,6 +163,7 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           options: VIEW,
           value: d.graphics.viewDistance,
         },
+        uiScaleRow(d.graphics.uiScale),
         {
           kind: 'info',
           label: 'Rozdzielczość',
@@ -234,6 +248,22 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
   }
 }
 
+/** Track position 0..1 of a UI scale 0.6–1.2. */
+const uiScaleTrack = (scale: number): number =>
+  (scale - UI_SCALE_MIN) / (UI_SCALE_MAX - UI_SCALE_MIN);
+
+function uiScaleRow(scale: number): SettingsRow {
+  return {
+    kind: 'slider',
+    id: 'uiScale',
+    label: 'Skala interfejsu',
+    value: uiScaleTrack(scale),
+    display: `${Math.round(scale * 100)}%`,
+    note: 'HUD, mapy, ekwipunek, menu',
+    keys: '◀ ▶ ±5 %',
+  };
+}
+
 /** Value shown next to a slider (0–100). */
 export const sliderPercent = percent;
 
@@ -273,6 +303,11 @@ export function chooseRow(d: Settings, id: ChoiceId, value: string): Settings {
 
 /** Sets slider `id` to `v` (0..1). */
 export function setSlider(d: Settings, id: SliderId, v: number): Settings {
+  if (id === 'uiScale') {
+    const t = Math.min(1, Math.max(0, v));
+    const uiScale = snapUiScale(UI_SCALE_MIN + t * (UI_SCALE_MAX - UI_SCALE_MIN));
+    return uiScale === d.graphics.uiScale ? d : { ...d, graphics: { ...d.graphics, uiScale } };
+  }
   return { ...d, audio: { ...d.audio, [id]: Math.min(1, Math.max(0, v)) } };
 }
 
@@ -283,6 +318,16 @@ export function adjustRow(
   key: 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End',
   fine: boolean,
 ): Settings {
+  if (row.kind === 'slider' && row.id === 'uiScale') {
+    const cur = d.graphics.uiScale;
+    const next =
+      key === 'Home'
+        ? UI_SCALE_MIN
+        : key === 'End'
+          ? UI_SCALE_MAX
+          : cur + (key === 'ArrowLeft' ? -UI_SCALE_STEP : UI_SCALE_STEP);
+    return setSlider(d, 'uiScale', uiScaleTrack(snapUiScale(next)));
+  }
   if (row.kind === 'slider') {
     const v = sliderKey(row.value, key, fine);
     return v === undefined ? d : setSlider(d, row.id, v);

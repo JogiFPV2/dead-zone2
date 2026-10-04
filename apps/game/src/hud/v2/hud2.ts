@@ -17,6 +17,7 @@ import {
 import { hud2Scale } from './scale.js';
 import { createTopBar } from './top-bar.js';
 import { CAMERA_CHIP_MS, createShowTimer } from '../v3/hud3-model.js';
+import { uiScale } from '../../ui/ui-scale.js';
 
 export interface Hud2Options {
   root: HTMLElement;
@@ -104,7 +105,7 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
     },
     events: (events, now) => log.push(itemLogChanges(events, opts.playerId), now),
     resize(width, height) {
-      opts.root.style.setProperty('--hud2-s', String(hud2Scale(width, height)));
+      opts.root.style.setProperty('--hud2-s', String(hud2Scale(width, height, uiScale())));
     },
   };
 }
