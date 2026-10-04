@@ -63,7 +63,11 @@
       { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" },
       { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
       { "item": "base:wooden-stick", "weight": 3 },
-      { "item": "base:gas-can", "weight": 2, "rarity": "uncommon" }
+      { "item": "base:gas-can", "weight": 2, "rarity": "uncommon" },
+      { "item": "base:engine-parts", "weight": 2 },
+      { "item": "base:rubber-hose", "weight": 2 },
+      { "item": "base:car-tire", "weight": 1 },
+      { "item": "base:car-window", "weight": 1 }
     ]
   },
   {

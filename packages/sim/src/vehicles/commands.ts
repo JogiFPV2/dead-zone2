@@ -1,4 +1,4 @@
-import type { Command, CommandRejectReason } from '@deadzone/protocol';
+import { VEHICLE_PARTS, type Command, type CommandRejectReason } from '@deadzone/protocol';
 import { atan2Bam } from '../core/dmath.js';
 import type { SimWorld } from '../core/world.js';
 import { canAct } from '../physics/modifiers.js';
@@ -32,6 +32,10 @@ const VEHICLE_COMMANDS = [
   'takeVehicleKey',
   'vehicleEngine',
   'horn',
+  'refuelVehicle',
+  'fillFuelCan',
+  'siphonFuel',
+  'repairVehicle',
 ] as const;
 type VehicleCommand = Extract<Command, { type: (typeof VEHICLE_COMMANDS)[number] }>;
 
@@ -289,5 +293,24 @@ export function applyVehicleCommand(
       return applyEngine(w, eid, cmd.on);
     case 'horn':
       return applyHorn(w, eid);
+    case 'refuelVehicle':
+    case 'siphonFuel': {
+      const a = newAction(cmd.type === 'refuelVehicle' ? 'refuel' : 'siphonFuel', {
+        item: cmd.item,
+      });
+      a.vehicle = cmd.vehicleId;
+      return startAction(w, eid, a);
+    }
+    case 'fillFuelCan': {
+      const a = newAction('fillFuel', { item: cmd.item });
+      a.pump = [cmd.x, cmd.y];
+      return startAction(w, eid, a);
+    }
+    case 'repairVehicle': {
+      const a = newAction('repairVehicle');
+      a.vehicle = cmd.vehicleId;
+      a.seat = VEHICLE_PARTS.indexOf(cmd.part);
+      return startAction(w, eid, a);
+    }
   }
 }

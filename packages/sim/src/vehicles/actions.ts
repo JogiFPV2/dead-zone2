@@ -8,6 +8,8 @@ import type { ActionState } from '../items/store.js';
 import { addXp, skillLevel } from '../progress/skills.js';
 import { enterBlock, enterNow, exitBlock, exitNow, openDoor } from './commands.js';
 import { carriedKey, drivenBy, tryStartEngine } from './keys.js';
+import { registerFuelActions } from './fuel.js';
+import { registerRepairActions } from './repair.js';
 import { vehicleSettings } from './settings.js';
 import type { Vehicle } from './types.js';
 
@@ -51,6 +53,8 @@ let registered = false;
 export function registerVehicleActions(): void {
   if (registered) return;
   registered = true;
+  registerFuelActions();
+  registerRepairActions();
 
   registerAction('enterVehicle', {
     validate: (w, eid, a) => enterBlock(w, eid, a.vehicle ?? 0, a.seat ?? 0),

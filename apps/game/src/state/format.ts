@@ -103,6 +103,10 @@ export function describeEvent(e: SimEvent): string {
       return `player ${e.playerId} took the key of vehicle ${e.vehicleId}`;
     case 'vehicleHorn':
       return `vehicle ${e.vehicleId} horn`;
+    case 'refueled':
+      return `${e.kind} ${e.litres} l (can ${e.canL} l${e.vehicleId ? `, vehicle ${e.vehicleId} ${e.fuel} l` : ''})`;
+    case 'partRepaired':
+      return `vehicle ${e.vehicleId} ${e.part} repaired → ${e.hp}`;
     case 'zombieKilled':
       return `zombie ${e.zombie} killed`;
     case 'animalSpawned':

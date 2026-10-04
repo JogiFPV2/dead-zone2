@@ -323,6 +323,12 @@ function writeVehicleHash(pw: PhysicsWorld, h: HashWriter): void {
       h.u32(0x7f20_00b1)
         .u32((v.locked ? 1 : 0) | (v.keyIn ? 2 : 0) | (v.hotwired ? 4 : 0))
         .u32(v.hornTick + 1);
+    // Chunk-spawned cars (vehicles/chunk-spawn.ts) only.
+    if (v.home !== undefined || v.keyZombie)
+      h.u32(0x7f20_00b2)
+        .u32((v.home ?? -1) + 1)
+        .u32(v.sig ?? 0)
+        .u32(v.keyZombie ? 1 : 0);
     for (const x of v.susp) h.f32(x);
     for (const x of v.zones) h.f32(x);
     h.f32(v.engine);

@@ -1,3 +1,4 @@
+import type { VehiclePart } from './vehicles.js';
 import type {
   BodyPart,
   ContainerId,
@@ -147,6 +148,9 @@ export interface ItemView {
   placed?: boolean;
   /** Car key: StableId of the only vehicle it fits (`worldSettings.vehicles.keyItem`). */
   vehicle?: number;
+  /** Gas can (`worldSettings.vehicles.fuel.canItem`): litres inside (0.1) and the capacity. */
+  fuelL?: number;
+  fuelMaxL?: number;
   /**
    * Part of a `combine` recipe the player knows (carried items only): recipe ids and whether
    * one of them can be done right now (all parts, tools, skills at hand).
@@ -310,7 +314,7 @@ export interface ActionView {
   /** Openings actions (`barricade`, `smashWindow` …): the target edge. */
   edge?: { tx: number; ty: number; z: number; side: EdgeSide };
   /** Vehicle actions (`enterVehicle`, `hotwire` …): the vehicle and, for `enterVehicle`, the seat. */
-  vehicle?: { vehicleId: number; seat?: number };
+  vehicle?: { vehicleId: number; seat?: number; part?: VehiclePart };
 }
 
 export interface SimViewPatch {

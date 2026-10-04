@@ -119,7 +119,15 @@ export type ActionKind =
   /** Get out of the current seat (`exitVehicle`, 1 s). */
   | 'exitVehicle'
   /** Hotwire the car from the driver seat (`hotwire`). */
-  | 'hotwire';
+  | 'hotwire'
+  /** Fuel (`vehicles/fuel.ts`): gas can → tank (`refuelVehicle`). */
+  | 'refuel'
+  /** Pump → gas can (`fillFuelCan`). */
+  | 'fillFuel'
+  /** Tank → gas can through a hose (`siphonFuel`). */
+  | 'siphonFuel'
+  /** Repair / replace a vehicle part (`repairVehicle`). */
+  | 'repairVehicle';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -352,6 +360,30 @@ export type SimEvent =
   | { type: 'hotwired'; tick: number; vehicleId: number; playerId: PlayerId; success: boolean }
   /** The driver took the key out of the ignition (`takeVehicleKey`): `itemId` = the key item. */
   | { type: 'vehicleKeyTaken'; tick: number; vehicleId: number; playerId: PlayerId; itemId: ItemId }
+  /**
+   * Fuel moved (`refuelVehicle` / `fillFuelCan` / `siphonFuel`, also the part an interrupted
+   * action managed): `litres` (> 0), the can's level after, the car's tank after.
+   */
+  | {
+      type: 'refueled';
+      tick: number;
+      playerId: PlayerId;
+      kind: 'refuel' | 'fill' | 'siphon';
+      item: ItemId;
+      litres: number;
+      canL: number;
+      vehicleId?: number;
+      fuel?: number;
+    }
+  /** A vehicle part was repaired / replaced (`repairVehicle`): hp after (0..100). */
+  | {
+      type: 'partRepaired';
+      tick: number;
+      vehicleId: number;
+      playerId: PlayerId;
+      part: VehiclePart;
+      hp: number;
+    }
   /** The driver sounded the horn (`horn`); also a `playerNoise` of kind `horn`. */
   | {
       type: 'vehicleHorn';

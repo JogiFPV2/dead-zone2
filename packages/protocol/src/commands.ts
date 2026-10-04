@@ -1,5 +1,6 @@
 import { SAVE_MARKER_COLORS, type SaveMarkerColor } from './api.js';
 import type { EdgeSide, OpeningState } from './map.js';
+import type { VehiclePart } from './vehicles.js';
 
 /** Largest value of an unsigned 32-bit integer (ticks, seq). */
 export const U32_MAX = 0xffff_ffff;
@@ -360,6 +361,54 @@ export interface VehicleEngineCommand extends CommandHeader {
  */
 export interface HornCommand extends CommandHeader {
   type: 'horn';
+}
+
+/**
+ * Pours the gas can `item` (carried, `worldSettings.vehicles.fuel.canItem`) into the tank of
+ * `vehicleId` (timed `refuel`, `fuel.refuelLps`; standing ≤ `fuel.reachTiles` from the car body,
+ * on foot). An interrupted action pours what it managed. Rejects: `no-item`, `out-of-range`,
+ * `no-fuel` (empty can), `no-space` (full tank), `invalid-target`.
+ */
+export interface RefuelVehicleCommand extends CommandHeader {
+  type: 'refuelVehicle';
+  vehicleId: number;
+  item: ItemId;
+}
+
+/**
+ * Fills the carried gas can `item` at the fuel pump on tile (x, y) (map object
+ * `fuel.pumpItem`, within `fuel.reachTiles`): timed `fillFuel`, `pumpPoweredLps` with mains
+ * power, `pumpManualLps` without (hand crank). Rejects: `no-item`, `no-station` (no pump there),
+ * `out-of-range`, `no-space` (can full), `no-fuel` (the station is dry).
+ */
+export interface FillFuelCanCommand extends CommandHeader {
+  type: 'fillFuelCan';
+  item: ItemId;
+  x: number;
+  y: number;
+}
+
+/**
+ * Siphons fuel from `vehicleId` into the carried gas can `item` with a hose (a carried item
+ * tagged `fuel.hoseTag`): timed `siphonFuel`, `fuel.siphonLps`. Rejects: `no-item`,
+ * `missing-tool` (no hose), `out-of-range`, `no-fuel` (empty tank), `no-space` (can full).
+ */
+export interface SiphonFuelCommand extends CommandHeader {
+  type: 'siphonFuel';
+  vehicleId: number;
+  item: ItemId;
+}
+
+/**
+ * Repairs / replaces a part of `vehicleId` (timed `repairVehicle`, on foot next to the car):
+ * tools (tags) and parts (consumed) per group from `worldSettings.vehicles.repair` (`engine`,
+ * `tire*`, `window*`, `body*`), Mechanics level and XP. Rejects: `invalid-target` (no car /
+ * part already at 100), `out-of-range`, `skill-too-low`, `missing-tool`, `missing-parts`.
+ */
+export interface RepairVehicleCommand extends CommandHeader {
+  type: 'repairVehicle';
+  vehicleId: number;
+  part: VehiclePart;
 }
 
 /**
@@ -771,6 +820,10 @@ export type Command =
   | TakeVehicleKeyCommand
   | VehicleEngineCommand
   | HornCommand
+  | RefuelVehicleCommand
+  | FillFuelCanCommand
+  | SiphonFuelCommand
+  | RepairVehicleCommand
   | DriveCommand
   | PlaceStorageCommand
   | PickUpStorageCommand

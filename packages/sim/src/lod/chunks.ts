@@ -5,6 +5,8 @@ import { createChunkContainers, scatterFloorLootChunk } from '../items/loot.js';
 import { scatterLootChunk } from '../items/search.js';
 import { destroyItem, tileKey, type ItemContainer, type ItemStore } from '../items/store.js';
 import { ChunkLoot, chunkIndex, type LodWorld } from './state.js';
+import { pristineVehicle, removeVehicle, spawnChunkVehicles } from '../vehicles/chunk-spawn.js';
+import type { Vehicle } from '../vehicles/types.js';
 
 /** Container kinds placed on map tiles (the rest live inside items or inventories). */
 const PLACED = new Set(['world', 'ground', 'hidden', 'corpse']);
@@ -19,6 +21,7 @@ export function spawnChunkLoot(w: SimWorld, lod: LodWorld, cx: number, cy: numbe
   const st = w.items;
   if (!st) return;
   const first = st.nextContainerId;
+  const i = chunkIndex(lod, cx, cy);
   for (let z = lod.bounds.z0; z <= lod.bounds.z1; z++) {
     const addr = { cx, cy, z };
     createChunkContainers(st, w.map, w.seed, addr);
@@ -26,13 +29,14 @@ export function spawnChunkLoot(w: SimWorld, lod: LodWorld, cx: number, cy: numbe
       scatterFloorLootChunk(st, w.map, w.seed, w.clock.startMinute, addr);
       scatterLootChunk(st, w.map, w.seed, w.clock.startMinute, addr);
     }
+    // Parked cars after the storage (a key may go into a building's storage of this chunk).
+    spawnChunkVehicles(w, cx, cy, z, i);
   }
   const created: ItemContainer[] = [];
   for (let id = first; id < st.nextContainerId; id++) {
     const c = st.containers.get(id);
     if (c && PLACED.has(c.kind)) created.push(c);
   }
-  const i = chunkIndex(lod, cx, cy);
   lod.chunkLoot[i] = ChunkLoot.live;
   lod.chunkSig.set(i, signature(st, created));
 }
@@ -74,14 +78,24 @@ export function releaseChunks(w: SimWorld, lod: LodWorld, chunks: readonly numbe
   if (!st || chunks.length === 0) return;
   const set = new Set(chunks);
   const placed = placedIn(st, lod, set);
+  const cars = new Map<number, Vehicle[]>();
+  for (const v of w.physics.vehicles.values()) {
+    if (v.home === undefined || !set.has(v.home)) continue;
+    const list = cars.get(v.home);
+    if (list) list.push(v);
+    else cars.set(v.home, [v]);
+  }
   for (const i of chunks) {
     const list = placed.get(i) ?? [];
-    if (signature(st, list) !== lod.chunkSig.get(i)) {
+    const own = (cars.get(i) ?? []).sort((a, b) => a.id - b.id);
+    // A changed car keeps the whole chunk (and the other way round): keys may sit in storage.
+    if (signature(st, list) !== lod.chunkSig.get(i) || !own.every((v) => pristineVehicle(w, v))) {
       lod.chunkLoot[i] = ChunkLoot.dirty;
       lod.chunkSig.delete(i);
       continue;
     }
     for (const c of list) removeContainer(st, c);
+    for (const v of own) removeVehicle(w, v);
     lod.chunkLoot[i] = ChunkLoot.none;
     lod.chunkSig.delete(i);
   }
@@ -127,6 +141,7 @@ export function signature(st: ItemStore, list: readonly ItemContainer[]): number
         .u32(it.ageStamp)
         .u32(it.placed ? 1 : 0);
       if (it.vehicle !== undefined) h.u32(0x6e70_0001).u32(it.vehicle);
+      if (it.fuelL !== undefined) h.u32(0x6e70_0002).f32(it.fuelL);
       const inner = it.inner ? st.containers.get(it.inner) : undefined;
       if (inner) writeContainer(inner);
       else h.u32(0);

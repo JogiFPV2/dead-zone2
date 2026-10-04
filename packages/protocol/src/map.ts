@@ -49,6 +49,24 @@ export interface SimChunk {
    * `world/levels.ts`). Optional; a chunk without stairs omits it.
    */
   readonly stairs?: readonly SimStairs[] | undefined;
+  /**
+   * Parked cars on this chunk's level (generator, docs/sim-architecture.md 9.36). The sim spawns
+   * them once, when the chunk first goes live (LOD) or at init (whole map), with seeded rolls
+   * for lock / key / fuel from `worldSettings.vehicles.spawn`. Optional.
+   */
+  readonly vehicles?: readonly SimChunkVehicle[] | undefined;
+}
+
+/**
+ * A parked car in chunk data: centre in **local tiles** of the chunk (float, 0 ≤ x, y < 32),
+ * heading in radians (0 = +x / east, π/2 = +y; default 0), vehicle type content id (default
+ * `worldSettings.vehicles.spawn.defaultType`).
+ */
+export interface SimChunkVehicle {
+  readonly x: number;
+  readonly y: number;
+  readonly heading?: number | undefined;
+  readonly type?: string | undefined;
 }
 
 /** Direction of ascent of a flight (N = towards −y, E = +x, S = +y, W = −x). */
@@ -193,6 +211,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       ...(c.roomBuildings ? { roomBuildings: c.roomBuildings } : {}),
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
+      ...(c.vehicles ? { vehicles: c.vehicles } : {}),
     });
   }
   const list: SimChunkAddress[] = data.chunks.map(({ cx, cy, z }) => ({ cx, cy, z }));
@@ -233,6 +252,7 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         ...(c.roomBuildings ? { roomBuildings: { ...c.roomBuildings } } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
         ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
+        ...(c.vehicles ? { vehicles: c.vehicles.map((v) => ({ ...v })) } : {}),
       });
     }
   }

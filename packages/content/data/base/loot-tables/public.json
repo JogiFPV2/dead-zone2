@@ -274,6 +274,22 @@
       {
         "item": "base:wire",
         "weight": 1
+      },
+      {
+        "item": "base:gas-can",
+        "weight": 3
+      },
+      {
+        "item": "base:rubber-hose",
+        "weight": 2
+      },
+      {
+        "item": "base:car-tire",
+        "weight": 2
+      },
+      {
+        "item": "base:engine-parts",
+        "weight": 1
       }
     ]
   },

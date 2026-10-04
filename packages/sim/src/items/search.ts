@@ -17,6 +17,7 @@ import { newAction, startAction } from '../actions/queue.js';
 import { moveItem, stableIdOf, tileInReach } from './inventory.js';
 import { lootWeight } from './loot.js';
 import { isVehicleContainer } from '../vehicles/containers.js';
+import { giveZombieKey } from '../vehicles/chunk-spawn.js';
 import {
   addContainer,
   createItem,
@@ -106,6 +107,7 @@ export function createCorpse(
     lootTable: table,
   });
   st.corpses.set(zombieSid, c.id);
+  giveZombieKey(w, c);
   return c;
 }
 

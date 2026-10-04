@@ -39,6 +39,10 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'enterVehicle',
   'exitVehicle',
   'hotwire',
+  'refuel',
+  'fillFuel',
+  'siphonFuel',
+  'repairVehicle',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;
@@ -60,6 +64,8 @@ export interface ActionHandler {
   validateEnd?(w: SimWorld, eid: number, a: ActionState): CommandRejectReason | undefined;
   /** Interrupt reasons that do not stop this action (`threat`, `moved`). */
   ignore?: readonly ActionInterruptReason[];
+  /** Called when the running action is interrupted (e.g. pour the fuel moved so far). */
+  interrupted?(w: SimWorld, eid: number, a: ActionState): void;
 }
 
 const handlers = new Map<number, ActionHandler>();
@@ -172,6 +178,7 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
 export function interruptActions(w: SimWorld, eid: number, reason: ActionInterruptReason): void {
   const p = playerItems(w, eid);
   if (!p?.current) return;
+  handlers.get(p.current.kind)?.interrupted?.(w, eid, p.current);
   w.events.push({
     type: 'actionInterrupted',
     tick: w.tick,

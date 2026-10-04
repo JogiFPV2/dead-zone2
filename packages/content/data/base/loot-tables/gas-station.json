@@ -18,7 +18,9 @@
       { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "rare" },
       { "item": "base:nails", "weight": 2, "count": { "min": 5, "max": 10 } },
       { "table": "base:handguns", "weight": 1, "rarity": "very_rare" },
-      { "item": "base:gas-can", "weight": 3 }
+      { "item": "base:gas-can", "weight": 3 },
+      { "item": "base:rubber-hose", "weight": 1 },
+      { "item": "base:engine-parts", "weight": 1, "rarity": "uncommon" }
     ]
   }
 ]

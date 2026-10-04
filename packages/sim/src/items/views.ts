@@ -12,7 +12,8 @@ import type {
 import { GROUND_PILE_SHOWN } from '@deadzone/protocol';
 import { previewLootWeight } from './loot.js';
 import { viewKind } from './search.js';
-import { ACTION_KINDS, actionPart } from '../actions/queue.js';
+import { ACTION_KINDS, actionKindIndex, actionPart } from '../actions/queue.js';
+import { VEHICLE_PARTS } from '@deadzone/protocol';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import {
@@ -111,6 +112,11 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
   if (item.inner) v.container = item.inner;
   if (item.placed) v.placed = true;
   if (item.vehicle !== undefined) v.vehicle = item.vehicle;
+  const fuel = st.content.vehicles?.fuel;
+  if (fuel && def.id === fuel.canItem) {
+    v.fuelL = Math.round((item.fuelL ?? 0) * 10) / 10;
+    v.fuelMaxL = fuel.canCapacityL;
+  }
   const slots: EquipSlot[] = [];
   for (const p of st.players.values()) {
     for (const [slot, other] of p.slots) if (other === id) slots.push(slot);
@@ -297,8 +303,14 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
   };
   if (a.spot) v.spot = { ...a.spot };
   if (a.edge !== undefined) v.edge = unpackKey(a.edge);
-  if (a.vehicle !== undefined)
-    v.vehicle = { vehicleId: a.vehicle, ...(a.seat !== undefined ? { seat: a.seat } : {}) };
+  if (a.vehicle !== undefined) {
+    const part =
+      a.kind === actionKindIndex('repairVehicle') ? VEHICLE_PARTS[a.seat ?? -1] : undefined;
+    v.vehicle = {
+      vehicleId: a.vehicle,
+      ...(part ? { part } : a.seat !== undefined ? { seat: a.seat } : {}),
+    };
+  }
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';

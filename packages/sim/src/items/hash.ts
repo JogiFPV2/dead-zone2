@@ -78,6 +78,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
         h.u32(0x7e41_0001)
           .u32(a.vehicle)
           .u32((a.seat ?? -1) + 1);
+      if (a.pump) h.u32(0x7e41_0002).u32(a.pump[0]).u32(a.pump[1]);
       if (a.recipe) {
         h.u32(a.recipe).u32(a.use.length);
         for (const id of a.use) h.u32(id);
@@ -105,6 +106,19 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   if (keys.length > 0) {
     h.u32(0x6e70_0001).u32(keys.length);
     for (const id of keys) h.u32(id).u32(st.items.get(id)!.vehicle!);
+  }
+  // Gas can levels and pump reserves (only when there are any: older goldens stay valid).
+  const cans = iids.filter((id) => st.items.get(id)!.fuelL !== undefined);
+  if (cans.length > 0) {
+    h.u32(0x6e70_0002).u32(cans.length);
+    for (const id of cans) h.u32(id).f32(st.items.get(id)!.fuelL!);
+  }
+  if (st.pumps.size > 0) {
+    h.u32(0x6e70_0003).u32(st.pumps.size);
+    for (const k of [...st.pumps.keys()].sort()) {
+      for (const n of k.split(',')) h.u32(Number(n));
+      h.f32(st.pumps.get(k)!);
+    }
   }
   hashLures(st, h);
   hashProgress(st, h);

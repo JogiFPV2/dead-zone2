@@ -31,6 +31,8 @@ export interface ItemInstance {
   placed: boolean;
   /** Car key: StableId of the vehicle it fits (`vehicles/keys.ts`); absent on other items. */
   vehicle?: number;
+  /** Gas can: litres inside (`vehicles/fuel.ts`); absent = empty. */
+  fuelL?: number;
 }
 
 /**
@@ -101,6 +103,8 @@ export interface ActionState {
   /** Vehicle actions (`vehicles/actions.ts`): the vehicle's StableId and the seat / part. */
   vehicle?: number | undefined;
   seat?: number | undefined;
+  /** `fillFuelCan`: the pump tile (x, y; the player's floor). */
+  pump?: [number, number] | undefined;
 }
 
 export interface ItemStore {
@@ -131,6 +135,8 @@ export interface ItemStore {
   readonly characters: Map<number, CharacterState>;
   /** Player StableId → content ids of VHS tapes watched to the end (sorted; leisure). */
   readonly vhsWatched: Map<number, string[]>;
+  /** Fuel pumps: `tileKey` → litres left (`vehicles/fuel.ts`; rolled on first use). */
+  readonly pumps: Map<string, number>;
   /** Mains power (fridges need it). No electricity system yet: always on. */
   powered: boolean;
   /** Bumped on any change (views and carry-load recompute). Not state. */
@@ -157,6 +163,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     jammed: new Set(),
     nextItemId: 1,
     nextContainerId: 1,
+    pumps: new Map(),
     powered: true,
     version: 0,
   };

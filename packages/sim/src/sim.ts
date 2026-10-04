@@ -7,6 +7,7 @@ import {
   primePlayerMaps,
   type PlayerMapConfig,
 } from './map/player-map.js';
+import { spawnChunkVehicles } from './vehicles/chunk-spawn.js';
 import { createKey } from './vehicles/keys.js';
 import { playerItems } from './items/inventory.js';
 import { parseCommand } from '@deadzone/protocol/schema';
@@ -517,6 +518,13 @@ export function createSim(input: SimOptions): Sim {
     if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
     if (opts.spawnAnimals) spawnAnimals(w, opts.spawnAnimals);
     if (opts.spawnVehicles) spawnVehicles(w, opts.spawnVehicles);
+    // Parked cars from chunk data (whole map; with LOD they come with each chunk's loot).
+    if (!w.lod) {
+      const list = [...(opts.map.listChunks?.() ?? [])].sort(
+        (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
+      );
+      for (const a of list) spawnChunkVehicles(w, a.cx, a.cy, a.z, -1);
+    }
     if (opts.populateAnimals) populateAnimals(w, ctx.grid, opts.populateAnimals);
     if (opts.character) {
       const r = applyNewCharacter(w, w.players.get(0)!, opts.character);

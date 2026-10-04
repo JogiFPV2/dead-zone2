@@ -198,6 +198,11 @@
     "base:wooden-crate": "Drewniana skrzynia",
     "base:wooden-stick": "Drewniany kij",
     "base:workbench": "Stół warsztatowy",
-    "base:car-key": "Kluczyk do auta"
+    "base:car-key": "Kluczyk do auta",
+    "base:engine-parts": "Części silnika",
+    "base:car-tire": "Opona samochodowa",
+    "base:car-window": "Szyba samochodowa",
+    "base:rubber-hose": "Wąż gumowy",
+    "base:fuel-pump": "Dystrybutor paliwa"
   }
 }

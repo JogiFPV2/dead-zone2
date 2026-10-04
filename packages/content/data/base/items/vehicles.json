@@ -5,5 +5,45 @@
     "kind": "misc",
     "weightKg": 0.05,
     "tags": ["base:car-key"]
+  },
+  {
+    "id": "base:engine-parts",
+    "name": "item.base.engine-parts.name",
+    "kind": "misc",
+    "weightKg": 1.5,
+    "tags": ["base:car-part"]
+  },
+  {
+    "id": "base:car-tire",
+    "name": "item.base.car-tire.name",
+    "kind": "misc",
+    "weightKg": 9,
+    "tags": ["base:car-part"]
+  },
+  {
+    "id": "base:car-window",
+    "name": "item.base.car-window.name",
+    "kind": "misc",
+    "weightKg": 6,
+    "tags": ["base:car-part"]
+  },
+  {
+    "id": "base:rubber-hose",
+    "name": "item.base.rubber-hose.name",
+    "kind": "misc",
+    "weightKg": 0.5,
+    "tags": ["base:tool-hose"]
+  },
+  {
+    "id": "base:fuel-pump",
+    "name": "item.base.fuel-pump.name",
+    "kind": "placeable",
+    "weightKg": 250,
+    "tags": ["base:fuel-pump"],
+    "placeable": {
+      "power": {
+        "consumesW": 500
+      }
+    }
   }
 ]

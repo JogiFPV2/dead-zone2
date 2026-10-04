@@ -55,6 +55,15 @@ export interface Vehicle {
   hotwired: boolean;
   /** Tick of the last horn (−1 = never; `horn.cooldownSec`). */
   hornTick: number;
+  /**
+   * Chunk spawn (`vehicles/chunk-spawn.ts`; absent on `spawnVehicles` cars): LOD chunk index
+   * of the chunk it came from, its state signature at spawn (unchanged = removed with the
+   * chunk's loot when the chunk is left), and whether its key waits for the next zombie killed
+   * nearby.
+   */
+  home?: number;
+  sig?: number;
+  keyZombie?: boolean;
   /** Sideways slide 0..1, wheel angle (rad), suspension FL, FR, RL, RR 0..1 (0.5 at rest). */
   slip: number;
   wheelSpin: number;

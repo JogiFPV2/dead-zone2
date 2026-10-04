@@ -7,6 +7,8 @@ import {
   SkillRefSchema,
   TilesSchema,
 } from './common/index.js';
+import { FuelSettingsSchema, RepairSettingsSchema } from './vehicles-repair-settings.js';
+import { VehicleSpawnSettingsSchema } from './vehicles-spawn-settings.js';
 
 /** Czas akcji w sekundach rzeczywistych przy ×1 (20 ticków / s); 0 = natychmiast. */
 const SecSchema = z.number().min(0).max(600);
@@ -62,6 +64,9 @@ export const VehiclesSettingsSchema = z
     trunkReachTiles: TilesSchema.default(1.5),
     horn: HornSettingsSchema,
     hotwire: HotwireSettingsSchema,
+    fuel: FuelSettingsSchema,
+    repair: RepairSettingsSchema,
+    spawn: VehicleSpawnSettingsSchema,
   })
   .prefault({});
 

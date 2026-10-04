@@ -17,6 +17,7 @@ import {
   type Command,
   type CommandParseResult,
 } from './commands.js';
+import { VEHICLE_PARTS } from './vehicles.js';
 import { CHUNK_SIZE, CHUNK_TILES, OPENING_STATES, SIM_EDGE_KINDS, STAIR_DIRS } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
@@ -173,6 +174,31 @@ export const vehicleEngineCommandSchema = z.strictObject({
   on: z.boolean(),
 });
 export const hornCommandSchema = z.strictObject({ ...header, type: z.literal('horn') });
+export const refuelVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('refuelVehicle'),
+  vehicleId: u32,
+  item: itemId,
+});
+export const fillFuelCanCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('fillFuelCan'),
+  item: itemId,
+  x: z.number().int().min(-1_000_000).max(1_000_000),
+  y: z.number().int().min(-1_000_000).max(1_000_000),
+});
+export const siphonFuelCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('siphonFuel'),
+  vehicleId: u32,
+  item: itemId,
+});
+export const repairVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('repairVehicle'),
+  vehicleId: u32,
+  part: z.enum(VEHICLE_PARTS),
+});
 const unit = z.number().finite().min(0).max(1);
 export const driveCommandSchema = z.strictObject({
   ...header,
@@ -477,6 +503,10 @@ export const commandSchema = z.discriminatedUnion('type', [
   takeVehicleKeyCommandSchema,
   vehicleEngineCommandSchema,
   hornCommandSchema,
+  refuelVehicleCommandSchema,
+  fillFuelCanCommandSchema,
+  siphonFuelCommandSchema,
+  repairVehicleCommandSchema,
   driveCommandSchema,
   placeStorageCommandSchema,
   pickUpStorageCommandSchema,
@@ -560,6 +590,17 @@ export const simMapDataSchema = z.object({
           }),
         )
         .max(CHUNK_TILES)
+        .optional(),
+      vehicles: z
+        .array(
+          z.strictObject({
+            x: z.number().finite().min(0).lt(CHUNK_SIZE),
+            y: z.number().finite().min(0).lt(CHUNK_SIZE),
+            heading: z.number().finite().min(-100).max(100).optional(),
+            type: contentId.optional(),
+          }),
+        )
+        .max(64)
         .optional(),
     }),
   ),
