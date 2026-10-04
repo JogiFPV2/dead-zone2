@@ -19,6 +19,21 @@ describe('parsePack', () => {
     expect(() => parsePack({ ...pack, licence: 'CC-BY-4.0' })).toThrow(/nie jest dozwolona/);
   });
 
+  it('files: a download url or a committed path, never both', () => {
+    const f = { sha256: 'a'.repeat(64), name: 'x.glb' };
+    const { download, sha256, ...base } = pack;
+    void download;
+    void sha256;
+    expect(parsePack({ ...base, files: [{ ...f, path: 'animals/x.glb' }] }).files?.[0]?.path).toBe(
+      'animals/x.glb',
+    );
+    expect(() => parsePack({ ...base, files: [f] })).toThrow(/url albo path/);
+    expect(() =>
+      parsePack({ ...base, files: [{ ...f, path: 'a.glb', url: 'https://x.org/a.glb' }] }),
+    ).toThrow(/url albo path/);
+    expect(() => parsePack({ ...base, files: [{ ...f, path: '../a.glb' }] })).toThrow();
+  });
+
   it('rejects mismatched LOD ratios and distances', () => {
     expect(() => parsePack({ ...pack, lod: { ratios: [0.5], distances: [] } })).toThrow(/lod/);
   });

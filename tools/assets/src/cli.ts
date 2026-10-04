@@ -7,6 +7,7 @@ import { checkManifestLicences, updateAssetsMd, type AssetManifest } from './man
 import { ALLOWED_LICENCES } from './pack.js';
 import { renderIcons } from './icons.js';
 import { bundleTown } from './town.js';
+import { buildAnimalSources } from './animal-sources.js';
 
 const toolDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(toolDir, '../..');
@@ -14,6 +15,7 @@ const paths = {
   packsDir: join(toolDir, 'packs'),
   cacheDir: join(toolDir, '.cache'),
   outDir: join(repo, 'apps/game/public/models'),
+  toolDir,
 };
 
 /** Icon size in px (UI slots are ≤ 64 px; 2× for HiDPI). */
@@ -69,7 +71,19 @@ async function main(cmd = 'build'): Promise<void> {
     await bundleTown(await createIO(), resolve(src), join(paths.outDir, 'deadzone-town'));
     return;
   }
-  if (cmd !== 'build') throw new Error('Użycie: assets build|check|icons [rozmiar]|town <katalog>');
+  if (cmd === 'animal-sources') {
+    const src = process.argv[3];
+    if (!src)
+      throw new Error(
+        'Użycie: assets animal-sources <katalog z rozpakowanymi źródłami (FBX, .blend)>',
+      );
+    await buildAnimalSources(await createIO(), resolve(src), join(toolDir, 'animals'));
+    return;
+  }
+  if (cmd !== 'build')
+    throw new Error(
+      'Użycie: assets build|check|icons [rozmiar]|town <katalog>|animal-sources <katalog>',
+    );
   const m = await buildAll(paths);
   const md = join(repo, 'ASSETS.md');
   const current = await readFile(md, 'utf8').catch(() => '');

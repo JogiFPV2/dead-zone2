@@ -17,15 +17,45 @@ export class CrowdBuffer {
   private animBySlot: Uint8Array;
   /** Health 0..1 (snapshot `hpPct`) of the latest snapshot per slot. */
   private hpBySlot: Float32Array;
+  /** Snapshot `variant` (zombie / animal type index) and `speed` (m/s) per slot. */
+  private variantBySlot: Uint8Array;
+  private speedBySlot: Float32Array;
   private generation = 0;
+  private readonly accept: (kind: number) => boolean;
 
-  constructor(initialCapacity = 256, growBy = 256) {
+  /**
+   * `accept`: snapshot `kind`s kept (default: everything but animals, i.e. the zombie crowd;
+   * the animal renderer keeps its own buffer of animals only).
+   */
+  constructor(
+    initialCapacity = 256,
+    growBy = 256,
+    accept: (kind: number) => boolean = (k) => k !== SnapshotEntityKind.animal,
+  ) {
+    this.accept = accept;
     this.slots = new SlotMap(initialCapacity, growBy);
     this.prev = new Float32Array(this.slots.capacity * S);
     this.curr = new Float32Array(this.slots.capacity * S);
     this.seen = new Uint32Array(this.slots.capacity);
     this.animBySlot = new Uint8Array(this.slots.capacity);
     this.hpBySlot = new Float32Array(this.slots.capacity);
+    this.variantBySlot = new Uint8Array(this.slots.capacity);
+    this.speedBySlot = new Float32Array(this.slots.capacity);
+  }
+
+  /** Snapshot `variant` per slot (valid for 0..count-1). */
+  get variant(): Uint8Array {
+    return this.variantBySlot;
+  }
+
+  /** Ground speed (m/s, snapshot `speed`) per slot (valid for 0..count-1). */
+  get speed(): Float32Array {
+    return this.speedBySlot;
+  }
+
+  /** Stable id of the entity in `slot`. */
+  idAt(slot: number): number {
+    return this.slots.idAt(slot);
   }
 
   /** Health 0..1 per slot (valid for 0..count-1). */
@@ -52,8 +82,7 @@ export class CrowdBuffer {
     const n = Math.floor(buf.length / SNAPSHOT_ENTITY_STRIDE);
     for (let e = skip; e < n; e++) {
       const o = e * SNAPSHOT_ENTITY_STRIDE;
-      // Animals are not zombies: skip until the client renders them (TODO, docs 9.19).
-      if (buf[o + SnapshotField.kind] === SnapshotEntityKind.animal) continue;
+      if (!this.accept(buf[o + SnapshotField.kind] ?? 0)) continue;
       const id = buf[o + SnapshotField.stableId] ?? 0;
       const known = this.slots.get(id);
       const slot = known ?? this.slots.add(id);
@@ -70,6 +99,8 @@ export class CrowdBuffer {
       this.seen[slot] = gen;
       this.animBySlot[slot] = buf[o + SnapshotField.anim] ?? 0;
       this.hpBySlot[slot] = buf[o + SnapshotField.hpPct] ?? 1;
+      this.variantBySlot[slot] = buf[o + SnapshotField.variant] ?? 0;
+      this.speedBySlot[slot] = buf[o + SnapshotField.speed] ?? 0;
     }
     // Drop entities missing from this snapshot (iterate backwards: swap-remove moves the tail).
     for (let slot = this.slots.size - 1; slot >= 0; slot--) {
@@ -101,6 +132,8 @@ export class CrowdBuffer {
     this.seen[to] = this.seen[from] ?? 0;
     this.animBySlot[to] = this.animBySlot[from] ?? 0;
     this.hpBySlot[to] = this.hpBySlot[from] ?? 1;
+    this.variantBySlot[to] = this.variantBySlot[from] ?? 0;
+    this.speedBySlot[to] = this.speedBySlot[from] ?? 0;
   };
 
   private write(dst: Float32Array, p: number, buf: Float32Array, o: number): void {
@@ -124,6 +157,12 @@ export class CrowdBuffer {
     const hp = new Float32Array(cap);
     hp.set(this.hpBySlot);
     this.hpBySlot = hp;
+    const variant = new Uint8Array(cap);
+    variant.set(this.variantBySlot);
+    this.variantBySlot = variant;
+    const speed = new Float32Array(cap);
+    speed.set(this.speedBySlot);
+    this.speedBySlot = speed;
   }
 }
 

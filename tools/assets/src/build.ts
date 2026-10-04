@@ -24,6 +24,8 @@ export interface BuildPaths {
   packsDir: string;
   cacheDir: string;
   outDir: string;
+  /** `tools/assets` (committed source files of packs, `files[].path`). */
+  toolDir?: string;
 }
 
 export async function createIO(): Promise<NodeIO> {
@@ -45,7 +47,7 @@ export async function loadPacks(packsDir: string): Promise<Pack[]> {
 }
 
 async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
-  const src = join(await fetchPack(pack, paths.cacheDir), pack.root);
+  const src = join(await fetchPack(pack, paths.cacheDir, paths.toolDir), pack.root);
   const out = join(paths.outDir, pack.id);
   await mkdir(out, { recursive: true });
   let palette: ManifestPack['palette'];
@@ -76,7 +78,11 @@ async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
     const input = join(src, `${srcFile}.glb`);
     const lods: ManifestLod[] = [];
     for (const [i, lvl] of levels.entries()) {
-      const doc = await optimize(await io.read(input), { paletteMaterial, ratio: lvl.ratio });
+      const doc = await optimize(await io.read(input), {
+        paletteMaterial,
+        ratio: lvl.ratio,
+        keepAnimations: pack.keepAnimations,
+      });
       const triangles = countTriangles(doc);
       // A level that barely simplifies (low-poly, UV seams) is not worth a file and a draw switch.
       if (i > 0 && triangles > MIN_LOD_GAIN * lods[lods.length - 1]!.triangles) continue;

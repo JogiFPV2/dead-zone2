@@ -1,0 +1,19 @@
+{
+  "id": "quaternius-animals-vol2",
+  "name": "Animal Pack Vol.2 (Cat)",
+  "author": "Quaternius (quaternius.com), via OpenGameArt",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://opengameart.org/content/animated-animales-low-poly",
+  "files": [
+    {
+      "path": "animals/cat.glb",
+      "sha256": "421bc8ce3f2fe311f4465e466f2500e611b92620da69473d3f69b507605ca407",
+      "name": "cat.glb"
+    }
+  ],
+  "root": "glb",
+  "animated": true,
+  "keepAnimations": ["Idle", "Walking"],
+  "models": ["cat"]
+}

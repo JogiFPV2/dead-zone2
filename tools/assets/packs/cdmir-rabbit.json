@@ -1,0 +1,19 @@
+{
+  "id": "cdmir-rabbit",
+  "name": "Rabbit (Kelgar)",
+  "author": "Čestmír Dammer (CDmir), via OpenGameArt",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://opengameart.org/content/rabbit-0",
+  "files": [
+    {
+      "path": "animals/rabbit.glb",
+      "sha256": "e197884077d40f241ef1a98b7aa1eba74af0e06036596539de815e99b43472ca",
+      "name": "rabbit.glb"
+    }
+  ],
+  "root": "glb",
+  "animated": true,
+  "keepAnimations": ["Sitting.000", "Sitting.001", "Jump", "Running", "Dying.000"],
+  "models": ["rabbit"]
+}

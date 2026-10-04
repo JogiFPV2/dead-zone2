@@ -97,15 +97,45 @@ webp q75) powstała z 4 tekstur ambientCG.
 | PavingStones138       | ambientCG | https://ambientcg.com/view?id=PavingStones138 | CC0-1.0  | `PavingStones138_1K-JPG.zip` (5e2aee8f…d83fdd)      | kanał B                                                    |
 | Ground037             | ambientCG | https://ambientcg.com/view?id=Ground037       | CC0-1.0  | `Ground037_1K-JPG.zip` (4e69db2b…aaead51c2574e)     | kanał A                                                    |
 
+## Zwierzęta (`apps/game/public/models/quaternius-animals*/`, `cdmir-rabbit/`, `mujtaba-pigeon/`)
+
+Animowane modele CC0 dla 5 typów zwierząt z paczki base. Przechodzą przez pipeline (`tools/assets/packs/`:
+`quaternius-animals.json`, `quaternius-animals-vol2.json`, `cdmir-rabbit.json`, `mujtaba-pigeon.json`): meshopt + kwantyzacja, a z
+klipów zostają tylko potrzebne (`keepAnimations`). W grze są wypiekane do tekstur kości jak zombie i rysowane
+instancjami (`apps/game/src/animals/`). Modele z samym FBX (kot, królik) lub .blend (gołąb) zostały raz
+skonwertowane offline (`assets animal-sources <katalog>`, FBX2glTF z npm `fbx2gltf` i Blender 4.2 ze skryptem
+`tools/assets/animals/pigeon-export.py`, `tools/assets/src/animal-sources.ts`)
+do `tools/assets/animals/*.glb`; te pliki są w repo, a pack ma je z sumą sha256. Kolory pochodzą z palety gry
+(`PIXEL_PALETTE`): szare materiały z FBX dostały kolory przy konwersji, fotograficzna tekstura królika
+została wypieczona do kolorów wierzchołków, a upierzenie gołębia (bez tekstury w źródle) jest pomalowane
+kolorami wierzchołków według kości.
+
+| Typ         | Model                                       | Autor / źródło                                                                                                          | Licencja | Klipy (idle / jedzenie / chód / bieg / śmierć)                                                                    |
+| ----------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| base:deer   | Deer (sarna) i Stag (jeleń, ~30% osobników) | Quaternius, „Ultimate Animated Animals”, poly.pizza/m/T6Cs7tmMHJ i poly.pizza/m/tQdzbZ1Cmw                              | CC0-1.0  | Idle / Eating / Walk / Gallop / Death                                                                             |
+| base:dog    | Shiba Inu                                   | Quaternius, „Ultimate Animated Animals”, poly.pizza/m/y4wdQpg767                                                        | CC0-1.0  | Idle / Eating / Walk / Gallop / Death                                                                             |
+| base:cat    | Cat (pręgowany szary)                       | Quaternius, „Animal Pack Vol.2”, opengameart.org/content/animated-animales-low-poly (zip sha256 6d8f6789…1248)          | CC0-1.0  | Idle / – / Walking / (Walking szybciej) / – (przewraca się na bok)                                                |
+| base:rabbit | Rabbit                                      | Čestmír Dammer (CDmir), opengameart.org/content/rabbit-0 (`rabbit-FBX.7z` sha256 dacae75e…7715; bez futra-nakładki)     | CC0-1.0  | Sitting.000 / Sitting.001 / Jump / Running / Dying.000                                                            |
+| base:bird   | Pigeon (gołąb miejski)                      | mujtaba-io, opengameart.org/content/low-poly-3d-pigeon-model-rigged-animated-untextured (`.blend` sha256 a02f6b2a…8643) | CC0-1.0  | perch-animation (dodany: skrzydła złożone) / – / (perch z podskokami) / flap-wings-animation (odlot) / – (na bok) |
+
+Wiewiórka (`base:squirrel`) jest wyłączona, bo nie ma darmowego modelu CC0 animowanej wiewiórki: sim jej nie
+rozmieszcza (`spawnWeight` 0), a klient jej nie rysuje (`HIDDEN_ANIMAL_TYPES`).
+Gołąb ma w źródle tylko pozy lotu (także w `idle-animation`), więc skrypt eksportu dodaje klip `perch-animation`
+(idle ze skrzydłami złożonymi wzdłuż ciała).
+
 ## Pack testowy pipeline'u (nieużywany w scenie gry)
 
 <!-- assets-pipeline:begin -->
 <!-- Generowane przez `pnpm --filter @deadzone/assets assets build`; nie edytuj ręcznie. -->
 
-| Pack                                         | Autor                                       | Licencja                                                      | Źródło                                 | W repo                                                      |
-| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------- |
-| Furniture Kit                                | Kenney (www.kenney.nl)                      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/furniture-kit | 10 modeli (`apps/game/public/models/kenney-furniture/`)     |
-| Survival Kit                                 | Kenney (www.kenney.nl)                      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/survival-kit  | 11 modeli (`apps/game/public/models/kenney-survival/`)      |
-| Animated characters (Casual, Worker, Hoodie) | Quaternius (quaternius.com), via Poly Pizza | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://poly.pizza/u/Quaternius        | 3 modeli (`apps/game/public/models/quaternius-characters/`) |
+| Pack                                         | Autor                                        | Licencja                                                      | Źródło                                                                              | W repo                                                        |
+| -------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Rabbit (Kelgar)                              | Čestmír Dammer (CDmir), via OpenGameArt      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/rabbit-0                                            | 1 modeli (`apps/game/public/models/cdmir-rabbit/`)            |
+| Furniture Kit                                | Kenney (www.kenney.nl)                       | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/furniture-kit                                              | 10 modeli (`apps/game/public/models/kenney-furniture/`)       |
+| Survival Kit                                 | Kenney (www.kenney.nl)                       | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/survival-kit                                               | 11 modeli (`apps/game/public/models/kenney-survival/`)        |
+| Low poly 3D Pigeon (rigged + animated)       | mujtaba-io, via OpenGameArt                  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/low-poly-3d-pigeon-model-rigged-animated-untextured | 1 modeli (`apps/game/public/models/mujtaba-pigeon/`)          |
+| Animated animals (Deer, Stag, Shiba Inu)     | Quaternius (quaternius.com), via Poly Pizza  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://quaternius.com/packs/ultimateanimatedanimals.html                           | 3 modeli (`apps/game/public/models/quaternius-animals/`)      |
+| Animal Pack Vol.2 (Cat)                      | Quaternius (quaternius.com), via OpenGameArt | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/animated-animales-low-poly                          | 1 modeli (`apps/game/public/models/quaternius-animals-vol2/`) |
+| Animated characters (Casual, Worker, Hoodie) | Quaternius (quaternius.com), via Poly Pizza  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://poly.pizza/u/Quaternius                                                     | 3 modeli (`apps/game/public/models/quaternius-characters/`)   |
 
 <!-- assets-pipeline:end -->

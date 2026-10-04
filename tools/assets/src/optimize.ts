@@ -9,6 +9,29 @@ export interface OptimizeOptions {
   ratio?: number;
   /** Max simplification error (fraction of mesh extent); low-poly models need a loose bound. */
   error?: number;
+  /** Animated models: clips to keep (see `Pack.keepAnimations`). */
+  keepAnimations?: readonly string[] | undefined;
+}
+
+/** Bare clip name (`AnimalArmature|Walk` → `Walk`; Blender exports repeat the armature prefix). */
+export const clipName = (name: string): string => name.slice(name.lastIndexOf('|') + 1);
+
+/**
+ * Keeps only the listed clips, the first one of each name (packs often hold every clip twice:
+ * `Walk` and `Armature|Walk`). Samplers / accessors of the dropped clips go with `prune`.
+ */
+export function keepAnimations(names: readonly string[]): Transform {
+  return (doc: Document) => {
+    const seen = new Set<string>();
+    for (const a of doc.getRoot().listAnimations()) {
+      const n = clipName(a.getName());
+      if (!names.includes(n) || seen.has(n)) {
+        for (const c of a.listChannels()) c.dispose();
+        for (const s of a.listSamplers()) s.dispose();
+        a.dispose();
+      } else seen.add(n);
+    }
+  };
 }
 
 /**
@@ -53,6 +76,7 @@ export async function optimize(doc: Document, opts: OptimizeOptions = {}): Promi
   await ready();
   const steps: Transform[] = [];
   if (opts.paletteMaterial) steps.push(palettize(opts.paletteMaterial));
+  if (opts.keepAnimations) steps.push(keepAnimations(opts.keepAnimations));
   steps.push(dedup(), weld());
   if (opts.ratio !== undefined && opts.ratio < 1) {
     steps.push(

@@ -2,7 +2,7 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
 import { describe, expect, it } from 'vitest';
-import { countTriangles, optimize } from './optimize.js';
+import { clipName, countTriangles, keepAnimations, optimize } from './optimize.js';
 
 /** n×n grid of quads (bumpy, so simplification has something to trade) with two materials. */
 function gridDoc(n: number): Document {
@@ -68,5 +68,43 @@ describe('optimize', () => {
     });
     const back = await io.readBinary(await io.writeBinary(lod));
     expect(countTriangles(back)).toBe(countTriangles(lod));
+  });
+
+  it('keeps only the listed clips, the first one of each name', async () => {
+    const doc = gridDoc(2);
+    const node = doc.getRoot().listNodes()[0]!;
+    const buf = doc.getRoot().listBuffers()[0]!;
+    for (const name of ['Walk', 'Armature|Walk', 'Armature|Idle', 'Attack']) {
+      const sampler = doc
+        .createAnimationSampler()
+        .setInput(
+          doc
+            .createAccessor()
+            .setType('SCALAR')
+            .setArray(new Float32Array([0, 1]))
+            .setBuffer(buf),
+        )
+        .setOutput(
+          doc.createAccessor().setType('VEC3').setArray(new Float32Array(6)).setBuffer(buf),
+        );
+      doc
+        .createAnimation(name)
+        .addSampler(sampler)
+        .addChannel(
+          doc
+            .createAnimationChannel()
+            .setTargetNode(node)
+            .setTargetPath('translation')
+            .setSampler(sampler),
+        );
+    }
+    await doc.transform(keepAnimations(['Walk', 'Idle']));
+    expect(
+      doc
+        .getRoot()
+        .listAnimations()
+        .map((a) => a.getName()),
+    ).toEqual(['Walk', 'Armature|Idle']);
+    expect(clipName('AnimalArmature|AnimalArmature|Death')).toBe('Death');
   });
 });

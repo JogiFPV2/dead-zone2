@@ -15,6 +15,8 @@ export interface StartSimOptions {
   dev?: boolean;
   /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
   zombiesAwayFrom?: { x: number; y: number; z?: number } | undefined;
+  /** New world: this many animals spread over the map by habitat (sim `populateAnimals`). */
+  populateAnimals?: number | undefined;
   /** New game: the creator's character (`init({ character })` → `newCharacter`). */
   character?: CharacterSpec | undefined;
   /** Restores this save (the character's slot) instead of a new world. */
@@ -44,6 +46,7 @@ export function startSimWorker(
     ...(opts.content ? { content: opts.content } : {}),
     ...(opts.dev ? { dev: true } : {}),
     ...(zombies.length ? { zombies } : {}),
+    ...(opts.populateAnimals && !opts.save ? { populateAnimals: opts.populateAnimals } : {}),
     ...(opts.character ? { character: opts.character } : {}),
     // A copy: the slot's buffer stays intact if the worker takes (transfers) it.
     ...(opts.save ? { save: opts.save.slice(0) } : {}),

@@ -8,8 +8,12 @@ import type { Pack } from './pack.js';
  * Downloads the pack zip into `cacheDir` (once), verifies sha256, extracts it to
  * `cacheDir/<id>/` and returns that directory.
  */
-export async function fetchPack(pack: Pack, cacheDir: string): Promise<string> {
-  if (pack.files) return fetchFiles(pack, pack.files, cacheDir);
+export async function fetchPack(
+  pack: Pack,
+  cacheDir: string,
+  toolDir = join(cacheDir, '..'),
+): Promise<string> {
+  if (pack.files) return fetchFiles(pack, pack.files, cacheDir, toolDir);
   if (!pack.download || !pack.sha256) throw new Error(`${pack.id}: brak download/sha256`);
   const zipPath = join(cacheDir, `${pack.id}.zip`);
   let zip: Uint8Array;
@@ -33,25 +37,34 @@ export async function fetchPack(pack: Pack, cacheDir: string): Promise<string> {
   return dir;
 }
 
-/** Single-file packs: each file cached under `cacheDir/<id>/<root>/<name>` and sha-checked. */
+/**
+ * Single-file packs: each file cached under `cacheDir/<id>/<root>/<name>` and sha-checked.
+ * Committed files (`path`) are copied from `toolDir` into the same place.
+ */
 async function fetchFiles(
   pack: Pack,
   files: NonNullable<Pack['files']>,
   cacheDir: string,
+  toolDir: string,
 ): Promise<string> {
   const dir = join(cacheDir, pack.id);
   for (const f of files) {
     const path = join(dir, pack.root, f.name);
     let data: Uint8Array;
-    try {
-      data = await readFile(path);
-    } catch {
-      const res = await fetch(f.url);
-      if (!res.ok) throw new Error(`${pack.id}: pobieranie ${res.status} ${f.url}`);
-      data = new Uint8Array(await res.arrayBuffer());
+    if (f.path) {
+      data = await readFile(join(toolDir, f.path));
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, data);
-    }
+    } else
+      try {
+        data = await readFile(path);
+      } catch {
+        const res = await fetch(f.url!);
+        if (!res.ok) throw new Error(`${pack.id}: pobieranie ${res.status} ${f.url}`);
+        data = new Uint8Array(await res.arrayBuffer());
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(path, data);
+      }
     const sha = createHash('sha256').update(data).digest('hex');
     if (sha !== f.sha256) throw new Error(`${pack.id}/${f.name}: sha256 ${sha} ≠ ${f.sha256}`);
   }

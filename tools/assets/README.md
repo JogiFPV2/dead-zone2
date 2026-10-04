@@ -8,6 +8,9 @@ pnpm --filter @deadzone/assets assets check   # licencje + obecność plików z 
 ```
 
 - Definicje packów: `packs/<id>.json` (licencja SPDX, URL źródła, URL zipa + sha256, lista modeli).
+  Zamiast zipa: pojedyncze pliki z `url` (np. Poly Pizza) albo z `path` (plik w repo, np.
+  `animals/*.glb`, skonwertowane raz offline z FBX/.blend: `assets animal-sources <katalog>` z env
+  `FBX2GLTF` i `BLENDER`). `keepAnimations` zostawia w animowanych modelach tylko wymienione klipy.
   Pack bez wpisu licencji albo z licencją spoza `CC0-1.0` jest odrzucany.
 - Kroki (gltf-transform + meshoptimizer, bez natywnych binarek): paleta → dedup → weld →
   (simplify dla LOD) → kwantyzacja + `EXT_meshopt_compression` → prune.

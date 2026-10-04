@@ -93,13 +93,13 @@ const ANIM_OF: Record<number, BodyState> = {
  */
 const SHADOW_ONLY = new MeshBasicMaterial({ colorWrite: false, depthWrite: false });
 
-interface ClipRange {
+export interface ClipRange {
   start: number;
   frames: number;
 }
 
 /** One sub-mesh of a template as an InstancedMesh with baked skinning. */
-interface Part {
+export interface Part {
   mesh: InstancedMesh;
   frame: InstancedBufferAttribute;
   /** Inverted-hull outline (same geometry, instances and baked frames), outline styles only. */
@@ -239,6 +239,8 @@ function mergeParts(skinned: readonly SkinnedMesh[]): Merged | undefined {
     const gi = g.getAttribute('skinIndex');
     const gw = g.getAttribute('skinWeight');
     const color = (m.material as MeshStandardMaterial).color;
+    // Sources with vertex colours (textures baked to colours offline) keep them, tinted.
+    const gc = g.getAttribute('color');
     nm.getNormalMatrix(m.bindMatrix);
     const remap = m.skeleton.bones.map((b, i) => boneSlot(b, m.skeleton.boneInverses[i]!));
     for (let i = 0; i < gp.count; i++) {
@@ -252,6 +254,11 @@ function mergeParts(skinned: readonly SkinnedMesh[]): Merged | undefined {
           .normalize()
           .toArray(nor, o * 3);
       color.toArray(col, o * 3);
+      if (gc) {
+        col[o * 3] = col[o * 3]! * gc.getX(i);
+        col[o * 3 + 1] = col[o * 3 + 1]! * gc.getY(i);
+        col[o * 3 + 2] = col[o * 3 + 2]! * gc.getZ(i);
+      }
       for (let k = 0; k < 4; k++) {
         si[o * 4 + k] = remap[gi.getComponent(i, k)] ?? 0;
         sw[o * 4 + k] = gw.getComponent(i, k);
@@ -275,23 +282,9 @@ function mergeParts(skinned: readonly SkinnedMesh[]): Merged | undefined {
   return { geometry, material, bones, inverses };
 }
 
-/** Row layout of the bake texture: one range of frames per animation, clips matched by name. */
-function layoutClips(clips: readonly AnimationClip[]): {
-  ranges: Record<BakedAnim, ClipRange>;
-  rows: number;
-  picked: (AnimationClip | undefined)[];
-} {
-  const ranges = {} as Record<BakedAnim, ClipRange>;
-  const picked: (AnimationClip | undefined)[] = [];
-  let rows = 0;
-  for (const anim of ANIMS) {
-    const clip = findClip(clips, CHARACTER_CLIPS[anim]);
-    picked.push(clip);
-    const frames = clip ? Math.max(1, Math.ceil(clip.duration * BAKE_FPS)) : 1;
-    ranges[anim] = { start: rows, frames };
-    rows += frames;
-  }
-  return { ranges, rows, picked };
+/** Zombie clips matched by name (missing ones bake as a single bind-pose frame). */
+function zombieClips(clips: readonly AnimationClip[]): [BakedAnim, AnimationClip | undefined][] {
+  return ANIMS.map((anim) => [anim, findClip(clips, CHARACTER_CLIPS[anim])]);
 }
 
 /** Bakes all clips of `object` (root at identity) into bone texture(s); one part if mergeable. */
@@ -300,15 +293,38 @@ function bakeTemplate(
   clips: readonly AnimationClip[],
   capacity: number,
 ): Template {
+  return bakeSkinned(object, zombieClips(clips), capacity, MODEL_YAW, 'zombie template');
+}
+
+/** Baked template of any skinned model: instanced parts, far LOD, shadow proxies, clip rows. */
+export interface BakedSkin<K extends string> {
+  parts: Part[];
+  far: Part[];
+  shadow: Part[];
+  clips: Record<K, ClipRange>;
+}
+
+/**
+ * Bakes `picked` clips (key → clip; a missing clip is one bind-pose frame) of a skinned
+ * `object` turned by `yaw` into bone texture(s): one InstancedMesh per merged part (one in
+ * total when the parts can share a material), plus a decimated LOD and shadow proxies.
+ */
+export function bakeSkinned<K extends string>(
+  object: Object3D,
+  picked: readonly (readonly [K, AnimationClip | undefined])[],
+  capacity: number,
+  yaw: number,
+  label = 'template',
+): BakedSkin<K> {
   object.position.set(0, 0, 0);
-  object.rotation.set(0, MODEL_YAW, 0);
+  object.rotation.set(0, yaw, 0);
   object.updateMatrixWorld(true);
   const skinned: SkinnedMesh[] = [];
   object.traverse((o) => {
     if ((o as Partial<SkinnedMesh>).isSkinnedMesh) skinned.push(o as SkinnedMesh);
   });
   const merged = mergeParts(skinned);
-  if (!merged) console.warn('zombie template: parts not mergeable, one draw call per part');
+  if (!merged) console.warn(`${label}: parts not mergeable, one draw call per part`);
   // Bake sources: merged → one (bones, inverses, identity bind); else one per skinned part.
   const sources = merged
     ? [{ bones: merged.bones, inverses: merged.inverses, bind: new Matrix4() }]
@@ -317,15 +333,20 @@ function bakeTemplate(
         inverses: m.skeleton.boneInverses,
         bind: m.bindMatrix,
       }));
-  const { ranges, rows, picked } = layoutClips(clips);
+  const ranges = {} as Record<K, ClipRange>;
+  let rows = 0;
+  for (const [key, clip] of picked) {
+    const frames = clip ? Math.max(1, Math.ceil(clip.duration * BAKE_FPS)) : 1;
+    ranges[key] = { start: rows, frames };
+    rows += frames;
+  }
   const mixer = new AnimationMixer(object);
   const data = sources.map((src) => new Float32Array(src.bones.length * 16 * rows));
   const tmp = new Matrix4();
-  ANIMS.forEach((anim, ci) => {
-    const clip = picked[ci];
+  for (const [key, clip] of picked) {
     mixer.stopAllAction();
     if (clip) mixer.clipAction(clip).play();
-    const r = ranges[anim];
+    const r = ranges[key];
     for (let f = 0; f < r.frames; f++) {
       mixer.setTime(Math.min(f / BAKE_FPS, (clip?.duration ?? 0) - 1e-4));
       object.updateMatrixWorld(true);
@@ -337,7 +358,7 @@ function bakeTemplate(
         }
       });
     }
-  });
+  }
   mixer.stopAllAction();
   const parts: Part[] = [];
   const far: Part[] = [];

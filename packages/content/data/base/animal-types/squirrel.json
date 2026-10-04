@@ -10,7 +10,7 @@
   "fleeDistanceTiles": 7,
   "safeDistanceTiles": 14,
   "habitat": "any",
-  "spawnWeight": 3,
+  "spawnWeight": 0,
   "wanderRadiusTiles": 4,
   "grazeSec": { "min": 2, "max": 7 },
   "loot": [{ "item": "base:small-game-meat" }]

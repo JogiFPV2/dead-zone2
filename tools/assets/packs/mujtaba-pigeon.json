@@ -1,0 +1,19 @@
+{
+  "id": "mujtaba-pigeon",
+  "name": "Low poly 3D Pigeon (rigged + animated)",
+  "author": "mujtaba-io, via OpenGameArt",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://opengameart.org/content/low-poly-3d-pigeon-model-rigged-animated-untextured",
+  "files": [
+    {
+      "path": "animals/pigeon.glb",
+      "sha256": "a78d2f1027a1409ee65d2c0cf5d0da0ec557ed891900502c2b6340be55af432f",
+      "name": "pigeon.glb"
+    }
+  ],
+  "root": "glb",
+  "animated": true,
+  "keepAnimations": ["perch-animation", "flap-wings-animation"],
+  "models": ["pigeon"]
+}

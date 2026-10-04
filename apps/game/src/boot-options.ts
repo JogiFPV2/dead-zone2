@@ -30,6 +30,8 @@ export interface BootOptions {
   stats: { stat: DebugStat; value: number }[];
   /** Dev `?zspawn=N`: N zombies spawned 2 tiles east (within near-sense) of the player at start. */
   zspawn: number;
+  /** `?animals=N`: animals at the start of a new world (default by map size, 0 = none). */
+  animals?: number;
   /** `?zombies=0` disables the start zombies on content maps. */
   zombies: boolean;
   /**
@@ -108,6 +110,9 @@ export function parseBootOptions(search: string): BootOptions {
     give: parseGiveParam(q.get('give')),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
+    ...(q.get('animals') !== null
+      ? { animals: Math.max(0, Math.min(2000, Math.floor(Number(q.get('animals')) || 0))) }
+      : {}),
     town: q.get('town') !== '0',
     ...(cam && Number(cam[3]) > 0
       ? { cam: { x: Number(cam[1]), z: Number(cam[2]), viewHeight: Number(cam[3]) } }

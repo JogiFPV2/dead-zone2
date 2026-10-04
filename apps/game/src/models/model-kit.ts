@@ -96,6 +96,11 @@ export class ModelKit {
     return fitted(src.clone(), height);
   }
 
+  /** Animated model as loaded (skeleton cloned, no fit): the caller scales / bakes it. */
+  animated(id: string): Promise<{ object: Object3D; clips: AnimationClip[] }> {
+    return this.loader.loadAnimated(id);
+  }
+
   character(id: string, height: number): Promise<{ object: Object3D; clips: AnimationClip[] }> {
     return this.loader.loadAnimated(id).then(({ object, clips }) => {
       object.traverse((m) => {

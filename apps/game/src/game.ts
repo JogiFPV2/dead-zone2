@@ -38,6 +38,7 @@ import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
 import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
+import { SnapshotEntityKind } from '@deadzone/protocol';
 import { TICK_MS } from '@deadzone/sim';
 import { MockSimClient } from './sim/mock-sim-client.js';
 import { SimStreamSync } from './world/streaming/sim-sync.js';
@@ -66,6 +67,9 @@ import {
 import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
+import { startAnimalCount } from './animals/animal-count.js';
+import { animalTypeIds } from './animals/animal-species.js';
+import { AnimalViews, loadAnimalTemplates } from './animals/animal-views.js';
 import { CrowdView } from './crowd/crowd-view.js';
 import { parseBootOptions } from './boot-options.js';
 import { startSimWorker } from './sim/start-sim.js';
@@ -309,6 +313,8 @@ if (boot.sim === 'worker') {
     spawn,
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
     zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
+    // Content maps get animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits).
+    populateAnimals: boot.map !== 'test' ? startAnimalCount(world.range, boot.animals) : 0,
     content: await simContent,
     character: newCharacter?.spec,
     save: session?.save?.data,
@@ -413,6 +419,13 @@ const weaponModels = new WeaponModels();
 /** Visible equipment per character (view `characters[]`, full list on change). */
 const characters = new Map<number, CharacterView>();
 const crowd = new CrowdBuffer();
+/** Animals (snapshot kind 3) in their own buffer; types by `variant` once the content loads. */
+const animalBuffer = new CrowdBuffer(64, 64, (k) => k === SnapshotEntityKind.animal);
+let animalViews: AnimalViews | undefined;
+/** Animal type ids by snapshot `variant`, once the content loads. */
+const animalTypes = Promise.resolve(simContent).then((content) =>
+  animalTypeIds(content?.packs.flatMap((pk) => pk.files) ?? []),
+);
 let crowdArrivedMs = 0;
 let firstSnapshot = true;
 sim.onSnapshot(({ tick, buf }) => {
@@ -435,6 +448,7 @@ sim.onSnapshot(({ tick, buf }) => {
   if (player) snapshots.push(player, performance.now());
   phys.pushSnapshot(tick, buf);
   crowd.push(buf, 1);
+  animalBuffer.push(buf, 1);
   crowdArrivedMs = performance.now();
 });
 const crowdView = new CrowdView(crowd, (next, prev) => {
@@ -740,6 +754,14 @@ void ModelKit.create(renderer).then(async (kit) => {
   } catch (e) {
     console.warn('player model', e);
   }
+  // CC0 animal models baked like the zombies (separate from them: a failure keeps the rest).
+  void animalTypes
+    .then(async (types) => {
+      const templates = await loadAnimalTemplates(kit, types, 128);
+      animalViews = new AnimalViews(animalBuffer, types, templates);
+      worldRoot.add(animalViews.root);
+    })
+    .catch((e: unknown) => console.warn('animal models', e));
   const templates = await loadZombieTemplates(kit);
   if (templates.length) {
     zombieViews = await InstancedZombies.create(templates, crowd);
@@ -1090,6 +1112,7 @@ if (import.meta.env.DEV) {
       /** Current game state (read-only). */
       state: () => gameState.get(),
       shelfFill,
+      animals: () => animalViews,
       groundPiles,
       /** Id of the first carried item of content `def`. */
       itemOf: (def: string): ItemId | undefined => devItemOf(def),
@@ -1212,6 +1235,7 @@ renderer.setAnimationLoop((time) => {
   if (zombieViews) {
     zombieViews.update(alpha, t0 / 1000, worldCamera, rig.target.x, rig.target.z, phys, simTick);
   } else crowdView.update(alpha);
+  animalViews?.update(alpha, t0 / 1000, worldCamera, rig.target.x, rig.target.z);
   const ui = settings.get().interface;
   zombieHp.update(alpha, worldCamera, container.clientWidth, container.clientHeight, {
     showWounded: ui.showZombieHp,

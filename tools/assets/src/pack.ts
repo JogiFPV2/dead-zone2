@@ -23,15 +23,26 @@ export const PackSchema = z
       .string()
       .regex(/^[0-9a-f]{64}$/)
       .optional(),
-    /** Instead of a zip: single files (e.g. Poly Pizza GLBs), each checked against its sha256. */
+    /**
+     * Instead of a zip: single files, each checked against its sha256. Either downloaded (`url`,
+     * e.g. Poly Pizza GLBs) or committed in the repo (`path`, relative to `tools/assets`: sources
+     * converted offline from FBX, see `src/animal-sources.ts`).
+     */
     files: z
       .array(
-        z.strictObject({
-          url: z.url(),
-          sha256: z.string().regex(/^[0-9a-f]{64}$/),
-          /** File name inside `root`. */
-          name: z.string().regex(/^[A-Za-z0-9._-]+$/),
-        }),
+        z
+          .strictObject({
+            url: z.url().optional(),
+            path: z
+              .string()
+              .regex(/^[A-Za-z0-9._/-]+$/)
+              .refine((p) => !p.includes('..'), 'path bez ..')
+              .optional(),
+            sha256: z.string().regex(/^[0-9a-f]{64}$/),
+            /** File name inside `root`. */
+            name: z.string().regex(/^[A-Za-z0-9._-]+$/),
+          })
+          .refine((f) => !!f.url !== !!f.path, 'podaj url albo path'),
       )
       .min(1)
       .optional(),
@@ -63,6 +74,11 @@ export const PackSchema = z
     models: z.array(z.union([Id, z.strictObject({ id: Id, file: z.string().min(1) })])).min(1),
     /** Keep skins and animations (characters): no LOD, no palette. */
     animated: z.boolean().optional(),
+    /**
+     * Animated packs: clips to keep (name or `Armature|name`; the first clip of each name wins,
+     * duplicates and every other clip are dropped to save bytes).
+     */
+    keepAnimations: z.array(z.string().min(1)).min(1).optional(),
   })
   .refine(
     (p) => (p.files ? !p.download && !p.sha256 : !!p.download && !!p.sha256),
