@@ -36,6 +36,8 @@ export function describeEvent(e: SimEvent): string {
       return `threw ${e.def} to ${e.x},${e.y}${e.broke ? ' (broke)' : ''}`;
     case 'openingChanged':
       return `${e.kind} ${e.tx},${e.ty}${e.side} ${e.state} (${e.hp}/${e.maxHp}, ${e.by})`;
+    case 'chunkChanged':
+      return `chunk ${e.cx},${e.cy} z${e.z} changed (${e.reason})`;
     case 'fellFromHeight':
       return `entity ${e.entity} fell ${e.levels} level(s), ${e.damage} damage${e.killed ? ' (killed)' : ''}`;
     case 'openingPressure':

@@ -119,6 +119,8 @@ export interface ContentIndex {
   aiSettings: ContentBundle['worldSettings']['ai'] | undefined;
   /** `worldSettings.movement` (walk speed, gait multipliers; optional for older bundles). */
   movement: ContentBundle['worldSettings']['movement'] | undefined;
+  /** `worldSettings.simLod` (big-map LOD; optional for older bundles). */
+  simLod: ContentBundle['worldSettings']['simLod'] | undefined;
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -245,6 +247,7 @@ export function compileContent(content: SimContent): ContentIndex {
     aiSettings: (content.worldSettings as { ai?: ContentBundle['worldSettings']['ai'] }).ai,
     movement: (content.worldSettings as { movement?: ContentBundle['worldSettings']['movement'] })
       .movement,
+    simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,
     search: {
       searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
       spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,

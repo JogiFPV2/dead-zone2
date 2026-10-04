@@ -89,6 +89,11 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Minimapa i licznik dni (Designer + Silnik)
 - [ ] Cele i zadania (Symulacja + Designer)
 - [ ] Lokalny zapis i wczytanie gry (IndexedDB) (Symulacja)
+- [x] LOD symulacji dużej mapy (8×8 km): zombie daleko jako liczniki w komórkach (dryf, reakcja na głośny hałas), rozwijanie i zwijanie deterministyczne z histerezą, leniwy łup per chunk z catch-upem psucia, `worldSettings.simLod` (Symulacja) — [sim-architecture.md 9.24](sim-architecture.md)
+- [x] Zapis świata jako delta: `deadzone-save` v2 = seed + `generatorVersion` + zmienione chunki + liczniki komórek + encje aktywne; ok. 230 KiB gzip przy 300 odwiedzonych chunkach; kody błędów wczytania (Symulacja) — 9.24
+- [x] Interfejs `WorldSource` dla generatora świata + adapter mapy demo (Symulacja); generator (Silnik 2)
+- [x] Streaming dla sim: `setInterest {cx, cy, radiusChunks}`, event `chunkChanged {cx, cy, z, reason}`, pokoje lokalne w chunku + globalny `buildingId` (`roomBuildings`) (Symulacja) — 9.24
+- [ ] Generator świata 8×8 km wg `WorldSource` (`chunkKind`, `generatorVersion`) (Silnik 2)
 - [x] Tryby gry jako dane: „Przetrwaj” i „Ratunek” (Modules)
 - [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)
 - [ ] Tryb „Ratunek”: NPC zamknięty w willi, pilnująca horda (limit 300), wywabienie hordy i ewakuacja NPC (Symulacja)

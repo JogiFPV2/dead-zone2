@@ -124,6 +124,11 @@ export interface SimWorkerClient {
   /** Create the character (once; usually via `init({ character })`). */
   newCharacter(character: CharacterSpec): void;
   placeStorage(item: ItemId, x: number, y: number): void;
+  /**
+   * Area of interest (docs 9.24): also simulate chunks within `radiusChunks` of chunk (cx, cy)
+   * in detail (e.g. the streamer's near ring around the camera target); 0 clears it.
+   */
+  setInterest(cx: number, cy: number, radiusChunks: number): void;
   /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
   /** Lay a lure at the player (timer lures: delay and run direction). */
@@ -305,6 +310,7 @@ export function createSimWorkerClient(
     triggerLure: (item) => cmd({ type: 'triggerLure', ...(item ? { item } : {}) }),
     throwItem: (item, x, y, opts) => cmd({ type: 'throw', item, x, y, ...opts }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
+    setInterest: (cx, cy, radiusChunks) => cmd({ type: 'setInterest', cx, cy, radiusChunks }),
     debugGiveItem: (itemId, count) =>
       cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),
     debugSpawnZombie: (x, y, count, zombieType) =>

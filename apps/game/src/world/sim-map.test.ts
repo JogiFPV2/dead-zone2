@@ -66,12 +66,17 @@ describe('ChunkSource → SimMap adapter', () => {
     const c = map.getChunk(1, 0, 0)!;
     expect(c.room).toBe(room);
     expect(c.rooms).toEqual({ '7': 'base:room-kitchen' });
+    // Chunk-local room id → global building id (sim contract, docs 9.24).
+    expect(c.roomBuildings).toEqual({ '7': 1 });
     expect(c.objects).toEqual([{ contentId: 'base:fridge', x: 3, y: 4 }]);
     expect(c.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);
     expect(map.listChunks?.()).toEqual([{ cx: 1, cy: 0, z: 0 }]);
     expect('listChunks' in chunkSourceToSimMap(src)).toBe(false);
     const data = chunkSourceToSimMapData(src, { cx0: 0, cy0: 0, cx1: 1, cy1: 0, z: 0 });
-    expect(data.chunks[0]).toMatchObject({ rooms: { '7': 'base:room-kitchen' } });
+    expect(data.chunks[0]).toMatchObject({
+      rooms: { '7': 'base:room-kitchen' },
+      roomBuildings: { '7': 1 },
+    });
     expect(data.chunks[0]?.objects).toHaveLength(1);
     expect(data.chunks[0]?.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);
   });

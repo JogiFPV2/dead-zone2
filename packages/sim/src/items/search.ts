@@ -3,6 +3,7 @@ import {
   tileIndex,
   type CommandRejectReason,
   type ContainerKind,
+  type SimChunkAddress,
   type SimMap,
   type SimZone,
 } from '@deadzone/protocol';
@@ -214,55 +215,65 @@ export function scatterLoot(
   seed: number,
   worldStartMinute: number,
 ): void {
-  const tables = st.content.scatterTables;
-  if (tables.length === 0) return;
+  if (st.content.scatterTables.length === 0) return;
   const list = [...(map.listChunks?.() ?? [])].sort(
     (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
   );
+  for (const addr of list) scatterLootChunk(st, map, seed, worldStartMinute, addr);
+}
+
+/** Scattered loot of one chunk (`scatterLoot` body; the sim LOD calls it lazily). */
+export function scatterLootChunk(
+  st: ItemStore,
+  map: SimMap,
+  seed: number,
+  worldStartMinute: number,
+  addr: SimChunkAddress,
+): void {
+  const tables = st.content.scatterTables;
+  if (tables.length === 0) return;
   const palette = map.floorTiles;
   const tags = st.content.tileTags;
   const terrainOf = (v: number): string[] => {
     const id = palette?.[v];
     return id ? [id, ...(tags.get(id) ?? [])] : [];
   };
-  for (const addr of list) {
-    const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
-    if (!chunk) continue;
-    for (const table of tables) {
-      const sc = table.scatter!;
-      const rng = Rng.fromSeed(deriveSeed(seed, 'scatter', addr.cx, addr.cy, addr.z, table.id));
-      const rolls = rng.int(sc.perChunk.min, sc.perChunk.max);
-      if (rolls <= 0) continue;
-      const zones =
-        sc.zones.length > 0
-          ? (map.zones ?? []).filter((zn) => zn.z === addr.z && zoneMatches(zn, sc.zones))
-          : undefined;
-      if (zones && zones.length === 0) continue;
-      const tiles: number[] = [];
-      for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-          const i = tileIndex(lx, ly);
-          const v = chunk.floor[i] ?? 0;
-          if (!v) continue;
-          if (sc.outdoor && (chunk.room?.[i] ?? 0) !== 0) continue;
-          if (sc.terrain.length > 0 && !terrainOf(v).some((t) => sc.terrain.includes(t))) continue;
-          const gx = addr.cx * CHUNK_SIZE + lx;
-          const gy = addr.cy * CHUNK_SIZE + ly;
-          if (zones && !zones.some((zn) => inZone(zn, gx, gy))) continue;
-          tiles.push(i);
-        }
+  const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
+  if (!chunk) return;
+  for (const table of tables) {
+    const sc = table.scatter!;
+    const rng = Rng.fromSeed(deriveSeed(seed, 'scatter', addr.cx, addr.cy, addr.z, table.id));
+    const rolls = rng.int(sc.perChunk.min, sc.perChunk.max);
+    if (rolls <= 0) continue;
+    const zones =
+      sc.zones.length > 0
+        ? (map.zones ?? []).filter((zn) => zn.z === addr.z && zoneMatches(zn, sc.zones))
+        : undefined;
+    if (zones && zones.length === 0) continue;
+    const tiles: number[] = [];
+    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        const i = tileIndex(lx, ly);
+        const v = chunk.floor[i] ?? 0;
+        if (!v) continue;
+        if (sc.outdoor && (chunk.room?.[i] ?? 0) !== 0) continue;
+        if (sc.terrain.length > 0 && !terrainOf(v).some((t) => sc.terrain.includes(t))) continue;
+        const gx = addr.cx * CHUNK_SIZE + lx;
+        const gy = addr.cy * CHUNK_SIZE + ly;
+        if (zones && !zones.some((zn) => inZone(zn, gx, gy))) continue;
+        tiles.push(i);
       }
-      if (tiles.length === 0) continue;
-      for (let k = 0; k < rolls; k++) {
-        const i = tiles[rng.int(0, tiles.length - 1)]!;
-        const pick = pickOne(st, table, rng);
-        const hidden = sc.hiddenChance > 0 && rng.chance(sc.hiddenChance);
-        if (!pick) continue;
-        const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
-        const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
-        const c = hidden ? hiddenCache(st, x, y, addr.z) : groundPile(st, x, y, addr.z);
-        createItem(st, pick.def, c.id, pick.count, worldStartMinute);
-      }
+    }
+    if (tiles.length === 0) continue;
+    for (let k = 0; k < rolls; k++) {
+      const i = tiles[rng.int(0, tiles.length - 1)]!;
+      const pick = pickOne(st, table, rng);
+      const hidden = sc.hiddenChance > 0 && rng.chance(sc.hiddenChance);
+      if (!pick) continue;
+      const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
+      const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
+      const c = hidden ? hiddenCache(st, x, y, addr.z) : groundPile(st, x, y, addr.z);
+      createItem(st, pick.def, c.id, pick.count, worldStartMinute);
     }
   }
 }

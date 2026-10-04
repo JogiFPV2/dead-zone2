@@ -9,6 +9,7 @@ import { NoiseSettingsSchema } from './noise-settings.js';
 import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { MovementSettingsSchema } from './movement-settings.js';
+import { SimLodSettingsSchema } from './sim-lod-settings.js';
 import { SurvivalSettingsSchema } from './survival/index.js';
 
 /**
@@ -53,6 +54,8 @@ export const WorldSettingsSchema = z.strictObject({
   openings: OpeningsSettingsSchema,
   /** Broń palna: spadek celności z odległością, rozrzut, ładowanie magazynków. */
   firearms: FirearmsSettingsSchema,
+  /** LOD symulacji dużej mapy: obszar aktywny, komórki zgrubne zombie, leniwy łup. */
+  simLod: SimLodSettingsSchema,
   ext: ExtSchema,
 });
 

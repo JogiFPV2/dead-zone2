@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, type SimChunk, type SimMap } from '@deadzone/protocol';
+import { buildingIdAt, CHUNK_SIZE, type SimChunk, type SimMap } from '@deadzone/protocol';
 import {
   createOpeningsWorld,
   DEFAULT_OPENINGS_CONFIG,
@@ -27,42 +27,51 @@ export class TileGrid {
   private lastZ = Number.NaN;
   private lastChunk: SimChunk | undefined;
   readonly openings: OpeningsWorld;
-  /** Flights of stairs from `SimChunk.stairs` (world tiles), in chunk list order. */
+  /**
+   * Flights of stairs from `SimChunk.stairs` (world tiles), in chunk list order; on lazy worlds
+   * (sim LOD) appended per chunk by `addChunkStairs` in a saved order.
+   */
   readonly stairs: readonly Stair[];
+  private readonly stairList: Stair[] = [];
   /** Tile key (`stairKey`, base level) → index in `stairs`. */
   private readonly stairTiles = new Map<number, number>();
-  /** Chunks on more than one level (`listChunks`). */
-  readonly multiLevel: boolean;
+  /** Chunks on more than one level (`listChunks`; the LOD sets it for multi-level worlds). */
+  multiLevel: boolean;
 
   constructor(
     private readonly map: SimMap,
     openings?: OpeningsWorld,
   ) {
     this.openings = openings ?? createOpeningsWorld(map, DEFAULT_OPENINGS_CONFIG);
-    const stairs: Stair[] = [];
+    this.stairs = this.stairList;
     const levels = new Set<number>();
     for (const a of map.listChunks?.() ?? []) {
       levels.add(a.z);
-      for (const st of map.getChunk(a.cx, a.cy, a.z)?.stairs ?? []) {
-        const { dx, dy } = STAIR_STEP[st.dir];
-        const s: Stair = {
-          id: stairs.length,
-          tx: a.cx * CHUNK_SIZE + st.tx,
-          ty: a.cy * CHUNK_SIZE + st.ty,
-          z: a.z,
-          dir: st.dir,
-          len: st.len,
-          dx,
-          dy,
-        };
-        stairs.push(s);
-        for (let i = 0; i < s.len; i++) {
-          this.stairTiles.set(stairKey(s.tx + dx * i, s.ty + dy * i, s.z), s.id);
-        }
+      this.addChunkStairs(a.cx, a.cy, a.z);
+    }
+    this.multiLevel = levels.size > 1;
+  }
+
+  /** Registers the flights of stairs of chunk (cx, cy, z) (call once per chunk). */
+  addChunkStairs(cx: number, cy: number, z: number): void {
+    const stairs = this.stairList;
+    for (const st of this.map.getChunk(cx, cy, z)?.stairs ?? []) {
+      const { dx, dy } = STAIR_STEP[st.dir];
+      const s: Stair = {
+        id: stairs.length,
+        tx: cx * CHUNK_SIZE + st.tx,
+        ty: cy * CHUNK_SIZE + st.ty,
+        z,
+        dir: st.dir,
+        len: st.len,
+        dx,
+        dy,
+      };
+      stairs.push(s);
+      for (let i = 0; i < s.len; i++) {
+        this.stairTiles.set(stairKey(s.tx + dx * i, s.ty + dy * i, s.z), s.id);
       }
     }
-    this.stairs = stairs;
-    this.multiLevel = levels.size > 1;
   }
 
   /** Flight covering tile (tx, ty) of its base level `z` (`world/levels.ts` `stairsAt`). */
@@ -88,6 +97,19 @@ export class TileGrid {
     const chunk = this.chunkAt(cx, cy, z);
     if (!chunk) return -1;
     return chunk[name][(ty - cy * CHUNK_SIZE) * CHUNK_SIZE + (tx - cx * CHUNK_SIZE)] ?? -1;
+  }
+
+  /**
+   * Global building id at a tile (0 = outside / no building). Room ids are chunk-local
+   * (`SimChunk.roomBuildings` maps them to buildings), so "same building" compares this value.
+   */
+  buildingAt(tx: number, ty: number, z: number): number {
+    const cx = Math.floor(tx / CHUNK_SIZE);
+    const cy = Math.floor(ty / CHUNK_SIZE);
+    return buildingIdAt(
+      this.chunkAt(cx, cy, z),
+      (ty - cy * CHUNK_SIZE) * CHUNK_SIZE + (tx - cx * CHUNK_SIZE),
+    );
   }
 
   /** No floor (id 0) or outside the map. */

@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, tileIndex, type SimMap } from '@deadzone/protocol';
+import { CHUNK_SIZE, tileIndex, type SimChunkAddress, type SimMap } from '@deadzone/protocol';
 import type { LootTableDef } from '../content/adapter.js';
 import { deriveSeed, Rng } from '../core/rng.js';
 import {
@@ -20,35 +20,43 @@ export function createWorldContainers(st: ItemStore, map: SimMap, seed: number):
   const list = [...(map.listChunks?.() ?? [])].sort(
     (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
   );
-  for (const addr of list) {
-    const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
-    for (const obj of chunk?.objects ?? []) {
-      const type = storageTypeOf(st, obj.contentId);
-      if (type < 0) continue;
-      const x = addr.cx * CHUNK_SIZE + obj.x;
-      const y = addr.cy * CHUNK_SIZE + obj.y;
-      const key = tileKey(x, y, addr.z);
-      const onTile = st.worldByTile.get(key) ?? [];
-      const roomId = chunk?.room?.[tileIndex(obj.x, obj.y)] ?? 0;
-      const roomType = roomId ? chunk?.rooms?.[String(roomId)] : undefined;
-      const t = st.content.containerTypes[type]!;
-      const c = addContainer(st, {
-        kind: 'world',
-        owner: 0,
-        type,
-        x,
-        y,
-        z: addr.z,
-        capacityKg: t.capacityKg,
-        acceptsTags: undefined,
-        roomType,
-        // Loot depends on the seed and the position only (docs 2.2 "RNG pochodne").
-        lootKey: deriveSeed(seed, 'loot', x, y, addr.z, t.id, onTile.length),
-        lootDone: false,
-      });
-      onTile.push(c.id);
-      st.worldByTile.set(key, onTile);
-    }
+  for (const addr of list) createChunkContainers(st, map, seed, addr);
+}
+
+/** World storage of one chunk (`createWorldContainers` body; the sim LOD calls it lazily). */
+export function createChunkContainers(
+  st: ItemStore,
+  map: SimMap,
+  seed: number,
+  addr: SimChunkAddress,
+): void {
+  const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
+  for (const obj of chunk?.objects ?? []) {
+    const type = storageTypeOf(st, obj.contentId);
+    if (type < 0) continue;
+    const x = addr.cx * CHUNK_SIZE + obj.x;
+    const y = addr.cy * CHUNK_SIZE + obj.y;
+    const key = tileKey(x, y, addr.z);
+    const onTile = st.worldByTile.get(key) ?? [];
+    const roomId = chunk?.room?.[tileIndex(obj.x, obj.y)] ?? 0;
+    const roomType = roomId ? chunk?.rooms?.[String(roomId)] : undefined;
+    const t = st.content.containerTypes[type]!;
+    const c = addContainer(st, {
+      kind: 'world',
+      owner: 0,
+      type,
+      x,
+      y,
+      z: addr.z,
+      capacityKg: t.capacityKg,
+      acceptsTags: undefined,
+      roomType,
+      // Loot depends on the seed and the position only (docs 2.2 "RNG pochodne").
+      lootKey: deriveSeed(seed, 'loot', x, y, addr.z, t.id, onTile.length),
+      lootDone: false,
+    });
+    onTile.push(c.id);
+    st.worldByTile.set(key, onTile);
   }
 }
 
@@ -178,51 +186,61 @@ export function scatterFloorLoot(
   seed: number,
   worldStartMinute: number,
 ): void {
+  if (st.content.lootTables.length === 0) return;
+  const list = [...(map.listChunks?.() ?? [])].sort(
+    (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
+  );
+  for (const addr of list) scatterFloorLootChunk(st, map, seed, worldStartMinute, addr);
+}
+
+/** Floor loot of one chunk (`scatterFloorLoot` body; the sim LOD calls it lazily). */
+export function scatterFloorLootChunk(
+  st: ItemStore,
+  map: SimMap,
+  seed: number,
+  worldStartMinute: number,
+  addr: SimChunkAddress,
+): void {
   const tables = st.content.lootTables;
   if (tables.length === 0) return;
   // Content with `scatter` tables places the outdoor items itself (items/search.ts).
   const outdoor = st.content.scatterTables.length === 0;
-  const list = [...(map.listChunks?.() ?? [])].sort(
-    (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
-  );
-  for (const addr of list) {
-    const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
-    if (!chunk) continue;
-    const rng = Rng.fromSeed(deriveSeed(seed, 'floor-loot', addr.cx, addr.cy, addr.z));
-    const byRoom = new Map<number, number[]>();
-    for (let i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++) {
-      if (!(chunk.floor[i] ?? 0)) continue;
-      const room = chunk.room?.[i] ?? 0;
-      let tiles = byRoom.get(room);
-      if (!tiles) byRoom.set(room, (tiles = []));
-      tiles.push(i);
+  const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
+  if (!chunk) return;
+  const rng = Rng.fromSeed(deriveSeed(seed, 'floor-loot', addr.cx, addr.cy, addr.z));
+  const byRoom = new Map<number, number[]>();
+  for (let i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++) {
+    if (!(chunk.floor[i] ?? 0)) continue;
+    const room = chunk.room?.[i] ?? 0;
+    let tiles = byRoom.get(room);
+    if (!tiles) byRoom.set(room, (tiles = []));
+    tiles.push(i);
+  }
+  for (const room of [...byRoom.keys()].sort((a, b) => a - b)) {
+    const tiles = byRoom.get(room)!;
+    const type = room ? chunk.rooms?.[String(room)] : undefined;
+    const table = type
+      ? tables.find((t) => t.rooms.includes(type))
+      : tables[rng.int(0, tables.length - 1)];
+    if (!rng.chance(room ? FLOOR_LOOT.roomChance : FLOOR_LOOT.outdoorChance) || !table) continue;
+    if (!room && !outdoor) continue;
+    const i = tiles[rng.int(0, tiles.length - 1)]!;
+    const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
+    const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
+    const weights = table.entries.map((e) => lootWeight(st, e.weight, e.rarity));
+    let e = table.entries[rng.pickWeighted(weights)];
+    // One level of nested tables is enough for single floor items.
+    if (e && !('item' in e)) {
+      const nested = st.content.lootTableById.get(e.table);
+      e =
+        nested?.entries[
+          rng.pickWeighted(nested.entries.map((n) => lootWeight(st, n.weight, n.rarity)))
+        ];
     }
-    for (const room of [...byRoom.keys()].sort((a, b) => a - b)) {
-      const tiles = byRoom.get(room)!;
-      const type = room ? chunk.rooms?.[String(room)] : undefined;
-      const table = type
-        ? tables.find((t) => t.rooms.includes(type))
-        : tables[rng.int(0, tables.length - 1)];
-      if (!rng.chance(room ? FLOOR_LOOT.roomChance : FLOOR_LOOT.outdoorChance) || !table) continue;
-      if (!room && !outdoor) continue;
-      const i = tiles[rng.int(0, tiles.length - 1)]!;
-      const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
-      const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
-      const weights = table.entries.map((e) => lootWeight(st, e.weight, e.rarity));
-      let e = table.entries[rng.pickWeighted(weights)];
-      // One level of nested tables is enough for single floor items.
-      if (e && !('item' in e)) {
-        const nested = st.content.lootTableById.get(e.table);
-        e =
-          nested?.entries[
-            rng.pickWeighted(nested.entries.map((n) => lootWeight(st, n.weight, n.rarity)))
-          ];
-      }
-      if (!e || !('item' in e)) continue;
-      const def = st.content.itemIndex.get(e.item);
-      if (def === undefined) continue;
-      const count = Math.min(Math.max(1, e.count.min), stackLimit(st, st.content.items[def]!));
-      createItem(st, def, groundPile(st, x, y, addr.z).id, count, worldStartMinute);
-    }
+    if (!e || !('item' in e)) continue;
+    const def = st.content.itemIndex.get(e.item);
+    if (def === undefined) continue;
+    const count = Math.min(Math.max(1, e.count.min), stackLimit(st, st.content.items[def]!));
+    createItem(st, def, groundPile(st, x, y, addr.z).id, count, worldStartMinute);
   }
 }

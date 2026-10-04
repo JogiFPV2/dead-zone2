@@ -7,7 +7,9 @@ export const RoomIdSchema = z.string().regex(/^[1-9]\d{0,4}$/, 'roomId: liczba 1
 /**
  * Pomieszczenie. `roomType` (np. `base:room-kitchen`) wybiera loot tables, które mają go w `rooms`.
  * `buildingId` grupuje pomieszczenia w budynek (render ukrywa dach i ściany budynku).
- * Oba id są wspólne dla całej mapy: ten sam `roomId` w kilku chunkach to jedno pomieszczenie.
+ * Na mapach contentu oba id są wspólne dla całej mapy: ten sam `roomId` w kilku chunkach to jedno
+ * pomieszczenie. Kontrakt sim jest luźniejszy (sim-architecture.md 9.24): `roomId` lokalny w chunku,
+ * `buildingId` globalny — mapy contentu są jego szczególnym przypadkiem.
  */
 export const RoomSchema = z.strictObject({
   roomType: RoomTypeSchema,

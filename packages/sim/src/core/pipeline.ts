@@ -12,6 +12,7 @@ import { inputSystem } from '../systems/input.js';
 import { lureSystem } from '../lures/lures.js';
 import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
+import { lodSystem } from '../lod/system.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { penaltiesSystem } from '../survival/penalties.js';
 import { physicsSystem } from '../physics/system.js';
@@ -38,6 +39,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
   [
     { name: 'commands.apply', run: (w, ctx) => inputSystem(w, ctx.grid) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
+    { name: 'lod', run: (w, ctx) => lodSystem(w, ctx.grid) },
     { name: 'actions', run: (w) => actionsSystem(w) },
     { name: 'lures', run: (w, ctx) => lureSystem(w, ctx.grid) },
     { name: 'noise.collect', run: (w) => noiseCollectSystem(w) },

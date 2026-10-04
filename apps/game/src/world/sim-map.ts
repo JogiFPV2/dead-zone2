@@ -32,6 +32,18 @@ function roomTypes(data: ChunkData): Record<string, string> | undefined {
 }
 
 /**
+ * Room id → global building id (the sim's `SimChunk.roomBuildings`; room ids are chunk-local in
+ * the sim contract, docs/sim-architecture.md 9.24). Rooms without a building are left out.
+ */
+function roomBuildings(data: ChunkData): Record<string, number> | undefined {
+  if (!data.rooms || data.rooms.size === 0) return undefined;
+  let out: Record<string, number> | undefined;
+  for (const [id, info] of data.rooms)
+    if (info.buildingId > 0) (out ??= {})[String(id)] = info.buildingId;
+  return out;
+}
+
+/**
  * Adapter from the renderer's ChunkSource to the sim's SimMap: floor ids unchanged
  * (0 = no floor), missing edge layers become empty, `edgeKinds` from the edge palette (doors,
  * windows and fences are sim openings, closed by default; the player opens doors with F). Rooms (layer +
@@ -49,11 +61,13 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
     let chunk: SimChunk | undefined;
     if (data) {
       const rooms = roomTypes(data);
+      const buildings = roomBuildings(data);
       chunk = {
         floor: data.floor,
         edgeN: data.edgeN ?? NO_EDGES,
         edgeW: data.edgeW ?? NO_EDGES,
         ...(data.room ? { room: data.room, rooms: rooms ?? {} } : {}),
+        ...(data.room && buildings ? { roomBuildings: buildings } : {}),
         ...(data.objects?.length
           ? { objects: data.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
           : {}),

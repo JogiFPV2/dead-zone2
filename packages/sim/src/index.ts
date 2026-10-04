@@ -6,6 +6,7 @@ export {
   type Sim,
   type SimOptions,
   type ZombieInfo,
+  type LodStats,
   type AnimalInfo,
 } from './sim.js';
 export {
@@ -147,3 +148,22 @@ export {
   type CharacterCheck,
   type CharacterState,
 } from './character/character.js';
+export {
+  addCoarseZombies,
+  cellOfChunk,
+  coarseTotal,
+  DEFAULT_SIM_LOD,
+  lodApplies,
+  type LodWorld,
+  type SimLodConfig,
+} from './lod/state.js';
+export { despawnZombie } from './lod/system.js';
+export { decodeZeroRle, encodeZeroRle, type LodSave } from './save/delta.js';
+export {
+  checkSave,
+  SAVE_VERSION,
+  SaveError,
+  type SaveCheck,
+  type SaveErrorCode,
+  type SaveWorldHeader,
+} from './save/save.js';

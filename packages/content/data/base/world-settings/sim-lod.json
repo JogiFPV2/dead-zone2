@@ -1,0 +1,30 @@
+{
+  "simLod": {
+    "enabled": true,
+    "activeRadiusChunks": 3,
+    "hysteresisChunks": 1,
+    "cellSizeChunks": 1,
+    "coarseTickEvery": 100,
+    "maxActiveZombies": 300,
+    "maxSpawnPerTick": 16,
+    "minSpawnDistTiles": 24,
+    "keepDamagedPerCell": 32,
+    "drift": { "chance": 0.05, "fraction": 0.25 },
+    "noise": { "minRadiusTiles": 40, "radiusMul": 4, "memorySec": 60, "pullFraction": 0.5 },
+    "zombiesPerChunk": {
+      "centrum": 4,
+      "uslugi": 3,
+      "bloki": 4,
+      "domy": 2,
+      "przemysl": 1.5,
+      "wojsko": 3,
+      "ruiny": 1,
+      "wies": 0.8,
+      "farma": 0.4,
+      "pola": 0.05,
+      "las": 0.03,
+      "woda": 0
+    },
+    "defaultZombiesPerChunk": 0.1
+  }
+}

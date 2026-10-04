@@ -28,6 +28,12 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       reject(w, cmd, 'unknown-player');
       continue;
     }
+    if (cmd.type === 'setInterest') {
+      // Area of interest (docs 9.24): kept per player, used by the LOD; also while dead.
+      if (cmd.radiusChunks <= 0) w.interest.delete(cmd.playerId);
+      else w.interest.set(cmd.playerId, { cx: cmd.cx, cy: cmd.cy, r: cmd.radiusChunks });
+      continue;
+    }
     if (w.survival?.dead[eid]) {
       reject(w, cmd, 'dead');
       continue;

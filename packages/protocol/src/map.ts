@@ -14,10 +14,21 @@ export interface SimChunk {
   readonly floor: Uint16Array;
   readonly edgeN: Uint16Array;
   readonly edgeW: Uint16Array;
-  /** Room id per tile (0 = outside), keys of `rooms`; optional (no rooms = outside). */
+  /**
+   * Room id per tile (0 = outside), keys of `rooms`; optional (no rooms = outside). Room ids are
+   * **local to the chunk** (docs/sim-architecture.md 9.24): unique within this chunk only, so a
+   * generator never runs out of Uint16 ids on an 8 × 8 km world. One room spanning several
+   * chunks may have a different id in each; it is the same building when `roomBuildings` agree.
+   * Content maps keep map-wide unique ids (a valid special case).
+   */
   readonly room?: Uint16Array | undefined;
   /** Room id → room type (e.g. `base:room-kitchen`, picks loot tables). */
   readonly rooms?: Readonly<Record<string, string>> | undefined;
+  /**
+   * Room id → map-global numeric building id (> 0, any safe integer, not limited to Uint16),
+   * optional (absent = rooms belong to no known building). Same building = same id everywhere.
+   */
+  readonly roomBuildings?: Readonly<Record<string, number>> | undefined;
   /**
    * Map objects (chunk `objects` in content): storage types (`containers/`) and placeables with
    * `containerType` become world storage; the rest is ignored by the sim for now.
@@ -139,6 +150,17 @@ function checkLayer(layer: Uint16Array, name: string): void {
   }
 }
 
+/** Room id at local tile index `i` of a chunk (0 = outside). Chunk-local, see `SimChunk.room`. */
+export function roomIdAt(chunk: SimChunk | undefined, i: number): number {
+  return chunk?.room?.[i] ?? 0;
+}
+
+/** Global building id of local tile index `i` (0 = outside or no building id). */
+export function buildingIdAt(chunk: SimChunk | undefined, i: number): number {
+  const room = roomIdAt(chunk, i);
+  return room === 0 ? 0 : (chunk?.roomBuildings?.[String(room)] ?? 0);
+}
+
 /** Builds an in-memory `SimMap` from serialized chunks (throws on malformed layers). */
 export function simMapFromData(data: SimMapData): SimMap {
   const chunks = new Map<string, SimChunk>();
@@ -153,6 +175,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       edgeW: c.edgeW,
       room: c.room,
       rooms: c.rooms,
+      ...(c.roomBuildings ? { roomBuildings: c.roomBuildings } : {}),
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
     });
@@ -192,6 +215,7 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         edgeW: c.edgeW.slice(),
         ...(c.room ? { room: c.room.slice() } : {}),
         ...(c.rooms ? { rooms: { ...c.rooms } } : {}),
+        ...(c.roomBuildings ? { roomBuildings: { ...c.roomBuildings } } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
         ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
       });

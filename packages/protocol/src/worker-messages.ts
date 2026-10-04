@@ -103,6 +103,11 @@ export type WorkerToMain =
       buf: ArrayBuffer;
     }
   /** Fatal init error (e.g. content failed validation); the sim does not start. */
-  | { kind: 'error'; message: string };
+  /**
+   * Init failed. `code` (PROTOCOL_VERSION 10) is set for save errors (sim `SaveErrorCode`:
+   * `not-a-save`, `unsupported-version`, `content`, `capacity`, `generator-version`,
+   * `world-seed`, `corrupt`) so the client can show a readable message or offer a migration.
+   */
+  | { kind: 'error'; message: string; code?: string };
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };

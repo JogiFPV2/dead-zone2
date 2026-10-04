@@ -1,4 +1,5 @@
 import type { Command, CommandRejectReason } from '@deadzone/protocol';
+import { markChunk } from '../world/chunk-events.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { interruptActions, newAction, startAction } from '../actions/queue.js';
@@ -353,6 +354,8 @@ function pickUpStorage(
     if (child && inner) moveItem(w, child, inner, child.count);
   }
   st.containers.delete(c.id);
+  // Map furniture gone: the streamer rebuilds the chunk (ground piles are diffed separately).
+  markChunk(w, c.x, c.y, c.z, 'object');
   const key = `${c.x},${c.y},${c.z}`;
   const onTile = st.worldByTile.get(key);
   const at = onTile?.indexOf(c.id) ?? -1;

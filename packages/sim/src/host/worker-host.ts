@@ -9,6 +9,7 @@ import {
 import { parseMainToWorker } from '@deadzone/protocol/schema';
 import { FixedStepLoop } from '../core/loop.js';
 import { createSim, type Sim } from '../sim.js';
+import { SaveError } from '../save/save.js';
 
 /** Minimal structural view of a worker global / MessagePort (no DOM types in sim). */
 export interface WorkerPortLike {
@@ -113,19 +114,33 @@ export function startSimWorkerHost(
         );
         return;
       }
-      const s = createSim({
-        seed: msg.seed,
-        map: simMapFromData(msg.map),
-        ...(msg.spawn ? { spawn: msg.spawn } : {}),
-        ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
-        ...(msg.animals ? { spawnAnimals: msg.animals } : {}),
-        ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),
-        content,
-        dev: msg.dev ?? false,
-        floorLoot: msg.floorLoot ?? true,
-        ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
-        ...(msg.character && !msg.save ? { character: msg.character } : {}),
-      });
+      let s: Sim;
+      try {
+        s = createSim({
+          seed: msg.seed,
+          map: simMapFromData(msg.map),
+          ...(msg.spawn ? { spawn: msg.spawn } : {}),
+          ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
+          ...(msg.animals ? { spawnAnimals: msg.animals } : {}),
+          ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),
+          content,
+          dev: msg.dev ?? false,
+          floorLoot: msg.floorLoot ?? true,
+          ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
+          ...(msg.character && !msg.save ? { character: msg.character } : {}),
+        });
+      } catch (e) {
+        // A bad save (or character) must not kill the worker: report it with the save error code.
+        port.postMessage(
+          {
+            kind: 'error',
+            message: e instanceof Error ? e.message : String(e),
+            ...(e instanceof SaveError ? { code: e.code } : {}),
+          },
+          [],
+        );
+        return;
+      }
       sim = s;
       loop = new FixedStepLoop({ step: () => s.step() });
       // A save resumes at the speed-up it was made with (the sim measures real time with it).

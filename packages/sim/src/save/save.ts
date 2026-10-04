@@ -1,4 +1,5 @@
-import { PROTOCOL_VERSION } from '@deadzone/protocol';
+import { PROTOCOL_VERSION, type WorldSource } from '@deadzone/protocol';
+import { decodeLod, encodeLod, type LodSave } from './delta.js';
 import { addComponent, addEntity, hasComponent } from 'bitecs';
 import { RNG_STREAMS, Rng } from '../core/rng.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
@@ -18,7 +19,37 @@ import {
  * a content fingerprint). Round trip: save → load → the same `hash()` after any number of ticks.
  */
 export const SAVE_FORMAT = 'deadzone-save';
-export const SAVE_VERSION = 1;
+/** 2: world header (`world`), LOD delta (`lod`), pooled eids (`freeEids`). Version 1 still loads. */
+export const SAVE_VERSION = 2;
+const READABLE_VERSIONS = [1, 2];
+
+/** Why a save cannot be loaded (`SaveError.code`, worker `error.code`). */
+export type SaveErrorCode =
+  | 'not-a-save'
+  | 'unsupported-version'
+  | 'content'
+  | 'capacity'
+  | 'generator-version'
+  | 'world-seed'
+  | 'corrupt';
+
+/** Readable load failure with a stable code (the game shows a message or offers a migration). */
+export class SaveError extends Error {
+  constructor(
+    readonly code: SaveErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'SaveError';
+  }
+}
+
+/** World the save was made on (generator seed and version, content fingerprint). */
+export interface SaveWorldHeader {
+  seed: number;
+  generatorVersion: number;
+  contentVersion: string;
+}
 
 /** Fields that are content, config or rebuilt every tick (never saved). */
 const SKIP_SURVIVAL = ['content'];
@@ -59,6 +90,14 @@ interface SaveFile {
   openings?: unknown;
   /** Physics bodies (absent in older saves: bodies are recreated on the next tick). */
   physics?: unknown;
+  /** Version 2: the world (generator) the delta applies to. */
+  world?: SaveWorldHeader;
+  /** Version 2: LOD cell counters, chunk flags and signatures (save/delta.ts). */
+  lod?: LodSave;
+  /** Version 2: eids freed by the LOD (reused LIFO by spawns). */
+  freeEids?: number[];
+  /** Version 2: `setInterest` areas `[playerId, cx, cy, radiusChunks]` (absent = none). */
+  interest?: [number, number, number, number][];
 }
 
 /** Cheap fingerprint of the compiled content (ids and counts), to refuse foreign saves. */
@@ -76,7 +115,11 @@ export function contentFingerprint(w: SimWorld): string {
 
 export function saveWorld(w: SimWorld): Uint8Array {
   const eids = sortedQuery(w, 'hash', []);
-  const maxEid = eids.reduce((m, e) => Math.max(m, e), 0);
+  // Pooled eids keep their old field values; they are saved too so a reuse matches after a load.
+  const maxEid = Math.max(
+    eids.reduce((m, e) => Math.max(m, e), 0),
+    w.freeEids.reduce((m, e) => Math.max(m, e), 0),
+  );
   // Per-entity arrays are trimmed to the used entity range (`len = k × capacity`).
   const usedOf = (v: AnyTyped): number =>
     v.length % w.capacity === 0 ? (v.length / w.capacity) * (maxEid + 1) : v.length;
@@ -112,8 +155,56 @@ export function saveWorld(w: SimWorld): Uint8Array {
       : {}),
     openings: encodeFields(w.openings, ['cfg', 'kinds'], usedOf),
     physics: encodeFields(w.physics, SKIP_PHYSICS, usedOf),
+    world: {
+      seed: w.source.seed,
+      generatorVersion: w.source.generatorVersion,
+      contentVersion: contentFingerprint(w),
+    },
+    ...(w.lod ? { lod: encodeLod(w.lod) } : {}),
+    ...(w.freeEids.length > 0 ? { freeEids: [...w.freeEids] } : {}),
+    ...(w.interest.size > 0
+      ? {
+          interest: [...w.interest.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([id, it]): [number, number, number, number] => [id, it.cx, it.cy, it.r]),
+        }
+      : {}),
   };
   return utf8Encode(JSON.stringify(file));
+}
+
+export type SaveCheck =
+  | { ok: true; seed: number; tick: number; version: number; world: SaveWorldHeader | undefined }
+  | { ok: false; code: SaveErrorCode; message: string };
+
+/**
+ * Checks a save without loading it (never throws): format, version and, when `world` is given,
+ * the generator seed / version (`WorldSource.acceptsGeneratorVersion` = migration path).
+ */
+export function checkSave(bytes: Uint8Array, world?: WorldSource): SaveCheck {
+  try {
+    const f = parse(bytes);
+    if (world) checkWorld(f, world);
+    return { ok: true, seed: f.seed, tick: f.tick, version: f.version, world: f.world };
+  } catch (e) {
+    if (e instanceof SaveError) return { ok: false, code: e.code, message: e.message };
+    return { ok: false, code: 'corrupt', message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+function checkWorld(f: SaveFile, src: WorldSource): void {
+  const wh = f.world ?? { seed: src.seed, generatorVersion: 0, contentVersion: f.fingerprint };
+  if (wh.seed !== src.seed)
+    throw new SaveError('world-seed', `save: world seed ${wh.seed}, this world is ${src.seed}`);
+  if (
+    wh.generatorVersion !== src.generatorVersion &&
+    !src.acceptsGeneratorVersion?.(wh.generatorVersion)
+  ) {
+    throw new SaveError(
+      'generator-version',
+      `save: made with world generator v${wh.generatorVersion}, this build has v${src.generatorVersion}`,
+    );
+  }
 }
 
 export function readSaveHeader(bytes: Uint8Array): { seed: number; tick: number; version: number } {
@@ -122,9 +213,16 @@ export function readSaveHeader(bytes: Uint8Array): { seed: number; tick: number;
 }
 
 function parse(bytes: Uint8Array): SaveFile {
-  const f = JSON.parse(utf8Decode(bytes)) as SaveFile;
-  if (f.format !== SAVE_FORMAT) throw new Error('save: not a Deadzone save');
-  if (f.version !== SAVE_VERSION) throw new Error(`save: unsupported version ${f.version}`);
+  let f: SaveFile;
+  try {
+    f = JSON.parse(utf8Decode(bytes)) as SaveFile;
+  } catch {
+    throw new SaveError('not-a-save', 'save: not a Deadzone save');
+  }
+  if (!f || typeof f !== 'object' || f.format !== SAVE_FORMAT)
+    throw new SaveError('not-a-save', 'save: not a Deadzone save');
+  if (!READABLE_VERSIONS.includes(f.version))
+    throw new SaveError('unsupported-version', `save: unsupported version ${f.version}`);
   return f;
 }
 
@@ -134,15 +232,27 @@ function parse(bytes: Uint8Array): SaveFile {
  */
 export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   const f = parse(bytes);
-  if (f.capacity !== w.capacity) throw new Error('save: different entity capacity');
-  if (f.fingerprint !== contentFingerprint(w)) throw new Error('save: different content');
+  if (f.capacity !== w.capacity) throw new SaveError('capacity', 'save: different entity capacity');
+  if (f.fingerprint !== contentFingerprint(w))
+    throw new SaveError('content', 'save: different content');
+  checkWorld(f, w.source);
+  if (!!f.lod !== !!w.lod)
+    throw new SaveError('corrupt', 'save: LOD state does not match this world (size or simLod)');
   const names = Object.keys(w.c) as (keyof typeof w.c)[];
   let last = -1;
   for (const [eid, comps] of f.entities) {
     while (last < eid) last = addEntity(w.ecs);
-    if (last !== eid) throw new Error('save: entity ids do not match');
+    if (last !== eid) throw new SaveError('corrupt', 'save: entity ids do not match');
     for (const n of comps) if (n in w.c) addComponentByName(w, eid, n as keyof typeof w.c);
   }
+  // Pooled eids past the last live entity exist too (no components), as in the saved world.
+  const free = f.freeEids ?? [];
+  const maxFree = free.reduce((m, e) => Math.max(m, e), -1);
+  while (last < maxFree) last = addEntity(w.ecs);
+  w.freeEids.length = 0;
+  w.freeEids.push(...free);
+  w.interest.clear();
+  for (const [id, cx, cy, r] of f.interest ?? []) w.interest.set(id, { cx, cy, r });
   w.structureVersion++;
   for (const n of names) {
     const saved = (f.components as Record<string, unknown>)[n];
@@ -174,6 +284,13 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
   w.physics.rng = w.rng.physics;
   w.physics.orderSize = -1;
+  if (w.lod && f.lod) {
+    try {
+      decodeLod(w.lod, f.lod);
+    } catch (e) {
+      throw new SaveError('corrupt', e instanceof Error ? e.message : String(e));
+    }
+  }
   if (w.items) w.items.version++;
 }
 

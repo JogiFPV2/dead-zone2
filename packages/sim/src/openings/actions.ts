@@ -1,4 +1,5 @@
 import { OPENING_STATES, type Command, type CommandRejectReason } from '@deadzone/protocol';
+import { markChunk } from '../world/chunk-events.js';
 import { emitNoise } from '../ai/noise.js';
 import type { SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
@@ -29,12 +30,9 @@ export function emitOpeningChanged(
   kind: number,
   by: 'player' | 'zombie' | 'crowd' | 'debug',
 ): void {
-  w.events.push({
-    type: 'openingChanged',
-    tick: w.tick,
-    ...openingView(w.openings, key, kind),
-    by,
-  });
+  const view = openingView(w.openings, key, kind);
+  w.events.push({ type: 'openingChanged', tick: w.tick, ...view, by });
+  markChunk(w, view.tx, view.ty, view.z, 'opening');
 }
 
 /**

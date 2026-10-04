@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildingIdAt,
   CHUNK_TILES,
   ENTITY_PHYS_STATES,
   SNAPSHOT_U32_FIELDS,
@@ -171,7 +172,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 17 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(17);
-    expect(PROTOCOL_VERSION).toBe(10);
+    expect(PROTOCOL_VERSION).toBe(11);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -380,5 +381,44 @@ describe('parseMainToWorker', () => {
     expect(parseMainToWorker({ kind: 'cmd', cmd: { type: 'move' } }).ok).toBe(false);
     expect(parseMainToWorker({ kind: 'nope' }).ok).toBe(false);
     expect(parseMainToWorker(null).ok).toBe(false);
+  });
+});
+
+describe('setInterest and chunk-local rooms (docs 9.24)', () => {
+  it('setInterest: integer chunk coords, radius 0..16', () => {
+    const base = { type: 'setInterest', tick: 0, playerId: 0, seq: 1, cx: 3, cy: -2 };
+    expect(parseCommand({ ...base, radiusChunks: 4 }).ok).toBe(true);
+    expect(parseCommand({ ...base, radiusChunks: 0 }).ok).toBe(true);
+    expect(parseCommand({ ...base, radiusChunks: 17 }).ok).toBe(false);
+    expect(parseCommand({ ...base, radiusChunks: 1.5 }).ok).toBe(false);
+    expect(parseCommand({ ...base, cx: 0.5, radiusChunks: 1 }).ok).toBe(false);
+  });
+
+  it('roomBuildings: passes through simMapFromData / simMapToData; buildingIdAt', () => {
+    const room = new Uint16Array(CHUNK_TILES);
+    room[5] = 1;
+    room[6] = 2;
+    const blank = new Uint16Array(CHUNK_TILES);
+    const map = simMapFromData({
+      chunks: [
+        {
+          cx: 0,
+          cy: 0,
+          z: 0,
+          floor: blank,
+          edgeN: blank,
+          edgeW: blank,
+          room,
+          rooms: { '1': 'base:room-kitchen', '2': 'base:room-hall' },
+          roomBuildings: { '1': 70_001 },
+        },
+      ],
+    });
+    const c = map.getChunk(0, 0, 0);
+    expect(buildingIdAt(c, 5)).toBe(70_001);
+    expect(buildingIdAt(c, 6)).toBe(0);
+    expect(buildingIdAt(c, 0)).toBe(0);
+    const data = simMapToData(map, { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
+    expect(data.chunks[0]!.roomBuildings).toEqual({ '1': 70_001 });
   });
 });

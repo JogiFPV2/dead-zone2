@@ -1,3 +1,4 @@
+import { flushChunkEvents, primeChunkWatch } from './world/chunk-events.js';
 import {
   CHUNK_SIZE,
   snapshotByteLength,
@@ -13,7 +14,19 @@ import {
   type SimAnimalSpawn,
   type CharacterSpec,
   type WoundView,
+  type WorldSource,
+  worldSourceFromMap,
 } from '@deadzone/protocol';
+import {
+  coarseTotal,
+  createLodWorld,
+  DEFAULT_SIM_LOD,
+  lodApplies,
+  populateLod,
+  replayStairs,
+  type SimLodConfig,
+} from './lod/state.js';
+import { hashLod } from './lod/hash.js';
 import type { Stage4Config } from './ai/config.js';
 import type { CombatConfig } from './combat/config.js';
 import { DEFAULT_PHYSICS_CONFIG, type PhysicsConfig } from './physics/constants.js';
@@ -63,7 +76,16 @@ import { TileGrid } from './world/grid.js';
 
 export interface SimOptions {
   seed: number;
+  /** Tiles (a big generated world: `simMapFromWorldSource(world)`). */
   map: SimMap;
+  /**
+   * Where `map` comes from (generator seed + version, `chunkKind` for zombie density; docs
+   * 9.24). Default: `worldSourceFromMap(map, { seed })` (generator version 0). Its bounds decide
+   * whether the LOD runs (world bigger than the active window).
+   */
+  world?: WorldSource | undefined;
+  /** Overrides of `worldSettings.simLod` (tests, tools). */
+  lod?: Partial<SimLodConfig> | undefined;
   /**
    * Player 0 spawn in tiles (worker: `init.spawn`); default: first free tile centre of chunk
    * (0, 0, 0). Not checked against walls: the caller picks a free tile.
@@ -157,6 +179,19 @@ export interface AnimalInfo {
   hp: number;
 }
 
+/** LOD counters (debug HUD, tests); undefined when the LOD is off (small maps). */
+export interface LodStats {
+  /** Zombie entities (detailed). */
+  activeZombies: number;
+  /** Zombies as cell counters (coarse, plus pending spawns in active cells). */
+  coarseZombies: number;
+  activeCells: number;
+  /** Chunks with generated, unchanged loot (released when left). */
+  liveChunks: number;
+  /** Chunks that differ from the generated state (kept, saved as the delta). */
+  dirtyChunks: number;
+}
+
 /** Read-only zombie state (tests, tools, debug overlays). */
 export interface ZombieInfo {
   stableId: number;
@@ -213,6 +248,8 @@ export interface Sim {
   readonly world: SimWorld;
   /** Whole sim state as a versioned save (UTF-8 JSON bytes); `createSim({ load })` restores it. */
   save(): Uint8Array;
+  /** LOD counters; undefined when the LOD is off. */
+  lodStats(): LodStats | undefined;
 }
 
 function findSpawn(grid: TileGrid): { x: number; y: number } {
@@ -251,9 +288,11 @@ export function createSim(input: SimOptions): Sim {
           },
         }
       : undefined);
+  const source = opts.world ?? worldSourceFromMap(opts.map, { seed: opts.seed });
   const w = createSimWorld({
     seed: opts.seed,
     map: opts.map,
+    source,
     capacity: opts.maxEntities ?? DEFAULT_MAX_ENTITIES,
     commandWindowTicks: opts.commandWindowTicks ?? COMMAND_WINDOW_TICKS,
     dayLengthMinutes: opts.content?.worldSettings.dayLengthMinutes,
@@ -278,7 +317,17 @@ export function createSim(input: SimOptions): Sim {
         opts.combatConfig,
       ),
   });
-  if (w.items && !opts.load) {
+  const lodCfg: SimLodConfig = {
+    ...DEFAULT_SIM_LOD,
+    ...(w.survival?.content.simLod ?? {}),
+    ...(opts.lod ?? {}),
+  };
+  if (w.ai && w.items && w.survival && lodApplies(lodCfg, source.bounds)) {
+    w.lod = createLodWorld(lodCfg, source, w.survival.content, opts.floorLoot ?? false);
+    // Loot appears per chunk when players come close (lod/chunks.ts); zombies start as counters.
+    if (!opts.load) populateLod(w.lod, w.ai.spawnWeights);
+  }
+  if (w.items && !opts.load && !w.lod) {
     createWorldContainers(w.items, opts.map, w.seed);
     if (opts.floorLoot) {
       scatterFloorLoot(w.items, opts.map, w.seed, w.clock.startMinute);
@@ -291,6 +340,7 @@ export function createSim(input: SimOptions): Sim {
     minutes,
     ambientC: opts.ambientTemperatureC ?? DEFAULT_AMBIENT_C,
   };
+  if (w.lod && source.bounds.z1 > source.bounds.z0) ctx.grid.multiLevel = true;
   w.physics.stairs = ctx.grid.stairs;
   w.physics.multiLevel = ctx.grid.multiLevel;
   const views = new ViewTracker(0);
@@ -323,8 +373,11 @@ export function createSim(input: SimOptions): Sim {
     return eid;
   };
 
-  if (opts.load) loadWorld(w, opts.load);
-  else {
+  if (opts.load) {
+    loadWorld(w, opts.load);
+    // Lazily registered stairs come back in the saved order (stair ids are state).
+    if (w.lod) replayStairs(w.lod, ctx.grid);
+  } else {
     const spawn = opts.spawn ?? findSpawn(ctx.grid);
     spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
     if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
@@ -404,6 +457,8 @@ export function createSim(input: SimOptions): Sim {
     hashAnimals(w, h);
     hashCombat(w, h);
     writePhysicsHash(w.physics, h);
+    // LOD section only when the LOD runs (keeps the goldens of small maps).
+    hashLod(w, h);
     // Doors / windows: only when something differs from the map (keeps older goldens).
     const o = w.openings;
     if (o.states.size > 0 || o.bashAt.size > 0) {
@@ -421,6 +476,7 @@ export function createSim(input: SimOptions): Sim {
     return h.digest();
   };
 
+  primeChunkWatch(w);
   return {
     get tick() {
       return w.tick;
@@ -430,6 +486,7 @@ export function createSim(input: SimOptions): Sim {
     enqueue: (cmd) => w.queue.enqueue(cmd, w.tick),
     step() {
       for (const sys of PIPELINE) sys.run(w, ctx);
+      flushChunkEvents(w);
       w.tick++;
     },
     snapshot: (buf) => writeRenderSnapshot(w, 0, buf),
@@ -511,6 +568,19 @@ export function createSim(input: SimOptions): Sim {
     },
     drainView: () => views.diff(w),
     save: () => saveWorld(w),
+    lodStats() {
+      const lod = w.lod;
+      if (!lod) return undefined;
+      let dirty = 0;
+      for (let i = 0; i < lod.chunkLoot.length; i++) if (lod.chunkLoot[i] === 2) dirty++;
+      return {
+        activeZombies: w.ai?.zombieCount ?? 0,
+        coarseZombies: coarseTotal(lod),
+        activeCells: lod.activeCells.length,
+        liveChunks: lod.liveChunks.length,
+        dirtyChunks: dirty,
+      };
+    },
     getInventory(playerId = 0) {
       const eid = w.players.get(playerId);
       return eid === undefined ? undefined : inventoryView(w, eid);

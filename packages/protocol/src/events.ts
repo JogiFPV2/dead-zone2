@@ -48,6 +48,14 @@ export type CommandRejectReason =
   /** `watchTv` / VHS: no TV within `leisure.tvRadiusTiles` (`no-station`) or it has no power. */
   | 'no-power';
 
+/**
+ * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
+ * damage, `object` = storage placed on or picked up from the ground (furniture-like), `loot` =
+ * items on the ground appeared, changed or disappeared (drop, pick-up, throw, spot search).
+ */
+export type ChunkChangeReason = 'opening' | 'object' | 'loot';
+export const CHUNK_CHANGE_REASONS: readonly ChunkChangeReason[] = ['opening', 'object', 'loot'];
+
 export type DeathCause =
   | 'bleeding'
   | 'starvation'
@@ -376,6 +384,20 @@ export type SimEvent =
       hp: number;
       maxHp: number;
       by: 'player' | 'zombie' | 'crowd' | 'debug';
+    }
+  /**
+   * Visible state of chunk (cx, cy) on level z changed (docs/sim-architecture.md 9.24): the
+   * client streamer rebuilds that chunk (`streamer.invalidate`). At most one event per chunk,
+   * level and reason per tick, emitted at the end of the tick in (z, cy, cx, reason) order. Not
+   * emitted for chunks the LOD just loaded or released (their generated state).
+   */
+  | {
+      type: 'chunkChanged';
+      tick: number;
+      cx: number;
+      cy: number;
+      z: number;
+      reason: ChunkChangeReason;
     }
   /**
    * Crowd pressure on a closed door / window / fence changed level (sim `physics/crowd.ts`,

@@ -243,6 +243,15 @@ export const breakWindowCommandSchema = z.strictObject({
   ty: tileCoord,
   side: edgeSide,
 });
+/** Upper bound of `setInterest.radiusChunks` (a 33 × 33 chunk square ≈ 1 km). */
+export const MAX_INTEREST_RADIUS_CHUNKS = 16;
+export const setInterestCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setInterest'),
+  cx: z.number().int().min(-0x8000).max(0x7fff),
+  cy: z.number().int().min(-0x8000).max(0x7fff),
+  radiusChunks: z.number().int().min(0).max(MAX_INTEREST_RADIUS_CHUNKS),
+});
 export const debugOpeningCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugOpening'),
@@ -400,6 +409,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugSkillCommandSchema,
   debugLearnRecipeCommandSchema,
   newCharacterCommandSchema,
+  setInterestCommandSchema,
 ]);
 
 /** Validates untrusted input; never throws. */
@@ -435,6 +445,12 @@ export const simMapDataSchema = z.object({
       edgeW: layer,
       room: layer.optional(),
       rooms: z.record(z.string().regex(/^[1-9]\d{0,4}$/), contentId).optional(),
+      roomBuildings: z
+        .record(
+          z.string().regex(/^[1-9]\d{0,4}$/),
+          z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+        )
+        .optional(),
       objects: z
         .array(z.object({ contentId, x: localTile, y: localTile }))
         .max(CHUNK_TILES * 4)

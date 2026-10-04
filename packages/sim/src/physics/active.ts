@@ -17,36 +17,43 @@ import type { PhysicsBody } from './types.js';
  * active) is body state: saved and hashed (only while frozen, so small maps keep their hashes).
  */
 
-/** Player chunk windows of this tick (transient, rebuilt by `updateActiveWindows`). */
+/** Chunk windows of this tick as (cx, cy, r) triples (transient, `updateActiveWindows`). */
 const windows: number[] = [];
-let radius = 2;
 
 export function activeChunkRadius(w: SimWorld): number {
   return w.physics.cfg.activeChunkRadius ?? Math.ceil((w.ai?.cfg.ai.farTiles ?? 64) / CHUNK_SIZE);
 }
 
-/** Collects the chunks of all players (call once per physics tick, before `isActive`). */
+/**
+ * Collects the chunks of all players, plus their `setInterest` areas (docs 9.24; radius = the
+ * larger of the interest radius and R), once per physics tick, before `isActive`.
+ */
 export function updateActiveWindows(w: SimWorld): void {
   windows.length = 0;
-  radius = activeChunkRadius(w);
+  const radius = activeChunkRadius(w);
   const { Position } = w.c;
   for (const eid of w.players.values()) {
     windows.push(
       Math.floor((Position.x[eid] ?? 0) / CHUNK_SIZE),
       Math.floor((Position.y[eid] ?? 0) / CHUNK_SIZE),
+      radius,
     );
+  }
+  if (windows.length === 0) return;
+  for (const id of [...w.interest.keys()].sort((a, b) => a - b)) {
+    const it = w.interest.get(id)!;
+    windows.push(it.cx, it.cy, Math.max(radius, it.r));
   }
 }
 
-/** (x, y) in tiles lies in some player's window (without players: everything is active). */
+/** (x, y) in tiles lies in some window (without players: everything is active). */
 export function isActive(x: number, y: number): boolean {
   if (windows.length === 0) return true;
   const cx = Math.floor(x / CHUNK_SIZE);
   const cy = Math.floor(y / CHUNK_SIZE);
-  for (let i = 0; i < windows.length; i += 2) {
-    if (Math.abs(cx - windows[i]!) <= radius && Math.abs(cy - windows[i + 1]!) <= radius) {
-      return true;
-    }
+  for (let i = 0; i < windows.length; i += 3) {
+    const r = windows[i + 2]!;
+    if (Math.abs(cx - windows[i]!) <= r && Math.abs(cy - windows[i + 1]!) <= r) return true;
   }
   return false;
 }

@@ -395,6 +395,21 @@ export interface BreakWindowCommand extends CommandHeader {
   side: EdgeSide;
 }
 
+/**
+ * Area of interest of a player (docs/sim-architecture.md 9.24, docs/streaming.md): the client
+ * streamer or the server asks the sim to simulate chunks within `radiusChunks` (Chebyshev) of
+ * chunk (cx, cy) in detail, in addition to the area around the player's own position (which is
+ * always active, so single player needs no command). `radiusChunks` 0 clears it. Saved and in the
+ * hash; without LOD (small maps, everything active) it has no effect. Accepted while dead
+ * (spectating).
+ */
+export interface SetInterestCommand extends CommandHeader {
+  type: 'setInterest';
+  cx: number;
+  cy: number;
+  radiusChunks: number;
+}
+
 /** Dev only (`init.dev`): sets the state of a door / window edge (hp resets to the state's max). */
 export interface DebugOpeningCommand extends CommandHeader {
   type: 'debugOpening';
@@ -596,7 +611,8 @@ export type Command =
   | UpgradeStationCommand
   | DebugSkillCommand
   | DebugLearnRecipeCommand
-  | NewCharacterCommand;
+  | NewCharacterCommand
+  | SetInterestCommand;
 export type CommandType = Command['type'];
 
 export type CommandParseResult = { ok: true; command: Command } | { ok: false; error: string };
