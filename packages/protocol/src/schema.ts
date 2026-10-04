@@ -564,3 +564,4 @@ export function parseMainToWorker(input: unknown): ParseResult<MainToWorker> {
   const r = mainToWorkerSchema.safeParse(input);
   return r.success ? { ok: true, value: r.data } : { ok: false, error: z.prettifyError(r.error) };
 }
+export * from './api-schema.js';

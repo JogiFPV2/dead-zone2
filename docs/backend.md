@@ -1,6 +1,6 @@
 # Backend: projekt (Deadzone)
 
-> **Status:** tylko projekt, stan na 1.10.2026. Nic z tego nie jest wdrożone. Ten dokument opisuje model i zachowanie backendu; nie zawiera migracji ani SQL do uruchomienia.
+> **Status:** stan na 4.10.2026. Nic z tego nie jest wdrożone. Migracje są w `supabase/migrations` (tylko pliki, testowane na PGlite), API `/v1/characters…` w `apps/server`. Zastosowanie migracji na hostowanym projekcie wymaga zgody Pawła (§10).
 > **Etap:** 8 (konta, serwer i landing), z przygotowaniem pod multiplayer (po demo).
 > **Właściciel:** Serwer. Dotyczy także: Symulacja (`packages/sim`, format zapisu, permadeath), Silnik (`apps/game`, IndexedDB), Designer (UI logowania, listy postaci i ekran śmierci).
 > **Stan repo:** szkielet z PR #1 już istnieje: `apps/server` (Fastify, `GET /health`), `packages/protocol` (`PROTOCOL_VERSION`, `Command`), `packages/sim` (`createRng`, `TICK_RATE_HZ = 20`). Ten dokument go rozszerza i nie zmienia.
@@ -334,7 +334,7 @@ Legenda: **[ZGODA]** oznacza krok wymagający wyraźnej zgody Pawła (zmiany w S
 2. `packages/protocol`: schematy koperty DZSV, typy API postaci i komunikaty co-op.
 3. `packages/sim`: `serializeState`, `deserializeState`, `SAVE_FORMAT_VERSION`, migracje, `CharacterDied`, `DayStarted`, fixture’y i test determinizmu.
 4. Lokalny zapis IndexedDB: jeden rekord na postać, te same wyzwalacze i format DZSV co chmura.
-5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów.
+5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów. **Zrobione** (bez rate limitu HTTP/IP, `DELETE` i `deserializeState` w `worker_threads`). Ścieżka pliku: `{user_id}/{character_id}/v{version}-{losowe}.dzsv`, żeby nowy plik powstał przed usunięciem starego.
 6. **[ZGODA]** Utworzenie organizacji `deadzone` i projektu `deadzone-prod` w regionie UE.
 7. **[ZGODA]** Konfiguracja Auth: Google OAuth, SMTP, CAPTCHA, redirect URLs i klucze JWT.
 8. **[ZGODA]** Zastosowanie przygotowanych migracji na `deadzone-prod` dopiero po osobnym review i zgodzie.

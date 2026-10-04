@@ -1,0 +1,24 @@
+import type { ApiErrorCode } from '@deadzone/protocol';
+
+/** An expected API error: status code + stable machine code (docs/backend.md §5.1). */
+export class HttpError extends Error {
+  constructor(
+    readonly statusCode: number,
+    readonly code: ApiErrorCode,
+    message: string = code,
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+export const badRequest = (msg: string): HttpError => new HttpError(400, 'bad_request', msg);
+export const invalidEnvelope = (msg: string): HttpError =>
+  new HttpError(400, 'invalid_envelope', msg);
+export const invalidState = (msg: string): HttpError => new HttpError(422, 'invalid_state', msg);
+export const notFound = (): HttpError =>
+  new HttpError(404, 'character_not_found', 'character not found');
+export const characterDead = (): HttpError =>
+  new HttpError(409, 'character_dead', 'character is dead (permadeath)');
+export const versionConflict = (): HttpError =>
+  new HttpError(409, 'save_version_conflict', 'save version does not match, reopen the save');

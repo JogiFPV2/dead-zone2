@@ -100,9 +100,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 8 — Konta, serwer i landing
 - [ ] Landing page (Designer + Silnik)
-- [ ] Supabase Auth: email + Google (Serwer) — projekt: [backend.md](backend.md)
-- [ ] Tabele profili i zapisów + RLS (Serwer) — projekt: [backend.md](backend.md)
-- [ ] API zapisów w chmurze z walidacją i limitami (Serwer) — projekt: [backend.md](backend.md)
+- [ ] Supabase Auth: email + Google (Serwer) — projekt: [backend.md](backend.md); serwer weryfikuje JWT przez JWKS, czeka na projekt Supabase, Google OAuth i SMTP (Paweł)
+- [x] Tabele profili i zapisów + RLS (Serwer) — `supabase/migrations`, tylko pliki; zastosowanie na produkcji wymaga zgody Pawła
+- [x] API zapisów w chmurze z walidacją i limitami (Serwer) — `apps/server` `/v1/characters…`; rate limit HTTP/IP i `deserializeState` w workerze później
 - [ ] Profil i lista zapisów, przycisk „Graj” (Designer + Silnik)
 
 ## Etap 9 — Grywalne demo
