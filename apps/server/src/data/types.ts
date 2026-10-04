@@ -33,6 +33,13 @@ export interface SaveRow {
   updated_at: string;
 }
 
+/** Settings columns of `public.profiles`. */
+export interface SettingsRow {
+  settings: Record<string, unknown> | null;
+  settings_version: number;
+  settings_updated_at: string | null;
+}
+
 export interface NewCharacter {
   user_id: string;
   name: string;
@@ -63,7 +70,9 @@ export type DataRuleCode =
   | 'character_dead'
   | 'character_not_found'
   /** The token's user has no account rows any more (deleted). */
-  | 'account_not_found';
+  | 'account_not_found'
+  /** `put_player_settings`: stale `If-Match`. */
+  | 'settings_version_conflict';
 
 export class DataRuleError extends Error {
   constructor(readonly code: DataRuleCode) {
@@ -102,6 +111,17 @@ export interface GameStore {
    * Throws `DataRuleError('character_not_found')`.
    */
   deleteCharacter(userId: string, characterId: string): Promise<{ storagePath: string | null }>;
+  /** Player settings of the profile; `undefined` without a profile row (deleted account). */
+  getSettings(userId: string): Promise<SettingsRow | undefined>;
+  /**
+   * Compare-and-swap of the settings; returns the new row. Throws `DataRuleError`
+   * (`settings_version_conflict`, `account_not_found`).
+   */
+  putSettings(
+    userId: string,
+    expectedVersion: number,
+    settings: Record<string, unknown>,
+  ): Promise<SettingsRow>;
   /** RODO: deletes all characters, saves and the profile of an account; returns remaining paths. */
   deleteAccountData(userId: string): Promise<{ storagePaths: string[] }>;
 }

@@ -17,6 +17,7 @@ const RULES: readonly DataRuleCode[] = [
   'character_dead',
   'character_not_found',
   'account_not_found',
+  'settings_version_conflict',
 ];
 
 interface PgError {
@@ -161,6 +162,26 @@ export function createSupabaseStore(db: Db): GameStore {
         .single();
       if (error) fail(error);
       return { storagePath: data.storage_path };
+    },
+    async getSettings(userId) {
+      const { data, error } = await db
+        .from('profiles')
+        .select('settings,settings_version,settings_updated_at')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) fail(error);
+      return data ?? undefined;
+    },
+    async putSettings(userId, expectedVersion, settings) {
+      const { data, error } = await db
+        .rpc('put_player_settings', {
+          p_user: userId,
+          p_expected_version: expectedVersion,
+          p_settings: settings,
+        })
+        .single();
+      if (error) fail(error);
+      return { settings, settings_version: data.version, settings_updated_at: data.updated_at };
     },
     async deleteAccountData(userId) {
       const { data, error } = await db.rpc('delete_account_data', { p_user: userId });

@@ -8,7 +8,14 @@ export type Database = {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; display_name: string | null; created_at: string };
+        Row: {
+          id: string;
+          display_name: string | null;
+          created_at: string;
+          settings: Record<string, unknown> | null;
+          settings_version: number;
+          settings_updated_at: string | null;
+        };
         Insert: { id: string; display_name?: string | null };
         Update: { display_name?: string | null };
         Relationships: [];
@@ -76,6 +83,14 @@ export type Database = {
       delete_character: {
         Args: { p_user: string; p_character: string };
         Returns: { storage_path: string | null }[];
+      };
+      put_player_settings: {
+        Args: {
+          p_user: string;
+          p_expected_version: number;
+          p_settings: Record<string, unknown>;
+        };
+        Returns: { version: number; updated_at: string }[];
       };
       delete_account_data: {
         Args: { p_user: string };

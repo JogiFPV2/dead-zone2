@@ -165,9 +165,28 @@ export type ApiErrorCode =
   | 'unsupported_format_version'
   | 'rate_limited'
   | 'unavailable'
-  | 'internal';
+  | 'internal'
+  /** `PUT /v1/me/settings` without `If-Match`. */
+  | 'precondition_required'
+  /** `PUT /v1/me/settings` with a stale `If-Match`: reload with `GET`. */
+  | 'settings_version_conflict'
+  /** Settings failed `validatePlayerSettings`; details in `issues`. */
+  | 'invalid_settings';
 
 export interface ApiError {
   error: ApiErrorCode;
   message: string;
+  /** `invalid_settings`: zod issues of `validatePlayerSettings` (path, code, message). */
+  issues?: { path: (string | number)[]; code: string; message: string }[];
+}
+
+/**
+ * `GET /v1/me/settings` and the `PUT` answer. `version` is also the `ETag` (`"<version>"`); the next
+ * `PUT` sends it in `If-Match`. `settings` null (version 0) = never stored, use the defaults.
+ */
+export interface PlayerSettingsResponse {
+  /** `PlayerSettings` of `@deadzone/ui/settings` as stored (validated by the server). */
+  settings: Record<string, unknown> | null;
+  version: number;
+  updatedAt: string | null;
 }

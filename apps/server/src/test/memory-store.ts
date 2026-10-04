@@ -6,6 +6,7 @@ import {
   type CharacterRow,
   type GameStore,
   type SaveRow,
+  type SettingsRow,
 } from '../data/types.js';
 
 /** In-memory `GameStore` with the same rules as the SQL triggers/functions (tests only). */
@@ -14,6 +15,8 @@ export class MemoryStore implements GameStore {
   saves = new Map<string, SaveRow>();
   /** Accounts with a profile row (signup trigger); tests add users here. */
   profiles = new Set<string>();
+  /** `profiles.settings*` per account (absent = never stored). */
+  settings = new Map<string, SettingsRow>();
   clock = Date.parse('2026-10-04T12:00:00Z');
   constructor(
     private readonly maxAlive = 20,
@@ -126,7 +129,28 @@ export class MemoryStore implements GameStore {
     this.characters.delete(id);
     return Promise.resolve({ storagePath: s?.storage_path ?? null });
   }
+  getSettings(userId: string) {
+    if (!this.profiles.has(userId)) return Promise.resolve(undefined);
+    const s = this.settings.get(userId);
+    return Promise.resolve(
+      s ? { ...s } : { settings: null, settings_version: 0, settings_updated_at: null },
+    );
+  }
+  async putSettings(userId: string, expected: number, settings: Record<string, unknown>) {
+    const cur = await this.getSettings(userId);
+    if (!cur) throw new DataRuleError('account_not_found');
+    if (cur.settings_version !== expected) throw new DataRuleError('settings_version_conflict');
+    // jsonb round trip: the stored value is a copy.
+    const row: SettingsRow = {
+      settings: JSON.parse(JSON.stringify(settings)) as Record<string, unknown>,
+      settings_version: expected + 1,
+      settings_updated_at: this.iso(),
+    };
+    this.settings.set(userId, row);
+    return { ...row };
+  }
   async deleteAccountData(userId: string) {
+    this.settings.delete(userId);
     const storagePaths = (await this.listSaves(userId)).map((s) => s.storage_path);
     for (const c of this.owned(userId)) {
       this.saves.delete(c.id);

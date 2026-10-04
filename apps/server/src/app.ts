@@ -51,7 +51,7 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
       }
       return reply
         .code(err.statusCode)
-        .send({ error: err.code, message: err.message } satisfies ApiError);
+        .send({ error: err.code, message: err.message, ...err.details } satisfies ApiError);
     }
     const status = typeof err.statusCode === 'number' ? err.statusCode : 500;
     const code = FASTIFY_CODES[status];

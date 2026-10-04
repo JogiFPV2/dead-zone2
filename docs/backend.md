@@ -90,6 +90,8 @@ auth.users 1──N characters 1──1 saves
 
 Nie ma osobnego rekordu świata ani historii zapisów.
 
+`public.profiles` (jeden wiersz na konto, tworzony przy rejestracji) trzyma też ustawienia gracza: `settings jsonb` (pusty = domyślne), `settings_version integer` (ETag, 0 = nigdy nie zapisane) i `settings_updated_at`. Właściciel ma tylko `select` (RLS), a zapisuje wyłącznie serwer przez `put_player_settings` (compare-and-swap, tylko service_role).
+
 ### 3.2 `public.characters`
 
 | Pole | Typ / reguła |
@@ -199,6 +201,8 @@ Rozmiar: według pomiaru Symulacji zapis po około 50 h gry ma **0,75–1,96 MiB
 | `POST /v1/characters/:id/death` | Zatwierdzenie śmierci po walidacji stanu, a następnie usunięcie zapisu |
 | `DELETE /v1/characters/:id` | Trwałe usunięcie postaci na żądanie użytkownika, wraz z jej zapisem |
 | `DELETE /v1/me` | Usunięcie konta i wszystkich danych (RODO) |
+| `GET /v1/me/settings` | Ustawienia gracza: `{ settings, version, updatedAt }` i nagłówek `ETag: "<version>"` |
+| `PUT /v1/me/settings` | Nadpisanie ustawień; body JSON (obiekt, najwyżej 16 KB), `If-Match: "<version>"` |
 
 `GET /v1/characters` zwraca (typy `ListCharactersResponse` i `CharacterSummary` w `packages/protocol`):
 
@@ -209,7 +213,9 @@ Lokacji nie podaje klient. Przy `PUT .../save` worker walidacji, po pełnej wali
 
 Nie ma endpointu do listowania, pobierania ani przywracania starszych zapisów. Nie ma osobnego endpointu „Zapisz”, bo zapis wynika z poniższych wyzwalaczy.
 
-Kody: `400` (format), `401` (JWT), `403` (brak własności lub ban), `404` (postać), `409` (konflikt wersji, postać martwa, limit żywych postaci), `413` (rozmiar lub quota), `422` (walidacja stanu), `426` (wersja formatu), `429` (rate limit).
+Ustawienia (`/v1/me/settings`, typ `PlayerSettingsResponse` w `packages/protocol`): serwer sprawdza body funkcją `validatePlayerSettings` z `@deadzone/ui/settings` i zapisuje tylko jej wynik `data` (nieznane klucze usunięte, brakujące pola z domyślnymi). Brak `If-Match` daje `428 precondition_required`, nieaktualny `412 settings_version_conflict` (klient robi `GET` i scala). Body ponad 16 KB albo `reason: 'too-large'` daje `413 payload_too_large`, `reason: 'invalid'` daje `422 invalid_settings` z polem `issues` (`path`, `code`, `message`, najwyżej 20). Body niebędące obiektem JSON daje 400. Oba endpointy liczą się do limitu żądań na IP i wymagają istniejącego konta (inaczej 401). `DELETE /v1/me` usuwa ustawienia razem z profilem.
+
+Kody: `400` (format), `401` (JWT), `403` (brak własności lub ban), `404` (postać), `409` (konflikt wersji, postać martwa, limit żywych postaci), `412` (nieaktualny ETag ustawień), `413` (rozmiar lub quota), `422` (walidacja stanu lub ustawień), `428` (brak `If-Match` ustawień), `426` (wersja formatu), `429` (rate limit).
 
 ### 5.2 Walidacja zapisu i optimistic concurrency
 

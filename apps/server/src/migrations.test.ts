@@ -270,6 +270,48 @@ describe('migrations', () => {
     await as('service_role', '', () => q(`delete from public.characters where user_id = $1`, [B]));
   });
 
+  it('put_player_settings: compare-and-swap, object only, server-only writes', async () => {
+    await as('service_role', '', async () => {
+      const put = (expected: number, settings: string) =>
+        q(`select version from public.put_player_settings($1, $2, $3::jsonb)`, [
+          A,
+          expected,
+          settings,
+        ]);
+      expect(
+        await q(`select settings, settings_version from public.profiles where id = $1`, [A]),
+      ).toEqual([{ settings: null, settings_version: 0 }]);
+      expect(await put(0, '{"audio":{"muted":true}}')).toEqual([{ version: 1 }]);
+      await expect(put(0, '{}')).rejects.toThrow('settings_version_conflict');
+      await expect(put(1, '[]')).rejects.toThrow();
+      await expect(put(1, JSON.stringify({ pad: 'x'.repeat(40000) }))).rejects.toThrow();
+      expect(
+        await q(`select settings, settings_version from public.profiles where id = $1`, [A]),
+      ).toEqual([{ settings: { audio: { muted: true } }, settings_version: 1 }]);
+      await expect(
+        q(`select * from public.put_player_settings($1, 0, '{}'::jsonb)`, [
+          '44444444-4444-4444-8444-444444444444',
+        ]),
+      ).rejects.toThrow('account_not_found');
+    });
+    await as('authenticated', A, async () => {
+      expect(await q(`select settings_version from public.profiles`)).toEqual([
+        { settings_version: 1 },
+      ]);
+      await expect(q(`update public.profiles set settings = '{}'::jsonb`)).rejects.toThrow(
+        'permission denied',
+      );
+      await expect(
+        q(`select * from public.put_player_settings($1, 1, '{}'::jsonb)`, [A]),
+      ).rejects.toThrow('permission denied');
+    });
+    await as('authenticated', B, async () => {
+      expect(await q(`select count(*)::int n from public.profiles where id = $1`, [A])).toEqual([
+        { n: 0 },
+      ]);
+    });
+  });
+
   it('a character for a missing auth user fails with 23503 (server maps it to 401)', async () => {
     await as('service_role', '', async () => {
       const err = await newCharacter('44444444-4444-4444-8444-444444444444', 'Ghost').catch(

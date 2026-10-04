@@ -239,6 +239,9 @@ importers:
       '@deadzone/sim':
         specifier: workspace:*
         version: link:../../packages/sim
+      '@deadzone/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@supabase/supabase-js':
         specifier: ^2.117.2
         version: 2.117.2

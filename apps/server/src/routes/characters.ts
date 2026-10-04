@@ -30,6 +30,7 @@ import {
 import { enforce, type RateLimitStore } from '../rate-limit.js';
 import type { ValidatedEnvelope } from '../save/validate.js';
 import type { SaveValidator } from '../save/worker-pool.js';
+import { registerSettingsRoutes } from './settings.js';
 
 export interface CharacterRouteDeps {
   config: Pick<
@@ -203,6 +204,9 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
       DAY_MS,
       'daily upload limit reached',
     );
+
+  // Player settings share the JWT/account check and the per-IP limit above.
+  registerSettingsRoutes(app, { store, user });
 
   async function ownedCharacter(userId: string, id: string): Promise<CharacterRow> {
     const c = await store.getCharacter(userId, id);
