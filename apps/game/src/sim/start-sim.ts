@@ -14,7 +14,7 @@ export interface StartSimOptions {
   /** Enables debug commands (`debugWound`, `debugStat`). */
   dev?: boolean;
   /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
-  zombiesAwayFrom?: { x: number; y: number } | undefined;
+  zombiesAwayFrom?: { x: number; y: number; z?: number } | undefined;
   /** New game: the creator's character (`init({ character })` → `newCharacter`). */
   character?: CharacterSpec | undefined;
   /** Restores this save (the character's slot) instead of a new world. */
