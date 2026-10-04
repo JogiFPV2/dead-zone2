@@ -10,6 +10,18 @@ export type PromptVM =
       search: boolean;
       /** Verb after the key (default `Otwórz`; doors: `Zamknij`, `Zamknięte`). */
       label?: string;
+      /** Hold verb (default `Przeszukaj`; openings: `Więcej` = the action menu). */
+      hold?: string;
+    }
+  | {
+      /** Opening action menu (hold F at a door / gate / window): numbered entries. */
+      mode: 'menu';
+      x: number;
+      y: number;
+      key: string;
+      title: string;
+      items: string[];
+      sel: number;
     }
   | {
       mode: 'search';
@@ -22,11 +34,15 @@ export type PromptVM =
       seconds: number;
       /** A zombie sees / chases the player: the ring pulses red, the search goes on (HUD v3). */
       threat?: boolean;
+      /** Panel title (default `Przeszukiwanie`; openings: `Barykadowanie` …). */
+      title?: string;
     };
 
 export interface InteractPrompt {
   readonly el: HTMLElement;
   update(vm: PromptVM): void;
+  /** Menu entry clicked / hovered (index). */
+  onMenu?: (i: number, kind: 'pick' | 'hover') => void;
 }
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -85,16 +101,24 @@ export function createInteractPrompt(): InteractPrompt {
   panel.className = 'dz-ip__panel';
   const sKey = span('dz-ip__key');
   const sTime = span('dz-ip__secs');
-  panel.append(span('dz-ip__title', 'Przeszukiwanie'), sKey, sTime);
+  const sTitle = span('dz-ip__title', 'Przeszukiwanie');
+  panel.append(sTitle, sKey, sTime);
 
   // Zombies never interrupt a search (only moving / attacking): warn instead of cancelling.
   const threat = span('dz-ip__threat', 'Zagrożenie · ruch przerywa');
   threat.setAttribute('role', 'status');
 
-  el.append(ring, marker, prompt, panel, threat);
+  const menu = document.createElement('div');
+  menu.className = 'dz-ip__menu';
+  const mTitle = span('dz-ip__menu-title');
+  const mList = document.createElement('div');
+  mList.className = 'dz-ip__menu-list';
+  menu.append(mTitle, mList);
+
+  el.append(ring, marker, prompt, panel, threat, menu);
 
   let last = '';
-  return {
+  const api: InteractPrompt = {
     el,
     update(vm) {
       const key = JSON.stringify(vm);
@@ -111,7 +135,23 @@ export function createInteractPrompt(): InteractPrompt {
         pOpen.textContent = vm.label ?? 'Otwórz';
         pSep.hidden = !vm.search;
         pHold.hidden = !vm.search;
-        pHold.textContent = `przytrzymaj ${vm.key} Przeszukaj`;
+        pHold.textContent = `przytrzymaj ${vm.key} ${vm.hold ?? 'Przeszukaj'}`;
+        return;
+      }
+      if (vm.mode === 'menu') {
+        el.removeAttribute('data-threat');
+        mTitle.textContent = vm.title;
+        mList.replaceChildren(
+          ...vm.items.map((label, i) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = `dz-ip__menu-item${i === vm.sel ? ' dz-ip__menu-item--sel' : ''}`;
+            row.append(span('dz-ip__key', String(i + 1)), span('', label));
+            row.addEventListener('click', () => api.onMenu?.(i, 'pick'));
+            row.addEventListener('mouseenter', () => api.onMenu?.(i, 'hover'));
+            return row;
+          }),
+        );
         return;
       }
       const p = Math.min(1, Math.max(0, vm.progress));
@@ -119,9 +159,11 @@ export function createInteractPrompt(): InteractPrompt {
       peak.style.transform = `rotate(${(p * 360).toFixed(1)}deg)`;
       pct.textContent = `${Math.floor(p * 100)}%`;
       name.textContent = vm.name;
+      sTitle.textContent = vm.title ?? 'Przeszukiwanie';
       sKey.textContent = vm.key;
       sTime.textContent = `${vm.seconds.toFixed(1).replace('.', ',')} s`;
       el.toggleAttribute('data-threat', vm.threat === true);
     },
   };
+  return api;
 }

@@ -2,6 +2,10 @@ import type { OpeningState } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
 import {
   DOOR_FIRST_TILES,
+  OpeningFeedback,
+  openingMenu,
+  openingPrimary,
+  type DoorTarget,
   doorCentre,
   doorVerb,
   doorWins,
@@ -46,8 +50,9 @@ describe('door targeting (F tap)', () => {
   });
 
   it('a door wins over a container only when nothing else is in reach or it is very close', () => {
-    const near = { ...north, dist: DOOR_FIRST_TILES - 0.1, state: 'closed' as const };
-    const far = { ...north, dist: DOOR_FIRST_TILES + 0.2, state: 'closed' as const };
+    const base = { ...north, kind: 'door' as const, barricade: 0, glass: false };
+    const near = { ...base, dist: DOOR_FIRST_TILES - 0.1, state: 'closed' as const };
+    const far = { ...base, dist: DOOR_FIRST_TILES + 0.2, state: 'closed' as const };
     expect(doorWins(undefined, false)).toBe(false);
     expect(doorWins(far, false)).toBe(true);
     expect(doorWins(far, true)).toBe(false);
@@ -63,5 +68,89 @@ describe('door targeting (F tap)', () => {
     expect(lockedDoorToast(rej, 1)).toBeUndefined();
     expect(lockedDoorToast({ ...rej, reason: 'out-of-range' }, 0)).toBeUndefined();
     expect(lockedDoorToast({ type: 'openingChanged' }, 0)).toBeUndefined();
+  });
+});
+
+const target = (o: Partial<DoorTarget>): DoorTarget => ({
+  tx: 1,
+  ty: 2,
+  z: 0,
+  side: 'n',
+  kind: 'door',
+  dist: 0.5,
+  state: 'closed',
+  barricade: 0,
+  glass: false,
+  ...o,
+});
+const cmds = (t: DoorTarget) => openingMenu(t).map((o) => o.cmd);
+
+describe('gates and windows (F targeting, #106)', () => {
+  it('gates and windows are targets; broken windows stay, broken doors / gates do not', () => {
+    const gate: DoorEdge = { tx: 4, ty: 6, z: 0, side: 'n', kind: 'gate' };
+    const win: DoorEdge = { tx: 8, ty: 6, z: 0, side: 'w', kind: 'window' };
+    const info =
+      (s: OpeningState, barricade = 0, glass = true) =>
+      () => ({ state: s, barricade, glass });
+    expect(nearestDoor([gate], info('closed'), 4.5, 6.5, 0)).toMatchObject({ kind: 'gate' });
+    expect(nearestDoor([gate], info('broken'), 4.5, 6.5, 0)).toBeUndefined();
+    expect(nearestDoor([win], info('broken', 2, false), 7.6, 6.5, 0)).toMatchObject({
+      kind: 'window',
+      state: 'broken',
+      barricade: 2,
+      glass: false,
+    });
+  });
+
+  it('tap: doors / gates toggle (locked too: the sim answers), windows climb when open / broken', () => {
+    expect(openingPrimary(target({ kind: 'gate', state: 'open' }))?.cmd).toBe('toggleDoor');
+    expect(openingPrimary(target({ state: 'locked' }))?.cmd).toBe('toggleDoor');
+    expect(openingPrimary(target({ kind: 'window', state: 'broken' }))?.cmd).toBe('climbThrough');
+    expect(openingPrimary(target({ kind: 'window', state: 'open' }))?.label).toBe('Przejdź');
+    expect(openingPrimary(target({ kind: 'window', state: 'closed' }))).toBeUndefined();
+    expect(openingPrimary(target({ barricade: 1 }))).toBeUndefined();
+  });
+
+  it('menu: the timed actions that fit the state', () => {
+    expect(cmds(target({ state: 'closed' }))).toEqual(['barricade']);
+    expect(cmds(target({ state: 'open' }))).toEqual([]);
+    expect(cmds(target({ kind: 'gate', state: 'locked' }))).toEqual(['forceDoor', 'barricade']);
+    expect(cmds(target({ kind: 'window', state: 'closed', glass: true }))).toEqual([
+      'toggleDoor',
+      'smashWindow',
+      'barricade',
+    ]);
+    expect(cmds(target({ kind: 'window', state: 'broken', glass: true }))).toEqual([
+      'removeGlass',
+      'barricade',
+    ]);
+    expect(cmds(target({ kind: 'window', state: 'broken', glass: false }))).toEqual(['barricade']);
+    expect(cmds(target({ barricade: 2 }))).toEqual(['removeBarricade', 'barricade']);
+    expect(cmds(target({ kind: 'window', barricade: 4 }))).toEqual(['removeBarricade']);
+  });
+
+  it('prompt verbs', () => {
+    expect(doorVerb(target({ barricade: 3 }))).toBe('Zabarykadowane');
+    expect(doorVerb(target({ state: 'locked' }))).toBe('Zamknięte');
+    expect(doorVerb(target({ kind: 'window', state: 'closed' }))).toBe('Okno');
+    expect(doorVerb(target({ kind: 'gate', state: 'open' }))).toBe('Zamknij');
+  });
+
+  it('feedback toasts in Polish for the local player', () => {
+    const fb = new OpeningFeedback(0);
+    const rej = (seq: number, reason: string, playerId = 0) =>
+      ({ type: 'commandRejected', tick: 1, playerId, seq, reason }) as never;
+    fb.sent(1, target({}));
+    expect(fb.toast(rej(1, 'missing-tool'))).toBe('Brak narzędzia');
+    fb.sent(2, target({}));
+    expect(fb.toast(rej(2, 'missing-parts'))).toBe('Brak materiałów');
+    fb.sent(3, target({ barricade: 2 }));
+    expect(fb.toast(rej(3, 'invalid-state'))).toBe('Zabarykadowane');
+    expect(fb.toast(rej(9, 'missing-tool'))).toBeUndefined();
+    expect(fb.toast(rej(9, 'locked'))).toBe('Zamknięte');
+    expect(fb.toast(rej(9, 'locked', 1))).toBeUndefined();
+    const forced = { type: 'doorForced', tick: 1, playerId: 0, tx: 1, ty: 2, z: 0, side: 'n' };
+    expect(fb.toast({ ...forced, method: 'kick', success: false } as never)).toBe('Nie puściło');
+    expect(fb.toast({ ...forced, method: 'pry', success: true } as never)).toBe('Wyważone');
   });
 });

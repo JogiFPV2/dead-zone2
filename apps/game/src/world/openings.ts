@@ -16,7 +16,8 @@ import { NO_CUTAWAY, isEdgeLowered, type Cutaway } from './cutaway.js';
 import { LEVEL_HEIGHT } from './instances.js';
 import { LOWERED_HEIGHT, WINDOW_HEIGHT, WALL_HEIGHT, collectEdges } from './structure-instances.js';
 
-export type OpeningKind = 'door' | 'window' | 'fence';
+export type OpeningKind = 'door' | 'window' | 'fence' | 'gate';
+const KINDS = ['door', 'window', 'fence', 'gate'] as const;
 
 /** Grey-box sizes (world units). */
 const DOOR = { width: 0.9, height: 2.1, thickness: 0.06 };
@@ -26,7 +27,15 @@ const COLORS: Record<OpeningKind, string> = {
   door: '#5a4636',
   window: '#9fb2bf',
   fence: '#7a6146',
+  gate: '#6b5640',
 };
+const PLANK_COLOR = '#8a6a44';
+const SHARD_COLOR = '#b9cad4';
+/**
+ * Plank: length along the edge (overhangs the frame), height, thickness. Centred on the edge
+ * line and thicker than the wall, so the boards show on both faces (inside and out).
+ */
+const PLANK = { length: 1.12, height: 0.16, thickness: 0.22 };
 
 /**
  * Shake under crowd pressure (`openingPressure.level` 1..3): amplitude (rad, around the hinge /
@@ -105,6 +114,17 @@ export function openingMatrix(
     pos.y = baseY + h / 2;
     return out.compose(pos, q, scale);
   }
+  if (e.kind === 'gate') {
+    // Fence-high leaf hinged at the edge start, a full tile wide; swings 90° like a door.
+    const h = lowered ? Math.min(LOWERED_HEIGHT, FENCE.height) : FENCE.height;
+    scale.set(0.96, h, FENCE.thickness);
+    const swing = state === 'open' ? (Math.PI / 2) * fallDir : shake;
+    q.setFromAxisAngle(new Vector3(0, 1, 0), yawAlong + swing);
+    const dir = along.clone().applyAxisAngle(new Vector3(0, 1, 0), swing);
+    pos.copy(start).addScaledVector(along, 0.02).addScaledVector(dir, 0.48);
+    pos.y = baseY + h / 2;
+    return out.compose(pos, q, scale);
+  }
   if (e.kind === 'window') {
     const hidden = state === 'open' || state === 'broken' || lowered;
     const h = hidden ? 0 : PANE.top - WINDOW_HEIGHT;
@@ -171,6 +191,15 @@ export function kitOpeningMatrix(
     q.setFromAxisAngle(up, yawAlong + swing);
     return out.compose(pos, q, new Vector3(1, sy, 1));
   }
+  if (e.kind === 'gate') {
+    // Fence panel model as a gate leaf: hinged at the edge start, swings 90° when open.
+    const sy = lowered ? Math.min(1, LOWERED_HEIGHT / KIT_FENCE.height) : 1;
+    const swing = state === 'open' ? (Math.PI / 2) * fallDir : shake;
+    q.setFromAxisAngle(up, yawAlong + swing);
+    const dir = along.clone().applyAxisAngle(up, swing);
+    pos.addScaledVector(dir, 0.5);
+    return out.compose(pos, q, new Vector3(1 / KIT_FENCE.length, sy, 1));
+  }
   // Fence panel, tilting around its bottom edge.
   const sy = lowered ? Math.min(1, LOWERED_HEIGHT / KIT_FENCE.height) : 1;
   const angle = state === 'broken' ? (fallDir * Math.PI) / 2 : shake;
@@ -180,6 +209,60 @@ export function kitOpeningMatrix(
   pos.addScaledVector(along, 0.5);
   if (state === 'broken') pos.y += 0.08;
   return out.compose(pos, q, new Vector3(1 / KIT_FENCE.length, sy, 1));
+}
+
+/** Height band (m above the floor) the planks of an edge kind cover. */
+function plankBand(kind: OpeningKind): [number, number] {
+  if (kind === 'window') return [WINDOW_HEIGHT + 0.1, PANE.top - 0.1];
+  if (kind === 'door') return [0.35, DOOR.height - 0.3];
+  return [0.15, FENCE.height - 0.15];
+}
+
+/**
+ * Plank `i` (0..3) of `count` nailed over an edge: across the frame (both faces), spread over the kind's height band, alternately tilted a little. Hidden (zero scale) when
+ * `i >= count` or above the cutaway height. Pure (tests).
+ */
+export function plankMatrix(
+  out: Matrix4,
+  e: OpeningEdge,
+  i: number,
+  count: number,
+  lowered: boolean,
+): Matrix4 {
+  const [lo, hi] = plankBand(e.kind);
+  const y = lo + ((hi - lo) * (i + 0.5)) / 4;
+  if (i >= count || (lowered && y > LOWERED_HEIGHT)) return out.makeScale(0, 0, 0);
+  const baseY = e.z * LEVEL_HEIGHT;
+  const along = e.side === 'n' ? new Vector3(1, 0, 0) : new Vector3(0, 0, 1);
+  const yawAlong = e.side === 'n' ? 0 : -Math.PI / 2;
+  const q = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yawAlong);
+  const roll = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), (i % 2 ? -1 : 1) * 0.14);
+  q.multiply(roll);
+  const pos = new Vector3(e.tx, baseY + y, e.ty).addScaledVector(along, 0.5);
+  return out.compose(pos, q, new Vector3(PLANK.length, PLANK.height, PLANK.thickness));
+}
+
+/**
+ * Glass shards left in a broken window frame (`glass: true`): a jagged strip on the sill (i 0)
+ * and under the lintel (i 1); hidden otherwise. Pure (tests).
+ */
+export function shardMatrix(
+  out: Matrix4,
+  e: OpeningEdge,
+  i: number,
+  show: boolean,
+  lowered: boolean,
+): Matrix4 {
+  if (!show || (lowered && i === 1)) return out.makeScale(0, 0, 0);
+  const baseY = e.z * LEVEL_HEIGHT;
+  const along = e.side === 'n' ? new Vector3(1, 0, 0) : new Vector3(0, 0, 1);
+  const yawAlong = e.side === 'n' ? 0 : -Math.PI / 2;
+  const h = i === 0 ? 0.14 : 0.09;
+  const y = i === 0 ? WINDOW_HEIGHT + h / 2 : PANE.top - h / 2;
+  const q = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yawAlong);
+  q.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), i === 0 ? 0.06 : -0.05));
+  const pos = new Vector3(e.tx, baseY + y, e.ty).addScaledVector(along, 0.5);
+  return out.compose(pos, q, new Vector3(0.9, h, PANE.thickness));
 }
 
 /** Town look of the opening pieces: kit models in one BatchedMesh (windows are wall modules). */
@@ -210,6 +293,14 @@ export class OpeningsView {
   private readonly groups = new Map<OpeningKind, Group3>();
   private readonly index = new Map<string, { kind: OpeningKind; i: number }>();
   private readonly states = new Map<string, OpeningState>();
+  private readonly planks = new Map<string, number>();
+  /** Windows whose frame has lost its glass (`removeGlass`); default: glass in the frame. */
+  private readonly noGlass = new Set<string>();
+  /** Every door / window / gate / fence edge (planks); windows (shards). */
+  private plankMesh: InstancedMesh | undefined;
+  private shardMesh: InstancedMesh | undefined;
+  private plankEdges: OpeningEdge[] = [];
+  private shardEdges: OpeningEdge[] = [];
   private readonly pressure = new Map<string, number>();
   private cutaway: Cutaway = NO_CUTAWAY;
   private readonly m = new Matrix4();
@@ -227,7 +318,7 @@ export class OpeningsView {
 
   /** Collects every door / window / fence edge in `range`. */
   loadRange(range: ChunkRange): void {
-    const lists: Record<OpeningKind, OpeningEdge[]> = { door: [], window: [], fence: [] };
+    const lists: Record<OpeningKind, OpeningEdge[]> = { door: [], window: [], fence: [], gate: [] };
     const kindOf = (id: number) => this.source.edgePalette?.[id]?.kind;
     for (let cy = range.cy0; cy <= range.cy1; cy++) {
       for (let cx = range.cx0; cx <= range.cx1; cx++) {
@@ -235,6 +326,7 @@ export class OpeningsView {
         if (!chunk) continue;
         for (const g of collectEdges(chunk, kindOf, this.lookup, (k) => k !== 'wall')) {
           const kind = g.kind as OpeningKind;
+          if (!lists[kind]) continue;
           for (const e of g.edges) {
             lists[kind].push({
               kind,
@@ -248,12 +340,13 @@ export class OpeningsView {
         }
       }
     }
+    this.loadExtras(lists);
     if (this.kit) {
       this.loadKit(lists);
       this.dirty = true;
       return;
     }
-    for (const kind of ['door', 'window', 'fence'] as const) {
+    for (const kind of KINDS) {
       const edges = lists[kind];
       if (edges.length === 0) continue;
       const mesh = new InstancedMesh(
@@ -272,6 +365,35 @@ export class OpeningsView {
     this.dirty = true;
   }
 
+  /** Planks (4 per edge) and window shards (2 per window): one InstancedMesh each. */
+  private loadExtras(lists: Record<OpeningKind, OpeningEdge[]>): void {
+    this.plankEdges = [...lists.door, ...lists.gate, ...lists.window, ...lists.fence];
+    this.shardEdges = lists.window;
+    if (this.plankEdges.length) {
+      const m = new InstancedMesh(
+        this.geometry,
+        placeholderMaterial(PLANK_COLOR),
+        this.plankEdges.length * 4,
+      );
+      m.name = 'openings:planks';
+      m.castShadow = m.receiveShadow = true;
+      m.frustumCulled = false;
+      this.plankMesh = m;
+      this.root.add(m);
+    }
+    if (this.shardEdges.length) {
+      const m = new InstancedMesh(
+        this.geometry,
+        placeholderMaterial(SHARD_COLOR),
+        this.shardEdges.length * 2,
+      );
+      m.name = 'openings:shards';
+      m.frustumCulled = false;
+      this.shardMesh = m;
+      this.root.add(m);
+    }
+  }
+
   /** Kit mode: door leaves + fence panels in one BatchedMesh (1 draw call). */
   private loadKit(lists: Record<OpeningKind, OpeningEdge[]>): void {
     const kit = this.kit;
@@ -279,6 +401,7 @@ export class OpeningsView {
     const pieces: { kind: OpeningKind; e: OpeningEdge; model: string }[] = [];
     for (const e of lists.door) pieces.push({ kind: 'door', e, model: kit.leafOf(e) });
     for (const e of lists.fence) pieces.push({ kind: 'fence', e, model: 'prop-fence' });
+    for (const e of lists.gate) pieces.push({ kind: 'gate', e, model: 'prop-fence' });
     const models = [...new Set(pieces.map((p) => p.model))].filter((m) =>
       kit.kit.geometries.has(m),
     );
@@ -289,7 +412,7 @@ export class OpeningsView {
       verts += g?.getAttribute('position').count ?? 0;
       index += g?.index?.count ?? 0;
     }
-    for (const kind of ['door', 'window', 'fence'] as const) {
+    for (const kind of KINDS) {
       const edges = lists[kind];
       edges.forEach((e, i) => this.index.set(openingKey(e.tx, e.ty, e.z, e.side), { kind, i }));
       if (edges.length) this.groups.set(kind, { edges, ids: [] });
@@ -319,6 +442,28 @@ export class OpeningsView {
     return this.states.get(openingKey(tx, ty, z, side)) ?? 'closed';
   }
 
+  /** State, planks and glass of an edge (F targeting). */
+  info(
+    tx: number,
+    ty: number,
+    z: number,
+    side: EdgeSide,
+  ): { state: OpeningState; barricade: number; glass: boolean } {
+    const key = openingKey(tx, ty, z, side);
+    return {
+      state: this.states.get(key) ?? 'closed',
+      barricade: this.planks.get(key) ?? 0,
+      glass: !this.noGlass.has(key),
+    };
+  }
+
+  private setExtras(key: string, barricade: number | undefined, glass: boolean | undefined): void {
+    if (barricade) this.planks.set(key, barricade);
+    else this.planks.delete(key);
+    if (glass === false) this.noGlass.add(key);
+    else this.noGlass.delete(key);
+  }
+
   pressureLevel(tx: number, ty: number, z: number, side: EdgeSide): number {
     return this.pressure.get(openingKey(tx, ty, z, side)) ?? 0;
   }
@@ -326,7 +471,13 @@ export class OpeningsView {
   /** Full list from the view (edges not listed are back to `closed`). */
   setStates(list: readonly OpeningView[]): void {
     this.states.clear();
-    for (const o of list) this.states.set(openingKey(o.tx, o.ty, o.z, o.side), o.state);
+    this.planks.clear();
+    this.noGlass.clear();
+    for (const o of list) {
+      const key = openingKey(o.tx, o.ty, o.z, o.side);
+      this.states.set(key, o.state);
+      this.setExtras(key, o.barricade, o.glass);
+    }
     this.dirty = true;
     if (this.kit?.onWindow) {
       for (const e of this.edges('window'))
@@ -339,6 +490,7 @@ export class OpeningsView {
     for (const e of events) {
       if (e.type === 'openingChanged') {
         this.states.set(openingKey(e.tx, e.ty, e.z, e.side), e.state);
+        this.setExtras(openingKey(e.tx, e.ty, e.z, e.side), e.barricade, e.glass);
         const at = this.index.get(openingKey(e.tx, e.ty, e.z, e.side));
         if (at?.kind === 'window') {
           const edge = this.groups.get('window')?.edges[at.i];
@@ -390,11 +542,40 @@ export class OpeningsView {
       });
       if (mesh) mesh.instanceMatrix.needsUpdate = true;
     }
+    this.updateExtras();
+  }
+
+  private updateExtras(): void {
+    const lowered = (e: OpeningEdge) =>
+      isEdgeLowered(this.cutaway, e.building, e.side === 'n' ? 'N' : 'W', e.tx, e.ty);
+    if (this.plankMesh) {
+      this.plankEdges.forEach((e, j) => {
+        const n = this.planks.get(openingKey(e.tx, e.ty, e.z, e.side)) ?? 0;
+        const low = n > 0 && lowered(e);
+        for (let i = 0; i < 4; i++)
+          this.plankMesh!.setMatrixAt(j * 4 + i, plankMatrix(this.m, e, i, n, low));
+      });
+      this.plankMesh.instanceMatrix.needsUpdate = true;
+    }
+    if (this.shardMesh) {
+      this.shardEdges.forEach((e, j) => {
+        const key = openingKey(e.tx, e.ty, e.z, e.side);
+        const show = this.states.get(key) === 'broken' && !this.noGlass.has(key);
+        const low = show && lowered(e);
+        for (let i = 0; i < 2; i++)
+          this.shardMesh!.setMatrixAt(j * 2 + i, shardMatrix(this.m, e, i, show, low));
+      });
+      this.shardMesh.instanceMatrix.needsUpdate = true;
+    }
   }
 
   dispose(): void {
     this.geometry.dispose();
-    for (const { mesh } of this.groups.values()) {
+    for (const mesh of [
+      ...[...this.groups.values()].map((g) => g.mesh),
+      this.plankMesh,
+      this.shardMesh,
+    ]) {
       if (mesh) (mesh.material as { dispose(): void }).dispose();
     }
     this.batch?.dispose();

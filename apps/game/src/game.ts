@@ -49,7 +49,14 @@ import {
 import { chunkSourceToWorld } from './world/streaming/source.js';
 import { CHUNK_SIZE } from './world/chunk.js';
 import { OpeningsView } from './world/openings.js';
-import { doorWins, nearestDoor, type DoorTarget } from './world/door-target.js';
+import {
+  doorWins,
+  nearestDoor,
+  openingPrimary,
+  OpeningFeedback,
+  type DoorTarget,
+  type OpeningCmd,
+} from './world/door-target.js';
 import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
@@ -396,8 +403,10 @@ const player = new PlayerView();
 scene.add(player.root);
 
 // HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
+const openingFeedback = new OpeningFeedback(PLAYER_ID);
 const hud = createHud({
   root: container,
+  openingToast: (e) => openingFeedback.toast(e),
   bindings: () => settings.get().input.bindings,
   geometry: minimapGeometry(world.source, world.range),
   pois: world.zones
@@ -697,11 +706,19 @@ gameState.subscribe((next) => {
     })
     .catch((e: unknown) => console.error('Zapis śmierci nie powiódł się', e));
 });
-/** Nearest door in reach of the player (`world/door-target.ts`). */
+/** Doors, gates and windows F can act on (`world/door-target.ts`). */
+const targetEdges = (['door', 'gate', 'window'] as const).flatMap((kind) =>
+  openings.edges(kind).map((e) => ({ tx: e.tx, ty: e.ty, z: e.z, side: e.side, kind })),
+);
+/** Nearest door / gate / window in reach of the player. */
 const doorInReach = (x: number, y: number, z: number): DoorTarget | undefined =>
-  nearestDoor(openings.edges('door'), (e) => openings.state(e.tx, e.ty, e.z, e.side), x, y, z);
-const toggleDoor = (door: DoorTarget): void =>
-  sim.send(stamper.stamp({ type: 'toggleDoor', tx: door.tx, ty: door.ty, side: door.side }));
+  nearestDoor(targetEdges, (e) => openings.info(e.tx, e.ty, e.z, e.side), x, y, z);
+/** Sim command on an opening edge (`toggleDoor`, `barricade`, `forceDoor` …). */
+const openingCommand = (door: DoorTarget, cmd: OpeningCmd): void => {
+  const c = stamper.stamp({ type: cmd, tx: door.tx, ty: door.ty, side: door.side });
+  openingFeedback.sent(c.seq, door);
+  sim.send(c);
+};
 /** Interact key / button: open/close a door, search/open the nearest container, cancel, close. */
 function interact(): void {
   if (inventory.open) {
@@ -715,7 +732,8 @@ function interact(): void {
   const door =
     intent.type === 'open' || intent.type === 'none' ? doorInReach(p.x, p.y, p.z) : undefined;
   if (door && doorWins(door, intent.type === 'open')) {
-    toggleDoor(door);
+    const main = openingPrimary(door);
+    if (main) openingCommand(door, main.cmd);
     return;
   }
   if (intent.type === 'open')
@@ -732,7 +750,7 @@ const interaction = new InteractController({
     const p = snapshots.sample(performance.now(), TICK_MS);
     return p ? doorInReach(p.x, p.y, p.z) : undefined;
   },
-  toggleDoor,
+  opening: openingCommand,
   held: () => input.isDown('interact'),
   interrupted: () =>
     (['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const).some((a) => input.isDown(a)) ||
@@ -756,6 +774,10 @@ const interaction = new InteractController({
   tickMs: TICK_MS,
 });
 input.on('interact', () => interaction.press(performance.now()));
+hud.onPromptMenu((i, kind) => {
+  if (kind === 'pick') interaction.choose(i);
+  else interaction.highlight(i);
+});
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death) return;
@@ -843,6 +865,8 @@ function updateReticle(px: number, py: number, now: number): void {
 }
 QUICKSLOTS.forEach((action, i) =>
   input.on(action, () => {
+    // Opening menu open: 1–n pick its entries instead of the quick slots.
+    if (interaction.choose(i)) return;
     if (!sleep.speedKey(i)) hud.selectSlot(i);
   }),
 );

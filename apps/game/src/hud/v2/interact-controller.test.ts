@@ -23,7 +23,10 @@ function setup(nearby: NearbyContainerView[], door?: DoorTarget) {
     state: () => state,
     player: () => ({ x: 2.5, y: 2.5 }),
     door: () => door,
-    toggleDoor: (d) => calls.push(`door ${d.tx},${d.ty},${d.side}`),
+    opening: (d: DoorTarget, cmd: string) =>
+      calls.push(
+        cmd === 'toggleDoor' ? `door ${d.tx},${d.ty},${d.side}` : `${cmd} ${d.tx},${d.ty}`,
+      ),
     held: () => held,
     interrupted: () => false,
     windowOpen: () => false,
@@ -79,13 +82,21 @@ describe('InteractController', () => {
     expect(t.calls).toEqual(['open 5']);
   });
 
-  const door = (dist: number, state: DoorTarget['state'] = 'closed'): DoorTarget => ({
+  const door = (
+    dist: number,
+    state: DoorTarget['state'] = 'closed',
+    more: Partial<DoorTarget> = {},
+  ): DoorTarget => ({
     tx: 2,
     ty: 3,
     z: 0,
     side: 'n',
+    kind: 'door',
     dist,
     state,
+    barricade: 0,
+    glass: false,
+    ...more,
   });
 
   it('a tap toggles the door in reach when no container is near', () => {
@@ -110,23 +121,82 @@ describe('InteractController', () => {
     expect(u.calls).toEqual(['door 2,3,n']);
   });
 
-  it('holding F near a door still searches the spot', () => {
-    const t = setup([], door(0.6));
+  it('holding F at an open door (nothing in its menu) still searches the spot', () => {
+    const t = setup([], door(0.6, 'open'));
     t.c.press(0);
     t.c.frame(TAP_MS, 0);
     expect(t.calls).toEqual(['search {"x":2,"y":2}']);
   });
 
+  it('holding F at a closed door opens its menu; F / number keys pick an entry', () => {
+    const t = setup([], door(0.6));
+    t.c.press(0);
+    expect(t.c.frame(TAP_MS, 0)).toMatchObject({
+      mode: 'menu',
+      title: 'Otwórz',
+      items: ['Zabarykaduj'],
+      sel: 0,
+    });
+    expect(t.calls).toEqual([]);
+    expect(t.c.menuOpen).toBe(true);
+    t.c.press(TAP_MS + 500);
+    expect(t.calls).toEqual(['barricade 2,3']);
+    expect(t.c.menuOpen).toBe(false);
+    // A number key picks too; out of range does nothing.
+    const u = setup([], door(0.6, 'locked'));
+    u.c.press(0);
+    u.c.frame(TAP_MS, 0);
+    expect(u.c.choose(5)).toBe(false);
+    expect(u.c.choose(0)).toBe(true);
+    expect(u.calls).toEqual(['forceDoor 2,3']);
+  });
+
+  it('a tap at a closed window opens its menu; at a broken one climbs through', () => {
+    const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }));
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    expect(t.calls).toEqual([]);
+    expect(t.c.frame(120, 0)).toMatchObject({
+      mode: 'menu',
+      items: ['Otwórz', 'Rozbij', 'Zabarykaduj'],
+    });
+    const u = setup([], door(0.6, 'broken', { kind: 'window' }));
+    u.c.press(0);
+    u.release();
+    u.c.frame(100, 0);
+    expect(u.calls).toEqual(['climbThrough 2,3']);
+  });
+
+  it('a timed opening action shows the ring at the edge with its title', () => {
+    const t = setup([], door(0.6));
+    t.setState({
+      action: {
+        kind: 'barricade',
+        startTick: 0,
+        endTick: 80,
+        queued: 0,
+        edge: { tx: 2, ty: 3, z: 0, side: 'n' },
+      },
+    });
+    expect(t.c.frame(0, 40)).toMatchObject({ mode: 'search', title: 'Barykadowanie', x: 25 });
+  });
+
   it('prompts at the door with its verb (open / close / locked)', () => {
     expect(setup([], door(0.6)).c.frame(0, 0)).toMatchObject({
       mode: 'prompt',
-      search: false,
+      search: true,
+      hold: 'Więcej',
       label: 'Otwórz',
       x: 25,
       y: 30,
     });
     expect(setup([], door(0.6, 'open')).c.frame(0, 0)).toMatchObject({ label: 'Zamknij' });
-    expect(setup([], door(0.6, 'locked')).c.frame(0, 0)).toMatchObject({ label: 'Zamknięte' });
+    expect(setup([], door(0.6, 'locked')).c.frame(0, 0)).toMatchObject({
+      label: 'Zamknięte',
+      search: true,
+      hold: 'Więcej',
+    });
     // The container prompt keeps its default verb.
     expect(setup([fridge], door(1.2)).c.frame(0, 0)).toMatchObject({ search: true, x: 35 });
   });

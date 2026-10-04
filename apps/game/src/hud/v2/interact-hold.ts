@@ -7,16 +7,16 @@ export const SEARCH_HOLD_MS = 3500;
 /** Released before this = a tap; held past it = start the search. */
 export const TAP_MS = 250;
 
-/** What F acts on: a container (or corpse) id, or a spot (tile) search. */
-export type HoldTarget = { container: number } | { x: number; y: number };
+/** What a search acts on: a container (or corpse) id, or a spot (tile). */
+export type SearchTarget = { container: number } | { x: number; y: number };
+/** What F acts on: a search target, or an opening edge (`edgeKey`; hold = its action menu). */
+export type HoldTarget = SearchTarget | { edge: string };
+
+const holdKey = (t: HoldTarget): string =>
+  'edge' in t ? `e:${t.edge}` : 'container' in t ? `c:${t.container}` : `s:${t.x},${t.y}`;
 
 export const sameTarget = (a: HoldTarget | undefined, b: HoldTarget | undefined): boolean =>
-  a === b ||
-  (a !== undefined &&
-    b !== undefined &&
-    ('container' in a
-      ? 'container' in b && a.container === b.container
-      : !('container' in b) && a.x === b.x && a.y === b.y));
+  a === b || (a !== undefined && b !== undefined && holdKey(a) === holdKey(b));
 
 export type HoldEvent =
   | { type: 'tap'; target: HoldTarget | undefined }

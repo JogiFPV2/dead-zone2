@@ -2,8 +2,25 @@ import type { NearbyContainerView } from '@deadzone/protocol';
 import type { GameState } from '../../state/game-state.js';
 import { actionProgress, nearestContainer } from '../hud-model.js';
 import { containerName } from '../labels.js';
-import { doorCentre, doorVerb, doorWins, type DoorTarget } from '../../world/door-target.js';
-import { InteractHold, SEARCH_HOLD_MS, type HoldEvent, type HoldTarget } from './interact-hold.js';
+import {
+  doorCentre,
+  doorVerb,
+  doorWins,
+  edgeKey,
+  openingMenu,
+  openingPrimary,
+  OPENING_ACTION_TITLES,
+  type DoorTarget,
+  type OpeningCmd,
+  type OpeningOption,
+} from '../../world/door-target.js';
+import {
+  InteractHold,
+  SEARCH_HOLD_MS,
+  type HoldEvent,
+  type HoldTarget,
+  type SearchTarget,
+} from './interact-hold.js';
 import type { PromptVM } from './interact-prompt.js';
 
 /** Height (m) above the floor where the prompt / ring is anchored. */
@@ -21,10 +38,10 @@ export interface InteractHost {
   state(): GameState;
   /** Player position in sim coords (undefined before the first snapshot). */
   player(): { x: number; y: number } | undefined;
-  /** Nearest door in reach (`world/door-target.ts`), undefined when none. */
+  /** Nearest door / gate / window in reach (`world/door-target.ts`), undefined when none. */
   door(): DoorTarget | undefined;
-  /** Sends the sim `toggleDoor` for this door. */
-  toggleDoor(door: DoorTarget): void;
+  /** Sends the sim command `cmd` (`toggleDoor`, `barricade` …) for this edge. */
+  opening(door: DoorTarget, cmd: OpeningCmd): void;
   /** Interact key still down. */
   held(): boolean;
   /** Moved or attacked this frame (cancels before the search starts, spec §6). */
@@ -34,7 +51,7 @@ export interface InteractHost {
   /** Old single-press behaviour: put all / close / cancel. */
   legacy(): void;
   open(container: number): void;
-  search(target: HoldTarget): void;
+  search(target: SearchTarget): void;
   cancel(): void;
   /** Sim point (x, y, z level, height m) -> CSS px in the HUD root, undefined when off screen. */
   project(x: number, y: number, z: number, h: number): { x: number; y: number } | undefined;
@@ -50,6 +67,8 @@ export interface InteractHost {
  */
 export class InteractController {
   private readonly hold = new InteractHold();
+  /** Open opening menu (hold F at a door / gate / window, or a tap without a main use). */
+  private menu: { door: DoorTarget; options: OpeningOption[]; sel: number } | undefined;
 
   constructor(private readonly host: InteractHost) {}
 
@@ -62,10 +81,47 @@ export class InteractController {
     const p = this.host.player();
     if (!p) return undefined;
     const c = this.nearest();
+    const door = this.host.door();
+    if (door && doorWins(door, c !== undefined)) return { edge: edgeKey(door) };
     return c ? { container: c.id } : { x: Math.floor(p.x), y: Math.floor(p.y) };
   }
 
+  /** The opening menu is open (number keys / F pick an entry, not the quick slots). */
+  get menuOpen(): boolean {
+    return this.menu !== undefined;
+  }
+
+  /** Picks menu entry `i` (0-based); false when no menu / no such entry. */
+  choose(i: number): boolean {
+    const m = this.menu;
+    const o = m?.options[i];
+    if (!m || !o) return false;
+    this.menu = undefined;
+    this.host.opening(m.door, o.cmd);
+    return true;
+  }
+
+  /** Highlights menu entry `i` (mouse hover). */
+  highlight(i: number): void {
+    if (this.menu && i >= 0 && i < this.menu.options.length) this.menu.sel = i;
+  }
+
+  closeMenu(): void {
+    this.menu = undefined;
+  }
+
+  private openMenu(door: DoorTarget): boolean {
+    const options = openingMenu(door);
+    if (!options.length) return false;
+    this.menu = { door, options, sel: 0 };
+    return true;
+  }
+
   press(now: number): void {
+    if (this.menu) {
+      this.choose(this.menu.sel);
+      return;
+    }
     const s = this.host.state();
     if (this.host.windowOpen() || s.container || s.action) {
       this.host.legacy();
@@ -78,14 +134,24 @@ export class InteractController {
     if (!ev) return;
     const h = this.host;
     if (ev.type === 'tap') {
-      // A door in reach opens / closes (it wins over a container only when very close).
+      // An opening in reach (it wins over a container only when very close): its main use
+      // (open / close, climb through), else its menu.
       const box = ev.target && 'container' in ev.target ? ev.target.container : undefined;
       const door = h.door();
-      if (door && doorWins(door, box !== undefined)) h.toggleDoor(door);
-      else if (box !== undefined) h.open(box);
+      if (door && doorWins(door, box !== undefined)) {
+        const main = openingPrimary(door);
+        if (main) h.opening(door, main.cmd);
+        else this.openMenu(door);
+      } else if (box !== undefined) h.open(box);
     } else if (ev.type === 'start') {
       const t = ev.target;
-      if ('container' in t) {
+      if ('edge' in t) {
+        // Hold at an opening: its action menu; without one, the spot search as before.
+        const door = h.door();
+        const p = h.player();
+        if (door && edgeKey(door) === t.edge && this.openMenu(door)) return;
+        if (p) h.search({ x: Math.floor(p.x), y: Math.floor(p.y) });
+      } else if ('container' in t) {
         const c = h.state().nearby.find((n) => n.id === t.container);
         if (c && !needsSearch(c)) h.open(c.id);
         else h.search(t);
@@ -104,10 +170,49 @@ export class InteractController {
     }
     const s = h.state();
     const p = h.player();
-    if (!p || h.windowOpen() || s.container) return { mode: 'hidden' };
+    if (!p || h.windowOpen() || s.container) {
+      this.menu = undefined;
+      return { mode: 'hidden' };
+    }
     const key = h.key();
+    if (this.menu) {
+      const door = h.door();
+      if (h.interrupted() || s.action || !door || edgeKey(door) !== edgeKey(this.menu.door)) {
+        this.menu = undefined;
+      } else {
+        const dc = doorCentre(door);
+        const at = h.project(dc.x, dc.y, door.z, DOOR_ANCHOR_HEIGHT);
+        if (!at) return { mode: 'hidden' };
+        return {
+          mode: 'menu',
+          ...at,
+          key,
+          title: doorVerb(door),
+          items: this.menu.options.map((o) => o.label),
+          sel: this.menu.sel,
+        };
+      }
+    }
+    // Timed opening action (barricade, force …): the search ring at the edge.
+    const edgeAction = s.action?.edge ? s.action : undefined;
+    const title = edgeAction ? OPENING_ACTION_TITLES[edgeAction.kind] : undefined;
+    if (edgeAction?.edge && title) {
+      const e = edgeAction.edge;
+      const dc = doorCentre(e);
+      const at = h.project(dc.x, dc.y, e.z, DOOR_ANCHOR_HEIGHT);
+      if (!at) return { mode: 'hidden' };
+      return {
+        mode: 'search',
+        ...at,
+        key,
+        progress: actionProgress(s, tick) ?? edgeAction.progress ?? 0,
+        name: title,
+        title,
+        seconds: ((edgeAction.endTick - edgeAction.startTick) * h.tickMs) / 1000,
+      };
+    }
     const action = s.action?.kind === 'search' ? s.action : undefined;
-    if (action || this.hold.searching) {
+    if (action || (this.hold.searching && !this.menu)) {
       const box =
         action?.container !== undefined
           ? s.nearby.find((n) => n.id === action.container)
@@ -139,7 +244,15 @@ export class InteractController {
       const dc = doorCentre(door);
       const at = h.project(dc.x, dc.y, door.z, DOOR_ANCHOR_HEIGHT);
       if (!at) return { mode: 'hidden' };
-      return { mode: 'prompt', ...at, key, search: false, label: doorVerb(door.state) };
+      const more = openingMenu(door).length > 0;
+      return {
+        mode: 'prompt',
+        ...at,
+        key,
+        search: more,
+        label: doorVerb(door),
+        ...(more ? { hold: 'Więcej' } : {}),
+      };
     }
     if (!c) return { mode: 'hidden' };
     const at = h.project(c.x + 0.5, c.y + 0.5, c.z, ANCHOR_HEIGHT);

@@ -39,6 +39,8 @@ export interface Hud2Parts {
   /** At the HUD rate (10 Hz). */
   frame(f: Hud2Frame): void;
   setPrompt(vm: PromptVM): void;
+  /** Opening menu entry clicked / hovered. */
+  onPromptMenu(fn: (i: number, kind: 'pick' | 'hover') => void): void;
   /** Sim events: item log (`itemPicked` / `itemDropped` / `spotSearched`). */
   events(events: readonly ItemLogEvent[], now: number): void;
   resize(width: number, height: number): void;
@@ -97,6 +99,9 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
       chipKeys.textContent = `${keyboardKey(b, 'zoomOut')} ${keyboardKey(b, 'zoomIn')}`;
     },
     setPrompt: (vm) => prompt.update(vm),
+    onPromptMenu: (fn) => {
+      prompt.onMenu = fn;
+    },
     events: (events, now) => log.push(itemLogChanges(events, opts.playerId), now),
     resize(width, height) {
       opts.root.style.setProperty('--hud2-s', String(hud2Scale(width, height)));
