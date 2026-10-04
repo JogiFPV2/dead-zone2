@@ -1,4 +1,5 @@
 import { humanizeId } from './labels.js';
+import { polishItemName } from '../content/polish-names.js';
 import { itemLabel, skillName } from '../creator/creator-labels.js';
 
 /**
@@ -176,7 +177,8 @@ const ITEMS: Record<string, string> = {
 export const recipeName = (id: string): string => RECIPES[id] ?? humanizeId(id);
 export const stationName = (id: string): string => STATIONS[id] ?? humanizeId(id);
 export const categoryName = (id: string): string => CATEGORIES[id] ?? humanizeId(id);
-export const craftItemName = (id: string): string => ITEMS[id] ?? itemLabel(id);
+export const craftItemName = (id: string): string =>
+  ITEMS[id] ?? polishItemName(id) ?? itemLabel(id);
 export const tagName = (id: string): string => TAGS[id] ?? humanizeId(id);
 /** Ingredient / tool label: item name or tag name. */
 export const partName = (p: { item?: string | undefined; tag?: string | undefined }): string =>

@@ -143,7 +143,7 @@ describe('HUD view models', () => {
     };
     const slots = hotbarItems(withState({ inventory: inv }), content);
     expect(slots).toHaveLength(5);
-    expect(slots[0]).toMatchObject({ icon: 'knife', stackable: false, name: 'Kitchen knife' });
+    expect(slots[0]).toMatchObject({ icon: 'knife', stackable: false, name: 'Nóż kuchenny' });
     expect(slots[1]).toMatchObject({ icon: 'can', stackable: true, count: 3 });
     expect(slots.slice(2)).toEqual([null, null, null]);
   });

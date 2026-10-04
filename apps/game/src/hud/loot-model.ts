@@ -5,7 +5,8 @@ import { itemIcon } from './hud-model.js';
 import { itemImage } from './item-icons.js';
 import { itemTooltip, type InvCommand } from './inventory-model.js';
 import type { TooltipItem } from '@deadzone/ui';
-import { containerName, humanizeId } from './labels.js';
+import { containerName } from './labels.js';
+import { craftItemName } from './crafting-labels.js';
 
 /**
  * Loot screen model (mockup `deadzone-shots/loot.png`, spec `deadzone-loot-spec.md` §1–2):
@@ -64,7 +65,7 @@ export function lootRow(it: ItemView, content: HudContentIndex): LootRowVM {
   const equipped = (it.equipped?.length ?? 0) > 0;
   return {
     id: it.id,
-    name: humanizeId(it.def),
+    name: craftItemName(it.def),
     sub: sub.join(' · '),
     ...(it.freshness ? { freshness: it.freshness } : {}),
     ...(durability !== undefined ? { durability } : {}),
@@ -97,7 +98,7 @@ export function ownItems(s: GameState): ItemView[] {
 export function ownTitle(s: GameState): string {
   const back = s.inventory?.equipped.back;
   const bag = back === undefined ? undefined : ownItems(s).find((i) => i.id === back);
-  return bag ? humanizeId(bag.def) : 'Przy sobie';
+  return bag ? craftItemName(bag.def) : 'Przy sobie';
 }
 
 /** Container tabs: everything in reach plus the opened one; „Podłoga” (ground) always last. */

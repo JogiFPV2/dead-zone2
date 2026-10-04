@@ -81,7 +81,7 @@ describe('inventory model', () => {
   it('builds panels', () => {
     const vm = inventoryVM(s, EMPTY_HUD_CONTENT);
     expect(vm.own[0]?.title).toBe('Przy sobie');
-    expect(vm.own[0]?.rows[0]?.name).toBe('Canned beans ×2');
+    expect(vm.own[0]?.rows[0]?.name).toBe('Fasola w puszce ×2');
     expect(vm.open?.title).toBe('Skrzynka · schowek');
     expect(formatKg(8.44)).toBe('8,4');
   });

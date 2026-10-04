@@ -1,4 +1,5 @@
 import { humanizeId } from '../hud/labels.js';
+import { polishItemName } from '../content/polish-names.js';
 
 /**
  * TEMPORARY Polish labels for the character creator (content only has i18n keys). Unknown ids
@@ -151,7 +152,7 @@ const ITEMS: Record<string, string> = {
 export const professionName = (id: string): string => PROFESSIONS[id] ?? humanizeId(id);
 export const skillName = (id: string): string => SKILLS[id] ?? humanizeId(id);
 export const traitName = (id: string): string => TRAITS[id] ?? humanizeId(id);
-export const itemLabel = (id: string): string => ITEMS[id] ?? humanizeId(id);
+export const itemLabel = (id: string): string => ITEMS[id] ?? polishItemName(id) ?? humanizeId(id);
 
 const pct = (v: number): string => `${v > 1 ? '+' : '−'}${Math.round(Math.abs(v - 1) * 100)}%`;
 const signed = (v: number): string => `${v > 0 ? '+' : '−'}${Math.abs(v)}`;

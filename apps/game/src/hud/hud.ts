@@ -46,7 +46,8 @@ import {
   vmKey,
 } from './hud-model.js';
 import { actionKey } from './key-label.js';
-import { containerName, humanizeId, itemCountLabel, moodleName } from './labels.js';
+import { craftItemName } from './crafting-labels.js';
+import { containerName, itemCountLabel, moodleName } from './labels.js';
 import type { MinimapGeometry } from './minimap-data.js';
 import { dockSide, firearmVM, noiseRingRadius, type FirearmVM } from './firearm-model.js';
 import { createFirearmWidget } from './firearm-widget.js';
@@ -434,7 +435,7 @@ export function createHud(opts: HudOptions): Hud {
         else if (e.type === 'actionInterrupted' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'warning', text: 'Przerwano akcję' });
         } else if (e.type === 'weaponBroke' && e.playerId === opts.playerId) {
-          toasts.push({ kind: 'warning', text: `Zepsuła się broń: ${humanizeId(e.itemId)}` });
+          toasts.push({ kind: 'warning', text: `Zepsuła się broń: ${craftItemName(e.itemId)}` });
         } else if (e.type === 'zombieKilled' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'info', text: 'Zabity zombie' });
         } else {

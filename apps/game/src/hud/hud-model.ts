@@ -15,7 +15,8 @@ import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex, HudItemDef } from './content-index.js';
 import { itemImage } from './item-icons.js';
 import { actionKey, moveKeysLabel } from './key-label.js';
-import { humanizeId, moodleName } from './labels.js';
+import { moodleName } from './labels.js';
+import { craftItemName } from './crafting-labels.js';
 
 /** Pure view-model builders: GameState (sim mirror) → `@deadzone/ui` props. */
 
@@ -179,7 +180,7 @@ export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem |
     const image = itemImage(it.def);
     out.push({
       id: String(it.id),
-      name: humanizeId(it.def),
+      name: craftItemName(it.def),
       icon: itemIcon(def),
       ...(image ? { image } : {}),
       count: it.count,
