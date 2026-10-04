@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { LootTableSchema } from '../schemas/loot-table.js';
-import { MIN_TRAIL_SPACING_M, PlayerMapSettingsSchema } from '../schemas/map-markers-settings.js';
+import {
+  MAX_TRAIL_POINTS,
+  MIN_TRAIL_SPACING_M,
+  PlayerMapSettingsSchema,
+} from '../schemas/map-markers-settings.js';
 import { ModManifestSchema } from '../schemas/mod-manifest.js';
 import { RecipeSchema } from '../schemas/recipe/recipe.js';
 import { SkillSchema } from '../schemas/skill.js';
@@ -69,5 +73,19 @@ describe('mapa gracza: odstęp śladu', () => {
     expect(parse(1).success).toBe(false);
     expect(WorldSettingsSchema.safeParse({ playerMap: { trailSpacingM: 16 } }).success).toBe(true);
     expect(WorldSettingsSchema.safeParse({ playerMap: { trailSpacingM: 10 } }).success).toBe(false);
+  });
+});
+
+describe('mapa gracza: długość śladu', () => {
+  it(`trailMaxPoints: najwyżej ${MAX_TRAIL_POINTS} (Serwer odrzuca dłuższy ślad)`, () => {
+    const parse = (trailMaxPoints: number) => PlayerMapSettingsSchema.safeParse({ trailMaxPoints });
+    expect(PlayerMapSettingsSchema.parse(undefined).trailMaxPoints).toBe(20_000);
+    expect(parse(20_000).success).toBe(true);
+    expect(parse(100).success).toBe(true);
+    expect(parse(20_001).success).toBe(false);
+    expect(parse(100_000).success).toBe(false);
+    expect(WorldSettingsSchema.safeParse({ playerMap: { trailMaxPoints: 20_001 } }).success).toBe(
+      false,
+    );
   });
 });

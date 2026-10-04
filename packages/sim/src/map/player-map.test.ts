@@ -1,6 +1,7 @@
 import {
   CHUNK_SIZE,
   MAP_MARKER_ICONS,
+  PLAYER_MAP_TRAIL_MAX_POINTS,
   PLAYER_MAP_TRAIL_SPACING_M,
   SAVE_MARKER_COLORS,
   simMapFromWorldSource,
@@ -8,6 +9,7 @@ import {
 } from '@deadzone/protocol';
 import {
   MapMarkersSettingsSchema,
+  MAX_TRAIL_POINTS,
   MIN_TRAIL_SPACING_M,
   PlayerMapSettingsSchema,
 } from '@deadzone/content';
@@ -57,6 +59,14 @@ describe('player map: shared constants', () => {
     expect(MIN_TRAIL_SPACING_M).toBe(PLAYER_MAP_TRAIL_SPACING_M);
     expect(PlayerMapSettingsSchema.parse(undefined).trailSpacingM).toBe(PLAYER_MAP_TRAIL_SPACING_M);
     expect(DEFAULT_PLAYER_MAP.trailSpacingM).toBe(PLAYER_MAP_TRAIL_SPACING_M);
+  });
+
+  it('trail length: content maximum and default = the server constant (20 000 points)', () => {
+    expect(MAX_TRAIL_POINTS).toBe(PLAYER_MAP_TRAIL_MAX_POINTS);
+    expect(PlayerMapSettingsSchema.parse(undefined).trailMaxPoints).toBe(
+      PLAYER_MAP_TRAIL_MAX_POINTS,
+    );
+    expect(DEFAULT_PLAYER_MAP.trailMaxPoints).toBe(PLAYER_MAP_TRAIL_MAX_POINTS);
   });
 });
 

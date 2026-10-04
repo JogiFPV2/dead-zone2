@@ -42,6 +42,12 @@ export const MapMarkersSettingsSchema = z
 export const MIN_TRAIL_SPACING_M = 16;
 
 /**
+ * Najwięcej punktów śladu. Serwer odrzuca dłuższy ślad (`PLAYER_MAP_TRAIL_MAX_POINTS` w
+ * `@deadzone/protocol`; równość sprawdza test w sim).
+ */
+export const MAX_TRAIL_POINTS = 20_000;
+
+/**
  * Mapa gracza: odkrywanie chunków (co `discoverEverySec`, w promieniu wzroku gracza — noc go
  * skraca) i ślad drogi (punkt co `trailSpacingM`, najwyżej `trailMaxPoints`, najstarsze wypadają).
  */
@@ -49,7 +55,7 @@ export const PlayerMapSettingsSchema = z
   .strictObject({
     discoverEverySec: z.number().min(0.05).max(10).default(1),
     trailSpacingM: z.number().min(MIN_TRAIL_SPACING_M).max(256).default(MIN_TRAIL_SPACING_M),
-    trailMaxPoints: z.number().int().min(100).max(100_000).default(20_000),
+    trailMaxPoints: z.number().int().min(100).max(MAX_TRAIL_POINTS).default(MAX_TRAIL_POINTS),
   })
   .prefault({});
 
