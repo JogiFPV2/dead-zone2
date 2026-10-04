@@ -65,6 +65,7 @@ import {
   OpeningFeedback,
   type DoorTarget,
   type OpeningCmd,
+  doorCentre,
 } from './world/door-target.js';
 import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
@@ -98,6 +99,11 @@ import {
   type HudContentIndex,
 } from './hud/content-index.js';
 import { createInventoryV3 } from './hud/inv3/inventory-v3.js';
+import { VehicleController } from './vehicles/vehicle-controller.js';
+import { createVehicleHud } from './vehicles/vehicle-hud.js';
+import { VehicleView } from './vehicles/vehicle-view.js';
+import { FUEL_PUMP, withPumps } from './vehicles/dev-pumps.js';
+import type { SnapshotVehicle } from '@deadzone/protocol';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
 import { createSleepController } from './hud/sleep-controller.js';
@@ -163,7 +169,7 @@ const stressWorld = boot.stress
       (m) => new m.StressWorldSource(SIM_SEED, boot.stressLatencyMs, boot.stressChunks),
     )
   : undefined;
-const world: LoadedMap = stressWorld
+const loadedWorld: LoadedMap = stressWorld
   ? {
       source: { tilePalette: [null], getChunk: () => undefined },
       range: { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 },
@@ -172,6 +178,11 @@ const world: LoadedMap = stressWorld
   : boot.map !== 'test'
     ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
     : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
+// Dev `?pump=x,y`: fuel pumps on the map (vehicle UI testing; no map has one yet).
+const world: LoadedMap =
+  import.meta.env.DEV && boot.pumps.length
+    ? { ...loadedWorld, source: withPumps(loadedWorld.source, boot.pumps) }
+    : loadedWorld;
 /** Where the player starts (streaming warm-up centre before the first snapshot). */
 const startPoint: { x: number; y: number } = stressWorld
   ? import.meta.env.DEV && boot.spawnAt
@@ -325,6 +336,8 @@ if (boot.sim === 'worker') {
     save: session?.save?.data,
     onWorkerError: (message) => loadFailed(message),
     dev: import.meta.env.DEV,
+    // Dev `?car=x,y,…`: parked cars (no map has cars yet).
+    ...(import.meta.env.DEV && boot.cars.length ? { vehicles: boot.cars } : {}),
   });
   worker.onError((message) => loadFailed(message));
   connectSimState(gameState, worker);
@@ -463,6 +476,19 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 worldRoot.add(crowdView.mesh);
 const player = new PlayerView();
 worldRoot.add(player.root);
+// Cars (PLACEHOLDER boxes until models): vehicle snapshot block, interpolated per frame.
+const vehicleView = new VehicleView((variant) => {
+  const types = hudContent.vehicleTypes;
+  return types ? [...types.values()][variant] : undefined;
+}, TICK_MS);
+worldRoot.add(vehicleView.root);
+/** Interpolated car poses of this frame (vehicle UI targets and anchors). */
+let carPoses: SnapshotVehicle[] = [];
+let carList: SnapshotVehicle[] = [];
+simWorker?.onVehicles((list) => {
+  carList = list;
+  vehicleView.push(list, performance.now());
+});
 // Dev `?arrow=1`: facing arrow (body +X) on the ground and at chest height (pose previews).
 if (import.meta.env.DEV && new URLSearchParams(location.search).get('arrow') === '1') {
   for (const [y, color] of [
@@ -568,7 +594,11 @@ const inventory = createInventoryV3({
       view: { ...s.view, inventoryView: p.view, inventorySort: p.sort, inventoryGroup: p.group },
     })),
   position: () => snapshots.sample(performance.now(), TICK_MS),
-  onSwitch: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
+  // Trunk / glovebox tabs: searched once first (vehicle UI), others open directly.
+  onSwitch: (id) => {
+    if (vehicles.isVehicleContainer(id)) vehicles.openContainer(id);
+    else sim.send(stamper.stamp({ type: 'openContainer', container: id }));
+  },
   // Combine the hovered item: the crouch key (`C`) while the window is open (mockup combine.png).
   isCombineKey: (code) => settings.get().input.bindings.crouch.includes(code),
   combineKey: () => actionKey(settings.get().input.bindings, 'crouch'),
@@ -610,7 +640,10 @@ const comingSoon = (id: QuickAccessId) => {
   const def = QUICK_ACCESS.find((q) => q.id === id);
   if (def && !QUICK_ACCESS_READY.has(id)) hud.toast(`${def.label} — wkrótce`);
 };
-input.on('character', () => comingSoon('character'));
+// H: horn in the driver seat (vehicle UI [ZAŁ.]), else the character screen (soon).
+input.on('character', () => {
+  if (!vehicles.pressCharacter()) comingSoon('character');
+});
 input.on('skills', () => comingSoon('skills'));
 input.on('journal', () => comingSoon('journal'));
 // Big map (M), HUD v2 spec §11. The world keeps running while it is open (no pause).
@@ -676,6 +709,12 @@ const escapeWindows: readonly Closable[] = [
   workshop,
   {
     get open() {
+      return vehicles.open;
+    },
+    close: () => vehicles.close(),
+  },
+  {
+    get open() {
       return loot.open;
     },
     close() {
@@ -725,6 +764,8 @@ input.on('pause', () => {
 });
 input.on('reload', () => {
   if (inventory.open) inventory.takeAll();
+  // In the driver seat R = engine (hold: take the key); at a pump R = „Do pełna”.
+  else if (vehicles.pressReload(performance.now())) return;
   else if (hud.firearm() && !gameState.get().death) sim.send(stamper.stamp({ type: 'reload' }));
 });
 const groundPiles = new GroundPiles();
@@ -879,6 +920,21 @@ function interact(): void {
 }
 // F: tap opens, hold 3.5 s searches (HUD v2 §6); in windows / during actions the old press.
 const projected = new Vector3();
+/** Sim point (x, y, level z, height h m) → CSS px in the HUD root; undefined off screen. */
+const interactProject = (
+  x: number,
+  y: number,
+  z: number,
+  h: number,
+): { x: number; y: number } | undefined => {
+  const w = simToWorld(x, y, z);
+  projected.set(w.x, w.y + h, w.z).project(worldCamera);
+  if (projected.z > 1 || Math.abs(projected.x) > 1.1 || Math.abs(projected.y) > 1.1) return;
+  return {
+    x: ((projected.x + 1) / 2) * container.clientWidth,
+    y: ((1 - projected.y) / 2) * container.clientHeight,
+  };
+};
 const interaction = new InteractController({
   state: () => gameState.get(),
   player: () => snapshots.sample(performance.now(), TICK_MS),
@@ -897,26 +953,75 @@ const interaction = new InteractController({
   open: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
   search: (t) => sim.send(stamper.stamp({ type: 'search', ...t })),
   cancel: () => sim.send(stamper.stamp({ type: 'cancelAction' })),
-  project(x, y, z, h) {
-    const w = simToWorld(x, y, z);
-    projected.set(w.x, w.y + h, w.z).project(worldCamera);
-    if (projected.z > 1 || Math.abs(projected.x) > 1.1 || Math.abs(projected.y) > 1.1) return;
-    return {
-      x: ((projected.x + 1) / 2) * container.clientWidth,
-      y: ((1 - projected.y) / 2) * container.clientHeight,
-    };
-  },
+  project: (x, y, z, h) => interactProject(x, y, z, h),
   key: () => actionKey(settings.get().input.bindings, 'interact'),
   tickMs: TICK_MS,
 });
-input.on('interact', () => interaction.press(performance.now()));
+// Vehicle UI first (car target, in a car, pump, its menu / windows), then doors and containers.
+const vehicleHud = createVehicleHud();
+container.append(vehicleHud.el);
+/** Nearest door / non-vehicle storage the F key would use instead of a car (sim m). */
+function otherTargetDist(): number {
+  const p = snapshots.sample(performance.now(), TICK_MS);
+  if (!p) return Infinity;
+  let d = Infinity;
+  const door = doorInReach(p.x, p.y, p.z);
+  if (door) {
+    const c = doorCentre(door);
+    d = Math.hypot(c.x - p.x, c.y - p.y);
+  }
+  for (const c of gameState.get().nearby) {
+    if (c.vehicle !== undefined || c.kind === 'ground') continue;
+    d = Math.min(d, Math.hypot(c.x + 0.5 - p.x, c.y + 0.5 - p.y));
+  }
+  return d;
+}
+const pumpTiles = mapObjectList
+  .filter((o) => o.contentId === FUEL_PUMP)
+  .map((o) => ({ x: o.tx, y: o.ty, z: o.z }));
+const vehicles = new VehicleController({
+  state: () => gameState.get(),
+  content: () => hudContent,
+  player: () => snapshots.sample(performance.now(), TICK_MS),
+  cars: () => carPoses,
+  pumps: () => pumpTiles,
+  send: (cmd) => sendBody(cmd),
+  project: (x, y, z, h) => interactProject(x, y, z, h),
+  isDown: (a) => input.isDown(a),
+  keyOf: (a) => actionKey(settings.get().input.bindings, a),
+  windowOpen: () =>
+    inventory.open || loot.open || workshop.open || bigMap.open || !!gameState.get().death,
+  otherTargetDist,
+  showInventory: () => {
+    if (!inventory.open) toggleInventory();
+  },
+  setTarget: (id) => vehicleView.setTarget(id),
+  setSeated: (seated) => {
+    container.dataset.vehicle = String(seated);
+  },
+  playerId: PLAYER_ID,
+  tickMs: TICK_MS,
+});
+vehicleHud.onAction = (kind, id) => vehicles.action(kind, id);
+window.addEventListener(
+  'keydown',
+  (e) => {
+    if (pause.simPaused || !vehicles.key(e)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  },
+  true,
+);
+input.on('interact', () => {
+  if (!vehicles.pressInteract(performance.now())) interaction.press(performance.now());
+});
 hud.onPromptMenu((i, kind) => {
   if (kind === 'pick') interaction.choose(i);
   else interaction.highlight(i);
 });
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
-  if (inventory.open || gameState.get().death) return;
+  if (inventory.open || gameState.get().death || vehicles.seated) return;
   lastSwingMs = performance.now();
   const gun = hud.firearm();
   if (gun?.state === 'empty') hud.dryFire();
@@ -925,11 +1030,14 @@ input.on('primaryAction', () => {
 });
 // Vault (context key): over a standing fence / through an open or broken window in reach.
 input.on('vault', () => {
-  if (inventory.open || gameState.get().death) return;
+  // In a car Space is the handbrake (`drive`).
+  if (inventory.open || gameState.get().death || vehicles.seated) return;
   sim.send(stamper.stamp({ type: 'vault' }));
 });
 input.on('secondaryAction', () => {
-  if (inventory.open || gameState.get().death) return;
+  if (inventory.open || gameState.get().death || vehicles.seated) return;
+  // RMB at a car: its menu (vehicle UI [ZAŁ.]) instead of a shove.
+  if (vehicles.pressSecondary()) return;
   // Firearm in hand: RMB (held) aims with the reticle instead of shoving.
   if (hud.firearm()) return;
   lastSwingMs = performance.now();
@@ -1041,6 +1149,7 @@ gameState.subscribe((_next, _prev, action) => {
   }
   if (action.type === 'events') {
     sleep.events(action.events);
+    vehicles.events(action.events);
     hud.events(action.events);
     const p = snapshots.sample(performance.now(), TICK_MS);
     if (p) for (const c of eventCues(action.events, p.x, p.y)) audio.play('sfx', c.id, c.volume);
@@ -1188,7 +1297,8 @@ renderer.setAnimationLoop((time) => {
     stylePass.render(scene, camera);
     return;
   }
-  playerInput.update(time, rig.targetYaw, worldCamera);
+  // In a car WASD drive (`drive`, vehicle controller), no `move` / `aim`.
+  if (!vehicles.seated) playerInput.update(time, rig.targetYaw, worldCamera);
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {
@@ -1198,6 +1308,8 @@ renderer.setAnimationLoop((time) => {
     player.aiming = devAim || isAiming(performance.now());
     player.setWeapons(hand, back, weaponModels);
     player.apply(state, performance.now(), phys.get(phys.localId), simTick);
+    // Seated: the body is inside the (placeholder) car.
+    player.root.visible = gameState.get().seat === undefined;
     const goal = simToWorld(state.x, state.y, state.z);
     if (!cameraSnapped) rig.target.set(goal.x, goal.y, goal.z);
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
@@ -1246,6 +1358,9 @@ renderer.setAnimationLoop((time) => {
   }
   lighting.update(camera, rig.target.x, rig.target.z);
   const gs = gameState.get();
+  const nowMs = performance.now();
+  carPoses = carList.map((c) => vehicleView.poseOf(c.stableId, nowMs) ?? c);
+  vehicleView.update(nowMs, dt);
   groundPiles.update(gs.groundPiles, gs.nearby, time);
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
@@ -1272,7 +1387,16 @@ renderer.setAnimationLoop((time) => {
       aiming: isGunAiming(),
       cameraZoom: rig.zoomTarget,
     });
-    hud.setPrompt(interaction.frame(performance.now(), simTick));
+    const basePrompt = interaction.frame(performance.now(), simTick);
+    const veh = vehicles.frame(performance.now(), simTick);
+    vehicleHud.update(veh.hud);
+    if (veh.hud.repair) container.dataset.modal = 'repair';
+    else if (container.dataset.modal === 'repair') container.dataset.modal = '';
+    // Seated: only the vehicle prompts (exit / hotwire ring), not the glovebox „Otwórz”; none
+    // under the repair window.
+    hud.setPrompt(
+      veh.prompt ?? (vehicles.seated || veh.hud.repair ? { mode: 'hidden' } : basePrompt),
+    );
     bigMap.frame(performance.now(), { x: state.x, y: state.y, heading: state.facing });
     noiseRing.setPixelScale(noisePixelScale());
     noiseRing.update(

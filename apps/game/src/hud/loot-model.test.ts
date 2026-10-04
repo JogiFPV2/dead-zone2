@@ -7,6 +7,7 @@ import {
   containersLabel,
   lootRow,
   lootTabs,
+  reachableTabs,
   ownItems,
   putCommand,
   putSelected,
@@ -75,6 +76,35 @@ describe('loot model', () => {
     expect(tabs.map((t) => t.label)).toEqual(['Lodówka', 'Szafka kuchenna', 'Podłoga']);
     expect(tabs[0]).toMatchObject({ active: true, count: 4 });
     expect(tabs[1]!.count).toBeUndefined();
+  });
+
+  it('tabs: the trunk in reach adds a dashed glovebox tab (vehicle UI)', () => {
+    const car: GameState = {
+      ...s,
+      nearby: [{ id: 30, kind: 'vehicle-trunk', vehicle: 7, x: 4, y: 4, z: 0, searched: true }],
+      vehicles: [
+        {
+          vehicleId: 7,
+          type: 'base:sedan',
+          locked: false,
+          keyInIgnition: false,
+          hasKey: false,
+          hotwired: false,
+          engineOn: false,
+          fuel: 10,
+          fuelMax: 50,
+          trunk: 30,
+          glovebox: 31,
+        },
+      ],
+    };
+    delete car.container;
+    const tabs = lootTabs(car);
+    expect(tabs.map((t) => [t.label, t.off])).toEqual([
+      ['Bagażnik', undefined],
+      ['Schowek', 'tylko z przedniego fotela'],
+    ]);
+    expect(reachableTabs(car).map((t) => t.id)).toEqual([30]);
   });
 
   it('LPM takes one piece, Ctrl+LPM the stack', () => {

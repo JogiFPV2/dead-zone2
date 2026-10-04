@@ -29,6 +29,8 @@ const CONTAINERS: Record<string, string> = {
   'base:kitchen-cabinet': 'Szafka kuchenna',
   'base:kitchen-counter': 'Blat kuchenny',
   'base:fridge': 'Lodówka',
+  'base:car-trunk': 'Bagażnik',
+  'base:car-glovebox': 'Schowek',
   'base:freezer': 'Zamrażarka',
   'base:wardrobe': 'Szafa',
   'base:dresser': 'Komoda',
@@ -54,11 +56,15 @@ export const moodleName = (id: string): string => MOODLES[id] ?? humanizeId(id);
 export const containerName = (type: string | undefined, kind: string): string =>
   type
     ? (CONTAINERS[type] ?? humanizeId(type))
-    : kind === 'ground'
-      ? 'Ziemia'
-      : kind === 'corpse'
-        ? 'Zwłoki'
-        : 'Schowek';
+    : kind === 'vehicle-trunk'
+      ? 'Bagażnik'
+      : kind === 'vehicle-glovebox'
+        ? 'Schowek'
+        : kind === 'ground'
+          ? 'Ziemia'
+          : kind === 'corpse'
+            ? 'Zwłoki'
+            : 'Schowek';
 
 /** `0 → pusto`, `1 przedmiot`, `2–4 przedmioty`, `5+ przedmiotów` (Polish plural rules). */
 export function itemCountLabel(n: number): string {

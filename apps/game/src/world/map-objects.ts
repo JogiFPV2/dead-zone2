@@ -38,6 +38,8 @@ const SIZES: Record<string, [number, number, number]> = {
   'base:tool-chest': [0.7, 0.8, 0.45],
   'base:locker': [0.5, 1.8, 0.5],
   'base:gun-locker': [0.8, 1.8, 0.5],
+  // PLACEHOLDER until a pump model (vehicle UI mockup sprite only).
+  'base:fuel-pump': [0.6, 1.7, 0.45],
 };
 const DEFAULT_SIZE: [number, number, number] = [0.8, 0.8, 0.8];
 

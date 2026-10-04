@@ -40,6 +40,11 @@ export interface LootTabVM {
   /** Item stacks (known only for the opened container). */
   count?: number;
   active: boolean;
+  /**
+   * Vehicle container out of reach (dashed tab): why (`tylko z przedniego fotela`). Shown next
+   * to its reachable sibling (trunk ↔ glovebox of the same car), vehicle UI [ZAŁ.].
+   */
+  off?: string;
 }
 
 const FRESHNESS_LABEL: Record<Freshness, string> = {
@@ -121,9 +126,33 @@ export function lootTabs(s: GameState): LootTabVM[] {
   };
   if (open) add(open.id, open.kind, open.type);
   for (const c of s.nearby) add(c.id, c.kind, c.type);
+  for (const v of s.vehicles) {
+    const trunk = v.trunk !== undefined && seen.has(v.trunk);
+    const glove = v.glovebox !== undefined && seen.has(v.glovebox);
+    if (trunk === glove) continue;
+    if (!glove && v.glovebox !== undefined)
+      tabs.push({
+        id: v.glovebox,
+        kind: 'vehicle-glovebox',
+        label: 'Schowek',
+        active: false,
+        off: 'tylko z przedniego fotela',
+      });
+    if (!trunk && v.trunk !== undefined)
+      tabs.push({
+        id: v.trunk,
+        kind: 'vehicle-trunk',
+        label: 'Bagażnik',
+        active: false,
+        off: s.seat ? 'wysiądź i podejdź do tyłu' : v.locked ? 'zamknięte' : 'podejdź do tyłu',
+      });
+  }
   const rank = (t: LootTabVM): number => (t.kind === 'ground' ? 1 : 0);
   return tabs.sort((a, b) => rank(a) - rank(b));
 }
+
+/** Tabs that can be opened (without the dashed vehicle tabs out of reach). */
+export const reachableTabs = (s: GameState): LootTabVM[] => lootTabs(s).filter((t) => !t.off);
 
 const inOpen = (s: GameState, id: number): ItemView | undefined =>
   s.container?.items.find((i) => i.id === id);

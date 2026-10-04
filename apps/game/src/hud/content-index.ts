@@ -34,6 +34,8 @@ export interface HudItemDef {
   sleepSurface?: 'bed' | 'sofa';
   /** A TV (`placeable.power` + the leisure TV tag): `watchTv` nearby. */
   tv?: boolean;
+  /** Content tags (`base:tool-wrench`, `base:tool-hose` …): vehicle tools and parts. */
+  tags?: readonly string[];
 }
 
 export interface HudRangedDef {
@@ -67,6 +69,66 @@ export interface HudRecipeDef {
   repair?: boolean;
 }
 
+/** Vehicle type (`vehicle-types/*.json`): what the vehicle UI shows. */
+export interface HudVehicleType {
+  id: string;
+  length: number;
+  width: number;
+  fuelMax: number;
+  /** Seats in content order (0 = driver): door side and offset from the car centre (m, nose +x). */
+  seats: readonly { id: string; doorSide: 'left' | 'right'; x: number; y: number }[];
+  trunkCapacity: number;
+  gloveboxCapacity: number;
+}
+
+/** One repair group of `worldSettings.vehicles.repair`. */
+export interface HudRepairGroup {
+  sec: number;
+  tools: readonly string[];
+  parts: readonly { item: string; count: number }[];
+  minSkill: number;
+  hpBase: number;
+  hpPerLevel: number;
+  xp: number;
+}
+
+/** `worldSettings.vehicles` (the parts the vehicle UI needs). */
+export interface HudVehicleSettings {
+  enterSec: number;
+  exitSec: number;
+  keyItem: string;
+  trunkReachTiles: number;
+  hotwire: {
+    sec: number;
+    electricalSkill: string;
+    mechanicsSkill: string;
+    minElectrical: number;
+    minMechanics: number;
+    baseChance: number;
+    chancePerElectrical: number;
+    chancePerMechanics: number;
+    maxChance: number;
+  };
+  fuel: {
+    canItem: string;
+    hoseTag: string;
+    pumpItem: string;
+    refuelLps: number;
+    siphonLps: number;
+    pumpPoweredLps: number;
+    pumpManualLps: number;
+    reachTiles: number;
+  };
+  repair: {
+    skill: string;
+    reachTiles: number;
+    engine: HudRepairGroup;
+    tire: HudRepairGroup;
+    window: HudRepairGroup;
+    body: HudRepairGroup;
+  };
+}
+
 export interface HudContentIndex {
   moodles: ReadonlyMap<string, HudMoodleDef>;
   items: ReadonlyMap<string, HudItemDef>;
@@ -76,6 +138,8 @@ export interface HudContentIndex {
   tagIcons?: ReadonlyMap<string, string>;
   /** `worldSettings.survival.sleep` / `leisure` (sleep screen, leisure buttons). */
   sleep?: HudSleepSettings;
+  vehicleTypes?: ReadonlyMap<string, HudVehicleType>;
+  vehicles?: HudVehicleSettings;
 }
 
 export const EMPTY_HUD_CONTENT: HudContentIndex = { moodles: new Map(), items: new Map() };
@@ -148,6 +212,8 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
   const recipes = new Map<string, HudRecipeDef>();
   const tagIcons = new Map<string, string>();
   let sleep: HudSleepSettings | undefined;
+  const vehicleTypes = new Map<string, HudVehicleType>();
+  let vehicles: HudVehicleSettings | undefined;
   for (const f of files) {
     if (!('json' in f)) continue;
     if (f.path.startsWith('stations/')) {
@@ -180,6 +246,12 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
       }
     } else if (f.path.startsWith('world-settings/')) {
       sleep = readSleepSettings(f.json) ?? sleep;
+      vehicles = readVehicleSettings(f.json) ?? vehicles;
+    } else if (f.path.startsWith('vehicle-types/')) {
+      for (const v of list(f.json)) {
+        const t = readVehicleType(v);
+        if (t) vehicleTypes.set(t.id, t);
+      }
     } else if (f.path.startsWith('moodles/')) {
       for (const m of list(f.json)) {
         if (typeof m.id !== 'string') continue;
@@ -218,6 +290,7 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(magazine ? { magazine } : {}),
           ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),
           ...(tv ? { tv: true } : {}),
+          ...(tags.length ? { tags: tags.filter((t): t is string => typeof t === 'string') } : {}),
           ...(isObj(i.drink) && typeof i.drink.uses === 'number' ? { fillMax: i.drink.uses } : {}),
           ...(isObj(i.bag) && typeof i.bag.weightReductionPct === 'number'
             ? { bagReductionPct: i.bag.weightReductionPct }
@@ -226,5 +299,99 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
       }
     }
   }
-  return { moodles, items, stations, recipes, tagIcons, ...(sleep ? { sleep } : {}) };
+  return {
+    moodles,
+    items,
+    stations,
+    recipes,
+    tagIcons,
+    vehicleTypes,
+    ...(sleep ? { sleep } : {}),
+    ...(vehicles ? { vehicles } : {}),
+  };
+}
+
+const strs = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+
+function readVehicleType(v: Obj): HudVehicleType | undefined {
+  if (typeof v.id !== 'string') return undefined;
+  const seats = list(v.seats).map((s, i) => {
+    const off = isObj(s.offset) ? s.offset : {};
+    return {
+      id: typeof s.id === 'string' ? s.id : `seat-${i}`,
+      doorSide: s.doorSide === 'right' ? ('right' as const) : ('left' as const),
+      x: num(off.x),
+      y: num(off.y),
+    };
+  });
+  return {
+    id: v.id,
+    length: num(v.length, 4.5),
+    width: num(v.width, 1.8),
+    fuelMax: num(v.fuelMax, 50),
+    seats,
+    trunkCapacity: num(v.trunkCapacity),
+    gloveboxCapacity: num(v.gloveboxCapacity),
+  };
+}
+
+function readRepairGroup(g: unknown): HudRepairGroup {
+  const o = isObj(g) ? g : {};
+  return {
+    sec: num(o.sec),
+    tools: strs(o.tools),
+    parts: list(o.parts)
+      .filter((p) => typeof p.item === 'string')
+      .map((p) => ({ item: p.item as string, count: num(p.count, 1) })),
+    minSkill: num(o.minSkill),
+    hpBase: num(o.hpBase),
+    hpPerLevel: num(o.hpPerLevel),
+    xp: num(o.xp),
+  };
+}
+
+/** `world-settings/vehicles.json` → the vehicle UI settings (undefined: not this file). */
+export function readVehicleSettings(json: unknown): HudVehicleSettings | undefined {
+  const root = isObj(json) && isObj(json.vehicles) ? json.vehicles : undefined;
+  if (!root) return undefined;
+  const h = isObj(root.hotwire) ? root.hotwire : {};
+  const f = isObj(root.fuel) ? root.fuel : {};
+  const r = isObj(root.repair) ? root.repair : {};
+  const str = (v: unknown, d: string): string => (typeof v === 'string' ? v : d);
+  return {
+    enterSec: num(root.enterSec, 1.5),
+    exitSec: num(root.exitSec, 1),
+    keyItem: str(root.keyItem, 'base:car-key'),
+    trunkReachTiles: num(root.trunkReachTiles, 1.5),
+    hotwire: {
+      sec: num(h.sec, 6),
+      electricalSkill: str(h.electricalSkill, 'base:electrical'),
+      mechanicsSkill: str(h.mechanicsSkill, 'base:mechanics'),
+      minElectrical: num(h.minElectrical),
+      minMechanics: num(h.minMechanics),
+      baseChance: num(h.baseChance),
+      chancePerElectrical: num(h.chancePerElectrical),
+      chancePerMechanics: num(h.chancePerMechanics),
+      maxChance: num(h.maxChance, 1),
+    },
+    fuel: {
+      canItem: str(f.canItem, 'base:gas-can'),
+      hoseTag: str(f.hoseTag, 'base:tool-hose'),
+      pumpItem: str(f.pumpItem, 'base:fuel-pump'),
+      refuelLps: num(f.refuelLps, 1),
+      siphonLps: num(f.siphonLps, 0.25),
+      pumpPoweredLps: num(f.pumpPoweredLps, 1.5),
+      pumpManualLps: num(f.pumpManualLps, 0.3),
+      reachTiles: num(f.reachTiles, 1.5),
+    },
+    repair: {
+      skill: str(r.skill, 'base:mechanics'),
+      reachTiles: num(r.reachTiles, 1.5),
+      engine: readRepairGroup(r.engine),
+      tire: readRepairGroup(r.tire),
+      window: readRepairGroup(r.window),
+      body: readRepairGroup(r.body),
+    },
+  };
 }

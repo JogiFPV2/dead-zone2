@@ -1,5 +1,11 @@
 import { expect, it } from 'vitest';
-import { parseBootOptions, parseGiveParam, parseStatParam } from './boot-options.js';
+import {
+  parseBootOptions,
+  parseCarParam,
+  parseGiveParam,
+  parseStatParam,
+  parseTileListParam,
+} from './boot-options.js';
 
 it('uses the worker by default and the mock only for ?crowd', () => {
   expect(parseBootOptions('')).toEqual({
@@ -10,6 +16,8 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     zones: false,
     timescale: 0,
     give: [],
+    cars: [],
+    pumps: [],
     stats: [],
     zombies: true,
     town: true,
@@ -66,4 +74,21 @@ it('parses ?stat= debug stats', () => {
     { stat: 'stress', value: 40 },
   ]);
   expect(parseBootOptions('').stats).toEqual([]);
+});
+
+it('parses dev cars (`?car=`) and pumps (`?pump=`)', () => {
+  expect(parseCarParam('12.5,20,90,18,locked+nokey;30,4')).toEqual([
+    { x: 12.5, y: 20, heading: Math.PI / 2, fuel: 18, locked: true, key: 'none' },
+    { x: 30, y: 4 },
+  ]);
+  expect(parseCarParam('1,2,0,5,glovebox')[0]).toMatchObject({ key: 'glovebox', fuel: 5 });
+  expect(parseCarParam('x,2;')).toEqual([]);
+  expect(parseTileListParam('10,12;bad;-3,4')).toEqual([
+    { x: 10, y: 12 },
+    { x: -3, y: 4 },
+  ]);
+  expect(parseBootOptions('?car=5,6&pump=7,8')).toMatchObject({
+    cars: [{ x: 5, y: 6 }],
+    pumps: [{ x: 7, y: 8 }],
+  });
 });

@@ -18,6 +18,7 @@ import type {
   SimViewPatch,
   SleepView,
   ViewStat,
+  VehicleStateView,
   WoundView,
 } from '@deadzone/protocol';
 
@@ -57,6 +58,10 @@ export interface GameState {
   inventory?: InventoryState;
   /** Opened container (loot panel); absent = closed. */
   container?: ContainerView;
+  /** Cars within `VEHICLE_VIEW_TILES` plus the one the player sits in (`view.vehicles`, full). */
+  vehicles: readonly VehicleStateView[];
+  /** The local player's seat (`player.vehicle`); absent = on foot. */
+  seat?: { vehicleId: number; seat: number };
   /** Containers in reach (full list from the last patch that had it). */
   nearby: readonly NearbyContainerView[];
   /** Ground piles within marker range (view.groundPiles). */
@@ -97,6 +102,7 @@ export const INITIAL_GAME_STATE: GameState = {
   tick: 0,
   player: { alive: true, sleeping: false, stats: {}, moodles: {}, wounds: [] },
   nearby: [],
+  vehicles: [],
   groundPiles: [],
   storages: [],
   skills: [],
@@ -175,6 +181,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.clock ? { clock: view.clock } : {}),
     ...(view.inventory ? { inventory: applyInventory(s.inventory, view.inventory) } : {}),
     ...(view.nearby ? { nearby: view.nearby } : {}),
+    ...(view.vehicles ? { vehicles: view.vehicles } : {}),
     ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
@@ -184,6 +191,14 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.characterProfile ? { characterProfile: view.characterProfile } : {}),
     player,
   };
+  const seat = p?.vehicle;
+  if (seat !== undefined) {
+    if (seat) next = { ...next, seat: { vehicleId: seat.vehicleId, seat: seat.seat } };
+    else if (next.seat) {
+      next = { ...next };
+      delete next.seat;
+    }
+  }
   next = patchNullable(next, 'container', view.container);
   next = patchNullable(next, 'action', view.action);
   return next;

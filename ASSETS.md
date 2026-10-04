@@ -62,6 +62,20 @@ Zastępują wcześniejsze venison, venison-steak, small-game-meat i deer-hide (p
 | wooden-crate, large-wooden-crate                                                                                                                                                                                                                          | Crate, poly.pizza/m/3OEFd1AWfa                     | Quaternius | CC0-1.0  |
 | rabbit-carcass, deer-hide, glass-shards, electronics-scrap, wire, thread, rag, sheet, garbage-bag, sheet-rope, sterilized-rag, splint, lure-remote, brick-stove; znaczki w rogu (noise-maker, lure-electronic, barricade-metal, door-plate, lure-running) | modele i glify własne Deadzone (Designer, Blender) | Deadzone   | CC0-1.0  |
 
+### Ikony pojazdów (gotowe PNG od Designera, 04.10.2026)
+
+6 ikon z tego samego rigu co partie 4 i 4b (256 px, w repo zmniejszone do 128 px), lista w
+`tools/assets/icons/prerendered.json`. Modele własne powstały w `build-vehicle-items.html`
+(`/workspace/deadzone-icons/render/`, poza repo), modele Kenneya z Car Kit (zip z `License.txt` w
+`/workspace/assets-src/kenney_car-kit/`). Używane w ekwipunku i w UI pojazdów (menu F, tankowanie, naprawa).
+
+| Ikony                         | Źródło                                                                 | Autor    | Licencja |
+| ----------------------------- | ---------------------------------------------------------------------- | -------- | -------- |
+| gas-can, car-key, rubber-hose | modele własne Deadzone (`gascan.glb`, `key.glb`, `hose.glb`, three.js) | Deadzone | CC0-1.0  |
+| engine-parts                  | model własny Deadzone (`engine.glb`, three.js)                         | Deadzone | CC0-1.0  |
+| car-tire                      | `wheel-default.glb`, Car Kit (kenney.nl/assets/car-kit)                | Kenney   | CC0-1.0  |
+| car-window                    | `debris-door-window.glb`, Car Kit (kenney.nl/assets/car-kit)           | Kenney   | CC0-1.0  |
+
 ## Dźwięki (`apps/game/public/audio/`)
 
 Każdy plik jest w dwóch formatach: `.ogg` (Vorbis) i `.mp3` (fallback dla Safari). Przekodowane ffmpeg

@@ -1,4 +1,9 @@
-import type { CharacterSpec, SimContentSource, SimSpawn } from '@deadzone/protocol';
+import type {
+  CharacterSpec,
+  SimContentSource,
+  SimSpawn,
+  SimVehicleSpawn,
+} from '@deadzone/protocol';
 import { pickZombieSpawns } from '../world/zombie-spawns.js';
 import { createSimWorkerClient } from '@deadzone/sim/worker-client';
 import SimWorker from '@deadzone/sim/worker?worker';
@@ -21,6 +26,8 @@ export interface StartSimOptions {
   character?: CharacterSpec | undefined;
   /** Restores this save (the character's slot) instead of a new world. */
   save?: ArrayBuffer | undefined;
+  /** Parked cars at start (dev `?car=`); ignored with `save`. */
+  vehicles?: readonly SimVehicleSpawn[] | undefined;
   /** Uncaught worker error (e.g. a save that no longer loads). */
   onWorkerError?: ((message: string) => void) | undefined;
 }
@@ -38,7 +45,7 @@ export function startSimWorker(
     worker.addEventListener('error', (e: ErrorEvent) => report(e.message || 'błąd symulacji'));
   }
   const client = createSimWorkerClient(worker);
-  const sim = new WorkerSimClient(client);
+  const sim = new WorkerSimClient(client, worker);
   const map = chunkSourceToSimMapData(source, range);
   const zombies = opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : [];
   client.init(seed, map, {
@@ -47,6 +54,7 @@ export function startSimWorker(
     ...(opts.dev ? { dev: true } : {}),
     ...(zombies.length ? { zombies } : {}),
     ...(opts.populateAnimals && !opts.save ? { populateAnimals: opts.populateAnimals } : {}),
+    ...(opts.vehicles?.length ? { vehicles: opts.vehicles } : {}),
     ...(opts.character ? { character: opts.character } : {}),
     // A copy: the slot's buffer stays intact if the worker takes (transfers) it.
     ...(opts.save ? { save: opts.save.slice(0) } : {}),

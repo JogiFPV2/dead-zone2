@@ -1,0 +1,858 @@
+/* Vehicle UI (deadzone-hud-v2-spec „Pojazdy (UI)”, mockups vehicle-*.png). 1280×720 px layout,
+   scaled with the HUD (--hud2-s, UI scale #148). */
+.dz-vh {
+  --k: var(--hud2-s, 1);
+  --acc: #e0a23a;
+  --acc-hi: #f0c06a;
+  --line: #2c3337;
+  --bd: #414a4f;
+  --muted: #9aa3a7;
+  --dim: #5b6469;
+  --bad: #e8766c;
+  --ok: #a9c07a;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary, #e4e6e3);
+  z-index: 6;
+}
+.dz-vh [hidden],
+.dz-vh > [hidden] {
+  display: none !important;
+}
+.dz-vh__grow {
+  flex: 1;
+}
+.dz-vh__muted {
+  color: var(--muted);
+}
+.dz-vh__acc {
+  color: var(--acc-hi);
+}
+.dz-vh__ic {
+  flex: none;
+}
+.dz-vh__img {
+  flex: none;
+  object-fit: contain;
+  /* Atlas icons are 128 px renders with their own outline: a little negative margin keeps the
+     row height of the 14 px stroke icons. */
+  margin: -3px;
+}
+.dz-vh__key {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 5px;
+  margin: 0 3px;
+  border: 1px solid var(--dim);
+  border-radius: 3px;
+  background: rgba(14, 17, 19, 0.9);
+  font: 700 10px var(--font-family-mono);
+  color: var(--color-text-primary, #e4e6e3);
+  white-space: nowrap;
+}
+
+/* Car panel (replaces the firearm panel): right 18, bottom 73, 228×96. */
+.dz-vh__dock {
+  position: absolute;
+  right: calc(18px * var(--k));
+  bottom: calc(73px * var(--k));
+  width: 228px;
+  transform: scale(var(--k));
+  transform-origin: bottom right;
+}
+.dz-vh__hints {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 5px);
+  font: 500 10px var(--font-family-mono);
+  color: var(--muted);
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+}
+.dz-vh__hints .dz-vh__key {
+  height: 15px;
+  font-size: 9px;
+}
+.dz-vh__panel {
+  box-sizing: border-box;
+  height: 96px;
+  padding: 6px 9px 7px;
+  background: #15191ccc;
+  border: 1px solid #5b646980;
+  border-radius: 5px;
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family-mono);
+}
+.dz-vh__r1 {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.dz-vh__r1 b {
+  letter-spacing: 0.07em;
+}
+.dz-vh__car {
+  color: var(--acc-hi);
+  display: inline-flex;
+}
+.dz-vh__seat {
+  color: var(--muted);
+  font-size: 10px;
+}
+.dz-vh__seat::before {
+  content: '· ';
+}
+.dz-vh__ign,
+.dz-vh__lock {
+  display: inline-flex;
+}
+.dz-vh__ign[data-t='key'] {
+  color: #e4e6e3;
+}
+.dz-vh__ign[data-t='hot'] {
+  color: #d9b64a;
+}
+.dz-vh__ign[data-t='none'] {
+  color: var(--bad);
+}
+.dz-vh__lock {
+  color: var(--dim);
+}
+.dz-vh__lock[data-on='true'] {
+  color: var(--acc-hi);
+}
+.dz-vh__r2 {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dz-vh__spd {
+  font: 700 26px/1 var(--font-family-mono);
+}
+.dz-vh__spd[data-rev='true'] {
+  color: var(--acc-hi);
+}
+.dz-vh__kmh {
+  font-size: 10px;
+  color: var(--muted);
+  align-self: flex-end;
+  margin-bottom: 7px;
+}
+.dz-vh__fuel {
+  width: 112px;
+}
+.dz-vh__fl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: var(--muted);
+}
+.dz-vh__fl b {
+  font-size: 12px;
+  color: #e4e6e3;
+}
+.dz-vh__max {
+  font-size: 9px;
+}
+.dz-vh__fuel[data-low='true'] b,
+.dz-vh__fuel[data-low='true'] .dz-vh__fl {
+  color: var(--bad);
+}
+.dz-vh__bar {
+  position: relative;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.dz-vh__bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--acc);
+}
+.dz-vh__fuel[data-low='true'] .dz-vh__bar i {
+  background: #e8766c;
+}
+.dz-vh__bar em {
+  position: absolute;
+  left: 15%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e4e6e3;
+  opacity: 0.6;
+}
+.dz-vh__r3 {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+}
+.dz-vh__eng {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dz-vh__r3 .dz-vh__key {
+  height: 14px;
+  padding: 0 4px;
+  margin: 0 3px 0 6px;
+  font-size: 9px;
+}
+.dz-vh__eng[data-t='on'] {
+  color: var(--ok);
+}
+.dz-vh__eng[data-t='off'] {
+  color: var(--dim);
+}
+.dz-vh__eng[data-t='bad'] {
+  color: var(--bad);
+}
+.dz-vh__k {
+  color: var(--muted);
+}
+.dz-vh__k[data-on='true'] {
+  color: var(--acc-hi);
+}
+
+/* F context menu at the car (282 px). */
+.dz-vh__menu {
+  position: absolute;
+  width: 282px;
+  transform: scale(var(--k));
+  transform-origin: top left;
+  background: rgba(17, 20, 23, 0.97);
+  border: 1px solid var(--bd);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  font-size: 12px;
+}
+.dz-vh__mh {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px;
+  font-family: var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-vh__mh b {
+  color: #e4e6e3;
+  letter-spacing: 0.06em;
+}
+.dz-vh__mh .dz-vh__muted {
+  font-size: 11px;
+}
+.dz-vh__chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.dz-vh__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font: 700 10px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-vh__chip[data-t='acc'] {
+  color: var(--acc-hi);
+}
+.dz-vh__chip[data-t='bad'] {
+  color: var(--bad);
+}
+.dz-vh__rows {
+  padding: 4px 0;
+}
+.dz-vh__div {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--line);
+}
+.dz-vh__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 10px;
+  margin: 0 4px;
+  border-radius: 3px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.dz-vh__row[data-sel='true'] {
+  background: rgba(224, 162, 58, 0.14);
+  border-left-color: var(--acc);
+}
+.dz-vh__row[data-off='true'] {
+  color: var(--dim);
+  cursor: default;
+}
+.dz-vh__lbl {
+  flex: 1;
+}
+.dz-vh__hint {
+  font: 400 11px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-vh__why {
+  font: 400 11px var(--font-family-mono);
+  color: var(--bad);
+}
+.dz-vh__mf {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Rejection toast at the player (2.5 s). */
+.dz-vh__toast {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  transform: translateX(-50%) scale(var(--k));
+  transform-origin: top center;
+  /* Above the F menu, which can open over the player. */
+  z-index: 3;
+  background: #0e1113d9;
+  border-left: 2px solid #c8453c;
+  border-radius: 2px;
+  color: var(--bad);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dz-vh__toast b {
+  font: 700 11px var(--font-family-mono);
+  letter-spacing: 0.04em;
+}
+.dz-vh__toast span {
+  color: #e4e6e3;
+}
+.dz-vh__toast[data-good='true'] {
+  border-left-color: #7f9a4e;
+  color: var(--ok);
+}
+
+/* Action chip at the player (refuel / siphon / fill / repair): ring 28 + text. */
+.dz-vh__achip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-14px, -14px) scale(var(--k));
+  transform-origin: 14px 14px;
+}
+.dz-vh__trk {
+  fill: rgba(14, 17, 19, 0.7);
+  stroke: var(--line);
+  stroke-width: 3;
+}
+.dz-vh__arc {
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 3;
+}
+.dz-vh__ctext {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  background: #0e1113d9;
+  border-radius: 3px;
+  font: 400 11px var(--font-family-mono);
+  color: #e4e6e3;
+  white-space: nowrap;
+}
+.dz-vh__ctext b {
+  color: var(--acc-hi);
+}
+
+/* Refuel panel: x 820, y 196, 442 wide (under the minimap). */
+.dz-vh__rstage {
+  position: absolute;
+  right: calc(18px * var(--k));
+  top: calc(196px * var(--k));
+  transform: scale(var(--k));
+  transform-origin: top right;
+}
+.dz-vh__refuel {
+  box-sizing: border-box;
+  width: 442px;
+  padding: 10px 12px 12px;
+  background: rgba(21, 25, 28, 0.9);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  border-radius: 5px;
+  backdrop-filter: blur(5px);
+  pointer-events: auto;
+  font-size: 11px;
+}
+.dz-vh__ph {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  font-family: var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-vh__ph b {
+  font-size: 13px;
+  letter-spacing: 0.07em;
+  color: #e4e6e3;
+}
+.dz-vh__ph .dz-vh__muted {
+  font-size: 11px;
+}
+.dz-vh__src {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+.dz-vh__lab {
+  font: 700 10px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  width: 58px;
+}
+.dz-vh__side .dz-vh__lab {
+  width: auto;
+  margin: 10px 0 6px;
+  color: var(--acc);
+}
+.dz-vh__pchip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px dashed var(--dim);
+  border-radius: 4px;
+  font-family: var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-vh__pchip[data-on='true'] {
+  border: 1px solid var(--acc);
+  background: rgba(224, 162, 58, 0.12);
+  color: #e4e6e3;
+}
+.dz-vh__note2 {
+  margin: -2px 0 6px 66px;
+  font-size: 10px;
+  color: var(--dim);
+}
+.dz-vh__rb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+}
+.dz-vh__rbi {
+  width: 22px;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--acc-hi);
+}
+.dz-vh__rbm {
+  flex: 1;
+}
+.dz-vh__rbt {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-family-mono);
+}
+.dz-vh__rbt b {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.dz-vh__big {
+  font: 700 14px var(--font-family-mono);
+}
+.dz-vh__bar2 {
+  position: relative;
+  height: 6px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.dz-vh__bar2 i,
+.dz-vh__bar2 s {
+  position: absolute;
+  inset: 0 auto 0 0;
+  text-decoration: none;
+}
+.dz-vh__bar2 s {
+  opacity: 0.32;
+}
+.dz-vh__rate {
+  width: 56px;
+  text-align: right;
+  font: 400 11px var(--font-family-mono);
+  color: var(--ok);
+}
+.dz-vh__gn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 6px 32px;
+  font-family: var(--font-family-mono);
+}
+.dz-vh__gn i {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--acc);
+  opacity: 0.4;
+}
+.dz-vh__note {
+  font-size: 10px;
+  color: var(--dim);
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.dz-vh__full {
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+  font-family: var(--font-family-mono);
+}
+.dz-vh__fh {
+  display: flex;
+  height: 22px;
+  align-items: center;
+  color: var(--acc);
+}
+.dz-vh__step {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-left: 2px solid transparent;
+}
+.dz-vh__step[data-on='true'] {
+  border-left-color: var(--acc);
+  background: rgba(224, 162, 58, 0.12);
+}
+.dz-vh__btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.dz-vh__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.6);
+  color: #e4e6e3;
+  font: 700 11px var(--font-family-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.dz-vh__btn[data-primary='true'] {
+  border-color: var(--acc);
+}
+.dz-vh__btn[data-off='true'] {
+  color: var(--dim);
+  border-color: var(--line);
+  cursor: default;
+}
+.dz-vh__btn .dz-vh__why {
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+/* Repair window: two panels like inventory v3 (18/45 and 662/45, 600×605). */
+.dz-vh__modal {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  z-index: 2;
+}
+/* Repair window open: above the minimap / stats like the inventory (game sets data-modal). */
+[data-modal='repair'] .dz-vh {
+  z-index: var(--z-modal);
+}
+.dz-vh__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 11, 0.38);
+  backdrop-filter: brightness(0.62);
+}
+.dz-vh__stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / var(--k));
+  height: calc(100% / var(--k));
+  transform: scale(var(--k));
+  transform-origin: 0 0;
+}
+.dz-vh__win {
+  position: absolute;
+  top: 45px;
+  width: 600px;
+  height: 605px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  background: rgba(21, 25, 28, 0.9);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  border-radius: 5px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.dz-vh__win--l {
+  left: 18px;
+}
+.dz-vh__win--r {
+  right: 18px;
+}
+.dz-vh__cols {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  font: 700 10px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  padding: 0 8px 0 30px;
+}
+.dz-vh__c2 {
+  width: 110px;
+  text-align: right;
+}
+.dz-vh__c3 {
+  width: 170px;
+  text-align: right;
+}
+.dz-vh__rlist {
+  overflow: hidden;
+}
+.dz-vh__sec {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  margin-top: 4px;
+  border-bottom: 1px solid var(--line);
+  font: 700 11px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--acc);
+}
+.dz-vh__sec .dz-vh__muted {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--acc-hi);
+}
+.dz-vh__rrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 8px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+.dz-vh__rrow[data-sel='true'] {
+  background: rgba(224, 162, 58, 0.12);
+  border-left-color: var(--acc);
+}
+.dz-vh__rrow[data-state='na'] {
+  border: 1px dashed var(--line);
+  color: var(--dim);
+  margin: 2px 0;
+}
+.dz-vh__rl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dz-vh__na {
+  font: 700 9px var(--font-family-mono);
+  color: #4fa8c8;
+  border: 1px solid #4fa8c8;
+  border-radius: 2px;
+  padding: 0 3px;
+}
+.dz-vh__hpb {
+  position: relative;
+  width: 56px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.dz-vh__hpb i {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+.dz-vh__hpn {
+  width: 40px;
+  text-align: right;
+  font: 400 11px var(--font-family-mono);
+}
+.dz-vh__rs {
+  width: 170px;
+  text-align: right;
+  font: 400 11px var(--font-family-mono);
+}
+.dz-vh__rrow[data-state='ready'] .dz-vh__rs {
+  color: var(--ok);
+}
+.dz-vh__rrow[data-state='blocked'] .dz-vh__rs {
+  color: var(--bad);
+}
+.dz-vh__rrow[data-state='ok'] .dz-vh__rs,
+.dz-vh__rrow[data-state='na'] .dz-vh__rs {
+  color: var(--dim);
+}
+.dz-vh__det {
+  display: flex;
+  gap: 8px;
+}
+.dz-vh__schem {
+  flex: none;
+}
+.dz-vh__schem [data-part] {
+  cursor: pointer;
+}
+.dz-vh__sel > :first-child {
+  stroke: var(--acc-hi) !important;
+  stroke-width: 3 !important;
+}
+.dz-vh__st {
+  font: 700 10px var(--font-family-mono);
+}
+.dz-vh__side {
+  flex: 1;
+  min-width: 0;
+}
+.dz-vh__req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--acc-hi);
+}
+.dz-vh__req b {
+  display: block;
+  font-weight: 500;
+  color: #e4e6e3;
+}
+.dz-vh__req .dz-vh__muted {
+  font-size: 10px;
+}
+.dz-vh__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: 700 10px var(--font-family-mono);
+  color: var(--ok);
+}
+.dz-vh__req[data-ok='false'] .dz-vh__ok,
+.dz-vh__req[data-ok='false'] b {
+  color: var(--bad);
+}
+.dz-vh__res > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  border-bottom: 1px solid var(--line);
+}
+.dz-vh__res > div > span:first-child {
+  flex: 1;
+  color: var(--muted);
+}
+.dz-vh__res b {
+  font-family: var(--font-family-mono);
+}
+.dz-vh__ex {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(200, 69, 60, 0.6);
+  background: rgba(200, 69, 60, 0.08);
+  border-radius: 4px;
+  font-size: 11px;
+}
+.dz-vh__exh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bad);
+  font-family: var(--font-family-mono);
+}
+.dz-vh__exr {
+  display: flex;
+  gap: 12px;
+  margin: 6px 0;
+  font-family: var(--font-family-mono);
+}
+.dz-vh__exr [data-ok='true'] {
+  color: var(--ok);
+}
+.dz-vh__exr [data-ok='false'] {
+  color: var(--bad);
+}
+.dz-vh__run {
+  font: 400 11px var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-vh__keys {
+  position: absolute;
+  left: 50%;
+  top: 680px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* In a car the firearm panel gives way to the car panel. */
+[data-vehicle='true'] .dz-fw {
+  display: none !important;
+}

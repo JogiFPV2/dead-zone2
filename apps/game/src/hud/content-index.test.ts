@@ -57,3 +57,56 @@ describe('content index: back slot', () => {
     });
   });
 });
+
+describe('content index: vehicles', () => {
+  const idx = buildHudContentIndex([
+    {
+      path: 'world-settings/vehicles.json',
+      json: {
+        vehicles: {
+          enterSec: 1.5,
+          hotwire: { sec: 6, minElectrical: 1, baseChance: 0.2, chancePerElectrical: 0.1 },
+          fuel: { refuelLps: 1, pumpPoweredLps: 1.5, pumpManualLps: 0.3 },
+          repair: {
+            skill: 'base:mechanics',
+            tire: {
+              sec: 10,
+              tools: ['base:tool-wrench'],
+              parts: [{ item: 'base:car-tire', count: 1 }],
+            },
+          },
+        },
+      },
+    },
+    {
+      path: 'vehicle-types/sedan.json',
+      json: {
+        id: 'base:sedan',
+        length: 4.6,
+        width: 1.8,
+        fuelMax: 50,
+        seats: [{ id: 'driver', doorSide: 'left', offset: { x: 0.1, y: -0.4 } }],
+        trunkCapacity: 60,
+        gloveboxCapacity: 3,
+      },
+    },
+    {
+      path: 'items/tools.json',
+      json: [{ id: 'x:wrench', kind: 'tool', tags: ['base:tool-wrench'] }],
+    },
+  ] as never);
+
+  it('reads vehicle settings, types and item tags', () => {
+    expect(idx.vehicles?.hotwire).toMatchObject({ sec: 6, minElectrical: 1, maxChance: 1 });
+    expect(idx.vehicles?.fuel.pumpManualLps).toBe(0.3);
+    expect(idx.vehicles?.repair.tire.parts).toEqual([{ item: 'base:car-tire', count: 1 }]);
+    expect(idx.vehicles?.repair.engine.tools).toEqual([]);
+    expect(idx.vehicleTypes?.get('base:sedan')).toMatchObject({
+      length: 4.6,
+      fuelMax: 50,
+      trunkCapacity: 60,
+      seats: [{ id: 'driver', doorSide: 'left', x: 0.1, y: -0.4 }],
+    });
+    expect(idx.items.get('x:wrench')?.tags).toEqual(['base:tool-wrench']);
+  });
+});

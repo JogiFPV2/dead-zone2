@@ -22,6 +22,32 @@ const view = (v: SimViewPatch, tick = 1): GameAction => ({ type: 'view', view: v
 const events = (e: SimEvent[], tick = 1): GameAction => ({ type: 'events', events: e, tick });
 const run = (...actions: GameAction[]) => actions.reduce(reduceGameState, INITIAL_GAME_STATE);
 
+describe('reduceGameState: vehicles', () => {
+  it('keeps the cars in reach and the seat; `vehicle: null` = on foot', () => {
+    const car = {
+      vehicleId: 4,
+      type: 'base:sedan',
+      locked: true,
+      keyInIgnition: false,
+      hasKey: false,
+      hotwired: false,
+      engineOn: false,
+      fuel: 18,
+      fuelMax: 50,
+    };
+    const base = { alive: true, sleeping: false, stats: {}, moodles: [], wounds: [] };
+    const s = run(
+      view({ vehicles: [car], player: { ...base, vehicle: { vehicleId: 4, seat: 0 } } }),
+    );
+    expect(s.vehicles).toEqual([car]);
+    expect(s.seat).toEqual({ vehicleId: 4, seat: 0 });
+    const s2 = reduceGameState(s, view({ player: { ...base, vehicle: null } }));
+    expect(s2.seat).toBeUndefined();
+    expect(s2.vehicles).toEqual([car]);
+    expect(reduceGameState(s, view({ clock })).seat).toEqual({ vehicleId: 4, seat: 0 });
+  });
+});
+
 describe('reduceGameState: view', () => {
   it('first full view sets clock, stats and running status', () => {
     const s = run(

@@ -9,7 +9,7 @@ import {
   clockLabel,
   containersLabel,
   lootRow,
-  lootTabs,
+  reachableTabs,
   ownItems,
   ownTitle,
   putCommand,
@@ -362,7 +362,7 @@ export function createLootWindow(opts: LootWindowOptions): LootWindow {
   };
 
   const renderBox = (s: GameState, content: HudContentIndex): void => {
-    const tabs = lootTabs(s);
+    const tabs = reachableTabs(s);
     const tabRow = div('dz-loot__tabs');
     if (tabs.length >= 2) {
       for (const t of tabs) {
@@ -459,7 +459,7 @@ export function createLootWindow(opts: LootWindowOptions): LootWindow {
   };
 
   const renderHead = (s: GameState): void => {
-    const n = lootTabs(s).length;
+    const n = reachableTabs(s).length;
     const count = div('dz-loot__count');
     count.append(svg(SEARCH_SVG), h('span', '', containersLabel(Math.max(1, n))));
     const where = h(
@@ -587,7 +587,7 @@ export function createLootWindow(opts: LootWindowOptions): LootWindow {
     else if (e.code === 'KeyF') {
       if (selected.own.size) transferRows('own', [...selected.own]);
     } else {
-      const tabs = lootTabs(s);
+      const tabs = reachableTabs(s);
       if (tabs.length < 2) return;
       const i = Math.max(
         0,

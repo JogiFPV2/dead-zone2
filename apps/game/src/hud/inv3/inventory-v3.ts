@@ -8,7 +8,8 @@ import { createCombineTooltip, linkIcon } from '../combine-tooltip.js';
 import type { HudContentIndex } from '../content-index.js';
 import { contextCommand, findItem, formatKg, type InvCommand } from '../inventory-model.js';
 import { containerName } from '../labels.js';
-import { lootTabs, takeWithinLimit } from '../loot-model.js';
+import { lootTabs, ownItems, reachableTabs, takeWithinLimit } from '../loot-model.js';
+import { vehicleTypeName } from '../../vehicles/vehicle-model.js';
 import { bindOutsideClose } from '../outside-click.js';
 import {
   FRESHNESS_LOOK,
@@ -83,6 +84,15 @@ const h = <K extends keyof HTMLElementTagNameMap>(
   return e;
 };
 const div = (cls?: string, text?: string): HTMLDivElement => h('div', cls, text);
+/** Footer of the player panel with a car key carried: `Kluczyk pasuje do: Sedan · to auto`. */
+function keyFitsLabel(s: GameState): string {
+  const key = ownItems(s).find((i) => i.vehicle !== undefined);
+  if (key?.vehicle === undefined) return '';
+  const car = s.vehicles.find((v) => v.vehicleId === key.vehicle);
+  if (!car) return 'Kluczyk pasuje do: auta poza zasięgiem';
+  const here = s.seat?.vehicleId === car.vehicleId ? 'to auto' : 'auto obok';
+  return `Kluczyk pasuje do: ${vehicleTypeName(car.type)} · ${here}`;
+}
 const svgEl = (markup: string, cls = 'dz-i3__svg'): HTMLElement => {
   const s = h('span', cls);
   s.innerHTML = markup;
@@ -92,6 +102,9 @@ const SV = (d: string, size = 15, sw = 2): string =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const CUBE = '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>';
 const ICON = {
+  trunk: SV('<path d="M3 12h18v6H3zM5 12l2-4h10l2 4M9 15h6"/>'),
+  glovebox: SV('<rect x="4" y="8" width="16" height="9" rx="1"/><path d="M10 12h4"/>'),
+  seat: SV('<path d="M8 4h4l1 9h5l1 7M8 4L7 14h6M10 14v6"/>', 13),
   bag: SV('<path d="M6 8h12l1 13H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>'),
   cabinet: SV(
     '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18M10 11v2M14 11v2"/>',
@@ -642,7 +655,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       h(
         'span',
         'dz-i3__selinfo',
-        info.count ? `Zaznaczono ${info.count} · ${formatKg(info.weightKg)} kg` : '',
+        info.count ? `Zaznaczono ${info.count} · ${formatKg(info.weightKg)} kg` : keyFitsLabel(s),
       ),
       h('span', 'dz-i3__grow'),
       button('PRZENIEŚ', 'Ctrl', moveSelected, !selected.own.size || !boxSection),
@@ -660,12 +673,20 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       c && pos && c.x !== undefined && c.y !== undefined
         ? distanceLabel(pos.x, pos.y, c.x, c.y)
         : '';
+    // Vehicle containers: `BAGAŻNIK · Sedan · 1,1 m` (vehicle UI §3).
+    const car =
+      c?.vehicle !== undefined ? s.vehicles.find((v) => v.vehicleId === c.vehicle) : undefined;
+    const vehicleSub = car ? `${vehicleTypeName(car.type)}${dist ? ` · ${dist}` : ''}` : dist;
     const parts: HTMLElement[] = [
       panelHead(
         'box',
-        ICON.cabinet,
+        c?.kind === 'vehicle-trunk'
+          ? ICON.trunk
+          : c?.kind === 'vehicle-glovebox'
+            ? ICON.glovebox
+            : ICON.cabinet,
         c ? containerName(c.type, c.kind).toUpperCase() : 'POJEMNIK',
-        dist,
+        vehicleSub,
       ),
     ];
     const tabs = lootTabs(s);
@@ -674,16 +695,26 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       const b = h('button', 'dz-i3__tab');
       b.type = 'button';
       if (t.active) b.dataset.on = 'true';
-      const ic =
-        t.kind === 'ground'
+      const ic = t.off
+        ? ICON.seat
+        : t.kind === 'ground'
           ? ICON.ground
-          : /fridge|freezer/.test(t.type ?? '')
-            ? ICON.fridge
-            : ICON.box;
+          : t.kind === 'vehicle-trunk'
+            ? ICON.trunk
+            : t.kind === 'vehicle-glovebox'
+              ? ICON.glovebox
+              : /fridge|freezer/.test(t.type ?? '')
+                ? ICON.fridge
+                : ICON.box;
       b.append(svgEl(ic), h('span', '', t.label));
       if (t.count !== undefined) b.append(h('span', 'dz-i3__tab-n', String(t.count)));
+      if (t.off) {
+        // Out of reach (vehicle UI [ZAŁ.]): dashed, dimmed, the reason in the title.
+        b.dataset.off = 'true';
+        b.title = t.off;
+      }
       b.addEventListener('click', () => {
-        if (!t.active) opts.onSwitch(t.id);
+        if (!t.active && !t.off) opts.onSwitch(t.id);
       });
       tabRow.append(b);
     }
@@ -725,6 +756,16 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       );
     }
     parts.push(body);
+    const offTab = tabs.find((t) => t.off);
+    if (offTab) {
+      const note = div('dz-i3__vnote');
+      note.append(
+        svgEl(ICON.seat),
+        h('b', '', offTab.label),
+        ` ${offTab.kind === 'vehicle-glovebox' ? 'otworzysz tylko z przedniego fotela.' : `: ${offTab.off}.`} W aucie zakładki się odwracają: Schowek aktywny, Bagażnik niedostępny.`,
+      );
+      parts.push(note);
+    }
     const foot = div('dz-i3__foot');
     foot.append(
       button('WEŹ WSZYSTKO', 'R', () => api.takeAll(), !c?.items.length),
@@ -947,7 +988,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         render();
       }
     } else {
-      const tabs = lootTabs(opts.state());
+      const tabs = reachableTabs(opts.state());
       if (!tabs.length) return;
       const i = tabs.findIndex((t) => t.active);
       const next =

@@ -1,4 +1,4 @@
-import { DEBUG_STATS, type DebugStat } from '@deadzone/protocol';
+import { DEBUG_STATS, type DebugStat, type SimVehicleSpawn } from '@deadzone/protocol';
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
 
@@ -46,6 +46,13 @@ export interface BootOptions {
   perf: boolean;
   /** `?town=0`: grey-box world instead of the town kit (comparison, fallback). */
   town: boolean;
+  /**
+   * Dev `?car=x,y[,headingDeg[,fuelL[,flags]]]` (`;` between cars; flags `locked`, `glovebox`,
+   * `nokey` joined by `+`): parked cars at start (vehicle UI testing; no map has cars yet).
+   */
+  cars: SimVehicleSpawn[];
+  /** Dev `?pump=x,y` (`;` between pumps): `base:fuel-pump` map objects on these tiles. */
+  pumps: { x: number; y: number }[];
   /** Dev `?cam=x,z,viewH`: camera pinned at a world point with that view height (screenshots). */
   cam?: { x: number; z: number; viewHeight: number };
 }
@@ -74,6 +81,43 @@ export function parseGiveParam(value: string | null): { itemId: string; count: n
     .map((part) => /^([a-z0-9-]+:[a-z0-9-]+)(?:\*(\d+))?$/.exec(part.trim()))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => ({ itemId: m[1] ?? '', count: Math.min(99, Math.max(1, Number(m[2] ?? 1))) }));
+}
+
+const NUM = /^-?\d+(?:\.\d+)?$/;
+
+/** `x,y[,headingDeg[,fuelL[,flags]]]` list (`;`), see `BootOptions.cars`; at most 8 cars. */
+export function parseCarParam(value: string | null): SimVehicleSpawn[] {
+  if (!value) return [];
+  const out: SimVehicleSpawn[] = [];
+  for (const part of value.split(';').slice(0, 8)) {
+    const [x = '', y = '', deg, fuel, flags = ''] = part.trim().split(',');
+    if (!NUM.test(x) || !NUM.test(y)) continue;
+    const f = new Set(flags.split('+'));
+    out.push({
+      x: Number(x),
+      y: Number(y),
+      ...(deg && NUM.test(deg) ? { heading: (Number(deg) * Math.PI) / 180 } : {}),
+      ...(fuel && NUM.test(fuel) ? { fuel: Number(fuel) } : {}),
+      ...(f.has('locked') ? { locked: true } : {}),
+      ...(f.has('glovebox')
+        ? { key: 'glovebox' as const }
+        : f.has('nokey')
+          ? { key: 'none' as const }
+          : {}),
+    });
+  }
+  return out;
+}
+
+/** `x,y` tile list (`;`), at most 8. */
+export function parseTileListParam(value: string | null): { x: number; y: number }[] {
+  if (!value) return [];
+  return value
+    .split(';')
+    .slice(0, 8)
+    .map((p) => p.trim().split(','))
+    .filter(([x = '', y = '']) => /^-?\d+$/.test(x) && /^-?\d+$/.test(y))
+    .map(([x, y]) => ({ x: Number(x), y: Number(y) }));
 }
 
 /** Parses the URL query (`?map=<base map>`, e.g. `demo-house`, `?crowd=N`, `?spawn=inside`, `?zones=1`). */
@@ -108,6 +152,8 @@ export function parseBootOptions(search: string): BootOptions {
     ...(time !== undefined ? { time } : {}),
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
     give: parseGiveParam(q.get('give')),
+    cars: parseCarParam(q.get('car')),
+    pumps: parseTileListParam(q.get('pump')),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
     ...(q.get('animals') !== null

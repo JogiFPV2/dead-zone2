@@ -682,3 +682,27 @@
   color: var(--muted);
   opacity: 0.7;
 }
+
+/* Vehicle containers (vehicle UI §3): a tab out of reach is dashed and dimmed. */
+.dz-i3__tab[data-off] {
+  border-style: dashed;
+  border-color: #5b6469;
+  color: var(--dim);
+  cursor: default;
+}
+.dz-i3__vnote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  margin: 6px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.5);
+  font-size: 11px;
+  color: var(--muted);
+}
+.dz-i3__vnote b {
+  color: var(--color-text-primary);
+}

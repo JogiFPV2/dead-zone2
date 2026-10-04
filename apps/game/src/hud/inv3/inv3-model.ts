@@ -116,6 +116,8 @@ export function itemState(it: ItemView, def: HudItemDef | undefined): InvState |
   if (it.freshness && def?.kind !== 'drink') return { kind: 'freshness', value: it.freshness };
   if (it.uses !== undefined && def?.fillMax)
     return { kind: 'fill', value: it.uses, max: def.fillMax };
+  // Gas can: litres inside (vehicle UI, `#4FA8C8` bar).
+  if (it.fuelMaxL !== undefined) return { kind: 'fill', value: it.fuelL ?? 0, max: it.fuelMaxL };
   if (it.freshness) return { kind: 'freshness', value: it.freshness };
   if (it.uses !== undefined) return { kind: 'uses', value: it.uses };
   return undefined;
@@ -159,6 +161,24 @@ export function tooltipV3(
   magCapacity?: number,
 ): TooltipItem {
   const base = itemTooltip(it, def, contextOf(it, def));
+  if (it.fuelMaxL !== undefined || it.vehicle !== undefined) {
+    // Gas can / car key (vehicle UI §3).
+    const extra =
+      it.fuelMaxL !== undefined
+        ? [
+            {
+              label: 'Paliwo',
+              value: `${(it.fuelL ?? 0).toFixed(1).replace('.', ',')} / ${it.fuelMaxL}`,
+              unit: 'l',
+            },
+          ]
+        : [{ label: 'Pasuje do', value: `auto #${it.vehicle}` }];
+    const after =
+      it.fuelMaxL !== undefined
+        ? [{ label: 'Napełnij', value: 'dystrybutor · 1,5', unit: 'l/s' }]
+        : [];
+    return { ...base, stats: [...extra, ...base.stats, ...after], actions: TIP_ACTIONS };
+  }
   if (!def?.ranged) return { ...base, actions: TIP_ACTIONS };
   const r = def.ranged;
   const cap = r.capacity ?? magCapacity;
