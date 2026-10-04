@@ -1,0 +1,361 @@
+{
+  "address": {
+    "cx": 1,
+    "cy": -1,
+    "z": 0
+  },
+  "palette": [
+    "base:grass",
+    "base:sidewalk",
+    "base:parking",
+    "base:concrete",
+    "base:kitchen-tiles",
+    "base:roof-felt",
+    "base:roof-flat"
+  ],
+  "layers": {
+    "floor": {
+      "rle": [
+        [1, 512],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 2],
+        [4, 7],
+        [3, 3],
+        [1, 20],
+        [3, 2],
+        [4, 7],
+        [3, 3],
+        [1, 20],
+        [3, 2],
+        [4, 7],
+        [3, 3],
+        [1, 20],
+        [3, 2],
+        [4, 5],
+        [5, 2],
+        [3, 3],
+        [1, 20],
+        [3, 2],
+        [4, 5],
+        [5, 2],
+        [3, 3],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [3, 12],
+        [1, 20],
+        [2, 64]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 578],
+        [6, 7],
+        [0, 25],
+        [6, 7],
+        [0, 25],
+        [6, 7],
+        [0, 25],
+        [6, 7],
+        [0, 25],
+        [6, 7],
+        [0, 23],
+        [7, 9],
+        [0, 23],
+        [7, 9],
+        [0, 23],
+        [7, 9],
+        [0, 23],
+        [7, 9],
+        [0, 23],
+        [7, 9],
+        [0, 23],
+        [7, 9],
+        [0, 119]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 578],
+        [78, 5],
+        [79, 2],
+        [0, 25],
+        [78, 5],
+        [79, 2],
+        [0, 25],
+        [78, 5],
+        [79, 2],
+        [0, 25],
+        [78, 5],
+        [80, 2],
+        [0, 25],
+        [78, 5],
+        [80, 2],
+        [0, 23],
+        [81, 9],
+        [0, 23],
+        [81, 9],
+        [0, 23],
+        [81, 9],
+        [0, 23],
+        [81, 9],
+        [0, 23],
+        [81, 9],
+        [0, 23],
+        [81, 9],
+        [0, 119]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 2,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 2,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 2,
+      "y": 19,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 2,
+      "y": 20,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 2,
+      "y": 21,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 2,
+      "y": 22,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 2,
+      "y": 23,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 3,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 3,
+      "y": 23,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 4,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 4,
+      "y": 23,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-glass"
+    },
+    {
+      "x": 5,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 5,
+      "y": 23,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 6,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 6,
+      "y": 23,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 7,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 7,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 7,
+      "y": 19,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 7,
+      "y": 20,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 7,
+      "y": 21,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 7,
+      "y": 21,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 7,
+      "y": 22,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 7,
+      "y": 23,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 8,
+      "y": 18,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 8,
+      "y": 21,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 8,
+      "y": 23,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 9,
+      "y": 18,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 9,
+      "y": 19,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 9,
+      "y": 20,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 9,
+      "y": 21,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    },
+    {
+      "x": 9,
+      "y": 22,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-gas"
+    }
+  ],
+  "objects": [],
+  "rooms": {
+    "78": {
+      "roomType": "base:room-gas-station",
+      "buildingId": 6
+    },
+    "79": {
+      "roomType": "base:room-warehouse",
+      "buildingId": 6
+    },
+    "80": {
+      "roomType": "base:room-bathroom",
+      "buildingId": 6
+    },
+    "81": {
+      "roomType": "base:room-gas-station",
+      "buildingId": 7
+    }
+  }
+}

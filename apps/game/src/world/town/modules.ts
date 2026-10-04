@@ -1,7 +1,42 @@
 import type { BuildingId, ContentId, EdgeKind } from '../chunk.js';
 
 /** Wall skins of the town kit (`wall-<skin>`, `window-<skin>`, `doorway-<skin>`, `stub-<skin>`). */
-export type Skin = 'green' | 'beige' | 'blue' | 'brick' | 'plaster' | 'interior';
+export type Skin =
+  | 'green'
+  | 'beige'
+  | 'blue'
+  | 'brick'
+  | 'plaster'
+  | 'interior'
+  // Catalogue skins (plaster modules with other wall cells, skins.ts).
+  | 'hospital'
+  | 'police'
+  | 'school'
+  | 'shop'
+  | 'kostka'
+  | 'plank'
+  | 'gas'
+  | 'pharmacy'
+  | 'burnt';
+
+/** Every wall skin (kit derivation of the catalogue skins, shop windows). */
+export const ALL_SKINS: readonly Skin[] = [
+  'green',
+  'beige',
+  'blue',
+  'brick',
+  'plaster',
+  'interior',
+  'hospital',
+  'police',
+  'school',
+  'shop',
+  'kostka',
+  'plank',
+  'gas',
+  'pharmacy',
+  'burnt',
+];
 
 const SIDING: readonly Skin[] = ['green', 'beige', 'blue'];
 
@@ -29,6 +64,24 @@ export function skinOfWall(wall: ContentId | undefined, building: BuildingId): S
       return 'plaster';
     case 'base:brick-wall':
       return 'brick';
+    case 'base:wall-hospital':
+      return 'hospital';
+    case 'base:wall-police':
+      return 'police';
+    case 'base:wall-school':
+      return 'school';
+    case 'base:wall-shop':
+      return 'shop';
+    case 'base:wall-kostka':
+      return 'kostka';
+    case 'base:wall-plank':
+      return 'plank';
+    case 'base:wall-gas':
+      return 'gas';
+    case 'base:wall-pharmacy':
+      return 'pharmacy';
+    case 'base:wall-burnt':
+      return 'burnt';
     default:
       return SIDING[Math.floor(hash01(building, 7) * SIDING.length)] ?? 'green';
   }
@@ -51,8 +104,13 @@ export function edgeModule(kind: EdgeKind, skin: Skin, content: ContentId, look:
   if (look.lowered) return `stub-${skin}`;
   if (kind === 'door') return `doorway-${skin}`;
   if (kind === 'window') {
+    // Shop window (witryna 0.3–2.5 m): generated module, kit.ts `shopWindowGeometry`.
     const base =
-      content === 'base:wooden-window' && skin === 'brick' ? 'window-brick-wood' : `window-${skin}`;
+      content === 'base:window-shop'
+        ? `shopwin-${skin}`
+        : content === 'base:wooden-window' && skin === 'brick'
+          ? 'window-brick-wood'
+          : `window-${skin}`;
     if (look.broken) return `${base}-broken`;
     return look.lit ? `${base}-lit` : base;
   }
@@ -65,7 +123,15 @@ export function doorLeaf(skin: Skin): string {
     case 'green':
       return 'door-red';
     case 'plaster':
+    case 'hospital':
+    case 'police':
+    case 'shop':
+    case 'gas':
+    case 'pharmacy':
       return 'door-glass';
+    case 'plank':
+    case 'burnt':
+      return 'door-wood';
     case 'blue':
     case 'interior':
       return 'door-wood';
@@ -90,14 +156,19 @@ export function edgeVariants(kind: EdgeKind, skin: Skin, content: ContentId): st
 /** Roof shape from the roof content: flat slabs + parapet, or a generated pitched roof. */
 export type RoofStyle = 'flat' | 'hip' | 'gable';
 export function roofStyle(roof: ContentId | undefined): RoofStyle {
-  if (roof === 'base:roof-gable') return 'gable';
-  if (roof === 'base:roof-shingles') return 'hip';
+  if (roof === 'base:roof-gable' || roof === 'base:roof-corrugated') return 'gable';
+  if (roof === 'base:roof-shingles' || roof === 'base:roof-tile') return 'hip';
   return 'flat';
 }
 
 const ROOF_COLOURS = ['roof-a', 'roof-b', 'roof-c', 'roof-d'] as const;
-export const roofColour = (building: BuildingId): string =>
-  ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a';
+/** Roof colour cell: catalogue roofs by content, others by building. */
+export const roofColour = (building: BuildingId, roof?: ContentId): string =>
+  roof === 'base:roof-tile'
+    ? 'roof-tile'
+    : roof === 'base:roof-corrugated'
+      ? 'corrugated'
+      : (ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a');
 
 /** Wall colour cell of a skin (gable ends of pitched roofs). */
 export const WALL_CELL: Record<Skin, string> = {
@@ -107,6 +178,15 @@ export const WALL_CELL: Record<Skin, string> = {
   brick: 'wall-brick',
   plaster: 'wall-plaster',
   interior: 'wall-interior',
+  hospital: 'hosp-wall',
+  police: 'police-wall',
+  school: 'school-wall',
+  shop: 'shop-wall',
+  kostka: 'kostka-wall',
+  plank: 'plank',
+  gas: 'gas-wall',
+  pharmacy: 'pharm-wall',
+  burnt: 'char',
 };
 
 /**

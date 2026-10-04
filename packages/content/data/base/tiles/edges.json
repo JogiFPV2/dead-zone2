@@ -58,5 +58,60 @@
     "id": "base:plaster-wall",
     "name": "tile.base.plaster-wall.name",
     "category": "wall"
+  },
+  {
+    "id": "base:wall-hospital",
+    "name": "tile.base.wall-hospital.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-police",
+    "name": "tile.base.wall-police.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-school",
+    "name": "tile.base.wall-school.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-shop",
+    "name": "tile.base.wall-shop.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-kostka",
+    "name": "tile.base.wall-kostka.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-plank",
+    "name": "tile.base.wall-plank.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-gas",
+    "name": "tile.base.wall-gas.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-pharmacy",
+    "name": "tile.base.wall-pharmacy.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:wall-burnt",
+    "name": "tile.base.wall-burnt.name",
+    "category": "wall"
+  },
+  {
+    "id": "base:window-shop",
+    "name": "tile.base.window-shop.name",
+    "category": "window"
+  },
+  {
+    "id": "base:door-glass",
+    "name": "tile.base.door-glass.name",
+    "category": "door"
   }
 ]

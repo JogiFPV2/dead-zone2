@@ -8,3 +8,14 @@ export { buildMap, type BuiltMap } from './build.js';
 export { mapFiles, type MapFile } from './files.js';
 export { formatErrors, validateSchemasOnly, validateWithPack } from './validate.js';
 export { PREVIEW_LEGEND, renderPreview, type PreviewRect } from './preview.js';
+export {
+  CATALOG,
+  CATALOG_IDS,
+  autoDoors,
+  facadeOpenings,
+  partFlights,
+  placeCatalog,
+  type CatalogPart,
+  type CatalogPlaced,
+  type CatalogType,
+} from './catalog.js';

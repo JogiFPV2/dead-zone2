@@ -27,6 +27,8 @@ export interface TownEdge {
 
 export interface TownRoof {
   building: BuildingId;
+  /** Most common roof content (colour of catalogue roofs). */
+  content: ContentId | undefined;
   style: RoofStyle;
   footprint: Footprint;
   /** Footprint is a full rectangle (else pitched roofs fall back to flat). */
@@ -108,6 +110,7 @@ export function layoutTown(tiles: MapTiles, range: ChunkRange): TownLayout {
     const rect = list.length === (x1 - x0 + 1) * (z1 - z0 + 1) && building !== NO_BUILDING;
     roofs.push({
       building,
+      content: roof,
       style: roofStyle(roof),
       footprint: { x0, z0, x1, z1 },
       rect,

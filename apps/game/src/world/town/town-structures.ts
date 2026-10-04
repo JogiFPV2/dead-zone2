@@ -1,4 +1,12 @@
-import { BatchedMesh, Group, Matrix4, Quaternion, Vector3, type BufferGeometry } from 'three';
+import {
+  BatchedMesh,
+  Color,
+  Group,
+  Matrix4,
+  Quaternion,
+  Vector3,
+  type BufferGeometry,
+} from 'three';
 import { BuildingLookup } from '../building-lookup.js';
 import {
   CHUNK_SIZE,
@@ -21,7 +29,7 @@ import {
   type Skin,
 } from './modules.js';
 import { pitchedRoof } from './roof.js';
-import { slabGeometry, stairsGeometry } from './levels.js';
+import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 
 /** A static prop of the town kit (trees, poles, signs...). */
@@ -51,6 +59,11 @@ interface Batch {
 
 const Y_AXIS = new Vector3(0, 1, 0);
 
+/** Levels below the player's floor in the player's building are dimmed (spec §3.3, uDim). */
+export const LOWER_LEVEL_DIM = 0.38;
+const WHITE = new Color(1, 1, 1);
+const DIM = new Color(LOWER_LEVEL_DIM, LOWER_LEVEL_DIM, LOWER_LEVEL_DIM);
+
 /**
  * Town look of the static map (walls, windows, door frames, roofs, props): ONE BatchedMesh per
  * chunk sharing the kit's palette material (1 draw call + 1 shadow per chunk, multi-draw).
@@ -71,6 +84,8 @@ export class TownStructures {
   /** Level of the loaded range (0 = ground). */
   z = 0;
   private cut: Cutaway = NO_CUTAWAY;
+  /** Building whose instances on this level are dimmed (player above this level). */
+  private dimmed: BuildingId = NO_BUILDING;
   private key = '-';
   private litMinute = -1;
 
@@ -132,7 +147,7 @@ export class TownStructures {
         const geo = pitchedRoof(
           r.footprint,
           r.style,
-          roofColour(r.building),
+          roofColour(r.building, r.content),
           WALL_CELL[skin],
           this.kit.cells,
           y,
@@ -183,6 +198,9 @@ export class TownStructures {
       }
     }
     for (const s of stairsGeometry(tiles, range, baseY, this.kit.cells)) {
+      push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
+    }
+    for (const s of railingGeometry(tiles, range, baseY, this.kit.cells)) {
       push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
     }
     for (const p of props) {
@@ -248,6 +266,8 @@ export class TownStructures {
           list.push({ batch, instance });
         }
       }
+      // Per-instance colours from the start (one shader variant, no hitch on the first dim).
+      if (mesh.instanceCount > 0) mesh.setColorAt(0, WHITE);
       mesh.computeBoundingBox();
       mesh.computeBoundingSphere();
       this.batches.set(k, batch);
@@ -266,6 +286,12 @@ export class TownStructures {
     this.cut = c;
     const touched = new Set([prev.building, c.building]);
     const level = c.z ?? 0;
+    const dim = c.building !== NO_BUILDING && this.z < level ? c.building : NO_BUILDING;
+    if (dim !== this.dimmed) {
+      this.tint(this.dimmed, WHITE);
+      this.tint(dim, DIM);
+      this.dimmed = dim;
+    }
     for (const b of touched) {
       // Levels above the player's are not drawn in the player's building (spec 3.1).
       const hidden = b === c.building && b !== NO_BUILDING && this.z > level;
@@ -294,7 +320,7 @@ export class TownStructures {
     if (m === this.litMinute) return;
     this.litMinute = m;
     for (const it of this.windows) {
-      const lit = !it.edge.interior && windowLit(it.seed, m);
+      const lit = !it.edge.interior && it.edge.skin !== 'burnt' && windowLit(it.seed, m);
       if (lit !== it.lit) {
         it.lit = lit;
         this.apply(it);
@@ -331,6 +357,19 @@ export class TownStructures {
     for (const b of this.batches.values()) b.mesh.dispose();
     this.batches.clear();
     this.root.clear();
+  }
+
+  /** Colour of every instance of building `b` on this level. */
+  private tint(b: BuildingId, c: Color): void {
+    if (b === NO_BUILDING) return;
+    for (const it of this.edgesByBuilding.get(b) ?? []) it.batch.mesh.setColorAt(it.instance, c);
+    for (const r of this.roofsByBuilding.get(b) ?? []) r.batch.mesh.setColorAt(r.instance, c);
+    for (const r of this.slabsByBuilding.get(b) ?? []) r.batch.mesh.setColorAt(r.instance, c);
+  }
+
+  /** Building dimmed on this level (tests). */
+  dimmedBuilding(): BuildingId {
+    return this.dimmed;
   }
 
   private apply(it: EdgeItem): void {

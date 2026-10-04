@@ -15,6 +15,10 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { CanvasTexture } from 'three';
+import { deriveSkins, paintExtCells, withExtCells } from './skins.js';
+import { shopWindowGeometry } from './levels.js';
+import { ALL_SKINS, WALL_CELL } from './modules.js';
 
 /** `deadzone-town/town.json` (written by `assets town`). */
 export interface TownKitIndex {
@@ -124,15 +128,27 @@ export async function loadTownKit(
 ): Promise<TownKit> {
   const res = await fetch(`${baseUrl}deadzone-town/town.json`);
   if (!res.ok) throw new Error(`town kit: HTTP ${res.status}`);
-  const index = (await res.json()) as TownKitIndex;
+  const index = withExtCells((await res.json()) as TownKitIndex);
   const tl = new TextureLoader();
   const gltf = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const [glb, palette, emissive, detail] = await Promise.all([
+  const [glb, paletteSrc, emissive, detail] = await Promise.all([
     gltf.loadAsync(baseUrl + index.glb),
     tl.loadAsync(baseUrl + index.palette),
     tl.loadAsync(baseUrl + index.emissive),
     tl.loadAsync(baseUrl + index.detail),
   ]);
+  // Catalogue cells (atlas 192+) painted into a copy of the palette.
+  const img = paletteSrc.image;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  let palette: Texture = paletteSrc;
+  if (ctx) {
+    ctx.drawImage(img, 0, 0);
+    paintExtCells(ctx, img.width);
+    palette = new CanvasTexture(canvas);
+  }
   for (const t of [palette, emissive]) {
     t.colorSpace = SRGBColorSpace;
     t.magFilter = t.minFilter = NearestFilter;
@@ -157,6 +173,8 @@ export async function loadTownKit(
       geometries.set(`${name}-broken`, withoutCell(g, glass));
     }
   }
+  deriveSkins(geometries, (c) => cells.uv(c));
+  addShopWindows(geometries, cells);
   const material = new MeshStandardMaterial({
     map: palette,
     emissiveMap: emissive,
@@ -169,4 +187,22 @@ export async function loadTownKit(
   });
   material.name = 'deadzone-town/palette';
   return { geometries, material, cells, detail };
+}
+
+/** Shop window modules `shopwin-<skin>` (+ `-lit`, `-broken`) for every wall skin. */
+export function addShopWindows(geometries: Map<string, BufferGeometry>, cells: TownCells): void {
+  const ref = geometries.get('wall-plaster');
+  ref?.computeBoundingBox();
+  const bb = ref?.boundingBox;
+  const t = bb ? Math.min(0.4, Math.max(0.05, bb.max.z - bb.min.z)) : 0.2;
+  const h = bb ? bb.max.y : 2.8;
+  for (const skin of ALL_SKINS) {
+    const wall = WALL_CELL[skin];
+    geometries.set(`shopwin-${skin}`, shopWindowGeometry(cells, wall, {}, t, h));
+    geometries.set(`shopwin-${skin}-lit`, shopWindowGeometry(cells, wall, { lit: true }, t, h));
+    geometries.set(
+      `shopwin-${skin}-broken`,
+      shopWindowGeometry(cells, wall, { broken: true }, t, h),
+    );
+  }
 }

@@ -1,4 +1,4 @@
-import { BoxGeometry, Matrix4, Vector3, type BufferGeometry } from 'three';
+import { BoxGeometry, Color, Matrix4, Vector3, type BufferGeometry } from 'three';
 import { describe, expect, it } from 'vitest';
 import { kitOpeningMatrix, type OpeningEdge } from '../openings.js';
 import { TEST_BUILDING, TEST_BUILDING_ID } from '../test-building.js';
@@ -19,7 +19,8 @@ import {
 import { pitchedRoof, ridgeHeight } from './roof.js';
 import { buildTerrainGeometry, floorLook } from './terrain-mesh.js';
 import { MapTiles } from './tiles.js';
-import { TownStructures } from './town-structures.js';
+import { LOWER_LEVEL_DIM, TownStructures } from './town-structures.js';
+import { shopWindowGeometry } from './levels.js';
 
 const cells = townCells({
   cells: Object.fromEntries(
@@ -162,6 +163,56 @@ describe('town layout (generated test map)', () => {
       before,
     );
     expect(night.length).toBe(before.length);
+  });
+
+  it('dims the building on levels below the player (spec 3.3), restores on leaving', () => {
+    const s = new TownStructures(source, stubKit());
+    s.loadRange(TEST_MAP_RANGE);
+    s.setCutaway({ building: TEST_BUILDING_ID, tx: 13, ty: 15, side: { sx: 1, sz: 1 }, z: 1 });
+    expect(s.dimmedBuilding()).toBe(TEST_BUILDING_ID);
+    const mesh = s.root.children[0] as unknown as {
+      getColorAt(i: number, c: Color): Color;
+      instanceCount: number;
+    };
+    const c = new Color();
+    const dim = Array.from({ length: mesh.instanceCount }, (_, i) => mesh.getColorAt(i, c).r);
+    expect(dim.filter((r) => Math.abs(r - LOWER_LEVEL_DIM) < 1e-6).length).toBeGreaterThan(10);
+    s.setCutaway({ building: 0, tx: 0, ty: 0, side: { sx: 1, sz: 1 } });
+    expect(s.dimmedBuilding()).toBe(0);
+    const back = Array.from({ length: mesh.instanceCount }, (_, i) => mesh.getColorAt(i, c).r);
+    expect(back.every((r) => r === 1)).toBe(true);
+  });
+});
+
+describe('catalogue skins and shop windows', () => {
+  it('maps catalogue walls to skins, shop windows to generated modules', () => {
+    expect(skinOfWall('base:wall-gas', 1)).toBe('gas');
+    expect(skinOfWall('base:wall-pharmacy', 1)).toBe('pharmacy');
+    expect(skinOfWall('base:wall-burnt', 1)).toBe('burnt');
+    expect(edgeModule('window', 'shop', 'base:window-shop', { lowered: false })).toBe(
+      'shopwin-shop',
+    );
+    expect(edgeModule('window', 'gas', 'base:window-shop', { lowered: false, lit: true })).toBe(
+      'shopwin-gas-lit',
+    );
+    expect(edgeVariants('window', 'shop', 'base:window-shop').sort()).toEqual([
+      'shopwin-shop',
+      'shopwin-shop-broken',
+      'shopwin-shop-lit',
+      'stub-shop',
+    ]);
+    expect(doorLeaf('pharmacy')).toBe('door-glass');
+  });
+
+  it('shop window glass runs 0.3–2.5 m; broken has no glass', () => {
+    const c = townCells({ cells: { glass: { uv: [0.1, 0.1], hex: '#000' } } });
+    const whole = shopWindowGeometry(c, 'wall', {});
+    const broken = shopWindowGeometry(c, 'wall', { broken: true });
+    whole.computeBoundingBox();
+    expect(whole.boundingBox!.max.y).toBeCloseTo(2.8);
+    expect(whole.getAttribute('position').count).toBeGreaterThan(
+      broken.getAttribute('position').count,
+    );
   });
 });
 

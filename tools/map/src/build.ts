@@ -138,6 +138,7 @@ function paintBuilding(world: World, b: Building, holes: ReadonlySet<string>): v
   const plan = level?.plan ?? b.plan;
   const rooms = floorRooms(b, z);
   const openings: Opening[] = level ? level.openings : b.openings;
+  const gaps = level ? level.gaps : b.gaps;
   const tiles: [number, number][] = [];
   // Palette order = authoring order: room floors, then the roof.
   for (const r of Object.values(rooms)) world.tile(r.floor);
@@ -158,7 +159,7 @@ function paintBuilding(world: World, b: Building, holes: ReadonlySet<string>): v
     });
   });
   // Walls on every border where the room changes (room | other room, room | outside).
-  for (const [x, y] of tiles) {
+  for (const [x, y] of b.walls ? tiles : []) {
     const r = world.roomAt(x, y);
     for (const side of ['n', 's', 'e', 'w'] as const) {
       const [ex, ey, s] = canonical(x, y, side);
@@ -186,6 +187,14 @@ function paintBuilding(world: World, b: Building, holes: ReadonlySet<string>): v
     const contentId = o.contentId ?? (o.type === 'door' ? b.door : b.window);
     if (!contentId) throw new Error(`budynek ${b.id}: brak domyślnego ${o.type}`);
     world.edges.set(key, { type: o.type, contentId });
+  }
+  for (const g of gaps) {
+    const [ex, ey, s] = canonical(b.origin[0] + g.at[0], b.origin[1] + g.at[1], g.side);
+    if (!world.edges.delete(edgeKey(ex, ey, s))) {
+      throw new Error(
+        `budynek ${b.id}: przerwa w (${g.at.join(', ')}) ${g.side} nie leży na ścianie`,
+      );
+    }
   }
 }
 

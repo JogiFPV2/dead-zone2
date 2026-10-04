@@ -24,6 +24,9 @@ export const OpeningSchema = z.strictObject({
   contentId: TileRefSchema.optional(),
 });
 
+/** Edge left open: no wall at all (ruins, breaches); `at` is building-local. */
+export const GapSchema = z.strictObject({ at: Xy, side: z.enum(['n', 's', 'e', 'w']) });
+
 const RoomsSchema = z.record(
   z.string().length(1),
   z.strictObject({
@@ -44,6 +47,7 @@ export const FloorSchema = z.strictObject({
   plan: z.array(z.string().min(1)).min(1).optional(),
   rooms: RoomsSchema.optional(),
   openings: z.array(OpeningSchema).default([]),
+  gaps: z.array(GapSchema).default([]),
 });
 
 export const BuildingSchema = z.strictObject({
@@ -63,6 +67,10 @@ export const BuildingSchema = z.strictObject({
   /** Roof over every room tile; omit for no roof. */
   roof: TileRefSchema.optional(),
   openings: z.array(OpeningSchema).default([]),
+  /** Wall edges removed after openings (ruins). */
+  gaps: z.array(GapSchema).default([]),
+  /** `false`: no generated walls (canopy, carport): rooms, floor and roof only. */
+  walls: z.boolean().default(true),
   /** Upper floors (z = 1, 2, ...); empty = single-storey. */
   floors: z.array(FloorSchema).default([]),
 });

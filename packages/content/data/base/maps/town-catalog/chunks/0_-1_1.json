@@ -1,0 +1,462 @@
+{
+  "address": {
+    "cx": 0,
+    "cy": -1,
+    "z": 1
+  },
+  "palette": ["base:concrete", "base:roof-felt"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [0, 608],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 3],
+        [0, 4],
+        [1, 1],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 24],
+        [1, 8],
+        [0, 120]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 608],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 24],
+        [2, 8],
+        [0, 120]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 608],
+        [70, 3],
+        [71, 5],
+        [0, 24],
+        [70, 3],
+        [71, 5],
+        [0, 24],
+        [70, 3],
+        [71, 5],
+        [0, 24],
+        [72, 8],
+        [0, 24],
+        [72, 8],
+        [0, 24],
+        [72, 8],
+        [0, 24],
+        [73, 3],
+        [74, 5],
+        [0, 24],
+        [73, 3],
+        [74, 5],
+        [0, 24],
+        [73, 3],
+        [74, 5],
+        [0, 24],
+        [73, 3],
+        [74, 5],
+        [0, 120]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 0,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 0,
+      "y": 22,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 0,
+      "y": 25,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 0,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 1,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 1,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 1,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 1,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 2,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 2,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 2,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 2,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 3,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 3,
+      "y": 19,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 20,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 21,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 25,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 26,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 27,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 28,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 3,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 4,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 4,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 4,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 4,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 5,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 5,
+      "y": 22,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 5,
+      "y": 25,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 5,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 6,
+      "y": 19,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 6,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 6,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 6,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 19,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 22,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 7,
+      "y": 25,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-police"
+    },
+    {
+      "x": 7,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 19,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 20,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 21,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 22,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 23,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 24,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 25,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 26,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 27,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 8,
+      "y": 28,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    }
+  ],
+  "objects": [],
+  "rooms": {
+    "70": {
+      "roomType": "base:room-office",
+      "buildingId": 4
+    },
+    "71": {
+      "roomType": "base:room-office",
+      "buildingId": 4
+    },
+    "72": {
+      "roomType": "base:room-police",
+      "buildingId": 4
+    },
+    "73": {
+      "roomType": "base:room-police",
+      "buildingId": 4
+    },
+    "74": {
+      "roomType": "base:room-police",
+      "buildingId": 4
+    }
+  }
+}

@@ -1,0 +1,1027 @@
+{
+  "address": {
+    "cx": -1,
+    "cy": 0,
+    "z": 0
+  },
+  "palette": [
+    "base:grass",
+    "base:sidewalk",
+    "base:asphalt",
+    "base:concrete",
+    "base:kitchen-tiles",
+    "base:roof-gable",
+    "base:roof-shingles",
+    "base:roof-corrugated"
+  ],
+  "layers": {
+    "floor": {
+      "rle": [
+        [3, 192],
+        [2, 64],
+        [1, 32],
+        [4, 7],
+        [1, 9],
+        [4, 2],
+        [5, 2],
+        [4, 3],
+        [1, 9],
+        [4, 7],
+        [1, 9],
+        [4, 2],
+        [5, 2],
+        [4, 3],
+        [1, 4],
+        [4, 4],
+        [1, 1],
+        [4, 7],
+        [1, 9],
+        [4, 2],
+        [5, 2],
+        [4, 3],
+        [1, 4],
+        [4, 4],
+        [1, 1],
+        [4, 7],
+        [1, 9],
+        [4, 2],
+        [5, 2],
+        [4, 3],
+        [1, 4],
+        [4, 4],
+        [1, 1],
+        [4, 7],
+        [1, 4],
+        [4, 5],
+        [5, 3],
+        [4, 4],
+        [1, 4],
+        [4, 4],
+        [1, 1],
+        [4, 3],
+        [5, 4],
+        [1, 4],
+        [4, 5],
+        [5, 3],
+        [4, 4],
+        [1, 4],
+        [4, 4],
+        [1, 1],
+        [4, 3],
+        [5, 4],
+        [1, 4],
+        [4, 5],
+        [5, 3],
+        [4, 4],
+        [1, 9],
+        [4, 3],
+        [5, 4],
+        [1, 4],
+        [4, 5],
+        [5, 3],
+        [4, 4],
+        [1, 169],
+        [2, 64],
+        [3, 192],
+        [2, 64]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 304],
+        [6, 7],
+        [0, 25],
+        [6, 7],
+        [0, 4],
+        [8, 4],
+        [0, 17],
+        [6, 7],
+        [0, 4],
+        [8, 4],
+        [0, 17],
+        [6, 7],
+        [0, 4],
+        [8, 4],
+        [0, 12],
+        [7, 5],
+        [6, 7],
+        [0, 4],
+        [8, 4],
+        [0, 12],
+        [7, 5],
+        [6, 7],
+        [0, 4],
+        [8, 4],
+        [0, 12],
+        [7, 5],
+        [6, 7],
+        [0, 20],
+        [7, 5],
+        [6, 7],
+        [0, 489]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 288],
+        [94, 7],
+        [0, 9],
+        [101, 2],
+        [102, 2],
+        [103, 3],
+        [0, 9],
+        [94, 7],
+        [0, 9],
+        [101, 2],
+        [102, 2],
+        [103, 3],
+        [0, 4],
+        [107, 4],
+        [0, 1],
+        [94, 7],
+        [0, 9],
+        [101, 2],
+        [102, 2],
+        [103, 3],
+        [0, 4],
+        [107, 4],
+        [0, 1],
+        [94, 7],
+        [0, 9],
+        [101, 2],
+        [102, 2],
+        [103, 3],
+        [0, 4],
+        [107, 4],
+        [0, 1],
+        [94, 7],
+        [0, 4],
+        [106, 5],
+        [104, 3],
+        [105, 4],
+        [0, 4],
+        [107, 4],
+        [0, 1],
+        [95, 3],
+        [96, 4],
+        [0, 4],
+        [106, 5],
+        [104, 3],
+        [105, 4],
+        [0, 4],
+        [107, 4],
+        [0, 1],
+        [95, 3],
+        [96, 4],
+        [0, 4],
+        [106, 5],
+        [104, 3],
+        [105, 4],
+        [0, 9],
+        [95, 3],
+        [96, 4],
+        [0, 4],
+        [106, 5],
+        [104, 3],
+        [105, 4],
+        [0, 489]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 0,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 0,
+      "y": 14,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 0,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 1,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 1,
+      "y": 14,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 1,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 2,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 2,
+      "y": 14,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 2,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 3,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 3,
+      "y": 14,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 3,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 3,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 3,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 3,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 4,
+      "y": 9,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 4,
+      "y": 14,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 4,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 5,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 5,
+      "y": 14,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 5,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 6,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 6,
+      "y": 14,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 6,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 7,
+      "y": 9,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 7,
+      "y": 11,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 7,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 7,
+      "y": 15,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 7,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-kostka"
+    },
+    {
+      "x": 11,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 11,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 11,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 11,
+      "y": 15,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 11,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 11,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 12,
+      "y": 13,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 12,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 13,
+      "y": 13,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 13,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 14,
+      "y": 13,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 14,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 15,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 15,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 9,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 10,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 16,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 12,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 16,
+      "y": 13,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 16,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 14,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 16,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 16,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 17,
+      "y": 9,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 17,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 17,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 18,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 9,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 10,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 18,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 18,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 19,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 14,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 19,
+      "y": 15,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 19,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 9,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 10,
+      "side": "w",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 20,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 20,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 21,
+      "y": 9,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 21,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 21,
+      "y": 17,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 22,
+      "y": 9,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 22,
+      "y": 13,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 22,
+      "y": 17,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 23,
+      "y": 9,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 23,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 23,
+      "y": 11,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 23,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 23,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 23,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 23,
+      "y": 15,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 23,
+      "y": 16,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:siding-blue"
+    },
+    {
+      "x": 27,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 27,
+      "y": 10,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 27,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 27,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 27,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 27,
+      "y": 14,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 27,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 28,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 28,
+      "y": 15,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 29,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 29,
+      "y": 15,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-plain"
+    },
+    {
+      "x": 30,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 30,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 31,
+      "y": 10,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 31,
+      "y": 11,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 31,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 31,
+      "y": 13,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plank"
+    },
+    {
+      "x": 31,
+      "y": 14,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    }
+  ],
+  "objects": [],
+  "rooms": {
+    "94": {
+      "roomType": "base:room-living-room",
+      "buildingId": 10
+    },
+    "95": {
+      "roomType": "base:room-living-room",
+      "buildingId": 10
+    },
+    "96": {
+      "roomType": "base:room-kitchen",
+      "buildingId": 10
+    },
+    "101": {
+      "roomType": "base:room-living-room",
+      "buildingId": 11
+    },
+    "102": {
+      "roomType": "base:room-bathroom",
+      "buildingId": 11
+    },
+    "103": {
+      "roomType": "base:room-bedroom",
+      "buildingId": 11
+    },
+    "104": {
+      "roomType": "base:room-kitchen",
+      "buildingId": 11
+    },
+    "105": {
+      "roomType": "base:room-living-room",
+      "buildingId": 11
+    },
+    "106": {
+      "roomType": "base:room-garage",
+      "buildingId": 12
+    },
+    "107": {
+      "roomType": "base:room-garage",
+      "buildingId": 13
+    }
+  }
+}

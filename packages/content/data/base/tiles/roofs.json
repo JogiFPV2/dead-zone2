@@ -13,5 +13,20 @@
     "id": "base:roof-gable",
     "name": "tile.base.roof-gable.name",
     "category": "roof"
+  },
+  {
+    "id": "base:roof-tile",
+    "name": "tile.base.roof-tile.name",
+    "category": "roof"
+  },
+  {
+    "id": "base:roof-felt",
+    "name": "tile.base.roof-felt.name",
+    "category": "roof"
+  },
+  {
+    "id": "base:roof-corrugated",
+    "name": "tile.base.roof-corrugated.name",
+    "category": "roof"
   }
 ]
