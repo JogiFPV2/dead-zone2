@@ -3,6 +3,7 @@ import { gridOf } from '../ai/commands.js';
 import { emitNoise } from '../ai/noise.js';
 import { ticksPerGameMinute } from '../core/clock.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
+import { noteReject } from '../core/reject-note.js';
 import type { SimWorld } from '../core/world.js';
 import type { ActionState } from '../items/store.js';
 import { addXp, skillLevel } from '../progress/skills.js';
@@ -29,8 +30,15 @@ export function hotwireBlock(w: SimWorld, eid: number, a: ActionState) {
   if (!v || v.id !== a.vehicle) return 'invalid-state' as const;
   if (v.hotwired || v.keyIn || v.engineOn || carriedKey(w, eid, v)) return 'invalid-state' as const;
   const h = vehicleSettings(w).hotwire;
-  if (skillLevel(w, eid, h.electricalSkill) < h.minElectrical) return 'skill-too-low' as const;
-  if (skillLevel(w, eid, h.mechanicsSkill) < h.minMechanics) return 'skill-too-low' as const;
+  for (const [skill, level] of [
+    [h.electricalSkill, h.minElectrical],
+    [h.mechanicsSkill, h.minMechanics],
+  ] as const) {
+    const have = skillLevel(w, eid, skill);
+    if (have >= level) continue;
+    noteReject(w, { missing: { skill: { skill, level, have } } });
+    return 'skill-too-low' as const;
+  }
   return undefined;
 }
 

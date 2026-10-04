@@ -59,7 +59,7 @@ describe('vehicle snapshot block', () => {
     expect(unpackVehicleTires(0x00ff00ff)).toEqual([1, 0, 1, 0]);
     expect(packVehicleEngine(1, 0b0010)).toBe(0x2ff);
     expect(unpackVehicleEngine(0x8ff)).toEqual({ engine: 1, windowsBroken: 0b1000 });
-    expect(VEHICLE_PARTS).toHaveLength(13);
+    expect(VEHICLE_PARTS).toHaveLength(15);
   });
 
   it('state `driving` is appended (index 13); vehicle commands validate', () => {

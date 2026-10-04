@@ -329,6 +329,11 @@ function writeVehicleHash(pw: PhysicsWorld, h: HashWriter): void {
         .u32((v.home ?? -1) + 1)
         .u32(v.sig ?? 0)
         .u32(v.keyZombie ? 1 : 0);
+    // Gameplay parts (vehicles/damage.ts, protocol 19): only once set, older hashes stay.
+    if (v.battery !== undefined || v.fuelTank !== undefined)
+      h.u32(0x7f20_00b3)
+        .f32(v.battery ?? 100)
+        .f32(v.fuelTank ?? 100);
     for (const x of v.susp) h.f32(x);
     for (const x of v.zones) h.f32(x);
     h.f32(v.engine);

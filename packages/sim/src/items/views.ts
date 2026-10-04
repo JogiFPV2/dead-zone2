@@ -37,6 +37,7 @@ import {
 } from './store.js';
 import { floorZ } from '../world/levels.js';
 import { accessTile, isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
+import { fuelActionView } from '../vehicles/fuel.js';
 
 /** Ground piles without a capacity count as full at this many stacks. */
 const PILE_FULL_STACKS = 10;
@@ -311,6 +312,8 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
       ...(part ? { part } : a.seat !== undefined ? { seat: a.seat } : {}),
     };
   }
+  const fuel = fuelActionView(w, a, v.kind);
+  if (fuel) v.fuel = fuel;
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';

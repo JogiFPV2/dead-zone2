@@ -203,6 +203,8 @@
     "base:engine-parts": "Części silnika",
     "base:car-tire": "Opona samochodowa",
     "base:car-window": "Szyba samochodowa",
+    "base:car-battery": "Akumulator samochodowy",
+    "base:fuel-tank": "Bak paliwa",
     "base:rubber-hose": "Wąż gumowy",
     "base:fuel-pump": "Dystrybutor paliwa"
   }

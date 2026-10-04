@@ -3,6 +3,7 @@ import { applyAiCommand, isAiCommand } from '../ai/commands.js';
 import { applyAnimalCommand, isAnimalCommand } from '../animals/commands.js';
 import { queueAttack } from '../combat/commands.js';
 import { applyFirearmCommand } from '../combat/firearms.js';
+import { takeRejectNote } from '../core/reject-note.js';
 import type { SimWorld } from '../core/world.js';
 import { applyNewCharacter } from '../character/character.js';
 import { applyCraftCommand, isCraftCommand } from '../crafting/crafting.js';
@@ -25,6 +26,7 @@ import { applyVehicleCommand, isVehicleCommand } from '../vehicles/commands.js';
 export function inputSystem(w: SimWorld, grid: TileGrid): void {
   const { MoveIntent, AimIntent } = w.c;
   for (const cmd of w.queue.take(w.tick)) {
+    takeRejectNote(w);
     const eid = w.players.get(cmd.playerId);
     if (eid === undefined) {
       reject(w, cmd, 'unknown-player');
@@ -108,6 +110,8 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
 }
 
 function reject(w: SimWorld, cmd: Command, reason: CommandRejectReason, detail?: string): void {
+  const note = takeRejectNote(w);
+  detail ??= note?.detail;
   w.events.push({
     type: 'commandRejected',
     tick: w.tick,
@@ -116,5 +120,6 @@ function reject(w: SimWorld, cmd: Command, reason: CommandRejectReason, detail?:
     command: cmd.type,
     reason,
     ...(detail ? { detail } : {}),
+    ...(note?.missing ? { missing: note.missing } : {}),
   });
 }

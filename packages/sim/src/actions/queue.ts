@@ -191,6 +191,16 @@ export function interruptActions(w: SimWorld, eid: number, reason: ActionInterru
   w.items!.version++;
 }
 
+/**
+ * Movement by other means than `MoveIntent` (the driver's throttle / brake): interrupts the
+ * current action with `moved` unless its handler ignores it (like walking does).
+ */
+export function interruptOnMove(w: SimWorld, eid: number): void {
+  const a = playerItems(w, eid)?.current;
+  if (!a || handlers.get(a.kind)?.ignore?.includes('moved')) return;
+  interruptActions(w, eid, 'moved');
+}
+
 /** Starts queued actions until one is valid (invalid ones are dropped as `target-lost`). */
 function next(w: SimWorld, eid: number, p: PlayerItems): void {
   for (let a = p.queue.shift(); a; a = p.queue.shift()) {

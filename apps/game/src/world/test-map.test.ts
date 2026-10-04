@@ -52,3 +52,19 @@ it('has one building with rooms, a roof and all edge kinds in chunk (0, 0)', () 
   );
   expect(kinds).toEqual(new Set([undefined, 'wall', 'window', 'door', 'fence']));
 });
+
+it('has fuel pumps and parked cars for the vehicle UI (sim spawns them from chunk data)', () => {
+  const map = createTestMap();
+  const north = map.getChunk(0, -1, 0)!;
+  expect(north.objects?.filter((o) => o.contentId === 'base:fuel-pump')).toHaveLength(2);
+  expect(north.vehicles).toHaveLength(2);
+  const cars = [-1, 0].flatMap((cy) =>
+    [-1, 0].flatMap((cx) => map.getChunk(cx, cy, 0)?.vehicles ?? []),
+  );
+  expect(cars).toHaveLength(4);
+  for (const c of cars) {
+    expect(c.x).toBeGreaterThanOrEqual(0);
+    expect(c.x).toBeLessThan(32);
+    expect(c.type).toBe('base:sedan');
+  }
+});

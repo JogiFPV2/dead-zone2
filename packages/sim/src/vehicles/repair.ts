@@ -2,7 +2,9 @@ import { VEHICLE_PARTS, type CommandRejectReason, type VehiclePart } from '@dead
 import { registerAction } from '../actions/queue.js';
 import { ticksPerGameMinute } from '../core/clock.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
+import { noteReject } from '../core/reject-note.js';
 import type { SimWorld } from '../core/world.js';
+import type { RejectMissing } from '@deadzone/protocol';
 import { carriedItems, hasToolTag } from '../items/actions.js';
 import { playerItems } from '../items/inventory.js';
 import { destroyItem, type ActionState, type ItemInstance } from '../items/store.js';
@@ -14,14 +16,15 @@ import { vehicleSettings, type VehicleGameplay } from './settings.js';
 /**
  * Repairs (docs/sim-architecture.md 9.36): timed `repairVehicle` on one part through
  * `setVehiclePartHp` (#128; a repaired engine starts by itself only with a key, `keys.ts`).
- * Group per part: `engine`, `tire*` → `tire`, `window*` → `window`, `body*` → `body`; tools
+ * Group per part: `engine`, `tire*` → `tire`, `window*` → `window`, `body*` → `body`,
+ * `battery`, `fuelTank` (protocol 19, replaced whole); tools
  * (tags, all needed, not used up) and parts (consumed on completion) from content, Mechanics.
  */
 
-export type RepairGroup = 'engine' | 'tire' | 'window' | 'body';
+export type RepairGroup = 'engine' | 'tire' | 'window' | 'body' | 'battery' | 'fuelTank';
 
 export function repairGroup(part: VehiclePart): RepairGroup {
-  if (part === 'engine') return 'engine';
+  if (part === 'engine' || part === 'battery' || part === 'fuelTank') return part;
   if (part.startsWith('tire')) return 'tire';
   if (part.startsWith('window')) return 'window';
   return 'body';
@@ -55,13 +58,28 @@ export function repairBlock(
   const r = vehicleSettings(w).repair;
   if (!onFootNear(w, eid, v, r.reachTiles)) return 'out-of-range';
   const g = groupCfg(w, part);
-  if (skillLevel(w, eid, r.skill) < g.minSkill) return 'skill-too-low';
-  if (!g.tools.every((t) => hasToolTag(w, eid, t))) return 'missing-tool';
-  for (const need of g.parts) {
-    const have = carriedOf(w, eid, need.item).reduce((s, i) => s + i.count, 0);
-    if (have < need.count) return 'missing-parts';
-  }
-  return undefined;
+  // Everything lacking goes into `commandRejected.missing`; the reason is the first of them.
+  const missing: RejectMissing = {};
+  const have = skillLevel(w, eid, r.skill);
+  if (have < g.minSkill) missing.skill = { skill: r.skill, level: g.minSkill, have };
+  const tools = g.tools.filter((t) => !hasToolTag(w, eid, t));
+  if (tools.length) missing.tools = tools;
+  const parts = g.parts
+    .map((need) => ({
+      item: need.item,
+      qty: need.count - carriedOf(w, eid, need.item).reduce((s, i) => s + i.count, 0),
+    }))
+    .filter((p) => p.qty > 0);
+  if (parts.length) missing.parts = parts;
+  const reason = missing.skill
+    ? 'skill-too-low'
+    : missing.tools
+      ? 'missing-tool'
+      : missing.parts
+        ? 'missing-parts'
+        : undefined;
+  if (reason) noteReject(w, { missing });
+  return reason;
 }
 
 let registered = false;

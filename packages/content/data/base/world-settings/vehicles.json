@@ -30,7 +30,9 @@
       "pumpPoweredLps": 1.5,
       "pumpManualLps": 0.3,
       "pumpReserveL": { "min": 200, "max": 1000 },
-      "reachTiles": 1.5
+      "reachTiles": 1.5,
+      "pumpHoseTiles": 4,
+      "tankLeakLps": 0.02
     },
     "repair": {
       "skill": "base:mechanics",
@@ -69,6 +71,24 @@
         "minSkill": 1,
         "hpBase": 15,
         "hpPerLevel": 6,
+        "xp": 6
+      },
+      "battery": {
+        "sec": 8,
+        "tools": [],
+        "parts": [{ "item": "base:car-battery", "count": 1 }],
+        "minSkill": 0,
+        "hpBase": 100,
+        "hpPerLevel": 0,
+        "xp": 3
+      },
+      "fuelTank": {
+        "sec": 18,
+        "tools": ["base:tool-wrench"],
+        "parts": [{ "item": "base:fuel-tank", "count": 1 }],
+        "minSkill": 1,
+        "hpBase": 100,
+        "hpPerLevel": 0,
         "xp": 6
       }
     },

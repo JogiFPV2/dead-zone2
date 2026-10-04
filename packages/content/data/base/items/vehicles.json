@@ -28,6 +28,20 @@
     "tags": ["base:car-part"]
   },
   {
+    "id": "base:car-battery",
+    "name": "item.base.car-battery.name",
+    "kind": "misc",
+    "weightKg": 12,
+    "tags": ["base:car-part"]
+  },
+  {
+    "id": "base:fuel-tank",
+    "name": "item.base.fuel-tank.name",
+    "kind": "misc",
+    "weightKg": 8,
+    "tags": ["base:car-part"]
+  },
+  {
     "id": "base:rubber-hose",
     "name": "item.base.rubber-hose.name",
     "kind": "misc",

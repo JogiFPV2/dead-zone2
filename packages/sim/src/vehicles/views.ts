@@ -4,6 +4,12 @@ import { vehicleContainer } from './containers.js';
 import { carriedKey } from './keys.js';
 import { seatOf, vehicleTypes } from './seats.js';
 
+/** PlayerId of the player with StableId `sid` (occupants are players), null if none. */
+function playerIdOf(w: SimWorld, sid: number): number | null {
+  for (const [id, eid] of w.players) if (w.c.StableId.value[eid] === sid) return id;
+  return null;
+}
+
 /**
  * Gameplay state of the cars around player `eid` (`SimViewPatch.vehicles`): within
  * `VEHICLE_VIEW_TILES` plus the one it sits in, sorted by id.
@@ -20,6 +26,7 @@ export function vehicleStateViews(w: SimWorld, eid: number): VehicleStateView[] 
     if (v.id !== inside && (v.x - ex) ** 2 + (v.y - ey) ** 2 > r2) continue;
     const trunk = vehicleContainer(w, v, 'vehicle-trunk');
     const glovebox = vehicleContainer(w, v, 'vehicle-glovebox');
+    const seats = v.occupants.map((sid) => (sid ? playerIdOf(w, sid) : null));
     out.push({
       vehicleId: v.id,
       type: types[v.type]?.id ?? '',
@@ -32,6 +39,9 @@ export function vehicleStateViews(w: SimWorld, eid: number): VehicleStateView[] 
       fuelMax: v.fuelMax,
       ...(trunk ? { trunk: trunk.id } : {}),
       ...(glovebox ? { glovebox: glovebox.id } : {}),
+      seats,
+      driverId: seats[0] ?? null,
+      parts: { battery: Math.round(v.battery ?? 100), fuelTank: Math.round(v.fuelTank ?? 100) },
     });
   }
   return out.sort((a, b) => a.vehicleId - b.vehicleId);

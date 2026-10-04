@@ -58,6 +58,55 @@ export function rangeBounds(range: ChunkRange): {
   };
 }
 
+/**
+ * Vehicle test props (vehicle UI without `?car=` / `?pump=`): two fuel pumps on the concrete lot
+ * north of the start (chunk (0, −1)) with a car parked at each side within hose reach, and two
+ * cars on the roads by the start. World tiles; the sim spawns the cars from chunk data.
+ */
+export const TEST_MAP_PUMPS: readonly { x: number; y: number }[] = [
+  { x: 14, y: -16 },
+  { x: 18, y: -16 },
+];
+export const TEST_MAP_CARS: readonly { x: number; y: number; heading: number }[] = [
+  { x: 16, y: -13.5, heading: 0 },
+  { x: 16, y: -19.5, heading: Math.PI },
+  { x: 8, y: 2, heading: 0 },
+  { x: -16, y: 2, heading: Math.PI },
+];
+
+const inChunk = (cx: number, cy: number) => (p: { x: number; y: number }) =>
+  Math.floor(p.x / CHUNK_SIZE) === cx && Math.floor(p.y / CHUNK_SIZE) === cy;
+
+/** Pumps (map objects) and parked cars of chunk (cx, cy), in local tiles. */
+function vehicleProps(cx: number, cy: number): Pick<ChunkData, 'objects' | 'vehicles'> {
+  const ox = cx * CHUNK_SIZE;
+  const oy = cy * CHUNK_SIZE;
+  const pumps = TEST_MAP_PUMPS.filter(inChunk(cx, cy));
+  const cars = TEST_MAP_CARS.filter(inChunk(cx, cy));
+  return {
+    ...(pumps.length
+      ? {
+          objects: pumps.map((p) => ({
+            contentId: 'base:fuel-pump' as const,
+            x: p.x - ox,
+            y: p.y - oy,
+            rot: 0,
+          })),
+        }
+      : {}),
+    ...(cars.length
+      ? {
+          vehicles: cars.map((c) => ({
+            x: c.x - ox,
+            y: c.y - oy,
+            heading: c.heading,
+            type: 'base:sedan',
+          })),
+        }
+      : {}),
+  };
+}
+
 export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
   const inRange = (cx: number, cy: number, z: number) =>
     z === range.z && cx >= range.cx0 && cx <= range.cx1 && cy >= range.cy0 && cy <= range.cy1;
@@ -75,14 +124,16 @@ export function createTestMap(range: ChunkRange = TEST_MAP_RANGE): ChunkSource {
       }
       const coord = { cx, cy, z };
       // One grey-box building in chunk (0, 0); other chunks keep empty edges (SimMap shape).
+      const props = vehicleProps(cx, cy);
       if (cx === 0 && cy === 0) {
-        return { coord, floor, ...paintTestBuilding(ROOF_FLAT), rooms: TEST_ROOMS };
+        return { coord, floor, ...paintTestBuilding(ROOF_FLAT), rooms: TEST_ROOMS, ...props };
       }
       return {
         coord,
         floor,
         edgeN: new Uint16Array(CHUNK_TILES),
         edgeW: new Uint16Array(CHUNK_TILES),
+        ...props,
       };
     },
   };

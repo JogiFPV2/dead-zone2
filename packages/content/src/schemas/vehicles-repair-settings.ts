@@ -2,41 +2,12 @@ import { z } from 'zod';
 import { TagSchema } from './common/tags.js';
 import { ItemRefSchema, SkillRefSchema, TilesSchema } from './common/index.js';
 
+export { FuelSettingsSchema } from './vehicles-fuel-settings.js';
+
 /** Czas akcji w sekundach rzeczywistych przy ×1; XP; poziom umiejętności. */
 const SecSchema = z.number().min(0).max(600);
 const XpSchema = z.number().min(0).max(1000);
 const SkillLevel = z.number().int().min(0).max(10);
-
-const LitresSchema = z.number().min(0).max(10_000);
-const LpsSchema = z.number().min(0.01).max(100);
-
-/**
- * Paliwo: kanister (przedmiot `canItem`, poziom w litrach na egzemplarzu, 0..`canCapacityL`),
- * tankowanie auta z kanistra, napełnianie kanistra z dystrybutora (obiekt mapy `pumpItem`) i
- * spuszczanie paliwa z auta wężem (narzędzie z tagiem `hoseTag`). Akcje czasowe: czas = litry /
- * wydajność (l/s), przerwana akcja przelewa tyle, ile zdążyła.
- *
- * Dystrybutor: z prądem (`items.powered`) pompuje `pumpPoweredLps`, bez prądu ręczną korbą
- * `pumpManualLps` (wolniej, ale działa po odcięciu prądu — paliwo nie znika ze świata). Zapas
- * stacji losowany przy pierwszym użyciu z `pumpReserveL`.
- */
-export const FuelSettingsSchema = z
-  .strictObject({
-    canItem: ItemRefSchema.default('base:gas-can'),
-    canCapacityL: LitresSchema.default(10),
-    hoseTag: TagSchema.default('base:tool-hose'),
-    pumpItem: ItemRefSchema.default('base:fuel-pump'),
-    refuelLps: LpsSchema.default(1),
-    siphonLps: LpsSchema.default(0.25),
-    pumpPoweredLps: LpsSchema.default(1.5),
-    pumpManualLps: LpsSchema.default(0.3),
-    pumpReserveL: z
-      .strictObject({ min: LitresSchema, max: LitresSchema })
-      .default({ min: 200, max: 1000 }),
-    /** Zasięg do obrysu auta (wlew / wąż) i do kafla dystrybutora. */
-    reachTiles: TilesSchema.default(1.5),
-  })
-  .prefault({});
 
 /** Jedna grupa napraw: narzędzia (tagi, wszystkie), części (zużywane), skill, wynik. */
 export const RepairGroupSchema = z.strictObject({
@@ -54,8 +25,9 @@ export const RepairGroupSchema = z.strictObject({
 });
 
 /**
- * Naprawy (akcje czasowe przez `setPartHp`): grupy części `engine`, `tire`, `window`, `body`.
- * Silnik i karoseria — naprawa częściowa zależna od Mechanics; opona i szyba — wymiana.
+ * Naprawy (akcje czasowe przez `setPartHp`): grupy części `engine`, `tire`, `window`, `body`,
+ * `battery`, `fuelTank`. Silnik i karoseria — naprawa częściowa zależna od Mechanics; opona,
+ * szyba, akumulator i bak — wymiana.
  */
 export const RepairSettingsSchema = z
   .strictObject({
@@ -95,6 +67,24 @@ export const RepairSettingsSchema = z
       minSkill: 1,
       hpBase: 15,
       hpPerLevel: 6,
+      xp: 6,
+    }),
+    battery: RepairGroupSchema.default({
+      sec: 8,
+      tools: [],
+      parts: [{ item: 'base:car-battery', count: 1 }],
+      minSkill: 0,
+      hpBase: 100,
+      hpPerLevel: 0,
+      xp: 3,
+    }),
+    fuelTank: RepairGroupSchema.default({
+      sec: 18,
+      tools: ['base:tool-wrench'],
+      parts: [{ item: 'base:fuel-tank', count: 1 }],
+      minSkill: 1,
+      hpBase: 100,
+      hpPerLevel: 0,
       xp: 6,
     }),
   })

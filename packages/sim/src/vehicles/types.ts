@@ -72,6 +72,12 @@ export interface Vehicle {
   zones: number[];
   /** Engine hp 0..100 (below `engineThreshold` less power, 0 = broken, won't start). */
   engine: number;
+  /**
+   * Gameplay parts (Symulacja, protocol 19; absent = 100): battery hp (0 = the engine does not
+   * start) and fuel tank hp (below 100 it leaks `fuel.tankLeakLps` × (1 − hp / 100)).
+   */
+  battery?: number;
+  fuelTank?: number;
   /** Tyre hp 0..100: FL, FR, RL, RR (below `tireFlatBelow` going flat: pull, less grip). */
   tires: number[];
   /** Window hp 0..100: front (windscreen), rear, left, right (0 = shattered). */

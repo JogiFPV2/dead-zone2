@@ -80,6 +80,8 @@ export function vehicleSig(w: SimWorld, v: Vehicle): number {
   const h = new HashWriter();
   h.f32(v.x).f32(v.y).u32(v.heading).f32(v.fuel).f32(v.engine).u32(v.doorsOpen);
   for (const a of [v.zones, v.tires, v.windows]) for (const x of a) h.f32(x);
+  if (v.battery !== undefined || v.fuelTank !== undefined)
+    h.f32(v.battery ?? 100).f32(v.fuelTank ?? 100);
   for (const x of v.occupants) h.u32(x);
   h.u32((v.locked ? 1 : 0) | (v.keyIn ? 2 : 0) | (v.hotwired ? 4 : 0) | (v.keyZombie ? 8 : 0));
   const st = w.items;

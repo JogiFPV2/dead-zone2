@@ -11,6 +11,7 @@ import { windowGrabStep } from './windows.js';
 import { applyImpactDamage, applyRollDamage, driveMods } from './damage.js';
 import { playerEidOf, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
+import { tankLeak } from './fuel.js';
 
 /** Vehicles in StableId order (deterministic). */
 export function sortedVehicles(w: SimWorld): Vehicle[] {
@@ -62,6 +63,7 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
     }
     v.frozenAt = -1;
     checkOccupants(w, v);
+    tankLeak(w, v);
     if (v.engineOn && v.fuel <= 0) {
       v.engineOn = false;
       v.throttle = 0;

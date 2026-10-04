@@ -1,6 +1,7 @@
 import {
   CHUNK_TILES,
   decodeSnapshot,
+  decodeVehicleSnapshot,
   SnapshotEntityKind,
   type MainToWorker,
   type SimEvent,
@@ -8,6 +9,7 @@ import {
   type SimViewPatch,
   type WorkerToMain,
 } from '@deadzone/protocol';
+import { BASE_PACK_DIR, readPackDir } from '@deadzone/content/node';
 import { describe, expect, it } from 'vitest';
 import { fixturePack } from '../test/content-fixtures.js';
 import { createSimWorkerClient, type SimWorkerLike } from './client.js';
@@ -146,6 +148,30 @@ describe('createSimWorkerClient', () => {
     expect(releases.length).toBe(seen.length);
     expect(releases.every((m) => m.transfer.length === 1)).toBe(true);
     expect(h.host.droppedMessages).toBe(0);
+  });
+
+  it('passes the vehicle block of every snapshot on (`snapshot.vehicles`)', async () => {
+    const h = harness();
+    const client = createSimWorkerClient(h.worker);
+    const base = await readPackDir(BASE_PACK_DIR);
+    const cars: { tick: number; x: number; id: number }[] = [];
+    let without = 0;
+    client.onSnapshot(({ tick, buf, vehicles }) => {
+      if (vehicles) {
+        const v = decodeVehicleSnapshot(vehicles)[0]!;
+        cars.push({ tick, x: v.x, id: v.stableId });
+      } else without++;
+      client.release(buf);
+    });
+    client.init(5, openMap(), {
+      content: { packs: [base] },
+      spawn: { x: 5.5, y: 5.5, z: 0 },
+      vehicles: [{ x: 16, y: 16, type: 'base:sedan' }],
+    });
+    h.advance(300);
+    expect(without).toBe(0);
+    expect(cars.length).toBeGreaterThan(1);
+    expect(cars.every((c) => c.x === 16 && c.id > 0)).toBe(true);
   });
 
   it('save over the worker: saved blob restores the same game in a new worker', async () => {

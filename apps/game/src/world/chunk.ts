@@ -1,3 +1,5 @@
+import type { SimChunkVehicle } from '@deadzone/protocol';
+
 /**
  * Local chunk contract for the renderer. The shared map format is still being agreed,
  * so this lives in apps/game and only describes what the client reads.
@@ -40,6 +42,11 @@ export interface ChunkData {
   readonly objects?: readonly MapObjectRef[];
   /** Flights of stairs from this level to z + 1 (content `stairs`, sim `SimChunk.stairs`). */
   readonly stairs?: readonly StairsRef[];
+  /**
+   * Parked cars spawned by the sim when the chunk goes live (`SimChunk.vehicles`): centre in
+   * local tiles, heading in rad, vehicle type content id. Drawn from the vehicle snapshot.
+   */
+  readonly vehicles?: readonly SimChunkVehicle[];
 }
 
 /** A flight of stairs: bottom tile (tx, ty) local to the chunk, `len` tiles climbing `dir`. */

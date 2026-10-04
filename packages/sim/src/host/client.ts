@@ -37,6 +37,8 @@ export interface SimSnapshotMessage {
   tick: number;
   /** Owned by the receiver; give it back with `release()` when no longer rendered. */
   buf: ArrayBuffer;
+  /** Vehicle block (protocol `decodeVehicleSnapshot`); absent when the world has no cars. */
+  vehicles?: ArrayBuffer;
 }
 
 /** A save game from the worker (store `buf`, pass it back as `init(..., { save })`). */
@@ -263,7 +265,9 @@ export function createSimWorkerClient(
       for (const cb of readyCbs) cb(msg.tick);
     } else if (msg.kind === 'snapshot') {
       tick = msg.tick;
-      for (const cb of snapCbs) cb({ tick: msg.tick, buf: msg.buf });
+      const snap: SimSnapshotMessage = { tick: msg.tick, buf: msg.buf };
+      if (msg.vehicles) snap.vehicles = msg.vehicles;
+      for (const cb of snapCbs) cb(snap);
     } else if (msg.kind === 'view') {
       for (const cb of viewCbs) cb(msg.view, msg.tick);
     } else if (msg.kind === 'events') {

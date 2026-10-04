@@ -17,7 +17,11 @@ const f = Math.fround;
 const ZONE_NAMES = ['Front', 'Rear', 'Left', 'Right'] as const;
 const TIRE_NAMES = ['FL', 'FR', 'RL', 'RR'] as const;
 
-/** Missing part arrays (states from before PR B) → full hp; no window grabs. */
+/**
+ * Missing part arrays (states from before PR B) → full hp; no window grabs. `battery` /
+ * `fuelTank` (protocol 19) stay absent until they take damage (absent = 100: saves and hashes of
+ * undamaged cars are unchanged).
+ */
 export function ensureVehicleParts(v: Vehicle): void {
   if (typeof v.engine !== 'number') v.engine = 100;
   if (!Array.isArray(v.tires) || v.tires.length !== 4) v.tires = [100, 100, 100, 100];
@@ -35,29 +39,46 @@ export function brokenWindowsMask(v: Vehicle): number {
   return m;
 }
 
-/** Slot of a part name: [array, index] (engine = [undefined, 0]). */
-function slot(v: Vehicle, part: VehiclePart): { arr: number[] | undefined; i: number } | undefined {
-  if (part === 'engine') return { arr: undefined, i: 0 };
+interface Slot {
+  get(): number;
+  set(hp: number): void;
+}
+
+/** Scalar part fields: `engine` and the gameplay parts (`battery`, `fuelTank`; absent = 100). */
+const scalar = (v: Vehicle, key: 'engine' | 'battery' | 'fuelTank'): Slot => ({
+  get: () => v[key] ?? 100,
+  set: (hp) => {
+    v[key] = hp;
+  },
+});
+
+/** Slot of a part name (read / write its hp). */
+function slot(v: Vehicle, part: VehiclePart): Slot | undefined {
+  if (part === 'engine' || part === 'battery' || part === 'fuelTank') return scalar(v, part);
+  const arr = (a: number[], i: number): Slot | undefined =>
+    i < 0
+      ? undefined
+      : {
+          get: () => a[i]!,
+          set: (hp) => {
+            a[i] = hp;
+          },
+        };
   if (part.startsWith('tire')) {
-    const i = TIRE_NAMES.indexOf(part.slice(4) as (typeof TIRE_NAMES)[number]);
-    return i < 0 ? undefined : { arr: v.tires, i };
+    return arr(v.tires, TIRE_NAMES.indexOf(part.slice(4) as (typeof TIRE_NAMES)[number]));
   }
   if (part.startsWith('body')) {
-    const i = ZONE_NAMES.indexOf(part.slice(4) as (typeof ZONE_NAMES)[number]);
-    return i < 0 ? undefined : { arr: v.zones, i };
+    return arr(v.zones, ZONE_NAMES.indexOf(part.slice(4) as (typeof ZONE_NAMES)[number]));
   }
   if (part.startsWith('window')) {
-    const i = ZONE_NAMES.indexOf(part.slice(6) as (typeof ZONE_NAMES)[number]);
-    return i < 0 ? undefined : { arr: v.windows, i };
+    return arr(v.windows, ZONE_NAMES.indexOf(part.slice(6) as (typeof ZONE_NAMES)[number]));
   }
   return undefined;
 }
 
 /** Current hp 0..100 of `part` (undefined for an unknown part name). */
 export function partHp(v: Vehicle, part: VehiclePart): number | undefined {
-  const s = slot(v, part);
-  if (!s) return undefined;
-  return s.arr ? s.arr[s.i] : v.engine;
+  return slot(v, part)?.get();
 }
 
 function stopBroken(w: SimWorld, v: Vehicle): void {
@@ -74,11 +95,10 @@ function hurt(w: SimWorld, v: Vehicle, part: VehiclePart, dmg: number, x: number
   if (!(dmg > 0)) return;
   const s = slot(v, part);
   if (!s) return;
-  const before = s.arr ? s.arr[s.i]! : v.engine;
+  const before = s.get();
   if (before <= 0) return;
   const after = f(Math.max(0, before - dmg));
-  if (s.arr) s.arr[s.i] = after;
-  else v.engine = after;
+  s.set(after);
   if (after > 0) return;
   w.events.push({
     type: 'vehiclePartBroken',
@@ -183,9 +203,9 @@ export function setVehiclePartHp(w: SimWorld, v: Vehicle, part: VehiclePart, hp:
   const s = slot(v, part);
   if (!s || !Number.isFinite(hp)) return false;
   const value = f(Math.max(0, Math.min(100, hp)));
-  const before = s.arr ? s.arr[s.i]! : v.engine;
-  if (s.arr) s.arr[s.i] = value;
-  else v.engine = value;
+  const before = s.get();
+  s.set(value);
+  // A dead battery / leaking tank stop nothing that runs: the battery only blocks the next start.
   if (part !== 'engine') return true;
   if (value <= 0) stopBroken(w, v);
   // A key (ignition / carried) or hotwiring is needed too (`vehicles/keys.ts`).

@@ -5,6 +5,7 @@ import type {
   EquipSlot,
   ItemId,
   MarkerColor,
+  PlayerId,
   WoundKind,
 } from './commands.js';
 import type { ActionKind, DeathCause, Freshness, LurePhase } from './events.js';
@@ -221,7 +222,12 @@ export interface NearbyContainerView {
   x: number;
   y: number;
   z: number;
-  /** This player searched it already (opening is instant). */
+  /**
+   * This player searched it already (opening is instant). The real per-player state for every
+   * kind that must be searched first (`world`, `corpse`, `vehicle-trunk`, `vehicle-glovebox`:
+   * false until this player's `search` completes; `openContainer` on it starts the search);
+   * always true for ground piles.
+   */
   searched: boolean;
   /** Fill 0..1 (see `StorageMarkerView.fillPct`); always set by the sim. */
   fillPct?: number;
@@ -259,6 +265,35 @@ export interface VehicleStateView {
   /** Container ids (absent = the type has none). */
   trunk?: ContainerId;
   glovebox?: ContainerId;
+  /**
+   * PROTOCOL_VERSION 19 (always set by the sim): who sits where, one entry per seat of the type
+   * (content `seats`, index = `seat`), PlayerId or null = empty; `driverId` = `seats[0]`.
+   */
+  seats?: (PlayerId | null)[];
+  driverId?: PlayerId | null;
+  /**
+   * PROTOCOL_VERSION 19 (always set): hp 0..100 (rounded) of the parts not in the snapshot block:
+   * `battery` (0 = no start), `fuelTank` (below 100 it leaks).
+   */
+  parts?: { battery: number; fuelTank: number };
+}
+
+/** Radius (tiles) of `SimViewPatch.pumps`. */
+export const PUMP_VIEW_TILES = 16;
+
+/**
+ * A fuel pump map object (`worldSettings.vehicles.fuel.pumpItem`) near the player (PROTOCOL_VERSION
+ * 19): tile, the station's stock in litres (rounded to 0.1; before the first use it is the
+ * deterministic roll the first use will start from, never unknown), and how it pumps now:
+ * `power` (mains power, `pumpPoweredLps`) or `crank` (hand crank, `pumpManualLps`), `lps` = rate.
+ */
+export interface PumpView {
+  x: number;
+  y: number;
+  z: number;
+  stockL: number;
+  source: 'power' | 'crank';
+  lps: number;
 }
 
 /** Radius (tiles) of `SimViewPatch.storages`. */
@@ -315,6 +350,16 @@ export interface ActionView {
   edge?: { tx: number; ty: number; z: number; side: EdgeSide };
   /** Vehicle actions (`enterVehicle`, `hotwire` …): the vehicle and, for `enterVehicle`, the seat. */
   vehicle?: { vehicleId: number; seat?: number; part?: VehiclePart };
+  /**
+   * Fuel actions (`refuel`, `fillFuel`, `siphonFuel`; PROTOCOL_VERSION 19): where the fuel comes
+   * from and the rate in l/s. `power` / `crank` = a pump (`fillFuel`, `refuel` from a pump), `can`
+   * = poured from a gas can, `hose` = siphoned. `pump` = the pump tile for pump actions.
+   */
+  fuel?: {
+    source: 'power' | 'crank' | 'can' | 'hose';
+    lps: number;
+    pump?: { x: number; y: number };
+  };
 }
 
 export interface SimViewPatch {
@@ -369,6 +414,8 @@ export interface SimViewPatch {
    * containers; full list (by id) when anything in it changes.
    */
   vehicles?: VehicleStateView[];
+  /** Fuel pumps within `PUMP_VIEW_TILES` on the player's floor (stock, source), full on change. */
+  pumps?: PumpView[];
 }
 
 /** A marker on the player's map (`addMarker`). */

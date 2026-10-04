@@ -20,6 +20,13 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(map.getChunk(0, 0, 0)).toBe(chunk);
   });
 
+  it('passes parked cars and pump objects on (`SimChunk.vehicles`, `objects`)', () => {
+    const chunk = chunkSourceToSimMap(source).getChunk(0, -1, 0)!;
+    expect(chunk.vehicles).toEqual(source.getChunk(0, -1, 0)!.vehicles);
+    expect(chunk.vehicles).toHaveLength(2);
+    expect(chunk.objects?.map((o) => o.contentId)).toEqual(['base:fuel-pump', 'base:fuel-pump']);
+  });
+
   it('keeps door / window / fence edges and names their kinds for the sim openings', () => {
     const map = chunkSourceToSimMap(source);
     const chunk = map.getChunk(0, 0, 0)!;

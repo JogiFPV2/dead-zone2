@@ -20,7 +20,9 @@
       { "table": "base:handguns", "weight": 1, "rarity": "very_rare" },
       { "item": "base:gas-can", "weight": 3 },
       { "item": "base:rubber-hose", "weight": 1 },
-      { "item": "base:engine-parts", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:engine-parts", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:car-battery", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:fuel-tank", "weight": 1, "rarity": "rare" }
     ]
   }
 ]

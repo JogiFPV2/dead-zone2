@@ -52,7 +52,10 @@ export type CommandRejectReason =
   | 'missing-parts'
   /** `newCharacter`: invalid choice or over budget (`commandRejected.detail` says what). */
   | 'invalid-character'
-  /** `watchTv` / VHS: no TV within `leisure.tvRadiusTiles` (`no-station`) or it has no power. */
+  /**
+   * `watchTv` / VHS: no TV within `leisure.tvRadiusTiles` (`no-station`) or it has no power;
+   * vehicle engine start with a dead battery (part `battery` at 0).
+   */
   | 'no-power'
   /** `addMarker`: the character already has `worldSettings.mapMarkers.maxMarkers` markers. */
   | 'marker-limit'
@@ -245,6 +248,23 @@ export const PHYS_EVENT_KINDS = [
 ] as const;
 export type PhysEventKind = (typeof PHYS_EVENT_KINDS)[number];
 
+/**
+ * What a rejected command lacked (`commandRejected.missing`, PROTOCOL_VERSION 19), for the UI
+ * („Brakuje: klucz, 1× opona, Mechanika 2”). Set by the vehicle commands (`repairVehicle`,
+ * `hotwire`, `siphonFuel`, `refuelVehicle`, `fillFuelCan`) on `missing-tool`, `missing-parts`,
+ * `skill-too-low`, `no-item`:
+ * - `tools`: tool tags none of the carried items has (e.g. `base:tool-wrench`);
+ * - `parts`: items still missing, `qty` = how many more are needed (not the total);
+ * - `skill`: the first skill below the requirement, `level` needed, `have` = current level;
+ * - `items`: item content ids of which none is carried (e.g. `base:gas-can` for a fuel action).
+ */
+export interface RejectMissing {
+  tools?: string[];
+  parts?: { item: string; qty: number }[];
+  skill?: { skill: string; level: number; have: number };
+  items?: string[];
+}
+
 /** Events emitted by the sim for the host (sounds, UI, debug). Never a source of truth. */
 export type SimEvent =
   | {
@@ -258,6 +278,8 @@ export type SimEvent =
       reason: CommandRejectReason;
       /** Extra info, e.g. `newCharacter`: `over-budget:-3`, `trait-conflict:base:weak`. */
       detail?: string;
+      /** What was lacking (tools, parts, skill), see `RejectMissing`. */
+      missing?: RejectMissing;
     }
   /**
    * Physics body event (players and zombies): `entity` = StableId, `source` = attacker StableId
@@ -362,18 +384,21 @@ export type SimEvent =
   | { type: 'vehicleKeyTaken'; tick: number; vehicleId: number; playerId: PlayerId; itemId: ItemId }
   /**
    * Fuel moved (`refuelVehicle` / `fillFuelCan` / `siphonFuel`, also the part an interrupted
-   * action managed): `litres` (> 0), the can's level after, the car's tank after.
+   * action managed): `litres` (> 0), the can's level after, the car's tank after. `pump`
+   * (PROTOCOL_VERSION 19) = `refuelVehicle {pump}`, car filled straight from the pump: no can
+   * (`item` 0, `canL` 0). `pumpL` = the station's stock after (`fill` and `pump`).
    */
   | {
       type: 'refueled';
       tick: number;
       playerId: PlayerId;
-      kind: 'refuel' | 'fill' | 'siphon';
+      kind: 'refuel' | 'fill' | 'siphon' | 'pump';
       item: ItemId;
       litres: number;
       canL: number;
       vehicleId?: number;
       fuel?: number;
+      pumpL?: number;
     }
   /** A vehicle part was repaired / replaced (`repairVehicle`): hp after (0..100). */
   | {

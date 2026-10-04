@@ -208,8 +208,9 @@ export interface UnequipCommand extends CommandHeader {
 }
 
 /**
- * Opens a container for the loot panel. A world storage not yet searched by this player starts
- * the timed action `search` (`containerType.searchMin`); the loot is generated on first search.
+ * Opens a container for the loot panel. A world storage, corpse, trunk or glovebox not yet
+ * searched by this player (`nearby[].searched` false) starts the timed action `search`
+ * (`containerType.searchMin`); the loot is generated on first search.
  */
 export interface OpenContainerCommand extends CommandHeader {
   type: 'openContainer';
@@ -218,13 +219,14 @@ export interface OpenContainerCommand extends CommandHeader {
 
 /**
  * Timed search (`search` action, `worldSettings.loot.search.searchSec` = 3.5 s at ×1, storage with
- * its own `containerType.searchMin` keeps that). Target: `container` = world storage or a zombie
- * corpse (`nearby[]` kind `corpse`) in reach; or a tile `x, y` (player's floor, in reach) = search
+ * its own `containerType.searchMin` keeps that). Target: `container` = world storage, a zombie
+ * corpse (`nearby[]` kind `corpse`) or a car's trunk / glovebox in reach; or a tile `x, y` (player's floor, in reach) = search
  * the spot (bush, ditch, street): hidden items within `search.spotRadiusTiles` of the tile turn
  * into normal ground piles. Movement, an attack / shove or a threat interrupt it
  * (`actionInterrupted`). Storage / corpse contents are not in any view before the search; on
  * completion the container opens (`containerOpened`, `nearby[].searched` true). Rejects:
- * `invalid-target` (neither or both targets, a container that is not storage / corpse),
+ * `invalid-target` (neither or both targets, a container that is not storage / corpse / trunk /
+ * glovebox),
  * `no-item`, `out-of-range`, `busy`.
  */
 export interface SearchCommand extends CommandHeader {
@@ -347,7 +349,7 @@ export interface TakeVehicleKeyCommand extends CommandHeader {
  * Driver: starts (`on: true`, `engineStart`) or stops (`engineStop {reason: 'driver'}`) the
  * engine. Starting needs the key (ignition or carried) or a hotwired car, fuel and a working
  * engine. Rejects: `invalid-state` (not the driver, already so, engine broken), `no-key`,
- * `no-fuel`.
+ * `no-fuel`, `no-power` (dead battery, part `battery` at 0; protocol 19).
  */
 export interface VehicleEngineCommand extends CommandHeader {
   type: 'vehicleEngine';
@@ -364,15 +366,22 @@ export interface HornCommand extends CommandHeader {
 }
 
 /**
- * Pours the gas can `item` (carried, `worldSettings.vehicles.fuel.canItem`) into the tank of
- * `vehicleId` (timed `refuel`, `fuel.refuelLps`; standing ≤ `fuel.reachTiles` from the car body,
- * on foot). An interrupted action pours what it managed. Rejects: `no-item`, `out-of-range`,
- * `no-fuel` (empty can), `no-space` (full tank), `invalid-target`.
+ * Fills the tank of `vehicleId` (timed `refuel`; on foot, ≤ `fuel.reachTiles` from the car body)
+ * from exactly one source:
+ * - `item`: a carried gas can (`fuel.canItem`), `fuel.refuelLps`;
+ * - `pump` (PROTOCOL_VERSION 19): straight from the fuel pump on tile (x, y) of the player's
+ *   floor, no can: the player within `fuel.reachTiles` of the pump tile, the car body within
+ *   `fuel.pumpHoseTiles` of it; `pumpPoweredLps` with power, `pumpManualLps` by hand crank; the
+ *   station's stock goes down (`SimViewPatch.pumps[].stockL`).
+ * An interrupted action pours what it managed. Rejects: `invalid-target` (no car, neither or
+ * both sources), `no-item`, `out-of-range` (player or car too far; `detail` `hose` = the car is
+ * out of the hose's reach), `no-station`, `no-fuel` (empty can / dry station), `no-space`.
  */
 export interface RefuelVehicleCommand extends CommandHeader {
   type: 'refuelVehicle';
   vehicleId: number;
-  item: ItemId;
+  item?: ItemId | undefined;
+  pump?: { x: number; y: number } | undefined;
 }
 
 /**
@@ -402,8 +411,9 @@ export interface SiphonFuelCommand extends CommandHeader {
 /**
  * Repairs / replaces a part of `vehicleId` (timed `repairVehicle`, on foot next to the car):
  * tools (tags) and parts (consumed) per group from `worldSettings.vehicles.repair` (`engine`,
- * `tire*`, `window*`, `body*`), Mechanics level and XP. Rejects: `invalid-target` (no car /
- * part already at 100), `out-of-range`, `skill-too-low`, `missing-tool`, `missing-parts`.
+ * `tire*`, `window*`, `body*`, `battery`, `fuelTank`), Mechanics level and XP. Rejects:
+ * `invalid-target` (no car / part already at 100), `out-of-range`, `skill-too-low`,
+ * `missing-tool`, `missing-parts` (`commandRejected.missing` lists what is lacking).
  */
 export interface RepairVehicleCommand extends CommandHeader {
   type: 'repairVehicle';
@@ -495,6 +505,18 @@ export interface DebugSpawnZombieCommand extends CommandHeader {
   z?: number | undefined;
   count?: number | undefined;
   zombieType?: string | undefined;
+}
+
+/**
+ * Dev only (`init.dev`, PROTOCOL_VERSION 19): sets `part` of `vehicleId` to `hp` (0..100, like
+ * damage or a repair: 0 breaks it, `vehiclePartBroken` is not sent). Rejects: `dev-only`,
+ * `invalid-target` (no such car).
+ */
+export interface DebugDamageVehicleCommand extends CommandHeader {
+  type: 'debugDamageVehicle';
+  vehicleId: number;
+  part: VehiclePart;
+  hp: number;
 }
 
 /**
@@ -832,6 +854,7 @@ export type Command =
   | DebugGiveItemCommand
   | DebugSpawnZombieCommand
   | DebugSpawnAnimalCommand
+  | DebugDamageVehicleCommand
   | DebugNoiseCommand
   | ToggleDoorCommand
   | BreakWindowCommand

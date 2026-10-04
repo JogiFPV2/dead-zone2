@@ -40,6 +40,7 @@ export function createKey(w: SimWorld, v: Vehicle, loc: number): ItemInstance | 
 export function startBlock(w: SimWorld, v: Vehicle): CommandRejectReason | undefined {
   if (v.engine <= 0) return 'invalid-state';
   if (v.fuel <= 0) return 'no-fuel';
+  if ((v.battery ?? 100) <= 0) return 'no-power';
   if (v.keyIn || v.hotwired) return undefined;
   const sid = v.occupants[0] ?? 0;
   const eid = sid ? playerEidOf(w, sid) : undefined;

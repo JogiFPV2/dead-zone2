@@ -10,7 +10,7 @@ import { circleVsObb, obbOf } from './geometry.js';
 import { doorPoint, seatOf, seatPoint, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
 import type { VehicleTypeDef } from '../content/adapter.js';
-import { newAction, startAction } from '../actions/queue.js';
+import { interruptOnMove, newAction, startAction } from '../actions/queue.js';
 import {
   applyEngine,
   applyHorn,
@@ -22,6 +22,7 @@ import {
   tryStartEngine,
 } from './keys.js';
 import { vehicleSettings } from './settings.js';
+import { setVehiclePartHp } from './damage.js';
 
 const VEHICLE_COMMANDS = [
   'enterVehicle',
@@ -36,6 +37,7 @@ const VEHICLE_COMMANDS = [
   'fillFuelCan',
   'siphonFuel',
   'repairVehicle',
+  'debugDamageVehicle',
 ] as const;
 type VehicleCommand = Extract<Command, { type: (typeof VEHICLE_COMMANDS)[number] }>;
 
@@ -241,6 +243,8 @@ function drive(
   v.brake = Math.fround(cmd.brake);
   v.steerInput = Math.fround(cmd.steer);
   v.handbrake = cmd.handbrake;
+  // Gas / brake is moving, like walking: it stops `hotwire` (and any other timed action).
+  if (v.throttle !== 0 || v.brake !== 0) interruptOnMove(w, eid);
   if (cmd.headlights !== undefined) v.headlights = cmd.headlights;
   return undefined;
 }
@@ -293,11 +297,16 @@ export function applyVehicleCommand(
       return applyEngine(w, eid, cmd.on);
     case 'horn':
       return applyHorn(w, eid);
-    case 'refuelVehicle':
+    case 'refuelVehicle': {
+      // Exactly one source: a carried gas can (`item`) or the pump on a tile (`pump`).
+      if ((cmd.item === undefined) === (cmd.pump === undefined)) return 'invalid-target';
+      const a = newAction('refuel', { item: cmd.item ?? 0 });
+      a.vehicle = cmd.vehicleId;
+      if (cmd.pump) a.pump = [cmd.pump.x, cmd.pump.y];
+      return startAction(w, eid, a);
+    }
     case 'siphonFuel': {
-      const a = newAction(cmd.type === 'refuelVehicle' ? 'refuel' : 'siphonFuel', {
-        item: cmd.item,
-      });
+      const a = newAction('siphonFuel', { item: cmd.item });
       a.vehicle = cmd.vehicleId;
       return startAction(w, eid, a);
     }
@@ -311,6 +320,12 @@ export function applyVehicleCommand(
       a.vehicle = cmd.vehicleId;
       a.seat = VEHICLE_PARTS.indexOf(cmd.part);
       return startAction(w, eid, a);
+    }
+    case 'debugDamageVehicle': {
+      if (!w.dev) return 'dev-only';
+      const v = w.physics.vehicles.get(cmd.vehicleId);
+      if (!v || !setVehiclePartHp(w, v, cmd.part, cmd.hp)) return 'invalid-target';
+      return undefined;
     }
   }
 }

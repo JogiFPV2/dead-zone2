@@ -65,7 +65,10 @@ export type VehicleZone = (typeof VEHICLE_ZONES)[number];
 
 /**
  * Damageable parts (hp 0..100): engine, tyres FL / FR / RL / RR, body zones, windows per side
- * (`setPartHp` / `getPartHp` in the sim, `vehiclePartBroken` event).
+ * (`setPartHp` / `getPartHp` in the sim, `vehiclePartBroken` event). Appended in
+ * PROTOCOL_VERSION 19 (Symulacja, gameplay only, not in the snapshot block): `battery` (0 = the
+ * engine does not start) and `fuelTank` (below 100 the tank leaks); their hp is in
+ * `VehicleStateView.parts`.
  */
 export const VEHICLE_PARTS = [
   'engine',
@@ -81,6 +84,8 @@ export const VEHICLE_PARTS = [
   'windowRear',
   'windowLeft',
   'windowRight',
+  'battery',
+  'fuelTank',
 ] as const;
 export type VehiclePart = (typeof VEHICLE_PARTS)[number];
 

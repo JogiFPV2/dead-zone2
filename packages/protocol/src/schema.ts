@@ -178,7 +178,8 @@ export const refuelVehicleCommandSchema = z.strictObject({
   ...header,
   type: z.literal('refuelVehicle'),
   vehicleId: u32,
-  item: itemId,
+  item: itemId.optional(),
+  pump: z.strictObject({ x: tileCoord, y: tileCoord }).optional(),
 });
 export const fillFuelCanCommandSchema = z.strictObject({
   ...header,
@@ -270,6 +271,14 @@ export const debugSpawnZombieCommandSchema = z.strictObject({
   z: z.number().int().min(-0x8000).max(0x7fff).optional(),
   count: z.number().int().min(1).max(500).optional(),
   zombieType: contentId.optional(),
+});
+
+export const debugDamageVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugDamageVehicle'),
+  vehicleId: u32,
+  part: z.enum(VEHICLE_PARTS),
+  hp: z.number().finite().min(0).max(100),
 });
 
 export const debugSpawnAnimalCommandSchema = z.strictObject({
@@ -515,6 +524,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugGiveItemCommandSchema,
   debugSpawnZombieCommandSchema,
   debugSpawnAnimalCommandSchema,
+  debugDamageVehicleCommandSchema,
   debugNoiseCommandSchema,
   toggleDoorCommandSchema,
   breakWindowCommandSchema,
