@@ -2,11 +2,14 @@ import type { NearbyContainerView } from '@deadzone/protocol';
 import type { GameState } from '../../state/game-state.js';
 import { actionProgress, nearestContainer } from '../hud-model.js';
 import { containerName } from '../labels.js';
+import { doorCentre, doorVerb, doorWins, type DoorTarget } from '../../world/door-target.js';
 import { InteractHold, SEARCH_HOLD_MS, type HoldEvent, type HoldTarget } from './interact-hold.js';
 import type { PromptVM } from './interact-prompt.js';
 
 /** Height (m) above the floor where the prompt / ring is anchored. */
 const ANCHOR_HEIGHT = 0.9;
+/** Door prompt anchor height (m), about the handle. */
+const DOOR_ANCHOR_HEIGHT = 1.2;
 /** Ring label of a spot search (tile, bush, ditch). */
 export const SPOT_NAME = 'Okolica';
 
@@ -18,6 +21,10 @@ export interface InteractHost {
   state(): GameState;
   /** Player position in sim coords (undefined before the first snapshot). */
   player(): { x: number; y: number } | undefined;
+  /** Nearest door in reach (`world/door-target.ts`), undefined when none. */
+  door(): DoorTarget | undefined;
+  /** Sends the sim `toggleDoor` for this door. */
+  toggleDoor(door: DoorTarget): void;
   /** Interact key still down. */
   held(): boolean;
   /** Moved or attacked this frame (cancels before the search starts, spec §6). */
@@ -71,9 +78,11 @@ export class InteractController {
     if (!ev) return;
     const h = this.host;
     if (ev.type === 'tap') {
-      // TODO(doors): a tap without a container should use the door / object in reach once the
-      // sim map carries doors.
-      if (ev.target && 'container' in ev.target) h.open(ev.target.container);
+      // A door in reach opens / closes (it wins over a container only when very close).
+      const box = ev.target && 'container' in ev.target ? ev.target.container : undefined;
+      const door = h.door();
+      if (door && doorWins(door, box !== undefined)) h.toggleDoor(door);
+      else if (box !== undefined) h.open(box);
     } else if (ev.type === 'start') {
       const t = ev.target;
       if ('container' in t) {
@@ -123,6 +132,13 @@ export class InteractController {
     }
     if (s.action) return { mode: 'hidden' };
     const c = this.nearest();
+    const door = h.door();
+    if (door && doorWins(door, c !== undefined)) {
+      const dc = doorCentre(door);
+      const at = h.project(dc.x, dc.y, door.z, DOOR_ANCHOR_HEIGHT);
+      if (!at) return { mode: 'hidden' };
+      return { mode: 'prompt', ...at, key, search: false, label: doorVerb(door.state) };
+    }
     if (!c) return { mode: 'hidden' };
     const at = h.project(c.x + 0.5, c.y + 0.5, c.z, ANCHOR_HEIGHT);
     if (!at) return { mode: 'hidden' };

@@ -49,6 +49,7 @@ import {
 import { chunkSourceToWorld } from './world/streaming/source.js';
 import { CHUNK_SIZE } from './world/chunk.js';
 import { OpeningsView } from './world/openings.js';
+import { doorWins, nearestDoor, type DoorTarget } from './world/door-target.js';
 import { BuildingLookup } from './world/building-lookup.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
@@ -696,21 +697,11 @@ gameState.subscribe((next) => {
     })
     .catch((e: unknown) => console.error('Zapis śmierci nie powiódł się', e));
 });
-/** A door within this distance (tiles from its centre) wins over a container in reach. */
-const DOOR_FIRST_TILES = 0.9;
-/** Nearest door edge within the sim's reach (1.5 tiles from the edge centre). */
-function nearestDoor(x: number, y: number, z: number) {
-  let best: { tx: number; ty: number; side: 'n' | 'w'; dist: number } | undefined;
-  for (const e of openings.edges('door')) {
-    if (e.z !== z || openings.state(e.tx, e.ty, e.z, e.side) === 'broken') continue;
-    const cx = e.side === 'n' ? e.tx + 0.5 : e.tx;
-    const cy = e.side === 'n' ? e.ty : e.ty + 0.5;
-    const dist = Math.hypot(cx - x, cy - y);
-    if (dist <= 1.4 && (!best || dist < best.dist))
-      best = { tx: e.tx, ty: e.ty, side: e.side, dist };
-  }
-  return best;
-}
+/** Nearest door in reach of the player (`world/door-target.ts`). */
+const doorInReach = (x: number, y: number, z: number): DoorTarget | undefined =>
+  nearestDoor(openings.edges('door'), (e) => openings.state(e.tx, e.ty, e.z, e.side), x, y, z);
+const toggleDoor = (door: DoorTarget): void =>
+  sim.send(stamper.stamp({ type: 'toggleDoor', tx: door.tx, ty: door.ty, side: door.side }));
 /** Interact key / button: open/close a door, search/open the nearest container, cancel, close. */
 function interact(): void {
   if (inventory.open) {
@@ -722,9 +713,9 @@ function interact(): void {
   const intent = interactIntent(gameState.get(), p.x, p.y);
   // A door in reach (and no container panel / search to close first) opens or closes.
   const door =
-    intent.type === 'open' || intent.type === 'none' ? nearestDoor(p.x, p.y, p.z) : undefined;
-  if (door && (intent.type === 'none' || door.dist < DOOR_FIRST_TILES)) {
-    sim.send(stamper.stamp({ type: 'toggleDoor', tx: door.tx, ty: door.ty, side: door.side }));
+    intent.type === 'open' || intent.type === 'none' ? doorInReach(p.x, p.y, p.z) : undefined;
+  if (door && doorWins(door, intent.type === 'open')) {
+    toggleDoor(door);
     return;
   }
   if (intent.type === 'open')
@@ -737,6 +728,11 @@ const projected = new Vector3();
 const interaction = new InteractController({
   state: () => gameState.get(),
   player: () => snapshots.sample(performance.now(), TICK_MS),
+  door() {
+    const p = snapshots.sample(performance.now(), TICK_MS);
+    return p ? doorInReach(p.x, p.y, p.z) : undefined;
+  },
+  toggleDoor,
   held: () => input.isDown('interact'),
   interrupted: () =>
     (['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const).some((a) => input.isDown(a)) ||

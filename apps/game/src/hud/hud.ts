@@ -2,6 +2,7 @@ import '@deadzone/ui/hud.css';
 import './hud-layout.css';
 import './hud-v2.css';
 import type { SimEvent } from '@deadzone/protocol';
+import { lockedDoorToast } from '../world/door-target.js';
 import {
   applyUiScale,
   applyVignetteAt,
@@ -416,6 +417,9 @@ export function createHud(opts: HudOptions): Hud {
           toasts.push({ kind: 'warning', text: `Zepsuła się broń: ${humanizeId(e.itemId)}` });
         } else if (e.type === 'zombieKilled' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'info', text: 'Zabity zombie' });
+        } else {
+          const locked = lockedDoorToast(e, opts.playerId);
+          if (locked) toasts.push({ kind: 'warning', text: locked });
         }
       }
     },

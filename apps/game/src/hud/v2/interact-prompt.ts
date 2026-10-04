@@ -2,7 +2,15 @@ import './interact-prompt.css';
 
 export type PromptVM =
   | { mode: 'hidden' }
-  | { mode: 'prompt'; x: number; y: number; key: string; search: boolean }
+  | {
+      mode: 'prompt';
+      x: number;
+      y: number;
+      key: string;
+      search: boolean;
+      /** Verb after the key (default `Otwórz`; doors: `Zamknij`, `Zamknięte`). */
+      label?: string;
+    }
   | {
       mode: 'search';
       x: number;
@@ -93,6 +101,7 @@ export function createInteractPrompt(): InteractPrompt {
       el.style.setProperty('--ip-y', `${vm.y.toFixed(1)}px`);
       if (vm.mode === 'prompt') {
         pKey.textContent = vm.key;
+        pOpen.textContent = vm.label ?? 'Otwórz';
         pSep.hidden = !vm.search;
         pHold.hidden = !vm.search;
         pHold.textContent = `przytrzymaj ${vm.key} Przeszukaj`;

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { INITIAL_GAME_STATE, type GameState } from '../../state/game-state.js';
 import { InteractController, SPOT_NAME } from './interact-controller.js';
 import { TAP_MS } from './interact-hold.js';
+import type { DoorTarget } from '../../world/door-target.js';
 
 const fridge: NearbyContainerView = {
   id: 5,
@@ -14,13 +15,15 @@ const fridge: NearbyContainerView = {
   searched: false,
 };
 
-function setup(nearby: NearbyContainerView[]) {
+function setup(nearby: NearbyContainerView[], door?: DoorTarget) {
   const calls: string[] = [];
   let state: GameState = { ...INITIAL_GAME_STATE, nearby };
   let held = true;
   const c = new InteractController({
     state: () => state,
     player: () => ({ x: 2.5, y: 2.5 }),
+    door: () => door,
+    toggleDoor: (d) => calls.push(`door ${d.tx},${d.ty},${d.side}`),
     held: () => held,
     interrupted: () => false,
     windowOpen: () => false,
@@ -74,5 +77,57 @@ describe('InteractController', () => {
     t.c.press(0);
     t.c.frame(TAP_MS, 0);
     expect(t.calls).toEqual(['open 5']);
+  });
+
+  const door = (dist: number, state: DoorTarget['state'] = 'closed'): DoorTarget => ({
+    tx: 2,
+    ty: 3,
+    z: 0,
+    side: 'n',
+    dist,
+    state,
+  });
+
+  it('a tap toggles the door in reach when no container is near', () => {
+    const t = setup([], door(0.6));
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    expect(t.calls).toEqual(['door 2,3,n']);
+  });
+
+  it('a tap prefers a container unless the door is very close', () => {
+    const t = setup([fridge], door(1.2));
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    expect(t.calls).toEqual(['open 5']);
+
+    const u = setup([fridge], door(0.5));
+    u.c.press(0);
+    u.release();
+    u.c.frame(100, 0);
+    expect(u.calls).toEqual(['door 2,3,n']);
+  });
+
+  it('holding F near a door still searches the spot', () => {
+    const t = setup([], door(0.6));
+    t.c.press(0);
+    t.c.frame(TAP_MS, 0);
+    expect(t.calls).toEqual(['search {"x":2,"y":2}']);
+  });
+
+  it('prompts at the door with its verb (open / close / locked)', () => {
+    expect(setup([], door(0.6)).c.frame(0, 0)).toMatchObject({
+      mode: 'prompt',
+      search: false,
+      label: 'Otwórz',
+      x: 25,
+      y: 30,
+    });
+    expect(setup([], door(0.6, 'open')).c.frame(0, 0)).toMatchObject({ label: 'Zamknij' });
+    expect(setup([], door(0.6, 'locked')).c.frame(0, 0)).toMatchObject({ label: 'Zamknięte' });
+    // The container prompt keeps its default verb.
+    expect(setup([fridge], door(1.2)).c.frame(0, 0)).toMatchObject({ search: true, x: 35 });
   });
 });
