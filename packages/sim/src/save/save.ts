@@ -29,7 +29,8 @@ export const SAVE_FORMAT = 'deadzone-save';
  * Versions 1 and 2 still load (missing sections = their defaults).
  */
 export const SAVE_VERSION = 3;
-const READABLE_VERSIONS = [1, 2, 3];
+/** Versions `loadWorld` reads (older ones are filled with defaults); the server accepts these. */
+export const SAVE_READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
 /** Why a save cannot be loaded (`SaveError.code`, worker `error.code`). */
 export type SaveErrorCode =
@@ -235,7 +236,7 @@ function parse(bytes: Uint8Array): SaveFile {
   }
   if (!f || typeof f !== 'object' || f.format !== SAVE_FORMAT)
     throw new SaveError('not-a-save', 'save: not a Deadzone save');
-  if (!READABLE_VERSIONS.includes(f.version))
+  if (!SAVE_READABLE_VERSIONS.includes(f.version))
     throw new SaveError('unsupported-version', `save: unsupported version ${f.version}`);
   return f;
 }

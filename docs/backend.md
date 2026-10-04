@@ -12,7 +12,7 @@
 3. **Model: jedna postać = jedna gra.** Konto może mieć wiele postaci. Świat, seed i ustawienia należą do wiersza postaci; świat nie jest osobnym rekordem.
 4. **Jeden bieżący zapis na postać, nadpisywany przez serwer.** Tabela `saves` ma dokładnie jeden wiersz na `character_id`. Nie ma punktów przywracania, starszych wersji ani historii. Przed równoległym nadpisaniem chroni optimistic concurrency na polu `version`.
 5. **Permadeath jest nieodwracalny.** Serwer ustawia `characters.status = dead` i `died_at`, usuwa plik oraz wiersz `saves`, a wiersz postaci zostawia jako nagrobek.
-6. **Limity na konto:** 20 żywych postaci (nagrobki się nie liczą) oraz 50 MiB zapisów łącznie. Docelowo daje to około 2–3 MiB po kompresji na postać; serwer odrzuca przekroczenia.
+6. **Limity na konto:** 20 żywych postaci (nagrobki się nie liczą) oraz 50 MiB zapisów łącznie. Zmierzony zapis po około 50 h gry ma 0,75–1,96 MiB po kompresji, więc 20 postaci się mieści; serwer odrzuca przekroczenia.
 7. **Klient tylko czyta dane z bazy, a wszystkie zapisy przechodzą przez `apps/server`.** RLS pozwala właścicielowi wyłącznie na odczyt własnych wierszy. Zmiany stanu wykonuje Fastify przez service role po walidacji.
 8. **Autorytet:** w singleplayerze symulacja działa u klienta, serwer waliduje i utrwala DZSV; później w co-opie serwer będzie autorytatywny.
 9. **`apps/server` zamiast Edge Functions.** Serwer jest potrzebny do multiplayera, działa w Node jak testy `sim` i nie ma limitu 2 s CPU na żądanie.
@@ -163,21 +163,26 @@ Nagłówek zawiera co najmniej `formatVersion`, `simVersion`, `world_seed`, `wor
 
 ### 4.2 Zawartość stanu
 
-- `world_seed` i `worldgen_version`; generator świata jest deterministyczny, więc nie zapisujemy całej mapy bazowej.
-- Tylko zmienione chunki. Mapa ma **16 384 × 16 384 m** (16 × 16 km), czyli **512 × 512 chunków po 32 m** (`MAP_CHUNKS`, `CHUNK_SIZE_M` w `packages/protocol`).
-- Stan postaci:
-  - bitmapa odkrytych chunków `512 × 512`, około **32 KB** bez kompresji;
-  - ślad trasy z punktem co **16 m**;
-  - najwyżej **200 znaczników** o kształcie `{ x, y, ikona, kolor, tekst }`, gdzie `ikona` to jedno z 8 id `base:marker-*` (`MAP_MARKER_ICONS` w `packages/protocol`), `kolor` jest jednym z 5 dozwolonych kolorów, a `tekst` ma najwyżej 40 znaków.
-- Pozostały stan symulacji: RNG, tick, dzień i czas gry, encje ECS, ekwipunek, rany, umiejętności, moodle i kolejka akcji czasowych.
+Stan to JSON z `saveWorld` w `packages/sim` (`format: "deadzone-save"`, `version` 1–3, bieżąca to 3).
+
+- `seed` to seed symulacji, równy `world_seed` postaci. Serwer wymaga zgodności z nagłówkiem. `world` (`seed`, `generatorVersion`, `contentVersion`) opisuje generator; generator jest deterministyczny, więc nie zapisujemy mapy bazowej.
+- Mapa ma **16 384 × 16 384 m** (16 × 16 km), czyli **512 × 512 chunków po 32 m** (`MAP_CHUNKS`, `CHUNK_SIZE_M` w `packages/protocol`).
+- `lod` (#104) to delta świata zamiast pełnych chunków: siatka komórek `cellsW × cellsH` (każda najwyżej 512), liczniki zombie (`counts`, `cellsW·cellsH·types`), flagi `active` / `epoch`, flagi lootu chunków (`chunks`, najwyżej 512² wartości) w kodowaniu zero-run varint base64 oraz sygnatury żywych chunków `sig`. Serwer sprawdza długości przez `zeroRleStats` z `packages/sim`, bez alokowania tablic.
+- `playerMaps[]`, czyli mapa postaci:
+  - `discovered`: bitmapa odkrytych chunków `512 × 512`, około **32 KB** bez kompresji, w kodowaniu zero-run;
+  - `trail`: ślad trasy z punktem co **16 m** (`PLAYER_MAP_TRAIL_SPACING_M`), najwyżej **20 000 punktów** (`PLAYER_MAP_TRAIL_MAX_POINTS`), całe metry w granicach mapy;
+  - `markers`: najwyżej **200 znaczników** `[id, x, y, ikona, kolor, tekst]`. `ikona` to jedno z 8 id `base:marker-*` (`MAP_MARKER_ICONS`), `kolor` to jeden z 5 kolorów (`SAVE_MARKER_COLORS`), a `tekst` ma najwyżej 40 znaków (emoji liczy się jako 1) i nie zawiera znaków sterujących. `id` są unikalne i mniejsze od `nextId`.
+- Pozostały stan symulacji (`components`, `survival`, `items`, `ai`, `combat`, `openings` z deskami i szybami z #106, `physics` oraz pojazdy i ich części z #114 i #128) serwer ogranicza tylko rozmiarem stanu. Pełne `loadWorld` wymaga contentu i generatora po stronie serwera.
 - Stan jest danymi: bez funkcji, klas, `Date` i `Map`. Kanoniczny JSON zapewnia stabilny hash i determinizm.
 
-Fastify sprawdza rozmiar koperty i rozpakowanego JSON, liczbę zmienionych chunków, bitmapę, długość trasy i wszystkie limity znaczników. Tekst znaczników jest danymi użytkownika: przy wyświetlaniu zawsze go escapujemy i traktujemy jako zwykły tekst, nigdy jako HTML.
+Walidacja działa w `worker_threads` (`apps/server/src/save/state.ts`): rozmiar koperty i rozpakowanego JSON, delta LOD, bitmapa, ślad i znaczniki. Wszystkie limity pochodzą z `packages/protocol`, a kodeki z `packages/sim`. Tekst znaczników jest danymi użytkownika: przy wyświetlaniu zawsze go escapujemy i traktujemy jako zwykły tekst, nigdy jako HTML.
+
+Rozmiar: według pomiaru Symulacji zapis po około 50 h gry ma **0,75–1,96 MiB** po gzip, więc 20 postaci mieści się w 50 MiB.
 
 ### 4.3 Wersjonowanie
 
-- `SAVE_FORMAT_VERSION` jest liczbą całkowitą w `packages/sim`; migracje są czystymi funkcjami i mają fixture’y.
-- Serwer przyjmuje bieżącą wersję formatu. Starszy zapis klient migruje przed wysłaniem, a nowszy serwer odrzuca kodem `426`.
+- `SAVE_VERSION` (3) i `SAVE_READABLE_VERSIONS` (1–3) są w `packages/sim`. Brakujące sekcje starszych wersji `loadWorld` uzupełnia wartościami domyślnymi.
+- Serwer przyjmuje każdą wersję, którą sim umie wczytać, aż do `SAVE_FORMAT_VERSION` (domyślnie 3, env może tylko obniżyć). Nagłówek `formatVersion` musi być równy `version` stanu. Starszy zapis zostaje przyjęty bez konwersji, a następny autozapis klienta zapisuje go już jako bieżącą wersję. Wersja nowsza od serwera albo taka, której sim już nie czyta, dostaje `426`.
 - Zmiana formatu nie tworzy drugiej kopii i nie wprowadza historii zapisów.
 
 ## 5. API i walidacja
@@ -202,7 +207,7 @@ Kody: `400` (format), `401` (JWT), `403` (brak własności lub ban), `404` (post
 
 1. Serwer weryfikuje JWT przez JWKS; `user_id` zawsze pochodzi z tokenu, nigdy z body.
 2. Fastify ogranicza body, parsuje kopertę, sprawdza magic, wersję, nagłówek i SHA-256.
-3. Serwer rozpakowuje gzip z limitem wyjścia, parsuje JSON i waliduje stan przez zod oraz `deserializeState` w `worker_threads` z timeoutem.
+3. W `worker_threads` z timeoutem i limitem sterty serwer rozpakowuje gzip z limitem wyjścia, parsuje JSON i waliduje stan przez zod oraz kodeki z `packages/sim` (§4.2).
 4. Z danych stanu wyznacza `game_day`, postać i status śmierci. Wartości muszą odpowiadać nagłówkowi i wierszowi `characters`.
 5. Serwer blokuje wiersz `saves`, sprawdza `If-Match` względem `version`, quota 50 MiB i właściciela postaci. Konflikt wersji kończy się kodem 409.
 6. Nowy plik trafia do Storage, a metadane są zatwierdzane jako kolejna wersja. Po sukcesie usuwany jest poprzedni plik.
@@ -229,7 +234,7 @@ Wartości startowe są konfigurowalne w env serwera, ale serwer nie może ich po
 | Limit | Wartość | Uzasadnienie |
 |---|---:|---|
 | Żywe postacie na konto | **20** | Ochrona przed masowym zakładaniem; nagrobki się nie liczą |
-| Łączny rozmiar bieżących zapisów na konto | **50 MiB** | Limit kosztowy Storage; około 2–3 MiB po kompresji na postać |
+| Łączny rozmiar bieżących zapisów na konto | **50 MiB** | Limit kosztowy Storage; zmierzone 0,75–1,96 MiB po kompresji na postać po około 50 h gry |
 | Zapis na postać | Jeden bieżący plik i jeden wiersz `saves` | Brak historii i punktów przywracania |
 | Zmienione chunki | Tylko mapa 512 × 512 chunków po 32 m | Reszta wynika deterministycznie z seeda |
 | Odkrycie mapy | Bitmapa 512 × 512, około 32 KB bez kompresji | Stały, przewidywalny koszt |
@@ -273,7 +278,7 @@ Ceny w USD netto (Supabase i inni mogą doliczać VAT), sprawdzone 30.09.2026. *
 | MAU | 50 000 | 100 000 |
 | Backupy | brak | dzienne, 7 dni |
 
-Limit 50 MiB na konto i 20 żywych postaci nie zmienia wcześniejszego szacunku: typowe konto używa około 2–3 MiB na żywą postać, a nagrobki nie mają pliku. Przed publicznym demo potrzebny jest Pro.
+Limit 50 MiB na konto i 20 żywych postaci nie zmienia wcześniejszego szacunku: zmierzony zapis po około 50 h gry ma 0,75–1,96 MiB na żywą postać, a nagrobki nie mają pliku. Przed publicznym demo potrzebny jest Pro.
 
 ### 7.2 `apps/server`
 

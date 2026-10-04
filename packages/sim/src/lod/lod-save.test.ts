@@ -12,7 +12,7 @@ import { gridWorld } from '../test/lod-fixtures.js';
 import { gzipSize, testLog, worldMapKind, START_CHUNK } from '../test/world-map-fixture.js';
 import { checkSave, SaveError } from '../save/save.js';
 import { utf8Decode, utf8Encode } from '../save/codec.js';
-import { decodeZeroRle, encodeZeroRle } from '../save/delta.js';
+import { decodeZeroRle, encodeZeroRle, zeroRleStats } from '../save/delta.js';
 import { generateLoot } from '../items/loot.js';
 import { spawnChunkLoot } from './chunks.js';
 import { ChunkLoot, chunkIndex } from './state.js';
@@ -77,6 +77,9 @@ describe('world save (delta)', () => {
     expect(b).toEqual(a);
     expect(s.length).toBeLessThan(40);
     expect(() => decodeZeroRle(s, new Uint16Array(10))).toThrow();
+    expect(zeroRleStats(s, 5000)).toEqual({ length: 5000, max: 65535 });
+    expect(() => zeroRleStats(s, 4999)).toThrow();
+    expect(() => zeroRleStats('gA==', 5000)).toThrow(); // [0x80]: truncated varint
   });
 
   it(

@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import type { SaveEnvelopeHeader } from '@deadzone/protocol';
+import { SAVE_VERSION } from '@deadzone/sim';
 import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from 'jose';
 import { buildApp } from '../app.js';
 import { createJwtVerifier } from '../auth.js';
 import { DEFAULT_LIMITS, type Limits } from '../config.js';
 import { sha256Hex } from '../save/envelope.js';
+import { realSave } from './sim-save.js';
 import { MemoryRateLimitStore } from '../rate-limit.js';
 import { createWorkerPool, type SaveValidator } from '../save/worker-pool.js';
 import { MemoryAccounts, MemoryBlobs, MemoryStore } from './memory-store.js';
@@ -57,7 +59,12 @@ export function setup(
   const app = buildApp({
     trustProxyHops: opts.trustProxyHops ?? 0,
     characters: {
-      config: { limits: l, worldgenVersion: 1, saveFormatVersion: 1, signedUrlTtlSeconds: 60 },
+      config: {
+        limits: l,
+        worldgenVersion: 1,
+        saveFormatVersion: SAVE_VERSION,
+        signedUrlTtlSeconds: 60,
+      },
       verifier: createJwtVerifier({ issuer: ISSUER, audience: 'authenticated', keys: jwks }),
       store,
       blobs,
@@ -83,17 +90,18 @@ export interface EnvelopeOpts {
 }
 
 export function envelope(characterId: string, worldSeed: number, o: EnvelopeOpts = {}): Buffer {
-  const state = o.state ?? {
-    format: 'deadzone-save',
-    version: 1,
-    seed: 7,
-    tick: 1200,
-    playerMaps: [{ sid: 1, discovered: 'AAAA', trail: '', markers: [], nextId: 1 }],
-    ...(o.padding ? { pad: randomBytes(o.padding).toString('base64') } : {}),
-  };
+  const given =
+    o.state && typeof o.state === 'object' && !Array.isArray(o.state)
+      ? { seed: worldSeed, ...o.state }
+      : o.state;
+  const state =
+    given ??
+    (o.padding
+      ? { ...realSave(worldSeed), pad: randomBytes(o.padding).toString('base64') }
+      : realSave(worldSeed));
   const raw = Buffer.from(JSON.stringify(state), 'utf8');
   const header: SaveEnvelopeHeader = {
-    formatVersion: 1,
+    formatVersion: SAVE_VERSION,
     simVersion: '0.0.0',
     world_seed: worldSeed,
     worldgen_version: 1,

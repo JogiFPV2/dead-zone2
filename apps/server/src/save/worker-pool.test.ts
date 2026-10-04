@@ -1,10 +1,11 @@
+import { SAVE_VERSION } from '@deadzone/sim';
 import { afterEach, describe, expect, it } from 'vitest';
 import { HttpError } from '../errors.js';
 import { envelope } from '../test/fixtures.js';
 import { createWorkerPool, type SaveValidator } from './worker-pool.js';
 
 const ID = '33333333-3333-4333-8333-333333333333';
-const OPTS = { saveFormatVersion: 1, maxStateBytes: 8 * 1024 * 1024 };
+const OPTS = { saveFormatVersion: SAVE_VERSION, maxStateBytes: 8 * 1024 * 1024 };
 const HANG = new URL('../test/hang-worker.mjs', import.meta.url);
 
 let pool: SaveValidator | undefined;

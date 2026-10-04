@@ -7,6 +7,8 @@ import {
   MAP_SIZE_M,
   type CharacterSummary,
 } from '@deadzone/protocol';
+import { SAVE_VERSION, encodeZeroRle } from '@deadzone/sim';
+import { realSave } from '../test/sim-save.js';
 import { USER_A, USER_B, checksum, envelope, setup, token } from '../test/fixtures.js';
 
 type Ctx = ReturnType<typeof setup>;
@@ -235,7 +237,9 @@ describe('saves', () => {
   });
 
   it('enforces the account quota across characters', async () => {
-    ctx = setup({ maxAccountSaveBytes: 6000 });
+    // Quota = 1.5 saves of the padded size (real sim saves differ a bit per seed).
+    const one = envelope('00000000-0000-4000-8000-000000000000', 1000, { padding: 3000 }).length;
+    ctx = setup({ maxAccountSaveBytes: Math.floor(one * 1.6) });
     const a = (await create(ctx, 'A')).json<CharacterSummary>();
     const b = (await create(ctx, 'B')).json<CharacterSummary>();
     expect(
@@ -265,10 +269,9 @@ describe('saves', () => {
     };
     const withMap = (map: Record<string, unknown>) => ({
       format: 'deadzone-save',
-      version: 1,
-      seed: 7,
+      version: SAVE_VERSION,
       tick: 1,
-      playerMaps: [{ sid: 1, discovered: '', trail: '', markers: [], nextId: 1, ...map }],
+      playerMaps: [{ sid: 1, discovered: '', trail: '', markers: [], nextId: 1000, ...map }],
     });
 
     const cases: [string, (id: string, seed: number) => Buffer, number, string][] = [
@@ -282,7 +285,7 @@ describe('saves', () => {
       ],
       [
         'newer format',
-        (id, s) => envelope(id, s, { header: { formatVersion: 2 } }),
+        (id, s) => envelope(id, s, { header: { formatVersion: SAVE_VERSION + 1 } }),
         426,
         'unsupported_format_version',
       ],
@@ -371,11 +374,26 @@ describe('saves', () => {
       ctx = setup();
       const ch = (await create(ctx)).json<CharacterSummary>();
       const state = withMap({
-        discovered: Buffer.alloc(EXPLORED_BITMAP_BYTES, 0xff).toString('base64'),
+        discovered: encodeZeroRle(new Uint8Array(EXPLORED_BITMAP_BYTES).fill(0xff)),
         markers: [marker({ 1: MAP_SIZE_M, 2: 16_000 })],
       });
       const res = await put(ctx, ch, '0', envelope(ch.id, ch.worldSeed, { state }));
       expect(res.statusCode, res.body).toBe(200);
+    });
+
+    it('accepts an older save the sim still loads (v2), refuses a newer one with 426', async () => {
+      ctx = setup();
+      const ch = (await create(ctx)).json<CharacterSummary>();
+      const v2 = envelope(ch.id, ch.worldSeed, {
+        header: { formatVersion: 2 },
+        state: { ...realSave(ch.worldSeed), version: 2 },
+      });
+      expect((await put(ctx, ch, '0', v2)).statusCode).toBe(200);
+      const v4 = envelope(ch.id, ch.worldSeed, {
+        header: { formatVersion: SAVE_VERSION + 1 },
+        state: { ...realSave(ch.worldSeed), version: SAVE_VERSION + 1 },
+      });
+      expect((await put(ctx, ch, '1', v4)).statusCode).toBe(426);
     });
 
     it('accepts every shared marker icon', async () => {

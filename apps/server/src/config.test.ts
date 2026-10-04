@@ -14,6 +14,8 @@ describe('loadConfig', () => {
     expect(c.limits.maxUploadBytesPerDay).toBe(200 * 1024 * 1024);
     expect(c.limits.maxIpRequestsPer5Min).toBe(300);
     expect(c.trustProxyHops).toBe(0);
+    expect(c.saveFormatVersion).toBe(3);
+    expect(() => loadConfig({ ...base, SAVE_FORMAT_VERSION: '4' })).toThrow();
   });
 
   it('requires secrets from env and never raises product limits', () => {

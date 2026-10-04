@@ -9,6 +9,7 @@ import {
   type SaveEnvelopeHeader,
 } from '@deadzone/protocol';
 import { saveEnvelopeHeaderSchema } from '@deadzone/protocol/schema';
+import { SAVE_READABLE_VERSIONS } from '@deadzone/sim';
 import { HttpError, invalidEnvelope, invalidState } from '../errors.js';
 
 export interface ParsedEnvelope {
@@ -66,12 +67,20 @@ export function parseEnvelope(
   if (!parsed.success) throw invalidEnvelope('invalid header');
   const header = parsed.data;
 
-  if (header.formatVersion !== opts.saveFormatVersion) {
-    // Older saves are migrated by the client before upload; newer ones need a newer server.
+  // Every version the sim can load up to the configured newest one (docs/backend.md §4.3): the
+  // sim migrates v1/v2 on load and the next autosave writes the current version.
+  if (header.formatVersion > opts.saveFormatVersion) {
     throw new HttpError(
       426,
       'unsupported_format_version',
-      `save format ${header.formatVersion}, server accepts ${opts.saveFormatVersion}`,
+      `save format ${header.formatVersion} is newer than the server (${opts.saveFormatVersion})`,
+    );
+  }
+  if (!SAVE_READABLE_VERSIONS.includes(header.formatVersion)) {
+    throw new HttpError(
+      426,
+      'unsupported_format_version',
+      `save format ${header.formatVersion} is no longer supported`,
     );
   }
   if (header.rawSize > opts.maxStateBytes) {

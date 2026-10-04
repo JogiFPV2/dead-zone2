@@ -7,6 +7,10 @@ import {
   type MapMarkerView,
   type MarkerColor,
   type WorldMapView,
+  MAP_MARKER_TEXT_MAX,
+  MAX_MAP_MARKERS,
+  PLAYER_MAP_TRAIL_MAX_POINTS,
+  PLAYER_MAP_TRAIL_SPACING_M,
 } from '@deadzone/protocol';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import type { SimWorld } from '../core/world.js';
@@ -33,11 +37,11 @@ export interface PlayerMapConfig {
 export const DEFAULT_PLAYER_MAP: PlayerMapConfig = {
   icons: MAP_MARKER_ICONS,
   colors: MARKER_COLORS,
-  maxMarkers: 200,
-  maxTextLength: 40,
+  maxMarkers: MAX_MAP_MARKERS,
+  maxTextLength: MAP_MARKER_TEXT_MAX,
   discoverEveryTicks: TICKS_PER_SECOND,
-  trailSpacingM: 16,
-  trailMaxPoints: 20_000,
+  trailSpacingM: PLAYER_MAP_TRAIL_SPACING_M,
+  trailMaxPoints: PLAYER_MAP_TRAIL_MAX_POINTS,
 };
 
 /** Sight range without the AI module (no content): daylight player sight. */

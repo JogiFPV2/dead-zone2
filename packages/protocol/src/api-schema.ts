@@ -61,7 +61,15 @@ export const saveMarkerSchema = z.tuple([
   z.number().finite(),
   z.enum(MAP_MARKER_ICONS),
   z.enum(SAVE_MARKER_COLORS),
-  z.string().max(MAP_MARKER_TEXT_MAX),
+  // The sim trims to MAP_MARKER_TEXT_MAX code points (emoji = 1) and replaces control chars.
+  z
+    .string()
+    .max(MAP_MARKER_TEXT_MAX * 2)
+    .refine((t) => Array.from(t).length <= MAP_MARKER_TEXT_MAX, {
+      message: `max ${MAP_MARKER_TEXT_MAX} characters`,
+    })
+    // eslint-disable-next-line no-control-regex
+    .refine((t) => !/[\u0000-\u001f\u007f]/.test(t), { message: 'control characters' }),
 ]);
 
 export const saveMarkersSchema = z.array(saveMarkerSchema).max(MAX_MAP_MARKERS);

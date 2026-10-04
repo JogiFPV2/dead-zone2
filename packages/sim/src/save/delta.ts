@@ -62,6 +62,35 @@ export function decodeZeroRle(s: string, out: Uint8Array | Uint16Array): void {
   if (i !== out.length) throw new Error('save: delta size does not match the world');
 }
 
+/**
+ * Decoded length and largest value of an `encodeZeroRle` string without allocating the output
+ * (server-side save validation). Throws on a truncated varint or past `maxLength` values.
+ */
+export function zeroRleStats(s: string, maxLength: number): { length: number; max: number } {
+  const b = fromBase64(s);
+  let p = 0;
+  const varint = (): number => {
+    let v = 0;
+    let shift = 0;
+    for (;;) {
+      if (p >= b.length || shift > 35) throw new Error('save: truncated varint');
+      const x = b[p++]!;
+      v += (x & 0x7f) * 2 ** shift;
+      if (x < 0x80) return v;
+      shift += 7;
+    }
+  };
+  let length = 0;
+  let max = 0;
+  while (p < b.length) {
+    const v = varint();
+    length += v === 0 ? varint() : 1;
+    if (v > max) max = v;
+    if (length > maxLength) throw new Error('save: delta longer than allowed');
+  }
+  return { length, max };
+}
+
 /** LOD part of a save: cell counters, cell / chunk flags, chunk signatures, coarse noises. */
 export interface LodSave {
   cellsW: number;

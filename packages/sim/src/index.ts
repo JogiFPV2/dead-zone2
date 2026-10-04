@@ -160,9 +160,12 @@ export {
   type SimLodConfig,
 } from './lod/state.js';
 export { despawnZombie } from './lod/system.js';
-export { decodeZeroRle, encodeZeroRle, type LodSave } from './save/delta.js';
+export { decodeZeroRle, encodeZeroRle, zeroRleStats, type LodSave } from './save/delta.js';
+export { decodeTrail, encodeTrail, type PlayerMapSave } from './map/player-map.js';
 export {
   checkSave,
+  SAVE_FORMAT,
+  SAVE_READABLE_VERSIONS,
   SAVE_VERSION,
   SaveError,
   type SaveCheck,

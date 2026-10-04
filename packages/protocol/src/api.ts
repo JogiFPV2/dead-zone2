@@ -35,6 +35,9 @@ export const WORLD_CHUNKS_PER_SIDE = MAP_CHUNKS;
 export const EXPLORED_BITMAP_BYTES = (MAP_CHUNKS * MAP_CHUNKS) / 8;
 export const MAX_MAP_MARKERS = 200;
 export const MAP_MARKER_TEXT_MAX = 40;
+/** Trail of the character map: a point every 16 m, at most 20 000 points (docs/backend.md §4.2). */
+export const PLAYER_MAP_TRAIL_SPACING_M = 16;
+export const PLAYER_MAP_TRAIL_MAX_POINTS = 20_000;
 /**
  * Map marker icons (content ids, drawn by the client). Single source for the sim, the client and
  * the server's save validation; Symulacja's `worldSettings.mapMarkers.icons` default (#109) is the

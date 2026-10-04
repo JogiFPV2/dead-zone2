@@ -6,6 +6,7 @@ import {
   MAX_SAVES_PER_HOUR,
   MAX_UPLOAD_BYTES_PER_DAY,
 } from '@deadzone/protocol';
+import { SAVE_VERSION } from '@deadzone/sim';
 
 /** Server limits (docs/backend.md §5.5). Env can only lower the product values. */
 export interface Limits {
@@ -41,7 +42,7 @@ export interface ServerConfig {
   trustProxyHops: number;
   /** Current deterministic world generator, stored on new characters. */
   worldgenVersion: number;
-  /** Current sim save format (`SAVE_VERSION` in packages/sim/src/save/save.ts). */
+  /** Newest accepted sim save format (default `SAVE_VERSION` of packages/sim); 1…it accepted. */
   saveFormatVersion: number;
   limits: Limits;
   /** DZSV validation workers (docs/backend.md §5.2.3). */
@@ -108,7 +109,8 @@ export function loadConfig(env: Env): ServerConfig {
     signedUrlTtlSeconds: int(env, 'SIGNED_URL_TTL_SECONDS', 60, 10, 3600),
     trustProxyHops: int(env, 'TRUST_PROXY_HOPS', 0, 0, 10),
     worldgenVersion: int(env, 'WORLDGEN_VERSION', 1, 1, 0xffff_ffff),
-    saveFormatVersion: int(env, 'SAVE_FORMAT_VERSION', 1, 1, 0xffff_ffff),
+    // Newest sim save version accepted; never above what this server's sim can read.
+    saveFormatVersion: int(env, 'SAVE_FORMAT_VERSION', SAVE_VERSION, 1, SAVE_VERSION),
     validation: {
       workers: int(env, 'VALIDATION_WORKERS', 0, 0, 64),
       timeoutMs: int(env, 'VALIDATION_TIMEOUT_MS', 5000, 100, 60_000),
