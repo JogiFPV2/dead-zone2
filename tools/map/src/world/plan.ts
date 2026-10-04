@@ -2,6 +2,8 @@ import { CHUNK_SIZE } from '@deadzone/content';
 import {
   dist,
   inORect,
+  oRectCorners,
+  oRectsOverlap,
   meander,
   oRectBounds,
   pointAt,
@@ -10,17 +12,19 @@ import {
   type ORect,
   type Pt,
 } from './geom.js';
+import { frontage, planOldTown, ringHit, squareEdges, type OldTown } from './oldtown.js';
 import { fbm, hash3, rand3, rng, valueNoise } from './rng.js';
 
 /**
  * World macro plan (Silnik 2 generator, step 1): from (seed, size) the whole map's layout —
- * river and lakes, cities / towns / villages, the road hierarchy, complexes (hospital, police,
+ * river and lakes, cities / towns / villages (cities and towns: an irregular old town inside the
+ * street grid, `oldtown.ts`), the road hierarchy, complexes (hospital, police,
  * military base), farms, roadside stops, forest paths and glades — as cheap vector data.
  * Chunk filling (tiles, walls, furniture) reads this plan later; nothing here is game data yet.
  *
  * Pure: depends only on (seed, size, WORLD_PLAN_VERSION).
  */
-export const WORLD_PLAN_VERSION = 'plan-1';
+export const WORLD_PLAN_VERSION = 'plan-2';
 /** Target world: 16 384 m = 512 × 512 chunks. */
 export const DEFAULT_WORLD_SIZE = 16384;
 /** Fallback when the sim's save can't hold the big world. */
@@ -396,6 +400,8 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
     rect: ORect;
   }
   const blocksOf = new Map<number, Block[]>();
+  const oldTowns = new Map<number, OldTown>();
+  const connectorsOf = new Map<number, Pt[][]>();
   /** Outer street corners of each city / town: country roads join the grid there. */
   const cornersOf = new Map<number, Pt[]>();
   const outline = (s: Settlement, ang: number): number =>
@@ -415,6 +421,21 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
       const p = toW(u, v);
       return Math.hypot(p.x - s.x, p.y - s.y) <= outline(s, Math.atan2(p.y - s.y, p.x - s.x));
     };
+    const ot = planOldTown({
+      seed,
+      id: s.id,
+      x: s.x,
+      y: s.y,
+      r: s.r,
+      angle: s.angle,
+      city: s.kind === 'city',
+    });
+    oldTowns.set(s.id, ot);
+    const inOld = (u: number, v: number) => {
+      const p = toW(u, v);
+      const ang = Math.atan2(p.y - s.y, p.x - s.x);
+      return Math.hypot(p.x - s.x, p.y - s.y) <= ot.ringAt(ang) + ROAD_WIDTH.street;
+    };
     const n = Math.ceil((s.r * 1.15) / bs) + 1;
     const blocks: Block[] = [];
     const used = new Set<string>();
@@ -428,6 +449,17 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
           !inside(u0 + bs, v0) ||
           !inside(u0, v0 + bs) ||
           !inside(u0 + bs, v0 + bs)
+        )
+          continue;
+        // The old town takes everything inside its ring (plus a street's width).
+        if (
+          [
+            [u0, v0],
+            [u0 + bs, v0],
+            [u0, v0 + bs],
+            [u0 + bs, v0 + bs],
+            [u0 + bs / 2, v0 + bs / 2],
+          ].some(([cu = 0, cv = 0]) => inOld(cu, cv))
         )
           continue;
         const u = u0 + bs / 2;
@@ -477,6 +509,26 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
           }
         }
       }
+    // Old town streets: ring on the old walls, inner lane loop, around the square, radials.
+    addRoad(s.kind === 'city' ? 'main' : 'street', ot.ring);
+    if (ot.innerRing.length > 0) addRoad('street', ot.innerRing);
+    addRoad('street', squareEdges(ot.square));
+    for (const rd of ot.radials) addRoad('street', rd);
+    // Grid streets cut by the old town end at its ring.
+    const connectors: Pt[][] = [];
+    connectorsOf.set(s.id, connectors);
+    for (const [k, nUse] of cornerUse) {
+      if (nUse >= 4) continue;
+      const [ci, cj] = k.split(',').map(Number) as [number, number];
+      const p = toW(ci * bs, cj * bs);
+      const ang = Math.atan2(p.y - s.y, p.x - s.x);
+      if (Math.hypot(p.x - s.x, p.y - s.y) > ot.ringAt(ang) + bs * 1.1) continue;
+      const q = ringHit(ot, p);
+      if (q && dist(p, q) > 3) {
+        addRoad('street', [p, q]);
+        connectors.push([p, q]);
+      }
+    }
   }
 
   // ---- country roads: routed around cities, towns and the base ----
@@ -714,7 +766,10 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
   // ---- settlements: blocks, houses, complexes ----
   for (const s of settlements) {
     if (s.kind === 'village') village(s);
-    else urban(s);
+    else {
+      urban(s);
+      oldTown(s);
+    }
   }
   // Ribbon development: houses along the country roads leaving each city / town.
   for (const s of urbanSet) {
@@ -801,6 +856,73 @@ export function planWorld(opts: WorldPlanOptions): WorldPlan {
         y: s.y + Math.sin(indDir + s.angle) * s.r * 0.75,
         settlement: s.id,
       });
+  }
+
+  /** Old town fill: square, town hall, church, tenements packed along every street. */
+  function oldTown(s: Settlement): void {
+    const ot = oldTowns.get(s.id);
+    if (!ot) return;
+    const r = rng(hash3(seed, s.id, 0x0ad));
+    const city = s.kind === 'city';
+    // Paved ground of the whole old town, under everything else.
+    let rMax = 0;
+    for (let k = 0; k < 32; k++) rMax = Math.max(rMax, ot.ringAt((k / 32) * Math.PI * 2));
+    const d = 2 * rMax + 24;
+    areas.unshift({ x: s.x, y: s.y, w: d, h: d, a: 0, kind: 'block', round: true });
+    // Green belt on the old walls' line (planty) between the ring and the grid, under it all.
+    const belt = d + blockSize(s) * 2;
+    areas.unshift({ x: s.x, y: s.y, w: belt, h: belt, a: 0, kind: 'park', round: true });
+    areas.push({ ...ot.square, kind: 'plaza' });
+    place({ ...ot.townHall, kind: 'office', floors: 2 }, 0.5);
+    occ.mark(ot.square);
+    // Exact checks here (the 4 m occupancy grid is too coarse for wall-to-wall tenements):
+    // no overlap with any building around, clear of every street and of the square.
+    const reach = ot.ringAt(0) * 1.6 + blockSize(s) * 2;
+    const near = buildings.filter((f) => Math.hypot(f.x - s.x, f.y - s.y) < reach);
+    const urbanRoads: RoadClass[] = ['highway', 'main', 'local', 'street'];
+    const clear = (f: ORect): boolean => {
+      const pts = [...oRectCorners(f), { x: f.x, y: f.y }];
+      for (let k = 0; k < 4; k++) {
+        const p = pts[k] as Pt;
+        const q = pts[(k + 1) % 4] as Pt;
+        pts.push({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
+      }
+      for (const p of pts) {
+        if (inORect(ot.square, p.x, p.y, 1)) return false;
+        for (const cls of urbanRoads)
+          if (index.nearest(p.x, p.y, ROAD_WIDTH[cls] / 2 + 0.5, (c) => c === cls)) return false;
+      }
+      if (riverDist(f.x, f.y) < riverWidth / 2 + 12) return false;
+      return !near.some((g) => oRectsOverlap(f, g));
+    };
+    const spots = ot.churchSpots;
+    const church = spots.find((c, k) => k === spots.length - 1 || clear(c)) as ORect;
+    const fc: Footprint = { ...church, kind: 'church', floors: 2 };
+    buildings.push(fc);
+    near.push(fc);
+    occ.mark(fc, -1.5);
+    const lot = (l: ORect): boolean => {
+      const roll = r();
+      const kind: BuildingKind = roll < 0.08 ? 'shop' : roll < 0.12 ? 'bar' : 'tenement';
+      const floors = (city ? 3 : 2) + Math.floor(r() * 3);
+      const f: Footprint = { ...l, w: l.w - 0.3, kind, floors };
+      if (!clear(f)) return false;
+      occ.mark(f, -1.5);
+      buildings.push(f);
+      near.push(f);
+      return true;
+    };
+    const streets: Pt[][] = [
+      squareEdges(ot.square),
+      ...ot.radials,
+      ot.innerRing,
+      ot.ring,
+      ...(connectorsOf.get(s.id) ?? []),
+    ];
+    for (const pts of streets)
+      frontage(pts, pts === ot.ring && city ? ROAD_WIDTH.main : ROAD_WIDTH.street, r, lot);
+    // Back lots: a second row behind the frontage where the blocks are deep enough.
+    for (const pts of [ot.innerRing, ...ot.radials]) frontage(pts, ROAD_WIDTH.street + 30, r, lot);
   }
 
   function zoneOf(s: Settlement, d: number, h: number): string {

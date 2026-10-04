@@ -95,3 +95,33 @@ export function meander(a: Pt, b: Pt, amp: number, minSeg: number, rand: () => n
   rec(a, b, 0);
   return out;
 }
+
+/** Corners of an oriented rectangle (grown by `margin` on every side). */
+export function oRectCorners(r: ORect, margin = 0): Pt[] {
+  const c = Math.cos(r.a);
+  const s = Math.sin(r.a);
+  const hw = r.w / 2 + margin;
+  const hh = r.h / 2 + margin;
+  return [
+    [hw, hh],
+    [hw, -hh],
+    [-hw, -hh],
+    [-hw, hh],
+  ].map(([u = 0, v = 0]) => ({ x: r.x + u * c - v * s, y: r.y + u * s + v * c }));
+}
+
+/** True when two oriented rectangles overlap (separating axis test). */
+export function oRectsOverlap(a: ORect, b: ORect): boolean {
+  if (Math.hypot(a.x - b.x, a.y - b.y) > (Math.hypot(a.w, a.h) + Math.hypot(b.w, b.h)) / 2)
+    return false;
+  const ca = oRectCorners(a);
+  const cb = oRectCorners(b);
+  for (const ang of [a.a, a.a + Math.PI / 2, b.a, b.a + Math.PI / 2]) {
+    const ax = Math.cos(ang);
+    const ay = Math.sin(ang);
+    const pa = ca.map((p) => p.x * ax + p.y * ay);
+    const pb = cb.map((p) => p.x * ax + p.y * ay);
+    if (Math.max(...pa) <= Math.min(...pb) || Math.max(...pb) <= Math.min(...pa)) return false;
+  }
+  return true;
+}

@@ -54,6 +54,18 @@ for (const v of villages) {
   }
 }
 if (best) save('country', best.x - 1536, best.y - 1536, 1.5, 2048, 2048);
+// Old towns (irregular cores inside the grid): every city, the first two towns.
+const cores = [
+  ...plan.settlements.filter((s) => s.kind === 'city'),
+  ...plan.settlements.filter((s) => s.kind === 'town').slice(0, 2),
+];
+const counter = { city: 0, town: 0, village: 0 };
+for (const s of cores) {
+  counter[s.kind]++;
+  const name = `oldtown-${s.kind}${counter[s.kind] > 1 ? counter[s.kind] : ''}`;
+  const half = s.kind === 'city' ? 330 : 220;
+  save(name, s.x - half, s.y - half, (2 * half) / 1200, 1200, 1200, true);
+}
 const mil = plan.complexes.find((c) => c.kind === 'military');
 if (mil) save('military', mil.x - 768, mil.y - 768, 0.75, 2048, 2048);
 writeFileSync(join(out, `${prefix}-stats.json`), JSON.stringify(stats, null, 2));
