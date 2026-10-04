@@ -2,6 +2,8 @@ import {
   MARKER_COLORS,
   MARKER_ICONS,
   MARKER_TEXT_MAX,
+  MARKER_TEXT_MAX_UNITS,
+  markerTextLength,
   markerHex,
   clampMarkerText,
   type MarkerDraft,
@@ -40,7 +42,7 @@ export function createMarkerEdit(h: MarkerEditHandlers): MarkerEdit {
 <div class="dz-bm__h6 dz-bm__h6--gap">KOLOR</div>
 <div class="dz-bm__colors"></div>
 <div class="dz-bm__desc-head"><div class="dz-bm__h6">OPIS</div><div class="dz-bm__count"></div></div>
-<input class="dz-bm__text" type="text" maxlength="${MARKER_TEXT_MAX}" spellcheck="false" />
+<input class="dz-bm__text" type="text" maxlength="${MARKER_TEXT_MAX_UNITS}" spellcheck="false" />
 <label class="dz-bm__mini"><input type="checkbox" /><span class="dz-bm__bx"></span>pokaż na minimapie</label>
 <div class="dz-bm__sep dz-bm__sep--wide"></div>
 <div class="dz-bm__btns">
@@ -86,7 +88,7 @@ export function createMarkerEdit(h: MarkerEditHandlers): MarkerEdit {
       b.addEventListener('click', () => set({ color: c }));
       colors.append(b);
     }
-    count.textContent = `${[...text.value].length} / ${MARKER_TEXT_MAX}`;
+    count.textContent = `${markerTextLength(text.value)} / ${MARKER_TEXT_MAX}`;
     mini.checked = d.showOnMinimap;
     el.classList.toggle('mini-on', d.showOnMinimap);
   };

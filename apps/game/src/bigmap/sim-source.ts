@@ -7,6 +7,7 @@ import type {
 import type { CommandBody } from '../sim/sim-client.js';
 import {
   MARKER_COLORS,
+  TRAIL_MAX_POINTS,
   clampMarkerText,
   decodeBase64,
   fogGrid,
@@ -94,6 +95,9 @@ export class SimBigMapSource implements BigMapSource {
     }
     if (w.trailAdd?.length) {
       this.points.push(...w.trailAdd);
+      // The sim resends the whole trail when it drops old points; stay within its cap anyway.
+      const over = this.points.length - TRAIL_MAX_POINTS * 2;
+      if (over > 0) this.points.splice(0, over);
       this.trailChanged();
     }
     if (w.markers) this.setMarkers(w.markers);

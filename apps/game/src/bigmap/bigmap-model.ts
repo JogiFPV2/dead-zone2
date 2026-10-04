@@ -9,6 +9,8 @@ import {
   MAP_MARKER_ICONS,
   MAP_MARKER_TEXT_MAX,
   MAX_MAP_MARKERS,
+  PLAYER_MAP_TRAIL_MAX_POINTS,
+  PLAYER_MAP_TRAIL_SPACING_M,
   SAVE_MARKER_COLORS,
   type MapMarkerIcon,
   type SaveMarkerColor,
@@ -301,8 +303,16 @@ export function discoveredText(g: FogGrid): { count: string; rest: string } {
   };
 }
 
+/** A jump longer than 4 trail steps (protocol `PLAYER_MAP_TRAIL_SPACING_M`) breaks the line. */
+export const TRAIL_BREAK_M = 4 * PLAYER_MAP_TRAIL_SPACING_M;
+/** The sim keeps at most this many trail points (protocol). */
+export const TRAIL_MAX_POINTS = PLAYER_MAP_TRAIL_MAX_POINTS;
+
 /** Trail → polylines in world metres (NaN pairs or jumps > `maxGapM` break the line). */
-export function trailSegments(trail: Float32Array, maxGapM = 64): { x: number; y: number }[][] {
+export function trailSegments(
+  trail: Float32Array,
+  maxGapM = TRAIL_BREAK_M,
+): { x: number; y: number }[][] {
   const out: { x: number; y: number }[][] = [];
   let cur: { x: number; y: number }[] = [];
   for (let i = 0; i + 1 < trail.length; i += 2) {
@@ -391,4 +401,18 @@ export function panelPosition(
   return { x: Math.max(12, x), y, flipped };
 }
 
-export const clampMarkerText = (t: string): string => [...t].slice(0, MARKER_TEXT_MAX).join('');
+/**
+ * Marker text length as the protocol counts it (Serwer #133, `saveMarkerSchema`): code points,
+ * an emoji = 1, not UTF-16 units (`string.length`).
+ */
+export const markerTextLength = (t: string): number => Array.from(t).length;
+
+/** Cuts marker text to `MAP_MARKER_TEXT_MAX` (40) code points, like the sim and the server. */
+export const clampMarkerText = (t: string): string =>
+  Array.from(t).slice(0, MARKER_TEXT_MAX).join('');
+
+/**
+ * Most UTF-16 units marker text can take (`saveMarkerSchema`: 2 × 40, every code point at most
+ * a surrogate pair). For the `<input maxlength>` only; the real limit is `clampMarkerText`.
+ */
+export const MARKER_TEXT_MAX_UNITS = MARKER_TEXT_MAX * 2;

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { PLAYER_MAP_TRAIL_MAX_POINTS, PLAYER_MAP_TRAIL_SPACING_M } from '@deadzone/protocol';
 import {
+  MARKER_TEXT_MAX_UNITS,
+  TRAIL_BREAK_M,
+  TRAIL_MAX_POINTS,
+  markerTextLength,
   decodeBase64,
   fogGrid,
   MARKER_TEXT_MAX,
@@ -135,5 +140,20 @@ describe('layout', () => {
     expect(p.flipped).toBe(true);
     expect(p.x).toBe(1100 - 44 - 320);
     expect(p.y + 400).toBeLessThanOrEqual(720 - 38);
+  });
+});
+
+describe('protocol limits (Serwer #133)', () => {
+  it('marker text counts code points: emoji = 1, cut at 40', () => {
+    const emoji = '🧟'.repeat(40);
+    expect(emoji.length).toBe(80);
+    expect(markerTextLength(emoji)).toBe(40);
+    expect(clampMarkerText(emoji + '🧟')).toBe(emoji);
+    expect(MARKER_TEXT_MAX_UNITS).toBe(80);
+  });
+
+  it('trail break and cap from the protocol', () => {
+    expect(TRAIL_BREAK_M).toBe(4 * PLAYER_MAP_TRAIL_SPACING_M);
+    expect(TRAIL_MAX_POINTS).toBe(PLAYER_MAP_TRAIL_MAX_POINTS);
   });
 });
