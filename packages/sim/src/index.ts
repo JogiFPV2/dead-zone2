@@ -154,6 +154,7 @@ export {
   addCoarseZombies,
   cellOfChunk,
   coarseTotal,
+  floorTotal,
   DEFAULT_SIM_LOD,
   lodApplies,
   type LodWorld,

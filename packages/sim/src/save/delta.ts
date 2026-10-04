@@ -109,6 +109,13 @@ export interface LodSave {
   noises: number[][];
   /** Stair chunks in registration order (absent = none). */
   stairs?: number[];
+  /**
+   * Counters off the ground (docs 9.39): `[cell, counts]`, counts `[(z − z0) * types + type]`
+   * over all levels (z 0 slot = 0). Absent = none (single-level world or a save from before).
+   */
+  floors?: [number, number[]][];
+  /** Cells already split over their levels: `[cell, stair mask]`. Absent = none. */
+  links?: [number, number][];
   cursor: number;
   rng: [number, number, number, number];
 }
@@ -130,6 +137,8 @@ export function encodeLod(lod: LodWorld): LodSave {
     lures: sorted(lod.lures).map(([k, v]) => [k, [...v]]),
     noises: lod.noises.map((n) => [...n]),
     ...(lod.stairChunks.length > 0 ? { stairs: [...lod.stairChunks] } : {}),
+    ...(lod.floors.size > 0 ? { floors: sorted(lod.floors).map(([k, v]) => [k, [...v]]) } : {}),
+    ...(lod.links.size > 0 ? { links: sorted(lod.links) } : {}),
     cursor: lod.cursor,
     rng: lod.rng.state(),
   };
@@ -152,6 +161,18 @@ export function decodeLod(lod: LodWorld, s: LodSave): void {
   lod.lures.clear();
   for (const [k, v] of s.lures) lod.lures.set(k, [...v]);
   lod.noises = s.noises.map((n) => [...n]);
+  const cells = lod.active.length;
+  lod.floors.clear();
+  for (const [k, v] of s.floors ?? []) {
+    if (!(k >= 0 && k < cells) || v.length !== lod.levels * lod.types)
+      throw new Error('save: bad floor counters');
+    lod.floors.set(k, Uint16Array.from(v));
+  }
+  lod.links.clear();
+  for (const [k, v] of s.links ?? []) {
+    if (!(k >= 0 && k < cells)) throw new Error('save: bad floor links');
+    lod.links.set(k, v >>> 0);
+  }
   lod.stairChunks.length = 0;
   lod.stairChunks.push(...(s.stairs ?? []));
   lod.cursor = s.cursor;

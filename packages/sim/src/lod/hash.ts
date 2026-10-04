@@ -1,5 +1,6 @@
 import { HashWriter, xxhash32 } from '../core/hash.js';
 import type { SimWorld } from '../core/world.js';
+import { hashFloors } from './floors.js';
 
 const bytesOf = (a: Uint8Array | Uint16Array): Uint8Array =>
   new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
@@ -52,4 +53,5 @@ export function hashLod(w: SimWorld, h: HashWriter): void {
   sub.u32(lod.noises.length);
   for (const n of lod.noises) sub.f32(n[0]!).f32(n[1]!).f32(n[2]!).f32(n[3]!).u32(n[4]!);
   h.u32(sub.digest());
+  hashFloors(lod, h);
 }

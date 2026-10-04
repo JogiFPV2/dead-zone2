@@ -38,6 +38,7 @@ export const DEFAULT_SIM_LOD: SimLodConfig = {
     woda: 0,
   },
   defaultZombiesPerChunk: 0.1,
+  floors: { weight: 0.5, upShare: 0.3 },
 };
 
 /** Loot state of a chunk column (`LodWorld.chunkLoot`). */
@@ -66,8 +67,22 @@ export interface LodWorld {
   readonly cellsH: number;
   /** Zombie types (content order). */
   readonly types: number;
-  /** Coarse / pending zombies: `counts[cell * types + type]`. */
+  /** Levels of the world (`bounds.z1 − z0 + 1`); 1 = single level (no floor counters). */
+  readonly levels: number;
+  /** Coarse / pending zombies on the ground (z 0): `counts[cell * types + type]`. */
   readonly counts: Uint16Array;
+  /**
+   * Coarse / pending zombies on the other levels (docs 9.39), sparse: cell →
+   * `[(z − z0) * types + type]` (the z 0 slot stays 0, the ground is `counts`). Only cells with
+   * zombies off the ground have an entry.
+   */
+  readonly floors: Map<number, Uint16Array>;
+  /**
+   * Cells whose population was split over their levels (`lod/floors.ts`, on the first
+   * activation): cell → stair mask (bit z − z0 = the cell has stairs from z to z + 1). Before
+   * that the whole start population of a cell waits on the ground counter.
+   */
+  readonly links: Map<number, number>;
   /** 1 = cell simulated in detail (its counter = zombies still waiting to be spawned). */
   readonly active: Uint8Array;
   /** Activations so far per cell (seeds the per-cell spawn RNG). */
@@ -128,7 +143,10 @@ export function createLodWorld(
     cellsW,
     cellsH,
     types,
+    levels: Math.max(1, b.z1 - b.z0 + 1),
     counts: new Uint16Array(cells * types),
+    floors: new Map(),
+    links: new Map(),
     active: new Uint8Array(cells),
     epoch: new Uint16Array(cells),
     chunkLoot: new Uint8Array(wChunks * hChunks),
@@ -170,30 +188,82 @@ export function cellOfChunk(lod: LodWorld, cx: number, cy: number): number {
 export const chunkIndex = (lod: LodWorld, cx: number, cy: number): number =>
   (cy - lod.bounds.cy0) * lod.wChunks + (cx - lod.bounds.cx0);
 
-/** Total coarse / pending zombies of a cell. */
-export function cellTotal(lod: LodWorld, cell: number): number {
+/** Coarse / pending zombies of a cell on the ground (z 0). */
+export function groundTotal(lod: LodWorld, cell: number): number {
   let n = 0;
   const o = cell * lod.types;
   for (let t = 0; t < lod.types; t++) n += lod.counts[o + t] ?? 0;
   return n;
 }
 
-/** Adds coarse zombies of a type to the cell holding chunk (cx, cy) (tests, game modes). */
+const sum = (a: Uint16Array): number => {
+  let n = 0;
+  for (let i = 0; i < a.length; i++) n += a[i]!;
+  return n;
+};
+
+/** Total coarse / pending zombies of a cell (all levels). */
+export function cellTotal(lod: LodWorld, cell: number): number {
+  const f = lod.floors.get(cell);
+  return groundTotal(lod, cell) + (f ? sum(f) : 0);
+}
+
+/**
+ * Counter array and offset of (cell, level z): the ground counter for z 0, else the cell's floor
+ * entry (created when `create`; undefined when missing).
+ */
+export function levelCounts(
+  lod: LodWorld,
+  cell: number,
+  z: number,
+  create: boolean,
+): [Uint16Array, number] | undefined {
+  if (z === 0) return [lod.counts, cell * lod.types];
+  const k = z - lod.bounds.z0;
+  if (k < 0 || k >= lod.levels) return undefined;
+  let f = lod.floors.get(cell);
+  if (!f) {
+    if (!create) return undefined;
+    lod.floors.set(cell, (f = new Uint16Array(lod.levels * lod.types)));
+  }
+  return [f, k * lod.types];
+}
+
+/** Drops the floor entry of a cell once it is empty (keeps `floors` sparse). */
+export function pruneFloors(lod: LodWorld, cell: number): void {
+  const f = lod.floors.get(cell);
+  if (f && sum(f) === 0) lod.floors.delete(cell);
+}
+
+/**
+ * Adds coarse zombies of a type to the cell holding chunk (cx, cy), on level `z` (default the
+ * ground; tests, game modes).
+ */
 export function addCoarseZombies(
   lod: LodWorld,
   cx: number,
   cy: number,
   type: number,
   n: number,
+  z = 0,
 ): void {
-  const i = cellOfChunk(lod, cx, cy) * lod.types + Math.min(lod.types - 1, Math.max(0, type));
-  lod.counts[i] = Math.min(0xffff, (lod.counts[i] ?? 0) + n);
+  const at = levelCounts(lod, cellOfChunk(lod, cx, cy), z, true);
+  if (!at) return;
+  const i = at[1] + Math.min(lod.types - 1, Math.max(0, type));
+  at[0][i] = Math.min(0xffff, (at[0][i] ?? 0) + n);
 }
 
-/** All coarse / pending zombies. */
+/** All coarse / pending zombies (all levels). */
 export function coarseTotal(lod: LodWorld): number {
+  let n = sum(lod.counts);
+  for (const f of lod.floors.values()) n += sum(f);
+  return n;
+}
+
+/** Coarse / pending zombies off the ground (levels ≠ 0). */
+export function floorTotal(lod: LodWorld): number {
   let n = 0;
-  for (let i = 0; i < lod.counts.length; i++) n += lod.counts[i]!;
+  for (const f of lod.floors.values()) n += sum(f);
   return n;
 }
 

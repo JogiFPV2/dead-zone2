@@ -35,6 +35,7 @@ import {
 } from '@deadzone/protocol';
 import {
   coarseTotal,
+  floorTotal,
   createLodWorld,
   DEFAULT_SIM_LOD,
   lodApplies,
@@ -256,8 +257,10 @@ export interface VehicleInfo {
 export interface LodStats {
   /** Zombie entities (detailed). */
   activeZombies: number;
-  /** Zombies as cell counters (coarse, plus pending spawns in active cells). */
+  /** Zombies as cell counters (coarse, plus pending spawns in active cells), all levels. */
   coarseZombies: number;
+  /** Part of `coarseZombies` off the ground (levels ≠ 0, docs 9.39). */
+  floorZombies: number;
   activeCells: number;
   /** Chunks with generated, unchanged loot (released when left). */
   liveChunks: number;
@@ -800,6 +803,7 @@ export function createSim(input: SimOptions): Sim {
       return {
         activeZombies: w.ai?.zombieCount ?? 0,
         coarseZombies: coarseTotal(lod),
+        floorZombies: floorTotal(lod),
         activeCells: lod.activeCells.length,
         liveChunks: lod.liveChunks.length,
         dirtyChunks: dirty,

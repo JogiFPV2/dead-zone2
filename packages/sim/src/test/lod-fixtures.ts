@@ -24,8 +24,13 @@ export function gridWorld(opts: {
   generatorVersion?: number;
   houseObjects?: number;
   kind?: (cx: number, cy: number) => string | undefined;
-  /** Houses get a first floor (z 1) over the kitchen and a flight of stairs up. */
-  floors?: boolean;
+  /**
+   * Houses get upper floors over the kitchen and a flight of stairs up on every level but the
+   * top: `true` = one floor (z 1), a number = that many levels in total (e.g. 6 = z 0..5).
+   */
+  floors?: boolean | number;
+  /** With `floors`: no stairs anywhere (sealed upper floors). */
+  noStairs?: boolean;
 }): WorldSource {
   const floor = new Uint16Array(CHUNK_TILES).fill(1);
   const empty = new Uint16Array(CHUNK_TILES);
@@ -52,16 +57,20 @@ export function gridWorld(opts: {
   const upperFloor = new Uint16Array(CHUNK_TILES);
   for (let y = 4; y <= 14; y++) for (let x = 4; x <= 14; x++) upperFloor[y * CHUNK_SIZE + x] = 1;
   const upper: SimChunk = { floor: upperFloor, edgeN: empty, edgeW: empty };
-  const houseUp: SimChunk = { ...house, stairs: [{ tx: 12, ty: 14, dir: 'N', len: 4 }] };
+  const flight = opts.noStairs ? undefined : [{ tx: 12, ty: 14, dir: 'N' as const, len: 4 }];
+  const houseUp: SimChunk = flight ? { ...house, stairs: flight } : house;
+  const levels = opts.floors === true ? 2 : opts.floors ? Math.max(1, opts.floors) : 1;
+  const upperUp: SimChunk = flight ? { ...upper, stairs: flight } : upper;
   return {
     seed: opts.seed ?? 77,
     generatorVersion: opts.generatorVersion ?? 1,
-    bounds: { cx0: 0, cy0: 0, cx1: opts.w - 1, cy1: opts.h - 1, z0: 0, z1: opts.floors ? 1 : 0 },
+    bounds: { cx0: 0, cy0: 0, cx1: opts.w - 1, cy1: opts.h - 1, z0: 0, z1: levels - 1 },
     getChunk: (cx, cy, z) => {
       if (cx < 0 || cy < 0 || cx >= opts.w || cy >= opts.h) return undefined;
       const isHouse = (cx + cy) % 2 === 0;
-      if (z === 0) return isHouse ? (opts.floors ? houseUp : house) : field;
-      return z === 1 && opts.floors && isHouse ? upper : undefined;
+      if (z === 0) return isHouse ? (levels > 1 ? houseUp : house) : field;
+      if (z < 1 || z >= levels || !isHouse) return undefined;
+      return z < levels - 1 ? upperUp : upper;
     },
     ...(opts.kind ? { chunkKind: opts.kind } : {}),
   };

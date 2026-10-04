@@ -10,18 +10,22 @@ import { removeBody } from '../physics/step.js';
 import { circleOverlaps } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
 import { releaseChunks, spawnChunkLoot } from './chunks.js';
+import { floorDrift, moveBetween, nextSpawn, resolveCell, takeSpawn } from './floors.js';
 import {
   cellOfChunk,
   cellTotal,
   chunkIndex,
   ChunkLoot,
+  groundTotal,
+  levelCounts,
   registerStairs,
   type LodWorld,
 } from './state.js';
+import { floorZ } from '../world/levels.js';
 
 /** Zombies are checked for folding every this many ticks. */
 const COLLAPSE_EVERY = 5;
-/** Tries per zombie to find a free tile when spawning a cell. */
+/** Tries per zombie to find a free tile when spawning a cell (ground; other levels × 4). */
 const SPAWN_TRIES = 12;
 /** Most noises kept for coarse cells. */
 const MAX_NOISES = 32;
@@ -143,6 +147,8 @@ function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
     keepCells.push(cell);
   }
   lod.activeCells = keepCells.sort((a, b) => a - b);
+  // Split new cells over their levels (also cells active in a save from before floors).
+  if (lod.levels > 1) for (const cell of lod.activeCells) resolveCell(lod, w.map, cell);
 
   // Loot chunks: same radii, chunk granularity.
   const release: number[] = [];
@@ -194,9 +200,14 @@ function collapseFar(w: SimWorld, lod: LodWorld): void {
       Math.floor((Position.y[eid] ?? 0) / CHUNK_SIZE),
     );
     const type = Math.min(lod.types - 1, Zombie.type[eid] ?? 0);
-    const i = cell * lod.types + type;
-    if ((lod.counts[i] ?? 0) < 0xffff) {
-      lod.counts[i] = (lod.counts[i] ?? 0) + 1;
+    // Off the ground: the zombie's level counter (split the cell first, so its start
+    // population does not land on top of it later).
+    const z = lod.levels > 1 ? floorZ(w, eid) : 0;
+    if (z !== 0) resolveCell(lod, w.map, cell);
+    const [arr, off] = levelCounts(lod, cell, z, true) ?? [lod.counts, cell * lod.types];
+    const i = off + type;
+    if ((arr[i] ?? 0) < 0xffff) {
+      arr[i] = (arr[i] ?? 0) + 1;
       const hp = Zombie.hp[eid] ?? 0;
       const max = ai.types[type]?.def.health ?? hp;
       if (hp > 0 && hp < max && lod.cfg.keepDamagedPerCell > 0) {
@@ -251,19 +262,24 @@ function spawnPending(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
     const by = cy0 + Math.floor(cell / lod.cellsW) * s;
     const bw = Math.min(cx1, bx + s - 1) - bx + 1;
     const bh = Math.min(cy1, by + s - 1) - by + 1;
-    while (budget > 0 && cellTotal(lod, cell) > 0) {
+    while (budget > 0) {
+      const next = nextSpawn(lod, cell, rng);
+      if (!next) break;
+      const { z, type } = next;
       let spot: { x: number; y: number } | undefined;
-      for (let k = 0; k < SPAWN_TRIES && !spot; k++) {
+      const tries = z === 0 ? SPAWN_TRIES : SPAWN_TRIES * 4;
+      for (let k = 0; k < tries && !spot; k++) {
         const x = (bx + rng.int(0, bw - 1)) * CHUNK_SIZE + rng.int(0, CHUNK_SIZE - 1) + 0.5;
         const y = (by + rng.int(0, bh - 1)) * CHUNK_SIZE + rng.int(0, CHUNK_SIZE - 1) + 0.5;
-        if (
-          grid.isVoid(Math.floor(x), Math.floor(y), 0) ||
-          grid.stairAt(Math.floor(x), Math.floor(y), 0)
-        )
-          continue;
-        if (circleOverlaps(grid, 0, x, y, radius)) continue;
+        const tx = Math.floor(x);
+        const ty = Math.floor(y);
+        if (grid.isVoid(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
+        // Off the ground also not over a flight coming up from below.
+        if (z !== 0 && grid.stairAt(tx, ty, z - 1)) continue;
+        if (circleOverlaps(grid, z, x, y, radius)) continue;
         let near = false;
         for (const p of players) {
+          if (z !== 0 && floorZ(w, p) !== z) continue; // other levels: out of sight
           const dx = (Position.x[p] ?? 0) - x;
           const dy = (Position.y[p] ?? 0) - y;
           if (dx * dx + dy * dy < minD2) near = true;
@@ -271,10 +287,8 @@ function spawnPending(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
         if (!near) spot = { x, y };
       }
       if (!spot) break; // try again next tick (players move, the RNG advances)
-      let type = 0;
-      while (type < lod.types && (lod.counts[cell * lod.types + type] ?? 0) === 0) type++;
-      lod.counts[cell * lod.types + type] = (lod.counts[cell * lod.types + type] ?? 0) - 1;
-      const eid = spawnZombie(w, ai, type, spot.x, spot.y, 0);
+      takeSpawn(lod, cell, z, type);
+      const eid = spawnZombie(w, ai, type, spot.x, spot.y, z);
       const dmg = lod.damaged.get(cell);
       if (dmg) {
         for (let j = 0; j < dmg.length; j += 2) {
@@ -331,8 +345,9 @@ function coarseSweep(w: SimWorld, lod: LodWorld): void {
     const cell = lod.cursor;
     lod.cursor = (lod.cursor + 1) % cells;
     if (lod.active[cell]) continue;
-    const total = cellTotal(lod, cell);
-    if (total === 0) continue;
+    const total = groundTotal(lod, cell);
+    const multi = lod.levels > 1 && lod.links.has(cell);
+    if (total === 0 && !multi) continue;
     const gx = cell % lod.cellsW;
     const gy = Math.floor(cell / lod.cellsW);
     // Cell centre in world tiles.
@@ -357,7 +372,8 @@ function coarseSweep(w: SimWorld, lod: LodWorld): void {
       pulled = true;
       break;
     }
-    if (pulled || !lod.rng.chance(lod.cfg.drift.chance)) continue;
+    if (multi) floorDrift(lod, cell, pulled);
+    if (pulled || total === 0 || !lod.rng.chance(lod.cfg.drift.chance)) continue;
     const dir = lod.rng.int(0, 3);
     const tx = gx + (dir === 0 ? 1 : dir === 1 ? -1 : 0);
     const ty = gy + (dir === 2 ? 1 : dir === 3 ? -1 : 0);
@@ -365,25 +381,12 @@ function coarseSweep(w: SimWorld, lod: LodWorld): void {
   }
 }
 
-/** Moves up to `k` zombies (types picked by count, `lod.rng`) from `cell` to cell (tx, ty). */
+/**
+ * Moves up to `k` ground zombies (types picked by count, `lod.rng`) from `cell` to cell (tx, ty)
+ * (horizontal drift stays on the ground; other levels move only through stairs, `floorDrift`).
+ */
 function moveZombies(lod: LodWorld, cell: number, tx: number, ty: number, k: number): number {
   if (tx < 0 || ty < 0 || tx >= lod.cellsW || ty >= lod.cellsH) return 0;
   const to = ty * lod.cellsW + tx;
-  let total = cellTotal(lod, cell);
-  let moved = 0;
-  for (; moved < k && total > 0; moved++) {
-    let r = lod.types > 1 ? lod.rng.int(0, total - 1) : 0;
-    let t = 0;
-    for (; t < lod.types; t++) {
-      r -= lod.counts[cell * lod.types + t] ?? 0;
-      if (r < 0) break;
-    }
-    t = Math.min(t, lod.types - 1);
-    const dst = to * lod.types + t;
-    if ((lod.counts[dst] ?? 0) >= 0xffff) break;
-    lod.counts[cell * lod.types + t] = (lod.counts[cell * lod.types + t] ?? 0) - 1;
-    lod.counts[dst] = (lod.counts[dst] ?? 0) + 1;
-    total--;
-  }
-  return moved;
+  return moveBetween(lod, [lod.counts, cell * lod.types], [lod.counts, to * lod.types], k);
 }

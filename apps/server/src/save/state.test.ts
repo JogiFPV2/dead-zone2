@@ -144,4 +144,21 @@ describe('LOD world delta (#104)', () => {
     lod(sig).sig = [[512 * 512, 1]];
     rejects(sig, /lod\.sig/);
   });
+
+  it('floor counters and stair masks (sim 9.39): optional, cells inside the grid', () => {
+    const ok = save();
+    const types = lod(ok).types as number;
+    lod(ok).floors = [[5, new Array(3 * types).fill(1)]];
+    lod(ok).links = [[5, 0b11]];
+    expect(() => check(ok)).not.toThrow();
+    const out = save();
+    lod(out).floors = [[32 * 32, new Array(types).fill(1)]];
+    rejects(out, /lod\.floors/);
+    const ragged = save();
+    lod(ragged).floors = [[1, new Array(types + 1).fill(1)]];
+    if (types > 1) rejects(ragged, /lod\.floors/);
+    const link = save();
+    lod(link).links = [[32 * 32, 1]];
+    rejects(link, /lod\.links/);
+  });
 });

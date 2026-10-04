@@ -41,16 +41,21 @@ export interface FloorPassage {
   stair: Stair;
 }
 
-/** Passages per (approach chunk, floor, up / down) of a grid. Derived from static map data. */
-const passageCache = new WeakMap<TileGrid, Map<string, FloorPassage[]>>();
+/**
+ * Passages per (approach chunk, floor, up / down) of a grid. Derived from static map data; on
+ * lazy worlds (sim LOD) stairs are registered as chunks come close, so the cache is rebuilt
+ * when `grid.stairs` grew (else a run and its loaded save would see different passages).
+ */
+const passageCache = new WeakMap<TileGrid, { n: number; m: Map<string, FloorPassage[]> }>();
 
 const bucketKey = (cx: number, cy: number, z: number, up: boolean): string =>
   `${cx},${cy},${z},${up ? 1 : 0}`;
 
 function passagesOf(grid: TileGrid): Map<string, FloorPassage[]> {
-  let m = passageCache.get(grid);
-  if (m) return m;
-  m = new Map();
+  const hit = passageCache.get(grid);
+  if (hit && hit.n === grid.stairs.length) return hit.m;
+  nearCache.delete(grid);
+  const m = new Map<string, FloorPassage[]>();
   const add = (p: FloorPassage): void => {
     // The approach tile must have a floor (else the flight cannot be entered from that side).
     if (grid.isVoid(p.ax, p.ay, p.fromZ)) return;
@@ -94,7 +99,7 @@ function passagesOf(grid: TileGrid): Map<string, FloorPassage[]> {
       stair: s,
     });
   }
-  passageCache.set(grid, m);
+  passageCache.set(grid, { n: grid.stairs.length, m });
   return m;
 }
 
@@ -109,6 +114,7 @@ function candidates(
   z: number,
   up: boolean,
 ): readonly FloorPassage[] {
+  const all = passagesOf(grid); // first: drops `nearCache` when stairs were added
   let memo = nearCache.get(grid);
   if (!memo) {
     memo = new Map();
@@ -117,7 +123,6 @@ function candidates(
   const key = bucketKey(ccx, ccy, z, up);
   let list = memo.get(key);
   if (list) return list;
-  const all = passagesOf(grid);
   const found: FloorPassage[] = [];
   const R = PASSAGE_SEARCH_CHUNKS;
   for (let cy = ccy - R; cy <= ccy + R; cy++) {

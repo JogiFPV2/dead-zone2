@@ -123,6 +123,15 @@ const lodSchema = z
       .array(nat.max(WORLD_CHUNKS - 1))
       .max(WORLD_CHUNKS)
       .optional(),
+    // Counters off the ground and stair masks of split cells (sim docs 9.39; absent = none).
+    floors: z
+      .array(z.tuple([nat, z.array(nat.max(0xffff)).max(64 * 256)]))
+      .max(WORLD_CHUNKS)
+      .optional(),
+    links: z
+      .array(z.tuple([nat, nat.max(0xffff_ffff)]))
+      .max(WORLD_CHUNKS)
+      .optional(),
     cursor: nat,
     rng: rngState,
   })
@@ -132,6 +141,14 @@ const lodSchema = z
     rle(ctx, ['active'], l.active, { exact: cells, max: 0, maxValue: 0xff });
     rle(ctx, ['epoch'], l.epoch, { exact: cells, max: 0, maxValue: 0xffff });
     rle(ctx, ['chunks'], l.chunks, { max: WORLD_CHUNKS, maxValue: 0xff });
+    l.floors?.forEach(([cell, v], i) => {
+      if (cell >= cells || v.length === 0 || v.length % l.types !== 0)
+        ctx.addIssue({ code: 'custom', path: ['floors', i], message: 'bad floor counters' });
+    });
+    l.links?.forEach(([cell], i) => {
+      if (cell >= cells)
+        ctx.addIssue({ code: 'custom', path: ['links', i], message: 'cell outside the grid' });
+    });
   });
 
 const stateSchema = z.looseObject({

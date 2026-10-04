@@ -25,6 +25,7 @@
       "las": 0.03,
       "woda": 0
     },
-    "defaultZombiesPerChunk": 0.1
+    "defaultZombiesPerChunk": 0.1,
+    "floors": { "weight": 0.5, "upShare": 0.3 }
   }
 }

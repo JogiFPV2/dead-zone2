@@ -71,6 +71,18 @@ export const SimLodSettingsSchema = z
       .default({ ...DEFAULT_ZOMBIES_PER_CHUNK }),
     /** Gęstość dla chunków bez typu strefy. */
     defaultZombiesPerChunk: z.number().min(0).max(1000).default(0.1),
+    /**
+     * Piętra (docs/sim-architecture.md 9.39). Przy pierwszym wejściu w komórkę populacja startowa
+     * dzieli się na poziomy wg kafli podłogi; kafel piętra lub piwnicy waży `weight` kafla
+     * parteru. Dryf zgrubny między poziomami tylko w komórkach ze schodami; `upShare` to szansa,
+     * że krok dryfu idzie w górę zamiast w dół (poniżej 0.5 horda ciąży ku parterowi).
+     */
+    floors: z
+      .strictObject({
+        weight: z.number().min(0).max(10).default(0.5),
+        upShare: FractionSchema.default(0.3),
+      })
+      .prefault({}),
   })
   .prefault({});
 
