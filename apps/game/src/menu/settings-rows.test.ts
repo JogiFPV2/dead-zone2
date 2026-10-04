@@ -37,6 +37,15 @@ describe('settings rows', () => {
     expect(JSON.stringify(settingsRows('graphics', d, ctx))).toContain('1280 × 720');
   });
 
+  it('Grafika: Zasięg widzenia steps Niski / Średni / Wysoki (the ?view= presets)', () => {
+    const v = row('graphics', 'viewDistance');
+    expect(v).toMatchObject({ kind: 'choice', label: 'Zasięg widzenia', value: 'medium' });
+    expect(JSON.stringify(v)).toContain('Niski');
+    expect(adjustRow(d, v, 'ArrowLeft', false).graphics.viewDistance).toBe('low');
+    expect(adjustRow(d, v, 'ArrowRight', false).graphics.viewDistance).toBe('high');
+    expect(isDirty(adjustRow(d, v, 'ArrowRight', false), d)).toBe(true);
+  });
+
   it('Dźwięk sliders step by 5 (Shift 1); Interfejs toggles', () => {
     const master = row('audio', 'master');
     expect(adjustRow(d, master, 'ArrowRight', false).audio.master).toBe(0.85);

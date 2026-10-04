@@ -2,7 +2,13 @@
 import type { Action } from '../input/actions.js';
 import { keyLabel } from '../hud/key-label.js';
 import { percent } from '../audio/mix.js';
-import { GRAPHICS_STYLES, type GraphicsStyle, type Settings } from '../settings/schema.js';
+import {
+  GRAPHICS_STYLES,
+  VIEW_DISTANCE_SETTINGS,
+  type GraphicsStyle,
+  type Settings,
+  type ViewDistance,
+} from '../settings/schema.js';
 import { sliderKey } from './menu-model.js';
 import type { SettingsTab } from './settings-tabs.js';
 
@@ -30,7 +36,7 @@ export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 
 type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice';
 type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
-type ChoiceId = 'style' | 'quality';
+type ChoiceId = 'style' | 'quality' | 'viewDistance';
 
 const STYLE_LABELS: Record<GraphicsStyle, string> = {
   classic: 'Klasyczny',
@@ -48,6 +54,16 @@ const QUALITY: readonly (ChoiceOption & { cap: number })[] = [
   { id: 'mid', label: 'Średni', cap: 1.5 },
   { id: 'high', label: 'Wysoki', cap: 2 },
 ];
+/** „Zasięg widzenia” = chunk streaming preset (world/streaming/rings.ts, same as `?view=`). */
+const VIEW_LABELS: Record<ViewDistance, string> = {
+  low: 'Niski',
+  medium: 'Średni',
+  high: 'Wysoki',
+};
+const VIEW: readonly ChoiceOption[] = VIEW_DISTANCE_SETTINGS.map((id) => ({
+  id,
+  label: VIEW_LABELS[id],
+}));
 const qualityOf = (cap: number): string =>
   QUALITY.reduce((best, q) => (Math.abs(q.cap - cap) < Math.abs(best.cap - cap) ? q : best)).id;
 
@@ -100,6 +116,14 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           hint: 'Limit gęstości pikseli · zapisywany, w grze wkrótce',
           options: QUALITY,
           value: qualityOf(d.graphics.pixelRatioCap),
+        },
+        {
+          kind: 'choice',
+          id: 'viewDistance',
+          label: 'Zasięg widzenia',
+          hint: 'Jak daleko świat się wczytuje i rysuje · niżej = więcej FPS',
+          options: VIEW,
+          value: d.graphics.viewDistance,
         },
         {
           kind: 'info',
@@ -196,6 +220,10 @@ export function chooseRow(d: Settings, id: ChoiceId, value: string): Settings {
   if (id === 'style') {
     const style = GRAPHICS_STYLES.find((s) => s === value);
     return style ? { ...d, graphics: { ...d.graphics, style } } : d;
+  }
+  if (id === 'viewDistance') {
+    const viewDistance = VIEW_DISTANCE_SETTINGS.find((v) => v === value);
+    return viewDistance ? { ...d, graphics: { ...d.graphics, viewDistance } } : d;
   }
   const q = QUALITY.find((o) => o.id === value);
   return q ? { ...d, graphics: { ...d.graphics, pixelRatioCap: q.cap } } : d;

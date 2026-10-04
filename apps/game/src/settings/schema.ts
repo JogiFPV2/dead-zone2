@@ -20,7 +20,7 @@ export interface GraphicsSettings {
   showFps: boolean;
   /**
    * „Zasięg widzenia”: chunk streaming ring radii / budgets (world/streaming/rings.ts presets).
-   * No UI row yet; `?view=` overrides it.
+   * Ustawienia › Grafika › Zasięg widzenia; `?view=` overrides it.
    */
   viewDistance: ViewDistance;
 }
