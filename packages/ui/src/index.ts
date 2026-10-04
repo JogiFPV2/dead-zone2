@@ -19,3 +19,4 @@ export * from './components/item-tooltip/index.js';
 export * from './mood/mood.js';
 export * from './mood/vignette.js';
 export * from './layout/ui-scale.js';
+export * from './settings/index.js';

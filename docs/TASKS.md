@@ -110,6 +110,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Dźwięki CC0 (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze brak
 - [x] Menu główne z żywą sceną w tle + Ustawienia › Audio, szyny głośności Web Audio (Silnik)
 - [ ] Samouczek i ustawienia (Designer + Silnik)
+- [x] Schemat układu HUD i ustawień gracza (Modules) — `@deadzone/ui/settings`: `HUD_ELEMENT_IDS`, `HUD_LAYOUT_SLOTS`, `hudLayoutSchema`, `DEFAULT_HUD_LAYOUT`, `resolveLayout`, `clampToViewport`; `playerSettingsSchema` (v1, limit 16 KB) + `resolveSettings` / `validatePlayerSettings` dla serwera. Bez DOM; edytor HUD w kliencie jeszcze niepodpięty (Silnik)
 - [ ] Profilowanie i optymalizacja (Silnik)
 - [ ] Sentry i zbieranie błędów (Serwer)
 - [ ] Wdrożenie publiczne (Serwer)

@@ -142,3 +142,11 @@ tooltip.place(tooltipPosition(hotbarRect, slotOffsetX, tooltipSize, viewport));
 ## Podgląd
 
 `pnpm --filter @deadzone/ui preview -- --png /tmp/ui.png` renderuje wszystkie stany na jednym arkuszu do `dist/preview/preview-{night,day,dusk}.html` (statyczny HTML) i, z `--png`, do PNG przez headless Chrome (`CHROME_BIN`, domyślnie `google-chrome`): `/tmp/ui.png` (dzień), `/tmp/ui-night.png` (noc) i `/tmp/ui-dusk.png` (zmierzch). `--png-new /tmp/ui-new.png` zapisuje dodatkowo same nowe komponenty w trzech nastrojach (`dist/preview/preview-new.html`). `--png-tooltip /tmp/tip.png` renderuje sam tooltip noża w 2× do porównania z makietą.
+
+## Ustawienia gracza i układ HUD (`@deadzone/ui/settings`)
+
+Czyste dane i funkcje bez DOM (zależy tylko od `zod`), więc ten sam kod działa w kliencie, w `apps/server` i w Edge Functions. Sprawdzają to `tsconfig.settings.json` (typecheck bez biblioteki DOM) i test `settings-entry.test.ts` (graf importów). Wszystko jest też eksportowane z `@deadzone/ui`.
+
+- **Układ HUD:** `HUD_ELEMENT_IDS` to id elementów z klienta. `HUD_LAYOUT_SLOTS` to klucze układu, bez `vehicle`, bo panel auta stoi w miejscu broni: `layoutSlotFor('vehicle') === 'weapon'`. Element ma `{anchor, x, y, scale 0.5–1.5, opacity 0.2–1, visible}`. `x` i `y` to przesunięcie od krawędzi kotwicy jako ułamek ekranu 0..1, a na osi środkowej (`tc`, `bc`, `cl`, `cr`) przesunięcie od środka −0.5..0.5. `hudLayoutSchema` (`version: 1`) trzyma tylko zmienione elementy, a nieznane id wycina.
+- **Funkcje:** `DEFAULT_HUD_LAYOUT` (HUD v3, 1280×720), `resolveLayout(saved)` (pełny układ, błędne pola wracają do domyślnych), `resetElement`, `resetAll`, `clampToViewport(el, {w,h}, rozmiarPx, uiScale?)` → prostokąt w px, który nigdy nie wychodzi poza ekran.
+- **Ustawienia:** `playerSettingsSchema` (`version: 1`) odpowiada `Settings` z `apps/game/src/settings/schema.ts`, czyli sekcjom input, interface, view, graphics i audio, z dodatkowym polem `hud`. Każde pole ma wartość domyślną, a nieznane klucze są wycinane. `resolveSettings(saved)` nigdy nie rzuca błędu. `validatePlayerSettings(raw)` sprawdza limit `PLAYER_SETTINGS_MAX_BYTES` (16 KB) i ścisły schemat. Serwer zapisuje wtedy `data`.
