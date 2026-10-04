@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { GROUND_PILE_SHOWN, type GroundPileView } from '@deadzone/protocol';
 import { fixtureContent, runMinutes, send } from '../test/content-fixtures.js';
 import { findItem, itemsSim, mainItems, rejectedReasons } from '../test/item-fixtures.js';
 
@@ -44,6 +45,18 @@ describe('inventory: weight, hands, bags, carry-load', () => {
     // Merged back into the existing stack; the empty pile is gone.
     expect(mainItems(sim)).toEqual([expect.objectContaining({ id: brick.id, count: 5 })]);
     expect(sim.getContainer(pile.id)).toBeUndefined();
+  });
+
+  it('ground pile markers list the top item defs (client draws them on the floor)', () => {
+    const sim = itemsSim();
+    send(sim, { type: 'debugGiveItem', itemId: 'fixture:brick', count: 2 });
+    sim.step();
+    send(sim, { type: 'drop', item: mainItems(sim)[0]!.id });
+    for (let i = 0; i < 10; i++) sim.step();
+    let piles: GroundPileView[] | undefined;
+    for (let v = sim.drainView(); v; v = sim.drainView()) piles = v.groundPiles ?? piles;
+    expect(piles).toEqual([expect.objectContaining({ items: ['fixture:brick'] })]);
+    expect(GROUND_PILE_SHOWN).toBe(4);
   });
 
   it('carry hard limit: nothing heavier can be picked up; overload slows movement (moodle)', () => {

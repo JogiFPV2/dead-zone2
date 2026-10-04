@@ -9,6 +9,7 @@ import type {
   NearbyContainerView,
   StorageMarkerView,
 } from '@deadzone/protocol';
+import { GROUND_PILE_SHOWN } from '@deadzone/protocol';
 import { previewLootWeight } from './loot.js';
 import { viewKind } from './search.js';
 import { ACTION_KINDS, actionPart } from '../actions/queue.js';
@@ -191,7 +192,13 @@ export function groundPilesView(w: SimWorld, eid: number, radius: number): Groun
     const dx = c.x + 0.5 - px;
     const dy = c.y + 0.5 - py;
     if (dx * dx + dy * dy > radius * radius) continue;
-    out.push({ id, x: c.x, y: c.y, z: c.z });
+    const items: string[] = [];
+    for (const iid of c.items) {
+      const it = st.items.get(iid);
+      if (it) items.push(defOf(st, it).id);
+      if (items.length >= GROUND_PILE_SHOWN) break;
+    }
+    out.push({ id, x: c.x, y: c.y, z: c.z, items });
   }
   return out.sort((a, b) => a.id - b.id);
 }

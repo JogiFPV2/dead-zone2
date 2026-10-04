@@ -1090,6 +1090,7 @@ if (import.meta.env.DEV) {
       /** Current game state (read-only). */
       state: () => gameState.get(),
       shelfFill,
+      groundPiles,
       /** Id of the first carried item of content `def`. */
       itemOf: (def: string): ItemId | undefined => devItemOf(def),
       /** Equips the first carried item of content `def` into `slot` (e.g. 'hand_primary'). */

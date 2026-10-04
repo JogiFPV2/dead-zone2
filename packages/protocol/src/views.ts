@@ -284,7 +284,12 @@ export interface GroundPileView {
   x: number;
   y: number;
   z: number;
+  /** Item defs on top of the pile (first GROUND_PILE_SHOWN, UI order) for the ground models. */
+  items?: string[];
 }
+
+/** Item models drawn per ground pile (the rest is only in the loot panel). */
+export const GROUND_PILE_SHOWN = 4;
 
 export interface ActionView {
   kind: ActionKind;
