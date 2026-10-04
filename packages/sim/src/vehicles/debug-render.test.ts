@@ -407,4 +407,245 @@ describe('vehicles: top-down debug renders', () => {
     });
     await save('fiz-car-ram.png', cv);
   });
+
+  it('fiz-car-damage.png: flat tyre vs healthy path, hit map per zone', async () => {
+    // Top: straight line at 30 km/h, steering centred: healthy, flat FR, flat FL, flat RR.
+    const runs = (
+      [
+        ['ZDROWE', undefined, GREEN],
+        ['FLAK PP (FR)', 'tireFR', ORANGE],
+        ['FLAK LP (FL)', 'tireFL', CYAN],
+        ['FLAK PT (RR)', 'tireRR', YELLOW],
+      ] as const
+    ).map(([label, part, col]) => {
+      const { sim, ctl } = seatedSim({ car: { x: 20, y: 40 } });
+      if (part) sim.setPartHp(car(sim).stableId, part, 0);
+      const pts: Sample[] = [];
+      const ev: SimEvent[] = [];
+      for (let i = 0; i < 120; i++) {
+        ctl.drive(Math.max(0, Math.min(1, (8.33 - car(sim).speed) * 2)));
+        record(sim, pts, ev);
+      }
+      return { label, col, pts, drift: pts[pts.length - 1]!.y - 40 };
+    });
+    expect(runs[0]!.drift).toBeCloseTo(0, 3);
+    expect(runs[1]!.drift).toBeGreaterThan(1);
+    expect(runs[2]!.drift).toBeLessThan(-1);
+
+    // Bottom: four crashes, each car drawn large with zone / window / tyre hp and hit points.
+    const wallAt = (x0: number): MapSpec => ({
+      wallW: (x) => x === x0,
+      edgeKinds: [null, 'wall'] as (SimEdgeKind | null)[],
+    });
+    const crash = (
+      label: string,
+      opts: VehicleSimOptions,
+      speed: number,
+      ticks: number,
+      which = 0,
+    ) => {
+      const { sim, ctl } = seatedSim(opts);
+      const poses = new Map<number, VehicleInfo>();
+      const ev: SimEvent[] = [];
+      for (let i = 0; i < ticks; i++) {
+        const sp = car(sim).speed;
+        if (speed >= 0) ctl.drive(Math.max(0, Math.min(1, (speed - sp) * 2)));
+        else ctl.drive(0, Math.max(0, Math.min(1, (sp - speed) * 2)));
+        poses.set(sim.tick, car(sim, which));
+        sim.step();
+        ev.push(...sim.drainEvents());
+      }
+      const c = car(sim, which);
+      const hits = eventsOf(ev, 'vehicleImpact')
+        .filter((e) => e.vehicleId === c.stableId)
+        .map((e) => {
+          const p = poses.get(e.tick) ?? c;
+          const hx = Math.cos(p.headingRad);
+          const hy = Math.sin(p.headingRad);
+          const dx = e.x - p.x;
+          const dy = e.y - p.y;
+          return { l: dx * hx + dy * hy, s: -dx * hy + dy * hx, e: e.energy };
+        });
+      const broken = eventsOf(ev, 'vehiclePartBroken').map((e) => e.part);
+      return { label, c, hits, broken };
+    };
+    const zombies = Array.from({ length: 10 }, (_, i) => ({
+      x: 40 + i * 8,
+      y: 64,
+      type: 'fixture:dummy',
+    }));
+    const crashes = [
+      crash('SCIANA PRZODEM 8 M/S', { map: wallAt(40) }, 8, 120),
+      crash('SCIANA TYLEM 5 M/S', { map: wallAt(12) }, -5, 160),
+      crash(
+        'BOK: UDERZONE W PRAWY BOK 8 M/S',
+        {
+          spawnVehicles: [
+            { x: 20, y: 64 },
+            { x: 40, y: 64, heading: Math.PI / 2 },
+          ],
+        },
+        8,
+        90,
+        1,
+      ),
+      crash('10 ZOMBIE 40 KM/H', { zombies }, 11, 300),
+    ];
+    expect(crashes[0]!.c.zones[0]!).toBeLessThan(80);
+    expect(crashes[1]!.c.zones[1]!).toBeLessThan(100);
+    expect(crashes[2]!.c.zones[3]!).toBeLessThan(100);
+    expect(crashes[3]!.c.zones[0]!).toBeLessThan(95);
+
+    const W = 1400;
+    const H = 960;
+    const cv = new Canvas(W, H);
+    cv.text(
+      20,
+      16,
+      'USZKODZENIA AUTA: FLAK CIAGNIE W SWOJA STRONE, MAPA TRAFIEN NA STREFY',
+      WHITE,
+      3,
+    );
+    cv.text(
+      20,
+      44,
+      '30 KM/H NA WPROST, KIEROWNICA PROSTO, 6 S. GRID 5 M. FLAK = OPONA 0 HP (PULL + MNIEJ PRZYCZEPNOSCI)',
+      GREY,
+      2,
+    );
+    const xs = runs.flatMap((r) => r.pts.map((p) => p.x));
+    const ys = runs.flatMap((r) => r.pts.map((p) => p.y));
+    const x0 = 14;
+    const x1 = Math.max(...xs) + 6;
+    const y0 = Math.min(...ys) - 4;
+    const y1 = Math.max(...ys) + 4;
+    const sc = Math.min((W - 360) / (x1 - x0), 240 / (y1 - y0));
+    const v: View = { cv, x0, y0, s: sc, ox: 20, oy: 80 };
+    grid(v, x1, y1);
+    runs.forEach((r) => {
+      for (let i = 1; i < r.pts.length; i++) {
+        const [a, b] = P(v, r.pts[i - 1]!.x, r.pts[i - 1]!.y);
+        const [c, d] = P(v, r.pts[i]!.x, r.pts[i]!.y);
+        cv.line(a, b, c, d, r.col, 3);
+      }
+      for (let i = 0; i < r.pts.length; i += 30) carBox(v, r.pts[i]!, r.col, 1);
+      const last = r.pts[r.pts.length - 1]!;
+      carBox(v, last, r.col, 2);
+      const [lx, ly] = P(v, last.x, last.y);
+      cv.text(
+        lx + 50,
+        ly - 6,
+        `${r.label} ${r.drift >= 0 ? '+' : ''}${r.drift.toFixed(1)} M`,
+        r.col,
+        2,
+      );
+    });
+
+    // Hit maps.
+    const hpCol = (hp: number): Rgb => {
+      const t = Math.max(0, Math.min(1, hp / 100));
+      return t > 0.5
+        ? [
+            YELLOW[0] + (GREEN[0] - YELLOW[0]) * (t - 0.5) * 2,
+            YELLOW[1] + (GREEN[1] - YELLOW[1]) * (t - 0.5) * 2,
+            YELLOW[2] + (GREEN[2] - YELLOW[2]) * (t - 0.5) * 2,
+          ]
+        : [
+            RED[0] + (YELLOW[0] - RED[0]) * t * 2,
+            RED[1] + (YELLOW[1] - RED[1]) * t * 2,
+            RED[2] + (YELLOW[2] - RED[2]) * t * 2,
+          ];
+    };
+    const top = 360;
+    cv.text(
+      20,
+      top - 20,
+      'MAPA TRAFIEN (NOS W PRAWO, X = PUNKT UDERZENIA, KOLOR = HP STREFY)',
+      WHITE,
+      2,
+    );
+    const cellW = W / 2;
+    const cellH = 290;
+    const m = 70; // px per metre
+    crashes.forEach((cr, k) => {
+      const ox = (k % 2) * cellW + cellW / 2 + 20;
+      const oy = top + 10 + Math.floor(k / 2) * cellH + 150;
+      const hl = SEDAN.length / 2;
+      const hw = SEDAN.width / 2;
+      const X = (l: number) => ox + l * m;
+      const Y = (s: number) => oy + s * m;
+      const z = cr.c.zones;
+      const zb = 0.45; // zone band depth (m)
+      // Body zones: front / rear bands, left / right bands.
+      cv.rect(X(hl - zb), Y(-hw), zb * m, 2 * hw * m, hpCol(z[0]!));
+      cv.rect(X(-hl), Y(-hw), zb * m, 2 * hw * m, hpCol(z[1]!));
+      cv.rect(X(-hl + zb), Y(-hw), (2 * hl - 2 * zb) * m, zb * m, hpCol(z[2]!));
+      cv.rect(X(-hl + zb), Y(hw - zb), (2 * hl - 2 * zb) * m, zb * m, hpCol(z[3]!));
+      cv.rect(X(-hl + zb), Y(-hw + zb), (2 * hl - 2 * zb) * m, (2 * hw - 2 * zb) * m, [40, 43, 48]);
+      // Windows (inner strips) and engine (bay behind the front band).
+      const w = cr.c.windows;
+      cv.rect(X(0.9), Y(-0.45), 0.18 * m, 0.9 * m, hpCol(w[0]!));
+      cv.rect(X(-1.35), Y(-0.45), 0.18 * m, 0.9 * m, hpCol(w[1]!));
+      cv.rect(X(-0.9), Y(-hw + zb + 0.04), 1.6 * m, 0.12 * m, hpCol(w[2]!));
+      cv.rect(X(-0.9), Y(hw - zb - 0.16), 1.6 * m, 0.12 * m, hpCol(w[3]!));
+      cv.rect(X(1.25), Y(-0.35), 0.5 * m, 0.7 * m, hpCol(cr.c.engine));
+      // Tyres.
+      const t = cr.c.tires;
+      const wb = SEDAN.wheelbase / 2;
+      const tw = SEDAN.track / 2;
+      [
+        [wb, -tw],
+        [wb, tw],
+        [-wb, -tw],
+        [-wb, tw],
+      ].forEach(([l, s2], i) => {
+        cv.rect(X(l! - 0.32), Y(s2! - 0.12), 0.64 * m, 0.24 * m, hpCol(t[i]!));
+        cv.rect(X(l! - 0.32), Y(s2! - 0.12), 0.64 * m, 0.24 * m, [20, 20, 20], 0.35);
+      });
+      cv.poly(
+        [
+          [X(hl), Y(-hw)],
+          [X(hl), Y(hw)],
+          [X(-hl), Y(hw)],
+          [X(-hl), Y(-hw)],
+        ],
+        WHITE,
+        2,
+      );
+      for (const h of cr.hits) {
+        const r = Math.max(4, Math.min(12, Math.sqrt(h.e) / 15));
+        // Contact points lie on the body: drawn clamped to the outline (pose of the hit tick).
+        const px = X(Math.max(-hl, Math.min(hl, h.l)));
+        const py = Y(Math.max(-hw, Math.min(hw, h.s)));
+        cv.line(px - r, py - r, px + r, py + r, WHITE, 2);
+        cv.line(px - r, py + r, px + r, py - r, WHITE, 2);
+      }
+      const tx = (k % 2) * cellW + 20;
+      const ty = top + 10 + Math.floor(k / 2) * cellH;
+      cv.text(tx, ty, cr.label, WHITE, 2);
+      const r0 = (x: number) => Math.round(x);
+      cv.text(
+        tx,
+        ty + 20,
+        `KAROSERIA P${r0(z[0]!)} T${r0(z[1]!)} L${r0(z[2]!)} R${r0(z[3]!)}  SILNIK ${r0(cr.c.engine)}  TRAFIEN ${cr.hits.length}`,
+        GREY,
+        2,
+      );
+      cv.text(
+        tx,
+        ty + 40,
+        `SZYBY P${r0(w[0]!)} T${r0(w[1]!)} L${r0(w[2]!)} R${r0(w[3]!)}  OPONY ${t.map(r0).join(' ')}`,
+        GREY,
+        2,
+      );
+      if (cr.broken.length)
+        cv.text(tx, ty + 252, `ZEPSUTE: ${cr.broken.join(' ').toUpperCase()}`, RED, 2);
+    });
+    // Legend.
+    for (let i = 0; i < 160; i++) cv.rect(W - 230 + i, H - 26, 1, 10, hpCol((i / 159) * 100));
+    cv.text(W - 300, H - 26, 'HP', GREY, 2);
+    cv.text(W - 230, H - 12, '0', GREY, 2);
+    cv.text(W - 90, H - 12, '100', GREY, 2);
+    await save('fiz-car-damage.png', cv);
+  });
 });

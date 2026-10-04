@@ -10,6 +10,7 @@ import {
   type ContainerView,
   type InventoryView,
   type SimViewPatch,
+  type VehiclePart,
   type SimZombieSpawn,
   type SimAnimalSpawn,
   type SimVehicleSpawn,
@@ -38,6 +39,7 @@ import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/st
 import { spawnZombies } from './ai/zombies.js';
 import { populateAnimals, spawnAnimals } from './animals/spawn.js';
 import { spawnVehicles } from './vehicles/spawn.js';
+import { partHp, setVehiclePartHp } from './vehicles/damage.js';
 import { facingRadOf, vehicleSnapshotBytes, writeVehicleSnapshot } from './vehicles/snapshot.js';
 import { sortedVehicles } from './vehicles/system.js';
 import { vehicleTypes } from './vehicles/seats.js';
@@ -216,6 +218,12 @@ export interface VehicleInfo {
   slip: number;
   /** Body zone hp 0..100: front, rear, left, right. */
   zones: number[];
+  /** Engine hp 0..100 (0 = broken). */
+  engine: number;
+  /** Tyre hp 0..100: FL, FR, RL, RR. */
+  tires: number[];
+  /** Window hp 0..100: front, rear, left, right. */
+  windows: number[];
   cx: number;
   cy: number;
   frozen: boolean;
@@ -280,7 +288,19 @@ export interface Sim {
   getAnimals(): AnimalInfo[];
   /** All vehicles in StableId order. */
   getVehicles(): VehicleInfo[];
-  /** Vehicle block of the render snapshot (protocol `VehicleField`, stride 19); empty without cars. */
+  /**
+   * Hp 0..100 of a vehicle part (`VEHICLE_PARTS`: engine, tireFL…tireRR, bodyFront…bodyRight,
+   * windowFront…windowRight); undefined for an unknown vehicle / part.
+   */
+  getPartHp(vehicleId: number, part: VehiclePart): number | undefined;
+  /**
+   * Sets a part's hp (clamped 0..100; Symulacja repairs, scripted damage). An engine repaired from
+   * 0 restarts when a driver sits in with fuel (`engineStart`); one set to 0 stops (`engineStop`
+   * `broken`). Returns false for an unknown vehicle / part. Not a command: call it from the step
+   * owner (hashed state).
+   */
+  setPartHp(vehicleId: number, part: VehiclePart, hp: number): boolean;
+  /** Vehicle block of the render snapshot (protocol `VehicleField`, stride 21); empty without cars. */
   vehicleSnapshot(buf?: ArrayBuffer): ArrayBuffer;
   vehicleSnapshotByteLength(): number;
   /** UI view delta for player 0 since the last call (undefined when nothing changed). */
@@ -639,10 +659,21 @@ export function createSim(input: SimOptions): Sim {
         containers: [...v.containers],
         slip: v.slip,
         zones: [...v.zones],
+        engine: v.engine,
+        tires: [...v.tires],
+        windows: [...v.windows],
         cx: v.cx,
         cy: v.cy,
         frozen: v.frozenAt >= 0,
       })),
+    getPartHp(vehicleId, part) {
+      const v = w.physics.vehicles.get(vehicleId);
+      return v ? partHp(v, part) : undefined;
+    },
+    setPartHp(vehicleId, part, hp) {
+      const v = w.physics.vehicles.get(vehicleId);
+      return v ? setVehiclePartHp(w, v, part, hp) : false;
+    },
     vehicleSnapshot: (buf) => writeVehicleSnapshot(w, buf),
     vehicleSnapshotByteLength: () => vehicleSnapshotBytes(w),
     drainView: () => views.diff(w),

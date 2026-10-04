@@ -47,6 +47,12 @@ export interface Vehicle {
   susp: number[];
   /** Body zone hp 0..100: front, rear, left, right. */
   zones: number[];
+  /** Engine hp 0..100 (below `engineThreshold` less power, 0 = broken, won't start). */
+  engine: number;
+  /** Tyre hp 0..100: FL, FR, RL, RR (below `tireFlatBelow` going flat: pull, less grip). */
+  tires: number[];
+  /** Window hp 0..100: front (windscreen), rear, left, right (0 = shattered). */
+  windows: number[];
   /**
    * StableIds of standing bodies the car touched last active tick (sorted): a body still in
    * contact is only shoved along (positional push + `plowDecel`), not hit again (no impulse,

@@ -7,6 +7,7 @@ import type { SimWorld } from '../core/world.js';
 import { datan2 } from '../core/dmath.js';
 import { sortedVehicles } from './system.js';
 import type { Vehicle } from './types.js';
+import { brokenWindowsMask } from './damage.js';
 
 /** Nose direction in radians [0, 2π) (like entity `facingRad`). */
 export function facingRadOf(v: Vehicle): number {
@@ -38,6 +39,14 @@ export function snapshotVehicle(v: Vehicle): SnapshotVehicle {
       left: (v.zones[2] ?? 100) / 100,
       right: (v.zones[3] ?? 100) / 100,
     },
+    tires: [
+      (v.tires[0] ?? 100) / 100,
+      (v.tires[1] ?? 100) / 100,
+      (v.tires[2] ?? 100) / 100,
+      (v.tires[3] ?? 100) / 100,
+    ],
+    engine: v.engine / 100,
+    windowsBroken: brokenWindowsMask(v),
   };
 }
 

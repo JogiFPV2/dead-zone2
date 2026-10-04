@@ -34,7 +34,7 @@
  * `accel` = longitudinal acceleration in m/s² (+ speeding up, − braking; jerk-limited for
  * players), `gait` = index in GAITS of the profile used this tick (players: sneak / walk / run /
  * sprint after endurance checks; zombies: walk, or run while chasing; animals: walk). GAITS got
- * `sprint` (index 3).
+ * `sprint` (index 3). 14 changed the vehicle block only (parts: `tires`, `engine`, stride 21).
  */
 export const SNAPSHOT_ENTITY_STRIDE = 20;
 export const SnapshotField = {

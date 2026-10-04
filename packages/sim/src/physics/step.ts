@@ -320,6 +320,9 @@ function writeVehicleHash(pw: PhysicsWorld, h: HashWriter): void {
     for (const x of v.containers) h.u32(x);
     for (const x of v.susp) h.f32(x);
     for (const x of v.zones) h.f32(x);
+    h.f32(v.engine);
+    for (const x of v.tires) h.f32(x);
+    for (const x of v.windows) h.f32(x);
     h.u32(v.contacts.length);
     for (const x of v.contacts) h.u32(x);
   }

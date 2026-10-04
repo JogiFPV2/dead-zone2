@@ -6,7 +6,8 @@ import type { TileGrid } from '../world/grid.js';
 import { collideVehicle, type Impact, type UnderBody } from './collide.js';
 import { ramBody, rollOver } from './ram.js';
 import { pinOccupant, releaseControls } from './commands.js';
-import { NO_MODS, driveStep } from './drive.js';
+import { driveStep } from './drive.js';
+import { applyImpactDamage, applyRollDamage, driveMods } from './damage.js';
 import { playerEidOf, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
 
@@ -68,7 +69,7 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
     const eff = v.engineOn ? v.throttle : 0;
     const saved = v.throttle;
     v.throttle = eff;
-    driveStep(v, t, cfg, NO_MODS);
+    driveStep(v, t, cfg, driveMods(v, cfg));
     v.throttle = saved;
     collideVehicle(w, grid, v, types, cfg, impacts, under);
     v.cx = Math.floor(v.x / CHUNK_SIZE);
@@ -92,6 +93,9 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
   // Ramming and rolling over bodies (after all cars moved; contact order is deterministic).
   for (const hit of impacts) ramBody(w, grid, hit, cfg);
   for (const u of under) rollOver(w, grid, u, cfg);
+  // Damage after the reactions (impact order = deterministic contact order).
+  for (const hit of impacts) applyImpactDamage(w, hit, cfg);
+  for (const u of under) applyRollDamage(w, u, cfg);
   for (const hit of impacts) {
     if (hit.energy >= cfg.minImpactJ) {
       w.events.push({

@@ -4,7 +4,12 @@ import {
   encodeVehicleSnapshot,
   ENTITY_PHYS_STATES,
   packVehicleDamage,
+  packVehicleEngine,
+  packVehicleTires,
   unpackVehicleDamage,
+  unpackVehicleEngine,
+  unpackVehicleTires,
+  VEHICLE_PARTS,
   VEHICLE_SNAPSHOT_STRIDE,
   vehicleSnapshotByteLength,
   type SnapshotVehicle,
@@ -28,11 +33,14 @@ const car: SnapshotVehicle = {
   wheelsSpin: 3,
   suspension: [0.5, 0.5, 0.25, 0.75],
   damage: { front: 1, rear: 0, left: 128 / 255, right: 1 },
+  tires: [1, 0, 51 / 255, 1],
+  engine: 102 / 255,
+  windowsBroken: 0b1001,
 };
 
 describe('vehicle snapshot block', () => {
-  it('19 words per vehicle, round trip (u32 doorsOpen / damage)', () => {
-    expect(VEHICLE_SNAPSHOT_STRIDE).toBe(19);
+  it('21 words per vehicle, round trip (u32 doorsOpen / damage / tires / engine)', () => {
+    expect(VEHICLE_SNAPSHOT_STRIDE).toBe(21);
     const buf = encodeVehicleSnapshot([car, { ...car, stableId: 43 }]);
     expect(buf.byteLength).toBe(vehicleSnapshotByteLength(2));
     const [a, b] = decodeVehicleSnapshot(buf);
@@ -44,6 +52,14 @@ describe('vehicle snapshot block', () => {
     const v = packVehicleDamage({ front: 1, rear: 0, left: 0, right: 1 });
     expect(v).toBe(0xff0000ff);
     expect(unpackVehicleDamage(v)).toEqual({ front: 1, rear: 0, left: 0, right: 1 });
+  });
+
+  it('tires: 4 × u8 FL … RR; engine: u8 hp + broken-window bits 8–11', () => {
+    expect(packVehicleTires([1, 0, 0, 1])).toBe(0xff0000ff);
+    expect(unpackVehicleTires(0x00ff00ff)).toEqual([1, 0, 1, 0]);
+    expect(packVehicleEngine(1, 0b0010)).toBe(0x2ff);
+    expect(unpackVehicleEngine(0x8ff)).toEqual({ engine: 1, windowsBroken: 0b1000 });
+    expect(VEHICLE_PARTS).toHaveLength(13);
   });
 
   it('state `driving` is appended (index 13); vehicle commands validate', () => {

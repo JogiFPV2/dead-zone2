@@ -93,7 +93,7 @@ function enter(
   });
   if (seat === 0) {
     v.handbrake = false;
-    if (!v.engineOn && v.fuel > 0) {
+    if (!v.engineOn && v.fuel > 0 && v.engine > 0) {
       v.engineOn = true;
       w.events.push({ type: 'engineStart', tick: w.tick, vehicleId: v.id });
     }

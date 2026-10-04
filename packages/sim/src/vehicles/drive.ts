@@ -15,8 +15,10 @@ export interface DriveMods {
   powerMul: number;
   /** Steering offset −1..1 added to the wheels (a flat tyre pulls to its side). */
   pull: number;
+  /** Tyre grip factor 0..1 (flat tyres). */
+  gripMul: number;
 }
-export const NO_MODS: DriveMods = { powerMul: 1, pull: 0 };
+export const NO_MODS: DriveMods = { powerMul: 1, pull: 0, gripMul: 1 };
 
 /**
  * One tick of the driving model (arcade bicycle model with tyre slip): velocity lives in the
@@ -33,7 +35,7 @@ export function driveStep(v: Vehicle, t: VehicleTypeDef, cfg: VehicleConfig, mod
   let vLong = v.vx * hx + v.vy * hy;
   let vLat = -v.vx * hy + v.vy * hx;
   const spd = Math.sqrt(vLong * vLong + vLat * vLat);
-  const gripMul = 1 / (1 + spd / cfg.gripFalloffMs);
+  const gripMul = mods.gripMul / (1 + spd / cfg.gripFalloffMs);
   const grip = cfg.gripAccel * gripMul;
 
   // Steering follows the input at a limited rate; less lock at speed.
@@ -57,7 +59,9 @@ export function driveStep(v: Vehicle, t: VehicleTypeDef, cfg: VehicleConfig, mod
     if (vLong > cfg.stopSpeed) a -= cfg.brakeDecel * v.brake;
     else if (running && v.throttle === 0 && vLong > -cfg.reverseMaxSpeed)
       a -= cfg.reverseAccel * v.brake;
-    else if (vLong < -cfg.reverseMaxSpeed) a += cfg.brakeDecel * v.brake;
+    // Rolling backwards too fast, or without a running engine (a bounce, a dead engine): brake.
+    else if (vLong < -cfg.reverseMaxSpeed || (!running && vLong < -cfg.stopSpeed))
+      a += cfg.brakeDecel * v.brake;
   }
   const resist = cfg.rolling + cfg.drag * vLong * vLong + (v.handbrake ? cfg.handbrakeDecel : 0);
   const before = vLong;

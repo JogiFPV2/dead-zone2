@@ -81,6 +81,30 @@ export interface VehicleConfig {
   crushSpeed: number;
   /** Shoving a body that stays in front of the car costs this much (m/s² per body). */
   plowDecel: number;
+  /**
+   * Damage (PR B, `damage.ts`): an impact takes (energy − `damageMinJ`) / 1 kJ × `zoneDmgPerKJ`
+   * hp from the zone hit (a 6 m/s wall hit ≈ 20 hp, a zombie at 11 m/s ≈ 2.5 hp); its window
+   * `windowDmgMul` ×, the nearest tyre `tireDmgMul` ×; a front hit `engineDmgShare` × to the
+   * engine (full damage once the front zone is below `engineExposedBelow`).
+   */
+  damageMinJ: number;
+  zoneDmgPerKJ: number;
+  /** Soft targets (zombies, players, animals) do only this fraction of that damage. */
+  softDmgMul: number;
+  windowDmgMul: number;
+  tireDmgMul: number;
+  engineDmgShare: number;
+  engineExposedBelow: number;
+  /** Rolling over a body: tyre hp per tick at 10 m/s; the zone over it gets this fraction. */
+  rollTireDmg: number;
+  rollBodyDmg: number;
+  /** Engine below this hp: power × hp / threshold (at least `engineMinPower`). */
+  engineThreshold: number;
+  engineMinPower: number;
+  /** A tyre below this hp is going flat: steering pull (`tirePull` at a flat front tyre), grip × (1 − `flatGripLoss` × mean flatness). */
+  tireFlatBelow: number;
+  tirePull: number;
+  flatGripLoss: number;
 }
 
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
@@ -125,4 +149,18 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   underWheelDecel: 6,
   crushSpeed: 7,
   plowDecel: 1.5,
+  damageMinJ: 300,
+  zoneDmgPerKJ: 1,
+  softDmgMul: 0.6,
+  windowDmgMul: 1.5,
+  tireDmgMul: 0.3,
+  engineDmgShare: 0.5,
+  engineExposedBelow: 30,
+  rollTireDmg: 0.4,
+  rollBodyDmg: 0.25,
+  engineThreshold: 50,
+  engineMinPower: 0.3,
+  tireFlatBelow: 40,
+  tirePull: 0.015,
+  flatGripLoss: 0.35,
 };

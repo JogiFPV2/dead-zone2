@@ -1,4 +1,4 @@
-import type { VehicleImpactTarget } from './vehicles.js';
+import type { VehicleImpactTarget, VehiclePart } from './vehicles.js';
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState } from './map.js';
 import type { CharacterProfileView, ContainerKind, OpeningEdgeKind, ReloadKind } from './views.js';
@@ -233,6 +233,19 @@ export type SimEvent =
       playerId: PlayerId;
       entity: number;
       seat: number;
+    }
+  /**
+   * A vehicle part reached 0 hp (`part`: a window shattered, a tyre went flat, the engine
+   * died, a body zone is wrecked). (x, y) = the hit point in tiles. A broken window is the hook
+   * for zombies reaching into the cabin later.
+   */
+  | {
+      type: 'vehiclePartBroken';
+      tick: number;
+      vehicleId: number;
+      part: VehiclePart;
+      x: number;
+      y: number;
     }
   /** The engine started (a driver got in with fuel) or stopped (`reason`). */
   | { type: 'engineStart'; tick: number; vehicleId: number }

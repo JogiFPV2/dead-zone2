@@ -3,6 +3,7 @@ import { decodeLod, encodeLod, type LodSave } from './delta.js';
 import { addComponent, addEntity, hasComponent } from 'bitecs';
 import { RNG_STREAMS, Rng } from '../core/rng.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
+import { ensureVehicleParts } from '../vehicles/damage.js';
 import {
   decode,
   encode,
@@ -284,6 +285,7 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
   w.physics.rng = w.rng.physics;
   w.physics.orderSize = -1;
+  for (const v of w.physics.vehicles.values()) ensureVehicleParts(v);
   if (w.lod && f.lod) {
     try {
       decodeLod(w.lod, f.lod);

@@ -82,6 +82,8 @@ export function describeEvent(e: SimEvent): string {
       return `player ${e.playerId} entered vehicle ${e.vehicleId} seat ${e.seat}`;
     case 'vehicleExit':
       return `player ${e.playerId} left vehicle ${e.vehicleId} seat ${e.seat}`;
+    case 'vehiclePartBroken':
+      return `vehicle ${e.vehicleId} ${e.part} broken`;
     case 'engineStart':
       return `vehicle ${e.vehicleId} engine on`;
     case 'engineStop':
