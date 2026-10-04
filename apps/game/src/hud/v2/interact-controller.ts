@@ -128,6 +128,8 @@ export class InteractController {
         seconds: action
           ? ((action.endTick - action.startTick) * h.tickMs) / 1000
           : SEARCH_HOLD_MS / 1000,
+        // Spec „Przeszukiwanie a zagrożenie”: zombies chasing / near never cancel the search.
+        threat: s.threat > 0,
       };
     }
     if (s.action) return { mode: 'hidden' };

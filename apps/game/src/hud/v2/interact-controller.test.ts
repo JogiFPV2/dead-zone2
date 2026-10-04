@@ -130,4 +130,16 @@ describe('InteractController', () => {
     // The container prompt keeps its default verb.
     expect(setup([fridge], door(1.2)).c.frame(0, 0)).toMatchObject({ search: true, x: 35 });
   });
+
+  it('a zombie threat never cancels a running search, it only flags the ring', () => {
+    const t = setup([fridge]);
+    t.c.press(0);
+    t.c.frame(TAP_MS, 0);
+    t.setState({ action: { kind: 'search', startTick: 0, endTick: 70, container: 5, queued: 0 } });
+    expect(t.c.frame(500, 10)).toMatchObject({ mode: 'search', threat: false });
+    t.setState({ threat: 60 });
+    expect(t.c.frame(1000, 35)).toMatchObject({ mode: 'search', progress: 0.5, threat: true });
+    t.c.frame(1500, 45);
+    expect(t.calls).toEqual(['search {"container":5}']);
+  });
 });

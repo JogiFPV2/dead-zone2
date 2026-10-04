@@ -1,6 +1,7 @@
 import '@deadzone/ui/hud.css';
 import './hud-layout.css';
 import './hud-v2.css';
+import './hud-v3.css';
 import type { SimEvent } from '@deadzone/protocol';
 import { lockedDoorToast } from '../world/door-target.js';
 import {
@@ -14,7 +15,6 @@ import {
   MINIMAP_PX_PER_M,
   createMoodleList,
   createObjectiveCard,
-  createStatBars,
   createThreatBanner,
   createToastStack,
   createVignette,
@@ -37,7 +37,6 @@ import type { GameState } from '../state/game-state.js';
 import { EMPTY_HUD_CONTENT, type HudContentIndex } from './content-index.js';
 import {
   HOTBAR_SLOTS,
-  actionVMs,
   hintItems,
   hotbarCommand,
   hotbarHeldIndex,
@@ -61,9 +60,16 @@ import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
 import { createHud2Parts } from './v2/hud2.js';
 import type { PromptVM } from './v2/interact-prompt.js';
 import type { QuickAccessId } from './v2/quick-access.js';
+import { createHpBar } from './v3/hp-bar.js';
+import {
+  AMMO_SHOW_MS,
+  MAX_STATUS_CHIPS,
+  createShowTimer,
+  problemMoodles,
+} from './v3/hud3-model.js';
 
-/** The Ø182 minimap draws the Ø200 SVG scaled down; zoom compensates to keep 2.5 px/m at 1,0×. */
-const MINIMAP_FIT = 200 / 182;
+/** The Ø136 minimap (HUD v3) draws the Ø200 SVG scaled down; zoom keeps 2.5 px/m at 1,0×. */
+const MINIMAP_FIT = 200 / 136;
 
 /** Stats, moodles, minimap and buttons are published at most this often (spec §5: 10 Hz). */
 export const HUD_UPDATE_MS = 100;
@@ -166,7 +172,7 @@ export function createHud(opts: HudOptions): Hud {
   // TODO(objectives): no objective system in the sim yet → card hidden, moodles at y 32.
   const objective = createObjectiveCard(null);
   group('objective', objective.el);
-  const moodles = createMoodleList([], { maxRows: 2 });
+  const moodles = createMoodleList([], { maxRows: 1, maxVisible: MAX_STATUS_CHIPS });
   group('moodles', moodles.el);
   const hintsBase = createKeyHints({ items: hintItems(opts.bindings()), visible: true });
   group('hints', hintsBase.el);
@@ -231,9 +237,10 @@ export function createHud(opts: HudOptions): Hud {
   slotBar.className = 'dz-fw-slotbar';
   const slotBarFill = document.createElement('i');
   slotBar.append(slotBarFill);
-  const stats = createStatBars({ health: 100, thirst: 100, hunger: 100, energy: 100 });
-  const setStats = gated(stats);
-  group('stats', stats.el);
+  // HUD v3: thin HP bar only; thirst / hunger / energy show as statuses when they are a problem.
+  const hp = createHpBar();
+  group('hp', hp.el);
+  const ammoShown = createShowTimer(AMMO_SHOW_MS);
   const actionsGroup = group('actions');
   const buttons = new Map<
     string,
@@ -250,7 +257,8 @@ export function createHud(opts: HudOptions): Hud {
   const setMinimap = (vm: MinimapVM): void => minimap.update(vm);
   const setHints = gated(hintsBase);
   const since = new Map<string, number>();
-  let hintsSetting: HintsSetting = 'auto';
+  // HUD v3: no key-hint row by default (the top bar lists the screens); F1 shows it.
+  let hintsSetting: HintsSetting = 'off';
   const bootMs = performance.now();
   let lastUpdate = -Infinity;
   let lastMinute = -1;
@@ -332,6 +340,15 @@ export function createHud(opts: HudOptions): Hud {
         inventory: actionKey(b, 'inventory'),
       });
       firearmWidget.update(firearm, dockSide(selected));
+      // HUD v3: the ammo widget only after a change (draw, shot, reload) and while aiming.
+      const ammoKey = firearm
+        ? `${firearm.weapon}|${firearm.state}|${firearm.loaded}|${firearm.reserve}|${firearm.reserveMags}`
+        : '';
+      const ammoBusy = f.aiming || firearm?.state === 'reloading' || firearm?.state === 'shell';
+      // Called every frame (also without a gun) so drawing the gun counts as a change.
+      const ammoOn = ammoShown(ammoKey, f.now, ammoBusy);
+      const ammo = firearm ? (ammoOn ? 'show' : 'calm') : 'none';
+      if (hud.dataset.ammo !== ammo) hud.dataset.ammo = ammo;
       syncSlotBar(s);
       if (firearm && f.aiming) {
         noiseRing.removeAttribute('hidden');
@@ -359,9 +376,9 @@ export function createHud(opts: HudOptions): Hud {
         lastState = s;
         // The highlight follows the item in hand (inventory PPM / hotbar alike).
         selected = hotbarHeldIndex(s) ?? selected;
-        setStats(statsVM(s));
+        hp.update(statsVM(s).health);
         setThreat({ level: threatLevel(s.threat) });
-        setMoodles(moodleVMs(s.player.moodles, content, since, f.now));
+        setMoodles(problemMoodles(moodleVMs(s.player.moodles, content, since, f.now), f.now));
         const items = hotbarItems(s, content);
         for (const slot of slots) {
           const p: InventorySlotProps = {
@@ -373,7 +390,6 @@ export function createHud(opts: HudOptions): Hud {
           slot.set(p);
         }
       }
-      const key = actionKey(b, 'interact');
       const leisure = leisureActionVMs(
         s,
         opts.spots(),
@@ -383,7 +399,8 @@ export function createHud(opts: HudOptions): Hud {
         content.sleep ?? DEFAULT_SLEEP_SETTINGS,
         f.tick,
       );
-      syncActions([...leisure, ...actionVMs(s, f.px, f.py, key, f.tick)], f.interactHeld);
+      // HUD v3: F / search live in the prompt at the object; only sleep / TV stay as buttons.
+      syncActions(leisure, f.interactHeld);
       const mm = minimapVM(f);
       const mmKey = `${mm.player.x.toFixed(1)},${mm.player.z.toFixed(1)},${mm.player.heading.toFixed(2)},${mm.cameraYaw.toFixed(2)}`;
       if (mmKey !== lastMinimapKey) {

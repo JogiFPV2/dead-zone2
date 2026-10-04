@@ -16,6 +16,7 @@ import {
 } from './quick-access.js';
 import { hud2Scale } from './scale.js';
 import { createTopBar } from './top-bar.js';
+import { CAMERA_CHIP_MS, createShowTimer } from '../v3/hud3-model.js';
 
 export interface Hud2Options {
   root: HTMLElement;
@@ -74,7 +75,9 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
   const chipKeys = document.createElement('span');
   chipKeys.className = 'dz-key';
   chip.append(chipLabel, chipValue, chipKeys);
-  opts.group('camera', chip);
+  const chipGroup = opts.group('camera', chip);
+  // HUD v3: the chip shows only for a moment after the camera zoom changes.
+  const chipShown = createShowTimer(CAMERA_CHIP_MS);
 
   return {
     frame(f) {
@@ -90,6 +93,7 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
       skillsSeen = skills;
       log.frame(f.now);
       chipValue.textContent = zoomLabel(f.cameraZoom);
+      chipGroup.toggleAttribute('data-show', chipShown(chipValue.textContent, f.now));
       chipKeys.textContent = `${keyboardKey(b, 'zoomOut')} ${keyboardKey(b, 'zoomIn')}`;
     },
     setPrompt: (vm) => prompt.update(vm),

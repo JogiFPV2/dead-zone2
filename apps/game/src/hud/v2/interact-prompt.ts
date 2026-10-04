@@ -20,6 +20,8 @@ export type PromptVM =
       progress: number;
       name: string;
       seconds: number;
+      /** A zombie sees / chases the player: the ring pulses red, the search goes on (HUD v3). */
+      threat?: boolean;
     };
 
 export interface InteractPrompt {
@@ -85,7 +87,11 @@ export function createInteractPrompt(): InteractPrompt {
   const sTime = span('dz-ip__secs');
   panel.append(span('dz-ip__title', 'Przeszukiwanie'), sKey, sTime);
 
-  el.append(ring, marker, prompt, panel);
+  // Zombies never interrupt a search (only moving / attacking): warn instead of cancelling.
+  const threat = span('dz-ip__threat', 'Zagrożenie · ruch przerywa');
+  threat.setAttribute('role', 'status');
+
+  el.append(ring, marker, prompt, panel, threat);
 
   let last = '';
   return {
@@ -100,6 +106,7 @@ export function createInteractPrompt(): InteractPrompt {
       el.style.setProperty('--ip-x', `${vm.x.toFixed(1)}px`);
       el.style.setProperty('--ip-y', `${vm.y.toFixed(1)}px`);
       if (vm.mode === 'prompt') {
+        el.removeAttribute('data-threat');
         pKey.textContent = vm.key;
         pOpen.textContent = vm.label ?? 'Otwórz';
         pSep.hidden = !vm.search;
@@ -114,6 +121,7 @@ export function createInteractPrompt(): InteractPrompt {
       name.textContent = vm.name;
       sKey.textContent = vm.key;
       sTime.textContent = `${vm.seconds.toFixed(1).replace('.', ',')} s`;
+      el.toggleAttribute('data-threat', vm.threat === true);
     },
   };
 }
