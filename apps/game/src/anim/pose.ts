@@ -216,6 +216,15 @@ export class PoseTracker {
       out.lockFacing = true;
       return out;
     }
+    if (s === 'driving') {
+      // Seated in a car: no steps however fast the car goes (the car view owns the seat pose).
+      out.loop = true;
+      out.time = ctx.loopTime;
+      out.anim = 'idle';
+      out.move = 0;
+      out.lockFacing = true;
+      return out;
+    }
     // Locomotion from the drawn speed (no skating when the sim speed jumps).
     out.loop = true;
     out.time = ctx.loopTime;

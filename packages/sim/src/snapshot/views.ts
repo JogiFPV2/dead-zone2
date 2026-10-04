@@ -172,6 +172,7 @@ export class ViewTracker {
   private skillsKey = '';
   private characterKey = '';
   private craftingKey = '';
+  private vehicleKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -240,6 +241,13 @@ export class ViewTracker {
         // A fresh tracker sends nothing while there are no penalties.
         if (this.penaltiesKey !== '' || Object.values(pen).some((v) => v > 0)) p.penalties = pen;
         this.penaltiesKey = pk;
+      }
+      const body = w.physics.bodies.get(w.c.StableId.value[eid] ?? 0);
+      const seat = body?.vehicle ? { vehicleId: body.vehicle, seat: body.seat } : null;
+      const vk = seat ? `${seat.vehicleId}:${seat.seat}` : '';
+      if (vk !== this.vehicleKey) {
+        p.vehicle = seat;
+        this.vehicleKey = vk;
       }
       if (Object.keys(p).length > 0) patch.player = p;
     }

@@ -1,0 +1,23 @@
+{
+  "id": "base:sedan",
+  "name": "vehicle.base.sedan.name",
+  "tags": ["base:car"],
+  "length": 4.6,
+  "width": 1.8,
+  "wheelbase": 2.7,
+  "track": 1.55,
+  "wheelRadius": 0.32,
+  "mass": 1200,
+  "enginePower": 90,
+  "maxSpeed": 45,
+  "fuelMax": 50,
+  "consumption": 0.004,
+  "seats": [
+    { "id": "driver", "doorSide": "left", "offset": { "x": 0.1, "y": -0.4 } },
+    { "id": "front-passenger", "doorSide": "right", "offset": { "x": 0.1, "y": 0.4 } },
+    { "id": "rear-left", "doorSide": "left", "offset": { "x": -0.8, "y": -0.4 } },
+    { "id": "rear-right", "doorSide": "right", "offset": { "x": -0.8, "y": 0.4 } }
+  ],
+  "trunkCapacity": 60,
+  "gloveboxCapacity": 3
+}

@@ -160,12 +160,14 @@ export function applyHit(
     kill(target, tick, events);
     return;
   }
-  // On the ground, falling or mid-vault (over a fence edge): the hit is recorded, no reaction.
+  // On the ground, falling, mid-vault (over a fence edge) or in a vehicle seat: the hit is
+  // recorded, no reaction.
   if (
     target.state === 'knockdown' ||
     target.state === 'getup' ||
     target.state === 'fall' ||
-    target.state === 'vault'
+    target.state === 'vault' ||
+    target.state === 'driving'
   )
     return;
   pushBack(target, out, cfg);

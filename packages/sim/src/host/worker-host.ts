@@ -74,7 +74,10 @@ export function startSimWorkerHost(
   const postSnapshot = (): void => {
     if (!sim) return;
     const buf = sim.snapshot(acquire(sim.snapshotByteLength()));
-    port.postMessage({ kind: 'snapshot', tick: sim.tick, buf }, [buf]);
+    if (sim.vehicleSnapshotByteLength() > 0) {
+      const vehicles = sim.vehicleSnapshot();
+      port.postMessage({ kind: 'snapshot', tick: sim.tick, buf, vehicles }, [buf, vehicles]);
+    } else port.postMessage({ kind: 'snapshot', tick: sim.tick, buf }, [buf]);
     const view = sim.drainView();
     if (view) port.postMessage({ kind: 'view', tick: sim.tick, view }, []);
     const events = sim.drainEvents();
@@ -122,6 +125,7 @@ export function startSimWorkerHost(
           ...(msg.spawn ? { spawn: msg.spawn } : {}),
           ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
           ...(msg.animals ? { spawnAnimals: msg.animals } : {}),
+          ...(msg.vehicles ? { spawnVehicles: msg.vehicles } : {}),
           ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),
           content,
           dev: msg.dev ?? false,

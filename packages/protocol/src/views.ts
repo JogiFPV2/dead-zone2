@@ -99,6 +99,11 @@ export interface PlayerView {
   wounds?: WoundView[];
   /** Current penalties from wounds and pain / fever / bleeding (when any changes). */
   penalties?: PenaltiesView;
+  /**
+   * Seat in a vehicle when it changes (null = on foot again): `vehicleId` = StableId (vehicle
+   * snapshot block), `seat` = index in the vehicle type's `seats` (0 = driver).
+   */
+  vehicle?: { vehicleId: number; seat: number } | null;
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 import type { Rng } from '../core/rng.js';
 import type { Stair } from '../world/levels.js';
 import type { PhysicsConfig } from './constants.js';
+import type { Vehicle } from '../vehicles/types.js';
 
 /** Body states (shared with the client through `@deadzone/protocol`). */
 export const PHYSICS_STATES = ENTITY_PHYS_STATES;
@@ -76,6 +77,12 @@ export interface PhysicsBody extends PhysicsSnapshotFields {
   vaultToY: number;
   vaultTrip: number;
   vaultGlass: number;
+  /**
+   * Vehicle the body sits in (StableId, 0 = none) and its seat (index in the vehicle type's
+   * `seats`, −1 = none); state `driving` while seated (`vehicles/commands.ts`).
+   */
+  vehicle: number;
+  seat: number;
 }
 
 /** Physics state of one sim (or one test). Bodies are iterated in `id` order. */
@@ -98,6 +105,8 @@ export interface PhysicsWorld {
   stairs: readonly Stair[];
   /** The map has more than one level (falls possible; set by the sim). */
   multiLevel: boolean;
+  /** Vehicles by StableId (`vehicles/*`; saved, hashed only when there are any). */
+  readonly vehicles: Map<number, Vehicle>;
 }
 
 /** Hit or shove of `attackerId` on `targetId`, resolved by `physicsStep` in the given order. */
@@ -106,9 +115,10 @@ export interface PhysicsHit {
   targetId: number;
   /**
    * `melee` (weapon / fists), `shove` (push, no damage), `zombie` (zombie lunge), `shot`
-   * (firearm: the force does not scale with the shooter's strength).
+   * (firearm: the force does not scale with the shooter's strength), `vehicle` (rammed by a car,
+   * `vehicles/ram.ts`; `attackerId` = the vehicle's StableId).
    */
-  kind: 'melee' | 'shove' | 'zombie' | 'shot';
+  kind: 'melee' | 'shove' | 'zombie' | 'shot' | 'vehicle';
   /** Strongest reaction allowed (firearms: pistols only stagger). */
   maxReaction?: 'stagger' | 'knockdown';
   /** Weapon knockback 0..1 (`melee.knockback`, unarmed 0.3); defaults by kind when omitted. */

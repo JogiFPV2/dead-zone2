@@ -27,7 +27,9 @@
  * in the content ids sorted ascending (`Object.keys(bundle.animalTypes).sort()`, sim helper
  * `animalTypeIds`), zombies: index of the zombie type the same way, players: 0. Kind `animal` (3)
  * and anim `flee` (5) came with it. 10 appended physics state `vault` (index 12; events `vaulted`,
- * `tripped`; command `vault`), layout unchanged.
+ * `tripped`; command `vault`), layout unchanged. 11 changed the world interface only (LOD,
+ * `WorldSource`, `setInterest`, `chunkChanged`). 12 appended `driving` (index 13) and added the
+ * vehicle block (`vehicles.ts`), layout unchanged.
  */
 export const SNAPSHOT_ENTITY_STRIDE = 17;
 export const SnapshotField = {
@@ -89,6 +91,11 @@ export const ENTITY_PHYS_STATES = [
    * (`tripped`) on the far side.
    */
   'vault',
+  /**
+   * In a vehicle (driver or passenger, `enterVehicle`): position pinned to the seat, moves with
+   * the car (vehicle snapshot block), no walking or attacks; back to `idle` on `exitVehicle`.
+   */
+  'driving',
 ] as const;
 export type EntityPhysState = (typeof ENTITY_PHYS_STATES)[number];
 

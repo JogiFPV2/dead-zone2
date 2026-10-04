@@ -1,4 +1,5 @@
 import { TICKS_PER_SECOND, WALK_SPEED_TILES_PER_SECOND } from '../core/constants.js';
+import { DEFAULT_VEHICLE_CONFIG, type VehicleConfig } from '../vehicles/config.js';
 
 /**
  * All physics tuning in one place (`physics/*`). Values follow Project Zomboid where it has a
@@ -106,6 +107,8 @@ export interface PhysicsConfig {
    * `ceil(ai.farTiles / 32)`.
    */
   activeChunkRadius?: number;
+  /** Vehicles (`vehicles/*`): driving model, collisions, enter / exit (m/s based). */
+  vehicle: VehicleConfig;
   /** Vaulting over low fences / through windows (`vault.ts`). */
   vault: VaultConfig;
   /** Knock-back of firearm hits per weapon category (`combat/firearms.ts` → `physicsHit`). */
@@ -256,6 +259,7 @@ export interface CrowdConfig {
 export const FENCE_HP = 40;
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
+  vehicle: DEFAULT_VEHICLE_CONFIG,
   /** Zombies are heavier (dead weight): less inertia multiplier, harder to push over. */
   bodyMassKg: { player: 80, zombie: 90 },
   refMassKg: 80,

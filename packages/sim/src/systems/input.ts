@@ -14,6 +14,7 @@ import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 import type { TileGrid } from '../world/grid.js';
 import { startVault } from '../physics/vault.js';
+import { applyVehicleCommand, isVehicleCommand } from '../vehicles/commands.js';
 
 /**
  * Pipeline step 1: applies this tick's commands in (playerId, seq) order. `move` and `aim` are
@@ -54,6 +55,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       if (reason) reject(w, cmd, reason);
     } else if (cmd.type === 'vault') {
       const reason = startVault(w, grid, eid);
+      if (reason) reject(w, cmd, reason);
+    } else if (isVehicleCommand(cmd)) {
+      const reason = applyVehicleCommand(w, grid, eid, cmd);
       if (reason) reject(w, cmd, reason);
     } else if (isAnimalCommand(cmd)) {
       const reason = applyAnimalCommand(w, cmd);

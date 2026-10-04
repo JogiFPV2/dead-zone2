@@ -30,6 +30,20 @@ export interface SimAnimalSpawn {
   type?: string | undefined;
 }
 
+/**
+ * A vehicle to place at init (`createSim({ spawnVehicles })`): centre in tiles, `heading` in rad
+ * (like facingRad), `type` = vehicle type content id (omitted = the first by id), `fuel` in litres
+ * (omitted = full).
+ */
+export interface SimVehicleSpawn {
+  x: number;
+  y: number;
+  z?: number | undefined;
+  heading?: number | undefined;
+  type?: string | undefined;
+  fuel?: number | undefined;
+}
+
 /** Main thread → sim worker. */
 export type MainToWorker =
   | {
@@ -49,6 +63,8 @@ export type MainToWorker =
        * buildings = town, without = wild; deterministic, RNG stream `animals`). Default 0.
        */
       populateAnimals?: number | undefined;
+      /** Vehicles at start (needs content with `vehicleTypes`). */
+      vehicles?: readonly SimVehicleSpawn[] | undefined;
       /** Single loot items on floors at init (default true). */
       floorLoot?: boolean | undefined;
       /** Save from a `saved` message: restores the game (spawn, zombies, floorLoot are ignored). */
@@ -84,7 +100,8 @@ export interface SimContentSource {
 /** Sim worker → main thread. `buf` is transferred (zero-copy), see snapshot.ts for the layout. */
 export type WorkerToMain =
   | { kind: 'ready'; tick: number }
-  | { kind: 'snapshot'; tick: number; buf: ArrayBuffer }
+  /** `vehicles`: vehicle block (vehicles.ts), transferred too; absent without vehicles. */
+  | { kind: 'snapshot'; tick: number; buf: ArrayBuffer; vehicles?: ArrayBuffer | undefined }
   /** UI view delta (HUD: moodles, stats, wounds, clock), only when something changed. */
   | { kind: 'view'; tick: number; view: SimViewPatch }
   /** Sim events of the last batch of ticks (died, wounded, moodleChanged, timeScaleHint…). */

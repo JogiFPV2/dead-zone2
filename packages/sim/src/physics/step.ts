@@ -32,6 +32,7 @@ export function createPhysicsWorld(
     pressure: new Map(),
     stairs: [],
     multiLevel: false,
+    vehicles: new Map(),
   };
 }
 
@@ -90,6 +91,8 @@ export function addBody(pw: PhysicsWorld, init: BodyInit): PhysicsBody {
     vaultToY: 0,
     vaultTrip: 0,
     vaultGlass: 0,
+    vehicle: 0,
+    seat: -1,
   };
   pw.bodies.set(b.id, b);
   updateMovementStats(b, pw.cfg);
@@ -286,6 +289,39 @@ export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
       h.f32(b.vaultFromX).f32(b.vaultFromY).f32(b.vaultToX).f32(b.vaultToY);
       h.f32(b.vaultTrip).u32(b.vaultGlass);
     }
+    if (b.vehicle) h.u32(0x7f20_00a2).u32(b.vehicle).u32(b.seat);
+  }
+  writeVehicleHash(pw, h);
+}
+
+/** Vehicles (StableId order); written only when there are any, so old states keep their hashes. */
+function writeVehicleHash(pw: PhysicsWorld, h: HashWriter): void {
+  if (pw.vehicles.size === 0) return;
+  const vs = [...pw.vehicles.values()].sort((a, b) => a.id - b.id);
+  h.u32(0x7f20_00a1).u32(vs.length);
+  for (const v of vs) {
+    h.u32(v.id).u32(v.type).f32(v.x).f32(v.y).f32(v.z).f32(v.hx).f32(v.hy).u32(v.heading);
+    h.f32(v.vx).f32(v.vy).f32(v.angVel).f32(v.speed).f32(v.steer).f32(v.steerInput);
+    h.f32(v.throttle)
+      .f32(v.brake)
+      .u32(v.handbrake ? 1 : 0)
+      .u32(v.headlights ? 1 : 0);
+    h.u32(v.engineOn ? 1 : 0)
+      .u32(v.doorsOpen)
+      .f32(v.fuel)
+      .f32(v.fuelMax)
+      .f32(v.slip);
+    h.f32(v.wheelSpin)
+      .u32(v.frozenAt + 1)
+      .u32(v.cx)
+      .u32(v.cy);
+    for (const x of v.doorTicks) h.u32(x);
+    for (const x of v.occupants) h.u32(x);
+    for (const x of v.containers) h.u32(x);
+    for (const x of v.susp) h.f32(x);
+    for (const x of v.zones) h.f32(x);
+    h.u32(v.contacts.length);
+    for (const x of v.contacts) h.u32(x);
   }
 }
 

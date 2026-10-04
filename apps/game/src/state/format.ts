@@ -76,6 +76,16 @@ export function describeEvent(e: SimEvent): string {
       return `hit ${e.source} ${e.attacker} → ${e.target} ${e.damage.toFixed(1)}${e.killed ? ' (killed)' : ''}`;
     case 'physics':
       return `body ${e.entity} ${e.kind}${e.source !== undefined ? ` (by ${e.source})` : ''}`;
+    case 'vehicleImpact':
+      return `vehicle ${e.vehicleId} hit ${e.targetKind}${e.target ? ` ${e.target}` : ''} at ${e.speed.toFixed(1)} m/s (${e.energy} J)`;
+    case 'vehicleEnter':
+      return `player ${e.playerId} entered vehicle ${e.vehicleId} seat ${e.seat}`;
+    case 'vehicleExit':
+      return `player ${e.playerId} left vehicle ${e.vehicleId} seat ${e.seat}`;
+    case 'engineStart':
+      return `vehicle ${e.vehicleId} engine on`;
+    case 'engineStop':
+      return `vehicle ${e.vehicleId} engine off (${e.reason})`;
     case 'zombieKilled':
       return `zombie ${e.zombie} killed`;
     case 'animalSpawned':

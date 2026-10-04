@@ -16,6 +16,7 @@ import { TileSchema } from './tile.js';
 import { TraitSchema } from './trait/index.js';
 import { ZombieTypeSchema } from './zombie-type.js';
 import { AnimalTypeSchema } from './animal-type.js';
+import { VehicleTypeSchema } from './vehicle-type.js';
 
 /** Schemat dla każdego rodzaju definicji. */
 export const CONTENT_SCHEMAS = {
@@ -28,6 +29,7 @@ export const CONTENT_SCHEMAS = {
   lootTable: LootTableSchema,
   zombieType: ZombieTypeSchema,
   animalType: AnimalTypeSchema,
+  vehicleType: VehicleTypeSchema,
   containerType: ContainerTypeSchema,
   tile: TileSchema,
   gameMode: GameModeSchema,

@@ -16,6 +16,7 @@ import type { Trait } from '../schemas/trait/trait.js';
 import type { WorldSettings } from '../schemas/world-settings.js';
 import type { ZombieType } from '../schemas/zombie-type.js';
 import type { AnimalType } from '../schemas/animal-type.js';
+import type { VehicleType } from '../schemas/vehicle-type.js';
 import type { DeepReadonly } from './deep-freeze.js';
 
 /**
@@ -33,6 +34,8 @@ export type ContentBundle = DeepReadonly<{
   zombieTypes: Record<string, ZombieType>;
   /** Zwierzęta (sim `animals/*`): dzikie i miejskie, łowne lub nie. */
   animalTypes: Record<string, AnimalType>;
+  /** Pojazdy (sim `vehicles/*`): wymiary, masa, silnik, paliwo, miejsca. */
+  vehicleTypes: Record<string, VehicleType>;
   containers: Record<string, ContainerType>;
   /** Elementy statyczne mapy (podłogi, dachy, ściany, okna, drzwi). */
   tiles: Record<string, Tile>;

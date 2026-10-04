@@ -84,10 +84,10 @@ export function controlLost(state: PhysicsState): boolean {
 
 /**
  * The entity may start an attack, a shove or a vault (also restarting an attack that is still
- * playing). Not while vaulting.
+ * playing). Not while vaulting or sitting in a vehicle.
  */
 export function canAct(state: PhysicsState): boolean {
-  return !controlLost(state) && state !== 'vault';
+  return !controlLost(state) && state !== 'vault' && state !== 'driving';
 }
 
 /**

@@ -19,6 +19,7 @@ import { physicsSystem } from '../physics/system.js';
 import { facingSystem, movementSystem } from '../systems/movement.js';
 import { sleepSystem } from '../systems/sleep.js';
 import { survivalSystem } from '../systems/survival.js';
+import { vehicleSystem } from '../vehicles/system.js';
 import type { TileGrid } from '../world/grid.js';
 import type { SimWorld } from './world.js';
 
@@ -49,6 +50,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'animals', run: (w, ctx) => animalSystem(w, ctx.grid) },
     { name: 'movement', run: (w, ctx) => movementSystem(w, ctx.grid) },
     { name: 'movement.facing', run: (w) => facingSystem(w) },
+    { name: 'vehicles', run: (w, ctx) => vehicleSystem(w, ctx.grid) },
     { name: 'physics', run: (w, ctx) => physicsSystem(w, ctx.grid) },
     { name: 'noise.footsteps', run: (w) => footstepSystem(w) },
     { name: 'ai.threat', run: (w, ctx) => threatSystem(w, ctx.grid) },

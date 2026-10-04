@@ -1,3 +1,4 @@
+import type { VehicleImpactTarget } from './vehicles.js';
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
 import type { EdgeSide, OpeningState } from './map.js';
 import type { CharacterProfileView, ContainerKind, OpeningEdgeKind, ReloadKind } from './views.js';
@@ -69,8 +70,11 @@ export type DeathCause =
   /** Fall from height (physics). */
   | 'fall';
 
-/** What caused a `hit`: a player's melee swing, a shove, or a zombie attack. */
-export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot';
+/**
+ * What caused a `hit`: a player's melee swing, a shove, a zombie attack, a shot, or a car
+ * (`vehicle`: a zombie killed by ramming / running over; `attacker` = the driver).
+ */
+export type HitSource = 'melee' | 'shove' | 'zombie' | 'shot' | 'vehicle';
 
 /** Timed actions (docs/sim-architecture.md, `actions`). */
 export type ActionKind =
@@ -129,6 +133,8 @@ export const NOISE_SOURCES = [
   'debug',
   /** An animal call while fleeing (a dog barking, `animalType.fleeNoise`). Last: indices are hashed. */
   'animal',
+  /** A running engine (louder with throttle); after `animal`, indices are hashed. */
+  'vehicle',
 ] as const;
 export type NoiseSource = (typeof NOISE_SOURCES)[number];
 
@@ -190,6 +196,51 @@ export type SimEvent =
       levels: number;
       damage: number;
       killed: boolean;
+    }
+  /**
+   * A vehicle hit something (`vehicleId` = StableId): `energy` = kinetic energy lost in the hit
+   * (J, ½·m·Δv² along the normal), `target` = StableId of a body or vehicle (0 for walls and
+   * fences), (x, y) = contact point in tiles, (nx, ny) = unit normal pointing away from the
+   * obstacle (into the car).
+   */
+  | {
+      type: 'vehicleImpact';
+      tick: number;
+      vehicleId: number;
+      energy: number;
+      /** Closing speed at the contact (m/s, ≥ 0). */
+      speed: number;
+      targetKind: VehicleImpactTarget;
+      target: number;
+      x: number;
+      y: number;
+      nx: number;
+      ny: number;
+    }
+  /** A player got into (`vehicleEnter`) or out of (`vehicleExit`) seat `seat` of a vehicle. */
+  | {
+      type: 'vehicleEnter';
+      tick: number;
+      vehicleId: number;
+      playerId: PlayerId;
+      entity: number;
+      seat: number;
+    }
+  | {
+      type: 'vehicleExit';
+      tick: number;
+      vehicleId: number;
+      playerId: PlayerId;
+      entity: number;
+      seat: number;
+    }
+  /** The engine started (a driver got in with fuel) or stopped (`reason`). */
+  | { type: 'engineStart'; tick: number; vehicleId: number }
+  | {
+      type: 'engineStop';
+      tick: number;
+      vehicleId: number;
+      reason: 'driver-left' | 'no-fuel' | 'broken';
     }
   /** The player's character was created (`newCharacter`). */
   | { type: 'characterCreated'; tick: number; playerId: PlayerId; character: CharacterProfileView }
@@ -399,7 +450,7 @@ export type SimEvent =
       barricade: number;
       /** Window: glass in the frame (false after `removeGlass`). */
       glass: boolean;
-      by: 'player' | 'zombie' | 'crowd' | 'debug';
+      by: 'player' | 'zombie' | 'crowd' | 'debug' | 'vehicle';
     }
   /**
    * Visible state of chunk (cx, cy) on level z changed (docs/sim-architecture.md 9.24): the
@@ -426,7 +477,7 @@ export type SimEvent =
       ty: number;
       z: number;
       side: EdgeSide;
-      by: 'player' | 'zombie' | 'crowd';
+      by: 'player' | 'zombie' | 'crowd' | 'vehicle';
       playerId?: PlayerId;
       withHand?: boolean;
     }

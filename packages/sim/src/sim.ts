@@ -12,6 +12,7 @@ import {
   type SimViewPatch,
   type SimZombieSpawn,
   type SimAnimalSpawn,
+  type SimVehicleSpawn,
   type CharacterSpec,
   type WoundView,
   type WorldSource,
@@ -36,6 +37,10 @@ import { hashCombat } from './combat/hash.js';
 import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
 import { spawnZombies } from './ai/zombies.js';
 import { populateAnimals, spawnAnimals } from './animals/spawn.js';
+import { spawnVehicles } from './vehicles/spawn.js';
+import { facingRadOf, vehicleSnapshotBytes, writeVehicleSnapshot } from './vehicles/snapshot.js';
+import { sortedVehicles } from './vehicles/system.js';
+import { vehicleTypes } from './vehicles/seats.js';
 import { hashAnimals } from './animals/hash.js';
 import { ANIMAL_STATE_NAMES, type AnimalStateName } from './animals/state.js';
 import { threatLevel } from './ai/threat.js';
@@ -117,6 +122,11 @@ export interface SimOptions {
    * by chunk, RNG stream `animals`). Default 0.
    */
   populateAnimals?: number | undefined;
+  /**
+   * Parked vehicles at start (needs content with `vehicleTypes`; `type` omitted = the first type
+   * by id). Positions are used as given (pick a free spot).
+   */
+  spawnVehicles?: readonly SimVehicleSpawn[] | undefined;
   /** Stage 4 tuning without data fields yet (ai/config.ts); default DEFAULT_STAGE4_CONFIG. */
   aiConfig?: Stage4Config | undefined;
   /** Combat tuning without data fields yet (combat/config.ts); default DEFAULT_COMBAT_CONFIG. */
@@ -179,6 +189,38 @@ export interface AnimalInfo {
   hp: number;
 }
 
+/** Read-only vehicle view (tests, tools, Symulacja). Heading in radians [0, 2π). */
+export interface VehicleInfo {
+  stableId: number;
+  type: string;
+  x: number;
+  y: number;
+  z: number;
+  headingRad: number;
+  /** Heading as BAM (u16, 65536 = 360°). */
+  heading: number;
+  /** Signed speed along the nose (m/s) and world velocity. */
+  speed: number;
+  vx: number;
+  vy: number;
+  steer: number;
+  engineOn: boolean;
+  handbrake: boolean;
+  headlights: boolean;
+  doorsOpen: number;
+  /** StableId per seat, 0 = empty (seat 0 = driver). */
+  occupants: number[];
+  fuel: number;
+  fuelMax: number;
+  containers: number[];
+  slip: number;
+  /** Body zone hp 0..100: front, rear, left, right. */
+  zones: number[];
+  cx: number;
+  cy: number;
+  frozen: boolean;
+}
+
 /** LOD counters (debug HUD, tests); undefined when the LOD is off (small maps). */
 export interface LodStats {
   /** Zombie entities (detailed). */
@@ -236,6 +278,11 @@ export interface Sim {
   getZombies(): ZombieInfo[];
   /** All animals (alive and corpses; gone birds excluded) in StableId order. */
   getAnimals(): AnimalInfo[];
+  /** All vehicles in StableId order. */
+  getVehicles(): VehicleInfo[];
+  /** Vehicle block of the render snapshot (protocol `VehicleField`, stride 19); empty without cars. */
+  vehicleSnapshot(buf?: ArrayBuffer): ArrayBuffer;
+  vehicleSnapshotByteLength(): number;
   /** UI view delta for player 0 since the last call (undefined when nothing changed). */
   drainView(): SimViewPatch | undefined;
   /** Full inventory view (all carried containers); undefined without content. */
@@ -382,6 +429,7 @@ export function createSim(input: SimOptions): Sim {
     spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
     if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
     if (opts.spawnAnimals) spawnAnimals(w, opts.spawnAnimals);
+    if (opts.spawnVehicles) spawnVehicles(w, opts.spawnVehicles);
     if (opts.populateAnimals) populateAnimals(w, ctx.grid, opts.populateAnimals);
     if (opts.character) {
       const r = applyNewCharacter(w, w.players.get(0)!, opts.character);
@@ -568,6 +616,35 @@ export function createSim(input: SimOptions): Sim {
         ];
       });
     },
+    getVehicles: () =>
+      sortedVehicles(w).map((v) => ({
+        stableId: v.id,
+        type: vehicleTypes(w)[v.type]?.id ?? '',
+        x: v.x,
+        y: v.y,
+        z: v.z,
+        headingRad: facingRadOf(v),
+        heading: v.heading,
+        speed: v.speed,
+        vx: v.vx,
+        vy: v.vy,
+        steer: v.steer,
+        engineOn: v.engineOn,
+        handbrake: v.handbrake,
+        headlights: v.headlights,
+        doorsOpen: v.doorsOpen,
+        occupants: [...v.occupants],
+        fuel: v.fuel,
+        fuelMax: v.fuelMax,
+        containers: [...v.containers],
+        slip: v.slip,
+        zones: [...v.zones],
+        cx: v.cx,
+        cy: v.cy,
+        frozen: v.frozenAt >= 0,
+      })),
+    vehicleSnapshot: (buf) => writeVehicleSnapshot(w, buf),
+    vehicleSnapshotByteLength: () => vehicleSnapshotBytes(w),
     drainView: () => views.diff(w),
     save: () => saveWorld(w),
     lodStats() {

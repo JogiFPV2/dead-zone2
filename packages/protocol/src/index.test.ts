@@ -173,7 +173,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 17 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(17);
-    expect(PROTOCOL_VERSION).toBe(11);
+    expect(PROTOCOL_VERSION).toBe(12);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {

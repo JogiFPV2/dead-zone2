@@ -144,6 +144,26 @@ export const vaultCommandSchema = z.strictObject({
   ...header,
   type: z.literal('vault'),
 });
+export const enterVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('enterVehicle'),
+  vehicleId: z.number().int().min(1).max(U32_MAX),
+  seat: z.number().int().min(0).max(15),
+});
+export const exitVehicleCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('exitVehicle'),
+});
+const unit = z.number().finite().min(0).max(1);
+export const driveCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('drive'),
+  throttle: unit,
+  brake: unit,
+  steer: axis,
+  handbrake: z.boolean(),
+  headlights: z.boolean().optional(),
+});
 export const placeStorageCommandSchema = z.strictObject({
   ...header,
   type: z.literal('placeStorage'),
@@ -398,6 +418,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   attackCommandSchema,
   shoveCommandSchema,
   vaultCommandSchema,
+  enterVehicleCommandSchema,
+  exitVehicleCommandSchema,
+  driveCommandSchema,
   placeStorageCommandSchema,
   pickUpStorageCommandSchema,
   debugWoundCommandSchema,
@@ -555,6 +578,19 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
       .max(2000)
       .optional(),
     populateAnimals: z.number().int().min(0).max(2000).optional(),
+    vehicles: z
+      .array(
+        z.strictObject({
+          x: coord,
+          y: coord,
+          z: chunkInt.optional(),
+          heading: z.number().finite().optional(),
+          type: contentId.optional(),
+          fuel: z.number().finite().min(0).optional(),
+        }),
+      )
+      .max(500)
+      .optional(),
     content: simContentSourceSchema.optional(),
     dev: z.boolean().optional(),
     character: characterSpecSchema.optional(),

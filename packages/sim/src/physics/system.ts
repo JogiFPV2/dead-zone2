@@ -21,7 +21,8 @@ import {
   stairPushSystem,
   startFalls,
 } from './stairs.js';
-import { applyHit, kill, resolveHit, startAttack } from './reactions.js';
+import { applyHit, kill, normalizeAngle, resolveHit, startAttack } from './reactions.js';
+import { datan2 } from '../core/dmath.js';
 import { addBody, physicsStep } from './step.js';
 import type { PhysicsBody, PhysicsEvent, PhysicsHit } from './types.js';
 import { floorZ } from '../world/levels.js';
@@ -171,6 +172,57 @@ export function physicsHit(
   applyHit(t, resolveHit(a, t, hit, pw.rng, pw.cfg), hit, w.tick, events, pw.cfg);
   if (t.stair) stairDomino(w, t, events);
   emit(w, events);
+}
+
+/**
+ * A vehicle (`vehicleId` = StableId) rammed or ran over entity `target`: the reaction is decided
+ * by the car (`vehicles/ram.ts`, speed thresholds), not rolled. (dirX, dirY) = unit push
+ * direction (from the car to the body), `impulse` 0..1 scales the knock-back. Draws exactly one
+ * value from `rng.physics` (knock-down length), whatever the outcome. `lethal`: state `dead`.
+ * Returns the body (undefined for entities without one, e.g. animals).
+ */
+export function physicsVehicleHit(
+  w: SimWorld,
+  target: number,
+  vehicleId: number,
+  reaction: 'stagger' | 'knockdown',
+  dirX: number,
+  dirY: number,
+  impulse: number,
+  lethal = false,
+): PhysicsBody | undefined {
+  const pw = w.physics;
+  const t = ensureBody(w, target);
+  const kd =
+    t?.kind === 'zombie' ? pw.cfg.durations.knockdownZombie : pw.cfg.durations.knockdownPlayer;
+  const kdTicks = pw.rng.int(kd.min, kd.max);
+  if (!t) return undefined;
+  t.x = w.c.Position.x[target] ?? 0;
+  t.y = w.c.Position.y[target] ?? 0;
+  t.facing = bamToRad(w.c.Facing.angle[target] ?? 0);
+  const imp = Math.fround(Math.max(0, Math.min(1, impulse)));
+  const d = pw.cfg.durations;
+  const events: PhysicsEvent[] = [];
+  applyHit(
+    t,
+    {
+      reaction,
+      impulse: imp,
+      behind: false,
+      dirX: Math.fround(dirX),
+      dirY: Math.fround(dirY),
+      hitFromDir: Math.fround(normalizeAngle(datan2(-dirY, -dirX))),
+      duration:
+        reaction === 'knockdown' ? kdTicks : d.staggerBase + Math.round(imp * d.staggerPerImpulse),
+    },
+    { attackerId: vehicleId, targetId: t.id, kind: 'vehicle', lethal },
+    w.tick,
+    events,
+    pw.cfg,
+  );
+  if (t.stair) stairDomino(w, t, events);
+  emit(w, events);
+  return t;
 }
 
 const eidBySid = new Map<number, number>();

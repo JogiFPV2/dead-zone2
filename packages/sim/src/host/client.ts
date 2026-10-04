@@ -11,6 +11,7 @@ import type {
   SimContentSource,
   SimZombieSpawn,
   SimAnimalSpawn,
+  SimVehicleSpawn,
   SimEvent,
   SimViewPatch,
   EdgeSide,
@@ -59,6 +60,8 @@ export interface SimWorkerClient {
       animals?: readonly SimAnimalSpawn[];
       /** Populate the map with this many animals (habitat by chunk, deterministic). */
       populateAnimals?: number;
+      /** Parked vehicles at given points (`type` omitted = the first type). */
+      vehicles?: readonly SimVehicleSpawn[];
       floorLoot?: boolean;
       /** Restores a save (`SavedGame.buf`). */
       save?: ArrayBuffer;
@@ -111,6 +114,18 @@ export interface SimWorkerClient {
   shove(): void;
   /** Vault over the nearest standing fence / through the nearest open or broken window. */
   vault(): void;
+  /** Get into `seat` of a vehicle (instant for now; near its door, car nearly stopped). */
+  enterVehicle(vehicleId: number, seat: number): void;
+  /** Get out at the seat's door (needs a free spot). */
+  exitVehicle(): void;
+  /** Driver controls (held until the next call): throttle / brake 0..1, steer −1..1 (+ = right). */
+  drive(
+    throttle: number,
+    brake: number,
+    steer: number,
+    handbrake?: boolean,
+    headlights?: boolean,
+  ): void;
   /** Reload the firearm in hand_primary (also clears a jam). */
   reload(): void;
   /** Fill a carried magazine with carried rounds. */
@@ -253,6 +268,7 @@ export function createSimWorkerClient(
         ...(opts?.dev ? { dev: true } : {}),
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
         ...(opts?.animals ? { animals: opts.animals } : {}),
+        ...(opts?.vehicles ? { vehicles: opts.vehicles } : {}),
         ...(opts?.populateAnimals ? { populateAnimals: opts.populateAnimals } : {}),
         ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
         ...(opts?.save ? { save: opts.save } : {}),
@@ -308,6 +324,17 @@ export function createSimWorkerClient(
     attack: () => cmd({ type: 'attack' }),
     shove: () => cmd({ type: 'shove' }),
     vault: () => cmd({ type: 'vault' }),
+    enterVehicle: (vehicleId, seat) => cmd({ type: 'enterVehicle', vehicleId, seat }),
+    exitVehicle: () => cmd({ type: 'exitVehicle' }),
+    drive: (throttle, brake, steer, handbrake = false, headlights) =>
+      cmd({
+        type: 'drive',
+        throttle,
+        brake,
+        steer,
+        handbrake,
+        ...(headlights !== undefined ? { headlights } : {}),
+      }),
     reload: () => cmd({ type: 'reload' }),
     loadMagazine: (item) => cmd({ type: 'loadMagazine', item }),
     craft: (recipe, count) => cmd({ type: 'craft', recipe, ...(count ? { count } : {}) }),

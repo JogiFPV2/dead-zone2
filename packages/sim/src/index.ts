@@ -6,6 +6,7 @@ export {
   type Sim,
   type SimOptions,
   type ZombieInfo,
+  type VehicleInfo,
   type LodStats,
   type AnimalInfo,
 } from './sim.js';

@@ -281,6 +281,44 @@ export interface VaultCommand extends CommandHeader {
 }
 
 /**
+ * Gets into seat `seat` (index in the vehicle type's `seats`) of vehicle `vehicleId`
+ * (StableId). Instant for now (a timed action later). The player must stand by that seat's door
+ * (within 1.5 tiles), the seat must be free and the car nearly stopped. Seat 0 is the driver:
+ * the engine starts (`engineStart`) when there is fuel. The player gets physics state `driving`
+ * (also as a passenger) and moves with the car. Rejects: `invalid-target` (no such vehicle or
+ * seat, seat taken), `out-of-range` (too far from the door), `invalid-state` (no control, already
+ * in a vehicle, the car is moving).
+ */
+export interface EnterVehicleCommand extends CommandHeader {
+  type: 'enterVehicle';
+  vehicleId: number;
+  seat: number;
+}
+
+/**
+ * Gets out of the current vehicle on the seat's door side (instant for now). Rejects:
+ * `invalid-state` (not in a vehicle, the car is moving), `no-space` (no free exit path).
+ */
+export interface ExitVehicleCommand extends CommandHeader {
+  type: 'exitVehicle';
+}
+
+/**
+ * Driver controls (held until the next `drive`; reset on exit): throttle and brake 0..1 (brake
+ * when stopped = reverse), steer −1..1 (−1 = full left), handbrake (locks the rear wheels: the
+ * rear slides). `headlights` toggles the lights when given. Rejects: `invalid-state` (not the
+ * driver).
+ */
+export interface DriveCommand extends CommandHeader {
+  type: 'drive';
+  throttle: number;
+  brake: number;
+  steer: number;
+  handbrake: boolean;
+  headlights?: boolean | undefined;
+}
+
+/**
  * Places a storage item (`placeable` with `containerType`, e.g. `base:wooden-crate`) on tile
  * (x, y) of the player's floor, in reach. Its contents stay inside; `pickUp` takes it back.
  */
@@ -625,6 +663,9 @@ export type Command =
   | AttackCommand
   | ShoveCommand
   | VaultCommand
+  | EnterVehicleCommand
+  | ExitVehicleCommand
+  | DriveCommand
   | PlaceStorageCommand
   | PickUpStorageCommand
   | DebugWoundCommand

@@ -29,6 +29,11 @@ export const BODY_STATES = [
    * window (~1.5 s); the length is `stateDuration`. Ends in `idle`, or `knockdown` after a trip.
    */
   'vault',
+  /**
+   * Sitting in a vehicle (sim `driving`, protocol v11): the body is pinned to its seat and moves
+   * with the car (vehicle snapshot block); a still seated pose until the car view draws it.
+   */
+  'driving',
 ] as const;
 export type BodyState = (typeof BODY_STATES)[number];
 

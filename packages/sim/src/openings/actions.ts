@@ -43,7 +43,7 @@ export function emitOpeningChanged(
   w: SimWorld,
   key: number,
   kind: number,
-  by: 'player' | 'zombie' | 'crowd' | 'debug',
+  by: 'player' | 'zombie' | 'crowd' | 'debug' | 'vehicle',
 ): void {
   const view = openingView(w.openings, key, kind);
   w.events.push({ type: 'openingChanged', tick: w.tick, ...view, by });
@@ -54,7 +54,7 @@ export function emitOpeningChanged(
 export function windowSmashed(
   w: SimWorld,
   key: number,
-  by: 'player' | 'zombie' | 'crowd',
+  by: 'player' | 'zombie' | 'crowd' | 'vehicle',
   player?: { playerId: number; withHand: boolean },
 ): void {
   const k = unpackKey(key);
@@ -83,7 +83,7 @@ export function damageOpening(
   key: number,
   kind: number,
   dmg: number,
-  by: 'player' | 'zombie' | 'crowd',
+  by: 'player' | 'zombie' | 'crowd' | 'vehicle',
 ): void {
   const o = w.openings;
   const e = o.states.get(key);
