@@ -16,7 +16,9 @@ import { floorZ } from '../world/levels.js';
 /**
  * Timed actions (docs 2.5 `actions`), the Stage 6 foundation: one current action per player plus
  * a short FIFO queue. The duration is fixed when the action starts; movement, sleep, death or a
- * threat interrupt it and clear the queue. Handlers validate again on completion.
+ * threat interrupt it and clear the queue. Handlers validate again on completion. `search` is
+ * never interrupted by zombies (threat, being hit): only the player's own movement / attack,
+ * sleep and death stop it.
  */
 export const ACTION_KINDS: readonly ActionKind[] = [
   'search',
@@ -30,6 +32,9 @@ export const ACTION_KINDS: readonly ActionKind[] = [
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;
+
+/** Actions zombies never interrupt (no `threat`): Paweł's rule — only the player stops a search. */
+const THREAT_IMMUNE: ReadonlySet<number> = new Set([actionKindIndex('search')]);
 
 export interface ActionHandler {
   /** Reject reason when the action cannot run (checked at start and at completion). */
@@ -152,7 +157,7 @@ function next(w: SimWorld, eid: number, p: PlayerItems): void {
 
 /**
  * Pipeline step 3 (before movement, after commands): interrupts (movement intent, sleep, death,
- * threat), completion, next queued action.
+ * threat — except for `search`), completion, next queued action.
  */
 export function actionsSystem(w: SimWorld): void {
   const st = w.items;
@@ -167,7 +172,7 @@ export function actionsSystem(w: SimWorld): void {
       ? 'died'
       : s?.asleep[eid]
         ? 'asleep'
-        : threatNearby(w, eid)
+        : !THREAT_IMMUNE.has(a.kind) && threatNearby(w, eid)
           ? 'threat'
           : moving
             ? 'moved'

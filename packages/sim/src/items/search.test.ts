@@ -4,9 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_STAGE4_CONFIG } from '../ai/config.js';
 import { createSim, type Sim } from '../sim.js';
 import { aiSim, eventsOf, NOON, runTicks, zombie } from '../test/ai-fixtures.js';
-import { fixturePack, runMinutes, send } from '../test/content-fixtures.js';
+import { fixtureContent, fixturePack, runMinutes, send } from '../test/content-fixtures.js';
 import { buildMap } from '../test/fixtures.js';
-import { itemsSim, mainItems, rejectedReasons, worldContainer } from '../test/item-fixtures.js';
+import {
+  findItem,
+  itemsSim,
+  mainItems,
+  rejectedReasons,
+  worldContainer,
+} from '../test/item-fixtures.js';
 
 /** 3.5 s at 20 Hz. */
 const SEARCH_TICKS = 70;
@@ -387,5 +393,94 @@ describe('item events', () => {
         container: cab.id,
       }),
     ]);
+  });
+});
+
+describe('search: zombies never interrupt it (only the player does)', () => {
+  /** Kitchen sim with a zombie at (x, y); search of the storage at (cx, cy) (fridge) started. */
+  function searchWithZombie(x: number, y: number, cx = 9, cy = 10) {
+    const sim = itemsSim(fixtureContent(), { spawnZombies: [{ x, y }], clockStart: NOON });
+    const fridge = worldContainer(sim, cx, cy);
+    send(sim, { type: 'search', container: fridge.id });
+    sim.step();
+    expect(sim.getAction()).toMatchObject({ kind: 'search', container: fridge.id });
+    return { sim, fridge };
+  }
+
+  it('a zombie attacking and hitting the player does not interrupt; the search ends with loot', () => {
+    // The cabinet (searchMin 2 = 100 ticks) always has loot in the fixture.
+    const { sim, fridge } = searchWithZombie(10.5, 11.7, 11, 10);
+    const ev: SimEvent[] = [];
+    for (let i = 0; i < 105 && sim.getAction(); i++) {
+      sim.step();
+      ev.push(...sim.drainEvents());
+    }
+    expect(eventsOf(ev, 'hit').filter((e) => e.source !== 'shot').length).toBeGreaterThan(0);
+    expect(eventsOf(ev, 'wounded').length).toBeGreaterThan(0);
+    expect(eventsOf(ev, 'actionInterrupted')).toEqual([]);
+    expect(ev).toContainEqual(
+      expect.objectContaining({ type: 'containerOpened', container: fridge.id, firstSearch: true }),
+    );
+    expect(eventsOf(ev, 'actionCompleted').map((e) => e.action)).toEqual(['search']);
+    expect(sim.getContainer(fridge.id)!.items.length).toBeGreaterThan(0);
+  });
+
+  it('a zombie that sees the player (threat / alarm) does not interrupt the search', () => {
+    const { sim, fridge } = searchWithZombie(14.5, 10.5);
+    const ev: SimEvent[] = [];
+    let threat = 0;
+    for (let i = 0; i < SEARCH_TICKS + 5 && sim.getAction(); i++) {
+      sim.step();
+      threat = Math.max(threat, sim.threatLevel());
+      ev.push(...sim.drainEvents());
+    }
+    expect(threat).toBeGreaterThan(0);
+    expect(eventsOf(ev, 'actionInterrupted')).toEqual([]);
+    expect(ev).toContainEqual(
+      expect.objectContaining({ type: 'containerOpened', container: fridge.id, firstSearch: true }),
+    );
+  });
+
+  it('moving still interrupts the search with a zombie around', () => {
+    const { sim, fridge } = searchWithZombie(14.5, 10.5);
+    runTicks(sim, 20);
+    send(sim, { type: 'move', dx: 0, dy: -1 });
+    sim.step();
+    expect(eventsOf(sim.drainEvents(), 'actionInterrupted').map((e) => e.reason)).toEqual([
+      'moved',
+    ]);
+    expect(sim.getAction()).toBeNull();
+    expect(sim.getContainer(fridge.id)!.items).toEqual([]);
+  });
+
+  it('attacking still interrupts the search with a zombie around', () => {
+    const { sim, fridge } = searchWithZombie(14.5, 10.5);
+    runTicks(sim, 20);
+    send(sim, { type: 'attack' });
+    sim.step();
+    expect(eventsOf(sim.drainEvents(), 'actionInterrupted').map((e) => e.reason)).toEqual([
+      'attack',
+    ]);
+    expect(sim.getAction()).toBeNull();
+    expect(sim.getContainer(fridge.id)!.items).toEqual([]);
+  });
+
+  it('other timed actions are still interrupted by a threat', () => {
+    const sim = itemsSim(fixtureContent(), {
+      spawnZombies: [{ x: 14.5, y: 10.5 }],
+      clockStart: NOON,
+    });
+    send(sim, { type: 'debugStat', stat: 'hunger', value: 50 });
+    send(sim, { type: 'debugGiveItem', itemId: 'fixture:apple' });
+    sim.step();
+    const ev: SimEvent[] = [];
+    for (let i = 0; i < 60; i++) {
+      const apple = findItem(sim, 'fixture:apple');
+      if (apple && !sim.getAction()) send(sim, { type: 'useItem', item: apple.id });
+      sim.step();
+      ev.push(...sim.drainEvents());
+      if (eventsOf(ev, 'actionInterrupted').length) break;
+    }
+    expect(eventsOf(ev, 'actionInterrupted').map((e) => e.reason)).toContain('threat');
   });
 });
