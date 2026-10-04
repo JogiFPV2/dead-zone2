@@ -1,0 +1,352 @@
+{
+  "address": {
+    "cx": 0,
+    "cy": 8,
+    "z": 0
+  },
+  "palette": ["base:grass", "base:concrete", "base:kitchen-tiles"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [1, 30],
+        [3, 2],
+        [1, 30],
+        [3, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 414],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 30],
+        [506, 2],
+        [0, 30],
+        [506, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [508, 2],
+        [0, 30],
+        [510, 2],
+        [0, 30],
+        [510, 2],
+        [0, 30],
+        [510, 2],
+        [0, 30],
+        [510, 2],
+        [0, 30],
+        [510, 2],
+        [0, 414],
+        [530, 2],
+        [0, 30],
+        [530, 2],
+        [0, 30],
+        [530, 2],
+        [0, 30],
+        [530, 2],
+        [0, 30],
+        [530, 2]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 30,
+      "y": 0,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 1,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 2,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 2,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 3,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 4,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 5,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 6,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 7,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 8,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 9,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 10,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 11,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 12,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 13,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 14,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 15,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 27,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 27,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 28,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 29,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 30,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 31,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 2,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 10,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 15,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 27,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 8,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 30,
+      "y": 15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 30,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 31,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 31,
+      "rot": 3
+    }
+  ],
+  "rooms": {
+    "506": {
+      "roomType": "base:room-bathroom",
+      "buildingId": 22
+    },
+    "508": {
+      "roomType": "base:room-school",
+      "buildingId": 22
+    },
+    "510": {
+      "roomType": "base:room-school",
+      "buildingId": 22
+    },
+    "530": {
+      "roomType": "base:room-school",
+      "buildingId": 23
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "address": {
+    "cx": 0,
+    "cy": 9,
+    "z": 0
+  },
+  "palette": ["base:grass", "base:concrete"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 30],
+        [2, 2],
+        [1, 800]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 30],
+        [530, 2],
+        [0, 30],
+        [530, 2],
+        [0, 30],
+        [533, 2],
+        [0, 30],
+        [533, 2],
+        [0, 30],
+        [533, 2],
+        [0, 30],
+        [533, 2],
+        [0, 30],
+        [533, 2],
+        [0, 800]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 30,
+      "y": 0,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 1,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 2,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 2,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 3,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 4,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 5,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 6,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 30,
+      "y": 7,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 31,
+      "y": 2,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 7,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:dresser",
+      "x": 31,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 31,
+      "y": 6,
+      "rot": 2
+    }
+  ],
+  "rooms": {
+    "530": {
+      "roomType": "base:room-school",
+      "buildingId": 23
+    },
+    "533": {
+      "roomType": "base:room-office",
+      "buildingId": 23
+    }
+  }
+}

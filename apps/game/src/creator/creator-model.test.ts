@@ -33,9 +33,10 @@ import { basePaletteHex } from './player-look.js';
 import { tileWindow } from './step-look.js';
 
 let c: ContentIndex;
+// Loading the whole base pack takes > 10 s on a busy CI runner (the default hook timeout).
 beforeAll(async () => {
   c = await loadCreatorContent();
-});
+}, 60_000);
 
 const seq = (...v: number[]) => {
   let i = 0;

@@ -1,0 +1,161 @@
+{
+  "address": {
+    "cx": 2,
+    "cy": 8,
+    "z": 3
+  },
+  "palette": ["base:concrete", "base:roof-felt"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [0, 949],
+        [1, 3],
+        [0, 28],
+        [1, 12],
+        [0, 20],
+        [1, 12]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 949],
+        [2, 3],
+        [0, 28],
+        [2, 12],
+        [0, 20],
+        [2, 12]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 949],
+        [338, 3],
+        [0, 28],
+        [338, 12],
+        [0, 20],
+        [338, 12]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 20,
+      "y": 30,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 30,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 20,
+      "y": 31,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 21,
+      "y": 29,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 21,
+      "y": 29,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 22,
+      "y": 29,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 23,
+      "y": 29,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 24,
+      "y": 29,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 24,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 25,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 26,
+      "y": 30,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 27,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 28,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 29,
+      "y": 30,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    },
+    {
+      "x": 31,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-school"
+    }
+  ],
+  "objects": [],
+  "rooms": {
+    "338": {
+      "roomType": "base:room-school",
+      "buildingId": 11
+    }
+  }
+}

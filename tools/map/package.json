@@ -2,7 +2,7 @@
   "name": "@deadzone/map",
   "version": "0.0.0",
   "private": true,
-  "description": "Narz\u0119dzie deweloperskie: budowanie map w chunkach z blueprint\u00f3w i walidacja map",
+  "description": "Narzędzie deweloperskie: budowanie map w chunkach z blueprintów i walidacja map",
   "type": "module",
   "exports": {
     ".": {
@@ -20,7 +20,10 @@
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
-    "map": "tsx src/cli.ts"
+    "map": "tsx src/cli.ts",
+    "osm:convert": "tsx src/osm/cli-convert.ts",
+    "osm:scene": "tsx src/osm/cli-scene.ts",
+    "osm:plan-png": "tsx src/osm/cli-plan-png.ts"
   },
   "dependencies": {
     "@deadzone/content": "workspace:*",

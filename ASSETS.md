@@ -153,3 +153,13 @@ Gołąb ma w źródle tylko pozy lotu (także w `idle-animation`), więc skrypt 
 | Animated characters (Casual, Worker, Hoodie) | Quaternius (quaternius.com), via Poly Pizza  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://poly.pizza/u/Quaternius                                                     | 3 modeli (`apps/game/public/models/quaternius-characters/`)   |
 
 <!-- assets-pipeline:end -->
+
+## Dane mapy z OpenStreetMap (ODbL 1.0, nie CC0)
+
+| Co                                                                                                                                           | Źródło                                                                      | Licencja |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------- |
+| Mapa `osm-okulickiego` (`packages/content/data/base/maps/osm-okulickiego/`, scena gry `apps/game/src/world/osm/scenes/osm-okulickiego.json`) | © współtwórcy OpenStreetMap, wyciąg Geofabrik `podkarpackie-261003.osm.pbf` | ODbL-1.0 |
+
+To baza danych pochodna od OSM: w grze i w „Autorach” stoi „© współtwórcy OpenStreetMap”, a dane
+(wraz ze skryptem eksportu) mają być udostępnione osobno na ODbL — szczegóły w `docs/osm.md`.
+Wyjątek od zasady „tylko CC0” do akceptacji przez Pawła.

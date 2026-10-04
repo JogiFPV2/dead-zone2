@@ -1,0 +1,255 @@
+{
+  "address": {
+    "cx": 7,
+    "cy": 7,
+    "z": 3
+  },
+  "palette": ["base:concrete", "base:roof-flat"],
+  "layers": {
+    "floor": {
+      "rle": [
+        [0, 20],
+        [1, 12],
+        [0, 20],
+        [1, 12],
+        [0, 20],
+        [1, 12],
+        [0, 23],
+        [1, 9],
+        [0, 896]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 20],
+        [2, 12],
+        [0, 20],
+        [2, 12],
+        [0, 20],
+        [2, 12],
+        [0, 23],
+        [2, 9],
+        [0, 896]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 20],
+        [661, 5],
+        [662, 5],
+        [663, 2],
+        [0, 20],
+        [661, 5],
+        [662, 5],
+        [663, 2],
+        [0, 20],
+        [661, 5],
+        [662, 5],
+        [663, 2],
+        [0, 23],
+        [661, 2],
+        [662, 5],
+        [663, 2],
+        [0, 896]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 20,
+      "y": 0,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 20,
+      "y": 1,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 20,
+      "y": 2,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 20,
+      "y": 3,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 21,
+      "y": 3,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 22,
+      "y": 3,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 23,
+      "y": 3,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 23,
+      "y": 4,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 24,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 25,
+      "y": 0,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 25,
+      "y": 1,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 25,
+      "y": 2,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 25,
+      "y": 3,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 25,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 26,
+      "y": 4,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 27,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 28,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 29,
+      "y": 4,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 30,
+      "y": 0,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 30,
+      "y": 1,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 30,
+      "y": 2,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 30,
+      "y": 3,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 30,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 31,
+      "y": 4,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:dresser",
+      "x": 20,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 30,
+      "y": 2,
+      "rot": 3
+    }
+  ],
+  "rooms": {
+    "661": {
+      "roomType": "base:room-office",
+      "buildingId": 26
+    },
+    "662": {
+      "roomType": "base:room-office",
+      "buildingId": 26
+    },
+    "663": {
+      "roomType": "base:room-office",
+      "buildingId": 26
+    }
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "address": {
+    "cx": 7,
+    "cy": 1,
+    "z": 0
+  },
+  "palette": [
+    "base:grass",
+    "base:concrete",
+    "base:asphalt",
+    "base:parking",
+    "base:sidewalk",
+    "base:roof-flat"
+  ],
+  "layers": {
+    "floor": {
+      "rle": [
+        [3, 32],
+        [4, 15],
+        [3, 17],
+        [4, 30],
+        [3, 2],
+        [4, 64],
+        [1, 5],
+        [4, 27],
+        [3, 2],
+        [1, 17],
+        [4, 13],
+        [3, 15],
+        [1, 17],
+        [3, 29],
+        [1, 3],
+        [3, 128],
+        [1, 2],
+        [3, 30],
+        [4, 4],
+        [1, 11],
+        [3, 17],
+        [4, 16],
+        [1, 13],
+        [3, 3],
+        [4, 29],
+        [1, 3],
+        [4, 64],
+        [3, 9],
+        [4, 23],
+        [3, 24],
+        [4, 8],
+        [3, 96],
+        [4, 9],
+        [3, 23],
+        [4, 24],
+        [3, 8],
+        [5, 6],
+        [4, 26],
+        [5, 18],
+        [4, 14],
+        [2, 6],
+        [5, 23],
+        [4, 3],
+        [2, 18],
+        [5, 14],
+        [2, 29],
+        [5, 3],
+        [2, 32]
+      ]
+    },
+    "roof": {
+      "rle": [
+        [0, 1002],
+        [6, 1],
+        [0, 21]
+      ]
+    },
+    "room": {
+      "rle": [
+        [0, 960],
+        [765, 1],
+        [0, 31],
+        [759, 5],
+        [753, 5],
+        [752, 1],
+        [0, 21]
+      ]
+    }
+  },
+  "edges": [
+    {
+      "x": 0,
+      "y": 30,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 0,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 0,
+      "y": 31,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 1,
+      "y": 30,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 1,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-shop"
+    },
+    {
+      "x": 2,
+      "y": 31,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 3,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-shop"
+    },
+    {
+      "x": 4,
+      "y": 31,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 5,
+      "y": 31,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 5,
+      "y": 31,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-shop"
+    },
+    {
+      "x": 6,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 7,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 8,
+      "y": 31,
+      "side": "n",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 9,
+      "y": 31,
+      "side": "n",
+      "type": "wall",
+      "contentId": "base:wall-plain"
+    },
+    {
+      "x": 10,
+      "y": 31,
+      "side": "n",
+      "type": "door",
+      "contentId": "base:door-glass"
+    },
+    {
+      "x": 10,
+      "y": 31,
+      "side": "w",
+      "type": "window",
+      "contentId": "base:window-plain"
+    },
+    {
+      "x": 11,
+      "y": 31,
+      "side": "w",
+      "type": "wall",
+      "contentId": "base:wall-shop"
+    }
+  ],
+  "objects": [
+    {
+      "contentId": "base:metal-shelf",
+      "x": 0,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 1,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 4,
+      "y": 31,
+      "rot": 1
+    }
+  ],
+  "rooms": {
+    "752": {
+      "roomType": "base:room-shop",
+      "buildingId": 43
+    },
+    "753": {
+      "roomType": "base:room-office",
+      "buildingId": 44
+    },
+    "759": {
+      "roomType": "base:room-shop",
+      "buildingId": 45
+    },
+    "765": {
+      "roomType": "base:room-office",
+      "buildingId": 46
+    }
+  }
+}

@@ -25,6 +25,8 @@ const OUTDOOR: Record<string, FloorLook> = {
   'base:sidewalk': { cell: 'sidewalk', mask: [0, 0, 0.7, 0] },
   'base:concrete': { cell: 'concrete', mask: [0, 0, 0.45, 0] },
   'base:dirt': { cell: 'dirt', mask: [0, 0, 0, 1] },
+  // Track ballast (OSM rails); sleepers and rails are drawn on top.
+  'base:rail': { cell: 'asphalt', mask: [0.3, 0, 0, 0.7], jitter: 0.16 },
   'base:kitchen-tiles': { cell: 'kitchen-tiles', mask: NONE, y: 0.02, jitter: 0.08 },
 };
 
@@ -221,6 +223,62 @@ export function buildTerrainGeometry(
     isRoad(x, z) &&
     run(x, z, 1, 0) + run(x, z, -1, 0) + 1 > ROAD_MAX_WIDTH &&
     run(x, z, 0, 1) + run(x, z, 0, -1) + 1 > ROAD_MAX_WIDTH;
+
+  // Railway: sleepers every 0.6 m and two rails per track along the ballast band (one track per
+  // ~4 m of band width), drawn from the band's first row / column.
+  const isRail = (x: number, z: number) => floorAt(x, z) === 'base:rail';
+  const railRun = (x: number, z: number, dx: number, dz: number) => {
+    let n = 0;
+    while (n < 24 && isRail(x + dx * (n + 1), z + dz * (n + 1))) n++;
+    return n;
+  };
+  const sleeper = col('stain').clone().multiplyScalar(0.8);
+  const steel = col('paint').clone().multiplyScalar(0.55);
+  const RAIL_GAUGE = 1.435;
+  for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
+    for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
+      if (!isRail(x, z)) continue;
+      const up = railRun(x, z, 0, -1);
+      const down = railRun(x, z, 0, 1);
+      const left = railRun(x, z, -1, 0);
+      const right = railRun(x, z, 1, 0);
+      const wz = up + down + 1;
+      const wx = left + right + 1;
+      if (wx >= wz && up === 0) {
+        const n = Math.max(1, Math.round(wz / 4));
+        for (let k = 0; k < n; k++) {
+          const c = z + ((k + 0.5) * wz) / n;
+          for (let i = 0; i < 2; i++)
+            flat(x + i * 0.5 + 0.1, c - 1.25, x + i * 0.5 + 0.32, c + 1.25, sleeper, 0.008);
+          for (const s of [-1, 1])
+            flat(
+              x,
+              c + (s * RAIL_GAUGE) / 2 - 0.04,
+              x + 1,
+              c + (s * RAIL_GAUGE) / 2 + 0.04,
+              steel,
+              0.03,
+            );
+        }
+      } else if (wz > wx && left === 0) {
+        const n = Math.max(1, Math.round(wx / 4));
+        for (let k = 0; k < n; k++) {
+          const c = x + ((k + 0.5) * wx) / n;
+          for (let i = 0; i < 2; i++)
+            flat(c - 1.25, z + i * 0.5 + 0.1, c + 1.25, z + i * 0.5 + 0.32, sleeper, 0.008);
+          for (const s of [-1, 1])
+            flat(
+              c + (s * RAIL_GAUGE) / 2 - 0.04,
+              z,
+              c + (s * RAIL_GAUGE) / 2 + 0.04,
+              z + 1,
+              steel,
+              0.03,
+            );
+        }
+      }
+    }
+  }
 
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {

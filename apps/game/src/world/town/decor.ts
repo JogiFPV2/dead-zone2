@@ -18,9 +18,15 @@ export const TREE_DENSITY = 0.009;
  * Procedural, deterministic decor derived from the map (the map format has no decor layer yet):
  * street lamps on the curb side of sidewalks every 18 m (alternating sides, arm over the road,
  * ~1 in 4 broken), power poles on the outer sidewalk edge every 24 m, trees and grass tufts on
- * open grass away from roads, buildings and walls. Visual only: the sim does not collide with it.
+ * open grass away from roads, buildings and walls (or the given trees, e.g. from OpenStreetMap).
+ * Visual only: the sim does not collide with it.
  */
-export function townDecor(tiles: MapTiles, range: ChunkRange): TownDecor {
+export function townDecor(
+  tiles: MapTiles,
+  range: ChunkRange,
+  /** Trees at fixed spots (OSM scenes, sim tiles): replace the random grass trees. */
+  trees?: readonly (readonly [number, number])[],
+): TownDecor {
   const props: PropPlacement[] = [];
   const lamps: LampDef[] = [];
   const x0 = range.cx0 * CHUNK_SIZE;
@@ -87,7 +93,7 @@ export function townDecor(tiles: MapTiles, range: ChunkRange): TownDecor {
       }
       if (t !== 'base:grass' && t !== 'base:dirt') continue;
       const h = hash01(x, z, 21);
-      if (t === 'base:grass' && h < TREE_DENSITY && !busy(x, z, 2)) {
+      if (!trees && t === 'base:grass' && h < TREE_DENSITY && !busy(x, z, 2)) {
         const name = TREES[Math.floor(hash01(x, z, 22) * TREES.length)] ?? 'prop-tree';
         props.push({
           name,
@@ -107,6 +113,19 @@ export function townDecor(tiles: MapTiles, range: ChunkRange): TownDecor {
         props.push({ name: 'prop-rock-a', x: x + 0.5, z: z + 0.5, rotY: hash01(x, z, 26) * 6.28 });
       }
     }
+  }
+  for (const [x, z] of trees ?? []) {
+    if (x < x0 || z < z0 || x >= x1 || z >= z1) continue;
+    const tx = Math.floor(x);
+    const tz = Math.floor(z);
+    const name = TREES[Math.floor(hash01(tx, tz, 22) * TREES.length)] ?? 'prop-tree';
+    props.push({
+      name,
+      x,
+      z,
+      rotY: hash01(tx, tz, 23) * Math.PI * 2,
+      scale: 0.9 + hash01(tx, tz, 24) * 0.3,
+    });
   }
   return { props, lamps };
 

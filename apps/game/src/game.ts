@@ -107,6 +107,7 @@ import { VehicleController } from './vehicles/vehicle-controller.js';
 import { createVehicleHud } from './vehicles/vehicle-hud.js';
 import { VehicleView } from './vehicles/vehicle-view.js';
 import { FUEL_PUMP, withPumps } from './vehicles/dev-pumps.js';
+import { OSM_ATTRIBUTION, osmScene, sceneZombies, withSceneVehicles } from './world/osm/scenes.js';
 import type { SnapshotVehicle } from '@deadzone/protocol';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
@@ -189,11 +190,33 @@ const loadedWorld: LoadedMap = stressWorld
   : boot.map !== 'test'
     ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
     : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
+// OSM scenes (`?map=osm-okulickiego`): parked cars, framed zombies and trees from the scene file.
+const osm = stressWorld ? undefined : osmScene(boot.map);
+const sceneWorld: LoadedMap = osm
+  ? { ...loadedWorld, source: withSceneVehicles(loadedWorld.source, osm) }
+  : loadedWorld;
 // Dev `?pump=x,y`: fuel pumps on the map (vehicle UI testing; no map has one yet).
 const world: LoadedMap =
   import.meta.env.DEV && boot.pumps.length
-    ? { ...loadedWorld, source: withPumps(loadedWorld.source, boot.pumps) }
-    : loadedWorld;
+    ? { ...sceneWorld, source: withPumps(sceneWorld.source, boot.pumps) }
+    : sceneWorld;
+// OSM maps: ODbL attribution always on screen (over the world, the minimap and the big map).
+if (osm) {
+  const attribution = document.createElement('div');
+  attribution.className = 'dz-osm-attribution';
+  attribution.textContent = OSM_ATTRIBUTION;
+  Object.assign(attribution.style, {
+    position: 'fixed',
+    right: '8px',
+    bottom: '4px',
+    font: '11px Inter, system-ui, sans-serif',
+    color: 'rgba(255, 255, 255, 0.78)',
+    textShadow: '0 1px 2px #000',
+    pointerEvents: 'none',
+    zIndex: '60',
+  });
+  document.body.appendChild(attribution);
+}
 /** Where the player starts (streaming warm-up centre before the first snapshot). */
 const startPoint: { x: number; y: number } = stressWorld
   ? import.meta.env.DEV && boot.spawnAt
@@ -234,7 +257,7 @@ const town = townKit ? await import('./world/town/index.js') : undefined;
 // Procedural decor of content maps (lamps, poles, trees); the generated test map has its own lamps.
 const decor =
   boot.map !== 'test' && town
-    ? town.townDecor(new town.MapTiles(world.source, world.range.z), world.range)
+    ? town.townDecor(new town.MapTiles(world.source, world.range.z), world.range, osm?.trees)
     : undefined;
 // Chunk streaming (docs/streaming.md): grey-box terrain / structures and map objects load per
 // chunk around the player / camera target; mid and far rings get merged LOD meshes.
@@ -343,6 +366,7 @@ if (boot.sim === 'worker') {
     spawn,
     // Content maps get zombies (test map stays empty for lighting/structure work); `?zombies=0` off.
     zombiesAwayFrom: boot.map !== 'test' && boot.zombies ? (spawn ?? { x: 0, y: 0 }) : undefined,
+    ...(osm && boot.zombies ? { zombies: sceneZombies(osm) } : {}),
     // Content maps get animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits).
     populateAnimals: boot.map !== 'test' ? startAnimalCount(world.range, boot.animals) : 0,
     content: await simContent,

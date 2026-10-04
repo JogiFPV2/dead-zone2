@@ -74,7 +74,7 @@ const MODES: readonly { id: GameMode; label: string }[] = [
   { id: 'rescue', label: 'Ratunek' },
 ];
 
-/** Assets shown in „Autorzy” (all CC0 / OFL, details in ASSETS.md). */
+/** Assets shown in „Autorzy” (CC0 / OFL / ODbL map data, details in ASSETS.md). */
 const CREDITS: readonly [string, string][] = [
   ['Postacie i zombie', 'Quaternius · CC0'],
   ['Meble, przedmioty, otoczenie', 'Kenney, Quaternius, Pichuliru · CC0'],
@@ -82,6 +82,7 @@ const CREDITS: readonly [string, string][] = [
   ['Otoczenie „Crickets Ambient Noise”', 'Wolfgang_ · OpenGameArt · CC0'],
   ['Dźwięki interfejsu „UI Audio”', 'Kenney · CC0'],
   ['Fonty Inter, JetBrains Mono', 'SIL Open Font License 1.1'],
+  ['Mapa Stalowej Woli (sceny OSM)', '© współtwórcy OpenStreetMap · ODbL 1.0'],
 ];
 
 const key = (k: string): string => `<span class="dzm-key">${k}</span>`;

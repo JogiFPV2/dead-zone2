@@ -18,8 +18,8 @@ import { menuCameraFrustum, menuDrift, shambleStep, type Shambler } from './menu
 /** Menu background (spec deadzone-menu-spec §1): test-town crossroads in a 55 s day loop, no player/HUD. */
 const MAP = 'test-town';
 /** Crossroads of the town grid (sim tiles): roads x 0..3 and y 0..3, houses at 10..21. */
-const FOCUS = { x: 2, y: 2 };
-const RANGE: ChunkRange = { cx0: -1, cy0: -1, cx1: 0, cy1: 0, z: 0 };
+const TOWN_FOCUS = { x: 2, y: 2 };
+const TOWN_RANGE: ChunkRange = { cx0: -1, cy0: -1, cx1: 0, cy1: 0, z: 0 };
 const VIEW_HEIGHT = 22;
 const LAMPS: LampDef[] = [
   { x: -0.6, z: 5.5, armX: 1, armZ: 0, working: true },
@@ -30,7 +30,7 @@ const LAMPS: LampDef[] = [
   { x: 12, z: -0.6, armX: 0, armZ: 1, working: true },
 ];
 /** Scripted zombies relative to the crossroads (sim units): x, y, heading, model, phase 0..1. */
-const ZOMBIES: readonly (readonly [number, number, number, number, number])[] = [
+const TOWN_ZOMBIES: readonly (readonly [number, number, number, number, number])[] = [
   [3.0, 1.4, -1.9, 0, 0.2],
   [5.0, -1.6, -2.3, 1, 0.7],
   [-1.4, 5.2, 2.6, 0, 0.1],
@@ -67,8 +67,43 @@ export async function createMenuScene(
   container.prepend(renderer.domElement);
 
   const scene = new Scene();
+  // `?menuScene=osm-okulickiego`: an OSM scene (map, focus, framed zombies) instead of test-town.
+  const sceneId = new URLSearchParams(window.location.search).get('menuScene');
+  const osm = sceneId
+    ? await import('../world/osm/scenes.js').then((m) => m.osmScene(sceneId))
+    : undefined;
+  const FOCUS = osm?.focus ?? TOWN_FOCUS;
+  const RANGE: ChunkRange = osm
+    ? {
+        cx0: Math.floor(FOCUS.x / 32) - 2,
+        cy0: Math.floor(FOCUS.y / 32) - 2,
+        cx1: Math.floor(FOCUS.x / 32) + 2,
+        cy1: Math.floor(FOCUS.y / 32) + 2,
+        z: 0,
+      }
+    : TOWN_RANGE;
+  const ZOMBIES = osm
+    ? osm.zombies.map(
+        (z, i) => [z.x - FOCUS.x, z.y - FOCUS.y, z.heading, i % 2, (i * 0.37) % 1] as const,
+      )
+    : TOWN_ZOMBIES;
   const { loadBaseMap } = await import('../world/load-content-map.js');
-  const world = await loadBaseMap(MAP);
+  const world = await loadBaseMap(osm?.map ?? MAP);
+  // ODbL: the attribution stays visible over an OSM background.
+  const attribution = osm ? document.createElement('div') : undefined;
+  if (attribution && osm) {
+    attribution.className = 'dzm-osm-attribution';
+    attribution.textContent = osm.attribution;
+    Object.assign(attribution.style, {
+      position: 'absolute',
+      right: '8px',
+      bottom: '52px',
+      font: '11px Inter, system-ui, sans-serif',
+      color: 'rgba(255, 255, 255, 0.7)',
+      pointerEvents: 'none',
+    });
+    container.appendChild(attribution);
+  }
   const terrain = new Terrain(world.source);
   terrain.loadRange(RANGE);
   scene.add(terrain.root);
@@ -77,9 +112,16 @@ export async function createMenuScene(
   scene.add(structures.root);
 
   // One shadowed lamp keeps the menu under the 250 draw-call budget (each shadow = a pass).
-  const lighting = createWorldLighting(scene, renderer, LAMPS, CAMERA_DISTANCE, undefined, {
-    shadowedLights: 1,
-  });
+  const lighting = createWorldLighting(
+    scene,
+    renderer,
+    osm ? [] : LAMPS,
+    CAMERA_DISTANCE,
+    undefined,
+    {
+      shadowedLights: 1,
+    },
+  );
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   // 55 s day loop (menu-day-cycle.ts); `?menuTime=0..55` pins it for screenshots.
   const cycle = new MenuDayCycle();
@@ -178,6 +220,7 @@ export async function createMenuScene(
       });
       renderer.dispose();
       renderer.domElement.remove();
+      attribution?.remove();
     },
   };
 }

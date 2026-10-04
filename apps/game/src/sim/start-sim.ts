@@ -3,6 +3,7 @@ import type {
   SimContentSource,
   SimSpawn,
   SimVehicleSpawn,
+  SimZombieSpawn,
 } from '@deadzone/protocol';
 import { pickZombieSpawns } from '../world/zombie-spawns.js';
 import { createSimWorkerClient } from '@deadzone/sim/worker-client';
@@ -20,6 +21,8 @@ export interface StartSimOptions {
   dev?: boolean;
   /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
   zombiesAwayFrom?: { x: number; y: number; z?: number } | undefined;
+  /** Extra zombies at fixed spots (OSM scenes: framed around the start), before the picked ones. */
+  zombies?: readonly SimZombieSpawn[] | undefined;
   /** New world: this many animals spread over the map by habitat (sim `populateAnimals`). */
   populateAnimals?: number | undefined;
   /** New game: the creator's character (`init({ character })` → `newCharacter`). */
@@ -47,7 +50,10 @@ export function startSimWorker(
   const client = createSimWorkerClient(worker);
   const sim = new WorkerSimClient(client, worker);
   const map = chunkSourceToSimMapData(source, range);
-  const zombies = opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : [];
+  const zombies = [
+    ...(opts.zombies ?? []),
+    ...(opts.zombiesAwayFrom ? pickZombieSpawns(map, opts.zombiesAwayFrom) : []),
+  ];
   client.init(seed, map, {
     ...(opts.spawn ? { spawn: opts.spawn } : {}),
     ...(opts.content ? { content: opts.content } : {}),
