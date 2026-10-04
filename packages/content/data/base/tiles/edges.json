@@ -35,6 +35,11 @@
     "category": "fence"
   },
   {
+    "id": "base:metal-gate",
+    "name": "tile.base.metal-gate.name",
+    "category": "gate"
+  },
+  {
     "id": "base:siding-green",
     "name": "tile.base.siding-green.name",
     "category": "wall"

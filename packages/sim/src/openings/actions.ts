@@ -1,9 +1,17 @@
-import { OPENING_STATES, type Command, type CommandRejectReason } from '@deadzone/protocol';
+import {
+  OPENING_ACTION_COMMANDS,
+  OPENING_STATES,
+  type Command,
+  type CommandRejectReason,
+  type OpeningActionType,
+} from '@deadzone/protocol';
+import { newAction, startAction } from '../actions/queue.js';
 import { markChunk } from '../world/chunk-events.js';
 import { emitNoise } from '../ai/noise.js';
 import type { SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
 import {
+  isDoorLike,
   maxHp,
   openingKey,
   OpeningKind,
@@ -11,14 +19,21 @@ import {
   OS,
   setOpening,
   sideIndex,
+  topPlankHp,
   unpackKey,
 } from './state.js';
 import { floorZ } from '../world/levels.js';
 
-type OpeningCommand = Extract<Command, { type: 'toggleDoor' | 'breakWindow' | 'debugOpening' }>;
+type OpeningCommand = Extract<
+  Command,
+  { type: 'toggleDoor' | 'breakWindow' | 'debugOpening' | OpeningActionType }
+>;
 
 export const isOpeningCommand = (cmd: Command): cmd is OpeningCommand =>
-  cmd.type === 'toggleDoor' || cmd.type === 'breakWindow' || cmd.type === 'debugOpening';
+  cmd.type === 'toggleDoor' ||
+  cmd.type === 'breakWindow' ||
+  cmd.type === 'debugOpening' ||
+  (OPENING_ACTION_COMMANDS as readonly string[]).includes(cmd.type);
 
 /** Centre of an edge: north edge (tx + 0.5, ty), west edge (tx, ty + 0.5). */
 export const edgeCentre = (side: number, tx: number, ty: number): { x: number; y: number } =>
@@ -35,10 +50,33 @@ export function emitOpeningChanged(
   markChunk(w, view.tx, view.ty, view.z, 'opening');
 }
 
+/** `windowSmashed` + the loud `break` noise at the edge centre. */
+export function windowSmashed(
+  w: SimWorld,
+  key: number,
+  by: 'player' | 'zombie' | 'crowd',
+  player?: { playerId: number; withHand: boolean },
+): void {
+  const k = unpackKey(key);
+  const c = edgeCentre(key % 2, k.tx, k.ty);
+  const n = w.openings.cfg.breakNoise;
+  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'break');
+  w.events.push({
+    type: 'windowSmashed',
+    tick: w.tick,
+    tx: k.tx,
+    ty: k.ty,
+    z: k.z,
+    side: k.side,
+    by,
+    ...player,
+  });
+}
+
 /**
- * Damage to a closed / locked / barricaded door, window or fence (zombie blows, crowd pressure).
- * Planks go first (door → `closed` with full hp, window → `broken`); at 0 hp → `broken` (a fence:
- * knocked over).
+ * Damage to a blocking door / window / gate / fence (zombie blows, crowd pressure, a failed
+ * `forceDoor`). Planks go first, one by one (the top plank's hp, the rest of a blow that knocks
+ * it off is lost); then the edge: at 0 hp → `broken` (window: shatters; fence: knocked over).
  */
 export function damageOpening(
   w: SimWorld,
@@ -50,14 +88,25 @@ export function damageOpening(
   const o = w.openings;
   const e = o.states.get(key);
   const state = e?.state ?? OS.closed;
+  const hp = e?.hp ?? maxHp(o.cfg, kind, state);
+  if (e && e.planks > 0) {
+    const ph = o.cfg.barricade.plankHp;
+    const top = topPlankHp(o.cfg, e);
+    if (dmg < top) setOpening(o, key, kind, state, hp, { bhp: e.bhp - dmg });
+    else {
+      const planks = e.planks - 1;
+      setOpening(o, key, kind, state, hp, { planks, bhp: planks * ph });
+    }
+    emitOpeningChanged(w, key, kind, by);
+    return;
+  }
   if (state === OS.open || state === OS.broken) return;
-  const hp = (e?.hp ?? maxHp(o.cfg, kind, state)) - dmg;
-  if (hp > 0) setOpening(o, key, kind, state, hp);
-  else if (state === OS.barricaded && kind === OpeningKind.door)
-    setOpening(o, key, kind, OS.closed);
+  const left = hp - dmg;
+  if (left > 0) setOpening(o, key, kind, state, left);
   else {
-    setOpening(o, key, kind, OS.broken);
-    if (kind === OpeningKind.window || kind === OpeningKind.fence) {
+    setOpening(o, key, kind, OS.broken, 0, { cleared: 0 });
+    if (kind === OpeningKind.window) windowSmashed(w, key, by);
+    else if (kind === OpeningKind.fence) {
       const k = unpackKey(key);
       const c = edgeCentre(key % 2, k.tx, k.ty);
       const n = o.cfg.breakNoise;
@@ -67,7 +116,37 @@ export function damageOpening(
   emitOpeningChanged(w, key, kind, by);
 }
 
-/** `toggleDoor` / `breakWindow` / `debugOpening` (docs 2.5 `openings`). */
+/** Edge (tx, ty, side) on level z: key, kind and current state. */
+export function edgeAt(
+  grid: TileGrid,
+  w: SimWorld,
+  side: number,
+  tx: number,
+  ty: number,
+  z: number,
+) {
+  const id = side === 0 ? grid.edgeN(tx, ty, z) : grid.edgeW(tx, ty, z);
+  const kind = grid.kindOf(id);
+  const key = openingKey(side, tx, ty, z);
+  const e = w.openings.states.get(key);
+  return { key, kind, e, state: e?.state ?? OS.closed, planks: e?.planks ?? 0 };
+}
+
+/** The player is within `reachTiles` of the edge centre. */
+export function edgeInReach(w: SimWorld, eid: number, key: number): boolean {
+  const k = unpackKey(key);
+  const c = edgeCentre(key % 2, k.tx, k.ty);
+  const dx = (w.c.Position.x[eid] ?? 0) - c.x;
+  const dy = (w.c.Position.y[eid] ?? 0) - c.y;
+  const r = w.openings.cfg.reachTiles;
+  return k.z === floorZ(w, eid) && dx * dx + dy * dy <= r * r;
+}
+
+/**
+ * `toggleDoor` / `debugOpening` (docs 2.5 `openings`); `breakWindow` and the timed edge
+ * commands (`smashWindow`, `climbThrough`, `removeGlass`, `barricade`, `removeBarricade`,
+ * `forceDoor`) start timed actions (`openings/timed.ts`).
+ */
 export function applyOpeningCommand(
   w: SimWorld,
   grid: TileGrid,
@@ -77,51 +156,47 @@ export function applyOpeningCommand(
   const o = w.openings;
   const side = sideIndex(cmd.side);
   const z = cmd.type === 'debugOpening' ? (cmd.z ?? 0) : floorZ(w, eid);
-  const id = side === 0 ? grid.edgeN(cmd.tx, cmd.ty, z) : grid.edgeW(cmd.tx, cmd.ty, z);
-  const kind = grid.kindOf(id);
+  const { key, kind, e: prev, state, planks } = edgeAt(grid, w, side, cmd.tx, cmd.ty, z);
   if (cmd.type === 'debugOpening') {
     if (!w.dev) return 'dev-only';
     if (kind === OpeningKind.wall) return 'invalid-target';
-    const state = OPENING_STATES.indexOf(cmd.state);
-    if (state === OS.locked && kind === OpeningKind.window) return 'invalid-state';
-    if (kind === OpeningKind.fence && state !== OS.closed && state !== OS.broken)
+    let next = OPENING_STATES.indexOf(cmd.state);
+    if (next === OS.locked && !isDoorLike(kind)) return 'invalid-state';
+    if (kind === OpeningKind.fence && next !== OS.closed && next !== OS.broken)
       return 'invalid-state';
-    const key = openingKey(side, cmd.tx, cmd.ty, z);
-    setOpening(o, key, kind, state);
+    // `barricaded` = closed with every plank (planks are a count since the barricade PR).
+    const full = next === OS.barricaded;
+    if (full) next = OS.closed;
+    const n = full ? o.cfg.barricade.maxPlanks : 0;
+    setOpening(o, key, kind, next, undefined, {
+      planks: n,
+      bhp: n * o.cfg.barricade.plankHp,
+      cleared: 0,
+    });
     emitOpeningChanged(w, key, kind, 'debug');
     return undefined;
   }
-  if (kind === OpeningKind.wall || kind === OpeningKind.fence) return 'invalid-target';
-  const c = edgeCentre(side, cmd.tx, cmd.ty);
-  const dx = (w.c.Position.x[eid] ?? 0) - c.x;
-  const dy = (w.c.Position.y[eid] ?? 0) - c.y;
-  if (dx * dx + dy * dy > o.cfg.reachTiles * o.cfg.reachTiles) return 'out-of-range';
-  if (w.survival?.asleep[eid]) return 'invalid-state';
-  const key = openingKey(side, cmd.tx, cmd.ty, z);
-  const prev = o.states.get(key);
-  const state = prev?.state ?? OS.closed;
-  let next: number;
-  if (cmd.type === 'breakWindow') {
-    if (kind !== OpeningKind.window) return 'invalid-target';
-    if (state !== OS.closed && state !== OS.open) return 'invalid-state';
-    next = OS.broken;
-    const n = o.cfg.breakNoise;
-    emitNoise(w, c.x, c.y, z, n.radiusTiles, n.volume, 'break');
-  } else {
-    if (state === OS.barricaded || state === OS.broken) return 'invalid-state';
-    if (cmd.lock) {
-      if (kind !== OpeningKind.door || state === OS.open) return 'invalid-state';
-      next = state === OS.locked ? OS.closed : OS.locked;
-    } else {
-      if (state === OS.locked) return 'locked';
-      next = state === OS.open ? OS.closed : OS.open;
-    }
-    const n = o.cfg.toggleNoise;
-    emitNoise(w, c.x, c.y, z, n.radiusTiles, n.volume, 'action');
+  if (cmd.type !== 'toggleDoor') {
+    const action = cmd.type === 'breakWindow' ? 'smashWindow' : cmd.type;
+    return startAction(w, eid, newAction(action, { edge: key }));
   }
+  if (kind === OpeningKind.wall || kind === OpeningKind.fence) return 'invalid-target';
+  if (!edgeInReach(w, eid, key)) return 'out-of-range';
+  if (w.survival?.asleep[eid]) return 'invalid-state';
+  if (state === OS.barricaded || state === OS.broken || planks > 0) return 'invalid-state';
+  let next: number;
+  if (cmd.lock) {
+    if (!isDoorLike(kind) || state === OS.open) return 'invalid-state';
+    next = state === OS.locked ? OS.closed : OS.locked;
+  } else {
+    if (state === OS.locked) return 'locked';
+    next = state === OS.open ? OS.closed : OS.open;
+  }
+  const c = edgeCentre(side, cmd.tx, cmd.ty);
+  const n = o.cfg.toggleNoise;
+  emitNoise(w, c.x, c.y, z, n.radiusTiles, n.volume, 'action');
   // A damaged door / window keeps its damage when opened, closed or locked.
-  const keep = next !== OS.broken && prev && prev.hp > 0;
-  setOpening(o, key, kind, next, keep ? prev.hp : undefined);
+  setOpening(o, key, kind, next, prev && prev.hp > 0 ? prev.hp : undefined);
   emitOpeningChanged(w, key, kind, 'player');
   return undefined;
 }

@@ -156,6 +156,11 @@ export class TileGrid {
     const kind = this.openings.kinds[id] ?? 0;
     if (kind === 0) return WALL;
     const e = this.openings.states.get(openingKey(side, tx, ty, z));
-    return openingFlags(kind, e?.state ?? OS.closed);
+    return openingFlags(
+      kind,
+      e?.state ?? OS.closed,
+      e?.planks ?? 0,
+      this.openings.cfg.barricade.sightBlockPlanks,
+    );
   }
 }

@@ -375,9 +375,9 @@ export interface DebugNoiseCommand extends CommandHeader {
 }
 
 /**
- * Opens / closes the door or window on edge (tx, ty, side) of the player's floor, within reach
- * (1.5 tiles from the edge centre). `lock: true` locks a closed door or unlocks a locked one.
- * Rejected with `locked` on a locked door, `invalid-state` on barricaded / broken ones.
+ * Opens / closes the door, window or gate on edge (tx, ty, side) of the player's floor, within
+ * reach (1.5 tiles from the edge centre). `lock: true` locks a closed door / gate or unlocks a
+ * locked one. Rejected with `locked` on a locked one, `invalid-state` on barricaded / broken ones.
  */
 export interface ToggleDoorCommand extends CommandHeader {
   type: 'toggleDoor';
@@ -387,7 +387,7 @@ export interface ToggleDoorCommand extends CommandHeader {
   lock?: boolean | undefined;
 }
 
-/** Smashes the window on edge (tx, ty, side) in reach: becomes `broken`, loud `break` noise. */
+/** Same as `smashWindow` (kept for older clients). */
 export interface BreakWindowCommand extends CommandHeader {
   type: 'breakWindow';
   tx: number;
@@ -409,6 +409,41 @@ export interface SetInterestCommand extends CommandHeader {
   cy: number;
   radiusChunks: number;
 }
+
+/**
+ * Timed actions on the edge (tx, ty, side) of the player's floor, within `openings.reachTiles`
+ * (sim `openings/timed.ts`, values in `worldSettings.openings`). Each starts an action (`action`
+ * view with `progress`, `actionStarted` / `actionCompleted` / `actionInterrupted`); moving
+ * interrupts them (not `climbThrough`), zombies nearby do not.
+ * - `smashWindow`: closed / open window without planks → `broken` (loud `break` noise,
+ *   `windowSmashed`); bare-handed (nothing in `hand_primary`) may cut the hand.
+ * - `climbThrough`: open / broken window without planks → the physics `vault` across it
+ *   (`vault.windowTicks`, 1.5 s); shards left in a broken frame may scratch / cut.
+ * - `removeGlass`: broken window with shards → frame cleared (`glass: false`).
+ * - `barricade`: hammer + plank + nails (`barricade.*`) → one more plank (max 4) on a closed /
+ *   locked door or gate, or any window; time shrinks with Carpentry, gives Carpentry XP.
+ * - `removeBarricade`: hammer or crowbar → top plank off, the plank back, nails by chance.
+ * - `forceDoor`: locked door / gate → crowbar (`pry`) or `kick` (no crowbar): noise, a chance
+ *   (+ Strength) to break it (`broken`), else damage; `doorForced`.
+ * Rejects: `out-of-range`, `invalid-target` (wrong edge kind), `invalid-state` (wrong state,
+ * planks in the way), `missing-tool`, `missing-parts` (planks / nails), `busy`.
+ */
+export interface OpeningActionCommand extends CommandHeader {
+  type: OpeningActionType;
+  tx: number;
+  ty: number;
+  side: EdgeSide;
+}
+
+export const OPENING_ACTION_COMMANDS = [
+  'smashWindow',
+  'climbThrough',
+  'removeGlass',
+  'barricade',
+  'removeBarricade',
+  'forceDoor',
+] as const;
+export type OpeningActionType = (typeof OPENING_ACTION_COMMANDS)[number];
 
 /** Dev only (`init.dev`): sets the state of a door / window edge (hp resets to the state's max). */
 export interface DebugOpeningCommand extends CommandHeader {
@@ -600,6 +635,7 @@ export type Command =
   | DebugNoiseCommand
   | ToggleDoorCommand
   | BreakWindowCommand
+  | OpeningActionCommand
   | DebugOpeningCommand
   | PlaceLureCommand
   | TriggerLureCommand

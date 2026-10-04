@@ -242,6 +242,8 @@ export interface ActionView {
   progress?: number;
   /** `search` of a spot (`search {x, y}`): the tile searched. */
   spot?: { x: number; y: number; z: number };
+  /** Openings actions (`barricade`, `smashWindow` …): the target edge. */
+  edge?: { tx: number; ty: number; z: number; side: EdgeSide };
 }
 
 export interface SimViewPatch {
@@ -389,11 +391,20 @@ export interface OpeningView {
   ty: number;
   z: number;
   side: EdgeSide;
-  kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
+  kind: OpeningEdgeKind;
   state: OpeningState;
+  /** Hit points left: the edge itself + its planks (0..maxHp). */
   hp: number;
+  /** Edge max hp (0 when broken) + planks × `barricade.plankHp`. */
   maxHp: number;
+  /** Planks nailed over the edge (0..`barricade.maxPlanks`, 4); > 0 blocks movement. */
+  barricade: number;
+  /** Window: glass in the frame (a pane, or shards of a broken one until `removeGlass`). */
+  glass: boolean;
 }
+
+/** Edge kinds with a state (`openings`). */
+export type OpeningEdgeKind = Extract<SimEdgeKind, 'door' | 'window' | 'fence' | 'gate'>;
 
 export interface CombatView {
   zombiesKilled: number;

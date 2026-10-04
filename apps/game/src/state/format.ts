@@ -35,7 +35,11 @@ export function describeEvent(e: SimEvent): string {
     case 'thrown':
       return `threw ${e.def} to ${e.x},${e.y}${e.broke ? ' (broke)' : ''}`;
     case 'openingChanged':
-      return `${e.kind} ${e.tx},${e.ty}${e.side} ${e.state} (${e.hp}/${e.maxHp}, ${e.by})`;
+      return `${e.kind} ${e.tx},${e.ty}${e.side} ${e.state}${e.barricade ? ` +${e.barricade} planks` : ''}${e.kind === 'window' && e.state === 'broken' && !e.glass ? ' (no glass)' : ''} (${e.hp}/${e.maxHp}, ${e.by})`;
+    case 'windowSmashed':
+      return `window ${e.tx},${e.ty}${e.side} smashed (${e.by}${e.withHand ? ', bare hand' : ''})`;
+    case 'doorForced':
+      return `forced ${e.tx},${e.ty}${e.side} by ${e.method}: ${e.success ? 'broke open' : 'held'}`;
     case 'chunkChanged':
       return `chunk ${e.cx},${e.cy} z${e.z} changed (${e.reason})`;
     case 'fellFromHeight':

@@ -94,6 +94,8 @@ export interface ActionState {
   use: number[];
   /** Search of a spot (`search {x, y}`; `container` 0): the tile searched. */
   spot?: { x: number; y: number; z: number } | undefined;
+  /** Openings actions (`openings/timed.ts`): the edge (`openingKey`). */
+  edge?: number | undefined;
 }
 
 export interface ItemStore {

@@ -235,7 +235,7 @@ describe('vault: windows', () => {
     expect(eventsOf(ev, 'wounded')).toEqual([]);
   });
 
-  it('through a broken window: glass may cut (laceration on an arm, hand or thigh)', () => {
+  it('through a broken window: glass may cut (scratch / laceration on an arm, hand or thigh)', () => {
     const sim = vaultSim(
       { x: 19.7, y: 32.5 },
       { physicsConfig: withVault({ glassChance: 1, tripWindow: 0 }) },
@@ -246,7 +246,7 @@ describe('vault: windows', () => {
     const ev = run(sim, DEFAULT_PHYSICS_CONFIG.vault.windowTicks + 2);
     const cuts = eventsOf(ev, 'wounded');
     expect(cuts).toHaveLength(1);
-    expect(cuts[0]).toMatchObject({ wound: 'laceration' });
+    expect(['scratch', 'laceration']).toContain(cuts[0]!.wound);
     expect(['forearm_l', 'forearm_r', 'hand_l', 'hand_r', 'thigh_l', 'thigh_r']).toContain(
       cuts[0]!.part,
     );

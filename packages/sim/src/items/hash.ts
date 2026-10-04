@@ -61,6 +61,10 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
         .u32(a.container)
         .u32(a.part + 1);
       if (a.spot) h.u32(0x5907_0001).u32(a.spot.x).u32(a.spot.y).u32(a.spot.z);
+      if (a.edge !== undefined)
+        h.u32(0xed6e_0001)
+          .u32(a.edge % 0x100000000)
+          .u32(Math.floor(a.edge / 0x100000000));
       if (a.recipe) {
         h.u32(a.recipe).u32(a.use.length);
         for (const id of a.use) h.u32(id);

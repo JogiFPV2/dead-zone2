@@ -34,6 +34,8 @@ export function physicsBashMul(w: SimWorld, kind: number): number {
   return kind === OpeningKind.fence ? w.physics.cfg.crowd.fenceBashMul : 1;
 }
 
+const planksOf = (w: SimWorld, key: number): number => w.openings.states.get(key)?.planks ?? 0;
+
 /** Pressure of the zombies on side `sign` of edge `key`, in zombie units, and their count. */
 export interface EdgePressure {
   units: number;
@@ -94,7 +96,9 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
     if (dx * dx + dy * dy > hold2) continue;
     out.resist += (cc.holdForce * (b?.bodyMassKg ?? w.physics.cfg.bodyMassKg.player)) / ref;
   }
-  if (state === OS.barricaded) out.resist += cc.barricadeResist;
+  // Planks: `barricadeResist` for a full barricade, proportionally less for fewer planks.
+  const planks = state === OS.barricaded ? w.openings.cfg.barricade.maxPlanks : planksOf(w, key);
+  out.resist += (cc.barricadeResist * planks) / w.openings.cfg.barricade.maxPlanks;
   return out;
 }
 
@@ -133,7 +137,8 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
   const e = w.openings.states.get(key);
   const state = e?.state ?? OS.closed;
   const prev = w.physics.pressure.get(key) ?? 0;
-  if (kind === OpeningKind.wall || state === OS.open || state === OS.broken || !eids.length) {
+  const passable = (state === OS.open || state === OS.broken) && !e?.planks;
+  if (kind === OpeningKind.wall || passable || !eids.length) {
     if (prev) emitPressure(w, key, kind, 0, undefined);
     return 0;
   }
@@ -147,7 +152,12 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
   if (level !== prev) emitPressure(w, key, kind, level, p);
   if (excess <= 0) return level;
   const u = w.physics.rng.nextFloat();
-  if (kind === OpeningKind.window && state === OS.closed && net >= cc.windowBreakUnits) {
+  if (
+    kind === OpeningKind.window &&
+    state === OS.closed &&
+    !e?.planks &&
+    net >= cc.windowBreakUnits
+  ) {
     damageOpening(w, key, kind, e?.hp ?? maxHp(w.openings.cfg, kind, state), 'crowd');
     return level;
   }

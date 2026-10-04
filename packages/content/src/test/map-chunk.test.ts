@@ -74,13 +74,16 @@ describe('MapChunkSchema', () => {
     expect(obj({ x: 32 }).success).toBe(false);
   });
 
-  it('krawędź ma typ wall|window|door|fence i stronę n|w; stanu dynamicznego nie ma w schemacie', () => {
+  it('krawędź ma typ wall|window|door|fence|gate i stronę n|w; stanu dynamicznego nie ma w schemacie', () => {
     const e = { x: 0, y: 0, side: 'n', contentId: 'base:wall' };
     expect(
       MapChunkSchema.safeParse(chunk(undefined, { edges: [{ ...e, type: 'fence' }] })).success,
     ).toBe(true);
     expect(
       MapChunkSchema.safeParse(chunk(undefined, { edges: [{ ...e, type: 'gate' }] })).success,
+    ).toBe(true);
+    expect(
+      MapChunkSchema.safeParse(chunk(undefined, { edges: [{ ...e, type: 'portal' }] })).success,
     ).toBe(false);
     expect(
       MapChunkSchema.safeParse(chunk(undefined, { edges: [{ ...e, type: 'door', side: 's' }] }))

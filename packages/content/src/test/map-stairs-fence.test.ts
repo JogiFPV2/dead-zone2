@@ -32,4 +32,28 @@ describe('mapy: płoty i schody w paczce', () => {
       ['wrong_kind', '$.edges[1].contentId'],
     ]);
   });
+
+  it('brama w ogrodzeniu: krawędź `gate` z tile category gate', () => {
+    const ok = validatePacks([
+      mapPack({
+        [C0]: chunk(undefined, {
+          edges: [
+            { x: 3, y: 3, side: 'n', type: 'fence', contentId: 'base:fence' },
+            { x: 4, y: 3, side: 'n', type: 'gate', contentId: 'base:gate' },
+          ],
+        }),
+      }),
+    ]);
+    expect(errs(ok)).toEqual([]);
+    const bad = validatePacks([
+      mapPack({
+        [C0]: chunk(undefined, {
+          edges: [{ x: 4, y: 3, side: 'n', type: 'gate', contentId: 'base:fence' }],
+        }),
+      }),
+    ]);
+    expect(bad.errors.map((e) => [e.code, e.path])).toEqual([
+      ['wrong_kind', '$.edges[0].contentId'],
+    ]);
+  });
 });

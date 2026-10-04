@@ -129,8 +129,20 @@ export interface SimWorkerClient {
    * in detail (e.g. the streamer's near ring around the camera target); 0 clears it.
    */
   setInterest(cx: number, cy: number, radiusChunks: number): void;
-  /** Open / close the door or window on edge (tx, ty, side); `lock` locks / unlocks a door. */
+  /** Open / close the door, window or gate on edge (tx, ty, side); `lock` locks / unlocks. */
   toggleDoor(tx: number, ty: number, side: EdgeSide, lock?: boolean): void;
+  /** Timed: smash the window (loud; bare hands may cut the hand). */
+  smashWindow(tx: number, ty: number, side: EdgeSide): void;
+  /** Timed: climb through the open / broken window (shards may cut). */
+  climbThrough(tx: number, ty: number, side: EdgeSide): void;
+  /** Timed: clear the shards from a broken window. */
+  removeGlass(tx: number, ty: number, side: EdgeSide): void;
+  /** Timed: nail one plank (hammer + plank + nails) over a door / window / gate. */
+  barricade(tx: number, ty: number, side: EdgeSide): void;
+  /** Timed: pull the top plank off (hammer or crowbar). */
+  removeBarricade(tx: number, ty: number, side: EdgeSide): void;
+  /** Timed: force a locked door / gate (crowbar if carried, else a kick). */
+  forceDoor(tx: number, ty: number, side: EdgeSide): void;
   /** Lay a lure at the player (timer lures: delay and run direction). */
   placeLure(item: ItemId, opts?: { delaySec?: number; dirX?: number; dirY?: number }): void;
   /** Fire a placed remote lure (nearest in range without `item`); needs the remote. */
@@ -142,7 +154,7 @@ export interface SimWorkerClient {
     y: number,
     opts?: { delaySec?: number; dirX?: number; dirY?: number },
   ): void;
-  /** Smash the window on edge (tx, ty, side) — loud. */
+  /** Same as `smashWindow` (older name). */
   breakWindow(tx: number, ty: number, side: EdgeSide): void;
   pickUpStorage(container: ContainerId): void;
   /** Dev only (init `dev: true`). */
@@ -305,7 +317,13 @@ export function createSimWorkerClient(
     placeStorage: (item, x, y) => cmd({ type: 'placeStorage', item, x, y }),
     toggleDoor: (tx, ty, side, lock) =>
       cmd({ type: 'toggleDoor', tx, ty, side, ...(lock ? { lock } : {}) }),
-    breakWindow: (tx, ty, side) => cmd({ type: 'breakWindow', tx, ty, side }),
+    breakWindow: (tx, ty, side) => cmd({ type: 'smashWindow', tx, ty, side }),
+    smashWindow: (tx, ty, side) => cmd({ type: 'smashWindow', tx, ty, side }),
+    climbThrough: (tx, ty, side) => cmd({ type: 'climbThrough', tx, ty, side }),
+    removeGlass: (tx, ty, side) => cmd({ type: 'removeGlass', tx, ty, side }),
+    barricade: (tx, ty, side) => cmd({ type: 'barricade', tx, ty, side }),
+    removeBarricade: (tx, ty, side) => cmd({ type: 'removeBarricade', tx, ty, side }),
+    forceDoor: (tx, ty, side) => cmd({ type: 'forceDoor', tx, ty, side }),
     placeLure: (item, opts) => cmd({ type: 'placeLure', item, ...opts }),
     triggerLure: (item) => cmd({ type: 'triggerLure', ...(item ? { item } : {}) }),
     throwItem: (item, x, y, opts) => cmd({ type: 'throw', item, x, y, ...opts }),

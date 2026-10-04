@@ -1,6 +1,6 @@
 import type { BodyPart, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
-import type { EdgeSide, OpeningState, SimEdgeKind } from './map.js';
-import type { CharacterProfileView, ContainerKind, ReloadKind } from './views.js';
+import type { EdgeSide, OpeningState } from './map.js';
+import type { CharacterProfileView, ContainerKind, OpeningEdgeKind, ReloadKind } from './views.js';
 
 export type CommandRejectReason =
   /** Failed the zod schema (structural validation). */
@@ -82,7 +82,19 @@ export type ActionKind =
   | 'craft'
   | 'read'
   /** TV session (`watchTv`) or a VHS tape (`useItem` on a `vhs` / `watchTv {vhs}`). */
-  | 'watch';
+  | 'watch'
+  /** Openings (`openings/timed.ts`): smash a window (`smashWindow`, also `breakWindow`). */
+  | 'smashWindow'
+  /** Climb through an open / broken window (`climbThrough`; the physics `vault` state). */
+  | 'climbThrough'
+  /** Clear the shards from a broken window frame (`removeGlass`). */
+  | 'removeGlass'
+  /** Nail one plank over a door / window / gate (`barricade`). */
+  | 'barricade'
+  /** Pull the top plank off (`removeBarricade`). */
+  | 'removeBarricade'
+  /** Force a locked door / gate: crowbar or kick (`forceDoor`). */
+  | 'forceDoor';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -378,11 +390,15 @@ export type SimEvent =
       ty: number;
       z: number;
       side: EdgeSide;
-      kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
+      kind: OpeningEdgeKind;
       state: OpeningState;
-      /** Hit points left (0..maxHp of the state). */
+      /** Hit points left: edge + planks (0..maxHp, as `OpeningView`). */
       hp: number;
       maxHp: number;
+      /** Planks over the edge (0..4): each `barricade` / `removeBarricade` / plank knocked off. */
+      barricade: number;
+      /** Window: glass in the frame (false after `removeGlass`). */
+      glass: boolean;
       by: 'player' | 'zombie' | 'crowd' | 'debug';
     }
   /**
@@ -400,6 +416,36 @@ export type SimEvent =
       reason: ChunkChangeReason;
     }
   /**
+   * A window broke (glass shatters, loud `break` noise): a player's `smashWindow` (`playerId`,
+   * `withHand` = bare hands, may cut the hand), a zombie bashing it or crowd pressure.
+   */
+  | {
+      type: 'windowSmashed';
+      tick: number;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      by: 'player' | 'zombie' | 'crowd';
+      playerId?: PlayerId;
+      withHand?: boolean;
+    }
+  /**
+   * `forceDoor` finished: `success` = the locked door / gate gave way (state `broken`);
+   * otherwise it only took damage (`openingChanged`). `method`: crowbar (`pry`) or `kick`.
+   */
+  | {
+      type: 'doorForced';
+      tick: number;
+      playerId: PlayerId;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      method: 'pry' | 'kick';
+      success: boolean;
+    }
+  /**
    * Crowd pressure on a closed door / window / fence changed level (sim `physics/crowd.ts`,
    * checked every 0.5 s): 0 = none (a lone zombie only bangs), 1..3 = the edge shakes harder.
    * `units` = net pressure in zombie units (pressing zombies by mass − player holding −
@@ -412,7 +458,7 @@ export type SimEvent =
       ty: number;
       z: number;
       side: EdgeSide;
-      kind: Extract<SimEdgeKind, 'door' | 'window' | 'fence'>;
+      kind: OpeningEdgeKind;
       level: number;
       units: number;
       pushers: number;

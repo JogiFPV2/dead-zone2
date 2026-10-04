@@ -5,6 +5,7 @@ import type { SimWorld } from '../core/world.js';
 import { ACTION_KINDS, registerAction } from '../actions/queue.js';
 import { registerCraftActions } from '../crafting/crafting.js';
 import { registerLeisureActions } from '../leisure/leisure.js';
+import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
 import { canReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
@@ -162,6 +163,7 @@ export function registerItemActions(): void {
   registered = true;
   registerCraftActions();
   registerLeisureActions();
+  registerOpeningActions();
 
   registerAction('search', {
     validate(w, eid, a) {

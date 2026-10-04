@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildingIdAt,
   CHUNK_TILES,
+  OPENING_ACTION_COMMANDS,
   ENTITY_PHYS_STATES,
   SNAPSHOT_U32_FIELDS,
   SnapshotField,
@@ -325,6 +326,9 @@ describe('parseMainToWorker', () => {
     ).toBe(true);
     expect(
       parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['gate'] } }).ok,
+    ).toBe(true);
+    expect(
+      parseMainToWorker({ kind: 'init', seed: 1, map: { chunks: [], edgeKinds: ['portal'] } }).ok,
     ).toBe(false);
     const chunk = (stairs: unknown) => ({
       cx: 0,
@@ -420,5 +424,17 @@ describe('setInterest and chunk-local rooms (docs 9.24)', () => {
     expect(buildingIdAt(c, 0)).toBe(0);
     const data = simMapToData(map, { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
     expect(data.chunks[0]!.roomBuildings).toEqual({ '1': 70_001 });
+  });
+});
+
+describe('openings action commands', () => {
+  it('parse smashWindow / climbThrough / removeGlass / barricade / removeBarricade / forceDoor', () => {
+    const h = { tick: 1, playerId: 0, seq: 2 };
+    for (const type of OPENING_ACTION_COMMANDS) {
+      const r = parseCommand({ ...h, type, tx: 3, ty: -4, side: 'w' });
+      expect(r).toEqual({ ok: true, command: { ...h, type, tx: 3, ty: -4, side: 'w' } });
+      expect(parseCommand({ ...h, type, tx: 3, ty: 4, side: 'e' }).ok).toBe(false);
+      expect(parseCommand({ ...h, type, tx: 3, ty: 4, side: 'n', lock: true }).ok).toBe(false);
+    }
   });
 });

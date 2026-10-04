@@ -51,12 +51,12 @@ describe('openings: edge flags', () => {
     expect(o.states.size).toBe(0);
   });
 
-  it('window: closed blocks movement not sight; broken passes slowly; barricaded blocks sight', () => {
+  it('window: closed blocks movement not sight; broken passes slowly; planks block sight', () => {
     expect(grid.hasWallW(20, 22, 0)).toBe(true);
     expect(lineOfSight(grid, 0, 18.5, 22.5, 22.5, 22.5)).toBe(true);
     setOpening(o, win, OpeningKind.window, OS.broken);
     expect(grid.flagsW(20, 22, 0) & (EF.blocksMove | EF.slow)).toBe(EF.slow);
-    setOpening(o, win, OpeningKind.window, OS.barricaded);
+    setOpening(o, win, OpeningKind.window, OS.broken, 0, { planks: 2, bhp: 80 });
     expect(lineOfSight(grid, 0, 18.5, 22.5, 22.5, 22.5)).toBe(false);
     expect(grid.hasWallW(20, 22, 0)).toBe(true);
   });
@@ -78,6 +78,8 @@ describe('openings: player commands', () => {
         state: 'open',
         hp: DEFAULT_OPENINGS_CONFIG.doorHp,
         maxHp: DEFAULT_OPENINGS_CONFIG.doorHp,
+        barricade: 0,
+        glass: false,
         by: 'player',
       },
     ]);
@@ -102,11 +104,14 @@ describe('openings: player commands', () => {
     expect(sim.getPlayer()!.x).toBeLessThan(20);
   });
 
-  it('breakWindow: loud break noise, broken window is passable but slow', () => {
+  it('breakWindow (= timed smashWindow): loud break noise, broken window is passable but slow', () => {
     const sim = aiSim({ map: roomSpec, spawn: { x: 21, y: 22.5 } });
     send(sim, { type: 'breakWindow', ...WINDOW });
-    sim.step();
-    const ev = sim.drainEvents();
+    const ev = [];
+    for (let i = 0; i < 22; i++) {
+      sim.step();
+      ev.push(...sim.drainEvents());
+    }
     expect(eventsOf(ev, 'openingChanged')[0]).toMatchObject({ state: 'broken', kind: 'window' });
     expect(eventsOf(ev, 'noise')[0]).toMatchObject({
       source: 'break',

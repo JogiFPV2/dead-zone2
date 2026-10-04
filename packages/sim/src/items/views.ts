@@ -1,3 +1,4 @@
+import { unpackKey } from '../openings/state.js';
 import type {
   ActionView,
   GroundPileView,
@@ -264,6 +265,7 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
     progress: Math.round(progress * 20) / 20,
   };
   if (a.spot) v.spot = { ...a.spot };
+  if (a.edge !== undefined) v.edge = unpackKey(a.edge);
   if (a.item) v.item = a.item;
   if (a.container) v.container = a.container;
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';

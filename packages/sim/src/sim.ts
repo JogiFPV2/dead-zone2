@@ -470,6 +470,8 @@ export function createSim(input: SimOptions): Sim {
           .u32(e.kind)
           .u32(e.state)
           .f32(e.hp);
+        // Planks / cleared glass only when set (older goldens).
+        if (e.planks || e.cleared) h.u32(0xba44_0001).u32(e.planks).f32(e.bhp).u32(e.cleared);
       }
       for (const k of [...o.bashAt.keys()].sort((a, b) => a - b)) h.u32(k).u32(o.bashAt.get(k)!);
     }

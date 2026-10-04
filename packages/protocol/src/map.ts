@@ -72,15 +72,20 @@ export interface SimChunkAddress {
 
 /**
  * Edge kinds (content `map/edge.ts` types). Windows block movement but not sight; a low `fence`
- * blocks movement only (sim-only for now: a crowd can knock it over, state `broken`).
+ * blocks movement only (sim-only for now: a crowd can knock it over, state `broken`). A `gate` is
+ * an openable section of a fence (compound fences: hospital, police, army): it opens, closes and
+ * locks like a door, zombies bash and force it, it can be barricaded; closed it blocks movement,
+ * not sight or sound.
  */
-export const SIM_EDGE_KINDS = ['wall', 'window', 'door', 'fence'] as const;
+export const SIM_EDGE_KINDS = ['wall', 'window', 'door', 'fence', 'gate'] as const;
 export type SimEdgeKind = (typeof SIM_EDGE_KINDS)[number];
 
 /**
- * State of a door or window edge (sim `openings`). Doors: `open` / `closed` / `locked` /
- * `barricaded` / `broken` (smashed, passable). Windows: `closed` (blocks movement, not sight),
- * `open` and `broken` (passable slowly), `barricaded` (blocks both). Map default: `closed`.
+ * State of a door / window / gate edge (sim `openings`). Doors and gates: `open` / `closed` /
+ * `locked` / `broken` (smashed or forced, passable). Windows: `closed` (blocks movement, not
+ * sight), `open` and `broken` (passable slowly). Map default: `closed`. Planks are a separate
+ * count (`OpeningView.barricade` 0..4, on top of any state): the sim no longer produces
+ * `barricaded` (kept for `debugOpening`, which turns it into `closed` + the maximum of planks).
  */
 export const OPENING_STATES = ['open', 'closed', 'locked', 'barricaded', 'broken'] as const;
 export type OpeningState = (typeof OPENING_STATES)[number];

@@ -23,12 +23,13 @@ const EDGE_GLYPH: Record<EdgeType, readonly [string, string]> = {
   window: ['=', '"'],
   door: ['d', 'd'],
   fence: ['~', '!'],
+  gate: ['g', 'g'],
 };
 const STAIR_GLYPH: Record<StairDir, string> = { N: '^', E: '>', S: 'v', W: '<' };
 
 export const PREVIEW_LEGEND = [
   'legenda: . podłoga, , pokój, (spacja) brak podłogi, * obiekt',
-  '  krawędzie: - | ściana, = " okno, d drzwi, ~ ! płot; schody: ^ > v < (kierunek wchodzenia), S = najniższy kafel',
+  '  krawędzie: - | ściana, = " okno, d drzwi, ~ ! płot, g brama; schody: ^ > v < (kierunek wchodzenia), S = najniższy kafel',
 ].join('\n');
 
 /**

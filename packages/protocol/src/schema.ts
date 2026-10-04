@@ -10,6 +10,7 @@ import {
   GAITS,
   MAX_PLAYER_ID,
   MAX_WORLD_COORD,
+  OPENING_ACTION_COMMANDS,
   U32_MAX,
   WOUND_KINDS,
   type Command,
@@ -252,6 +253,16 @@ export const setInterestCommandSchema = z.strictObject({
   cy: z.number().int().min(-0x8000).max(0x7fff),
   radiusChunks: z.number().int().min(0).max(MAX_INTEREST_RADIUS_CHUNKS),
 });
+/** `smashWindow` / `climbThrough` / `removeGlass` / `barricade` / `removeBarricade` / `forceDoor`. */
+export const openingActionCommandSchemas = OPENING_ACTION_COMMANDS.map((type) =>
+  z.strictObject({
+    ...header,
+    type: z.literal(type),
+    tx: tileCoord,
+    ty: tileCoord,
+    side: edgeSide,
+  }),
+);
 export const debugOpeningCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugOpening'),
@@ -397,6 +408,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugNoiseCommandSchema,
   toggleDoorCommandSchema,
   breakWindowCommandSchema,
+  ...openingActionCommandSchemas,
   debugOpeningCommandSchema,
   placeLureCommandSchema,
   triggerLureCommandSchema,

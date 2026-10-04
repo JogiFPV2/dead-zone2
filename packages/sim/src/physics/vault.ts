@@ -48,6 +48,7 @@ function findEdge(
   x: number,
   y: number,
   z: number,
+  only?: VaultTarget,
 ): VaultEdge | undefined {
   const reach = w.physics.cfg.vault.reachTiles;
   const tx = Math.floor(x);
@@ -63,17 +64,22 @@ function findEdge(
   let bestD = Infinity;
   for (const [d, side, ex, ey, dx, dy] of cands) {
     if (d > reach || d >= bestD) continue;
+    if (only && (only.side !== side || only.tx !== ex || only.ty !== ey)) continue;
     const id = side === 0 ? grid.edgeN(ex, ey, z) : grid.edgeW(ex, ey, z);
     const kind = grid.kindOf(id);
     if (kind !== OpeningKind.fence && kind !== OpeningKind.window) continue;
-    const state = w.openings.states.get(openingKey(side, ex, ey, z))?.state ?? OS.closed;
+    const e = w.openings.states.get(openingKey(side, ex, ey, z));
+    const state = e?.state ?? OS.closed;
     const ok =
-      kind === OpeningKind.fence ? state === OS.closed : state === OS.open || state === OS.broken;
+      kind === OpeningKind.fence
+        ? state === OS.closed
+        : (state === OS.open || state === OS.broken) && !e?.planks;
     if (!ok) continue;
     bestD = d;
     best = {
       kind,
-      glass: kind === OpeningKind.window && state === OS.broken,
+      // Shards left in a broken frame (`removeGlass` clears them).
+      glass: kind === OpeningKind.window && state === OS.broken && !e?.cleared,
       line: side === 0 ? ey : ex,
       dx,
       dy,
@@ -110,11 +116,31 @@ export function tripChance(w: SimWorld, eid: number, b: PhysicsBody, kind: numbe
   return Math.fround(Math.min(c.tripMax, Math.max(0, p)));
 }
 
-/** `vault` command: starts the vault over the nearest fence / through the nearest window. */
+/** A specific edge to vault (`climbThrough {tx, ty, side}`); side 0 = n, 1 = w. */
+export interface VaultTarget {
+  side: number;
+  tx: number;
+  ty: number;
+}
+
+/** Whether `startVault` would start now (no state change). */
+export const canVault = (
+  w: SimWorld,
+  grid: TileGrid,
+  eid: number,
+  only?: VaultTarget,
+): CommandRejectReason | undefined => startVault(w, grid, eid, only, true);
+
+/**
+ * `vault` command: starts the vault over the nearest fence / through the nearest window (`only`:
+ * just that edge, `climbThrough`). `dry`: only checks.
+ */
 export function startVault(
   w: SimWorld,
   grid: TileGrid,
   eid: number,
+  only?: VaultTarget,
+  dry = false,
 ): CommandRejectReason | undefined {
   const b = body(w, eid);
   if (!b || b.kind !== 'player' || !canAct(b.state) || b.stair) return 'invalid-state';
@@ -123,7 +149,7 @@ export function startVault(
   const x = Position.x[eid] ?? 0;
   const y = Position.y[eid] ?? 0;
   const z = floorZ(w, eid);
-  const e = findEdge(w, grid, x, y, z);
+  const e = findEdge(w, grid, x, y, z, only);
   if (!e) return 'invalid-target';
   const cfg = w.physics.cfg.vault;
   const r = Math.min(Collider.radius[eid] ?? 0.3, 0.45);
@@ -133,6 +159,7 @@ export function startVault(
   const toX = e.dx !== 0 ? e.line + e.dx * land : along;
   const toY = e.dx !== 0 ? along : e.line + e.dy * land;
   if (!fits(grid, z, e.tx, e.ty, toX, toY, r)) return 'invalid-target';
+  if (dry) return undefined;
 
   b.vaultTrip = tripChance(w, eid, b, e.kind);
   b.vaultGlass = e.glass ? 1 : 0;
@@ -183,11 +210,12 @@ function landVault(w: SimWorld, eid: number, b: PhysicsBody, events: PhysicsEven
   const u1 = pw.rng.nextFloat();
   const u2 = pw.rng.nextFloat();
   const u3 = pw.rng.nextFloat();
-  // TODO(openings): skip the cut once windows have a "glass cleared" state.
+  // Shards in the frame: a cut (`openings.window.climbLacerationShare`) or a scratch.
   if (b.vaultGlass && u2 < cfg.glassChance && w.survival) {
     const part =
       GLASS_PARTS[Math.min(GLASS_PARTS.length - 1, Math.floor(u3 * GLASS_PARTS.length))]!;
-    inflictWound(w, eid, part, woundKindIndex('laceration'));
+    const deep = u2 < cfg.glassChance * w.openings.cfg.window.climbLacerationShare;
+    inflictWound(w, eid, part, woundKindIndex(deep ? 'laceration' : 'scratch'));
   }
   const tripped = u1 < b.vaultTrip;
   b.vaultFromX = b.vaultFromY = b.vaultToX = b.vaultToY = b.vaultTrip = 0;

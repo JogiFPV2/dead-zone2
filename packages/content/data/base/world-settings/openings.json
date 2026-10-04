@@ -2,12 +2,68 @@
   "openings": {
     "doorHp": 60,
     "windowHp": 6,
-    "barricadeHp": 150,
+    "gateHp": 80,
     "zombieBashMul": 1,
-    "bashNoise": { "radiusTiles": 14, "volume": 0.8 },
-    "breakNoise": { "radiusTiles": 20, "volume": 1 },
-    "toggleNoise": { "radiusTiles": 3, "volume": 0.3 },
+    "bashNoise": {
+      "radiusTiles": 14,
+      "volume": 0.8
+    },
+    "breakNoise": {
+      "radiusTiles": 20,
+      "volume": 1
+    },
+    "toggleNoise": {
+      "radiusTiles": 3,
+      "volume": 0.3
+    },
     "windowSpeedMul": 0.3,
-    "reachTiles": 1.5
+    "reachTiles": 1.5,
+    "barricade": {
+      "maxPlanks": 4,
+      "plankHp": 40,
+      "plankItem": "base:plank",
+      "nailsItem": "base:nails",
+      "nailsPerPlank": 2,
+      "hammerTag": "base:tool-hammer",
+      "pryTag": "base:tool-pry",
+      "addSec": 4,
+      "removeSec": 3,
+      "carpentryTimePerLevel": 0.06,
+      "minTimeMul": 0.4,
+      "skill": "base:carpentry",
+      "xpPerPlank": 3,
+      "xpPerRemove": 1,
+      "nailReturnChance": 0.5,
+      "sightBlockPlanks": 2,
+      "noise": {
+        "radiusTiles": 15,
+        "volume": 0.7
+      }
+    },
+    "window": {
+      "smashSec": 1,
+      "handCutChance": 0.5,
+      "removeGlassSec": 3,
+      "glassItem": "base:glass-shards",
+      "glassPieces": 1,
+      "climbLacerationShare": 0.4
+    },
+    "force": {
+      "prySec": 3,
+      "pryChance": 0.4,
+      "pryNoise": {
+        "radiusTiles": 10,
+        "volume": 0.5
+      },
+      "kickSec": 1.2,
+      "kickChance": 0.15,
+      "kickNoise": {
+        "radiusTiles": 16,
+        "volume": 0.8
+      },
+      "chancePerStrength": 0.03,
+      "strengthSkill": "base:strength",
+      "failDamage": 8
+    }
   }
 }

@@ -2,8 +2,12 @@ import { z } from 'zod';
 import { TileRefSchema } from '../common/index.js';
 import { LocalTileSchema } from './address.js';
 
-/** `fence`: low fence (blocks movement only; a crowd can knock it over, sim state `broken`). */
-export const EDGE_TYPES = ['wall', 'window', 'door', 'fence'] as const;
+/**
+ * `fence`: low fence (blocks movement only; a crowd can knock it over, sim state `broken`).
+ * `gate`: brama w ogrodzeniu (kompleksy: szpital, policja, wojsko) — otwierana, zamykana na klucz,
+ * wyważana i barykadowana jak drzwi; zamknięta blokuje ruch, nie wzrok ani dźwięk.
+ */
+export const EDGE_TYPES = ['wall', 'window', 'door', 'fence', 'gate'] as const;
 
 /**
  * Krawędź kafla (rzadka lista, tylko istniejące krawędzie). Każdy kafel ma własne krawędzie

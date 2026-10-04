@@ -41,6 +41,8 @@ describe('world sfx', () => {
       state,
       hp: 1,
       maxHp: 1,
+      barricade: 0,
+      glass: false,
       by: 'player',
     });
     const cues = eventCues(
