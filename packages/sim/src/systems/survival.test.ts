@@ -114,6 +114,7 @@ describe('survival: needs (rates per game minute from worldSettings.survival)', 
     expect(stats(sim).health).toBe(hp);
   });
 
+  // Up to 5 game days tick by tick: a few seconds alone, more on a busy CI runner.
   it('base pack: without food and water the character dies of thirst in 2–4 game days', async () => {
     const sim = survivalSim(await baseContent());
     let died: SimEvent | undefined;
@@ -125,5 +126,5 @@ describe('survival: needs (rates per game minute from worldSettings.survival)', 
     const days = (died?.tick ?? 0) / (1440 * TICKS_PER_MIN);
     expect(days).toBeGreaterThan(2);
     expect(days).toBeLessThan(4);
-  });
+  }, 30_000);
 });
