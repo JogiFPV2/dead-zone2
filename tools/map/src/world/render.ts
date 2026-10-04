@@ -9,6 +9,7 @@ import {
   type WorldPlan,
 } from './plan.js';
 import { valueNoise } from './rng.js';
+import { baseHeight } from './terrain.js';
 
 /** Top-down raster view: world rect from (x0, y0), `mpp` metres per pixel, w × h pixels. */
 export interface MapView {
@@ -55,6 +56,9 @@ export const AREA_COLOR: Record<AreaKind, RGB> = {
   sports: hex('#5f9e48'),
   industrial: hex('#9d988c'),
   block: hex('#bdb7a9'),
+  allotment: hex('#7fa24f'),
+  beach: hex('#e2d39c'),
+  copse: hex('#3d6534'),
 };
 export const BUILDING_COLOR: Record<BuildingKind, RGB> = {
   house: hex('#b4634c'),
@@ -112,6 +116,7 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
     img[o + 1] = (img[o + 1] ?? 0) * (1 - a) + c[1] * a;
     img[o + 2] = (img[o + 2] ?? 0) * (1 - a) + c[2] * a;
   };
+  const height = (x: number, y: number) => baseHeight(plan.seed, plan.size, x, y, plan.riverMouth);
   // Ground (+ forest canopy texture).
   for (let py = 0; py < v.h; py++)
     for (let px = 0; px < v.w; px++) {
@@ -123,10 +128,15 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
         g === 'forest' || g === 'water'
           ? c0
           : [c0[0] * 0.78 + 150 * 0.22, c0[1] * 0.78 + 150 * 0.22, c0[2] * 0.78 + 110 * 0.22];
-      const n =
+      const n0 =
         g === 'forest'
           ? 0.8 + valueNoise(plan.seed + 21, x / 6, y / 6) * 0.4
           : 0.95 + valueNoise(plan.seed + 22, x / 30, y / 30) * 0.1;
+      // Hill shading (light from the north-west) so the terrain the river follows reads.
+      const e = Math.max(v.mpp, 30);
+      const slope =
+        g === 'water' ? 0 : (height(x - e, y - e) - height(x + e, y + e)) / (2 * e * Math.SQRT2);
+      const n = n0 * Math.min(1.25, Math.max(0.75, 1 + slope * 9));
       set(px, py, [c[0] * n, c[1] * n, c[2] * n]);
     }
   const toPx = (x: number, y: number) => ({ x: (x - v.x0) / v.mpp, y: (y - v.y0) / v.mpp });
@@ -188,6 +198,32 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
           fillRect({ x, y, w: 3, h: 3, a: 0 }, hex('#3f6a32'), true);
         }
     }
+  // Copses: crowns; avenues of trees and shrubby balks: one dot per tree / bush.
+  if (v.mpp <= 2)
+    for (const ar of plan.areas) {
+      if (ar.kind !== 'copse') continue;
+      for (let u = -ar.w / 2 + 2; u < ar.w / 2; u += 5)
+        for (let w = -ar.h / 2 + 2; w < ar.h / 2; w += 5) {
+          const x = ar.x + u * Math.cos(ar.a) - w * Math.sin(ar.a);
+          const y = ar.y + u * Math.sin(ar.a) + w * Math.cos(ar.a);
+          if ((u / (ar.w / 2)) ** 2 + (w / (ar.h / 2)) ** 2 > 0.85) continue;
+          fillRect({ x, y, w: 5, h: 5, a: 0 }, hex('#2f5228'), true, 0.8);
+        }
+    }
+  for (const t of plan.treeLines)
+    for (const p of t.pts)
+      fillRect(
+        {
+          x: p.x,
+          y: p.y,
+          w: t.kind === 'avenue' ? 6 : 4.5,
+          h: t.kind === 'avenue' ? 6 : 4.5,
+          a: 0,
+        },
+        t.kind === 'avenue' ? hex('#335a2b') : hex('#4f7234'),
+        true,
+        v.mpp > 4 ? 0.55 : 1,
+      );
   // Roads: casing then fill, minor to major.
   const drawLine = (pts: readonly Pt[], widthM: number, c: RGB, minPx: number, a = 1, dash = 0) => {
     const half = Math.max(minPx, widthM / v.mpp) / 2;
@@ -239,7 +275,15 @@ export function renderMap(plan: WorldPlan, v: MapView): Uint8Array {
         drawLine(r.pts, 0.4, hex('#ffffff'), 0.6, 0.9, 4 / v.mpp);
     }
   }
-  // River on top of roads? No: bridges = roads over water (roads drawn after ground water).
+  // Bridges: parapets either side of the deck (roads are already drawn over the water).
+  for (const b of plan.bridges) {
+    const minW = Math.max(b.h, 3 * v.mpp);
+    fillRect({ ...b, h: minW + Math.max(1.6, 1.5 * v.mpp) }, hex('#2e2a26'));
+    fillRect(
+      { ...b, w: b.w - Math.max(1, v.mpp), h: minW },
+      b.cls === 'rail' ? ROAD_COLOR.rail : ROAD_COLOR[b.cls === 'highway' ? 'highway' : b.cls],
+    );
+  }
   for (const b of plan.buildings) {
     const c = BUILDING_COLOR[b.kind];
     // Darker outline when zoomed in (reads as walls / roof edges).

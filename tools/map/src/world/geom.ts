@@ -110,8 +110,11 @@ export function oRectCorners(r: ORect, margin = 0): Pt[] {
   ].map(([u = 0, v = 0]) => ({ x: r.x + u * c - v * s, y: r.y + u * s + v * c }));
 }
 
-/** True when two oriented rectangles overlap (separating axis test). */
-export function oRectsOverlap(a: ORect, b: ORect): boolean {
+/**
+ * True when two oriented rectangles overlap (separating axis test). Touching is not overlap;
+ * `eps` (m) also forgives that much interpenetration (rounding on wall-to-wall rows).
+ */
+export function oRectsOverlap(a: ORect, b: ORect, eps = 0): boolean {
   if (Math.hypot(a.x - b.x, a.y - b.y) > (Math.hypot(a.w, a.h) + Math.hypot(b.w, b.h)) / 2)
     return false;
   const ca = oRectCorners(a);
@@ -121,7 +124,101 @@ export function oRectsOverlap(a: ORect, b: ORect): boolean {
     const ay = Math.sin(ang);
     const pa = ca.map((p) => p.x * ax + p.y * ay);
     const pb = cb.map((p) => p.x * ax + p.y * ay);
-    if (Math.max(...pa) <= Math.min(...pb) || Math.max(...pb) <= Math.min(...pa)) return false;
+    if (Math.max(...pa) <= Math.min(...pb) + eps || Math.max(...pb) <= Math.min(...pa) + eps)
+      return false;
   }
   return true;
+}
+
+/** Intersection of segments ab and cd: parameters along each (0..1) and the point, or undefined. */
+export function segCross(
+  a: Pt,
+  b: Pt,
+  c: Pt,
+  d: Pt,
+): { t: number; u: number; x: number; y: number } | undefined {
+  const rx = b.x - a.x;
+  const ry = b.y - a.y;
+  const sx = d.x - c.x;
+  const sy = d.y - c.y;
+  const den = rx * sy - ry * sx;
+  if (Math.abs(den) < 1e-12) return undefined;
+  const t = ((c.x - a.x) * sy - (c.y - a.y) * sx) / den;
+  const u = ((c.x - a.x) * ry - (c.y - a.y) * rx) / den;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return undefined;
+  return { t, u, x: a.x + rx * t, y: a.y + ry * t };
+}
+
+/** Grid index over one polyline's segments: fast distance and crossing queries (the river). */
+export class PolylineIndex {
+  private readonly cell = 400;
+  private readonly cells = new Map<number, number[]>();
+  constructor(readonly pts: readonly Pt[]) {
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1] as Pt;
+      const b = pts[i] as Pt;
+      for (
+        let y = Math.floor(Math.min(a.y, b.y) / this.cell);
+        y <= Math.floor(Math.max(a.y, b.y) / this.cell);
+        y++
+      )
+        for (
+          let x = Math.floor(Math.min(a.x, b.x) / this.cell);
+          x <= Math.floor(Math.max(a.x, b.x) / this.cell);
+          x++
+        ) {
+          const k = (y + 1024) * 4096 + x + 1024;
+          const l = this.cells.get(k);
+          if (l) l.push(i);
+          else this.cells.set(k, [i]);
+        }
+    }
+  }
+
+  private near(x: number, y: number, ring: number): number[] {
+    const out = new Set<number>();
+    const cx = Math.floor(x / this.cell);
+    const cy = Math.floor(y / this.cell);
+    for (let j = -ring; j <= ring; j++)
+      for (let i = -ring; i <= ring; i++)
+        for (const s of this.cells.get((cy + j + 1024) * 4096 + cx + i + 1024) ?? []) out.add(s);
+    return [...out];
+  }
+
+  /** Exact distance to the polyline. */
+  dist(x: number, y: number): number {
+    let d = Infinity;
+    for (const i of this.near(x, y, 1)) {
+      const a = this.pts[i - 1] as Pt;
+      const b = this.pts[i] as Pt;
+      d = Math.min(d, segDist(x, y, a.x, a.y, b.x, b.y).d);
+    }
+    if (d <= this.cell) return d;
+    for (let i = 1; i < this.pts.length; i++) {
+      const a = this.pts[i - 1] as Pt;
+      const b = this.pts[i] as Pt;
+      d = Math.min(d, segDist(x, y, a.x, a.y, b.x, b.y).d);
+    }
+    return d;
+  }
+
+  /** Every crossing of segment ab with the polyline (`seg` = index of its segment end point). */
+  crossings(a: Pt, b: Pt): { x: number; y: number; t: number; seg: number }[] {
+    const l = dist(a, b);
+    const steps = Math.max(1, Math.ceil(l / this.cell));
+    const segs = new Set<number>();
+    for (let k = 0; k <= steps; k++)
+      for (const s of this.near(
+        a.x + ((b.x - a.x) * k) / steps,
+        a.y + ((b.y - a.y) * k) / steps,
+        1,
+      ))
+        segs.add(s);
+    const out: { x: number; y: number; t: number; seg: number }[] = [];
+    for (const s of [...segs].sort((p, q) => p - q)) {
+      const h = segCross(a, b, this.pts[s - 1] as Pt, this.pts[s] as Pt);
+      if (h) out.push({ x: h.x, y: h.y, t: h.t, seg: s });
+    }
+    return out.sort((p, q) => p.t - q.t);
+  }
 }

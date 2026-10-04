@@ -28,11 +28,41 @@ const CROPS: Ground[] = [
   'meadow',
 ];
 
+/** Farmland (fields, meadows, pastures, field hedges): open country with nothing on it yet. */
+export const isFarmland = (g: Ground): boolean => g !== 'water' && g !== 'urban' && g !== 'forest';
+
+/** What the land cover needs from a plan (it also runs on a plan still being built). */
+export type GroundPlan = Pick<
+  WorldPlan,
+  'seed' | 'size' | 'river' | 'riverWidth' | 'settlements' | 'forestThreshold'
+>;
+
+/** Field region at a point (jittered Voronoi, 1.4 km): its id hash and strip angle. */
+export function fieldRegion(seed: number, x: number, y: number): { id: number; ang: number } {
+  const R = 1400;
+  const gx = Math.floor(x / R);
+  const gy = Math.floor(y / R);
+  let best = Infinity;
+  let rid = 0;
+  for (let j = -1; j <= 1; j++)
+    for (let i = -1; i <= 1; i++) {
+      const h = hash3(seed + 11, gx + i, gy + j);
+      const cx = (gx + i + ((h & 0xffff) / 65536) * 0.8 + 0.1) * R;
+      const cy = (gy + j + ((h >>> 16) / 65536) * 0.8 + 0.1) * R;
+      const d = (x - cx) ** 2 + (y - cy) ** 2;
+      if (d < best) {
+        best = d;
+        rid = h;
+      }
+    }
+  return { id: rid, ang: ((rid % 360) / 360) * Math.PI };
+}
+
 /** Precomputed lookups for fast per-point land cover. */
 export class GroundField {
   private readonly riverCell = 256;
   private readonly riverCells = new Map<number, number[]>();
-  constructor(readonly plan: WorldPlan) {
+  constructor(readonly plan: GroundPlan) {
     const r = plan.river;
     for (let i = 1; i < r.length; i++) {
       const a = r[i - 1] as Pt;
@@ -81,7 +111,7 @@ export class GroundField {
       const pad = s.kind === 'village' ? s.r * 1.8 + 120 : s.r + 260;
       if (Math.hypot(x - s.x, y - s.y) < pad) nearTown = true;
     }
-    const f = forestNoise(p.seed, x, y);
+    const f = forestNoise(p.seed, x, y, p.size);
     if (!nearTown && f > p.forestThreshold && rd > 70) return 'forest';
     if (rd < 220) return valueNoise(p.seed + 5, x / 90, y / 90) < 0.6 ? 'meadow' : 'pasture';
     if (f > p.forestThreshold - 0.03 && !nearTown) return 'meadow';
@@ -91,23 +121,7 @@ export class GroundField {
   /** Field patchwork: regions (jittered Voronoi, 1.4 km) of parallel strips with crops. */
   private field(x: number, y: number): Ground {
     const seed = this.plan.seed;
-    const R = 1400;
-    const gx = Math.floor(x / R);
-    const gy = Math.floor(y / R);
-    let best = Infinity;
-    let rid = 0;
-    for (let j = -1; j <= 1; j++)
-      for (let i = -1; i <= 1; i++) {
-        const h = hash3(seed + 11, gx + i, gy + j);
-        const cx = (gx + i + ((h & 0xffff) / 65536) * 0.8 + 0.1) * R;
-        const cy = (gy + j + ((h >>> 16) / 65536) * 0.8 + 0.1) * R;
-        const d = (x - cx) ** 2 + (y - cy) ** 2;
-        if (d < best) {
-          best = d;
-          rid = h;
-        }
-      }
-    const ang = ((rid % 360) / 360) * Math.PI;
+    const { id: rid, ang } = fieldRegion(seed, x, y);
     const W = 30 + ((rid >>> 9) % 90); // strip width (Polish fields are narrow)
     const L = 160 + ((rid >>> 17) % 300);
     const u = x * Math.cos(ang) + y * Math.sin(ang);

@@ -1,4 +1,4 @@
-import { dist, meander, pointAt, polyLength, type ORect, type Pt } from './geom.js';
+import { dist, meander, type ORect, type Pt } from './geom.js';
 import { hash3, rng, valueNoise } from './rng.js';
 
 /**
@@ -195,44 +195,137 @@ export interface Lot {
   a: number;
 }
 
+/** Usable frontage is cut back this far (m) from a polyline end (cross street, corner). */
+const END_TRIM = 4;
+/** Deepest tenement (m): sets how far a bend's inner corner is cut back. */
+const MAX_DEPTH = 16;
+/** Narrower lot widths (share of the slot) tried where a full lot is cut by a cross street. */
+const CORNER_FRACTIONS = Array.from({ length: 14 }, (_, k) => 0.95 - k * 0.05);
+
 /**
- * Tenement lots along both sides of a street: narrow (7–13 m) frontage, 11–16 m deep, turned
- * to the street. `place` accepts or rejects each (occupancy), so lots fill the gaps only.
+ * Tenement lots along both sides of a street, as unbroken frontages (pierzeje): every straight
+ * segment of the polyline gets its own row, all lots turned to that segment's angle, their
+ * widths (≈ 7–13 m) summing exactly to the segment's usable length, so neighbours touch wall to
+ * wall with no gap and no overlap. Segment ends are trimmed at the polyline ends and at bends
+ * (more on sharper turns), where the next segment's row takes over. Depth 11–16 m (shallower
+ * when the deep one doesn't fit). `place`
+ * accepts or rejects each lot (occupancy). Where a cross street cuts a slot, narrower corner
+ * tenements fill it from both sides up to the cross street.
  */
 export function frontage(
-  pts: readonly Pt[],
+  street: readonly Pt[],
   roadWidth: number,
   rand: () => number,
   place: (lot: Lot) => boolean,
 ): number {
   let made = 0;
-  const L = polyLength(pts);
-  for (const side of [-1, 1]) {
-    for (let t = 4; t < L - 4;) {
-      const w0 = 7 + rand() * 6;
-      const dep = 11 + rand() * 5;
-      // On bends and next to cross streets a narrower or shallower house still fits.
-      let step = 3;
-      for (const [fw, fd] of [
-        [1, 1],
-        [0.7, 1],
-        [0.7, 0.7],
-        [0.5, 0.7],
-      ] as const) {
-        const w = Math.max(5, w0 * fw);
-        const d = dep * fd;
-        const { p, dx, dy } = pointAt(pts, t + w / 2);
+  // Crooked streets: straighten into runs first (within 1 m, inside the pavement), so each row
+  // is long enough for a proper frontage.
+  const pts = simplify(street, 1);
+  const n = pts.length;
+  const turnAt = (k: number): number => {
+    // Turn angle at inner vertex k (0 at the polyline ends, or the closing vertex of a loop).
+    const closed = n > 2 && dist(pts[0] as Pt, pts[n - 1] as Pt) < 1e-6;
+    const prev = k === 0 ? (closed ? n - 2 : -1) : k - 1;
+    const next = k === n - 1 ? (closed ? 1 : -1) : k + 1;
+    if (prev < 0 || next < 0) return Number.NaN;
+    const a = pts[prev] as Pt;
+    const b = pts[k] as Pt;
+    const c = pts[next] as Pt;
+    const d0 = Math.atan2(b.y - a.y, b.x - a.x);
+    const d1 = Math.atan2(c.y - b.y, c.x - b.x);
+    return Math.atan2(Math.sin(d1 - d0), Math.cos(d1 - d0));
+  };
+  // Inside a bend the two rows would overlap: cut back by the depth's share of the turn. On the
+  // outside they fan out: the fronts meet at the corner, nothing to cut.
+  const trim = (k: number, side: number): number => {
+    const t = turnAt(k);
+    if (Number.isNaN(t)) return END_TRIM;
+    if (Math.sign(t) !== side) return 0.5;
+    return 0.5 + (roadWidth / 2 + SIDEWALK + MAX_DEPTH) * Math.tan(Math.min(Math.abs(t), 1.2) / 2);
+  };
+  for (let k = 1; k < n; k++) {
+    const a = pts[k - 1] as Pt;
+    const b = pts[k] as Pt;
+    const L = dist(a, b);
+    const dx = (b.x - a.x) / L;
+    const dy = (b.y - a.y) / L;
+    const ang = Math.atan2(dy, dx);
+    for (const side of [-1, 1]) {
+      const t0 = trim(k - 1, side);
+      const U = L - t0 - trim(k, side);
+      if (U < 5) continue;
+      const count = Math.max(1, Math.ceil(U / 10));
+      const weights = Array.from({ length: count }, () => 0.8 + rand() * 0.4);
+      const sum = weights.reduce((x, y) => x + y, 0);
+      let t = t0;
+      for (const wt of weights) {
+        const w = (U * wt) / sum;
+        const d0 = 11 + rand() * 5;
         const nx = -dy * side;
         const ny = dx * side;
-        const o = roadWidth / 2 + SIDEWALK + d / 2;
-        if (place({ x: p.x + nx * o, y: p.y + ny * o, w, h: d, a: Math.atan2(dy, dx) })) {
-          made++;
-          step = w + 0.1;
-          break;
+        // Shallower where the block behind is tight (same width: the row stays unbroken).
+        const tryLot = (t0: number, lw: number): boolean => {
+          const cx = a.x + dx * (t0 + lw / 2);
+          const cy = a.y + dy * (t0 + lw / 2);
+          for (const d of [d0, d0 * 0.7, 6]) {
+            const o = roadWidth / 2 + SIDEWALK + d / 2;
+            if (place({ x: cx + nx * o, y: cy + ny * o, w: lw, h: d, a: ang })) {
+              made++;
+              return true;
+            }
+          }
+          return false;
+        };
+        if (!tryLot(t, w)) {
+          // A cross street (or a corner building) cuts this lot: narrower corner tenements
+          // (kamienice narożne) on either side of it, each against its neighbour in the row.
+          let left = 0;
+          for (const f of CORNER_FRACTIONS)
+            if (w * f >= 4 && tryLot(t, w * f)) {
+              left = w * f;
+              break;
+            }
+          for (const f of CORNER_FRACTIONS) {
+            // Never a sliver of a gap between the two pieces: closer than 1 m, they touch.
+            const rw = w - left - w * f < 1 ? w - left : w * f;
+            if (rw >= 4 && tryLot(t + w - rw, rw)) break;
+          }
         }
+        t += w;
       }
-      t += step;
     }
   }
   return made;
+}
+
+/** Douglas–Peucker simplification of a polyline (keeps both ends). */
+export function simplify(pts: readonly Pt[], tol: number): Pt[] {
+  if (pts.length < 3) return [...pts];
+  const keep = new Uint8Array(pts.length);
+  keep[0] = 1;
+  keep[pts.length - 1] = 1;
+  const stack: [number, number][] = [[0, pts.length - 1]];
+  while (stack.length) {
+    const [i, j] = stack.pop() as [number, number];
+    const a = pts[i] as Pt;
+    const b = pts[j] as Pt;
+    let worst = -1;
+    let wd = tol;
+    for (let k = i + 1; k < j; k++) {
+      const p = pts[k] as Pt;
+      const l = dist(a, b);
+      const d =
+        l < 1e-9 ? dist(p, a) : Math.abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / l;
+      if (d > wd) {
+        wd = d;
+        worst = k;
+      }
+    }
+    if (worst >= 0) {
+      keep[worst] = 1;
+      stack.push([i, worst], [worst, j]);
+    }
+  }
+  return pts.filter((_, k) => keep[k]);
 }

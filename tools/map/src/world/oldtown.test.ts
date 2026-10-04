@@ -77,7 +77,7 @@ describe('old town (irregular core of every city and town)', { timeout: 60_000 }
         let bad = 0;
         for (let i = 0; i < inside.length; i++)
           for (let j = i + 1; j < inside.length; j++)
-            if (oRectsOverlap(inside[i]!, inside[j]!)) bad++;
+            if (oRectsOverlap(inside[i]!, inside[j]!, 0.01)) bad++;
         expect(bad).toBe(0);
       }
   });
@@ -95,8 +95,8 @@ describe('old town (irregular core of every city and town)', { timeout: 60_000 }
       )
       .digest('hex');
     expect({ version: WORLD_PLAN_VERSION, digest: d }).toEqual({
-      version: 'plan-2',
-      digest: 'e1cfb88da4640e13c6d0312504f2b0fa30d9d386',
+      version: 'plan-3',
+      digest: 'a76897856eecf3e06398ef89a0ff804427cf1803',
     });
   });
 });
