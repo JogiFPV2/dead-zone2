@@ -97,7 +97,7 @@ import {
   buildHudContentIndex,
   type HudContentIndex,
 } from './hud/content-index.js';
-import { createInventoryWindow } from './hud/inventory-window.js';
+import { createInventoryV3 } from './hud/inv3/inventory-v3.js';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
 import { createSleepController } from './hud/sleep-controller.js';
@@ -548,22 +548,28 @@ if (boot.sim === 'worker') {
 }
 // Baked item icons (tools/assets `icons`); vector icons until / unless they load.
 void loadItemIcons();
-// Inventory window (I / Esc): character + equipment, bags and the opened container.
-const inventory = createInventoryWindow({
+// Inventory v3 (I / Esc, HUD v2 spec „Ekwipunek v3”): player panel (hands, pockets, bags) and the
+// container panel with tabs; list / grid view and sorting kept in the UI settings.
+const inventory = createInventoryV3({
   root: container,
   send: (cmd) => sleep.track(sendBody(cmd)),
   state: () => gameState.get(),
   content: () => hudContent,
-  keys: () => {
-    const b = settings.get().input.bindings;
-    return {
-      takeAll: actionKey(b, 'reload'),
-      putAll: actionKey(b, 'interact'),
-      combine: actionKey(b, 'crouch'),
-    };
+  prefs: () => {
+    const v = settings.get().view;
+    return { view: v.inventoryView, sort: v.inventorySort, group: v.inventoryGroup };
   },
+  setPrefs: (p) =>
+    settings.update((s) => ({
+      ...s,
+      view: { ...s.view, inventoryView: p.view, inventorySort: p.sort, inventoryGroup: p.group },
+    })),
+  position: () => snapshots.sample(performance.now(), TICK_MS),
+  onSwitch: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
   // Combine the hovered item: the crouch key (`C`) while the window is open (mockup combine.png).
   isCombineKey: (code) => settings.get().input.bindings.crouch.includes(code),
+  combineKey: () => actionKey(settings.get().input.bindings, 'crouch'),
+  toast: (text) => hud.toast(text),
 });
 // Loot screen (mockup loot.png): opens by itself once a searched container's content arrives.
 const loot = createLootWindow({

@@ -26,6 +26,10 @@ export interface HudItemDef {
   ranged?: HudRangedDef;
   /** Magazines: rounds they take and how many. */
   magazine?: { ammo: string; capacity: number };
+  /** Drinks: uses of a full item (`drink.uses`), shown as a fill bar (inventory v3 „Stan”). */
+  fillMax?: number;
+  /** Bags: `bag.weightReductionPct` (inventory v3 section header `−30% wagi`). */
+  bagReductionPct?: number;
   /** Furniture you can sleep on (`placeable.sleepSurface`). */
   sleepSurface?: 'bed' | 'sofa';
   /** A TV (`placeable.power` + the leisure TV tag): `watchTv` nearby. */
@@ -42,6 +46,8 @@ export interface HudRangedDef {
   rangeTiles: number;
   /** `shotNoise.radiusTiles` (m). */
   noiseRadius: number;
+  /** `damage.min` / `damage.max` (tooltip „Obrażenia”). */
+  damage?: { min: number; max: number };
   reloadSec: number;
   /** Internal feed loaded one round at a time (pump shotgun, hunting rifle). */
   loadSecPerRound?: number;
@@ -112,6 +118,9 @@ function rangedOf(i: Obj): HudRangedDef | undefined {
     ...(mag && typeof feed.magazine === 'string' ? { magazine: feed.magazine } : {}),
     rangeTiles: num(r.rangeTiles, 20),
     noiseRadius: isObj(r.shotNoise) ? num(r.shotNoise.radiusTiles) : 0,
+    ...(isObj(r.damage) && typeof r.damage.min === 'number' && typeof r.damage.max === 'number'
+      ? { damage: { min: r.damage.min, max: r.damage.max } }
+      : {}),
     reloadSec: num(r.reloadSec, 2),
     ...(typeof r.loadSecPerRound === 'number' ? { loadSecPerRound: r.loadSecPerRound } : {}),
   };
@@ -209,6 +218,10 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(magazine ? { magazine } : {}),
           ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),
           ...(tv ? { tv: true } : {}),
+          ...(isObj(i.drink) && typeof i.drink.uses === 'number' ? { fillMax: i.drink.uses } : {}),
+          ...(isObj(i.bag) && typeof i.bag.weightReductionPct === 'number'
+            ? { bagReductionPct: i.bag.weightReductionPct }
+            : {}),
         });
       }
     }

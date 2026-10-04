@@ -51,21 +51,44 @@ describe('sanitizeSettings', () => {
 
   it('keeps view zoom (clamped) and defaults it for files without it', () => {
     const layers = { markers: true, trail: true, grid: false };
+    const inv = {
+      inventoryView: 'list',
+      inventorySort: {
+        player: { by: 'category', desc: false },
+        container: { by: 'category', desc: false },
+      },
+      inventoryGroup: true,
+    };
     expect(sanitizeSettings({ version: SETTINGS_VERSION }).view).toEqual({
       cameraZoom: 1,
       minimapZoom: 1,
       bigMapZoom: 1,
       bigMapLayers: layers,
+      ...inv,
     });
     expect(
       sanitizeSettings({
-        view: { cameraZoom: 1.4, minimapZoom: 99, bigMapZoom: 0.1, bigMapLayers: { grid: true } },
+        view: {
+          cameraZoom: 1.4,
+          minimapZoom: 99,
+          bigMapZoom: 0.1,
+          bigMapLayers: { grid: true },
+          inventoryView: 'grid',
+          inventorySort: { player: { by: 'weight', desc: true }, container: { by: 'bogus' } },
+          inventoryGroup: false,
+        },
       }).view,
     ).toEqual({
       cameraZoom: 1.4,
       minimapZoom: 4,
       bigMapZoom: 0.25,
       bigMapLayers: { ...layers, grid: true },
+      inventoryView: 'grid',
+      inventorySort: {
+        player: { by: 'weight', desc: true },
+        container: { by: 'category', desc: false },
+      },
+      inventoryGroup: false,
     });
   });
 });

@@ -73,6 +73,29 @@ export interface ViewSettings {
   /** Big map (M): last zoom (0.25–4) and layer toggles (HUD v2 spec §11). */
   bigMapZoom: number;
   bigMapLayers: { markers: boolean; trail: boolean; grid: boolean };
+  /** Inventory v3: list or grid (Tab switches both panels). */
+  inventoryView: InventoryViewMode;
+  /** Inventory v3: sort per panel (dropdown / column header, second click reverses). */
+  inventorySort: { player: InventorySortSetting; container: InventorySortSetting };
+  /** Inventory v3: „Grupuj stosy” (same item, different state → one row with a chevron). */
+  inventoryGroup: boolean;
+}
+
+export const INVENTORY_VIEW_MODES = ['list', 'grid'] as const;
+export type InventoryViewMode = (typeof INVENTORY_VIEW_MODES)[number];
+/** Dropdown keys + the `count` column header. */
+export const INVENTORY_SORTS = [
+  'category',
+  'name',
+  'weight',
+  'condition',
+  'recent',
+  'count',
+] as const;
+export type InventorySort = (typeof INVENTORY_SORTS)[number];
+export interface InventorySortSetting {
+  by: InventorySort;
+  desc: boolean;
 }
 
 export interface Settings {
@@ -93,6 +116,12 @@ export const DEFAULT_SETTINGS: Settings = {
     minimapZoom: 1,
     bigMapZoom: 1,
     bigMapLayers: { markers: true, trail: true, grid: false },
+    inventoryView: 'list',
+    inventorySort: {
+      player: { by: 'category', desc: false },
+      container: { by: 'category', desc: false },
+    },
+    inventoryGroup: true,
   },
   graphics: {
     style: 'classic',
@@ -116,6 +145,12 @@ type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj =>
   typeof v === 'object' && v !== null && !Array.isArray(v) ? (v as Obj) : {};
 const bool = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
+const oneOf = <T extends string>(list: readonly T[], v: unknown, d: T): T =>
+  (list as readonly unknown[]).includes(v) ? (v as T) : d;
+const invSort = (v: unknown, d: InventorySortSetting): InventorySortSetting => {
+  const o = obj(v);
+  return { by: oneOf(INVENTORY_SORTS, o.by, d.by), desc: bool(o.desc, d.desc) };
+};
 const range = (v: unknown, min: number, max: number, d: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d;
 
@@ -152,6 +187,12 @@ export function sanitizeSettings(raw: unknown): Settings {
         trail: bool(obj(v.bigMapLayers).trail, dv.bigMapLayers.trail),
         grid: bool(obj(v.bigMapLayers).grid, dv.bigMapLayers.grid),
       },
+      inventoryView: oneOf(INVENTORY_VIEW_MODES, v.inventoryView, dv.inventoryView),
+      inventorySort: {
+        player: invSort(obj(v.inventorySort).player, dv.inventorySort.player),
+        container: invSort(obj(v.inventorySort).container, dv.inventorySort.container),
+      },
+      inventoryGroup: bool(v.inventoryGroup, dv.inventoryGroup),
     },
     graphics: {
       style: (GRAPHICS_STYLES as readonly unknown[]).includes(g.style)
