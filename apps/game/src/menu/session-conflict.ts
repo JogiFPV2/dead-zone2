@@ -1,0 +1,179 @@
+import type { ServerSaveInfo } from '../account/account-api.js';
+import { playedLabel } from './characters-model.js';
+import { icon } from './icons.js';
+import { keyBadge } from './overlay-stage.js';
+
+const esc = (s: string): string => s.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
+const hhmm = (m: number): string =>
+  `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(Math.floor(m % 60)).padStart(2, '0')}`;
+
+export type ToastTone = 'error' | 'warn' | 'info';
+
+export interface ToastOptions {
+  readonly host: HTMLElement;
+  readonly title: string;
+  readonly body?: string | undefined;
+  readonly meta?: string | undefined;
+  readonly tone?: ToastTone;
+  /** Icon name (icons.ts). */
+  readonly icon?: string;
+  /** Auto-hide (spec: 6 s); 0 = stays until closed. */
+  readonly ms?: number;
+}
+
+/** Toast top right (session-conflict.png: 360 px, inset bar, 6 s, X). */
+export function showToast(o: ToastOptions): { el: HTMLElement; close(): void } {
+  const el = document.createElement('div');
+  const tone = o.tone ?? 'error';
+  el.className = `dza-toast${tone === 'error' ? '' : ` dza-toast--${tone}`}`;
+  el.setAttribute('role', tone === 'error' ? 'alert' : 'status');
+  el.innerHTML = `${icon(o.icon ?? 'cloudOff', 20)}<div class="dza-toast-text"><b>${esc(o.title)}</b>${o.body ? `<span>${esc(o.body)}</span>` : ''}${o.meta ? `<em>${esc(o.meta)}</em>` : ''}</div><button type="button" class="dza-toast-x" aria-label="Zamknij">${icon('x', 14)}</button>`;
+  o.host.appendChild(el);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const close = (): void => {
+    if (timer !== undefined) clearTimeout(timer);
+    el.remove();
+  };
+  el.querySelector('.dza-toast-x')?.addEventListener('click', close);
+  const ms = o.ms ?? 6000;
+  if (ms > 0) timer = setTimeout(close, ms);
+  return { el, close };
+}
+
+export interface LocalSaveInfo {
+  day: number;
+  minuteOfDay?: number | undefined;
+  /** When this device made the rejected save (epoch ms). */
+  savedAt: number;
+}
+
+export interface SaveConflictOptions {
+  /** Stage (1280×720) the window covers. */
+  readonly host: HTMLElement;
+  /** 409: newer state elsewhere; `gone`: died on another device (410 / `character_dead`). */
+  readonly kind: 'conflict' | 'gone';
+  readonly name: string;
+  readonly female: boolean;
+  /** What was being saved: daily autosave or „Zapisz i wyjdź”. */
+  readonly trigger: 'autosave' | 'exit';
+  readonly local: LocalSaveInfo;
+  readonly server?: ServerSaveInfo | undefined;
+  readonly now?: () => number;
+  /** Toast auto-hide (default 6 s); previews pin it with 0. */
+  readonly toastMs?: number;
+  /** WCZYTAJ NOWSZY STAN: download the server save and load it (local state is dropped). */
+  onLoadNewer(): void;
+  /** WYJDŹ DO MENU → Postacie (local state is dropped). */
+  onMenu(): void;
+}
+
+export interface SaveConflictDialog {
+  onKey(e: KeyboardEvent): boolean;
+  dispose(): void;
+}
+
+/** `autozapis · dzień 12, 06:00 · teraz`. */
+export function toastMeta(trigger: 'autosave' | 'exit', l: LocalSaveInfo): string {
+  const when = l.minuteOfDay === undefined ? '' : `, ${hhmm(l.minuteOfDay)}`;
+  return `${trigger === 'exit' ? 'Zapisz i wyjdź' : 'autozapis'} · dzień ${l.day}${when} · teraz`;
+}
+
+/** Rows of the comparison table; undefined unless the 409 named the newer save's day and time. */
+export function compareRows(
+  server: ServerSaveInfo | undefined,
+  local: LocalSaveInfo,
+  now: number,
+): { server: string; local: string } | undefined {
+  if (!server || server.day === undefined || !server.savedAt) return undefined;
+  const t = Date.parse(server.savedAt);
+  if (!Number.isFinite(t)) return undefined;
+  return {
+    server: `dzień ${server.day} · ${playedLabel(t, now)}`,
+    local: `dzień ${local.day} · ${playedLabel(local.savedAt, now)}`,
+  };
+}
+
+/**
+ * Konflikt sesji (mockup session-conflict.png): the server refused this device's save because
+ * another session saved newer state (409), or the character died elsewhere (410). The toast shows
+ * on every 409; the window keeps the game paused until the player loads the newer state or leaves.
+ */
+export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
+  const now = (o.now ?? Date.now)();
+  const toast =
+    o.kind === 'conflict'
+      ? showToast({
+          host: o.host,
+          title: 'Zapis odrzucony',
+          body: 'Serwer ma nowszy stan tej postaci z innego urządzenia.',
+          meta: toastMeta(o.trigger, o.local),
+          ...(o.toastMs === undefined ? {} : { ms: o.toastMs }),
+        })
+      : undefined;
+  const el = document.createElement('div');
+  el.className = 'dza-conflict-layer';
+  el.setAttribute('role', 'alertdialog');
+  const gone = o.kind === 'gone';
+  // „Zapisz i wyjdź” → 409: the player wanted to leave, so WYJDŹ DO MENU is the primary [ZAŁ.].
+  const menuFirst = gone || o.trigger === 'exit';
+  const rows = gone ? undefined : compareRows(o.server, o.local, now);
+  const title = gone ? 'TA POSTAĆ NIE ŻYJE' : 'TA POSTAĆ BYŁA GRANA<br>NA INNYM URZĄDZENIU';
+  el.setAttribute('aria-label', title.replace('<br>', ' '));
+  const body = gone
+    ? `${esc(o.name)} ${o.female ? 'zginęła' : 'zginął'} na innym urządzeniu. Zostaje nagrobek.`
+    : `${esc(o.name)} ma na serwerze nowszy stan. Wczytaj go, żeby grać dalej. Postęp z tego komputera od ostatniego zapisu przepadnie.`;
+  const menuBtn = `<button type="button" class="dza-btn ${menuFirst ? 'dza-btn--pri dza-btn--focus' : 'dza-btn--sec'}" data-act="menu">${icon('exit', 15)}WYJDŹ DO MENU</button>`;
+  const loadBtn = gone
+    ? ''
+    : `<button type="button" class="dza-btn ${menuFirst ? 'dza-btn--sec' : 'dza-btn--pri dza-btn--focus'}" data-act="load">${icon('download', 15)}WCZYTAJ NOWSZY STAN</button>`;
+  const hints = gone
+    ? `<span>${keyBadge('Enter')}menu</span>`
+    : menuFirst
+      ? `<span>${keyBadge('Enter')}menu</span><span>${keyBadge('Esc')}menu</span>`
+      : `<span>${keyBadge('Enter')}wczytaj</span><span>${keyBadge('Esc')}menu</span>`;
+  el.innerHTML = `<div class="dza-scrim"></div><div class="dzo-panel dza-conflict${gone ? ' dza-conflict--dead' : ''}">
+<div class="dza-conflict-ic">${icon(gone ? 'grave' : 'monitor', 24)}</div>
+<div class="dza-conflict-title">${title}</div>
+${gone ? '' : '<div class="dza-conflict-sub">Twój zapis nie został przyjęty.</div>'}
+<div class="dza-conflict-body">${body}</div>
+${rows ? `<div class="dza-cmp"><div><span>NA SERWERZE</span><span class="dza-cmp-new">${esc(rows.server)}</span></div><div><span>TUTAJ (ODRZUCONY)</span><span class="dza-cmp-old">${esc(rows.local)}</span></div></div>` : ''}
+<div class="dza-hsep"></div>
+<div class="dza-conflict-foot">${menuFirst ? `${loadBtn}${menuBtn}` : `${menuBtn}${loadBtn}`}</div>
+<div class="dza-conflict-hints">${hints}<span>· gra jest wstrzymana</span></div></div>`;
+  // Under the toast, so the toast stays readable on top.
+  if (toast) o.host.insertBefore(el, toast.el);
+  else o.host.appendChild(el);
+  el.querySelector<HTMLElement>('.dza-btn--focus')?.focus({ preventScroll: true });
+
+  let done = false;
+  const finish = (load: boolean): void => {
+    if (done) return;
+    done = true;
+    el.remove();
+    toast?.close();
+    if (load) o.onLoadNewer();
+    else o.onMenu();
+  };
+  el.addEventListener('click', (e) => {
+    const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act;
+    if (act === 'load') finish(true);
+    else if (act === 'menu') finish(false);
+  });
+
+  return {
+    onKey(e) {
+      if (done) return false;
+      if (e.code === 'Escape') finish(false);
+      else if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+        if (e.target instanceof HTMLButtonElement && el.contains(e.target)) return false;
+        finish(!menuFirst);
+      } else return e.code === 'Tab' ? false : true;
+      return true;
+    },
+    dispose() {
+      done = true;
+      el.remove();
+      toast?.close();
+    },
+  };
+}

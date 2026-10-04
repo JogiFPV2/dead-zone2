@@ -20,14 +20,16 @@ import {
   type SettingsRow,
 } from './settings-rows.js';
 import {
-  SETTINGS_TABS,
   isSettingsTab,
   settingsKey,
+  settingsTabs,
   stepSettingsFocus,
   stepTab,
   type SettingsFocus,
   type SettingsTab,
 } from './settings-tabs.js';
+import type { AccountSession } from '../account/account-session.js';
+import { createAccountPanel, type AccountPanel } from './account-panel.js';
 
 export interface SettingsScreenOptions {
   readonly root: HTMLElement;
@@ -35,6 +37,12 @@ export interface SettingsScreenOptions {
   readonly audio: Pick<AudioEngine, 'play' | 'preview'>;
   readonly trackTitle: string;
   readonly initialTab?: SettingsTab;
+  /** Online accounts: adds Ustawienia › Konto (account-settings.png). */
+  readonly account?: AccountSession | undefined;
+  /** Konto › ZALOGUJ SIĘ (main menu only): the screen is already disposed. */
+  readonly onLogin?: (() => void) | undefined;
+  /** Konto › account deleted / logged out: the screen is already disposed. */
+  readonly onAccountGone?: (() => void) | undefined;
   /** Back / Zastosuj: the screen is already disposed. */
   onClose(): void;
 }
@@ -55,7 +63,27 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
   const { settings, audio } = o;
   const overlay = mountOverlay(o.root, 'dzo--settings');
   const { stage } = overlay;
-  let tab: SettingsTab = o.initialTab ?? 'graphics';
+  const tabList = settingsTabs(!!o.account?.online);
+  let tab: SettingsTab =
+    o.initialTab && isSettingsTab(o.initialTab, tabList) ? o.initialTab : 'graphics';
+  let accountPanel: AccountPanel | undefined;
+  function panel(): AccountPanel | undefined {
+    if (!o.account) return undefined;
+    accountPanel ??= createAccountPanel({
+      account: o.account,
+      onLogin: o.onLogin
+        ? () => {
+            api.dispose();
+            o.onLogin?.();
+          }
+        : undefined,
+      onDeleted: () => {
+        api.dispose();
+        (o.onAccountGone ?? o.onClose)();
+      },
+    });
+    return accountPanel;
+  }
   let draft: Settings = settings.get();
   let focus: SettingsFocus = { zone: 'tabs' };
   let confirm: ConfirmDialog | undefined;
@@ -109,11 +137,13 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
 
   function render(): void {
     if (disposed) return;
-    const tabs = SETTINGS_TABS.map((t) => {
-      const on = t.id === tab;
-      const tf = on && focus.zone === 'tabs';
-      return `<button type="button" class="dzo-tab${on ? ' dzo-tab--on' : ''}${tf ? ' dzo-tab--focus' : ''}" role="tab" id="dzo-tab-${t.id}" data-tab="${t.id}" aria-selected="${on}" aria-controls="dzo-tabpanel" tabindex="${tf ? 0 : -1}">${t.label}</button>`;
-    }).join('');
+    const tabs = tabList
+      .map((t) => {
+        const on = t.id === tab;
+        const tf = on && focus.zone === 'tabs';
+        return `<button type="button" class="dzo-tab${on ? ' dzo-tab--on' : ''}${tf ? ' dzo-tab--focus' : ''}" role="tab" id="dzo-tab-${t.id}" data-tab="${t.id}" aria-selected="${on}" aria-controls="dzo-tabpanel" tabindex="${tf ? 0 : -1}">${t.label}</button>`;
+      })
+      .join('');
     let fi = 0;
     const list = rows()
       .map((r) => renderRow(r, isFocusable(r) ? fi++ : undefined))
@@ -121,7 +151,10 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
     const body =
       tab === 'interface'
         ? `<div class="dzo-cols"><div class="dzo-col">${list}</div>${noisePreview(draft.interface.noiseDisplay)}</div>`
-        : list;
+        : tab === 'account'
+          ? '<div data-account-slot></div>'
+          : list;
+    const accountTab = tab === 'account';
     // The confirm dialog (if any) lives in the stage too: keep it on top.
     const keep = stage.querySelector('.dzo-confirm');
     stage.innerHTML = `${MINI_LOGO}
@@ -129,11 +162,29 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
 <div class="dzo-settings-head"><span class="dzo-title">USTAWIENIA</span><span class="dzo-grow"></span><div class="dzo-tabs" role="tablist" aria-label="Kategorie ustawień">${tabs}</div></div>
 <div class="dzo-sep"></div>
 <div class="dzo-settings-body" id="dzo-tabpanel" role="tabpanel" aria-labelledby="dzo-tab-${tab}" data-panel="${tab}">${body}</div>
-<div class="dzo-settings-foot"><button type="button" class="dzo-btn dzo-btn--sec" data-act="defaults">${icon('reset', 16)} PRZYWRÓĆ DOMYŚLNE</button><span class="dzo-grow"></span><button type="button" class="dzo-btn dzo-btn--sec" data-act="back">WSTECZ ${keyBadge('ESC')}</button><button type="button" class="dzo-btn dzo-btn--pri" data-act="apply">ZASTOSUJ ${keyBadge('ENTER', true)}</button></div>
+${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class="dzo-btn dzo-btn--sec" data-act="defaults">${icon('reset', 16)} PRZYWRÓĆ DOMYŚLNE</button><span class="dzo-grow"></span><button type="button" class="dzo-btn dzo-btn--sec" data-act="back">WSTECZ ${keyBadge('ESC')}</button><button type="button" class="dzo-btn dzo-btn--pri" data-act="apply">ZASTOSUJ ${keyBadge('ENTER', true)}</button></div>`}
 </div>
 <div class="dzo-hints">${keyBadge('Q / E')}<span>zmień zakładkę</span>${keyBadge('↑↓')}<span>wybierz</span>${keyBadge('ESC')}<span>wstecz</span></div>`;
+    if (accountTab) {
+      const p = panel();
+      const slot = stage.querySelector('[data-account-slot]');
+      if (p && slot) slot.replaceWith(p.el);
+    }
     if (keep) stage.appendChild(keep);
     else stage.querySelector<HTMLElement>('[tabindex="0"]')?.focus({ preventScroll: true });
+  }
+
+  /** Konto: ↑/↓ walk the panel's controls (it has no settings rows). */
+  function moveAccountFocus(delta: 1 | -1): void {
+    const items = [
+      stage.querySelector<HTMLElement>('.dzo-tab--on'),
+      ...stage.querySelectorAll<HTMLElement>(
+        '.dza-set-wrap button:not([disabled]), .dza-set-wrap input:not([disabled])',
+      ),
+    ].filter((x): x is HTMLElement => !!x);
+    const cur = items.indexOf(document.activeElement as HTMLElement);
+    const next = items[(((cur + delta) % items.length) + items.length) % items.length];
+    next?.focus({ preventScroll: true });
   }
 
   function setTab(next: SettingsTab): void {
@@ -201,14 +252,27 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
   function onKey(e: KeyboardEvent): boolean {
     if (disposed) return false;
     if (confirm) return confirm.onKey(e);
+    // Text fields (Konto › e-mail) keep their keys; Esc still goes back.
+    if (e.target instanceof HTMLInputElement && e.code !== 'Escape') return false;
+    if (tab === 'account') {
+      if (e.code === 'Tab' && !e.ctrlKey) return false;
+      if ((e.code === 'Enter' || e.code === 'Space') && e.target instanceof HTMLButtonElement) {
+        return false;
+      }
+    }
     const cmd = settingsKey(e.code, { ctrl: e.ctrlKey, shift: e.shiftKey }, focus);
     if (!cmd) return false;
+    if (tab === 'account' && cmd.type === 'focus') {
+      moveAccountFocus(cmd.delta);
+      return true;
+    }
+    if (tab === 'account' && cmd.type === 'apply') return true;
     if (e.repeat && (cmd.type === 'apply' || cmd.type === 'back' || cmd.type === 'tab'))
       return true;
     const row = focusedRow();
     switch (cmd.type) {
       case 'tab':
-        setTab(stepTab(tab, cmd.delta));
+        setTab(stepTab(tab, cmd.delta, tabList));
         break;
       case 'focus':
         focus = stepSettingsFocus(focus, cmd.delta, focusable().length);
@@ -251,7 +315,7 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
     if (confirm) return;
     const t = e.target as HTMLElement;
     const tabId = t.closest<HTMLElement>('[data-tab]')?.dataset.tab;
-    if (isSettingsTab(tabId)) {
+    if (isSettingsTab(tabId, tabList)) {
       focus = { zone: 'tabs' };
       if (tabId === tab) render();
       else setTab(tabId);
@@ -341,6 +405,7 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       if (disposed) return;
       disposed = true;
       confirm?.dispose();
+      accountPanel?.dispose();
       audio.preview(null);
       // Saved on Zastosuj (the store applies it), otherwise back to the stored scale.
       setUiScale(settings.get().graphics.uiScale);

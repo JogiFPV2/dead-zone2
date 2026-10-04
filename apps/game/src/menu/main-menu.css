@@ -403,3 +403,14 @@
     animation: none !important;
   }
 }
+.dzm-account--btn {
+  cursor: pointer;
+}
+.dzm-account--btn:hover,
+.dzm-account--btn:focus-visible {
+  border-color: var(--color-border-strong);
+  outline: none;
+}
+.dzm > .dza-toast {
+  z-index: 700;
+}

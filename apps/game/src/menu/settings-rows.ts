@@ -136,6 +136,9 @@ export interface RowContext {
 /** Rows of `tab` for the draft `d`. */
 export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): SettingsRow[] {
   switch (tab) {
+    case 'account':
+      // Ustawienia › Konto has its own panel (account-panel.ts), no rows.
+      return [];
     case 'graphics':
       return [
         { kind: 'header', label: 'Grafika', note: 'Q / E lub ← → na zakładkach' },

@@ -1,0 +1,167 @@
+import { describe, expect, it, vi } from 'vitest';
+import {
+  conflictInfo,
+  createHttpAccountApi,
+  saveResultOf,
+  settingsResultOf,
+  versionOf,
+  type AuthProvider,
+} from './http-api.js';
+
+const auth = (token: string | null = 'tok'): AuthProvider => ({
+  session: () => Promise.resolve(undefined),
+  accessToken: () => Promise.resolve(token ?? undefined),
+  signInWithGoogle: () => Promise.resolve({ ok: false, code: 'not-configured' }),
+  signInWithPassword: () => Promise.resolve({ ok: false, code: 'not-configured' }),
+  signUp: () => Promise.resolve({ ok: true }),
+  sendMagicLink: () => Promise.resolve({ ok: true }),
+  sendPasswordReset: () => Promise.resolve({ ok: true }),
+  resendConfirmation: () => Promise.resolve({ ok: true }),
+  signOut: () => Promise.resolve(),
+});
+const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
+  new Response(body === undefined ? null : JSON.stringify(body), { status, headers });
+
+describe('save answers (409 / 410)', () => {
+  it('409 save_version_conflict → conflict, with the newer save only when the server names it', () => {
+    expect(saveResultOf(409, { error: 'save_version_conflict' })).toEqual({
+      ok: false,
+      reason: 'conflict',
+      server: undefined,
+    });
+    const body = {
+      error: 'save_version_conflict',
+      server: { version: 15, gameDay: 14, minuteOfDay: 664, updatedAt: '2026-10-04T18:04:00Z' },
+    };
+    expect(saveResultOf(409, body)).toEqual({
+      ok: false,
+      reason: 'conflict',
+      server: { version: 15, day: 14, minuteOfDay: 664, savedAt: '2026-10-04T18:04:00Z' },
+    });
+    expect(conflictInfo({ server: { gameDay: 3 } })).toBeUndefined();
+  });
+
+  it('dead elsewhere (410, 409 character_dead, 404) → gone; quota, rate limit, 401', () => {
+    expect(saveResultOf(410, undefined)).toEqual({ ok: false, reason: 'gone' });
+    expect(saveResultOf(409, { error: 'character_dead' })).toEqual({ ok: false, reason: 'gone' });
+    expect(saveResultOf(404, { error: 'character_not_found' })).toEqual({
+      ok: false,
+      reason: 'gone',
+    });
+    expect(saveResultOf(413, { error: 'save_quota_exceeded' })).toEqual({
+      ok: false,
+      reason: 'quota',
+    });
+    expect(saveResultOf(429, { error: 'rate_limited' }, '30')).toEqual({
+      ok: false,
+      reason: 'rate-limited',
+      retryAfterSec: 30,
+    });
+    expect(saveResultOf(401, undefined)).toEqual({ ok: false, reason: 'unauthorized' });
+    expect(saveResultOf(200, { version: 4, sizeBytes: 9 })).toEqual({
+      ok: true,
+      version: 4,
+      sizeBytes: 9,
+    });
+  });
+
+  it('settings (#164): 412 conflict, 413, 422 with issues, 428; stored copy and ETag', () => {
+    expect(settingsResultOf(412, { error: 'settings_version_conflict' }, null)).toEqual({
+      ok: false,
+      reason: 'conflict',
+    });
+    expect(settingsResultOf(413, { error: 'payload_too_large' }, null)).toEqual({
+      ok: false,
+      reason: 'too-large',
+    });
+    const issue = { path: ['audio', 'master'], code: 'too_big', message: 'Too big' };
+    expect(settingsResultOf(422, { error: 'invalid_settings', issues: [issue] }, null)).toEqual({
+      ok: false,
+      reason: 'invalid',
+      issues: [issue],
+    });
+    expect(settingsResultOf(428, { error: 'precondition_required' }, null)).toEqual({
+      ok: false,
+      reason: 'precondition',
+    });
+    expect(settingsResultOf(401, undefined, null)).toEqual({ ok: false, reason: 'unauthorized' });
+    expect(settingsResultOf(200, {}, '"7"')).toEqual({
+      ok: true,
+      version: 7,
+      settings: null,
+      updatedAt: null,
+    });
+    expect(
+      settingsResultOf(200, { settings: { version: 1 }, version: 3, updatedAt: 'T' }, '"3"'),
+    ).toEqual({ ok: true, version: 3, settings: { version: 1 }, updatedAt: 'T' });
+    expect(versionOf('W/"12"')).toBe(12);
+    expect(versionOf(null)).toBe(0);
+  });
+});
+
+describe('createHttpAccountApi', () => {
+  it('GET /v1/characters with the bearer token; usage falls back to the older limits block', async () => {
+    const fetch = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(
+        json(200, {
+          characters: [{ id: 'a', name: 'Ewa', status: 'alive' }],
+          limits: { maxAlive: 20, alive: 1, maxSaveBytes: 50, usedSaveBytes: 5 },
+        }),
+      ),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test/', auth: auth(), fetch });
+    const r = await api.listCharacters();
+    expect(fetch.mock.calls[0]?.[0]).toBe('https://api.test/v1/characters');
+    expect((fetch.mock.calls[0]?.[1].headers as Record<string, string>).authorization).toBe(
+      'Bearer tok',
+    );
+    expect(r).toMatchObject({
+      ok: true,
+      usage: { usedBytes: 5, limitBytes: 50, alive: 1, aliveLimit: 20 },
+    });
+    if (r.ok) expect(r.characters[0]?.lastLocation).toBeNull();
+  });
+
+  it('PUT save sends If-Match and the checksum; network errors and missing tokens are typed', async () => {
+    const fetch = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(json(409, { error: 'save_version_conflict' })),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(), fetch });
+    const r = await api.putSave('id-1', 3, {
+      bytes: new Uint8Array([1, 2]),
+      sha256: 'ab',
+      reason: 'autosave',
+    });
+    const h = fetch.mock.calls[0]?.[1].headers as Record<string, string>;
+    expect(h['if-match']).toBe('"3"');
+    expect(h['x-dzsv-sha256']).toBe('ab');
+    expect(r).toMatchObject({ ok: false, reason: 'conflict' });
+
+    const down = createHttpAccountApi({
+      baseUrl: 'https://api.test',
+      auth: auth(),
+      fetch: () => Promise.reject(new TypeError('offline')),
+    });
+    expect(await down.getSettings()).toEqual({ ok: false, reason: 'network' });
+    const anon = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(null), fetch });
+    expect(await anon.deleteAccount()).toEqual({ ok: false, reason: 'unauthorized' });
+  });
+
+  it('PUT /v1/me/settings sends the whole object with If-Match', async () => {
+    const fetch = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(json(200, { settings: { a: 1 }, version: 2, updatedAt: 'T' })),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(), fetch });
+    expect(await api.putSettings({ a: 1 }, 1)).toEqual({
+      ok: true,
+      version: 2,
+      settings: { a: 1 },
+      updatedAt: 'T',
+    });
+    const init = fetch.mock.calls[0]?.[1];
+    expect(init?.method).toBe('PUT');
+    expect((init?.headers as Record<string, string>)['if-match']).toBe('"1"');
+    // The body is the settings object itself (Serwer validates `req.body`).
+    expect(JSON.parse(init?.body as string)).toEqual({ a: 1 });
+  });
+});

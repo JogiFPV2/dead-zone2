@@ -8,17 +8,38 @@ export const SETTINGS_TABS = [
   { id: 'interface', label: 'Interfejs' },
 ] as const;
 
-export type SettingsTab = (typeof SETTINGS_TABS)[number]['id'];
+/** Ustawienia › Konto (account-settings.png): last, only when online accounts exist. */
+export const ACCOUNT_TAB = { id: 'account', label: 'Konto' } as const;
 
-/** Tab `delta` steps from `tab`, wrapping. */
-export function stepTab(tab: SettingsTab, delta: number): SettingsTab {
-  const n = SETTINGS_TABS.length;
-  const i = SETTINGS_TABS.findIndex((t) => t.id === tab);
-  return SETTINGS_TABS[(((i + delta) % n) + n) % n]!.id;
+export type SettingsTab = (typeof SETTINGS_TABS)[number]['id'] | typeof ACCOUNT_TAB.id;
+
+export interface TabDef {
+  readonly id: SettingsTab;
+  readonly label: string;
 }
 
-export const isSettingsTab = (s: string | undefined): s is SettingsTab =>
-  SETTINGS_TABS.some((t) => t.id === s);
+/** Tabs of the screen: the account tab is appended when the game has online accounts. */
+export const settingsTabs = (withAccount: boolean): readonly TabDef[] =>
+  withAccount ? [...SETTINGS_TABS, ACCOUNT_TAB] : SETTINGS_TABS;
+
+/** Tab `delta` steps from `tab`, wrapping. */
+export function stepTab(
+  tab: SettingsTab,
+  delta: number,
+  tabs: readonly TabDef[] = SETTINGS_TABS,
+): SettingsTab {
+  const n = tabs.length;
+  const i = Math.max(
+    0,
+    tabs.findIndex((t) => t.id === tab),
+  );
+  return tabs[(((i + delta) % n) + n) % n]!.id;
+}
+
+export const isSettingsTab = (
+  s: string | undefined,
+  tabs: readonly TabDef[] = SETTINGS_TABS,
+): s is SettingsTab => tabs.some((t) => t.id === s);
 
 /** Where the settings focus is: the tab strip or a content row (index into focusable rows). */
 export type SettingsFocus = { zone: 'tabs' } | { zone: 'row'; index: number };
