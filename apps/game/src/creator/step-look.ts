@@ -134,10 +134,13 @@ const SWATCH_NAMES: Record<string, string> = {
 
 export function renderLookLeft(x: LookCtx): string {
   const max = creation(x.c).name.maxLen;
+  const input = (field: 'first' | 'last', value: string, placeholder: string, label: string) =>
+    `<label class="dzc-input"><input data-act="name" data-field="${field}" maxlength="${max}" value="${esc(value)}" placeholder="${esc(placeholder)}" aria-label="${esc(label)}" spellcheck="false" autocomplete="off"><span class="dzc-count" data-name-count="${field}">${value.length}/${max}</span></label>`;
   return `<div class="dzc-hdr"><span class="dzc-htitle">TOŻSAMOŚĆ</span></div>
 <div class="dzc-col dzc-gap8"><span class="dzc-lbl">IMIĘ I NAZWISKO</span>
-<div class="dzc-row dzc-gap8"><label class="dzc-input"><input data-act="name" maxlength="${max}" value="${esc(x.d.name)}" spellcheck="false" autocomplete="off"><span class="dzc-count" data-name-count>${x.d.name.length}/${max}</span></label>
-<button type="button" class="dzc-btn dzc-btn--sec" data-act="random">${svg('dice', 18)} LOSUJ ${keyCap('R')}</button></div></div>
+<div class="dzc-row dzc-gap8">${input('first', x.d.firstName, 'Imię', 'Imię')}
+<button type="button" class="dzc-btn dzc-btn--sec" data-act="random">${svg('dice', 18)} LOSUJ ${keyCap('R')}</button></div>
+<div class="dzc-row dzc-gap8">${input('last', x.d.lastName, 'Nazwisko (opcjonalnie)', 'Nazwisko (opcjonalnie)')}</div></div>
 <div class="dzc-sep"></div>
 <div class="dzc-hdr"><span class="dzc-htitle">GŁOWA</span></div>
 ${tiles(x, 'head', 'TWARZ I FRYZURA')}
@@ -147,7 +150,7 @@ ${tiles(x, 'top', 'OKRYCIE (KURTKA / BLUZA)')}`;
 export function renderLookRight(x: LookCtx): string {
   const d = x.d;
   const bald = !HEAD_PRESETS.find((h) => h.id === d.head)?.hair;
-  return `<div class="dzc-hdr"><span class="dzc-htitle">UBRANIE</span></div>
+  return `<div class="dzc-hdr"><span class="dzc-htitle">UBRANIE</span><button type="button" class="dzc-btn dzc-btn--sec dzc-btn--sm" data-act="random-outfit">${svg('dice', 16)} Losowy ubiór</button></div>
 ${tiles(x, 'bottom', 'SPODNIE')}
 ${tiles(x, 'shoes', 'BUTY')}
 <div class="dzc-sep"></div>

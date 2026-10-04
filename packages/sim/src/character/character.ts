@@ -44,7 +44,8 @@ export function checkCharacter(c: ContentIndex, spec: CharacterSpec): CharacterC
   const nameOk = (n: string) =>
     n.trim().length >= cc.name.minLen && n.trim().length <= cc.name.maxLen;
   if (!nameOk(spec.firstName)) errors.push('name:first');
-  if (!nameOk(spec.lastName)) errors.push('name:last');
+  // Surname is optional: empty is fine, otherwise the same length rule as the first name.
+  if (spec.lastName.trim() !== '' && !nameOk(spec.lastName)) errors.push('name:last');
   // Appearance.
   const palette = (id: string) => c.palettes.get(id);
   const inPalette = (pid: string, color: string): boolean => {

@@ -15,6 +15,7 @@ import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
+import { displayName } from './characters/display-name.js';
 import { GraphicsStylePass } from './render/graphics-style.js';
 import { addHulls } from './render/style-materials.js';
 import type { GraphicsStyle } from './settings/schema.js';
@@ -700,7 +701,7 @@ if (session && !session.character.appearance.look) {
       .then(async ([look, portrait, open]) => {
         const l = look.lookOfProfile(p);
         const store = await open.characterStore();
-        await store.adoptProfile(id, `${p.firstName} ${p.lastName}`, {
+        await store.adoptProfile(id, displayName(p.firstName, p.lastName), {
           portrait: portrait.portraitOf(l),
           look: l,
         });

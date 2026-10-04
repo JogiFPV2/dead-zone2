@@ -124,11 +124,13 @@ export function renderSkills(c: ContentIndex, d: CreatorDraft): string {
     body += skillRow(r, Math.min(10, max));
   }
   if (body) groups.push(body);
-  const left = b.pool - b.skills;
-  const pct = b.pool > 0 ? Math.max(0, Math.min(100, (b.skills / b.pool) * 100)) : 0;
+  // Points for skills = pool − merits + flaws (picked traits move the budget).
+  const avail = b.pool - b.merits + b.flaws;
+  const left = b.left;
+  const pct = avail > 0 ? Math.max(0, Math.min(100, (b.skills / avail) * 100)) : 0;
   const costs = cc.skillPointCost.join(' / ');
-  return `<div class="dzc-hdr"><span class="dzc-htitle">UMIEJĘTNOŚCI</span></div>
-<div class="dzc-pool"><div class="dzc-col dzc-gap6 dzc-grow"><div class="dzc-row"><span class="dzc-pooltitle dzc-grow">Punkty: <span class="dzc-mono dzc-acchi${left < 0 ? ' dzc-neg' : ''}">${left} / ${b.pool}</span></span><span class="dzc-note">wydane ${b.skills} · pozostało ${left}</span></div>
+  return `<div class="dzc-hdr"><span class="dzc-htitle">UMIEJĘTNOŚCI</span><button type="button" class="dzc-btn dzc-btn--sec dzc-btn--sm" data-act="random-skills">${svg('dice', 16)} Losuj umiejętności</button></div>
+<div class="dzc-pool"><div class="dzc-col dzc-gap6 dzc-grow"><div class="dzc-row"><span class="dzc-pooltitle dzc-grow">Punkty: <span class="dzc-mono dzc-acchi${left < 0 ? ' dzc-neg' : ''}">${left} / ${avail}</span></span><span class="dzc-note">wydane ${b.skills} · pozostało ${left}</span></div>
 <div class="dzc-bar"><i style="width:${pct.toFixed(1)}%"></i></div></div>
 <div class="dzc-row dzc-gap12 dzc-note"><span class="dzc-row dzc-gap4"><i class="dzc-pip dzc-pip--b"></i>baza</span><span class="dzc-row dzc-gap4"><i class="dzc-pip dzc-pip--s"></i>wydane</span></div></div>
 <div class="dzc-skhead"><span class="dzc-grow">UMIEJĘTNOŚĆ</span><span class="dzc-skbase">BAZA</span><span class="dzc-pips">POZIOM</span><span class="dzc-skpts">PKT</span><span class="dzc-skbtns"></span><span class="dzc-sktot">RAZEM</span></div>

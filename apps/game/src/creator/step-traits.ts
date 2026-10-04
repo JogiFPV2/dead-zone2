@@ -73,7 +73,7 @@ export function renderTraitSummary(c: ContentIndex, d: CreatorDraft): string {
     .join('');
   const row = (l: string, v: string, cls = '') =>
     `<div class="dzc-srow"><span class="dzc-sl">${l}</span><span class="dzc-sv ${cls}">${v}</span></div>`;
-  return `<div class="dzc-hdr"><span class="dzc-htitle">WYBRANE CECHY</span><span class="dzc-hnote">${d.traits.length + free.filter((f) => !d.traits.includes(f)).length}</span></div>
+  return `<div class="dzc-hdr"><span class="dzc-htitle">WYBRANE CECHY</span><span class="dzc-hnote">${d.traits.length + free.filter((f) => !d.traits.includes(f)).length}</span><button type="button" class="dzc-btn dzc-btn--sec dzc-btn--sm" data-act="random-traits">${svg('dice', 16)} Losuj cechy</button></div>
 <div class="dzc-row dzc-wrap dzc-gap8">${chips || '<span class="dzc-note">Brak — kliknij zaletę lub wadę</span>'}</div>
 <div class="dzc-stats">${row('Pozostało z umiejętności', String(b.pool - b.skills))}${row('Zalety', signedPts(-b.merits), b.merits ? 'dzc-neg' : '')}${row('Wady', signedPts(b.flaws))}
 <div class="dzc-srow dzc-srow--total"><span class="dzc-sl">Bilans końcowy</span><span class="dzc-sv${b.left < 0 ? ' dzc-neg' : ''}">${b.left}</span></div></div>

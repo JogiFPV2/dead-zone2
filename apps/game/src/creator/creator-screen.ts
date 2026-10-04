@@ -9,11 +9,15 @@ import {
   decSkill,
   defaultDraft,
   draftLook,
+  draftName,
   errorText,
   incSkill,
   paletteHex,
   randomName,
   randomizeLook,
+  randomizeOutfit,
+  randomizeSkills,
+  randomizeTraits,
   setProfession,
   setSkill,
   toSpec,
@@ -109,7 +113,7 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
   }
 
   function summary(): string {
-    const name = d.name.trim() || '—';
+    const name = draftName(d) || '—';
     if (step === 0) {
       const top = lookOptions(lookCtx(), 'top').find((x) => x.id === d.top.part)?.label ?? '';
       const bottom =
@@ -141,7 +145,7 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
   }
 
   function nameplate(): string {
-    return `<span class="dzc-npname">${esc(d.name.trim())}</span><span class="dzc-npprof">${esc(professionName(d.profession).toUpperCase())}</span>`;
+    return `<span class="dzc-npname">${esc(draftName(d))}</span><span class="dzc-npprof">${esc(professionName(d.profession).toUpperCase())}</span>`;
   }
 
   function render(): void {
@@ -257,6 +261,18 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
         o.sound?.('switch');
         update(randomizeLook(c, d, rng), true);
         break;
+      case 'random-outfit':
+        o.sound?.('switch');
+        update(randomizeOutfit(c, d, rng), true);
+        break;
+      case 'random-skills':
+        o.sound?.('switch');
+        update(randomizeSkills(c, d, rng));
+        break;
+      case 'random-traits':
+        o.sound?.('switch');
+        update(randomizeTraits(c, d, rng));
+        break;
       case 'pick':
         pick(t.dataset.slot as LookSlot, id);
         break;
@@ -290,8 +306,9 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
   el.addEventListener('input', (e) => {
     const t = e.target as HTMLInputElement;
     if (t.dataset.act !== 'name') return;
-    d = { ...d, name: t.value };
-    const count = el.querySelector('[data-name-count]');
+    const field = t.dataset.field === 'last' ? 'last' : 'first';
+    d = field === 'last' ? { ...d, lastName: t.value } : { ...d, firstName: t.value };
+    const count = el.querySelector(`[data-name-count="${field}"]`);
     if (count) count.textContent = `${t.value.length}/${t.maxLength}`;
     $('.dzc-foot').innerHTML = footer();
     $('.dzc-nameplate').innerHTML = nameplate();

@@ -1,4 +1,5 @@
 import type { SimEvent } from '@deadzone/protocol';
+import { displayName } from '../characters/display-name.js';
 import type { GameState } from './game-state.js';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -19,7 +20,7 @@ export function describeEvent(e: SimEvent): string {
     case 'fellAsleep':
       return 'fell asleep';
     case 'characterCreated':
-      return `character ${e.character.firstName} ${e.character.lastName} (${e.character.profession})`;
+      return `character ${displayName(e.character.firstName, e.character.lastName)} (${e.character.profession})`;
     case 'crafted':
       return `crafted ${e.recipe} → ${e.results.map((r) => `${r.def}×${r.count}`).join(', ')}`;
     case 'skillLevelUp':

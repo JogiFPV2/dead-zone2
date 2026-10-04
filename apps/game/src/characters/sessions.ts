@@ -1,6 +1,7 @@
 import type { CreatorResult } from '../creator/creator-screen.js';
 import type { GameSession } from '../session.js';
 import type { CharacterStore } from './character-store.js';
+import { displayName } from './display-name.js';
 import { portraitOf } from './portrait.js';
 import type { CharacterRecord, WorldSettings } from './schema.js';
 
@@ -19,7 +20,7 @@ export async function newSession(
 ): Promise<GameSession> {
   const { firstName, lastName } = created.spec;
   const character = await store.create({
-    name: `${firstName} ${lastName}`.trim(),
+    name: displayName(firstName, lastName),
     appearance: { portrait: portraitOf(created.look), spec: created.spec, look: created.look },
     worldSettings: world,
   });

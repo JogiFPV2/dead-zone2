@@ -17,6 +17,11 @@ import {
   incSkill,
   paletteHex,
   randomizeLook,
+  randomizeOutfit,
+  randomizeSkills,
+  randomizeTraits,
+  displayName,
+  draftName,
   setProfession,
   skillRows,
   splitName,
@@ -51,6 +56,18 @@ describe('creator model (base pack)', () => {
       lastName: 'Maria Kowalski',
     });
     expect(splitName('Ola').firstName).toBe('Ola');
+  });
+
+  it('surname is optional: only the first name is required', () => {
+    const d = { ...defaultDraft(c), firstName: 'Ola', lastName: '' };
+    const r = checkDraft(c, d);
+    expect(r.ok).toBe(true);
+    expect(toSpec(c, d).lastName).toBe('');
+    expect(draftName(d)).toBe('Ola');
+    expect(checkDraft(c, { ...d, firstName: ' ' }).ok).toBe(false);
+    expect(checkDraft(c, { ...d, lastName: 'K' }).ok).toBe(false);
+    expect(displayName(' Jan ', ' Kos ')).toBe('Jan Kos');
+    expect(displayName('Jan', '  ')).toBe('Jan');
   });
 
   it('every cloth option of the 3D map exists in content', () => {
@@ -132,5 +149,98 @@ describe('creator model (base pack)', () => {
     expect(tileWindow(5, 3)).toEqual([2, 3, 4]);
     expect(tileWindow(5, 4)).toEqual([2, 3, 4]);
     expect(tileWindow(2, 1)).toEqual([0, 1]);
+  });
+});
+
+/** Deterministic PRNG (mulberry32) for the property tests. */
+const mulberry = (seed: number) => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+describe('creator randomisers (property: 200 seeds)', () => {
+  const professions = () => [...c.professions.keys()];
+  const traitsOk = (d: ReturnType<typeof defaultDraft>) => {
+    const free = c.professions.get(d.profession)?.freeTraits ?? [];
+    for (const id of d.traits) {
+      expect(c.traits.get(id)?.selectable, id).toBe(true);
+      expect(free.includes(id), id).toBe(false);
+    }
+    expect(new Set(d.traits).size).toBe(d.traits.length);
+  };
+
+  it('Losuj umiejętności: valid, every point spent, profession and traits kept', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const rng = mulberry(seed);
+      let d = setProfession(c, defaultDraft(c), professions()[seed % professions().length]!);
+      if (seed % 3 === 0) d = randomizeTraits(c, { ...d, skills: {} }, rng);
+      const traits = [...d.traits];
+      const before = budget(c, { ...d, skills: {} }).left;
+      const r = randomizeSkills(c, d, rng);
+      expect(r.traits).toEqual(traits);
+      expect(r.profession).toBe(d.profession);
+      const check = checkDraft(c, r);
+      expect(check.ok, `seed ${seed}`).toBe(true);
+      if (before >= 0) expect(check.ok && check.state.pointsLeft, `seed ${seed}`).toBe(0);
+      for (const n of Object.values(r.skills)) expect(n).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('Losuj cechy: valid, no conflicts, every point spent, skills kept when possible', () => {
+    let changed = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      const rng = mulberry(seed * 7919);
+      let d = setProfession(c, defaultDraft(c), professions()[seed % professions().length]!);
+      if (seed % 2 === 0) d = randomizeSkills(c, d, rng);
+      const r = randomizeTraits(c, d, rng);
+      traitsOk(r);
+      const check = checkDraft(c, r);
+      expect(check.ok, `seed ${seed}: ${check.ok ? '' : check.errors.join()}`).toBe(true);
+      expect(check.ok && check.state.pointsLeft, `seed ${seed}`).toBe(0);
+      if (JSON.stringify(r.skills) !== JSON.stringify(d.skills)) changed++;
+    }
+    // Skills are only topped up when no trait set closes the balance exactly (rare).
+    expect(changed).toBeLessThan(10);
+  });
+
+  it('skills then traits and traits then skills both end at 0 points', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const rng = mulberry(seed * 31);
+      const d0 = setProfession(
+        c,
+        defaultDraft(c),
+        professions()[(seed * 5) % professions().length]!,
+      );
+      for (const d of [
+        randomizeTraits(c, randomizeSkills(c, d0, rng), rng),
+        randomizeSkills(c, randomizeTraits(c, d0, rng), rng),
+      ]) {
+        const check = checkDraft(c, d);
+        expect(check.ok && check.state.pointsLeft, `seed ${seed}`).toBe(0);
+      }
+    }
+  });
+
+  it('Losowy ubiór: only clothes change, always valid', () => {
+    const d = defaultDraft(c);
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = randomizeOutfit(c, d, mulberry(seed));
+      expect(checkDraft(c, r).ok).toBe(true);
+      expect([r.firstName, r.lastName, r.head, r.skin, r.hairColor]).toEqual([
+        d.firstName,
+        d.lastName,
+        d.head,
+        d.skin,
+        d.hairColor,
+      ]);
+      expect(r.skills).toEqual(d.skills);
+      expect(r.traits).toEqual(d.traits);
+    }
   });
 });

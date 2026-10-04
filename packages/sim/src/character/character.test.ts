@@ -75,8 +75,17 @@ describe('character creator: validation', () => {
     expect(r.ok && r.state.pointsLeft).toBe(1);
   });
 
+  it('surname is optional (empty or blank is a valid character)', () => {
+    for (const lastName of ['', '   ']) {
+      const r = checkCharacter(index, carpenter({ lastName }));
+      expect(r.ok && r.state.lastName).toBe('');
+    }
+  });
+
   it('rejects bad names, slots, parts, colors, traits and skills', () => {
     expect(errorsOf(carpenter({ firstName: ' A ' }))).toEqual(['name:first']);
+    expect(errorsOf(carpenter({ lastName: 'K' }))).toEqual(['name:last']);
+    expect(errorsOf(carpenter({ firstName: '' }))).toEqual(['name:first']);
     const a = look();
     delete (a.parts as Record<string, unknown>).shoes;
     expect(errorsOf(carpenter({ appearance: a }))).toEqual(['missing-slot:shoes']);
@@ -154,7 +163,7 @@ describe('character creator: in the sim', () => {
       reason: 'invalid-character',
       detail: 'over-budget:-2',
     });
-    expect(() => sim({ character: carpenter({ lastName: '' }) })).toThrow('name:last');
+    expect(() => sim({ character: carpenter({ lastName: 'K' }) })).toThrow('name:last');
   });
 
   it('createSim({ character }) + save/load keeps the character (same hash)', () => {

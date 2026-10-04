@@ -1,5 +1,6 @@
 import type { CharacterSpec } from '@deadzone/protocol';
 import { checkCharacter, skillCost, type CharacterCheck, type ContentIndex } from '@deadzone/sim';
+import { displayName } from '../characters/display-name.js';
 import {
   CLOTH_OPTIONS,
   HEAD_PRESETS,
@@ -18,7 +19,10 @@ export interface ClothChoice {
 }
 
 export interface CreatorDraft {
-  name: string;
+  /** Required (content `characterCreation.name` length). */
+  firstName: string;
+  /** Optional; when given it follows the same length rule. */
+  lastName: string;
   skin: string;
   /** Head preset id (appearance-map HEAD_PRESETS). */
   head: string;
@@ -96,7 +100,7 @@ export function defaultDraft(c: ContentIndex, name = 'Adam Nowak'): CreatorDraft
   const preset = presetOfParts(parts);
   const professions = [...c.professions.keys()];
   return {
-    name,
+    ...splitName(name),
     skin: def?.skin ?? paletteColors(c, SKIN_PALETTE)[0]?.id ?? '',
     head: preset.id,
     hairColor: hairChoice?.colors?.primary ?? paletteColors(c, HAIR_PALETTE)[0]?.id ?? '',
@@ -116,6 +120,10 @@ export function splitName(name: string): { firstName: string; lastName: string }
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return { firstName: parts[0] ?? '', lastName: parts.slice(1).join(' ') };
 }
+
+export { displayName };
+
+export const draftName = (d: CreatorDraft): string => displayName(d.firstName, d.lastName);
 
 function channelColors(
   c: ContentIndex,
@@ -155,7 +163,8 @@ export function toSpec(c: ContentIndex, d: CreatorDraft): CharacterSpec {
   }
   const skills = Object.fromEntries(Object.entries(d.skills).filter(([, n]) => n > 0));
   return {
-    ...splitName(d.name),
+    firstName: d.firstName.trim(),
+    lastName: d.lastName.trim(),
     appearance: { skin: d.skin, parts },
     profession: d.profession,
     traits: [...d.traits],
@@ -379,17 +388,29 @@ const pick = <T>(list: readonly T[], rng: Rng): T => list[Math.floor(rng() * lis
 
 export const randomName = (rng: Rng): string => `${pick(FIRST, rng)} ${pick(LAST, rng)}`;
 
-/** „Losuj”: new name, head, skin, hair and clothes (profession, skills and traits stay). */
-export function randomizeLook(c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft {
+/** Random cloth part and colors per clothing slot. */
+function randomCloth(c: ContentIndex, rng: Rng): Pick<CreatorDraft, ClothSlot> {
   const cloth = paletteColors(c, CLOTH_PALETTE).map((x) => x.id);
   const choice = (slot: ClothSlot): ClothChoice => ({
     part: pick(clothOptions(c, slot), rng).part,
     primary: pick(cloth, rng),
     secondary: pick(cloth, rng),
   });
+  return { top: choice('top'), bottom: choice('bottom'), shoes: choice('shoes') };
+}
+
+/** „Losowy ubiór”: new top, trousers and shoes with colors (name, head and skin stay). */
+export const randomizeOutfit = (c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft => ({
+  ...d,
+  ...randomCloth(c, rng),
+});
+
+/** „Losuj”: new name, head, skin, hair and clothes (profession, skills and traits stay). */
+export function randomizeLook(c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft {
+  const cloth = randomCloth(c, rng);
   return {
     ...d,
-    name: randomName(rng),
+    ...splitName(randomName(rng)),
     head: pick(HEAD_PRESETS, rng).id,
     skin: pick(
       paletteColors(c, SKIN_PALETTE).map((x) => x.id),
@@ -399,10 +420,107 @@ export function randomizeLook(c: ContentIndex, d: CreatorDraft, rng: Rng): Creat
       paletteColors(c, HAIR_PALETTE).map((x) => x.id),
       rng,
     ),
-    top: choice('top'),
-    bottom: choice('bottom'),
-    shoes: choice('shoes'),
+    ...cloth,
   };
+}
+
+/** Fisher–Yates copy. */
+function shuffled<T>(list: readonly T[], rng: Rng): T[] {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
+/**
+ * Buys random skill levels (same rules as the + button: not passive, ≤ `maxSkillLevelAtStart`
+ * bought, total ≤ 10, next level affordable) until no point is left. Starts from `d.skills`.
+ */
+function spendOnSkills(c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft {
+  let out = d;
+  for (let guard = 0; guard < 500 && budget(c, out).left > 0; guard++) {
+    const rows = skillRows(c, out).filter((r) => r.canInc);
+    if (!rows.length) break;
+    // Prefer deepening already bought skills now and then (specialists, not 1 level everywhere).
+    const deeper = rows.filter((r) => r.bought > 0);
+    const from = deeper.length && rng() < 0.45 ? deeper : rows;
+    out = incSkill(c, out, pick(from, rng).id);
+  }
+  return out;
+}
+
+/**
+ * „Losuj umiejętności”: profession and traits stay, skills are re-rolled and spend every point
+ * (start pool + profession − merits + flaws). Leaves 0 whenever the traits leave anything ≥ 0.
+ */
+export function randomizeSkills(c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft {
+  const empty = { ...d, skills: {} };
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const r = spendOnSkills(c, empty, rng);
+    if (budget(c, r).left <= 0) return r;
+  }
+  // Practically unreachable (every skill capped): cheapest levels first.
+  return spendOnSkills(c, empty, () => 0);
+}
+
+/** Selectable traits the draft could pick (not a free trait, nor conflicting with one). */
+function pickableTraits(c: ContentIndex, d: CreatorDraft): Trait[] {
+  const free = c.professions.get(d.profession)?.freeTraits ?? [];
+  return [...c.traits.values()].filter(
+    (t) => t.selectable && !free.includes(t.id) && !free.some((f) => conflicts(t, c.traits.get(f))),
+  );
+}
+
+const MAX_RANDOM_TRAITS = 6;
+
+/**
+ * Random conflict-free set of `pool` traits whose Σ cost is exactly `target`
+ * (randomised depth-first search; undefined when no such set exists).
+ */
+function traitSet(pool: readonly Trait[], target: number, rng: Rng): Trait[] | undefined {
+  let nodes = 0;
+  const chosen: Trait[] = [];
+  const dfs = (i: number, sum: number): boolean => {
+    if (++nodes > 20000) return false;
+    if (i === pool.length || chosen.length === MAX_RANDOM_TRAITS) return sum === target;
+    const t = pool[i]!;
+    const ok = !chosen.some((o) => conflicts(t, o));
+    const take = (): boolean => {
+      if (!ok) return false;
+      chosen.push(t);
+      if (dfs(i + 1, sum + t.cost)) return true;
+      chosen.pop();
+      return false;
+    };
+    // Bias towards 2–4 picked traits so the result looks like a hand-made character.
+    const pTake = chosen.length < 2 ? 0.6 : chosen.length < 4 ? 0.35 : 0.15;
+    return rng() < pTake ? take() || dfs(i + 1, sum) : dfs(i + 1, sum) || take();
+  };
+  return dfs(0, 0) ? [...chosen] : undefined;
+}
+
+/**
+ * „Losuj cechy”: profession and skills stay, traits are re-rolled (selectable, no conflicts,
+ * profession free traits respected) so the final balance is exactly 0. If no trait set can
+ * close the balance exactly, the closest set that leaves points is used and the remainder is
+ * spent on skill levels.
+ */
+export function randomizeTraits(c: ContentIndex, d: CreatorDraft, rng: Rng): CreatorDraft {
+  const base = { ...d, traits: [] as string[] };
+  const target = budget(c, base).left; // Σ trait costs that brings the balance to 0
+  const pool = shuffled(pickableTraits(c, base), rng);
+  const exact = traitSet(pool, target, rng);
+  if (exact) return { ...base, traits: exact.map((t) => t.id) };
+  for (let t = target - 1; t >= target - 20; t--) {
+    const set = traitSet(pool, t, rng);
+    if (set) {
+      const r = spendOnSkills(c, { ...base, traits: set.map((x) => x.id) }, rng);
+      if (budget(c, r).left === 0) return r;
+    }
+  }
+  return spendOnSkills(c, base, rng);
 }
 
 /** 3D look of the draft (hex colors per mesh). */
@@ -432,7 +550,7 @@ export function errorText(e: string | undefined): string {
   const [kind = '', arg = ''] = e.split(':');
   switch (kind) {
     case 'name':
-      return arg === 'first' ? 'Podaj imię (2–24 znaki)' : 'Podaj nazwisko (2–24 znaki)';
+      return arg === 'first' ? 'Podaj imię (2–24 znaki)' : 'Nazwisko: 2–24 znaki albo puste';
     case 'over-budget':
       return `Brakuje punktów: ${arg.replace('-', '')}`;
     case 'trait-conflict':
