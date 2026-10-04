@@ -15,16 +15,20 @@ const el = (
 ): Readonly<HudElementLayout> =>
   Object.freeze({ anchor, x: fx(xPx), y: fy(yPx), scale: 1, opacity: 1, visible: true });
 
-/** Current HUD v3 (apps/game/src/hud/hud-v3.css), offsets in px at 1280×720. */
+/**
+ * Current HUD v3, offsets in px at 1280×720. Sources (apps/game/src/hud): hud-layout.css (group
+ * anchors, safe area), hud-v3.css (v3 sizes and offsets), layout/hud-slots.css (editor slots
+ * `status`, `weapon`, `hints`), vehicles/vehicle-hud.css (`.dz-vh__dock`, same place as `weapon`).
+ */
 const DEFAULTS: Record<HudLayoutSlot, Readonly<HudElementLayout>> = {
-  minimap: el('tr', SAFE, 47), // Ø136
+  minimap: el('tr', SAFE, 47), // Ø136, right 18, top 47
   topbar: el('tl', 0, 0), // thin bar, full width, h 31
-  status: el('tl', SAFE, 94), // status chips (problems only)
-  hotbar: el('br', SAFE, SAFE), // quickbar 226×48
-  itemlog: el('tr', SAFE, 196), // under the minimap
-  weapon: el('br', SAFE, 73), // weapon / vehicle panel above the quickbar
-  threat: el('tc', 0, 40),
-  hints: el('tl', SAFE, 124), // F1 only
+  status: el('tl', SAFE, 48), // objective + status chips + HP as one block, left 18, top 48
+  hotbar: el('br', SAFE, SAFE), // quickbar 226×48, right 18, bottom 18
+  itemlog: el('tr', SAFE, 196), // under the minimap, right 18, top 196
+  weapon: el('br', SAFE, 73), // weapon / vehicle panel above the quickbar, right 18, bottom 73
+  threat: el('tc', 0, 40), // centred, top 40
+  hints: el('bl', SAFE, SAFE), // F1 key hints, left 18, bottom 18
 };
 
 export const DEFAULT_HUD_LAYOUT: Readonly<ResolvedHudLayout> = Object.freeze({
