@@ -51,6 +51,9 @@ import { spawnZombies } from './ai/zombies.js';
 import { populateAnimals, spawnAnimals } from './animals/spawn.js';
 import { spawnVehicles } from './vehicles/spawn.js';
 import { partHp, setVehiclePartHp } from './vehicles/damage.js';
+import { pullOutDriver, vehicleOpeningsOf, type VehicleOpening } from './vehicles/windows.js';
+
+export type { VehicleOpening } from './vehicles/windows.js';
 import { facingRadOf, vehicleSnapshotBytes, writeVehicleSnapshot } from './vehicles/snapshot.js';
 import { sortedVehicles } from './vehicles/system.js';
 import { vehicleTypes } from './vehicles/seats.js';
@@ -235,6 +238,8 @@ export interface VehicleInfo {
   tires: number[];
   /** Window hp 0..100: front, rear, left, right. */
   windows: number[];
+  /** Per seat: ticks a zombie has been reaching in through a broken window (0 = none). */
+  grab: number[];
   cx: number;
   cy: number;
   frozen: boolean;
@@ -311,6 +316,17 @@ export interface Sim {
    * owner (hashed state).
    */
   setPartHp(vehicleId: number, part: VehiclePart, hp: number): boolean;
+  /**
+   * Broken windows of a vehicle (where zombies can reach in: centre, outward normal, half
+   * length, seats behind it) for Symulacja's AI targeting; undefined for an unknown vehicle.
+   */
+  vehicleOpenings(vehicleId: number): VehicleOpening[] | undefined;
+  /**
+   * Forced exit (`pullOutDriver`): seat `seat` (default the driver) out through the side of
+   * window `window` (0 front … 3 right; default the door), knocked down, `vehicleExit {reason:
+   * 'pulled'}`. False for an empty seat / no free spot. Call from the step owner (hashed state).
+   */
+  pullOutOfVehicle(vehicleId: number, seat?: number, window?: number): boolean;
   /** Vehicle block of the render snapshot (protocol `VehicleField`, stride 21); empty without cars. */
   vehicleSnapshot(buf?: ArrayBuffer): ArrayBuffer;
   vehicleSnapshotByteLength(): number;
@@ -724,6 +740,7 @@ export function createSim(input: SimOptions): Sim {
         engine: v.engine,
         tires: [...v.tires],
         windows: [...v.windows],
+        grab: [...v.grab],
         cx: v.cx,
         cy: v.cy,
         frozen: v.frozenAt >= 0,
@@ -736,6 +753,12 @@ export function createSim(input: SimOptions): Sim {
       const v = w.physics.vehicles.get(vehicleId);
       return v ? setVehiclePartHp(w, v, part, hp) : false;
     },
+    vehicleOpenings(vehicleId) {
+      const v = w.physics.vehicles.get(vehicleId);
+      return v ? vehicleOpeningsOf(w, v) : undefined;
+    },
+    pullOutOfVehicle: (vehicleId, seat = 0, window) =>
+      pullOutDriver(w, ctx.grid, vehicleId, seat, window),
     vehicleSnapshot: (buf) => writeVehicleSnapshot(w, buf),
     vehicleSnapshotByteLength: () => vehicleSnapshotBytes(w),
     drainView: () => views.diff(w),

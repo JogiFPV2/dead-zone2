@@ -105,6 +105,18 @@ export interface VehicleConfig {
   tireFlatBelow: number;
   tirePull: number;
   flatGripLoss: number;
+  /**
+   * Broken windows (`windows.ts`): a zombie reaches in when its edge is within
+   * `windowReachTiles` of the opening and the seat within `seatReachTiles`; after `pullTicks`
+   * of contact each tick pulls the person out with `pullChancePerTick` (knock-down impulse
+   * `pullImpulse`). Faster than `shakeOffSpeed` (m/s) the car shakes them off / can't be reached.
+   */
+  windowReachTiles: number;
+  seatReachTiles: number;
+  pullTicks: number;
+  pullChancePerTick: number;
+  pullImpulse: number;
+  shakeOffSpeed: number;
 }
 
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
@@ -163,4 +175,10 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   tireFlatBelow: 40,
   tirePull: 0.015,
   flatGripLoss: 0.35,
+  windowReachTiles: 0.5,
+  seatReachTiles: 1.6,
+  pullTicks: 60,
+  pullChancePerTick: 0.05,
+  pullImpulse: 0.3,
+  shakeOffSpeed: 3,
 };

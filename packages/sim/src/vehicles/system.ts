@@ -7,6 +7,7 @@ import { collideVehicle, type Impact, type UnderBody } from './collide.js';
 import { ramBody, rollOver } from './ram.js';
 import { pinOccupant, releaseControls } from './commands.js';
 import { driveStep } from './drive.js';
+import { windowGrabStep } from './windows.js';
 import { applyImpactDamage, applyRollDamage, driveMods } from './damage.js';
 import { playerEidOf, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
@@ -96,6 +97,8 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
   // Damage after the reactions (impact order = deterministic contact order).
   for (const hit of impacts) applyImpactDamage(w, hit, cfg);
   for (const u of under) applyRollDamage(w, u, cfg);
+  // Zombies at broken windows (after the damage of this tick: a window broken now counts).
+  for (const v of sortedVehicles(w)) if (v.frozenAt < 0) windowGrabStep(w, grid, v);
   for (const hit of impacts) {
     if (hit.energy >= cfg.minImpactJ) {
       w.events.push({

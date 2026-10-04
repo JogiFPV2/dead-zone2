@@ -109,6 +109,7 @@ export function unseat(
   seat: number,
   x: number,
   y: number,
+  reason: 'exit' | 'pulled' = 'exit',
 ): void {
   const sid = v.occupants[seat]!;
   v.occupants[seat] = 0;
@@ -129,6 +130,7 @@ export function unseat(
     playerId,
     entity: sid,
     seat,
+    reason,
   });
   if (seat === 0) {
     releaseControls(v);

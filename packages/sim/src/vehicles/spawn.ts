@@ -59,6 +59,8 @@ export function spawnVehicle(
     engine: 100,
     tires: [100, 100, 100, 100],
     windows: [100, 100, 100, 100],
+    grab: new Array<number>(n).fill(0),
+    grabBy: new Array<number>(n).fill(0),
     contacts: [],
     cx: Math.floor(x / CHUNK_SIZE),
     cy: Math.floor(y / CHUNK_SIZE),

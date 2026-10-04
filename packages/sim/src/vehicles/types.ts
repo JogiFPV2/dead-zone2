@@ -54,6 +54,12 @@ export interface Vehicle {
   /** Window hp 0..100: front (windscreen), rear, left, right (0 = shattered). */
   windows: number[];
   /**
+   * Per seat: ticks a zombie (`grabBy`, StableId; 0 = none) has been reaching in through a
+   * broken window at the person in it (`windows.ts`, pull-out from `pullTicks`).
+   */
+  grab: number[];
+  grabBy: number[];
+  /**
    * StableIds of standing bodies the car touched last active tick (sorted): a body still in
    * contact is only shoved along (positional push + `plowDecel`), not hit again (no impulse,
    * no `vehicleImpact`, no ramming).

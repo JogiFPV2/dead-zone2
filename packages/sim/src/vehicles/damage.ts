@@ -16,12 +16,15 @@ const f = Math.fround;
 const ZONE_NAMES = ['Front', 'Rear', 'Left', 'Right'] as const;
 const TIRE_NAMES = ['FL', 'FR', 'RL', 'RR'] as const;
 
-/** Missing part arrays (states from before PR B) → full hp. */
+/** Missing part arrays (states from before PR B) → full hp; no window grabs. */
 export function ensureVehicleParts(v: Vehicle): void {
   if (typeof v.engine !== 'number') v.engine = 100;
   if (!Array.isArray(v.tires) || v.tires.length !== 4) v.tires = [100, 100, 100, 100];
   if (!Array.isArray(v.windows) || v.windows.length !== 4) v.windows = [100, 100, 100, 100];
   if (!Array.isArray(v.zones) || v.zones.length !== 4) v.zones = [100, 100, 100, 100];
+  const n = v.occupants.length;
+  if (!Array.isArray(v.grab) || v.grab.length !== n) v.grab = new Array<number>(n).fill(0);
+  if (!Array.isArray(v.grabBy) || v.grabBy.length !== n) v.grabBy = new Array<number>(n).fill(0);
 }
 
 /** Bit i = window i (front, rear, left, right) at 0 hp (snapshot `engine` bits 8–11). */

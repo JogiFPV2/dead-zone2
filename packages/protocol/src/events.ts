@@ -243,6 +243,11 @@ export type SimEvent =
       playerId: PlayerId;
       entity: number;
       seat: number;
+      /**
+       * `exit` = got out (`exitVehicle`); `pulled` = a zombie pulled them out through a broken
+       * window (v16: forced out on that side and knocked down next to the car).
+       */
+      reason: 'exit' | 'pulled';
     }
   /**
    * A vehicle part reached 0 hp (`part`: a window shattered, a tyre went flat, the engine

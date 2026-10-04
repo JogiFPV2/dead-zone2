@@ -1,3 +1,4 @@
+import { windowAccess } from '../vehicles/windows.js';
 import { Pen, penaltyMul } from '../survival/penalties.js';
 import { BODY_PARTS, type HitSource } from '@deadzone/protocol';
 import { emitNoise } from '../ai/noise.js';
@@ -343,9 +344,9 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     cb.swingTick[zid] = w.tick;
     if (dx !== 0 || dy !== 0) Facing.angle[zid] = atan2Bam(dy, dx);
     physicsBeginAttack(w, zid);
-    // A player sitting in a car is out of reach (the zombie bangs on the body; car damage
-    // from zombies comes with `vehicles/damage`).
-    if (bodyOf(w, pid)?.state === 'driving') continue;
+    // A player sitting in a car is out of reach (the zombie bangs on the body), unless the
+    // zombie stands at a broken window on the player's side (`vehicles/windows.ts`).
+    if (bodyOf(w, pid)?.state === 'driving' && windowAccess(w, zid, target) < 0) continue;
     const rng = w.rng.combat;
     if (!rng.chance(zc.hitChance)) continue;
     const dmg = Math.fround(t.damage.min + rng.nextFloat() * (t.damage.max - t.damage.min));
