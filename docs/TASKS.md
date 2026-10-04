@@ -102,7 +102,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Landing page (Designer + Silnik)
 - [ ] Supabase Auth: email + Google (Serwer) — projekt: [backend.md](backend.md); serwer weryfikuje JWT przez JWKS, czeka na projekt Supabase, Google OAuth i SMTP (Paweł)
 - [x] Tabele profili i zapisów + RLS (Serwer) — `supabase/migrations`, tylko pliki; zastosowanie na produkcji wymaga zgody Pawła
-- [x] API zapisów w chmurze z walidacją i limitami (Serwer) — `apps/server` `/v1/characters…`, rate limit konta/IP (429 + `Retry-After`), `DELETE` postaci i konta (RODO); `deserializeState` w workerze później
+- [x] API zapisów w chmurze z walidacją i limitami (Serwer) — `apps/server` `/v1/characters…`, rate limit konta/IP (429 + `Retry-After`), `DELETE` postaci i konta (RODO); walidacja DZSV w `worker_threads` (timeout + limit sterty)
 - [ ] Profil i lista zapisów, przycisk „Graj” (Designer + Silnik)
 
 ## Etap 9 — Grywalne demo

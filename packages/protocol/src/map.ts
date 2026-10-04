@@ -2,6 +2,16 @@
 export const CHUNK_SIZE = 32;
 export const CHUNK_TILES = CHUNK_SIZE * CHUNK_SIZE;
 
+/**
+ * World size, shared by sim, client and server (docs/backend.md §4.2): 16 × 16 km =
+ * `MAP_CHUNKS × MAP_CHUNKS` chunks of `CHUNK_SIZE_M` metres. Import these instead of literals.
+ */
+export const MAP_CHUNKS = 512;
+/** Chunk edge in metres (1 tile = 1 m), same value as `CHUNK_SIZE`. */
+export const CHUNK_SIZE_M = CHUNK_SIZE;
+/** World edge in metres (16 384 m). */
+export const MAP_SIZE_M = MAP_CHUNKS * CHUNK_SIZE_M;
+
 /** 0 in `floor` = no floor (void, blocks movement); 0 in an edge layer = no wall. */
 export const EMPTY_TILE = 0;
 

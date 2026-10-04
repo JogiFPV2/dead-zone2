@@ -44,6 +44,14 @@ export interface ServerConfig {
   /** Current sim save format (`SAVE_VERSION` in packages/sim/src/save/save.ts). */
   saveFormatVersion: number;
   limits: Limits;
+  /** DZSV validation workers (docs/backend.md §5.2.3). */
+  validation: {
+    /** 0 = `availableParallelism() - 1`. */
+    workers: number;
+    timeoutMs: number;
+    /** V8 old-generation cap per worker, MiB. */
+    maxHeapMb: number;
+  };
 }
 
 export const DEFAULT_LIMITS: Limits = {
@@ -75,11 +83,20 @@ function int(env: Env, name: string, fallback: number, min: number, max: number)
   return v;
 }
 
+function checked(c: ServerConfig): ServerConfig {
+  // A state string larger than the worker heap aborts the process (save/worker-pool.ts).
+  const need = Math.ceil((c.limits.maxStateBytes * 4) / (1024 * 1024));
+  if (c.validation.maxHeapMb < need) {
+    throw new Error(`VALIDATION_HEAP_MB must be at least ${need} for LIMIT_STATE_BYTES`);
+  }
+  return c;
+}
+
 export function loadConfig(env: Env): ServerConfig {
   const supabaseUrl = required(env, 'SUPABASE_URL').replace(/\/+$/, '');
   const jwtIssuer = env.SUPABASE_JWT_ISSUER?.trim() || `${supabaseUrl}/auth/v1`;
   const d = DEFAULT_LIMITS;
-  return {
+  return checked({
     port: int(env, 'PORT', 3001, 1, 65535),
     host: env.HOST?.trim() || '0.0.0.0',
     supabaseUrl,
@@ -92,6 +109,11 @@ export function loadConfig(env: Env): ServerConfig {
     trustProxyHops: int(env, 'TRUST_PROXY_HOPS', 0, 0, 10),
     worldgenVersion: int(env, 'WORLDGEN_VERSION', 1, 1, 0xffff_ffff),
     saveFormatVersion: int(env, 'SAVE_FORMAT_VERSION', 1, 1, 0xffff_ffff),
+    validation: {
+      workers: int(env, 'VALIDATION_WORKERS', 0, 0, 64),
+      timeoutMs: int(env, 'VALIDATION_TIMEOUT_MS', 5000, 100, 60_000),
+      maxHeapMb: int(env, 'VALIDATION_HEAP_MB', 512, 32, 4096),
+    },
     limits: {
       maxAliveCharacters: int(
         env,
@@ -138,5 +160,5 @@ export function loadConfig(env: Env): ServerConfig {
         d.maxIpRequestsPer5Min,
       ),
     },
-  };
+  });
 }

@@ -16,6 +16,7 @@ const RULES: readonly DataRuleCode[] = [
   'save_version_conflict',
   'character_dead',
   'character_not_found',
+  'account_not_found',
 ];
 
 interface PgError {
@@ -29,6 +30,8 @@ function fail(error: PgError): never {
   if (rule) throw new DataRuleError(rule);
   // 23505 on the saves primary key = concurrent first save.
   if (error.code === '23505') throw new DataRuleError('save_version_conflict');
+  // 23503 = foreign key to auth.users: the account was deleted while the token is still valid.
+  if (error.code === '23503') throw new DataRuleError('account_not_found');
   throw new Error(`database error ${error.code ?? ''}`.trim());
 }
 
@@ -46,6 +49,11 @@ export function createServiceClient(config: ServerConfig): Db {
 
 export function createSupabaseStore(db: Db): GameStore {
   return {
+    async accountExists(userId) {
+      const { data, error } = await db.from('profiles').select('id').eq('id', userId).maybeSingle();
+      if (error) fail(error);
+      return data !== null;
+    },
     async listCharacters(userId) {
       const { data, error } = await db
         .from('characters')
@@ -217,6 +225,14 @@ export function createSupabaseAccountAdmin(db: Db): AccountAdmin {
       const { error } = await db.auth.admin.deleteUser(userId);
       // 404 = already deleted by an earlier attempt.
       if (error && error.status !== 404) throw new Error('auth user delete failed');
+    },
+    async userExists(userId) {
+      const { data, error } = await db.auth.admin.getUserById(userId);
+      if (error) {
+        if (error.status === 404) return false;
+        throw new Error('auth user lookup failed');
+      }
+      return data.user !== null;
     },
   };
 }

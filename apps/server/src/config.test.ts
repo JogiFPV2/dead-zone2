@@ -24,4 +24,14 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...base, LIMIT_IP_REQUESTS_PER_5_MIN: '301' })).toThrow();
     expect(loadConfig({ ...base, LIMIT_SAVES_PER_HOUR: '30' }).limits.maxSavesPerHour).toBe(30);
   });
+
+  it('validation workers: defaults and a heap cap big enough for the state limit', () => {
+    const c = loadConfig(base);
+    expect(c.validation).toEqual({ workers: 0, timeoutMs: 5000, maxHeapMb: 512 });
+    expect(() => loadConfig({ ...base, VALIDATION_HEAP_MB: '128' })).toThrow(/VALIDATION_HEAP_MB/);
+    expect(
+      loadConfig({ ...base, VALIDATION_HEAP_MB: '128', LIMIT_STATE_BYTES: '16777216' }).validation
+        .maxHeapMb,
+    ).toBe(128);
+  });
 });

@@ -7,6 +7,7 @@ import { createJwtVerifier } from '../auth.js';
 import { DEFAULT_LIMITS, type Limits } from '../config.js';
 import { sha256Hex } from '../save/envelope.js';
 import { MemoryRateLimitStore } from '../rate-limit.js';
+import { createWorkerPool, type SaveValidator } from '../save/worker-pool.js';
 import { MemoryAccounts, MemoryBlobs, MemoryStore } from './memory-store.js';
 
 export const ISSUER = 'https://test.supabase.co/auth/v1';
@@ -37,11 +38,20 @@ export async function token(
     .sign(opts.key ?? keys.privateKey);
 }
 
-export function setup(limits: Partial<Limits> = {}, opts: { trustProxyHops?: number } = {}) {
+export function setup(
+  limits: Partial<Limits> = {},
+  opts: { trustProxyHops?: number; validator?: SaveValidator } = {},
+) {
   const l = { ...DEFAULT_LIMITS, ...limits };
   const store = new MemoryStore(l.maxAliveCharacters, l.maxAccountSaveBytes);
   const blobs = new MemoryBlobs();
   const accounts = new MemoryAccounts();
+  for (const u of [USER_A, USER_B]) {
+    store.profiles.add(u);
+    accounts.users.add(u);
+  }
+  const validator =
+    opts.validator ?? createWorkerPool({ size: 1, timeoutMs: 10_000, maxHeapMb: 256 });
   const rateLimits = new MemoryRateLimitStore(() => store.clock);
   let seed = 1000;
   const app = buildApp({
@@ -52,6 +62,7 @@ export function setup(limits: Partial<Limits> = {}, opts: { trustProxyHops?: num
       store,
       blobs,
       accounts,
+      validator,
       rateLimits,
       now: () => new Date(store.clock),
       newSeed: () => seed++,

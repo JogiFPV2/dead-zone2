@@ -4,6 +4,8 @@
  * `@deadzone/protocol/schema` (`api-schema.ts`).
  */
 
+import { MAP_CHUNKS } from './map.js';
+
 /** Product limits (docs/backend.md §5.5). The server may lower them via env, never raise. */
 export const MAX_ALIVE_CHARACTERS = 20;
 export const MAX_ACCOUNT_SAVE_BYTES = 50 * 1024 * 1024;
@@ -27,10 +29,28 @@ export const CLOUD_SAVE_REASONS = ['autosave', 'sleep', 'exit', 'manual', 'death
 export type CloudSaveReason = (typeof CLOUD_SAVE_REASONS)[number];
 
 /** Player map limits inside the state (docs/backend.md §4.2). */
-export const WORLD_CHUNKS_PER_SIDE = 256;
-export const EXPLORED_BITMAP_BYTES = (WORLD_CHUNKS_PER_SIDE * WORLD_CHUNKS_PER_SIDE) / 8;
+/** @deprecated Use `MAP_CHUNKS` (map.ts); kept as an alias. */
+export const WORLD_CHUNKS_PER_SIDE = MAP_CHUNKS;
+/** One bit per chunk: 512 × 512 / 8 = 32 KiB raw. */
+export const EXPLORED_BITMAP_BYTES = (MAP_CHUNKS * MAP_CHUNKS) / 8;
 export const MAX_MAP_MARKERS = 200;
 export const MAP_MARKER_TEXT_MAX = 40;
+/**
+ * Map marker icons (content ids, drawn by the client). Single source for the sim, the client and
+ * the server's save validation; Symulacja's `worldSettings.mapMarkers.icons` default (#109) is the
+ * same list.
+ */
+export const MAP_MARKER_ICONS = [
+  'base:marker-food',
+  'base:marker-danger',
+  'base:marker-zombies',
+  'base:marker-loot',
+  'base:marker-base',
+  'base:marker-car',
+  'base:marker-water',
+  'base:marker-note',
+] as const;
+export type MapMarkerIcon = (typeof MAP_MARKER_ICONS)[number];
 export const SAVE_MARKER_COLORS = ['red', 'yellow', 'green', 'blue', 'white'] as const;
 export type SaveMarkerColor = (typeof SAVE_MARKER_COLORS)[number];
 
@@ -110,6 +130,7 @@ export type ApiErrorCode =
   | 'invalid_state'
   | 'unsupported_format_version'
   | 'rate_limited'
+  | 'unavailable'
   | 'internal';
 
 export interface ApiError {

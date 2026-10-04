@@ -22,3 +22,5 @@ export const characterDead = (): HttpError =>
   new HttpError(409, 'character_dead', 'character is dead (permadeath)');
 export const versionConflict = (): HttpError =>
   new HttpError(409, 'save_version_conflict', 'save version does not match, reopen the save');
+export const accountGone = (): HttpError =>
+  new HttpError(401, 'unauthorized', 'account no longer exists');

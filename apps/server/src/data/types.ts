@@ -53,7 +53,9 @@ export type DataRuleCode =
   | 'save_quota_exceeded'
   | 'save_version_conflict'
   | 'character_dead'
-  | 'character_not_found';
+  | 'character_not_found'
+  /** The token's user has no account rows any more (deleted). */
+  | 'account_not_found';
 
 export class DataRuleError extends Error {
   constructor(readonly code: DataRuleCode) {
@@ -64,6 +66,8 @@ export class DataRuleError extends Error {
 
 /** Database operations of the server (service role). Implementations must be atomic per call. */
 export interface GameStore {
+  /** The account's profile row exists (created at signup, removed by account deletion). */
+  accountExists(userId: string): Promise<boolean>;
   listCharacters(userId: string): Promise<CharacterRow[]>;
   getCharacter(userId: string, characterId: string): Promise<CharacterRow | undefined>;
   countAliveCharacters(userId: string): Promise<number>;
@@ -110,4 +114,6 @@ export interface BlobStore {
 export interface AccountAdmin {
   /** Deletes the auth user; an already deleted user counts as success (retries). */
   deleteUser(userId: string): Promise<void>;
+  /** The auth user still exists. */
+  userExists(userId: string): Promise<boolean>;
 }

@@ -198,6 +198,15 @@ describe('migrations', () => {
     });
   });
 
+  it('a character for a missing auth user fails with 23503 (server maps it to 401)', async () => {
+    await as('service_role', '', async () => {
+      const err = await newCharacter('44444444-4444-4444-8444-444444444444', 'Ghost').catch(
+        (e: unknown) => e,
+      );
+      expect(err).toMatchObject({ code: '23503' });
+    });
+  });
+
   it('deleting the auth user removes everything', async () => {
     await q(`delete from auth.users where id = $1`, [A]);
     expect(await q('select count(*)::int n from public.characters')).toEqual([{ n: 0 }]);

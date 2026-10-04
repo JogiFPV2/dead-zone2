@@ -4,6 +4,7 @@ import {
   CHARACTER_JSON_MAX_BYTES,
   CHARACTER_NAME_MAX,
   MAP_MARKER_TEXT_MAX,
+  MAP_MARKER_ICONS,
   MAX_MAP_MARKERS,
   SAVE_MARKER_COLORS,
   CLOUD_SAVE_REASONS,
@@ -58,7 +59,7 @@ export const saveMarkerSchema = z.tuple([
   z.number().int().min(0).max(U32),
   z.number().finite(),
   z.number().finite(),
-  z.string().min(1).max(64),
+  z.enum(MAP_MARKER_ICONS),
   z.enum(SAVE_MARKER_COLORS),
   z.string().max(MAP_MARKER_TEXT_MAX),
 ]);

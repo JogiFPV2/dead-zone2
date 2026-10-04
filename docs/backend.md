@@ -164,11 +164,11 @@ Nagłówek zawiera co najmniej `formatVersion`, `simVersion`, `world_seed`, `wor
 ### 4.2 Zawartość stanu
 
 - `world_seed` i `worldgen_version`; generator świata jest deterministyczny, więc nie zapisujemy całej mapy bazowej.
-- Tylko zmienione chunki. Mapa ma **8192 × 8192 m**, czyli **256 × 256 chunków po 32 m**.
+- Tylko zmienione chunki. Mapa ma **16 384 × 16 384 m** (16 × 16 km), czyli **512 × 512 chunków po 32 m** (`MAP_CHUNKS`, `CHUNK_SIZE_M` w `packages/protocol`).
 - Stan postaci:
-  - bitmapa odkrytych chunków `256 × 256`, około **8 KB**;
+  - bitmapa odkrytych chunków `512 × 512`, około **32 KB** bez kompresji;
   - ślad trasy z punktem co **16 m**;
-  - najwyżej **200 znaczników** o kształcie `{ x, y, ikona, kolor, tekst }`, gdzie `kolor` jest jednym z 5 dozwolonych kolorów, a `tekst` ma najwyżej 40 znaków.
+  - najwyżej **200 znaczników** o kształcie `{ x, y, ikona, kolor, tekst }`, gdzie `ikona` to jedno z 8 id `base:marker-*` (`MAP_MARKER_ICONS` w `packages/protocol`), `kolor` jest jednym z 5 dozwolonych kolorów, a `tekst` ma najwyżej 40 znaków.
 - Pozostały stan symulacji: RNG, tick, dzień i czas gry, encje ECS, ekwipunek, rany, umiejętności, moodle i kolejka akcji czasowych.
 - Stan jest danymi: bez funkcji, klas, `Date` i `Map`. Kanoniczny JSON zapewnia stabilny hash i determinizm.
 
@@ -231,8 +231,8 @@ Wartości startowe są konfigurowalne w env serwera, ale serwer nie może ich po
 | Żywe postacie na konto | **20** | Ochrona przed masowym zakładaniem; nagrobki się nie liczą |
 | Łączny rozmiar bieżących zapisów na konto | **50 MiB** | Limit kosztowy Storage; około 2–3 MiB po kompresji na postać |
 | Zapis na postać | Jeden bieżący plik i jeden wiersz `saves` | Brak historii i punktów przywracania |
-| Zmienione chunki | Tylko mapa 256 × 256 chunków po 32 m | Reszta wynika deterministycznie z seeda |
-| Odkrycie mapy | Bitmapa 256 × 256, około 8 KB | Stały, przewidywalny koszt |
+| Zmienione chunki | Tylko mapa 512 × 512 chunków po 32 m | Reszta wynika deterministycznie z seeda |
+| Odkrycie mapy | Bitmapa 512 × 512, około 32 KB bez kompresji | Stały, przewidywalny koszt |
 | Znaczniki | 200, tekst do 40 znaków, 5 kolorów | Walidacja Fastify i bezpieczne renderowanie |
 | Zapisy HTTP | 120 na godzinę na konto, 200 MiB uploadu na dobę | Ochrona przed spamem; zwykła gra robi znacznie mniej |
 | Żądania z IP | 300 na 5 min | Niezależnie od konta |
@@ -334,7 +334,7 @@ Legenda: **[ZGODA]** oznacza krok wymagający wyraźnej zgody Pawła (zmiany w S
 2. `packages/protocol`: schematy koperty DZSV, typy API postaci i komunikaty co-op.
 3. `packages/sim`: `serializeState`, `deserializeState`, `SAVE_FORMAT_VERSION`, migracje, `CharacterDied`, `DayStarted`, fixture’y i test determinizmu.
 4. Lokalny zapis IndexedDB: jeden rekord na postać, te same wyzwalacze i format DZSV co chmura.
-5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów. **Zrobione**, łącznie z rate limitem (120 zapisów/h i 200 MiB uploadu/dobę na konto, 300 żądań/5 min na IP; liczniki w pamięci za interfejsem `RateLimitStore`, później Redis; `429` z `Retry-After`) oraz `DELETE /v1/characters/:id` i `DELETE /v1/me` (najpierw pliki w Storage, potem wiersze przez `delete_character` / `delete_account_data`, na końcu użytkownik Auth przez admin API). Zostaje `deserializeState` w `worker_threads`. Ścieżka pliku: `{user_id}/{character_id}/v{version}-{losowe}.dzsv`, żeby nowy plik powstał przed usunięciem starego.
+5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów. **Zrobione**, łącznie z rate limitem (120 zapisów/h i 200 MiB uploadu/dobę na konto, 300 żądań/5 min na IP; liczniki w pamięci za interfejsem `RateLimitStore`, później Redis; `429` z `Retry-After`) oraz `DELETE /v1/characters/:id` i `DELETE /v1/me` (najpierw pliki w Storage, potem wiersze przez `delete_character` / `delete_account_data`, na końcu użytkownik Auth przez admin API). Walidacja DZSV (koperta, gunzip, JSON, schemat stanu) działa w puli `worker_threads` z timeoutem (`VALIDATION_TIMEOUT_MS`, przekroczenie daje 422) i limitem sterty (`VALIDATION_HEAP_MB`, co najmniej 4× `LIMIT_STATE_BYTES`, przekroczenie daje 413). Pełne `deserializeState` z `packages/sim` dojdzie, gdy serwer dostanie content i mapę. Token usuniętego konta (brak wiersza `profiles`) dostaje 401 na każdym endpoincie. Ścieżka pliku: `{user_id}/{character_id}/v{version}-{losowe}.dzsv`, żeby nowy plik powstał przed usunięciem starego.
 6. **[ZGODA]** Utworzenie organizacji `deadzone` i projektu `deadzone-prod` w regionie UE.
 7. **[ZGODA]** Konfiguracja Auth: Google OAuth, SMTP, CAPTCHA, redirect URLs i klucze JWT.
 8. **[ZGODA]** Zastosowanie przygotowanych migracji na `deadzone-prod` dopiero po osobnym review i zgodzie.

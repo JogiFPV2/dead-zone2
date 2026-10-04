@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { CharacterSummary } from '@deadzone/protocol';
+import {
+  CHUNK_SIZE_M,
+  EXPLORED_BITMAP_BYTES,
+  MAP_CHUNKS,
+  MAP_MARKER_ICONS,
+  MAP_SIZE_M,
+  type CharacterSummary,
+} from '@deadzone/protocol';
 import { USER_A, USER_B, checksum, envelope, setup, token } from '../test/fixtures.js';
 
 type Ctx = ReturnType<typeof setup>;
@@ -323,13 +330,26 @@ describe('saves', () => {
       ],
       [
         'marker off map',
-        (id, s) => envelope(id, s, { state: withMap({ markers: [marker({ 1: 9000 })] }) }),
+        (id, s) =>
+          envelope(id, s, { state: withMap({ markers: [marker({ 1: MAP_SIZE_M + 1 })] }) }),
+        422,
+        'invalid_state',
+      ],
+      [
+        'unknown marker icon',
+        (id, s) =>
+          envelope(id, s, { state: withMap({ markers: [marker({ 3: 'base:marker-unicorn' })] }) }),
         422,
         'invalid_state',
       ],
       [
         'explored bitmap too big',
-        (id, s) => envelope(id, s, { state: withMap({ discovered: 'A'.repeat(30_000) }) }),
+        (id, s) =>
+          envelope(id, s, {
+            state: withMap({
+              discovered: 'A'.repeat(4 * Math.ceil((EXPLORED_BITMAP_BYTES * 2) / 3) + 4),
+            }),
+          }),
         422,
         'invalid_state',
       ],
@@ -343,6 +363,33 @@ describe('saves', () => {
       expect(res.json()).toMatchObject({ error: code });
       expect(ctx.store.saves.size).toBe(0);
       expect(ctx.blobs.objects.size).toBe(0);
+    });
+
+    it('uses the shared 16 × 16 km map: far markers and a full 512² bitmap pass', async () => {
+      expect(MAP_SIZE_M).toBe(MAP_CHUNKS * CHUNK_SIZE_M);
+      expect(EXPLORED_BITMAP_BYTES).toBe(32 * 1024);
+      ctx = setup();
+      const ch = (await create(ctx)).json<CharacterSummary>();
+      const state = withMap({
+        discovered: Buffer.alloc(EXPLORED_BITMAP_BYTES, 0xff).toString('base64'),
+        markers: [marker({ 1: MAP_SIZE_M, 2: 16_000 })],
+      });
+      const res = await put(ctx, ch, '0', envelope(ch.id, ch.worldSeed, { state }));
+      expect(res.statusCode, res.body).toBe(200);
+    });
+
+    it('accepts every shared marker icon', async () => {
+      expect(MAP_MARKER_ICONS).toHaveLength(8);
+      ctx = setup();
+      const ch = (await create(ctx)).json<CharacterSummary>();
+      const markers = MAP_MARKER_ICONS.map((icon, i) => marker({ 0: i, 3: icon }));
+      const res = await put(
+        ctx,
+        ch,
+        '0',
+        envelope(ch.id, ch.worldSeed, { state: withMap({ markers }) }),
+      );
+      expect(res.statusCode, res.body).toBe(200);
     });
 
     it('200 markers with 40-char text and every colour are fine', async () => {

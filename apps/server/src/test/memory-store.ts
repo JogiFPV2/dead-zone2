@@ -12,6 +12,8 @@ import {
 export class MemoryStore implements GameStore {
   characters = new Map<string, CharacterRow>();
   saves = new Map<string, SaveRow>();
+  /** Accounts with a profile row (signup trigger); tests add users here. */
+  profiles = new Set<string>();
   clock = Date.parse('2026-10-04T12:00:00Z');
   constructor(
     private readonly maxAlive = 20,
@@ -26,6 +28,9 @@ export class MemoryStore implements GameStore {
     return [...this.characters.values()].filter((c) => c.user_id === userId);
   }
 
+  accountExists(userId: string) {
+    return Promise.resolve(this.profiles.has(userId));
+  }
   listCharacters(userId: string) {
     return Promise.resolve(this.owned(userId));
   }
@@ -40,6 +45,8 @@ export class MemoryStore implements GameStore {
     return Promise.resolve(this.owned(userId).filter((c) => c.created_at >= since).length);
   }
   async insertCharacter(n: Parameters<GameStore['insertCharacter']>[0]) {
+    // FK to auth.users (23503 in Postgres).
+    if (!this.profiles.has(n.user_id)) throw new DataRuleError('account_not_found');
     if ((await this.countAliveCharacters(n.user_id)) >= this.maxAlive) {
       throw new DataRuleError('alive_character_limit');
     }
@@ -113,6 +120,7 @@ export class MemoryStore implements GameStore {
       this.saves.delete(c.id);
       this.characters.delete(c.id);
     }
+    this.profiles.delete(userId);
     return { storagePaths };
   }
 }
@@ -152,5 +160,10 @@ export class MemoryAccounts implements AccountAdmin {
     if (this.fail) return Promise.reject(new Error('auth admin down'));
     this.deleted.push(userId);
     return Promise.resolve();
+  }
+  /** Auth users that exist (deleteUser removes them). */
+  users = new Set<string>();
+  userExists(userId: string) {
+    return Promise.resolve(this.users.has(userId) && !this.deleted.includes(userId));
   }
 }

@@ -23,11 +23,12 @@ import {
   characterDead,
   invalidState,
   notFound,
+  accountGone,
   versionConflict,
 } from '../errors.js';
 import { enforce, type RateLimitStore } from '../rate-limit.js';
-import { parseEnvelope, type ParsedEnvelope } from '../save/envelope.js';
-import { validateState } from '../save/state.js';
+import type { ValidatedEnvelope } from '../save/validate.js';
+import type { SaveValidator } from '../save/worker-pool.js';
 
 export interface CharacterRouteDeps {
   config: Pick<
@@ -41,6 +42,8 @@ export interface CharacterRouteDeps {
   accounts: AccountAdmin;
   /** Counters for the HTTP rate limits (§5.5); in-memory now, Redis later. */
   rateLimits: RateLimitStore;
+  /** DZSV validation in `worker_threads` (timeout + heap cap); closed with the app. */
+  validator: SaveValidator;
   /** Injectable for tests. */
   now?: () => Date;
   newSeed?: () => number;
@@ -91,6 +94,8 @@ function ruleToHttp(err: unknown): never {
         throw characterDead();
       case 'character_not_found':
         throw notFound();
+      case 'account_not_found':
+        throw accountGone();
     }
   }
   throw err;
@@ -123,17 +128,27 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
   const now = deps.now ?? (() => new Date());
   const newSeed = deps.newSeed ?? (() => randomInt(0, 0x1_0000_0000));
 
-  const { rateLimits } = deps;
+  const { rateLimits, validator } = deps;
+  app.addHook('onClose', () => validator.close());
   // One JWT verification per request even when a route hook already authenticated.
   const authed = new WeakMap<FastifyRequest, Promise<AuthUser>>();
   const user = (req: FastifyRequest): Promise<AuthUser> => {
     let u = authed.get(req);
     if (!u) {
-      u = authenticate(req, verifier);
+      u = authenticate(req, verifier).then(requireAccount);
       authed.set(req, u);
     }
     return u;
   };
+
+  /**
+   * A valid JWT outlives a deleted account until it expires: the profile row (created at signup,
+   * removed by account deletion) must still exist, otherwise 401 on every endpoint.
+   */
+  async function requireAccount(u: AuthUser): Promise<AuthUser> {
+    if (!(await store.accountExists(u.userId))) throw accountGone();
+    return u;
+  }
 
   // Per-IP limit on the whole API, before auth and before reading any body.
   app.addHook('onRequest', async (req) => {
@@ -179,13 +194,14 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
   }
 
   /** Envelope + state checks shared by save and death; values must match the character row. */
-  function checkEnvelope(req: FastifyRequest, c: CharacterRow): ParsedEnvelope {
+  async function checkEnvelope(req: FastifyRequest, c: CharacterRow): Promise<ValidatedEnvelope> {
     const bytes = bodyBytes(req);
     const claimed = req.headers['x-dzsv-sha256'];
     if (typeof claimed !== 'string' || !SHA256.test(claimed.toLowerCase())) {
       throw badRequest('X-DZSV-SHA256: <hex sha256 of the envelope> is required');
     }
-    const env = parseEnvelope(bytes, {
+    // gunzip, JSON and state schema run in a worker thread with a timeout and heap cap.
+    const env = await validator.validate(bytes, {
       saveFormatVersion: config.saveFormatVersion,
       maxStateBytes: limits.maxStateBytes,
     });
@@ -199,7 +215,6 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
       throw invalidState('envelope world does not match the character');
     }
     if (h.gameDay < c.days_survived) throw invalidState('game day went backwards');
-    validateState(env.state, config.saveFormatVersion);
     return env;
   }
 
@@ -282,7 +297,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
       const expected = expectedVersion(req);
       const c = await ownedCharacter(userId, id);
       if (c.status === 'dead') throw characterDead();
-      const env = checkEnvelope(req, c);
+      const env = await checkEnvelope(req, c);
       if (env.header.reason === 'death') {
         throw invalidState('a death snapshot goes to POST /v1/characters/:id/death');
       }
@@ -341,7 +356,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
         return toSummary(c, undefined);
       }
       await uploadRateLimit(userId, bodyBytes(req).length);
-      const env = checkEnvelope(req, c);
+      const env = await checkEnvelope(req, c);
       if (env.header.reason !== 'death')
         throw invalidState('death needs a snapshot with reason "death"');
       const dead = await store.markDead(userId, c.id, env.header.gameDay).catch(ruleToHttp);
@@ -385,7 +400,12 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
    * same token until it expires.
    */
   app.delete('/v1/me', async (req, reply) => {
-    const { userId } = await user(req);
+    // Not `user()`: a retry after a failed Auth admin call finds the profile already gone, but
+    // the auth user still exists and must be deletable. A fully deleted user gets 401.
+    const { userId } = await authenticate(req, verifier);
+    if (!(await store.accountExists(userId)) && !(await accounts.userExists(userId))) {
+      throw accountGone();
+    }
     await blobs.removePrefix(userId);
     const { storagePaths } = await store.deleteAccountData(userId);
     for (const path of storagePaths) {

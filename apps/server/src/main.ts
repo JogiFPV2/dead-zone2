@@ -1,6 +1,7 @@
 import { buildApp } from './app.js';
 import { createJwksVerifier } from './auth.js';
 import { MemoryRateLimitStore } from './rate-limit.js';
+import { createWorkerPool } from './save/worker-pool.js';
 import { loadConfig } from './config.js';
 import {
   createServiceClient,
@@ -22,6 +23,11 @@ const app = buildApp({
     accounts: createSupabaseAccountAdmin(db),
     // Single process for now; swap for a Redis store when the server scales out.
     rateLimits: new MemoryRateLimitStore(),
+    validator: createWorkerPool({
+      ...(config.validation.workers > 0 ? { size: config.validation.workers } : {}),
+      timeoutMs: config.validation.timeoutMs,
+      maxHeapMb: config.validation.maxHeapMb,
+    }),
   },
 });
 

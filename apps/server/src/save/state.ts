@@ -1,18 +1,19 @@
-import { CHUNK_SIZE, EXPLORED_BITMAP_BYTES, WORLD_CHUNKS_PER_SIDE } from '@deadzone/protocol';
+import { CHUNK_SIZE_M, EXPLORED_BITMAP_BYTES, MAP_CHUNKS } from '@deadzone/protocol';
 import { saveMarkersSchema } from '@deadzone/protocol/schema';
 import { z } from 'zod';
 import { invalidState } from '../errors.js';
 
-const WORLD_METRES = WORLD_CHUNKS_PER_SIDE * CHUNK_SIZE;
+/** Map edge in metres from the shared constants (16 × 16 km = 512 × 512 chunks of 32 m). */
+export const WORLD_METRES = MAP_CHUNKS * CHUNK_SIZE_M;
 /** base64 length of `n` bytes. */
 const b64Len = (n: number): number => 4 * Math.ceil(n / 3);
-/** Explored bitmap 256×256 (8 KiB raw); the sim folds zero runs, which never grows it 2×. */
+/** Explored bitmap MAP_CHUNKS² bits (512×512 = 32 KiB raw); the sim folds zero runs, which never grows it 2×. */
 const MAX_DISCOVERED_CHARS = b64Len(EXPLORED_BITMAP_BYTES * 2);
 /** Trail: point every 16 m, at most 20 000 points, ≤ 2 varints of 5 bytes each. */
 export const MAX_TRAIL_POINTS = 20_000;
 const MAX_TRAIL_CHARS = b64Len(MAX_TRAIL_POINTS * 10);
-/** Changed chunks only: at most the whole 256 × 256 map on a few levels. */
-export const MAX_CHANGED_CHUNKS = WORLD_CHUNKS_PER_SIDE * WORLD_CHUNKS_PER_SIDE;
+/** Changed chunks only: at most every chunk of the map. */
+export const MAX_CHANGED_CHUNKS = MAP_CHUNKS * MAP_CHUNKS;
 
 const coordinate = z.number().finite().min(0).max(WORLD_METRES);
 
