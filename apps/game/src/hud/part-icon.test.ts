@@ -7,18 +7,10 @@ const TAGS_DIR = new URL('../../../../packages/content/data/base/tags/', import.
 const ICONS = new URL('../../public/icons/index.json', import.meta.url);
 
 /**
- * `iconItem` bez wypieczonej ikony w `public/icons` (część 4 od Designera czeka na import
- * albo przedmiot nie ma jeszcze modelu). Do tego czasu UI pokazuje kostkę. Jawnie.
+ * `iconItem` bez wypieczonej ikony w `public/icons` (partia 5 od Designera czeka na import). Do tego czasu UI pokazuje kostkę. Jawnie.
  */
 const PENDING_ICONS = new Set([
-  'base:plank',
-  'base:log',
-  'base:rag',
-  'base:sheet',
   'base:t-shirt',
-  'base:scrap-metal',
-  'base:carrot',
-  'base:vodka',
   'base:cooking-pot',
   'base:matches',
   'base:sewing-needle',

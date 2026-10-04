@@ -13,10 +13,18 @@ export interface IconJob {
 /** Content id → icon file name (`base:kitchen-knife` → `kitchen-knife.png`). */
 export const iconFile = (itemId: string): string => `${itemId.replace(/^[a-z0-9-]+:/, '')}.png`;
 
-/** `icons/index.json`: item id → file (the game falls back to vector icons for the rest). */
-export function iconIndex(jobs: readonly IconJob[]): Record<string, string> {
+/**
+ * `icons/index.json`: item id → file (the game falls back to vector icons for the rest).
+ * `prerendered`: ids whose PNG the Designer renders outside this tool (`icons/prerendered.json`,
+ * partie 4/4b) — kept in the index, never re-rendered here.
+ */
+export function iconIndex(
+  jobs: readonly IconJob[],
+  prerendered: readonly string[] = [],
+): Record<string, string> {
   const out: Record<string, string> = {};
   for (const j of jobs) for (const id of [...j.items].sort()) out[id] = iconFile(id);
+  for (const id of prerendered) out[id] = iconFile(id);
   return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
 }
 
@@ -46,6 +54,9 @@ export async function renderIcons(opts: {
 }): Promise<void> {
   const iconsDir = join(opts.toolDir, 'icons');
   const jobs = JSON.parse(await readFile(join(iconsDir, 'items.json'), 'utf8')) as IconJob[];
+  const prerendered = JSON.parse(
+    await readFile(join(iconsDir, 'prerendered.json'), 'utf8'),
+  ) as string[];
   const mod = (await import(
     process.env.PLAYWRIGHT_CORE ??
       '/usr/local/lib/pnpm/5/.pnpm/playwright-core@1.59.1/node_modules/playwright-core/index.js'
@@ -84,7 +95,7 @@ export async function renderIcons(opts: {
     }
     await writeFile(
       join(opts.outDir, 'index.json'),
-      `${JSON.stringify(iconIndex(jobs), null, 2)}\n`,
+      `${JSON.stringify(iconIndex(jobs, prerendered), null, 2)}\n`,
     );
   } finally {
     await browser.close();
