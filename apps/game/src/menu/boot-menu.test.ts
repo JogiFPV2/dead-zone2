@@ -7,5 +7,7 @@ describe('shouldShowMenu', () => {
     expect(shouldShowMenu('?map=test-town')).toBe(false);
     expect(shouldShowMenu('?menu=1&map=test')).toBe(true);
     expect(shouldShowMenu('?menu=0')).toBe(false);
+    expect(shouldShowMenu('?menuTime=10')).toBe(true);
+    expect(shouldShowMenu('?menu=0&menuTime=10')).toBe(false);
   });
 });

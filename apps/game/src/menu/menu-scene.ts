@@ -1,6 +1,6 @@
 import { OrthographicCamera, Scene, Vector3, WebGLRenderer, type Object3D } from 'three';
 import { CAMERA_DISTANCE, isometricOffset } from '../camera/isometric.js';
-import { DAY_CYCLE, DayCycle, createWorldLighting, type LampDef } from '../lighting/index.js';
+import { createWorldLighting, type LampDef } from '../lighting/index.js';
 import { CharacterRig } from '../models/character-rig.js';
 import { ModelKit, ZOMBIE_MODELS } from '../models/model-kit.js';
 import { tintZombie } from '../models/zombie-views.js';
@@ -12,16 +12,15 @@ import { Terrain } from '../world/terrain.js';
 import { GraphicsStylePass } from '../render/graphics-style.js';
 import { addHulls } from '../render/style-materials.js';
 import type { GraphicsStyle } from '../settings/schema.js';
+import { MenuDayCycle, menuClock, parseMenuCycleQuery } from './menu-day-cycle.js';
 import { menuCameraFrustum, menuDrift, shambleStep, type Shambler } from './menu-scene-model.js';
 
-/** Menu background (spec deadzone-menu-spec §1): test-town crossroads at dusk, no player/HUD. */
+/** Menu background (spec deadzone-menu-spec §1): test-town crossroads in a 55 s day loop, no player/HUD. */
 const MAP = 'test-town';
 /** Crossroads of the town grid (sim tiles): roads x 0..3 and y 0..3, houses at 10..21. */
 const FOCUS = { x: 2, y: 2 };
 const RANGE: ChunkRange = { cx0: -1, cy0: -1, cx1: 0, cy1: 0, z: 0 };
 const VIEW_HEIGHT = 22;
-/** Dusk going into night: low warm sky, street lamps on. */
-const MINUTE = 19 * 60 + 25;
 const LAMPS: LampDef[] = [
   { x: -0.6, z: 5.5, armX: 1, armZ: 0, working: true },
   { x: 4.6, z: -1.5, armX: -1, armZ: 0, working: true },
@@ -81,14 +80,19 @@ export async function createMenuScene(
   const lighting = createWorldLighting(scene, renderer, LAMPS, CAMERA_DISTANCE, undefined, {
     shadowedLights: 1,
   });
-  const cycle = new DayCycle(DAY_CYCLE);
-  lighting.applyCompiled(cycle.sample(MINUTE), 1);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // 55 s day loop (menu-day-cycle.ts); `?menuTime=0..55` pins it for screenshots.
+  const cycle = new MenuDayCycle();
+  const clock = menuClock({
+    ...parseMenuCycleQuery(location.search),
+    reducedMotion: () => reducedMotion.matches,
+  });
+  cycle.apply(lighting, clock(0));
 
   const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, CAMERA_DISTANCE * 4);
   const focus = simToWorld(FOCUS.x, FOCUS.y, 0);
   const target = new Vector3();
   const offset = isometricOffset(CAMERA_DISTANCE);
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const zombies: ZombieActor[] = [];
   let disposed = false;
@@ -149,6 +153,7 @@ export async function createMenuScene(
       // Quaternius models walk along +Z.
       z.object.rotation.y = Math.atan2(Math.cos(z.heading), Math.sin(z.heading));
     }
+    cycle.apply(lighting, clock(time));
     lighting.update(camera, target.x, target.z);
     stylePass.setStyle(style());
     stylePass.render(scene, camera);

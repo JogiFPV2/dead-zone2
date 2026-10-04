@@ -17,6 +17,8 @@ export function shouldShowMenu(search: string): boolean {
   const menu = q.get('menu');
   if (menu === '1') return true;
   if (menu === '0') return false;
+  // Debug `?menuTime=` / `?menuSpeed=` only make sense on the menu.
+  if (q.has('menuTime') || q.has('menuSpeed')) return true;
   return [...q.keys()].length === 0;
 }
 
