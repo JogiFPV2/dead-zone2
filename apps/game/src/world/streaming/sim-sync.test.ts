@@ -54,7 +54,7 @@ describe('SimStreamSync', () => {
       () => {},
       (cx, cy) => inv.push(`${cx},${cy}`),
     );
-    const ev = (cx: number, z: number, reason: 'opening' | 'object' | 'loot'): SimEvent => ({
+    const ev = (cx: number, z: number, reason: 'opening' | 'object'): SimEvent => ({
       type: 'chunkChanged',
       tick: 1,
       cx,
@@ -62,7 +62,7 @@ describe('SimStreamSync', () => {
       z,
       reason,
     });
-    s.onEvents([ev(1, 0, 'opening'), ev(1, 1, 'loot'), ev(3, 0, 'object')]);
+    s.onEvents([ev(1, 0, 'opening'), ev(1, 1, 'object'), ev(3, 0, 'object')]);
     expect(inv).toEqual([]);
     s.update({ x: 0, y: 0 }, STREAM_PRESETS.medium);
     expect(inv).toEqual(['1,2', '3,2']);

@@ -28,8 +28,9 @@ export function interestFor(target: { x: number; y: number }, cfg: StreamConfig)
 /**
  * Keeps the sim in sync with the client streamer:
  * - sends `setInterest` only when the chunk or the radius changes (0 = clear, sent once);
- * - `chunkChanged` events (opening / object / loot) rebuild that chunk (`invalidate`), coalesced
- *   per frame (one rebuild per chunk, whatever the level or reason).
+ * - `chunkChanged` events (opening / object) rebuild that chunk (`invalidate`), coalesced per frame
+ *   (one rebuild per chunk, whatever the level or reason). The sim no longer sends `loot`: ground
+ *   piles come in the view (`nearby`), not in chunk data.
  */
 export class SimStreamSync {
   private last: Interest | undefined;

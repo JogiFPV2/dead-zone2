@@ -1,4 +1,5 @@
 import type {
+  Command,
   CommandRejectReason,
   MapMarkerView,
   SimEvent,
@@ -28,6 +29,9 @@ export const MARKER_REJECT_TEXT: Partial<Record<CommandRejectReason, string>> = 
 
 type MarkerCommand = Extract<CommandBody, { type: 'addMarker' | 'editMarker' | 'removeMarker' }>;
 
+const MARKER_COMMANDS: readonly Command['type'][] = ['addMarker', 'editMarker', 'removeMarker'];
+const isMarkerCommand = (c: Command['type']): boolean => MARKER_COMMANDS.includes(c);
+
 const colorOf = (c: string): MarkerColor =>
   (MARKER_COLORS as readonly string[]).includes(c) ? (c as MarkerColor) : 'white';
 
@@ -37,26 +41,21 @@ const colorOf = (c: string): MarkerColor =>
  *   fog, `chunksDiscovered` events add cells;
  * - `worldMap.trail` replaces the trail, `trailAdd` appends;
  * - `worldMap.markers` / `markersChanged` replace the marker list.
- * Marker commands go to the sim (applied at once, also in pause); `showOnMinimap` is client-only
- * (the sim does not store it), kept per marker id for the session.
+ * Marker commands go to the sim (applied at once, also in pause), `showOnMinimap` included (the
+ * sim keeps it with the marker and saves it). Rejections are recognised by `commandRejected.command`.
  */
 export class SimBigMapSource implements BigMapSource {
   private grid: FogGrid = fogGrid();
   private points: number[] = [];
   private trailCache: Float32Array | undefined;
   private list: Marker[] = [];
-  private readonly hiddenOnMinimap = new Set<number>();
-  /** seq → command type of marker commands in flight (rejections come back by seq). */
-  private readonly pending = new Map<number, MarkerCommand['type']>();
-  /** `showOnMinimap: false` for the next added marker. */
-  private nextAddHidden: boolean[] = [];
   fogVersion = 0;
   trailVersion = 0;
   markersVersion = 0;
 
   constructor(
-    /** Sends a command; returns its `seq`. */
-    private readonly send: (cmd: MarkerCommand) => number,
+    /** Sends a command to the sim. */
+    private readonly send: (cmd: MarkerCommand) => unknown,
     private readonly playerId: () => number | undefined = () => undefined,
     /** Toast for a rejected marker command. */
     private readonly onRejected: (text: string) => void = () => {},
@@ -112,59 +111,40 @@ export class SimBigMapSource implements BigMapSource {
         for (const [cx, cy] of e.cells) changed = setDiscovered(this.grid, cx, cy) || changed;
         if (changed) this.fogVersion++;
       } else if (e.type === 'markersChanged') {
-        if (e.change === 'added' && this.nextAddHidden.shift()) this.hiddenOnMinimap.add(e.changed);
-        if (e.change === 'removed') this.hiddenOnMinimap.delete(e.changed);
         this.setMarkers(e.markers);
-      } else if (e.type === 'commandRejected') {
-        const cmd = this.pending.get(e.seq);
-        if (!cmd) continue;
-        this.pending.delete(e.seq);
-        if (cmd === 'addMarker') this.nextAddHidden.shift();
+      } else if (e.type === 'commandRejected' && isMarkerCommand(e.command)) {
         this.onRejected(MARKER_REJECT_TEXT[e.reason] ?? 'Nie udało się zmienić znacznika');
       }
     }
   }
 
   addMarker(m: MarkerDraft): void {
-    this.nextAddHidden.push(!m.showOnMinimap);
-    this.track(
-      this.send({
-        type: 'addMarker',
-        x: m.x,
-        y: m.y,
-        icon: m.icon,
-        color: m.color,
-        text: clampMarkerText(m.text),
-      }),
-      'addMarker',
-    );
+    this.send({
+      type: 'addMarker',
+      x: m.x,
+      y: m.y,
+      icon: m.icon,
+      color: m.color,
+      text: clampMarkerText(m.text),
+      showOnMinimap: m.showOnMinimap,
+    });
   }
 
   editMarker(id: number, m: MarkerDraft): void {
-    if (m.showOnMinimap) this.hiddenOnMinimap.delete(id);
-    else this.hiddenOnMinimap.add(id);
-    this.track(
-      this.send({
-        type: 'editMarker',
-        id,
-        x: m.x,
-        y: m.y,
-        icon: m.icon,
-        color: m.color,
-        text: clampMarkerText(m.text),
-      }),
-      'editMarker',
-    );
+    this.send({
+      type: 'editMarker',
+      id,
+      x: m.x,
+      y: m.y,
+      icon: m.icon,
+      color: m.color,
+      text: clampMarkerText(m.text),
+      showOnMinimap: m.showOnMinimap,
+    });
   }
 
   removeMarker(id: number): void {
-    this.track(this.send({ type: 'removeMarker', id }), 'removeMarker');
-  }
-
-  private track(seq: number, type: MarkerCommand['type']): void {
-    this.pending.set(seq, type);
-    // Answers come within a tick or two; keep the map small if some never do.
-    if (this.pending.size > 64) this.pending.delete(this.pending.keys().next().value!);
+    this.send({ type: 'removeMarker', id });
   }
 
   private trailChanged(): void {
@@ -180,7 +160,7 @@ export class SimBigMapSource implements BigMapSource {
       icon: m.icon,
       color: colorOf(m.color),
       text: m.text,
-      showOnMinimap: !this.hiddenOnMinimap.has(m.id),
+      showOnMinimap: m.showOnMinimap ?? true,
     }));
     this.markersVersion++;
   }

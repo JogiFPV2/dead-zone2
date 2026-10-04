@@ -31,12 +31,11 @@ describe('SimBigMapSource (protocol)', () => {
     expect([...s.trail()]).toEqual([5, 5]);
   });
 
-  it('marker commands, markersChanged, client-only showOnMinimap, Polish rejections', () => {
+  it('marker commands, markersChanged, showOnMinimap in the sim marker, Polish rejections by command', () => {
     const sent: unknown[] = [];
     const toasts: string[] = [];
-    let seq = 0;
     const s = new SimBigMapSource(
-      (c) => (sent.push(c), ++seq),
+      (c) => sent.push(c),
       () => 0,
       (t) => toasts.push(t),
     );
@@ -55,22 +54,40 @@ describe('SimBigMapSource (protocol)', () => {
       icon: 'base:marker-food',
       color: 'green',
       text: 'x'.repeat(40),
+      showOnMinimap: false,
     });
     const m = { id: 7, x: 10, y: 20, icon: 'base:marker-food', color: 'green' as const, text: 'a' };
     s.applyEvents([
-      { type: 'markersChanged', tick: 2, playerId: 0, change: 'added', changed: 7, markers: [m] },
+      {
+        type: 'markersChanged',
+        tick: 2,
+        playerId: 0,
+        change: 'added',
+        changed: 7,
+        markers: [
+          { ...m, showOnMinimap: false },
+          { ...m, id: 8 },
+        ],
+      },
     ]);
-    expect(s.markers()).toEqual([{ ...m, showOnMinimap: false }]);
+    // Missing field (older sim) = shown.
+    expect(s.markers()).toEqual([
+      { ...m, showOnMinimap: false },
+      { ...m, id: 8, showOnMinimap: true },
+    ]);
+    s.editMarker(7, { ...m, showOnMinimap: true });
+    expect(sent[1]).toMatchObject({ type: 'editMarker', id: 7, showOnMinimap: true });
     s.removeMarker(99);
-    const reject = (seqNo: number, reason: 'unknown-marker'): SimEvent => ({
+    const reject = (command: 'removeMarker' | 'move', playerId = 0): SimEvent => ({
       type: 'commandRejected',
       tick: 3,
-      playerId: 0,
-      seq: seqNo,
-      command: 'removeMarker',
-      reason,
+      playerId,
+      seq: 2,
+      command,
+      reason: command === 'move' ? 'invalid-target' : 'unknown-marker',
     });
-    s.applyEvents([reject(2, 'unknown-marker'), reject(42, 'unknown-marker')]);
+    // Another command's invalid-target and another player's rejection are not ours.
+    s.applyEvents([reject('removeMarker'), reject('move'), reject('removeMarker', 1)]);
     expect(toasts).toEqual(['Ten znacznik już nie istnieje']);
   });
 });

@@ -337,7 +337,7 @@ if (boot.sim === 'worker') {
 // Big map (M) data: the sim's player map (fog bitmap, trail, markers). Subscribed right after the
 // sim starts so the first view (bounds + discovered + trail + markers) is not missed.
 const bigMapSource = new SimBigMapSource(
-  (cmd) => sendBody(cmd).seq,
+  (cmd) => sendBody(cmd),
   () => PLAYER_ID,
   (text) => hud.toast(text),
 );
