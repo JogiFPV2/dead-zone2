@@ -3,6 +3,7 @@ import type { ServerConfig } from '../config.js';
 import type { Database } from './database.js';
 import {
   DataRuleError,
+  type AccountAdmin,
   type BlobStore,
   type DataRuleCode,
   type GameStore,
@@ -141,8 +142,26 @@ export function createSupabaseStore(db: Db): GameStore {
       const row = data;
       return { storagePath: row.storage_path, diedAt: row.died_at };
     },
+    async deleteCharacter(userId, characterId) {
+      const { data, error } = await db
+        .rpc('delete_character', { p_user: userId, p_character: characterId })
+        .single();
+      if (error) fail(error);
+      return { storagePath: data.storage_path };
+    },
+    async deleteAccountData(userId) {
+      const { data, error } = await db.rpc('delete_account_data', { p_user: userId });
+      if (error) fail(error);
+      return { storagePaths: data.map((r) => r.storage_path) };
+    },
   };
 }
+
+/** `{user_id}` or `{user_id}/{character_id}`: guards against wiping the whole bucket. */
+const BLOB_PREFIX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/;
+const LIST_PAGE = 1000;
+const LIST_MAX_DEPTH = 3;
 
 export function createSupabaseBlobStore(db: Db, bucket: string): BlobStore {
   const b = () => db.storage.from(bucket);
@@ -158,10 +177,46 @@ export function createSupabaseBlobStore(db: Db, bucket: string): BlobStore {
       const { error } = await b().remove([path]);
       if (error) throw new Error('storage remove failed');
     },
+    async removePrefix(prefix) {
+      if (!BLOB_PREFIX.test(prefix)) throw new Error('invalid storage prefix');
+      const files: string[] = [];
+      const walk = async (dir: string, depth: number): Promise<void> => {
+        for (let offset = 0; ; offset += LIST_PAGE) {
+          const { data, error } = await b().list(dir, { limit: LIST_PAGE, offset });
+          if (error) throw new Error('storage list failed');
+          for (const e of data) {
+            const path = `${dir}/${e.name}`;
+            // Folders are listed without an id.
+            if (e.id === null) {
+              if (depth < LIST_MAX_DEPTH) await walk(path, depth + 1);
+            } else {
+              files.push(path);
+            }
+          }
+          if (data.length < LIST_PAGE) break;
+        }
+      };
+      await walk(prefix, 1);
+      for (let i = 0; i < files.length; i += LIST_PAGE) {
+        const { error } = await b().remove(files.slice(i, i + LIST_PAGE));
+        if (error) throw new Error('storage remove failed');
+      }
+      return files.length;
+    },
     async signedUrl(path, ttlSeconds) {
       const { data, error } = await b().createSignedUrl(path, ttlSeconds);
       if (error) throw new Error('storage signed url failed');
       return data.signedUrl;
+    },
+  };
+}
+
+export function createSupabaseAccountAdmin(db: Db): AccountAdmin {
+  return {
+    async deleteUser(userId) {
+      const { error } = await db.auth.admin.deleteUser(userId);
+      // 404 = already deleted by an earlier attempt.
+      if (error && error.status !== 404) throw new Error('auth user delete failed');
     },
   };
 }

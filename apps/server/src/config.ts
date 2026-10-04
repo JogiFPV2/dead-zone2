@@ -1,7 +1,10 @@
 import {
   MAX_ACCOUNT_SAVE_BYTES,
   MAX_ALIVE_CHARACTERS,
+  MAX_IP_REQUESTS_PER_5_MIN,
   MAX_NEW_CHARACTERS_PER_DAY,
+  MAX_SAVES_PER_HOUR,
+  MAX_UPLOAD_BYTES_PER_DAY,
 } from '@deadzone/protocol';
 
 /** Server limits (docs/backend.md §5.5). Env can only lower the product values. */
@@ -13,6 +16,12 @@ export interface Limits {
   maxEnvelopeBytes: number;
   /** Max uncompressed state JSON (gunzip output limit). */
   maxStateBytes: number;
+  /** Save + death uploads per account per hour. */
+  maxSavesPerHour: number;
+  /** Uploaded save bytes per account per 24 h. */
+  maxUploadBytesPerDay: number;
+  /** `/v1` requests per client IP per 5 minutes. */
+  maxIpRequestsPer5Min: number;
 }
 
 export interface ServerConfig {
@@ -28,6 +37,8 @@ export interface ServerConfig {
   jwtAudience: string;
   storageBucket: string;
   signedUrlTtlSeconds: number;
+  /** Proxy hops in front of the server (X-Forwarded-For); 0 = direct, use the socket IP. */
+  trustProxyHops: number;
   /** Current deterministic world generator, stored on new characters. */
   worldgenVersion: number;
   /** Current sim save format (`SAVE_VERSION` in packages/sim/src/save/save.ts). */
@@ -41,6 +52,9 @@ export const DEFAULT_LIMITS: Limits = {
   maxNewCharactersPerDay: MAX_NEW_CHARACTERS_PER_DAY,
   maxEnvelopeBytes: 16 * 1024 * 1024,
   maxStateBytes: 64 * 1024 * 1024,
+  maxSavesPerHour: MAX_SAVES_PER_HOUR,
+  maxUploadBytesPerDay: MAX_UPLOAD_BYTES_PER_DAY,
+  maxIpRequestsPer5Min: MAX_IP_REQUESTS_PER_5_MIN,
 };
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -75,6 +89,7 @@ export function loadConfig(env: Env): ServerConfig {
     jwtAudience: env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated',
     storageBucket: env.SAVES_BUCKET?.trim() || 'saves',
     signedUrlTtlSeconds: int(env, 'SIGNED_URL_TTL_SECONDS', 60, 10, 3600),
+    trustProxyHops: int(env, 'TRUST_PROXY_HOPS', 0, 0, 10),
     worldgenVersion: int(env, 'WORLDGEN_VERSION', 1, 1, 0xffff_ffff),
     saveFormatVersion: int(env, 'SAVE_FORMAT_VERSION', 1, 1, 0xffff_ffff),
     limits: {
@@ -107,6 +122,21 @@ export function loadConfig(env: Env): ServerConfig {
         d.maxEnvelopeBytes,
       ),
       maxStateBytes: int(env, 'LIMIT_STATE_BYTES', d.maxStateBytes, 1024, d.maxStateBytes),
+      maxSavesPerHour: int(env, 'LIMIT_SAVES_PER_HOUR', d.maxSavesPerHour, 1, d.maxSavesPerHour),
+      maxUploadBytesPerDay: int(
+        env,
+        'LIMIT_UPLOAD_BYTES_PER_DAY',
+        d.maxUploadBytesPerDay,
+        1024,
+        d.maxUploadBytesPerDay,
+      ),
+      maxIpRequestsPer5Min: int(
+        env,
+        'LIMIT_IP_REQUESTS_PER_5_MIN',
+        d.maxIpRequestsPer5Min,
+        1,
+        d.maxIpRequestsPer5Min,
+      ),
     },
   };
 }

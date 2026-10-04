@@ -11,6 +11,7 @@ import { authenticate, type AuthUser, type TokenVerifier } from '../auth.js';
 import type { ServerConfig } from '../config.js';
 import {
   DataRuleError,
+  type AccountAdmin,
   type BlobStore,
   type CharacterRow,
   type GameStore,
@@ -24,6 +25,7 @@ import {
   notFound,
   versionConflict,
 } from '../errors.js';
+import { enforce, type RateLimitStore } from '../rate-limit.js';
 import { parseEnvelope, type ParsedEnvelope } from '../save/envelope.js';
 import { validateState } from '../save/state.js';
 
@@ -35,6 +37,10 @@ export interface CharacterRouteDeps {
   verifier: TokenVerifier;
   store: GameStore;
   blobs: BlobStore;
+  /** Auth admin API for `DELETE /v1/me`. */
+  accounts: AccountAdmin;
+  /** Counters for the HTTP rate limits (§5.5); in-memory now, Redis later. */
+  rateLimits: RateLimitStore;
   /** Injectable for tests. */
   now?: () => Date;
   newSeed?: () => number;
@@ -43,6 +49,8 @@ export interface CharacterRouteDeps {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA256 = /^[0-9a-f]{64}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const IP_WINDOW_MS = 5 * 60 * 1000;
 
 function toSummary(c: CharacterRow, save: SaveRow | undefined): CharacterSummary {
   return {
@@ -110,12 +118,59 @@ function expectedVersion(req: FastifyRequest): number {
 }
 
 export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRouteDeps): void {
-  const { config, store, blobs, verifier } = deps;
+  const { config, store, blobs, verifier, accounts } = deps;
   const limits = config.limits;
   const now = deps.now ?? (() => new Date());
   const newSeed = deps.newSeed ?? (() => randomInt(0, 0x1_0000_0000));
 
-  const user = (req: FastifyRequest): Promise<AuthUser> => authenticate(req, verifier);
+  const { rateLimits } = deps;
+  // One JWT verification per request even when a route hook already authenticated.
+  const authed = new WeakMap<FastifyRequest, Promise<AuthUser>>();
+  const user = (req: FastifyRequest): Promise<AuthUser> => {
+    let u = authed.get(req);
+    if (!u) {
+      u = authenticate(req, verifier);
+      authed.set(req, u);
+    }
+    return u;
+  };
+
+  // Per-IP limit on the whole API, before auth and before reading any body.
+  app.addHook('onRequest', async (req) => {
+    if (!req.url.startsWith('/v1/') && req.url !== '/v1') return;
+    await enforce(
+      rateLimits,
+      `ip:${req.ip}`,
+      1,
+      limits.maxIpRequestsPer5Min,
+      IP_WINDOW_MS,
+      'too many requests from this address',
+    );
+  });
+
+  /** Save/death uploads per account per hour; runs before the body is read. */
+  const saveRateLimit = async (req: FastifyRequest): Promise<void> => {
+    const { userId } = await user(req);
+    await enforce(
+      rateLimits,
+      `saves:${userId}`,
+      1,
+      limits.maxSavesPerHour,
+      HOUR_MS,
+      'too many saves this hour',
+    );
+  };
+
+  /** Uploaded bytes per account per day. */
+  const uploadRateLimit = (userId: string, bytes: number): Promise<void> =>
+    enforce(
+      rateLimits,
+      `upload:${userId}`,
+      bytes,
+      limits.maxUploadBytesPerDay,
+      DAY_MS,
+      'daily upload limit reached',
+    );
 
   async function ownedCharacter(userId: string, id: string): Promise<CharacterRow> {
     const c = await store.getCharacter(userId, id);
@@ -219,10 +274,11 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
   app.put(
     '/v1/characters/:id/save',
-    { bodyLimit: limits.maxEnvelopeBytes },
+    { bodyLimit: limits.maxEnvelopeBytes, onRequest: saveRateLimit },
     async (req): Promise<PutSaveResponse> => {
       const { userId } = await user(req);
       const id = characterId(req);
+      await uploadRateLimit(userId, bodyBytes(req).length);
       const expected = expectedVersion(req);
       const c = await ownedCharacter(userId, id);
       if (c.status === 'dead') throw characterDead();
@@ -276,7 +332,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
   app.post(
     '/v1/characters/:id/death',
-    { bodyLimit: limits.maxEnvelopeBytes },
+    { bodyLimit: limits.maxEnvelopeBytes, onRequest: saveRateLimit },
     async (req): Promise<CharacterSummary> => {
       const { userId } = await user(req);
       const c = await ownedCharacter(userId, characterId(req));
@@ -284,6 +340,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
         // Retried request after a confirmed death: idempotent, the tombstone is the answer.
         return toSummary(c, undefined);
       }
+      await uploadRateLimit(userId, bodyBytes(req).length);
       const env = checkEnvelope(req, c);
       if (env.header.reason !== 'death')
         throw invalidState('death needs a snapshot with reason "death"');
@@ -304,4 +361,38 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
       );
     },
   );
+
+  /**
+   * Permanent deletion of one character (alive or tombstone) on the owner's request
+   * (docs/backend.md §5.1): save blobs first, then the rows. A failure before the rows are gone
+   * leaves the character in place, so the client can retry.
+   */
+  app.delete('/v1/characters/:id', async (req, reply) => {
+    const { userId } = await user(req);
+    const c = await ownedCharacter(userId, characterId(req));
+    await blobs.removePrefix(`${userId}/${c.id}`);
+    const { storagePath } = await store.deleteCharacter(userId, c.id).catch(ruleToHttp);
+    // A save that committed between the blob sweep and the row delete.
+    if (storagePath) {
+      await blobs.remove(storagePath).catch(() => req.log.warn('deleted character blob left'));
+    }
+    return reply.code(204).send();
+  });
+
+  /**
+   * RODO account deletion (docs/backend.md §5.1): all save blobs, then all rows, then the auth
+   * user via the admin API. Every step is idempotent, so a failed request can be retried with the
+   * same token until it expires.
+   */
+  app.delete('/v1/me', async (req, reply) => {
+    const { userId } = await user(req);
+    await blobs.removePrefix(userId);
+    const { storagePaths } = await store.deleteAccountData(userId);
+    for (const path of storagePaths) {
+      await blobs.remove(path).catch(() => req.log.warn('deleted account blob left'));
+    }
+    await accounts.deleteUser(userId);
+    req.log.info('account deleted');
+    return reply.code(204).send();
+  });
 }

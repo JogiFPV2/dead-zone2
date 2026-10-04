@@ -140,6 +140,64 @@ describe('migrations', () => {
     });
   });
 
+  it('delete_character removes a character or tombstone with its save, owner only', async () => {
+    await as('service_role', '', async () => {
+      const c = await newCharacter(B, 'Del');
+      await commit(B, c, 0, 'b1');
+      await expect(q(`select * from public.delete_character($1, $2)`, [A, c])).rejects.toThrow(
+        'character_not_found',
+      );
+      expect(await q(`select * from public.delete_character($1, $2)`, [B, c])).toEqual([
+        { storage_path: 'b1' },
+      ]);
+      expect(await q(`select count(*)::int n from public.characters where id = $1`, [c])).toEqual([
+        { n: 0 },
+      ]);
+      expect(
+        await q(`select count(*)::int n from public.saves where character_id = $1`, [c]),
+      ).toEqual([{ n: 0 }]);
+      await expect(q(`select * from public.delete_character($1, $2)`, [B, c])).rejects.toThrow(
+        'character_not_found',
+      );
+
+      const t = await newCharacter(B, 'Grave');
+      await q(`select * from public.mark_character_dead($1, $2, 3)`, [B, t]);
+      expect(await q(`select * from public.delete_character($1, $2)`, [B, t])).toEqual([
+        { storage_path: null },
+      ]);
+    });
+  });
+
+  it('delete_account_data removes all rows of one account and returns its save paths', async () => {
+    await as('service_role', '', async () => {
+      const c1 = await newCharacter(B, 'B1');
+      const c2 = await newCharacter(B, 'B2');
+      await commit(B, c1, 0, 'bb1');
+      await commit(B, c2, 0, 'bb2');
+      await newCharacter(B, 'B3');
+      const paths = await q(`select * from public.delete_account_data($1)`, [B]);
+      expect(paths.map((r) => r.storage_path).sort()).toEqual(['bb1', 'bb2']);
+      expect(
+        await q(`select count(*)::int n from public.characters where user_id = $1`, [B]),
+      ).toEqual([{ n: 0 }]);
+      expect(await q(`select count(*)::int n from public.profiles where id = $1`, [B])).toEqual([
+        { n: 0 },
+      ]);
+      // Account A is untouched.
+      expect(
+        await q(`select count(*)::int n from public.characters where user_id = $1`, [A]),
+      ).toEqual([{ n: 21 }]);
+    });
+    await as('authenticated', B, async () => {
+      await expect(q(`select * from public.delete_account_data($1)`, [B])).rejects.toThrow(
+        'permission denied',
+      );
+      await expect(q(`select * from public.delete_character($1, $2)`, [B, A])).rejects.toThrow(
+        'permission denied',
+      );
+    });
+  });
+
   it('deleting the auth user removes everything', async () => {
     await q(`delete from auth.users where id = $1`, [A]);
     expect(await q('select count(*)::int n from public.characters')).toEqual([{ n: 0 }]);

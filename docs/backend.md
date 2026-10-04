@@ -334,7 +334,7 @@ Legenda: **[ZGODA]** oznacza krok wymagający wyraźnej zgody Pawła (zmiany w S
 2. `packages/protocol`: schematy koperty DZSV, typy API postaci i komunikaty co-op.
 3. `packages/sim`: `serializeState`, `deserializeState`, `SAVE_FORMAT_VERSION`, migracje, `CharacterDied`, `DayStarted`, fixture’y i test determinizmu.
 4. Lokalny zapis IndexedDB: jeden rekord na postać, te same wyzwalacze i format DZSV co chmura.
-5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów. **Zrobione** (bez rate limitu HTTP/IP, `DELETE` i `deserializeState` w `worker_threads`). Ścieżka pliku: `{user_id}/{character_id}/v{version}-{losowe}.dzsv`, żeby nowy plik powstał przed usunięciem starego.
+5. `apps/server`: auth przez JWKS, moduł postaci, walidacja Fastify, optimistic concurrency, quota, Storage i audyt bez body zapisów. **Zrobione**, łącznie z rate limitem (120 zapisów/h i 200 MiB uploadu/dobę na konto, 300 żądań/5 min na IP; liczniki w pamięci za interfejsem `RateLimitStore`, później Redis; `429` z `Retry-After`) oraz `DELETE /v1/characters/:id` i `DELETE /v1/me` (najpierw pliki w Storage, potem wiersze przez `delete_character` / `delete_account_data`, na końcu użytkownik Auth przez admin API). Zostaje `deserializeState` w `worker_threads`. Ścieżka pliku: `{user_id}/{character_id}/v{version}-{losowe}.dzsv`, żeby nowy plik powstał przed usunięciem starego.
 6. **[ZGODA]** Utworzenie organizacji `deadzone` i projektu `deadzone-prod` w regionie UE.
 7. **[ZGODA]** Konfiguracja Auth: Google OAuth, SMTP, CAPTCHA, redirect URLs i klucze JWT.
 8. **[ZGODA]** Zastosowanie przygotowanych migracji na `deadzone-prod` dopiero po osobnym review i zgodzie.

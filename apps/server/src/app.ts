@@ -1,11 +1,18 @@
-import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
+import Fastify, {
+  type FastifyError,
+  type FastifyInstance,
+  type FastifyServerOptions,
+} from 'fastify';
 import { PROTOCOL_VERSION, type ApiError, type HealthResponse } from '@deadzone/protocol';
 import { HttpError } from './errors.js';
+import { RateLimitedError } from './rate-limit.js';
 import { registerCharacterRoutes, type CharacterRouteDeps } from './routes/characters.js';
 
 export interface AppOptions {
   /** Cloud save API `/v1` (docs/backend.md §5); omitted = only `/health`. */
   characters?: CharacterRouteDeps;
+  /** Proxy hops to trust for the client IP (rate limits); 0 = socket address. */
+  trustProxyHops?: number;
 }
 
 const FASTIFY_CODES: Record<number, ApiError['error']> = {
@@ -18,13 +25,17 @@ const FASTIFY_CODES: Record<number, ApiError['error']> = {
 };
 
 export function buildApp(opts: AppOptions = {}): FastifyInstance {
-  const app = Fastify({
+  const hops = opts.trustProxyHops ?? 0;
+  const options: FastifyServerOptions = {
+    // Number of trusted hops; without a proxy `req.ip` is the socket address.
+    trustProxy: hops > 0 ? (_addr: string, i: number) => i < hops : false,
     logger:
       process.env.NODE_ENV === 'test'
         ? false
         : // Never log save bodies or tokens (docs/backend.md §5.2.7).
           { redact: ['req.headers.authorization'] },
-  });
+  };
+  const app = Fastify(options);
 
   app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, (_req, body, done) =>
     done(null, body),
@@ -32,6 +43,9 @@ export function buildApp(opts: AppOptions = {}): FastifyInstance {
 
   app.setErrorHandler((err: FastifyError | HttpError, req, reply) => {
     if (err instanceof HttpError) {
+      if (err instanceof RateLimitedError) {
+        void reply.header('retry-after', String(err.retryAfterSeconds));
+      }
       if (err.statusCode >= 400 && err.statusCode !== 401) {
         req.log.info({ code: err.code }, 'request rejected');
       }

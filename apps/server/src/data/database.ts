@@ -58,6 +58,14 @@ export type Database = {
         Args: { p_user: string; p_character: string; p_days_survived: number };
         Returns: { storage_path: string | null; died_at: string }[];
       };
+      delete_character: {
+        Args: { p_user: string; p_character: string };
+        Returns: { storage_path: string | null }[];
+      };
+      delete_account_data: {
+        Args: { p_user: string };
+        Returns: { storage_path: string }[];
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;

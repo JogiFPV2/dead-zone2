@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   DataRuleError,
+  type AccountAdmin,
   type BlobStore,
   type CharacterRow,
   type GameStore,
@@ -98,6 +99,22 @@ export class MemoryStore implements GameStore {
     this.saves.delete(id);
     return Promise.resolve({ storagePath: s?.storage_path ?? null, diedAt: ch.died_at });
   }
+  deleteCharacter(userId: string, id: string) {
+    const ch = this.characters.get(id);
+    if (!ch || ch.user_id !== userId) throw new DataRuleError('character_not_found');
+    const s = this.saves.get(id);
+    this.saves.delete(id);
+    this.characters.delete(id);
+    return Promise.resolve({ storagePath: s?.storage_path ?? null });
+  }
+  async deleteAccountData(userId: string) {
+    const storagePaths = (await this.listSaves(userId)).map((s) => s.storage_path);
+    for (const c of this.owned(userId)) {
+      this.saves.delete(c.id);
+      this.characters.delete(c.id);
+    }
+    return { storagePaths };
+  }
 }
 
 export class MemoryBlobs implements BlobStore {
@@ -111,7 +128,29 @@ export class MemoryBlobs implements BlobStore {
     this.objects.delete(path);
     return Promise.resolve();
   }
+  failRemovePrefix = false;
+  removePrefix(prefix: string) {
+    if (!prefix || this.failRemovePrefix) return Promise.reject(new Error('storage down'));
+    let n = 0;
+    for (const k of [...this.objects.keys()]) {
+      if (k.startsWith(`${prefix}/`)) {
+        this.objects.delete(k);
+        n++;
+      }
+    }
+    return Promise.resolve(n);
+  }
   signedUrl(path: string, ttl: number) {
     return Promise.resolve(`https://storage.test/${path}?ttl=${ttl}`);
+  }
+}
+
+export class MemoryAccounts implements AccountAdmin {
+  deleted: string[] = [];
+  fail = false;
+  deleteUser(userId: string) {
+    if (this.fail) return Promise.reject(new Error('auth admin down'));
+    this.deleted.push(userId);
+    return Promise.resolve();
   }
 }

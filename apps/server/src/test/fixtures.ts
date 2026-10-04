@@ -6,7 +6,8 @@ import { buildApp } from '../app.js';
 import { createJwtVerifier } from '../auth.js';
 import { DEFAULT_LIMITS, type Limits } from '../config.js';
 import { sha256Hex } from '../save/envelope.js';
-import { MemoryBlobs, MemoryStore } from './memory-store.js';
+import { MemoryRateLimitStore } from '../rate-limit.js';
+import { MemoryAccounts, MemoryBlobs, MemoryStore } from './memory-store.js';
 
 export const ISSUER = 'https://test.supabase.co/auth/v1';
 export const USER_A = '11111111-1111-4111-8111-111111111111';
@@ -36,22 +37,27 @@ export async function token(
     .sign(opts.key ?? keys.privateKey);
 }
 
-export function setup(limits: Partial<Limits> = {}) {
+export function setup(limits: Partial<Limits> = {}, opts: { trustProxyHops?: number } = {}) {
   const l = { ...DEFAULT_LIMITS, ...limits };
   const store = new MemoryStore(l.maxAliveCharacters, l.maxAccountSaveBytes);
   const blobs = new MemoryBlobs();
+  const accounts = new MemoryAccounts();
+  const rateLimits = new MemoryRateLimitStore(() => store.clock);
   let seed = 1000;
   const app = buildApp({
+    trustProxyHops: opts.trustProxyHops ?? 0,
     characters: {
       config: { limits: l, worldgenVersion: 1, saveFormatVersion: 1, signedUrlTtlSeconds: 60 },
       verifier: createJwtVerifier({ issuer: ISSUER, audience: 'authenticated', keys: jwks }),
       store,
       blobs,
+      accounts,
+      rateLimits,
       now: () => new Date(store.clock),
       newSeed: () => seed++,
     },
   });
-  return { app, store, blobs };
+  return { app, store, blobs, accounts, rateLimits };
 }
 
 export interface EnvelopeOpts {

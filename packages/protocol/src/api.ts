@@ -8,6 +8,10 @@
 export const MAX_ALIVE_CHARACTERS = 20;
 export const MAX_ACCOUNT_SAVE_BYTES = 50 * 1024 * 1024;
 export const MAX_NEW_CHARACTERS_PER_DAY = 10;
+/** HTTP rate limits (§5.5): save/death uploads per account, upload bytes per day, requests per IP. */
+export const MAX_SAVES_PER_HOUR = 120;
+export const MAX_UPLOAD_BYTES_PER_DAY = 200 * 1024 * 1024;
+export const MAX_IP_REQUESTS_PER_5_MIN = 300;
 export const CHARACTER_NAME_MAX = 40;
 /** Serialized size limit of `appearance` and `world_settings` (UTF-8 JSON bytes). */
 export const CHARACTER_JSON_MAX_BYTES = 4096;

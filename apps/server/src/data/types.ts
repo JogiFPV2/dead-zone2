@@ -84,11 +84,30 @@ export interface GameStore {
     characterId: string,
     daysSurvived: number,
   ): Promise<{ storagePath: string | null; diedAt: string }>;
+  /**
+   * Deletes the character row (alive or tombstone) and its save row in one transaction.
+   * Returns the save path still referenced at delete time (a save may have committed meanwhile).
+   * Throws `DataRuleError('character_not_found')`.
+   */
+  deleteCharacter(userId: string, characterId: string): Promise<{ storagePath: string | null }>;
+  /** RODO: deletes all characters, saves and the profile of an account; returns remaining paths. */
+  deleteAccountData(userId: string): Promise<{ storagePaths: string[] }>;
 }
 
 /** Private Storage bucket for DZSV blobs. */
 export interface BlobStore {
   put(path: string, bytes: Uint8Array): Promise<void>;
   remove(path: string): Promise<void>;
+  /**
+   * Removes every object under `{prefix}/` (recursively); returns how many were removed.
+   * `prefix` is `{user_id}` or `{user_id}/{character_id}`, never empty.
+   */
+  removePrefix(prefix: string): Promise<number>;
   signedUrl(path: string, ttlSeconds: number): Promise<string>;
+}
+
+/** Supabase Auth admin API (service role). */
+export interface AccountAdmin {
+  /** Deletes the auth user; an already deleted user counts as success (retries). */
+  deleteUser(userId: string): Promise<void>;
 }
