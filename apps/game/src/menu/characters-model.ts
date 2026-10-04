@@ -2,13 +2,14 @@
 import type { DeathCause } from '@deadzone/protocol';
 import type { CharacterRecord, Portrait } from '../characters/schema.js';
 import { causeLabel } from '../death/death-model.js';
+import { isOldMap } from '../boot-options.js';
 
 export type CardAction = 'play' | 'delete';
 
 export interface CardView {
   readonly id: string;
   readonly name: string;
-  /** `TEST TOWN · AKTYWNA`. */
+  /** `TEST TOWN · AKTYWNA` (`· STARA MAPA` when saved on an older map). */
   readonly sub: string;
   readonly dead: boolean;
   readonly portrait: Portrait;
@@ -73,7 +74,7 @@ export function cardView(c: CharacterRecord, now: number, active: boolean): Card
   return {
     id: c.id,
     name: c.name,
-    sub: `${mapLabel(c.worldSettings.map).toUpperCase()} · ${status}`,
+    sub: `${mapLabel(c.worldSettings.map).toUpperCase()} · ${status}${isOldMap(c.worldSettings.map) ? ' · STARA MAPA' : ''}`,
     dead,
     portrait: c.appearance.portrait,
     days: { label: fem ? 'PRZEŻYŁA' : 'PRZEŻYŁ', value: daysLabel(c.daysSurvived) },

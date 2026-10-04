@@ -88,6 +88,8 @@ import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
 import { PICK_PLANE_Y, ZombieHpLayer } from './hud/zombie-hp.js';
+import { RmbGesture } from './input/rmb-gesture.js';
+import { allowsNativeContextMenu } from './input/context-menu.js';
 import { createAimReticle } from './hud/aim-reticle.js';
 import { SPREAD_WARN, reticleRadius } from './hud/firearm-model.js';
 import { clientToNdc, ndcToFloor } from './input/aim.js';
@@ -1022,6 +1024,7 @@ hud.onPromptMenu((i, kind) => {
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death || vehicles.seated) return;
+  rmb.attack();
   lastSwingMs = performance.now();
   const gun = hud.firearm();
   if (gun?.state === 'empty') hud.dryFire();
@@ -1034,16 +1037,27 @@ input.on('vault', () => {
   if (inventory.open || gameState.get().death || vehicles.seated) return;
   sim.send(stamper.stamp({ type: 'vault' }));
 });
+// RMB like PZ (input/rmb-gesture.ts): held = aim / ready (LMB attacks), a short click = the
+// context action: the car menu at a car (vehicle UI [ZAŁ.]), otherwise a shove.
+const rmb = new RmbGesture();
 input.on('secondaryAction', () => {
   if (inventory.open || gameState.get().death || vehicles.seated) return;
-  // RMB at a car: its menu (vehicle UI [ZAŁ.]) instead of a shove.
+  rmb.press(performance.now());
+});
+const onSecondaryRelease = (): void => {
+  if (input.isDown('secondaryAction')) return;
+  if (!rmb.release(performance.now())) return;
+  if (inventory.open || gameState.get().death || vehicles.seated) return;
   if (vehicles.pressSecondary()) return;
-  // Firearm in hand: RMB (held) aims with the reticle instead of shoving.
+  // Firearm in hand: RMB only aims with the reticle, no shove.
   if (hud.firearm()) return;
   lastSwingMs = performance.now();
   sim.send(stamper.stamp({ type: 'shove' }));
   phys.noteLocalAction('shove');
-});
+};
+window.addEventListener('pointerup', onSecondaryRelease);
+window.addEventListener('keyup', onSecondaryRelease);
+window.addEventListener('blur', () => rmb.cancel());
 // Aiming (PZ-like): the body faces the cursor while a mouse action is held and shortly after a
 // swing; otherwise it turns towards the movement (player/locomotion.ts). Shift is sprint.
 const AIM_HOLD_MS = 700;
@@ -1052,7 +1066,10 @@ const isAiming = (now: number): boolean =>
   input.isDown('primaryAction') ||
   input.isDown('secondaryAction') ||
   now - lastSwingMs < AIM_HOLD_MS;
-renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+// No browser context menu over the game (canvas and HUD); text fields keep theirs.
+container.addEventListener('contextmenu', (e) => {
+  if (!allowsNativeContextMenu(e.target)) e.preventDefault();
+});
 // Firearm aim reticle (spec §4): RMB held with a gun in hand, follows the cursor.
 const gameRoot: HTMLElement = container;
 const reticle = createAimReticle(gameRoot);

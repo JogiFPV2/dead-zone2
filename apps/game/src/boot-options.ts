@@ -57,6 +57,15 @@ export interface BootOptions {
   cam?: { x: number; z: number; viewHeight: number };
 }
 
+/**
+ * The newest playable map: every new game in the public build starts on it. A character saved on
+ * another content map keeps loading there (its `worldSettings.map`) and its card says „stara mapa”.
+ */
+export const LATEST_MAP: MapChoice = 'test-town';
+
+/** A saved world on a content map other than the newest one (the dev test map never counts). */
+export const isOldMap = (map: string): boolean => map !== LATEST_MAP && map !== 'test';
+
 const DEBUG_STAT_SET: ReadonlySet<string> = new Set(DEBUG_STATS);
 
 /** `stat:value` list, comma separated; unknown stats and non-numbers are skipped. */
@@ -126,8 +135,8 @@ export function parseBootOptions(search: string): BootOptions {
   const crowd = parseCrowdParam(search);
   const spawnInside = q.get('spawn') === 'inside';
   const name = q.get('map') ?? '';
-  // Public build (production): test-town with containers by default; dev: generated test map.
-  const fallback: MapChoice = import.meta.env.PROD ? 'test-town' : 'test';
+  // Public build (production): the newest playable map; dev: generated test map.
+  const fallback: MapChoice = import.meta.env.PROD ? LATEST_MAP : 'test';
   const map: MapChoice = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) ? name : fallback;
   const stress = q.get('stress') === '1' || q.get('stress') === '16';
   const mock = crowd > 0 || stress;

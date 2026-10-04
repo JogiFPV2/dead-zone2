@@ -334,6 +334,10 @@ export function createVehicleHud(): VehicleHud {
   parts.repair.className = 'dz-vh__modal';
   parts.refuel.className = 'dz-vh__rstage';
   el.append(parts.panel, parts.refuel, parts.chip, parts.toast, parts.menu, parts.repair);
+  // Empty parts start hidden: `set` skips an unchanged '' so it would never hide them, and the
+  // empty repair modal (inset 0, pointer-events auto) would swallow every click and wheel on the
+  // game canvas (attack, zoom, Shift-click zombie HP).
+  for (const p of Object.values(parts)) p.hidden = true;
   const last: Record<keyof typeof parts, string> = {
     panel: '',
     menu: '',

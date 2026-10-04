@@ -60,6 +60,15 @@ describe('characters model', () => {
     });
   });
 
+  it('marks a character saved on an older map („stara mapa”), not the newest or test map', () => {
+    expect(
+      cardView({ ...base, worldSettings: { map: 'demo-house', mode: 'survive' } }, now, true).sub,
+    ).toBe('DEMO HOUSE · AKTYWNA · STARA MAPA');
+    expect(
+      cardView({ ...base, worldSettings: { map: 'test', mode: 'survive' } }, now, true).sub,
+    ).toBe('MAPA TESTOWA · AKTYWNA');
+  });
+
   it('moves focus between cards, actions and Nowa postać', () => {
     const cards = [{ actions: ['play', 'delete'] as const }, { actions: ['delete'] as const }];
     const f0 = { card: 0, action: 1 };
