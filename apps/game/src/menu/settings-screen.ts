@@ -1,5 +1,8 @@
 import type { AudioEngine } from '../audio/audio-engine.js';
+import { HUD_LAYOUT_VERSION, type HudLayout } from '@deadzone/ui/settings';
 import { DEFAULT_SETTINGS, type Settings } from '../settings/schema.js';
+import type { PlayerSettingsStore } from '../settings/player-settings-store.js';
+import { layoutPreviewHtml } from '../hud/layout/layout-preview.js';
 import { noisePreview } from './noise-preview.js';
 import type { SettingsStore } from '../settings/store.js';
 import { createConfirm, type ConfirmDialog } from './confirm-dialog.js';
@@ -31,12 +34,29 @@ import {
 import type { AccountSession } from '../account/account-session.js';
 import { createAccountPanel, type AccountPanel } from './account-panel.js';
 
+/** Settings being edited plus the HUD layout (back and forth with the HUD editor). */
+export interface SettingsDraft {
+  readonly settings: Settings;
+  readonly hud: HudLayout;
+}
+
+const EMPTY_HUD: HudLayout = { version: HUD_LAYOUT_VERSION, elements: {} };
+
 export interface SettingsScreenOptions {
   readonly root: HTMLElement;
   readonly settings: SettingsStore;
   readonly audio: Pick<AudioEngine, 'play' | 'preview'>;
   readonly trackTitle: string;
   readonly initialTab?: SettingsTab;
+  /** Draft to continue with (back from the HUD editor); default: the stored settings. */
+  readonly initialDraft?: SettingsDraft;
+  /** Whole settings object: the HUD layout (`hud`) is read and saved through it. */
+  readonly player?: Pick<PlayerSettingsStore, 'load' | 'save'>;
+  /**
+   * „Edytuj HUD” (Interfejs): the owner closes this screen and opens the editor with the draft.
+   * Missing (main menu): the row is disabled.
+   */
+  readonly onEditHud?: (draft: SettingsDraft) => void;
   /** Online accounts: adds Ustawienia › Konto (account-settings.png). */
   readonly account?: AccountSession | undefined;
   /** Konto › ZALOGUJ SIĘ (main menu only): the screen is already disposed. */
@@ -84,7 +104,9 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
     });
     return accountPanel;
   }
-  let draft: Settings = settings.get();
+  let draft: Settings = o.initialDraft?.settings ?? settings.get();
+  const storedHud = (): HudLayout => o.player?.load().hud ?? EMPTY_HUD;
+  let hudDraft: HudLayout = o.initialDraft?.hud ?? storedHud();
   let focus: SettingsFocus = { zone: 'tabs' };
   let confirm: ConfirmDialog | undefined;
   let disposed = false;
@@ -95,6 +117,8 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
     settingsRows(tab, draft, {
       trackTitle: o.trackTitle,
       viewport: { width: window.innerWidth, height: window.innerHeight },
+      hudEditor: o.onEditHud !== undefined,
+      hudLayout: hudDraft,
     });
   const focusable = (): FocusableRow[] => rows().filter(isFocusable);
 
@@ -108,7 +132,7 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       case 'slider': {
         const p = sliderPercent(r.value);
         const shown = r.display ?? String(p);
-        return `<div class="${cls}"${attrs} role="slider" aria-label="${r.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-valuetext="${shown}"><span class="dzo-row-label">${r.label}</span><span class="dzo-track" data-track="${r.id}"><i style="width:${p}%"></i><b style="left:${p}%"></b></span><span class="dzo-row-value">${shown}</span><span class="dzo-row-note">${sel ? (r.keys ?? '◀ ▶ ±5 · Shift ±1') : r.note}</span></div>`;
+        return `<div class="${cls}"${attrs} role="slider" aria-label="${r.label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-valuetext="${shown}">${r.hint ? `<span class="dzo-row-col dzo-row-label"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span></span>` : `<span class="dzo-row-label">${r.label}</span>`}<span class="dzo-track" data-track="${r.id}"><i style="width:${p}%"></i><b style="left:${p}%"></b></span><span class="dzo-row-value">${shown}</span><span class="dzo-row-note">${sel ? (r.keys ?? '◀ ▶ ±5 · Shift ±1') : r.note}</span></div>`;
       }
       case 'toggle':
         return `<div class="${cls}"${attrs} role="switch" aria-checked="${r.on}" aria-label="${r.label}"><span class="dzo-row-col"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span></span><span class="dzo-toggle${r.on ? ' dzo-toggle--on' : ''}"></span></div>`;
@@ -132,6 +156,8 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       }
       case 'info':
         return `<div class="${cls}"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-info">${r.soon ? `<span class="dzo-soon">${r.value}</span>` : r.value}</span></div>`;
+      case 'button':
+        return `<div class="${cls}${r.accent ? ' dzo-row--accent' : ''}"${attrs} aria-label="${r.label}"><span class="dzo-row-col"><span class="dzo-row-title">${r.label}</span><span class="dzo-row-hint">${r.hint}</span>${r.state ? `<span class="dzo-row-hint dzo-row-state">${r.state}</span>` : ''}</span><button type="button" class="dzo-btn ${r.accent ? 'dzo-btn--pri' : 'dzo-btn--sec'} dzo-row-btn" data-btn="${r.id}"${r.disabled ? ' disabled aria-disabled="true"' : ''} tabindex="-1">${icon(r.icon, 15)} ${r.button}</button></div>`;
     }
   }
 
@@ -150,7 +176,7 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       .join('');
     const body =
       tab === 'interface'
-        ? `<div class="dzo-cols"><div class="dzo-col">${list}</div>${noisePreview(draft.interface.noiseDisplay)}</div>`
+        ? `<div class="dzo-cols"><div class="dzo-col">${list}</div><div class="dzo-col dzo-col--side">${focusedRow()?.id === 'noiseDisplay' ? noisePreview(draft.interface.noiseDisplay) : layoutPreviewHtml(hudDraft)}</div></div>`
         : tab === 'account'
           ? '<div data-account-slot></div>'
           : list;
@@ -164,7 +190,7 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
 <div class="dzo-settings-body" id="dzo-tabpanel" role="tabpanel" aria-labelledby="dzo-tab-${tab}" data-panel="${tab}">${body}</div>
 ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class="dzo-btn dzo-btn--sec" data-act="defaults">${icon('reset', 16)} PRZYWRÓĆ DOMYŚLNE</button><span class="dzo-grow"></span><button type="button" class="dzo-btn dzo-btn--sec" data-act="back">WSTECZ ${keyBadge('ESC')}</button><button type="button" class="dzo-btn dzo-btn--pri" data-act="apply">ZASTOSUJ ${keyBadge('ENTER', true)}</button></div>`}
 </div>
-<div class="dzo-hints">${keyBadge('Q / E')}<span>zmień zakładkę</span>${keyBadge('↑↓')}<span>wybierz</span>${keyBadge('ESC')}<span>wstecz</span></div>`;
+<div class="dzo-hints">${keyBadge('Q / E')}<span>zmień zakładkę</span>${keyBadge('↑↓')}<span>wybierz</span>${editFocused() ? `${keyBadge('ENTER')}<span>edytuj HUD</span>` : `${keyBadge('ESC')}<span>wstecz</span>`}</div>`;
     if (accountTab) {
       const p = panel();
       const slot = stage.querySelector('[data-account-slot]');
@@ -220,13 +246,18 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
         graphics: d.graphics,
         interface: d.interface,
       }));
+      // The layout lives in PlayerSettings next to `Settings` (player-settings-store.ts).
+      if (o.player && hudDirty()) {
+        const r = o.player.save({ ...o.player.load(), hud: hudDraft });
+        if (!r.ok) console.warn('Układ HUD nie został zapisany', r);
+      }
     }
     api.dispose();
     o.onClose();
   }
 
   function back(): void {
-    if (!isDirty(draft, settings.get())) {
+    if (!isDirty(draft, settings.get()) && !hudDirty()) {
       ui('ui-click1');
       close(false);
       return;
@@ -243,6 +274,40 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
         else render();
       },
     });
+  }
+
+  /** Button rows: Edytuj HUD hands the draft over, Przywróć domyślny układ asks first. */
+  function runButton(id: 'editHud' | 'resetHud'): void {
+    const row = focusable().find((r) => r.kind === 'button' && r.id === id);
+    if (row?.kind !== 'button' || row.disabled) return;
+    ui('ui-click1');
+    if (id === 'editHud') {
+      const d: SettingsDraft = { settings: draft, hud: hudDraft };
+      api.dispose();
+      o.onEditHud?.(d);
+      return;
+    }
+    confirm = createConfirm({
+      host: stage,
+      title: 'PRZYWRÓCIĆ DOMYŚLNY UKŁAD HUD?',
+      body: 'Wszystkie elementy wrócą na swoje miejsca. Skala interfejsu zostaje.',
+      yes: 'PRZYWRÓĆ',
+      onAnswer(yes) {
+        confirm = undefined;
+        ui('ui-click1');
+        if (yes) hudDraft = EMPTY_HUD;
+        render();
+      },
+    });
+  }
+
+  function hudDirty(): boolean {
+    return JSON.stringify(hudDraft) !== JSON.stringify(storedHud());
+  }
+
+  function editFocused(): boolean {
+    const r = focusedRow();
+    return r?.kind === 'button' && r.id === 'editHud' && !r.disabled;
   }
 
   function focusedRow(): FocusableRow | undefined {
@@ -292,7 +357,8 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
         if (row) setDraft(adjustRow(draft, row, cmd.to === 0 ? 'Home' : 'End', false));
         break;
       case 'activate':
-        if (row) {
+        if (row?.kind === 'button') runButton(row.id);
+        else if (row) {
           ui('ui-switch2');
           setDraft(activateRow(draft, row));
         } else if (focus.zone === 'tabs' && focusable().length) {
@@ -301,6 +367,11 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
         }
         break;
       case 'apply':
+        // Enter on „Układ HUD” opens the editor (settings-hud.png hint row); elsewhere Zastosuj.
+        if (row?.kind === 'button' && row.id === 'editHud' && !row.disabled) {
+          runButton('editHud');
+          break;
+        }
         ui('ui-click1');
         close(true);
         break;
@@ -337,6 +408,11 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
         graphics: d.graphics,
         interface: d.interface,
       });
+      return;
+    }
+    const btn = t.closest<HTMLElement>('[data-btn]')?.dataset.btn;
+    if (btn === 'editHud' || btn === 'resetHud') {
+      runButton(btn);
       return;
     }
     const rowEl = t.closest<HTMLElement>('[data-row]');

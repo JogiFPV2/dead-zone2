@@ -73,10 +73,39 @@ describe('settings rows', () => {
     expect(isDirty(setSlider(d, 'uiScale', 1), d)).toBe(true);
   });
 
-  it('Interfejs: Pokazuj hałas is the first row, Tylko głośne by default, ←/→ steps', () => {
+  it('Interfejs: Układ HUD first — EDYTUJ HUD (game only), Skala, Resetuj układ', () => {
     const rows = settingsRows('interface', d, ctx).filter(isFocusable);
-    expect(rows[0]).toMatchObject({ id: 'noiseDisplay', label: 'Pokazuj hałas', value: 'loud' });
-    const n = rows[0]!;
+    expect(rows.slice(0, 3).map((r) => r.id)).toEqual(['editHud', 'uiScale', 'resetHud']);
+    expect(rows[0]).toMatchObject({ kind: 'button', button: 'EDYTUJ HUD', disabled: true });
+    expect(rows[2]).toMatchObject({ kind: 'button', disabled: true });
+    const custom = {
+      version: 1 as const,
+      elements: {
+        minimap: {
+          anchor: 'tr' as const,
+          x: 0.01,
+          y: 0.02,
+          scale: 0.7,
+          opacity: 0.55,
+          visible: true,
+        },
+        hotbar: { anchor: 'bc' as const, x: 0, y: 0.03, scale: 1.2, opacity: 1, visible: true },
+      },
+    };
+    const inGame = settingsRows('interface', d, {
+      ...ctx,
+      hudEditor: true,
+      hudLayout: custom,
+    }).filter(isFocusable);
+    expect(inGame[0]).toMatchObject({ disabled: false });
+    expect(JSON.stringify(inGame[0])).toContain('własny');
+    expect(JSON.stringify(inGame[0])).toContain('2 zmienione elementy');
+    expect(inGame[2]).toMatchObject({ disabled: false });
+  });
+
+  it('Interfejs: Pokazuj hałas, Tylko głośne by default, ←/→ steps', () => {
+    const n = row('interface', 'noiseDisplay');
+    expect(n).toMatchObject({ label: 'Pokazuj hałas', value: 'loud' });
     expect(adjustRow(d, n, 'ArrowLeft', false).interface.noiseDisplay).toBe('off');
     expect(adjustRow(d, n, 'ArrowRight', false).interface.noiseDisplay).toBe('always');
     expect(adjustRow(d, n, 'Home', false).interface.noiseDisplay).toBe('off');

@@ -16,6 +16,8 @@ export interface ItemLog {
   push(changes: readonly ItemDelta[], now: number): void;
   /** Ages / fades rows (call at the HUD rate). */
   frame(now: number): void;
+  /** Drops every row (HUD editor sample off). */
+  clear(now: number): void;
 }
 
 export interface ItemLogOptions {
@@ -100,6 +102,10 @@ export function createItemLog(opts: ItemLogOptions): ItemLog {
         log = pushItemLog(log, c, now, nextId++);
         // A merged entry moves to the top: re-insert its row there.
       }
+      render(now);
+    },
+    clear(now) {
+      log = [];
       render(now);
     },
     frame(now) {

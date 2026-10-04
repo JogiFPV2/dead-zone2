@@ -13,6 +13,8 @@ import {
 } from '../settings/schema.js';
 import { UI_SCALE_MAX, UI_SCALE_MIN, UI_SCALE_STEP, snapUiScale } from '../ui/ui-scale.js';
 import { sliderKey } from './menu-model.js';
+import { changedLabel, changedSlots } from '../hud/layout/hud-layout-model.js';
+import type { HudLayout } from '@deadzone/ui/settings';
 import type { SettingsTab } from './settings-tabs.js';
 
 export interface ChoiceOption {
@@ -33,6 +35,8 @@ export type SettingsRow =
       display?: string;
       /** Hint while focused (default `◀ ▶ ±5 · Shift ±1`). */
       keys?: string;
+      /** Description under the label (Interfejs › Skala interfejsu). */
+      hint?: string;
     }
   | { kind: 'toggle'; id: ToggleId; label: string; hint: string; on: boolean }
   | {
@@ -47,7 +51,19 @@ export type SettingsRow =
       /** Card row: one line per option under the options, a warning note and a side preview. */
       card?: { legend: readonly (ChoiceOption & { text: string })[]; warn: string };
     }
-  | { kind: 'info'; label: string; value: string; soon?: boolean };
+  | { kind: 'info'; label: string; value: string; soon?: boolean }
+  | {
+      kind: 'button';
+      id: ButtonId;
+      label: string;
+      hint: string;
+      /** Second hint line (trusted HTML: static text + `<b>`). */
+      state?: string;
+      button: string;
+      icon: string;
+      accent?: boolean;
+      disabled?: boolean;
+    };
 
 export type FocusableRow = Extract<SettingsRow, { id: string }>;
 export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
@@ -56,6 +72,8 @@ type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice' | 'uiScale
 type VolumeId = Exclude<SliderId, 'uiScale'>;
 type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
 type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay';
+/** Rows with a button: the screen runs them (Edytuj HUD, Przywróć domyślny układ). */
+export type ButtonId = 'editHud' | 'resetHud';
 
 const STYLE_LABELS: Record<GraphicsStyle, string> = {
   classic: 'Klasyczny',
@@ -131,6 +149,10 @@ export interface RowContext {
   trackTitle: string;
   /** Canvas size for „Rozdzielczość”. */
   viewport: { width: number; height: number };
+  /** „Edytuj HUD” works only in the game (the pause menu), not in the main menu. */
+  hudEditor?: boolean;
+  /** Draft HUD layout (PlayerSettings `hud`, saved apart from `Settings`). */
+  hudLayout?: HudLayout;
 }
 
 /** Rows of `tab` for the draft `d`. */
@@ -217,9 +239,36 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
         { kind: 'info', label: 'Zapis świata', value: 'Jeden zapis, nadpisywany przy wyjściu' },
         { kind: 'info', label: 'Śmierć', value: 'Jedno życie: postać ginie na zawsze' },
       ];
-    case 'interface':
+    case 'interface': {
+      const changed = ctx.hudLayout ? changedSlots(ctx.hudLayout).length : 0;
       return [
-        { kind: 'header', label: 'Interfejs', note: 'Q / E zmień zakładkę' },
+        { kind: 'header', label: 'Układ HUD' },
+        {
+          kind: 'button',
+          id: 'editHud',
+          label: 'Układ HUD',
+          hint: 'Przeciągnij elementy, zmień ich rozmiar i przezroczystość.',
+          state: `Teraz: <b>${changed ? 'własny' : 'domyślny'}</b>${changed ? ` (${changedLabel(changed)})` : ''}${ctx.hudEditor ? '' : ' · edycja w trakcie gry'}`,
+          button: 'EDYTUJ HUD',
+          icon: 'edit',
+          accent: true,
+          disabled: !ctx.hudEditor,
+        },
+        {
+          ...uiScaleRow(d.graphics.uiScale),
+          hint: 'Globalnie, mnoży rozmiar każdego elementu HUD. Ten sam suwak co w zakładce Grafika.',
+          note: '60–120%',
+        } as SettingsRow,
+        {
+          kind: 'button',
+          id: 'resetHud',
+          label: 'Resetuj układ',
+          hint: 'Wraca do układu domyślnego. Skala interfejsu zostaje.',
+          button: 'PRZYWRÓĆ DOMYŚLNY UKŁAD',
+          icon: 'reset',
+          disabled: changed === 0,
+        },
+        { kind: 'header', label: 'Informacje na ekranie' },
         {
           kind: 'choice',
           id: 'noiseDisplay',
@@ -248,6 +297,7 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           on: d.interface.targetZombieHp,
         },
       ];
+    }
   }
 }
 
@@ -335,6 +385,7 @@ export function adjustRow(
     const v = sliderKey(row.value, key, fine);
     return v === undefined ? d : setSlider(d, row.id, v);
   }
+  if (row.kind === 'button') return d;
   if (row.kind === 'toggle') {
     if (key === 'Home' || key === 'End') return d;
     return toggleRow(d, row.id);

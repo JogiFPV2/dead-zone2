@@ -45,7 +45,20 @@ export interface Hud2Parts {
   /** Sim events: item log (`itemPicked` / `itemDropped` / `spotSearched`). */
   events(events: readonly ItemLogEvent[], now: number): void;
   resize(width: number, height: number): void;
+  /** HUD editor targets: the top bar and the item log group. */
+  readonly topbar: HTMLElement;
+  readonly itemlogGroup: HTMLElement;
+  /** HUD editor: sample rows in the item log (on) / cleared (off). */
+  setEditPreview(on: boolean, now: number): void;
 }
+
+/** HUD editor: item log sample (hud-editor.png: bandaż, puszka fasoli, 9 mm, taśma). */
+const EDIT_SAMPLE_LOG = [
+  { def: 'base:duct-tape', delta: 1 },
+  { def: 'base:ammo-9mm', delta: 12 },
+  { def: 'base:canned-beans', delta: -1 },
+  { def: 'base:bandage', delta: 1 },
+] as const;
 
 /**
  * HUD v2 additions (deadzone-hud-v2-spec): top bar with date/time and quick access, item log,
@@ -63,7 +76,7 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
     name: craftItemName,
     vectorIcon: (def) => itemIcon(opts.content().items.get(def)) || 'tag',
   });
-  opts.group('itemlog', log.el);
+  const itemlogGroup = opts.group('itemlog', log.el);
 
   const prompt = createInteractPrompt();
   opts.group('world', prompt.el);
@@ -83,6 +96,12 @@ export function createHud2Parts(opts: Hud2Options): Hud2Parts {
   const chipShown = createShowTimer(CAMERA_CHIP_MS);
 
   return {
+    topbar: top.el,
+    itemlogGroup,
+    setEditPreview(on, now) {
+      log.clear(now);
+      if (on) log.push(EDIT_SAMPLE_LOG, now);
+    },
     frame(f) {
       const s = f.state;
       top.setClock(f.clock);

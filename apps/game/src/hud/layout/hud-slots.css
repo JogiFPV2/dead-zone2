@@ -1,0 +1,65 @@
+/* HUD editor slots (deadzone-hud-v2-spec „Edytor HUD”, accepted mockups hud-editor*.png):
+   one positioned group per layout slot. The applier (apply-layout.ts) overrides a group's
+   left / right / top / bottom / transform / opacity inline only for slots the player changed. */
+
+/* `status`: objective, status chips and the HP bar as one block (x 18, y 48), HP under them. */
+.dz-hud .dz-g--status {
+  left: var(--_safe);
+  top: calc(48px * var(--_s));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  transform: scale(var(--_s));
+  transform-origin: top left;
+}
+.dz-hud .dz-g--status > .dz-g,
+.dz-hud[data-objective='none'] .dz-g--status > .dz-g {
+  position: relative;
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  transform: none;
+}
+.dz-hud .dz-g--status > .dz-g--hp {
+  margin-top: 2px;
+}
+
+/* `weapon`: the ammo widget in its own group above the quickbar (right 18, bottom 73). */
+.dz-hud .dz-g--weapon {
+  right: var(--_safe);
+  bottom: calc(73px * var(--_s));
+  width: 142px;
+  transform: scale(var(--_s));
+  transform-origin: bottom right;
+}
+.dz-hud .dz-g--weapon .dz-fw,
+.dz-hud .dz-g--weapon .dz-fw[data-dock] {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+}
+
+/* `hints`: the key-hint row (F1) in the bottom-left corner, where the HP bar was. */
+.dz-hud .dz-g--hints,
+.dz-hud[data-objective='none'] .dz-g--hints {
+  top: auto;
+  bottom: var(--_safe);
+  transform-origin: bottom left;
+}
+
+/* Hidden in game („Widoczny w grze” off). */
+.dz-hud [data-hud-off],
+[data-hud-off] {
+  display: none !important;
+}
+/* Editor sample: the calm-hidden ammo widget shows. */
+.dz-hud[data-hud-edit] .dz-fw {
+  opacity: 1;
+}
+/* Editor: a hidden element stays faintly visible so it can be switched back on. */
+[data-hud-ghost] {
+  opacity: 0.28 !important;
+}

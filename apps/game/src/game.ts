@@ -19,6 +19,8 @@ import { PlayerInput } from './input/player-input.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
+import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
+import { installHudLayout } from './hud/layout/hud-layout-runtime.js';
 import { displayName } from './characters/display-name.js';
 import { GraphicsStylePass, isPixelStyle, pixelRows } from './render/graphics-style.js';
 import { NoiseRingModel } from './hud/noise/noise-model.js';
@@ -139,6 +141,13 @@ const FOLLOW_HALF_LIFE_MS = 80;
 /** Stress world edge in tiles (8 km); kept here so the stress module stays lazy. */
 
 /** The game itself (the default page); imported by main.ts. */
+function localStorageOrUndefined(): Storage | undefined {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
 const container = document.getElementById('app');
 if (!container) throw new Error('#app not found');
 
@@ -204,6 +213,9 @@ const worldRoot = floating.root;
 scene.add(worldRoot);
 for (const o of [...scene.children]) if (o !== worldRoot) worldRoot.add(o);
 const settings = createSettingsStore();
+// Whole settings object (`hud` = the HUD editor layout, deadzone.hudLayout; cloud copy via
+// account/settings-sync.ts when signed in).
+const playerSettings = new LocalPlayerSettingsStore(settings, localStorageOrUndefined());
 // „Skala interfejsu” for every UI layer, following the stored setting.
 bindUiScale(settings);
 // Town kit (CC0 modules, one atlas material): BatchedMesh per chunk + merged terrain per chunk.
@@ -728,6 +740,8 @@ const escapeWindows: readonly Closable[] = [
 const pause = new PauseController({
   root: container,
   settings,
+  player: playerSettings,
+  openHudEditor: (draft, done) => hudLayout.openEditor(draft.hud, done),
   audio,
   trackTitle: MENU_TRACK.title,
   // Single-player: the menu stops the sim. Co-op will pass false (menu only, world runs on).
@@ -962,6 +976,18 @@ const interaction = new InteractController({
 // Vehicle UI first (car target, in a car, pump, its menu / windows), then doors and containers.
 const vehicleHud = createVehicleHud();
 container.append(vehicleHud.el);
+// HUD editor layout (Ustawienia › Interfejs › EDYTUJ HUD): the car panel shares the weapon slot.
+const hudLayout = installHudLayout({
+  root: container,
+  player: playerSettings,
+  settings,
+  targets: () => {
+    const t = hud.layoutTargets();
+    const dock = vehicleHud.el.querySelector<HTMLElement>('.dz-vh__dock');
+    return dock ? { ...t, weapon: [...(t.weapon ?? []), dock] } : t;
+  },
+  setPreview: (on) => hud.setEditPreview(on),
+});
 /** Nearest door / non-vehicle storage the F key would use instead of a car (sim m). */
 function otherTargetDist(): number {
   const p = snapshots.sample(performance.now(), TICK_MS);

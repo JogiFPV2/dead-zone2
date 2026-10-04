@@ -68,10 +68,10 @@ describe('settings screen tabs', () => {
   it('edits a draft and saves it on Zastosuj (Enter)', () => {
     const { screen, settings, tab, root, onClose } = setup();
     tab('interface').click();
-    // Row 0 = Pokazuj hałas (card with a preview), row 1 = Pokazuj życie zombie.
-    root.querySelector<HTMLElement>('[data-row="0"] [data-opt="always"]')!.click();
+    // Rows 0–2 = Układ HUD, row 3 = Pokazuj hałas (card with a preview), row 4 = Pokazuj życie zombie.
+    root.querySelector<HTMLElement>('[data-row="3"] [data-opt="always"]')!.click();
     expect(root.querySelector('.dzo-preview-tag')!.textContent).toContain('CHÓD');
-    root.querySelector<HTMLElement>('[data-row="1"]')!.click();
+    root.querySelector<HTMLElement>('[data-row="4"]')!.click();
     expect(settings.get().interface.showZombieHp).toBe(false);
     screen.onKey(key('Enter'));
     expect(settings.get().interface.showZombieHp).toBe(true);

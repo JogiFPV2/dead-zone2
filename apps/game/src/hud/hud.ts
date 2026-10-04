@@ -2,7 +2,9 @@ import '@deadzone/ui/hud.css';
 import './hud-layout.css';
 import './hud-v2.css';
 import './hud-v3.css';
+import './layout/hud-slots.css';
 import type { SimEvent } from '@deadzone/protocol';
+import type { HudLayoutSlot } from '@deadzone/ui/settings';
 import {
   applyUiScale,
   applyVignetteAt,
@@ -143,7 +145,30 @@ export interface Hud {
   onPromptMenu(fn: (i: number, kind: 'pick' | 'hover') => void): void;
   /** Info toast (e.g. „wkrótce” for screens that do not exist yet). */
   toast(text: string): void;
+  /** HUD editor: the DOM element(s) each layout slot moves (`weapon` without the car panel). */
+  layoutTargets(): Partial<Record<HudLayoutSlot, HTMLElement[]>>;
+  /**
+   * HUD editor: elements hidden in calm play (item log, weapon panel, threat, key hints) show
+   * sample content so they can be placed; off = back to the game state on the next frame.
+   */
+  setEditPreview(on: boolean): void;
 }
+
+/** HUD editor sample of the weapon panel (hud-editor.png: Pistolet M9, 12/15, zapas 34). */
+const SAMPLE_FIREARM: FirearmVM = {
+  weapon: 'base:pistol',
+  name: 'Pistolet M9',
+  state: 'normal',
+  title: '',
+  loaded: 12,
+  capacity: 15,
+  reserve: 34,
+  reserveMags: 0,
+  ammo: '9 mm',
+  pips: 'bars',
+  noiseRadius: 0,
+  rangeTiles: 0,
+};
 
 /** Runs `update` only when the view model's key changes (no DOM writes for equal values). */
 function gated<P>(m: Mounted<P>): (vm: P) => void {
@@ -174,17 +199,23 @@ export function createHud(opts: HudOptions): Hud {
     return g;
   };
 
+  // HUD editor slot `status` (accepted mockup hud-editor.png): objective, status chips and the
+  // HP bar as one block that moves and scales together (HP under the statuses).
+  const statusGroup = group('status');
+  const inStatus = (name: string, el: HTMLElement): void => {
+    statusGroup.append(group(name, el));
+  };
   // TODO(objectives): no objective system in the sim yet → card hidden, moodles at y 32.
   const objective = createObjectiveCard(null);
-  group('objective', objective.el);
+  inStatus('objective', objective.el);
   const moodles = createMoodleList([], { maxRows: 1, maxVisible: MAX_STATUS_CHIPS });
-  group('moodles', moodles.el);
+  inStatus('moodles', moodles.el);
   const hintsBase = createKeyHints({ items: hintItems(opts.bindings()), visible: true });
-  group('hints', hintsBase.el);
+  const hintsGroup = group('hints', hintsBase.el);
   // Sim threat 0–100 → banner level (low hides it).
   const threat = createThreatBanner({ level: 'low' });
   const setThreat = gated(threat);
-  group('threat', threat.el);
+  const threatGroup = group('threat', threat.el);
   const minimapVM = (f: Pick<HudFrame, 'px' | 'py' | 'facing' | 'cameraYaw'>): MinimapVM => ({
     player: { x: f.px, z: f.py, heading: f.facing },
     cameraYaw: f.cameraYaw,
@@ -236,7 +267,8 @@ export function createHud(opts: HudOptions): Hud {
   hotbar.append(...slots.map((s) => s.slot.el));
   const hotbarGroup = group('hotbar', hotbar);
   const firearmWidget = createFirearmWidget();
-  hotbarGroup.append(firearmWidget.el);
+  // Own group (HUD editor slot `weapon`, shared with the car panel): right 18, bottom 73.
+  const weaponGroup = group('weapon', firearmWidget.el);
   let firearm: FirearmVM | undefined;
   const slotBar = document.createElement('div');
   slotBar.className = 'dz-fw-slotbar';
@@ -244,7 +276,7 @@ export function createHud(opts: HudOptions): Hud {
   slotBar.append(slotBarFill);
   // HUD v3: thin HP bar only; thirst / hunger / energy show as statuses when they are a problem.
   const hp = createHpBar();
-  group('hp', hp.el);
+  inStatus('hp', hp.el);
   const ammoShown = createShowTimer(AMMO_SHOW_MS);
   const actionsGroup = group('actions');
   const buttons = new Map<
@@ -465,6 +497,29 @@ export function createHud(opts: HudOptions): Hud {
     setPrompt: (vm) => v2.setPrompt(vm),
     onPromptMenu: (fn) => v2.onPromptMenu(fn),
     toast: (text) => toasts.push({ kind: 'info', text }),
+    layoutTargets: () => ({
+      topbar: [v2.topbar],
+      status: [statusGroup],
+      minimap: [minimapGroup],
+      itemlog: [v2.itemlogGroup],
+      weapon: [weaponGroup],
+      hotbar: [hotbarGroup],
+      threat: [threatGroup],
+      hints: [hintsGroup],
+    }),
+    setEditPreview(on) {
+      hud.toggleAttribute('data-hud-edit', on);
+      v2.setEditPreview(on, performance.now());
+      if (on) {
+        threat.update({ level: 'medium' });
+        firearmWidget.update(SAMPLE_FIREARM, 'right');
+        hud.dataset.ammo = 'show';
+        hintsBase.update({ items: hintItems(opts.bindings(), false), visible: true });
+      } else {
+        lastState = undefined;
+        lastUpdate = -Infinity;
+      }
+    },
     resize(width, height) {
       applyUiScale(hud, scaledUi(computeUiScale(width, height)));
       v2.resize(width, height);

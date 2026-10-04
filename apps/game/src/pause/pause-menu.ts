@@ -1,9 +1,14 @@
 import type { AudioEngine } from '../audio/audio-engine.js';
+import type { PlayerSettingsStore } from '../settings/player-settings-store.js';
 import type { SettingsStore } from '../settings/store.js';
 import { createConfirm, type ConfirmDialog } from '../menu/confirm-dialog.js';
 import { icon } from '../menu/icons.js';
 import { MINI_LOGO, keyBadge, mountOverlay } from '../menu/overlay-stage.js';
-import { createSettingsScreen, type SettingsScreen } from '../menu/settings-screen.js';
+import {
+  createSettingsScreen,
+  type SettingsDraft,
+  type SettingsScreen,
+} from '../menu/settings-screen.js';
 import {
   PAUSE_ITEMS,
   SaveRefusedError,
@@ -19,6 +24,8 @@ import {
 export interface PauseMenuOptions {
   readonly root: HTMLElement;
   readonly settings: SettingsStore;
+  /** Whole settings object (the HUD layout `hud` is saved through it). */
+  readonly player?: Pick<PlayerSettingsStore, 'load' | 'save'>;
   readonly audio: Pick<AudioEngine, 'play' | 'preview'>;
   readonly trackTitle: string;
   /** Single-player: the sim is stopped while the menu is open (co-op: it keeps running). */
@@ -28,6 +35,21 @@ export interface PauseMenuOptions {
   onResume(): void;
   /** Saves the world and leaves to the main menu; rejects when the save failed. */
   onSaveExit(): Promise<void>;
+  /**
+   * Opens the in-game HUD editor (Ustawienia › Interfejs › EDYTUJ HUD), starting from the
+   * settings draft's layout. `done(true)` after Zapisz
+   * (back to the game), `done(false)` after Anuluj (back to Ustawienia). Absent = row disabled.
+   */
+  readonly openHudEditor?: (
+    draft: SettingsDraft,
+    done: (saved: boolean) => void,
+  ) => HudEditorHandle;
+}
+
+/** What the pause menu needs from an open HUD editor. */
+export interface HudEditorHandle {
+  onKey(e: KeyboardEvent): boolean;
+  dispose(): void;
 }
 
 export interface PauseMenu {
@@ -42,6 +64,7 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
   const { el, stage } = overlay;
   let focus = 0;
   let settingsScreen: SettingsScreen | undefined;
+  let hudEditor: HudEditorHandle | undefined;
   let confirm: ConfirmDialog | undefined;
   let saving = false;
   let error = '';
@@ -61,7 +84,7 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
 
   function render(): void {
     if (disposed) return;
-    el.hidden = settingsScreen !== undefined;
+    el.hidden = settingsScreen !== undefined || hudEditor !== undefined;
     const keep = stage.querySelector('.dzo-confirm');
     const status = o.pausesSim
       ? 'Symulacja zatrzymana · AI i czas nie postępują'
@@ -78,7 +101,7 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
 </div>
 <div class="dzo-hints">${keyBadge('↑↓')}<span>wybierz</span>${keyBadge('ENTER')}<span>potwierdź</span>${keyBadge('ESC')}<span>wróć do gry</span></div>`;
     if (keep) stage.appendChild(keep);
-    else if (!settingsScreen)
+    else if (!settingsScreen && !hudEditor)
       stage.querySelector<HTMLElement>('[tabindex="0"]')?.focus({ preventScroll: true });
   }
 
@@ -121,23 +144,45 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
     ui('ui-click1');
     if (id === 'resume') o.onResume();
     else if (id === 'saveExit') askSaveExit();
-    else {
-      settingsScreen = createSettingsScreen({
-        root: o.root,
-        settings: o.settings,
-        audio: o.audio,
-        trackTitle: o.trackTitle,
-        onClose() {
-          settingsScreen = undefined;
-          render();
-        },
-      });
-      render();
-    }
+    else openSettings();
+  }
+
+  function openSettings(draft?: SettingsDraft): void {
+    const edit = o.openHudEditor;
+    settingsScreen = createSettingsScreen({
+      root: o.root,
+      settings: o.settings,
+      ...(o.player ? { player: o.player } : {}),
+      audio: o.audio,
+      trackTitle: o.trackTitle,
+      ...(draft ? { initialTab: 'interface' as const, initialDraft: draft } : {}),
+      onClose() {
+        settingsScreen = undefined;
+        render();
+      },
+      ...(edit
+        ? {
+            onEditHud(d: SettingsDraft) {
+              // The settings screen disposed itself; the pause overlay stays hidden underneath.
+              settingsScreen = undefined;
+              hudEditor = edit(d, (saved) => {
+                hudEditor?.dispose();
+                hudEditor = undefined;
+                if (disposed) return;
+                if (saved) o.onResume();
+                else openSettings(d);
+              });
+              render();
+            },
+          }
+        : {}),
+    });
+    render();
   }
 
   function onKey(e: KeyboardEvent): boolean {
     if (disposed) return false;
+    if (hudEditor) return hudEditor.onKey(e);
     if (settingsScreen) return settingsScreen.onKey(e);
     if (confirm) return confirm.onKey(e);
     const cmd = pauseKey(e.code, e.shiftKey);
@@ -177,6 +222,7 @@ export function createPauseMenu(o: PauseMenuOptions): PauseMenu {
     dispose() {
       if (disposed) return;
       disposed = true;
+      hudEditor?.dispose();
       settingsScreen?.dispose();
       confirm?.dispose();
       overlay.dispose();
