@@ -1,4 +1,4 @@
-import { Group, Vector3, WebGLRenderer } from 'three';
+import { ArrowHelper, Group, Vector3, WebGLRenderer } from 'three';
 import { computeUiScale } from '@deadzone/ui';
 import {
   CAMERA_DISTANCE,
@@ -103,7 +103,7 @@ import { PLAYER_HEIGHT } from './player/player-view.js';
 import { PhysAdapter } from './anim/phys-adapter.js';
 import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
-import { weaponLoadout } from './weapons/loadout.js';
+import { devHoldWeapon, weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
 import { FloatingOrigin, chunkCorner } from './render/floating-origin.js';
@@ -421,6 +421,16 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 worldRoot.add(crowdView.mesh);
 const player = new PlayerView();
 worldRoot.add(player.root);
+// Dev `?arrow=1`: facing arrow (body +X) on the ground and at chest height (pose previews).
+if (import.meta.env.DEV && new URLSearchParams(location.search).get('arrow') === '1') {
+  for (const [y, color] of [
+    [0.03, 0xffd400],
+    [1.4, 0xff3030],
+  ] as const)
+    player.root.add(
+      new ArrowHelper(new Vector3(1, 0, 0), new Vector3(0, y, 0), 1.6, color, 0.25, 0.12),
+    );
+}
 
 // HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
 const openingFeedback = new OpeningFeedback(PLAYER_ID);
@@ -1030,6 +1040,12 @@ if (import.meta.env.DEV) {
 
 let lastFrameMs: number | undefined;
 let cameraSnapped = false;
+// Dev `?hold=base:crowbar` / `?hold=chainsaw`: weapon drawn in the hand regardless of the
+// inventory (grip previews, `weapons/grip.ts`). An optional `@grip` suffix overrides the grip.
+const devQuery = import.meta.env.DEV ? new URLSearchParams(location.search) : undefined;
+const devHoldParam = devQuery?.get('hold') ?? null;
+/** Dev `?aim=1`: the player view keeps the aim pose (grip previews). */
+const devAim = devQuery?.get('aim') === '1';
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
@@ -1043,8 +1059,10 @@ renderer.setAnimationLoop((time) => {
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {
-    const { hand, back } = weaponLoadout(characters.get(phys.localId), weaponIndex);
-    player.aiming = isAiming(performance.now());
+    const loadout = weaponLoadout(characters.get(phys.localId), weaponIndex);
+    const hand = devHoldWeapon(devHoldParam, weaponIndex) ?? loadout.hand;
+    const back = loadout.back;
+    player.aiming = devAim || isAiming(performance.now());
     player.setWeapons(hand, back, weaponModels);
     player.apply(state, performance.now(), phys.get(phys.localId), simTick);
     const goal = simToWorld(state.x, state.y, state.z);

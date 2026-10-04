@@ -1,6 +1,7 @@
 import type { CharacterView, WeaponKind } from '@deadzone/protocol';
 import type { WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from './weapon-kinds.js';
+import { gripOfKind, isGrip, type Grip } from './grip.js';
 
 export interface Loadout {
   /** Weapon drawn in the right hand. */
@@ -57,10 +58,46 @@ export function weaponLoadout(
   if (c.equippedPrimary && c.weaponKind !== 'unarmed' && c.weaponKind !== 'item') {
     const known = weapons.get(c.equippedPrimary);
     const cls = weaponClassOf(c.weaponKind, c.twoHanded, known?.cls);
+    const grip = known?.grip ?? gripOfKind(c.weaponKind, c.twoHanded);
     hand = known
       ? { ...known, cls }
-      : { id: c.equippedPrimary, cls, knockback: 0, length: FALLBACK_LENGTH[cls] };
+      : {
+          id: c.equippedPrimary,
+          cls,
+          knockback: 0,
+          length: FALLBACK_LENGTH[cls],
+          ...(grip ? { grip } : {}),
+        };
   }
   const back = c.equippedBack ? weapons.get(c.equippedBack) : undefined;
   return { hand, back };
+}
+
+const GRIP_CLASS: Record<Grip, WeaponClass> = {
+  one_hand: 'one_handed',
+  two_hand: 'two_handed',
+  knife: 'stab',
+  spear: 'stab',
+  pistol: 'firearm',
+  rifle: 'firearm',
+  chainsaw: 'two_handed',
+};
+
+/**
+ * Dev `?hold=<item id>[@grip]` (or a bare grip name, e.g. `chainsaw`): the weapon shown in the hand
+ * regardless of the inventory. Undefined when the param is empty or names nothing known.
+ */
+export function devHoldWeapon(
+  param: string | null,
+  weapons: ReadonlyMap<string, WeaponInfo>,
+): WeaponInfo | undefined {
+  if (!param) return undefined;
+  const [id = '', at] = param.split('@');
+  const forced = isGrip(at) ? at : undefined;
+  const known = weapons.get(id);
+  if (known) return forced ? { ...known, grip: forced } : known;
+  const grip = forced ?? (isGrip(id) ? id : undefined);
+  if (!grip) return undefined;
+  const cls = GRIP_CLASS[grip];
+  return { id: `dev:${grip}`, cls, knockback: 0, length: grip === 'chainsaw' ? 0.9 : 0.6, grip };
 }

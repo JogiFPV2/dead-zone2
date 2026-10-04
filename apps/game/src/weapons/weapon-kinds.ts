@@ -1,5 +1,6 @@
 import type { PackFile } from '@deadzone/content';
 import type { WeaponClass } from '../anim/pose.js';
+import { gripOfItem, type Grip } from './grip.js';
 
 /** What the views need to know about a weapon item. */
 export interface WeaponInfo {
@@ -11,6 +12,8 @@ export interface WeaponInfo {
   length: number;
   /** `melee.category` (placeholder shape of weapons without a model). */
   category?: string;
+  /** How it is held (`weapons/grip.ts`); undefined = one-hand clip pose. */
+  grip?: Grip;
 }
 
 type Obj = Record<string, unknown>;
@@ -59,7 +62,9 @@ export function buildWeaponIndex(files: readonly PackFile[]): Map<string, Weapon
       const melee = isObj(i.melee) ? i.melee : {};
       const knockback = typeof melee.knockback === 'number' ? melee.knockback : 0;
       const category = typeof melee.category === 'string' ? melee.category : undefined;
+      const grip = gripOfItem(i);
       out.set(i.id, {
+        ...(grip ? { grip } : {}),
         id: i.id,
         cls,
         knockback,

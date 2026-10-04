@@ -122,7 +122,10 @@ export const PLACEHOLDER_STEEL = '#d3d8de';
 const PLACEHOLDER_GUN = '#5d646c';
 
 /** Head shape of a weapon without a model, from its id / `melee.category`. */
-export function placeholderHead(info: WeaponInfo): 'gun' | 'axe' | 'blade' | 'spear' | 'club' {
+export function placeholderHead(
+  info: WeaponInfo,
+): 'gun' | 'axe' | 'blade' | 'spear' | 'club' | 'saw' {
+  if (info.grip === 'chainsaw') return 'saw';
   if (info.cls === 'firearm') return 'gun';
   if (/axe|hatchet|cleaver/.test(info.id)) return 'axe';
   if (info.category === 'spear') return 'spear';
@@ -160,6 +163,15 @@ export function placeholderWeapon(info: WeaponInfo): Group {
       const grip = new Mesh(new BoxGeometry(0.05, 0.07, 0.14), dark);
       grip.position.set(0, -0.02, -0.07);
       g.add(body, grip);
+      break;
+    }
+    case 'saw': {
+      // Motor body behind the grip, guide bar forward (+Y).
+      const orange = placeholderMaterial('#c8641e');
+      const body = new Mesh(new BoxGeometry(0.14, 0.26, 0.2), orange);
+      body.position.y = 0.02;
+      g.add(body);
+      box(0.02, L * 0.62, 0.07, 0, 0.15 + L * 0.31);
       break;
     }
     case 'axe':

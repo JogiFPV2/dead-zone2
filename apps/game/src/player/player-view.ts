@@ -3,6 +3,7 @@ import {
   CapsuleGeometry,
   Group,
   Mesh,
+  Vector3,
   type AnimationClip,
   type MeshStandardMaterial,
   type Object3D,
@@ -19,6 +20,18 @@ import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
 import { gaitClip, targetYaw } from './locomotion.js';
+import { ArmPose, GRIP_SPECS, armBones } from '../anim/arm-pose.js';
+import type { BodyState } from '../anim/contract.js';
+
+/** Body states in which the hands keep the weapon grip (else the clip owns the arms). */
+const GRIP_STATES: ReadonlySet<BodyState> = new Set([
+  'idle',
+  'walk',
+  'run',
+  'attack',
+  'push',
+  'climb',
+]);
 
 /** Grey-box placeholder sizes (world units). */
 export const PLAYER_HEIGHT = 1.6;
@@ -47,6 +60,9 @@ export class PlayerView {
   private held: { key: string; object: Object3D; parent: Group } | undefined;
   private slung: { key: string; object: Object3D } | undefined;
   private weapon: WeaponClass = 'unarmed';
+  private hand: WeaponInfo | undefined;
+  private arms: ArmPose | undefined;
+  private attackStartMs = NaN;
   /** Aiming (set by the game from input): the body faces the cursor instead of the movement. */
   aiming = false;
   /** Fallback state when no physics state is passed (mock / tests). */
@@ -103,6 +119,7 @@ export class PlayerView {
     models: WeaponModels,
   ): void {
     this.weapon = hand?.cls ?? 'unarmed';
+    this.hand = hand;
     const m = this.mounts;
     if (!m) return;
     const handKey = hand?.id ?? '';
@@ -111,7 +128,12 @@ export class PlayerView {
       this.held = undefined;
       if (hand) {
         // Guns and stabbing weapons point along the fingers; swung weapons out of the fist.
-        const parent = hand.cls === 'firearm' || hand.cls === 'stab' ? m.handGun : m.hand;
+        const spec = hand.grip ? GRIP_SPECS[hand.grip] : undefined;
+        const parent = spec
+          ? m[spec.mount]
+          : hand.cls === 'firearm' || hand.cls === 'stab'
+            ? m.handGun
+            : m.hand;
         const object = models.create(hand);
         parent.add(object);
         this.held = { key: handKey, object, parent };
@@ -205,8 +227,58 @@ export class PlayerView {
     if (!this.mounts) {
       this.root.updateMatrixWorld(true);
       this.mounts = createWeaponMounts(this.rig.object);
+      const right = armBones(this.rig.object, 'R');
+      const chest =
+        this.rig.object.getObjectByName('Chest') ?? this.rig.object.getObjectByName('Torso');
+      this.arms =
+        right && chest
+          ? new ArmPose(
+              right,
+              armBones(this.rig.object, 'L'),
+              chest,
+              this.rig.object,
+              this.rig.object.getObjectByName('Head') ?? undefined,
+            )
+          : undefined;
+      return;
     }
+    // Grip pose (anim/arm-pose.ts) on top of the clip: hands on the weapon, guns raised.
+    if (pose.state === 'attack') {
+      if (Number.isNaN(this.attackStartMs)) this.attackStartMs = nowMs;
+    } else this.attackStartMs = NaN;
+    const attack = Number.isNaN(this.attackStartMs)
+      ? NaN
+      : Math.min(1, (nowMs - this.attackStartMs) / 450);
+    const grip = this.hand?.grip;
+    this.lastBodyState = `${pose.state}/${pose.anim}`;
+    this.root.updateMatrixWorld(true);
+    this.arms?.update(grip ? GRIP_SPECS[grip] : undefined, this.held?.parent, {
+      aim: aiming || pose.anim === 'aim' || pose.anim === 'shoot',
+      attack,
+      active: GRIP_STATES.has(pose.state) && !this.dead,
+      dt,
+    });
   }
+
+  /**
+   * Grip diagnostics (dev hook, tests): held weapon barrel (+Y of its mount) vs the facing (body
+   * +X), in degrees, plus the body state and grip blend.
+   */
+  debugGrip(): { state: string; grip?: string; blend: number; barrelVsFacingDeg: number } {
+    this.root.updateMatrixWorld(true);
+    const m = this.held?.parent;
+    const barrel = m
+      ? new Vector3(0, 1, 0).transformDirection(m.matrixWorld)
+      : new Vector3(Number.NaN, 0, 0);
+    const face = new Vector3(1, 0, 0).applyQuaternion(this.root.quaternion);
+    return {
+      state: this.lastBodyState,
+      ...(this.hand?.grip ? { grip: this.hand.grip } : {}),
+      blend: this.arms?.blend ?? 0,
+      barrelVsFacingDeg: (barrel.angleTo(face) * 180) / Math.PI,
+    };
+  }
+  private lastBodyState = '';
 
   /** Minimal state from the snapshot alone (no adapter): locomotion from position deltas. */
   private last: { x: number; y: number } | undefined;
