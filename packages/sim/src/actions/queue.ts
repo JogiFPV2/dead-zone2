@@ -3,13 +3,14 @@ import {
   type ActionInterruptReason,
   type ActionKind,
   type CommandRejectReason,
+  type PlayerNoiseKind,
 } from '@deadzone/protocol';
 import { ticksPerGameMinute } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { playerItems } from '../items/inventory.js';
 import type { ActionState, PlayerItems } from '../items/store.js';
 import { threatNearby } from '../systems/sleep.js';
-import { emitNoise } from '../ai/noise.js';
+import { emitNoise, type PlayerNoiseBy } from '../ai/noise.js';
 import { Pen, penaltyMul } from '../survival/penalties.js';
 import { floorZ } from '../world/levels.js';
 
@@ -110,6 +111,22 @@ export function startAction(
   return undefined;
 }
 
+const ACTION_NOISE_KINDS: Partial<Record<ActionKind, PlayerNoiseKind>> = {
+  search: 'search',
+  eat: 'eat',
+  drink: 'drink',
+  bandage: 'bandage',
+  unpack: 'unpack',
+  craft: 'craft',
+  watch: 'watch',
+};
+
+/** `playerNoise` kind of a timed action's start noise (none for kinds without a mapping). */
+const actionNoiseKind = (kind: ActionKind, eid: number): PlayerNoiseBy | undefined => {
+  const k = ACTION_NOISE_KINDS[kind];
+  return k ? { eid, kind: k } : undefined;
+};
+
 function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: ActionHandler): void {
   // Slower with wounds (woundPenalties.actionSpeed, capped at maxPenalty < 1).
   const speed = Math.max(0.1, penaltyMul(w, eid, Pen.action));
@@ -132,6 +149,8 @@ function begin(w: SimWorld, eid: number, p: PlayerItems, a: ActionState, h: Acti
       noise.radiusTiles,
       noise.volume,
       'action',
+      0,
+      actionNoiseKind(kindName(a), eid),
     );
   }
   w.events.push({

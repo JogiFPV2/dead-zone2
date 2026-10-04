@@ -118,6 +118,11 @@ export interface AiWorld {
   readonly threat: Map<number, Threat>;
   /** Player eid → visibility factor for zombie sight this tick (derived). */
   readonly visibility: Map<number, number>;
+  /**
+   * `playerNoise` throttle (not state, not hashed or saved): `eid * 64 + kind index` → tick of
+   * the last event of a continuous kind (ai/noise.ts).
+   */
+  readonly playerNoiseTick: Map<number, number>;
   /** Per zombie eid (derived): straight line to the goal is walkable (checked when thinking). */
   readonly direct: Uint8Array;
   /** Per zombie eid: position before the last movement (progress check for `stuck`). */
@@ -184,6 +189,7 @@ export function createAiWorld(
     flows: new Map(),
     threat: new Map(),
     visibility: new Map(),
+    playerNoiseTick: new Map(),
     direct: new Uint8Array(capacity),
     lastX: new Float32Array(capacity),
     lastY: new Float32Array(capacity),

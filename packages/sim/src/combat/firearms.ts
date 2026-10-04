@@ -409,7 +409,10 @@ export function fire(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, 
   cb.swingTick[eid] = w.tick;
   g.item.uses--;
   st.version++;
-  emitNoise(w, x, y, z, r.shotNoise.radiusTiles, r.shotNoise.volume, 'shot');
+  emitNoise(w, x, y, z, r.shotNoise.radiusTiles, r.shotNoise.volume, 'shot', 0, {
+    eid,
+    kind: 'shot',
+  });
   let ax = 1;
   let ay = 0;
   {

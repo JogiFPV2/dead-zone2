@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LootTableSchema } from '../schemas/loot-table.js';
+import { MIN_TRAIL_SPACING_M, PlayerMapSettingsSchema } from '../schemas/map-markers-settings.js';
 import { ModManifestSchema } from '../schemas/mod-manifest.js';
 import { RecipeSchema } from '../schemas/recipe/recipe.js';
 import { SkillSchema } from '../schemas/skill.js';
@@ -54,5 +55,19 @@ describe('WorldSettingsSchema', () => {
   it('dayLengthMinutes domyślnie 60', () => {
     expect(WorldSettingsSchema.parse({}).dayLengthMinutes).toBe(60);
     expect(WorldSettingsSchema.safeParse({ dayLengthMinutes: 0 }).success).toBe(false);
+  });
+});
+
+describe('mapa gracza: odstęp śladu', () => {
+  it(`trailSpacingM: minimum ${MIN_TRAIL_SPACING_M} m (Serwer odrzuca gęstszy ślad)`, () => {
+    const parse = (trailSpacingM: number) => PlayerMapSettingsSchema.safeParse({ trailSpacingM });
+    expect(PlayerMapSettingsSchema.parse(undefined).trailSpacingM).toBe(16);
+    expect(parse(16).success).toBe(true);
+    expect(parse(32).success).toBe(true);
+    expect(parse(15.9).success).toBe(false);
+    expect(parse(8).success).toBe(false);
+    expect(parse(1).success).toBe(false);
+    expect(WorldSettingsSchema.safeParse({ playerMap: { trailSpacingM: 16 } }).success).toBe(true);
+    expect(WorldSettingsSchema.safeParse({ playerMap: { trailSpacingM: 10 } }).success).toBe(false);
   });
 });

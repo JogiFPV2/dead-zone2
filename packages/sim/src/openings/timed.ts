@@ -1,6 +1,6 @@
 import type { CommandRejectReason } from '@deadzone/protocol';
 import { registerAction } from '../actions/queue.js';
-import { emitNoise } from '../ai/noise.js';
+import { emitNoise, type PlayerNoiseBy } from '../ai/noise.js';
 import { gridOf } from '../ai/commands.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { gameMinuteAt, ticksPerGameMinute } from '../core/clock.js';
@@ -108,10 +108,15 @@ function give(w: SimWorld, eid: number, id: string, n: number): void {
   addPieces(st, def, into, n, gameMinuteAt(w.clock, w.tick));
 }
 
-function noiseAt(w: SimWorld, key: number, n: { radiusTiles: number; volume: number }): void {
+function noiseAt(
+  w: SimWorld,
+  key: number,
+  n: { radiusTiles: number; volume: number },
+  by: PlayerNoiseBy,
+): void {
   const k = unpackKey(key);
   const c = edgeCentre(key % 2, k.tx, k.ty);
-  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'impact');
+  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'impact', 0, by);
 }
 
 const vaultTarget = (key: number): VaultTarget => {
@@ -146,7 +151,7 @@ export function registerOpeningActions(): void {
       const p = playerItems(w, eid);
       const withHand = !p?.slots.get('hand_primary');
       setOpening(w.openings, key, t.kind, OS.broken, 0, { cleared: 0 });
-      windowSmashed(w, key, 'player', { playerId: w.c.Player.id[eid] ?? 0, withHand });
+      windowSmashed(w, key, 'player', { playerId: w.c.Player.id[eid] ?? 0, withHand }, eid);
       emitOpeningChanged(w, key, t.kind, 'player');
       if (withHand && w.rng.actions.nextFloat() < w.openings.cfg.window.handCutChance)
         inflictWound(w, eid, HAND_R, woundKindIndex('laceration'));
@@ -206,8 +211,8 @@ export function registerOpeningActions(): void {
       return undefined;
     },
     durationMin: (w, eid) => secMin(w, w.openings.cfg.barricade.addSec) * carpentryMul(w, eid),
-    begin(w, _eid, a) {
-      noiseAt(w, a.edge!, w.openings.cfg.barricade.noise);
+    begin(w, eid, a) {
+      noiseAt(w, a.edge!, w.openings.cfg.barricade.noise, { eid, kind: 'board' });
     },
     ignore: ['threat'],
     complete(w, eid, a) {
@@ -273,7 +278,7 @@ export function registerOpeningActions(): void {
       const t = target(w, eid, a) as Target;
       const f = w.openings.cfg.force;
       const method = forceMethod(w, eid);
-      noiseAt(w, t.key, method === 'pry' ? f.pryNoise : f.kickNoise);
+      noiseAt(w, t.key, method === 'pry' ? f.pryNoise : f.kickNoise, { eid, kind: method });
       const chance =
         (method === 'pry' ? f.pryChance : f.kickChance) +
         skillLevel(w, eid, f.strengthSkill) * f.chancePerStrength;
@@ -282,7 +287,7 @@ export function registerOpeningActions(): void {
         setOpening(w.openings, t.key, t.kind, OS.broken, 0);
         emitOpeningChanged(w, t.key, t.kind, 'player');
       } else {
-        damageOpening(w, t.key, t.kind, f.failDamage, 'player');
+        damageOpening(w, t.key, t.kind, f.failDamage, 'player', eid);
         success = w.openings.states.get(t.key)?.state === OS.broken;
       }
       const k = unpackKey(t.key);

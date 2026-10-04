@@ -165,7 +165,7 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
     const killed = damageZombie(w, ai, cb, grid, t.eid, eid, dmg, 'melee');
     physicsHit(w, eid, t.eid, 'melee', m.knockback, killed);
   }
-  emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack');
+  emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack', 0, { eid, kind: 'melee' });
   if (targets.length > 0 && m.item !== undefined && m.lossChancePerUse > 0) wear(w, eid, m.item);
   void StableId;
 }

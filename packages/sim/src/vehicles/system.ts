@@ -80,7 +80,9 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
     }
     if (v.engineOn && (w.tick + v.id) % cfg.noiseEveryTicks === 0) {
       const r = cfg.noiseIdleTiles + (cfg.noiseFullTiles - cfg.noiseIdleTiles) * v.throttle;
-      emitNoise(w, v.x, v.y, v.z, r, cfg.noiseVolume, 'vehicle');
+      const driver = v.occupants[0] ? playerEidOf(w, v.occupants[0]) : undefined;
+      const by = driver === undefined ? undefined : { eid: driver, kind: 'vehicle' as const };
+      emitNoise(w, v.x, v.y, v.z, r, cfg.noiseVolume, 'vehicle', 0, by);
     }
   }
   // Pin after all cars moved (a car pushed by another one carries its occupants too).

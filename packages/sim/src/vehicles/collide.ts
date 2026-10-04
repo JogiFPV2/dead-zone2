@@ -6,6 +6,7 @@ import { isLiveAnimal } from '../animals/state.js';
 import { damageOpening } from '../openings/actions.js';
 import { OpeningKind, openingKey } from '../openings/state.js';
 import { moveCircle } from '../world/collision.js';
+import { playerEidOf } from './seats.js';
 import type { TileGrid } from '../world/grid.js';
 import type { VehicleConfig } from './config.js';
 import {
@@ -84,7 +85,8 @@ function collideStatic(
         const cy = n ? ty : Math.max(ty, Math.min(ty + 1, v.y));
         const vn = -(v.vx * m.nx + v.vy * m.ny);
         if (fence && vn > cfg.fenceBreakSpeed) {
-          damageOpening(w, openingKey(side, tx, ty, z), OpeningKind.fence, 1e9, 'vehicle');
+          const driver = v.occupants[0] ? playerEidOf(w, v.occupants[0]) : undefined;
+          damageOpening(w, openingKey(side, tx, ty, z), OpeningKind.fence, 1e9, 'vehicle', driver);
           v.vx = f(v.vx + vn * cfg.fenceSlow * m.nx);
           v.vy = f(v.vy + vn * cfg.fenceSlow * m.ny);
           const lost = vn * cfg.fenceSlow;

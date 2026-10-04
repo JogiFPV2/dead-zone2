@@ -197,7 +197,7 @@ export function applyLureCommand(
   const item = moveItem(w, found, groundPile(st, Math.floor(lx), Math.floor(ly), pz), 1);
   const t = def.throwable;
   const noise = t?.impactNoise ?? THUD;
-  emitNoise(w, lx, ly, pz, noise.radiusTiles, noise.volume, 'impact');
+  emitNoise(w, lx, ly, pz, noise.radiusTiles, noise.volume, 'impact', 0, { eid, kind: 'throw' });
   const broke = t?.breaksOnImpact === true;
   w.events.push({
     type: 'thrown',

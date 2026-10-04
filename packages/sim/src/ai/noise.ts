@@ -1,5 +1,12 @@
 import { SPRINT_NOISE_MUL } from '../physics/constants.js';
-import { GAITS, type NoiseSource } from '@deadzone/protocol';
+import {
+  GAITS,
+  PLAYER_NOISE_CONTINUOUS,
+  PLAYER_NOISE_KINDS,
+  PLAYER_NOISE_MIN_TICKS,
+  type NoiseSource,
+  type PlayerNoiseKind,
+} from '@deadzone/protocol';
 import { ModSlot } from '../content/adapter.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { modded } from '../survival/state.js';
@@ -15,6 +22,10 @@ import { floorZ } from '../world/levels.js';
  * edges), no propagation through rooms in the demo. Between floors (z = floor index, fractional z
  * on stairs counts as `Math.floor(z)`): × `noise.floorMul` per floor of difference, up to
  * `noise.maxFloors` floors (`worldSettings.noise`); walls are counted on the listener's floor.
+ *
+ * `by` = the player character that made the noise: also pushes a `playerNoise` event (production
+ * builds too) with the exact values the AI hears; continuous kinds are throttled to one per
+ * `PLAYER_NOISE_MIN_TICKS` per player and kind (the throttle never touches the AI noise).
  */
 export function emitNoise(
   w: SimWorld,
@@ -25,6 +36,7 @@ export function emitNoise(
   volume: number,
   source: NoiseSource,
   lingerSec = 0,
+  by?: PlayerNoiseBy,
 ): void {
   const ai = w.ai;
   if (!ai || radius <= 0) return;
@@ -51,7 +63,42 @@ export function emitNoise(
       source,
     });
   }
+  if (by) pushPlayerNoise(w, ai, n, by);
 }
+
+/** Who made a noise (player eid) and what kind it was, for `playerNoise`. */
+export interface PlayerNoiseBy {
+  eid: number;
+  kind: PlayerNoiseKind;
+}
+
+const CONTINUOUS = new Set<PlayerNoiseKind>(PLAYER_NOISE_CONTINUOUS);
+
+function pushPlayerNoise(w: SimWorld, ai: AiWorld, n: Noise, by: PlayerNoiseBy): void {
+  const playerId = w.c.Player.id[by.eid] ?? 0;
+  if (w.players.get(playerId) !== by.eid) return;
+  if (CONTINUOUS.has(by.kind)) {
+    const key = by.eid * 64 + PLAYER_NOISE_KINDS.indexOf(by.kind);
+    const last = ai.playerNoiseTick.get(key);
+    if (last !== undefined && w.tick - last < PLAYER_NOISE_MIN_TICKS && w.tick >= last) return;
+    ai.playerNoiseTick.set(key, w.tick);
+  }
+  w.events.push({
+    type: 'playerNoise',
+    tick: w.tick,
+    playerId,
+    x: n.x,
+    y: n.y,
+    z: n.z,
+    radius: n.radius,
+    loudness: n.volume,
+    kind: by.kind,
+  });
+}
+
+/** Footstep kind of a gait (`walk` → `step`). */
+export const footstepKind = (gait: string): PlayerNoiseKind =>
+  gait === 'sneak' ? 'sneak' : gait === 'run' ? 'run' : gait === 'sprint' ? 'sprint' : 'step';
 
 /**
  * Effective radius of `n` for a listener at (x, y, z) with hearing range `hearing` (tiles):
@@ -134,6 +181,8 @@ export function footstepSystem(w: SimWorld): void {
       radius,
       f.volume,
       'footstep',
+      0,
+      { eid, kind: footstepKind(gait) },
     );
   }
 }

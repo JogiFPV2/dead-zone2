@@ -330,8 +330,10 @@ describe('openings timed: barricade', () => {
     for (let i = 0; i < 4; i++) d.cmd({ type: 'barricade', ...WINDOW });
     d.step();
     // Hammering is loud at the start of each plank.
-    expect(eventsOf(d.take(), 'noise')).toContainEqual(
-      expect.objectContaining({ radiusTiles: 15 }),
+    const hammer = d.take();
+    expect(eventsOf(hammer, 'noise')).toContainEqual(expect.objectContaining({ radiusTiles: 15 }));
+    expect(eventsOf(hammer, 'playerNoise')).toContainEqual(
+      expect.objectContaining({ kind: 'board', radius: 15, playerId: 0 }),
     );
     d.step(BARRICADE_TICKS - 2);
     expect(view(s, WINDOW)).toBeUndefined();
@@ -468,6 +470,9 @@ describe('openings timed: forceDoor (locked)', () => {
       expect.objectContaining({ ...DOOR, method: 'kick', success: true }),
     ]);
     expect(eventsOf(ev, 'noise')).toContainEqual(expect.objectContaining({ radiusTiles: 16 }));
+    expect(eventsOf(ev, 'playerNoise')).toContainEqual(
+      expect.objectContaining({ kind: 'kick', radius: 16 }),
+    );
     expect(view(s, DOOR)).toMatchObject({ state: OS.broken });
   });
 
@@ -482,6 +487,9 @@ describe('openings timed: forceDoor (locked)', () => {
     expect(eventsOf(ev, 'doorForced')).toEqual([
       expect.objectContaining({ method: 'pry', success: false }),
     ]);
+    expect(eventsOf(ev, 'playerNoise')).toContainEqual(
+      expect.objectContaining({ kind: 'pry', radius: 10 }),
+    );
     expect(view(s, DOOR)).toMatchObject({ state: OS.locked, hp: 60 - 8 });
   });
 });

@@ -56,11 +56,13 @@ export function windowSmashed(
   key: number,
   by: 'player' | 'zombie' | 'crowd' | 'vehicle',
   player?: { playerId: number; withHand: boolean },
+  byEid?: number,
 ): void {
   const k = unpackKey(key);
   const c = edgeCentre(key % 2, k.tx, k.ty);
   const n = w.openings.cfg.breakNoise;
-  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'break');
+  const pn = byEid === undefined ? undefined : { eid: byEid, kind: 'window' as const };
+  emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'break', 0, pn);
   w.events.push({
     type: 'windowSmashed',
     tick: w.tick,
@@ -85,6 +87,7 @@ export function damageOpening(
   kind: number,
   dmg: number,
   by: 'player' | 'zombie' | 'crowd' | 'vehicle',
+  byEid?: number,
 ): void {
   const o = w.openings;
   const e = o.states.get(key);
@@ -106,12 +109,13 @@ export function damageOpening(
   if (left > 0) setOpening(o, key, kind, state, left);
   else {
     setOpening(o, key, kind, OS.broken, 0, { cleared: 0 });
-    if (kind === OpeningKind.window) windowSmashed(w, key, by);
+    if (kind === OpeningKind.window) windowSmashed(w, key, by, undefined, byEid);
     else if (kind === OpeningKind.fence || kind === OpeningKind.gate) {
       const k = unpackKey(key);
       const c = edgeCentre(key % 2, k.tx, k.ty);
       const n = o.cfg.breakNoise;
-      emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'break');
+      const pn = byEid === undefined ? undefined : { eid: byEid, kind: 'smash' as const };
+      emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'break', 0, pn);
     }
   }
   emitOpeningChanged(w, key, kind, by);
@@ -195,7 +199,7 @@ export function applyOpeningCommand(
   }
   const c = edgeCentre(side, cmd.tx, cmd.ty);
   const n = o.cfg.toggleNoise;
-  emitNoise(w, c.x, c.y, z, n.radiusTiles, n.volume, 'action');
+  emitNoise(w, c.x, c.y, z, n.radiusTiles, n.volume, 'action', 0, { eid, kind: 'door' });
   // A damaged door / window keeps its damage when opened, closed or locked.
   setOpening(o, key, kind, next, prev && prev.hp > 0 ? prev.hp : undefined);
   emitOpeningChanged(w, key, kind, 'player');

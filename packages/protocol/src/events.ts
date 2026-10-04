@@ -149,6 +149,49 @@ export const NOISE_SOURCES = [
 export type NoiseSource = (typeof NOISE_SOURCES)[number];
 
 /**
+ * What the player's own character did to make a `playerNoise` (noise circle in the HUD).
+ * Footsteps by gait (`sneak` / `step` = walk / `run` / `sprint`), timed actions by name
+ * (`search`, `eat`, `drink`, `bandage`, `unpack`, `craft`, `watch`), openings (`door` = open /
+ * close / lock, `window` = smashed glass, `board` = nailing a plank, `pry` / `kick` = forcing a
+ * door, `smash` = a fence / gate knocked over by the player or their car), combat (`melee` swing,
+ * `shot`), `throw` (thrown item landing, at the impact point) and `vehicle` (running engine of
+ * the car the player drives).
+ */
+export const PLAYER_NOISE_KINDS = [
+  'sneak',
+  'step',
+  'run',
+  'sprint',
+  'search',
+  'eat',
+  'drink',
+  'bandage',
+  'unpack',
+  'craft',
+  'watch',
+  'door',
+  'window',
+  'board',
+  'pry',
+  'kick',
+  'smash',
+  'melee',
+  'shot',
+  'throw',
+  'vehicle',
+] as const;
+export type PlayerNoiseKind = (typeof PLAYER_NOISE_KINDS)[number];
+/** Continuous `playerNoise` kinds: at most one event per player and kind per this many ticks. */
+export const PLAYER_NOISE_MIN_TICKS = 10;
+export const PLAYER_NOISE_CONTINUOUS: readonly PlayerNoiseKind[] = [
+  'sneak',
+  'step',
+  'run',
+  'sprint',
+  'vehicle',
+];
+
+/**
  * Why an animal started to flee: saw a player within `fleeDistanceTiles`, saw a zombie, heard a
  * noise (footsteps, shots…; sneaking is quieter and less visible) or was hit.
  */
@@ -364,6 +407,24 @@ export type SimEvent =
       radiusTiles: number;
       volume: number;
       source: NoiseSource;
+    }
+  /**
+   * Production builds too: a noise made by player `playerId`'s character, emitted from the same
+   * `emitNoise` call the zombie AI hears (one source of truth). `radius` = base radius in m
+   * (1 tile = 1 m) on open ground, before the per-listener wall / floor damping; `loudness`
+   * 0..1 (the noise volume); z = floor index. Continuous kinds (`sneak` / `step` / `run` /
+   * `sprint` / `vehicle`) come at most once per `PLAYER_NOISE_MIN_TICKS` per player and kind.
+   */
+  | {
+      type: 'playerNoise';
+      tick: number;
+      playerId: PlayerId;
+      x: number;
+      y: number;
+      z: number;
+      radius: number;
+      loudness: number;
+      kind: PlayerNoiseKind;
     }
   /**
    * A zombie (StableId) started investigating a noise or chasing a player (growl sound, HUD).

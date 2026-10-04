@@ -75,6 +75,8 @@ export function describeEvent(e: SimEvent): string {
       return `container ${e.container} opened${e.firstSearch ? ' (searched)' : ''}`;
     case 'noise':
       return `noise ${e.source} r${e.radiusTiles.toFixed(1)} at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+    case 'playerNoise':
+      return `player ${e.playerId} noise ${e.kind} r${e.radius.toFixed(1)} at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
     case 'zombieAlerted':
       return `zombie ${e.zombie} alerted (${e.reason})`;
     case 'hit':

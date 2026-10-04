@@ -1,11 +1,16 @@
 import {
   CHUNK_SIZE,
   MAP_MARKER_ICONS,
+  PLAYER_MAP_TRAIL_SPACING_M,
   SAVE_MARKER_COLORS,
   simMapFromWorldSource,
   type SimEvent,
 } from '@deadzone/protocol';
-import { MapMarkersSettingsSchema } from '@deadzone/content';
+import {
+  MapMarkersSettingsSchema,
+  MIN_TRAIL_SPACING_M,
+  PlayerMapSettingsSchema,
+} from '@deadzone/content';
 import { describe, expect, it } from 'vitest';
 import { createSim, type Sim } from '../sim.js';
 import { MIDNIGHT, NOON } from '../test/ai-fixtures.js';
@@ -46,6 +51,12 @@ describe('player map: shared constants', () => {
     expect(d.icons).toEqual([...MAP_MARKER_ICONS]);
     expect(d.colors).toEqual([...SAVE_MARKER_COLORS]);
     expect(DEFAULT_PLAYER_MAP.icons).toBe(MAP_MARKER_ICONS);
+  });
+
+  it('trail spacing: content minimum and default = the server constant (16 m)', () => {
+    expect(MIN_TRAIL_SPACING_M).toBe(PLAYER_MAP_TRAIL_SPACING_M);
+    expect(PlayerMapSettingsSchema.parse(undefined).trailSpacingM).toBe(PLAYER_MAP_TRAIL_SPACING_M);
+    expect(DEFAULT_PLAYER_MAP.trailSpacingM).toBe(PLAYER_MAP_TRAIL_SPACING_M);
   });
 });
 
