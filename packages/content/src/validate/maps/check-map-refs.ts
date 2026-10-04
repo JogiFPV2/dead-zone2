@@ -3,6 +3,7 @@ import type { MapChunk } from '../../schemas/map/chunk.js';
 import type { ContentIndex } from '../content-index.js';
 import type { ContentErrorCode, ErrorSink } from '../errors.js';
 import { formatJsonPath, type PathSegment } from '../json-path.js';
+import { indoorProblem } from './check-map-indoor.js';
 import type { MapData } from './map-data.js';
 
 /**
@@ -10,7 +11,8 @@ import type { MapData } from './map-data.js';
  * - paleta → `tiles/` (użyte w `floor` muszą mieć category `floor`, w `roof` — `roof`),
  * - krawędź → `tiles/` z category równym `type`,
  * - obiekt → typ schowka albo przedmiot `placeable`,
- * - `roomType` → co najmniej jedna loot table ma go w `rooms`.
+ * - `roomType` → co najmniej jedna loot table ma go w `rooms`,
+ * - meble tylko w środku (`indoorProblem`).
  */
 export function checkMapRefs(map: MapData, index: ContentIndex, sink: ErrorSink): void {
   const roomTypes = new Set<string>();
@@ -46,8 +48,13 @@ export function checkMapRefs(map: MapData, index: ContentIndex, sink: ErrorSink)
     });
     chunk.edges.forEach((e, i) => tile(e.contentId, e.type, 'edges', i, 'contentId'));
     chunk.objects.forEach((o, i) => {
-      if (index.has('containerType', o.contentId)) return;
-      const item = index.get('item', o.contentId);
+      const container = index.get('containerType', o.contentId);
+      const item = container ? undefined : index.get('item', o.contentId);
+      if (container || item?.data.kind === 'placeable') {
+        const problem = indoorProblem(chunk, o, container?.data.tags ?? item?.data.tags, index);
+        if (problem) add('map', problem, 'objects', i);
+      }
+      if (container) return;
       if (!item) {
         add(
           'missing_ref',

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "base:trash-bin",
+    "name": "container.base.trash-bin.name",
+    "category": "other",
+    "tags": ["base:outdoor-ok"],
+    "capacityKg": 25,
+    "searchMin": 1
+  },
+  {
+    "id": "base:dumpster",
+    "name": "container.base.dumpster.name",
+    "category": "other",
+    "tags": ["base:outdoor-ok"],
+    "capacityKg": 120,
+    "searchMin": 2
+  },
+  {
+    "id": "base:firewood-pile",
+    "name": "container.base.firewood-pile.name",
+    "category": "other",
+    "tags": ["base:outdoor-ok"],
+    "capacityKg": 80,
+    "searchMin": 1
+  }
+]

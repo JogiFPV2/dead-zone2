@@ -252,7 +252,11 @@ export function buildMap(bp: Blueprint): BuiltMap {
     }
   }
   checkStairs(world, bp.stairs);
-  for (const o of bp.objects) world.index(o.x, o.y, `obiekt ${o.contentId}`);
+  for (const o of bp.objects) {
+    const w = levels.get(o.z);
+    if (!w) throw new Error(`obiekt ${o.contentId} (${o.x}, ${o.y}): brak piętra z = ${o.z}`);
+    w.index(o.x, o.y, `obiekt ${o.contentId}`);
+  }
 
   const { cx0, cy0, cx1, cy1 } = bp.chunks;
   const chunks: BuiltMap['chunks'] = [];
@@ -318,11 +322,17 @@ function chunkJson(
     })
     .filter((e) => e.x >= 0 && e.y >= 0 && e.x < CHUNK_SIZE && e.y < CHUNK_SIZE)
     .sort((a, b) => a.x - b.x || a.y - b.y || a.side.localeCompare(b.side));
-  // Map objects stand on the ground level (no `z` in the blueprint yet).
+  // Map objects of this level (the chunk address carries `z`).
   const objects = bp.objects
-    .filter(() => world.z === 0)
+    .filter((o) => o.z === world.z)
     .filter((o) => o.x >= ox && o.y >= oy && o.x < ox + CHUNK_SIZE && o.y < oy + CHUNK_SIZE)
-    .map((o) => ({ ...o, x: o.x - ox, y: o.y - oy }));
+    .map((o) => ({
+      contentId: o.contentId,
+      x: o.x - ox,
+      y: o.y - oy,
+      rot: o.rot,
+      ...(o.offset ? { offset: o.offset } : {}),
+    }));
   const ids = [...new Set(room)].filter((v) => v !== 0).sort((a, b) => a - b);
   const stairs: Stairs[] = bp.stairs
     .filter(

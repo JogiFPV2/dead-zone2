@@ -118,19 +118,19 @@
   "edges": [],
   "objects": [
     {
-      "contentId": "base:fridge",
+      "contentId": "base:dumpster",
       "x": 12,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:crate",
       "x": 19,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:trash-bin",
       "x": 12,
       "y": 19,
       "rot": 0

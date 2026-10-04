@@ -727,6 +727,15 @@ input.on('reload', () => {
 const groundPiles = new GroundPiles();
 worldRoot.add(groundPiles.root);
 const { mapObjects } = streaming;
+// Upper floors are not streamed (laid out whole, like `upperTown`): load their furniture too.
+for (let z = world.range.z + 1; z <= world.range.z + upperTown.length; z++) {
+  for (let cy = world.range.cy0; cy <= world.range.cy1; cy++) {
+    for (let cx = world.range.cx0; cx <= world.range.cx1; cx++) {
+      const chunk = world.source.getChunk(cx, cy, z);
+      if (chunk) mapObjects.loadChunk(chunk);
+    }
+  }
+}
 const shelfFill = new ShelfFill(world.source, world.range, (tx, ty, z, on) =>
   mapObjects.setXray(tx, ty, z, on),
 );
@@ -1144,6 +1153,7 @@ if (import.meta.env.DEV) {
       noise: (e: Parameters<NoiseRingModel['push']>[0]) =>
         noise.push(e, performance.now(), settings.get().interface.noiseDisplay),
       shelfFill,
+      mapObjects,
       animals: () => animalViews,
       groundPiles,
       /** Id of the first carried item of content `def`. */
@@ -1197,6 +1207,7 @@ renderer.setAnimationLoop((time) => {
     structures.setCutaway(cut);
     for (const l of upperTown) l.setCutaway(cut);
     openings.setCutaway(cut);
+    mapObjects.setCutaway(cut);
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }

@@ -1299,7 +1299,350 @@
       "contentId": "base:wall-school"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:metal-shelf",
+      "x": 4,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 7,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 8,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 9,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 10,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 11,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 14,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 19,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 14,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 19,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 4,
+      "y": 18,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 14,
+      "y": 18,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 19,
+      "y": 18,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 14,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 19,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 21,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 12,
+      "y": 20,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 13,
+      "y": 20,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": 14,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 8,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 9,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 15,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 17,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 18,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 4,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": 21,
+      "y": 22,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 30,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 31,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": 6,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 7,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 8,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 9,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 10,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 11,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 12,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 13,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 16,
+      "y": 23,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 21,
+      "y": 23,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": 26,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 27,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 16,
+      "y": 24,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": 25,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 26,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 27,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": 11,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 17,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 4,
+      "y": 28,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 6,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 11,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": 12,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 17,
+      "y": 28,
+      "rot": 3
+    }
+  ],
   "rooms": {
     "8": {
       "roomType": "base:room-hospital",

@@ -5,7 +5,7 @@
     "category": "crate",
     "capacityKg": 50,
     "pickupItem": "base:wooden-crate",
-    "tags": ["base:player-built"],
+    "tags": ["base:outdoor-ok", "base:player-built"],
     "searchMin": 0.5
   },
   {
@@ -14,7 +14,7 @@
     "category": "crate",
     "capacityKg": 110,
     "pickupItem": "base:large-wooden-crate",
-    "tags": ["base:player-built"],
+    "tags": ["base:outdoor-ok", "base:player-built"],
     "searchMin": 0.8
   }
 ]

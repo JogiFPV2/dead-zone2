@@ -7,7 +7,9 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { CATALOG, placeCatalog } from './catalog.js';
-import type { BlueprintInput } from './blueprint.js';
+import { parseBlueprint, type BlueprintInput } from './blueprint.js';
+import { furnish } from './furnish.js';
+import { baseFurnishOptions } from './furnish-base.js';
 
 /** [type, x, y, clockwise turns] (NW corner of the rotated footprint). */
 const place: [string, number, number, number][] = [
@@ -61,6 +63,14 @@ export function townCatalogBlueprint(): BlueprintInput {
     stairs,
     zones: [{ id: 'start', role: 'start', rects: [{ x: -2, y: 2, w: 4, h: 2 }] }],
   };
+  // Furniture inside the rooms (kits per room type) and props by the outer walls.
+  bp.objects = furnish(parseBlueprint(bp), baseFurnishOptions(1)).map((o) => ({
+    contentId: o.contentId,
+    x: o.x,
+    y: o.y,
+    ...(o.z ? { z: o.z } : {}),
+    rot: o.rot,
+  }));
   return bp;
 }
 
@@ -69,5 +79,8 @@ export const TOWN_CATALOG_FILE = new URL('../blueprints/town-catalog.json', impo
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const bp = townCatalogBlueprint();
   writeFileSync(TOWN_CATALOG_FILE, JSON.stringify(bp, null, 2) + '\n');
-  console.log(`town-catalog: ${bp.buildings?.length} buildings, ${bp.stairs?.length} flights`);
+  console.log(
+    `town-catalog: ${bp.buildings?.length} buildings, ${bp.stairs?.length} flights, ` +
+      `${bp.objects?.length} objects`,
+  );
 }

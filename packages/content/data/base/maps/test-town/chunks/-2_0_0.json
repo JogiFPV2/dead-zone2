@@ -148,25 +148,25 @@
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:trash-bin",
       "x": 12,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:gun-locker",
+      "contentId": "base:firewood-pile",
       "x": 19,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:dumpster",
       "x": 12,
       "y": 19,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": 5,
       "y": 5,
       "rot": 0

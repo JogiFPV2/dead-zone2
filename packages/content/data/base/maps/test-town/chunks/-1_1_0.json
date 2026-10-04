@@ -146,19 +146,19 @@
   "edges": [],
   "objects": [
     {
-      "contentId": "base:wooden-chest",
+      "contentId": "base:crate",
       "x": 12,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:trash-bin",
       "x": 19,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:firewood-pile",
       "x": 12,
       "y": 19,
       "rot": 0

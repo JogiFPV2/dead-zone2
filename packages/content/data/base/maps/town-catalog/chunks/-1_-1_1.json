@@ -940,7 +940,128 @@
       "contentId": "base:window-plain"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:bookshelf",
+      "x": 30,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 8,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 8,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 12,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 0,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 2,
+      "y": 22,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": 22,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 22,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 31,
+      "y": 22,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 15,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 3,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 30,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 12,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 12,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 15,
+      "y": 28,
+      "rot": 1
+    }
+  ],
   "rooms": {
     "43": {
       "roomType": "base:room-school",

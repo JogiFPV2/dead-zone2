@@ -142,19 +142,19 @@
   "edges": [],
   "objects": [
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:firewood-pile",
       "x": 12,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:dumpster",
       "x": 19,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:wooden-chest",
+      "contentId": "base:crate",
       "x": 12,
       "y": 19,
       "rot": 0

@@ -423,61 +423,61 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": -45,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:trash-bin",
       "x": -52,
       "y": -45,
       "rot": 0
     },
     {
-      "contentId": "base:wooden-chest",
+      "contentId": "base:firewood-pile",
       "x": -20,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:dumpster",
       "x": -13,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:crate",
       "x": -20,
       "y": -45,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:trash-bin",
       "x": 12,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:firewood-pile",
       "x": 19,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:dumpster",
       "x": 12,
       "y": -45,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:crate",
       "x": 44,
       "y": -52,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:trash-bin",
       "x": 51,
       "y": -52,
       "rot": 0
@@ -489,61 +489,61 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:firewood-pile",
       "x": -52,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:dumpster",
       "x": -45,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:wooden-chest",
+      "contentId": "base:crate",
       "x": -52,
       "y": -13,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:trash-bin",
       "x": -20,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:firewood-pile",
       "x": -13,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:dumpster",
       "x": -20,
       "y": -13,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:crate",
       "x": 12,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:trash-bin",
       "x": 19,
       "y": -20,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:firewood-pile",
       "x": 12,
       "y": -13,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dumpster",
       "x": 44,
       "y": -20,
       "rot": 0
@@ -555,61 +555,61 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": 44,
       "y": -13,
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:trash-bin",
       "x": -52,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:gun-locker",
+      "contentId": "base:firewood-pile",
       "x": -45,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:dumpster",
       "x": -52,
       "y": 19,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:crate",
       "x": -20,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:trash-bin",
       "x": -13,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:firewood-pile",
       "x": -20,
       "y": 19,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:dumpster",
       "x": 44,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:crate",
       "x": 51,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:trash-bin",
       "x": 44,
       "y": 19,
       "rot": 0
@@ -621,61 +621,61 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:firewood-pile",
       "x": -45,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:tool-chest",
+      "contentId": "base:dumpster",
       "x": -52,
       "y": 51,
       "rot": 0
     },
     {
-      "contentId": "base:wooden-chest",
+      "contentId": "base:crate",
       "x": -20,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:trash-bin",
       "x": -13,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:firewood-pile",
       "x": -20,
       "y": 51,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:dumpster",
       "x": 12,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:crate",
       "x": 19,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:trash-bin",
       "x": 12,
       "y": 51,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:firewood-pile",
       "x": 44,
       "y": 44,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dumpster",
       "x": 51,
       "y": 44,
       "rot": 0
@@ -705,7 +705,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": -59,
       "y": 5,
       "rot": 0

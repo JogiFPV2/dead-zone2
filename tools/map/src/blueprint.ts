@@ -148,6 +148,8 @@ export const BlueprintSchema = z.strictObject({
         contentId: ContentIdSchema,
         x: Int,
         y: Int,
+        /** Level (0 = ground); upper floors need that level painted by a building. */
+        z: Int.min(0).max(15).default(0),
         rot: Int.min(0).max(3).default(0),
         offset: z
           .strictObject({ x: z.number().min(-0.5).max(0.5), y: z.number().min(-0.5).max(0.5) })

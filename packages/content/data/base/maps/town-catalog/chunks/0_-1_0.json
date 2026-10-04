@@ -1007,7 +1007,242 @@
       "contentId": "base:wall-shop"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:metal-shelf",
+      "x": 12,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 13,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 14,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 15,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 17,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 18,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 19,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 20,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 21,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 22,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 23,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 24,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 0,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": 14,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": 14,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": 21,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 17,
+      "y": 21,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 18,
+      "y": 21,
+      "rot": 2
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": 21,
+      "rot": 1
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 8,
+      "y": 22,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 21,
+      "y": 22,
+      "rot": 3
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": 22,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 23,
+      "y": 23,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": 0,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 0,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bench",
+      "x": 8,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 14,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 11,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 7,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 12,
+      "y": 28,
+      "rot": 3
+    }
+  ],
   "rooms": {
     "64": {
       "roomType": "base:room-police",

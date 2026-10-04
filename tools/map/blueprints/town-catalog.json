@@ -4407,5 +4407,3224 @@
         }
       ]
     }
+  ],
+  "objects": [
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -52,
+      "y": -16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 12,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 13,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 14,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 15,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 17,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 18,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 19,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 20,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 21,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 22,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 23,
+      "y": -15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 24,
+      "y": -15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -60,
+      "y": -14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -54,
+      "y": -14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": -17,
+      "y": -14,
+      "rot": 2
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 34,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 35,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 36,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 37,
+      "y": -14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 40,
+      "y": -14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -54,
+      "y": -13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -53,
+      "y": -13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:freezer",
+      "x": -37,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -36,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -35,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -34,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -33,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -21,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -20,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -2,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -1,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 0,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": -13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": -13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": 14,
+      "y": -13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -60,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -54,
+      "y": -12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -49,
+      "y": -12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -48,
+      "y": -12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -47,
+      "y": -12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bench",
+      "x": -42,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bench",
+      "x": -14,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -9,
+      "y": -12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bench",
+      "x": -5,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": -12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": 14,
+      "y": -12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 34,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -55,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -53,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -48,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -47,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -42,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -38,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -34,
+      "y": -11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -22,
+      "y": -11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -14,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -5,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 16,
+      "y": -11,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 17,
+      "y": -11,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 18,
+      "y": -11,
+      "rot": 2
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": -11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 40,
+      "y": -11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -60,
+      "y": -10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -38,
+      "y": -10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
+      "x": -34,
+      "y": -10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -33,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -32,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -25,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -19,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bench",
+      "x": -14,
+      "y": -10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 8,
+      "y": -10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 21,
+      "y": -10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": -10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -58,
+      "y": -9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -54,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -51,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -48,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -47,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -46,
+      "y": -9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -19,
+      "y": -9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 23,
+      "y": -9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -58,
+      "y": -8,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -8,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -28,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -27,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -26,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -25,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -17,
+      "y": -8,
+      "rot": 1
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": -2,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -1,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 0,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": -8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -58,
+      "y": -7,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -36,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -35,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -34,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -33,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -23,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -22,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -21,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -20,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -14,
+      "y": -7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -11,
+      "y": -7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -2,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -1,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 0,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bench",
+      "x": 8,
+      "y": -7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 14,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bench",
+      "x": -10,
+      "y": -6,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": -6,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -58,
+      "y": -5,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -2,
+      "y": -5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": -5,
+      "rot": 1
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 11,
+      "y": -5,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": -61,
+      "y": -4,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -11,
+      "y": -4,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -7,
+      "y": -4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 7,
+      "y": -4,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 12,
+      "y": -4,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bench",
+      "x": -30,
+      "y": -3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -29,
+      "y": -3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -57,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -43,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -29,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -14,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": 22,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -56,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -45,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -41,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -40,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -31,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -30,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -29,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -16,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -11,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -10,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 20,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 21,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 22,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 23,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 29,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 30,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 32,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 36,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -2,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 20,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 32,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 37,
+      "y": 10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -43,
+      "y": 11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": -34,
+      "y": 11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": -2,
+      "y": 11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -42,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -41,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -21,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -15,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -14,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -12,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 15,
+      "y": 12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 16,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 22,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 23,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 29,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 30,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 31,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 34,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -57,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -46,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -45,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -42,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -31,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -30,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -14,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 32,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": 33,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 34,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -57,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -53,
+      "y": 14,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": 14,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -51,
+      "y": 14,
+      "rot": 2
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": -50,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -43,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -30,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -29,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -27,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:freezer",
+      "x": -26,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -10,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -5,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:crate",
+      "x": 8,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 20,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 23,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 29,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 32,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -33,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -13,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": -4,
+      "y": 15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": 4,
+      "y": 15,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 23,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -58,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:crate",
+      "x": -51,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:fridge",
+      "x": -46,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -45,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -44,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -43,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -42,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -41,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -33,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -29,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -27,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:fridge",
+      "x": -26,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:crate",
+      "x": -19,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -18,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:tool-chest",
+      "x": -17,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:fridge",
+      "x": -16,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -15,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -14,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -13,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 23,
+      "y": 16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 33,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": -51,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": -43,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": -17,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:firewood-pile",
+      "x": -16,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 33,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -60,
+      "y": -16,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -58,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -57,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -56,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -55,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -53,
+      "y": -16,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -16,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -16,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -50,
+      "y": -15,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -15,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -60,
+      "y": -14,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -50,
+      "y": -14,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -45,
+      "y": -14,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -43,
+      "y": -13,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -2,
+      "y": -13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": -13,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": -13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -51,
+      "y": -12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -12,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -24,
+      "y": -12,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 3,
+      "y": -12,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -57,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -55,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -47,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -46,
+      "y": -11,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -24,
+      "y": -11,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -20,
+      "y": -11,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -43,
+      "y": -10,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -34,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -33,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -32,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -30,
+      "y": -10,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -25,
+      "y": -10,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -2,
+      "y": -10,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -1,
+      "y": -10,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 1,
+      "y": -10,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": -10,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -58,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -57,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -56,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -55,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -54,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -51,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -48,
+      "y": -9,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -43,
+      "y": -9,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -38,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -37,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -17,
+      "y": -9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -48,
+      "y": -8,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -30,
+      "y": -8,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -29,
+      "y": -8,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 1,
+      "y": -8,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -48,
+      "y": -7,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -38,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -37,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -34,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -7,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": -2,
+      "y": -7,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 3,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 4,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 7,
+      "y": -7,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -48,
+      "y": -6,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -6,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -20,
+      "y": -6,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -53,
+      "y": -5,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -47,
+      "y": -5,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -31,
+      "y": -5,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -20,
+      "y": -5,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -60,
+      "y": -4,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -58,
+      "y": -4,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -57,
+      "y": -4,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -4,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -4,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -48,
+      "y": -4,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -47,
+      "y": -4,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -17,
+      "y": -4,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": -4,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 3,
+      "y": -4,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -58,
+      "y": 9,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -53,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -51,
+      "y": 9,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -28,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 23,
+      "y": 9,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -51,
+      "y": 10,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -30,
+      "y": 10,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": 23,
+      "y": 10,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -55,
+      "y": 11,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -54,
+      "y": 11,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -51,
+      "y": 11,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 23,
+      "y": 11,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -54,
+      "y": 12,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
+      "x": -51,
+      "y": 12,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 16,
+      "y": 12,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -52,
+      "y": 13,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -51,
+      "y": 13,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -31,
+      "y": 13,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -30,
+      "y": 13,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 16,
+      "y": 13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 20,
+      "y": 13,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 21,
+      "y": 13,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -28,
+      "y": 14,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -27,
+      "y": 14,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -26,
+      "y": 14,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 16,
+      "y": 14,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -58,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -57,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -56,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -55,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -54,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -33,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -32,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -30,
+      "y": 16,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 22,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 23,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -51,
+      "y": -16,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -16,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -51,
+      "y": -15,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -15,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -43,
+      "y": -15,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": -14,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -46,
+      "y": -14,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -45,
+      "y": -14,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -56,
+      "y": -13,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -55,
+      "y": -13,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -46,
+      "y": -13,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -17,
+      "y": -13,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -59,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -56,
+      "y": -12,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -51,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -46,
+      "y": -12,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -12,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -31,
+      "y": -12,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -11,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -49,
+      "y": -11,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -46,
+      "y": -11,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -43,
+      "y": -11,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -11,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -24,
+      "y": -11,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -55,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -38,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -37,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -36,
+      "y": -10,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -10,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -24,
+      "y": -10,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -58,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -57,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -56,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -55,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -48,
+      "y": -9,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -44,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -32,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -30,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -29,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -17,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -8,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -52,
+      "y": -7,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -32,
+      "y": -7,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -31,
+      "y": -7,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -30,
+      "y": -7,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -20,
+      "y": -7,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -52,
+      "y": -6,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -20,
+      "y": -6,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -53,
+      "y": -5,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -31,
+      "y": -5,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -57,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -56,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -55,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -4,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -51,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -36,
+      "y": -4,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -32,
+      "y": -4,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -16,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -45,
+      "y": -16,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -15,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -51,
+      "y": -15,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -46,
+      "y": -15,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -15,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -43,
+      "y": -15,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -60,
+      "y": -14,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -46,
+      "y": -14,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -14,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -46,
+      "y": -13,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -13,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -60,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -59,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -55,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -54,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -52,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -51,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -50,
+      "y": -12,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -46,
+      "y": -12,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -47,
+      "y": -11,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -46,
+      "y": -11,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -60,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -57,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -56,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -55,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -54,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -10,
+      "z": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -58,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -57,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -56,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -55,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -54,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -53,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -52,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -51,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -9,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -47,
+      "y": -9,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -8,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -47,
+      "y": -8,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -58,
+      "y": -7,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -7,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -6,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -48,
+      "y": -6,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -5,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -5,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -60,
+      "y": -4,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -58,
+      "y": -4,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -4,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -53,
+      "y": -4,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -4,
+      "z": 3,
+      "rot": 2
+    }
   ]
 }

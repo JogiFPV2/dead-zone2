@@ -39,6 +39,9 @@ const CONTAINERS: Record<string, string> = {
   'base:tool-chest': 'Skrzynka narzędziowa',
   'base:locker': 'Szafka',
   'base:gun-locker': 'Szafa na broń',
+  'base:trash-bin': 'Kosz na śmieci',
+  'base:dumpster': 'Kontener na śmieci',
+  'base:firewood-pile': 'Stos drewna',
 };
 
 /** `base:kitchen-knife` → `Kitchen knife` (fallback until i18n). */

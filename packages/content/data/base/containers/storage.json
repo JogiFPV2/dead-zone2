@@ -12,7 +12,8 @@
     "category": "crate",
     "capacityKg": 70,
     "searchMin": 2,
-    "defaultLootTable": "base:warehouse"
+    "defaultLootTable": "base:warehouse",
+    "tags": ["base:outdoor-ok"]
   },
   {
     "id": "base:metal-shelf",

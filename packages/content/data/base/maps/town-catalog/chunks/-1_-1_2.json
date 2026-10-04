@@ -801,7 +801,116 @@
       "contentId": "base:wall-school"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 15,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 8,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 22,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 8,
+      "y": 22,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 3,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 15,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 0,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 12,
+      "y": 25,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 12,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 28,
+      "rot": 1
+    }
+  ],
   "rooms": {
     "52": {
       "roomType": "base:room-school",

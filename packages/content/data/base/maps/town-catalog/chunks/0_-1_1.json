@@ -436,7 +436,86 @@
       "contentId": "base:window-plain"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 3,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 1,
+      "y": 22,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 7,
+      "y": 22,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 1,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 2,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 3,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 4,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:gun-locker",
+      "x": 7,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 3,
+      "y": 28,
+      "rot": 2
+    }
+  ],
   "rooms": {
     "70": {
       "roomType": "base:room-office",

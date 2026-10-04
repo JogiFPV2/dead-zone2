@@ -41,5 +41,13 @@
     "placeable": {
       "sleepSurface": "sofa"
     }
+  },
+  {
+    "id": "base:bench",
+    "name": "item.base.bench.name",
+    "kind": "placeable",
+    "weightKg": 25,
+    "tags": ["base:furniture", "base:outdoor-ok"],
+    "placeable": {}
   }
 ]

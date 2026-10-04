@@ -118,7 +118,7 @@
   "edges": [],
   "objects": [
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dumpster",
       "x": 12,
       "y": 12,
       "rot": 0
@@ -130,7 +130,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": 12,
       "y": 19,
       "rot": 0

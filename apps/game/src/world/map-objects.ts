@@ -1,4 +1,5 @@
 import {
+  Box3,
   BoxGeometry,
   Group,
   type InstancedMesh,
@@ -10,7 +11,8 @@ import {
 import type { NearbyContainerView } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
-import { CHUNK_SIZE } from './chunk.js';
+import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from './chunk.js';
+import { NO_CUTAWAY, type Cutaway } from './cutaway.js';
 import { MARKER_GEOMETRY, MARKER_MATERIAL, animateMarker } from './ground-piles.js';
 import {
   buildInstances,
@@ -55,6 +57,10 @@ interface Obj {
   slots?: InstanceSlots;
   /** Individual clone shown instead of the instances while x-rayed. */
   xray?: Object3D;
+  /** Building of the object's tile (NO_BUILDING outside). */
+  building: BuildingId;
+  /** Hidden by the cutaway (a floor above the player's in the player's building). */
+  hidden: boolean;
 }
 
 type ModelFn = (contentId: string, height: number) => Object3D | undefined;
@@ -81,6 +87,7 @@ export class MapObjects {
   private instances: InstancedMesh[] = [];
   private origin = { x: 0, z: 0 };
   private instancesDirty = false;
+  private cutaway: Cutaway = NO_CUTAWAY;
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -124,8 +131,11 @@ export class MapObjects {
         material,
         marker,
         markerY,
+        building: buildingAt(chunk, o.x, o.y),
+        hidden: false,
       };
       this.objects.push(obj);
+      this.applyCutaway(obj);
     }
     this.instancesDirty = true;
     // Markers / searched shades for the new objects on the next update.
@@ -156,7 +166,8 @@ export class MapObjects {
   private partsOf(contentId: string, height: number): ModelPart[] | undefined {
     const key = `${contentId}|${height}`;
     if (!this.parts.has(key)) {
-      const m = this.model?.(contentId, height);
+      const raw = this.model?.(contentId, height);
+      const m = raw && fitTile(raw);
       this.parts.set(key, m ? modelParts(m) : undefined);
     }
     return this.parts.get(key);
@@ -196,6 +207,7 @@ export class MapObjects {
         o.mesh.visible = false;
         if (o.xray) setSlotsVisible(sl, false);
       }
+      this.applyCutaway(o);
     });
     this.instances = meshes;
   }
@@ -208,6 +220,26 @@ export class MapObjects {
     if (x === this.origin.x && z === this.origin.z) return;
     this.origin = { x, z };
     this.instancesDirty = true;
+  }
+
+  /**
+   * Same cutaway as the buildings: furniture on floors above the player's, in the player's
+   * building, is hidden with those floors (no beds floating over a cut-away storey).
+   */
+  setCutaway(c: Cutaway): void {
+    if (c.building === this.cutaway.building && (c.z ?? 0) === (this.cutaway.z ?? 0)) return;
+    this.cutaway = c;
+    for (const o of this.objects) this.applyCutaway(o);
+  }
+
+  private applyCutaway(o: Obj): void {
+    const c = this.cutaway;
+    o.hidden = c.building !== NO_BUILDING && o.building === c.building && o.z > (c.z ?? 0);
+    if (o.slots) {
+      if (!o.xray) setSlotsVisible(o.slots, !o.hidden);
+    } else o.mesh.visible = !o.hidden;
+    if (o.xray) o.xray.visible = !o.hidden;
+    if (o.hidden) o.marker.visible = false;
   }
 
   /** Swaps the grey boxes for models where `model(contentId, height)` has one (also later chunks). */
@@ -232,7 +264,8 @@ export class MapObjects {
     if (!o) return;
     // Instanced furniture: an individual clone stands in while see-through.
     if (o.slots && on && !o.xray) {
-      const clone = this.model?.(o.contentId, o.height);
+      const raw = this.model?.(o.contentId, o.height);
+      const clone = raw && fitTile(raw);
       if (clone) {
         clone.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
         clone.rotation.y = o.mesh.rotation.y;
@@ -266,7 +299,7 @@ export class MapObjects {
     if (!on && o.xray) {
       this.root.remove(o.xray);
       delete o.xray;
-      if (o.slots) setSlotsVisible(o.slots, true);
+      if (o.slots) setSlotsVisible(o.slots, !o.hidden);
     }
   }
 
@@ -287,7 +320,7 @@ export class MapObjects {
       }
       for (const o of this.objects) {
         const key = `${o.tx},${o.ty},${o.z}`;
-        o.marker.visible = unsearched.has(key);
+        o.marker.visible = !o.hidden && unsearched.has(key);
         o.material.color.setHex(this.searched.has(key) ? 0x5d6266 : 0x8c9196);
       }
     }
@@ -295,4 +328,32 @@ export class MapObjects {
       if (o.marker.visible) animateMarker(o.marker, o.markerY, true, nowMs);
     }
   }
+}
+
+function buildingAt(chunk: ChunkData, x: number, y: number): BuildingId {
+  const room = chunk.room?.[y * CHUNK_SIZE + x] ?? 0;
+  return room === 0 ? NO_BUILDING : (chunk.rooms?.get(room)?.buildingId ?? NO_BUILDING);
+}
+
+/** Largest footprint side of a map object model: one tile minus a gap (walls stay closed). */
+const MAX_FOOTPRINT = 0.96;
+
+/**
+ * Squeezes a model (scaled by height) into its one-tile footprint on X/Z, so a wide shelf in
+ * a room corner does not poke through the next wall. Returns a wrapper (instancing reads the
+ * parts relative to the root, so the squeeze sits one level down).
+ */
+function fitTile(m: Object3D): Object3D {
+  const wrap = new Group();
+  wrap.add(m);
+  wrap.updateMatrixWorld(true);
+  const box = new Box3().setFromObject(m);
+  const w = box.max.x - box.min.x;
+  const d = box.max.z - box.min.z;
+  const k = Math.min(1, MAX_FOOTPRINT / Math.max(w, d, 1e-6));
+  if (k < 1) {
+    m.scale.x *= k;
+    m.scale.z *= k;
+  }
+  return wrap;
 }
