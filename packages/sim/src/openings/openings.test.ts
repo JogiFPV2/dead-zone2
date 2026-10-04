@@ -188,3 +188,12 @@ describe('openings: save', () => {
     expect(b.hash()).toBe(a.hash());
   });
 });
+
+describe('openings: edge kinds', () => {
+  it('one list of edge kinds: content EDGE_TYPES = protocol SIM_EDGE_KINDS (gate included)', async () => {
+    const { EDGE_TYPES } = await import('@deadzone/content');
+    const { SIM_EDGE_KINDS } = await import('@deadzone/protocol');
+    expect([...EDGE_TYPES]).toEqual([...SIM_EDGE_KINDS]);
+    expect(SIM_EDGE_KINDS).toContain('gate');
+  });
+});

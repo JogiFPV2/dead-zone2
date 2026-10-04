@@ -242,6 +242,12 @@ export interface CrowdConfig {
   fenceBashMul: number;
   /** A closed window breaks at once at this net pressure (units). */
   windowBreakUnits: number;
+  /**
+   * A closed gate without planks falls over at once at this net pressure (units); a locked
+   * (barred) gate needs `gateBarMul` × that. Below it the crowd only damages it (like a door).
+   */
+  gateFallUnits: number;
+  gateBarMul: number;
   /** A player within this distance of the edge centre on the other side holds it. */
   holdReachTiles: number;
   holdForce: number;
@@ -316,6 +322,8 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     fenceDamageMul: 2,
     fenceBashMul: 0.25,
     windowBreakUnits: 3,
+    gateFallUnits: 5,
+    gateBarMul: 1.8,
     holdReachTiles: 1,
     holdForce: 2.5,
     barricadeResist: 3,

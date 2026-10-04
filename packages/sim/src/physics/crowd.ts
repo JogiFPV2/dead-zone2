@@ -13,7 +13,9 @@ import { floorZ } from '../world/levels.js';
  * Crowd pressure (PZ hordes): zombies pressing on a closed door / window / fence add up their
  * mass; a player holding it from the other side and planks push back. A lone zombie only bangs
  * on it (its blows in `ai.locomotion` stay as they were); the excess of a crowd damages the
- * edge every pulse, breaks a window at once or knocks a low fence over. Zombies in a crowd also
+ * edge every pulse through the same `damageOpening` as the blows (planks first, outermost one
+ * by one, then the edge), breaks a window at once, knocks a low fence over and topples a gate
+ * (`gateFallUnits`, barred = locked × `gateBarMul`). Zombies in a crowd also
  * push each other apart by mass (`separateZombies`). Deterministic: zombies in StableId order,
  * edges in key order, damage jitter from `rng.physics` (1 draw per damaging pulse).
  */
@@ -152,6 +154,17 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
   if (level !== prev) emitPressure(w, key, kind, level, p);
   if (excess <= 0) return level;
   const u = w.physics.rng.nextFloat();
+  // A gate without planks falls over under heavy pressure (like a low fence, but at once); a
+  // locked (barred) one only from `gateBarMul` × that. Same damage path as blows (all its hp).
+  if (
+    kind === OpeningKind.gate &&
+    !e?.planks &&
+    (state === OS.closed || state === OS.locked) &&
+    net >= cc.gateFallUnits * (state === OS.locked ? cc.gateBarMul : 1)
+  ) {
+    damageOpening(w, key, kind, e?.hp ?? maxHp(w.openings.cfg, kind, state), 'crowd');
+    return level;
+  }
   if (
     kind === OpeningKind.window &&
     state === OS.closed &&

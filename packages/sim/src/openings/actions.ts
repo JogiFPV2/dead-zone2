@@ -76,7 +76,8 @@ export function windowSmashed(
 /**
  * Damage to a blocking door / window / gate / fence (zombie blows, crowd pressure, a failed
  * `forceDoor`). Planks go first, one by one (the top plank's hp, the rest of a blow that knocks
- * it off is lost); then the edge: at 0 hp → `broken` (window: shatters; fence: knocked over).
+ * it off is lost); then the edge: at 0 hp → `broken` (window: shatters; fence / gate: knocked
+ * over, loud `break` noise). `openingChanged` carries hp / maxHp of the edge plus its planks.
  */
 export function damageOpening(
   w: SimWorld,
@@ -106,7 +107,7 @@ export function damageOpening(
   else {
     setOpening(o, key, kind, OS.broken, 0, { cleared: 0 });
     if (kind === OpeningKind.window) windowSmashed(w, key, by);
-    else if (kind === OpeningKind.fence) {
+    else if (kind === OpeningKind.fence || kind === OpeningKind.gate) {
       const k = unpackKey(key);
       const c = edgeCentre(key % 2, k.tx, k.ty);
       const n = o.cfg.breakNoise;
