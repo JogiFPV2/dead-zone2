@@ -38,7 +38,8 @@ function fail(error: PgError): never {
 
 const CHARACTER_COLUMNS =
   'id,user_id,name,appearance,world_seed,worldgen_version,world_settings,status,days_survived,created_at,last_played_at,died_at,last_place,last_x,last_y,last_z,last_day';
-const SAVE_COLUMNS = 'character_id,storage_path,version,size_bytes,checksum,game_day,updated_at';
+const SAVE_COLUMNS =
+  'character_id,storage_path,version,size_bytes,checksum,game_day,minute_of_day,updated_at';
 
 type Db = SupabaseClient<Database>;
 
@@ -138,6 +139,7 @@ export function createSupabaseStore(db: Db): GameStore {
           p_last_y: c.location?.y ?? null,
           p_last_z: c.location?.z ?? null,
           p_last_day: c.location?.day ?? null,
+          p_minute_of_day: c.minuteOfDay,
         })
         .single();
       if (error) fail(error);
@@ -162,6 +164,15 @@ export function createSupabaseStore(db: Db): GameStore {
         .single();
       if (error) fail(error);
       return { storagePath: data.storage_path };
+    },
+    async getProfile(userId) {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id,display_name,created_at')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) fail(error);
+      return data ?? undefined;
     },
     async getSettings(userId) {
       const { data, error } = await db

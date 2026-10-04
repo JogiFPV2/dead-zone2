@@ -312,6 +312,31 @@ describe('migrations', () => {
     });
   });
 
+  it('commit_save stores minute_of_day of the save (null without it, 0..1439)', async () => {
+    await as('service_role', '', async () => {
+      const c = await newCharacter(B, 'Clock');
+      const minute = () =>
+        q(`select minute_of_day from public.saves where character_id = $1`, [c]).then(
+          (r) => r[0]?.minute_of_day,
+        );
+      const withMinute = (expected: number, path: string, m: number) =>
+        q(
+          `select * from public.commit_save($1, $2, $3, $4, 100, $5, 1,
+             null, null, null, null, null, $6)`,
+          [B, c, expected, path, SUM, m],
+        );
+      await commit(B, c, 0, 'm1');
+      expect(await minute()).toBeNull();
+      await withMinute(1, 'm2', 1439);
+      expect(await minute()).toBe(1439);
+      await expect(withMinute(2, 'm3', 1440)).rejects.toThrow();
+      await expect(withMinute(2, 'm3', -1)).rejects.toThrow();
+      await commit(B, c, 2, 'm4');
+      expect(await minute()).toBeNull();
+      await q(`delete from public.characters where id = $1`, [c]);
+    });
+  });
+
   it('a character for a missing auth user fails with 23503 (server maps it to 401)', async () => {
     await as('service_role', '', async () => {
       const err = await newCharacter('44444444-4444-4444-8444-444444444444', 'Ghost').catch(

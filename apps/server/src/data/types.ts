@@ -30,6 +30,8 @@ export interface SaveRow {
   size_bytes: number;
   checksum: string;
   game_day: number;
+  /** Minute of the game day (0..1439); null for rows from before the column. */
+  minute_of_day: number | null;
   updated_at: string;
 }
 
@@ -38,6 +40,13 @@ export interface SettingsRow {
   settings: Record<string, unknown> | null;
   settings_version: number;
   settings_updated_at: string | null;
+}
+
+/** `public.profiles` row (without the settings columns, see `SettingsRow`). */
+export interface ProfileRow {
+  id: string;
+  display_name: string | null;
+  created_at: string;
 }
 
 export interface NewCharacter {
@@ -58,6 +67,8 @@ export interface CommitSave {
   sizeBytes: number;
   checksum: string;
   gameDay: number;
+  /** Minute of the game day of the validated state (0..1439). */
+  minuteOfDay: number | null;
   /** Server-derived summary of the validated save; null keeps the stored location. */
   location: LastLocation | null;
 }
@@ -111,6 +122,8 @@ export interface GameStore {
    * Throws `DataRuleError('character_not_found')`.
    */
   deleteCharacter(userId: string, characterId: string): Promise<{ storagePath: string | null }>;
+  /** The profile row; `undefined` without one (deleted account). */
+  getProfile(userId: string): Promise<ProfileRow | undefined>;
   /** Player settings of the profile; `undefined` without a profile row (deleted account). */
   getSettings(userId: string): Promise<SettingsRow | undefined>;
   /**

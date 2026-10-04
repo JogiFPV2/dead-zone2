@@ -1,4 +1,4 @@
-import type { ApiError, ApiErrorCode } from '@deadzone/protocol';
+import type { ApiError, ApiErrorCode, SaveConflictError } from '@deadzone/protocol';
 
 /** An expected API error: status code + stable machine code (docs/backend.md §5.1). */
 export class HttpError extends Error {
@@ -6,8 +6,8 @@ export class HttpError extends Error {
     readonly statusCode: number,
     readonly code: ApiErrorCode,
     message: string = code,
-    /** Extra fields of the error body (e.g. `issues`). */
-    readonly details?: Omit<ApiError, 'error' | 'message'>,
+    /** Extra fields of the error body (`issues`, `server` of `SaveConflictError`). */
+    readonly details?: Omit<ApiError, 'error' | 'message'> | Pick<SaveConflictError, 'server'>,
   ) {
     super(message);
     this.name = 'HttpError';

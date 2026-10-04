@@ -1,6 +1,7 @@
 import {
   MAX_ACCOUNT_SAVE_BYTES,
   MAX_ALIVE_CHARACTERS,
+  MAX_EXPORTS_PER_HOUR,
   MAX_IP_REQUESTS_PER_5_MIN,
   MAX_NEW_CHARACTERS_PER_DAY,
   MAX_SAVES_PER_HOUR,
@@ -23,6 +24,8 @@ export interface Limits {
   maxUploadBytesPerDay: number;
   /** `/v1` requests per client IP per 5 minutes. */
   maxIpRequestsPer5Min: number;
+  /** `GET /v1/me/export` per account per hour. */
+  maxExportsPerHour: number;
 }
 
 export interface ServerConfig {
@@ -64,6 +67,7 @@ export const DEFAULT_LIMITS: Limits = {
   maxSavesPerHour: MAX_SAVES_PER_HOUR,
   maxUploadBytesPerDay: MAX_UPLOAD_BYTES_PER_DAY,
   maxIpRequestsPer5Min: MAX_IP_REQUESTS_PER_5_MIN,
+  maxExportsPerHour: MAX_EXPORTS_PER_HOUR,
 };
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -160,6 +164,13 @@ export function loadConfig(env: Env): ServerConfig {
         d.maxIpRequestsPer5Min,
         1,
         d.maxIpRequestsPer5Min,
+      ),
+      maxExportsPerHour: int(
+        env,
+        'LIMIT_EXPORTS_PER_HOUR',
+        d.maxExportsPerHour,
+        1,
+        d.maxExportsPerHour,
       ),
     },
   });

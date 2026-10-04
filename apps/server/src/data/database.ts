@@ -73,6 +73,7 @@ export type Database = {
           p_last_y?: number | null;
           p_last_z?: number | null;
           p_last_day?: number | null;
+          p_minute_of_day?: number | null;
         };
         Returns: { version: number; previous_path: string | null }[];
       };

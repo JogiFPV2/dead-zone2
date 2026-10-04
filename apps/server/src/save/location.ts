@@ -1,5 +1,12 @@
 import { MAP_SIZE_M } from '@deadzone/protocol';
 import type { LastLocation } from '@deadzone/protocol';
+import {
+  DEFAULT_CLOCK_START,
+  DEFAULT_DAY_LENGTH_MINUTES,
+  createClock,
+  gameMinuteAt,
+  minuteOfDay,
+} from '@deadzone/sim';
 import { SaveError, saveSummary, type SaveSummaryOptions } from '@deadzone/sim/save-summary';
 
 export type { SaveSummaryOptions };
@@ -58,6 +65,15 @@ export function sanitizeLocation(raw: unknown): LastLocation | null {
     z: clamp(Math.round(z), MIN_Z, MAX_Z),
     day: clamp(Math.floor(s.day), 0, MAX_DAY),
   };
+}
+
+/**
+ * Minute of the game day (0..1439) at `tick`, with the same clock as `saveSummary` (day length of
+ * the character, default start day 1 09:00): the clock is not stored in the save.
+ */
+export function stateMinuteOfDay(tick: number, dayLengthMinutes?: number): number {
+  const clock = createClock(dayLengthMinutes ?? DEFAULT_DAY_LENGTH_MINUTES, DEFAULT_CLOCK_START);
+  return minuteOfDay(gameMinuteAt(clock, Math.max(0, tick)));
 }
 
 /** Why no location came out of a validated save (logged by the route, never fails the save). */

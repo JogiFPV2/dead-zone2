@@ -13,6 +13,7 @@ describe('loadConfig', () => {
     expect(c.limits.maxSavesPerHour).toBe(120);
     expect(c.limits.maxUploadBytesPerDay).toBe(200 * 1024 * 1024);
     expect(c.limits.maxIpRequestsPer5Min).toBe(300);
+    expect(c.limits.maxExportsPerHour).toBe(5);
     expect(c.trustProxyHops).toBe(0);
     expect(c.saveFormatVersion).toBe(3);
     expect(() => loadConfig({ ...base, SAVE_FORMAT_VERSION: '4' })).toThrow();
@@ -24,6 +25,7 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...base, LIMIT_ALIVE_CHARACTERS: '5' }).limits.maxAliveCharacters).toBe(5);
     expect(() => loadConfig({ ...base, LIMIT_SAVES_PER_HOUR: '121' })).toThrow();
     expect(() => loadConfig({ ...base, LIMIT_IP_REQUESTS_PER_5_MIN: '301' })).toThrow();
+    expect(() => loadConfig({ ...base, LIMIT_EXPORTS_PER_HOUR: '6' })).toThrow();
     expect(loadConfig({ ...base, LIMIT_SAVES_PER_HOUR: '30' }).limits.maxSavesPerHour).toBe(30);
   });
 

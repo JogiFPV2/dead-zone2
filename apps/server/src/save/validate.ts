@@ -1,6 +1,11 @@
 import type { LastLocation, SaveEnvelopeHeader } from '@deadzone/protocol';
 import { parseEnvelope } from './envelope.js';
-import { summarizeLocation, type SaveSummaryFn, type SummaryResult } from './location.js';
+import {
+  stateMinuteOfDay,
+  summarizeLocation,
+  type SaveSummaryFn,
+  type SummaryResult,
+} from './location.js';
 import { validateState } from './state.js';
 
 export interface ValidateOptions {
@@ -18,6 +23,8 @@ export interface ValidatedEnvelope {
   sizeBytes: number;
   /** Sanitized `saveSummary` of the validated state; null when the summary failed. */
   location: LastLocation | null;
+  /** Minute of the game day of the state (sim clock over `tick`, 0..1439). */
+  minuteOfDay: number;
   /** Why `location` is null (for the log); the save itself is valid. */
   summaryFailure?: SummaryResult['failure'];
 }
@@ -41,6 +48,7 @@ export function validateEnvelope(
     sha256: env.sha256,
     sizeBytes: env.sizeBytes,
     location,
+    minuteOfDay: stateMinuteOfDay(state.tick, opts.dayLengthMinutes),
     ...(failure ? { summaryFailure: failure } : {}),
   };
 }

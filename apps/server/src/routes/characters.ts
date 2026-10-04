@@ -2,7 +2,6 @@ import { randomBytes, randomInt } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type {
   CharacterSummary,
-  LastLocation,
   ListCharactersResponse,
   OpenSaveResponse,
   PutSaveResponse,
@@ -31,6 +30,8 @@ import { enforce, type RateLimitStore } from '../rate-limit.js';
 import type { ValidatedEnvelope } from '../save/validate.js';
 import type { SaveValidator } from '../save/worker-pool.js';
 import { registerSettingsRoutes } from './settings.js';
+import { registerExportRoutes } from './export.js';
+import { conflictServer, dayLengthMinutes, toSummary } from './summary.js';
 
 export interface CharacterRouteDeps {
   config: Pick<
@@ -57,45 +58,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 const IP_WINDOW_MS = 5 * 60 * 1000;
 
-/** Stored last location; tombstones and characters without a summarized save give null. */
-function lastLocation(c: CharacterRow): LastLocation | null {
-  if (c.status !== 'alive') return null;
-  if (c.last_x === null || c.last_y === null || c.last_z === null || c.last_day === null) {
-    return null;
-  }
-  return { place: c.last_place, x: c.last_x, y: c.last_y, z: c.last_z, day: c.last_day };
-}
-
-/** `world_settings.dayLengthMinutes` when it is a sane number (sim default otherwise). */
-function dayLengthMinutes(c: CharacterRow): number | undefined {
-  const v = c.world_settings.dayLengthMinutes;
-  return typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 10_080 ? v : undefined;
-}
-
-function toSummary(c: CharacterRow, save: SaveRow | undefined): CharacterSummary {
-  return {
-    id: c.id,
-    name: c.name,
-    appearance: c.appearance,
-    worldSeed: c.world_seed,
-    worldgenVersion: c.worldgen_version,
-    worldSettings: c.world_settings,
-    status: c.status,
-    daysSurvived: c.days_survived,
-    createdAt: c.created_at,
-    lastPlayedAt: c.last_played_at,
-    diedAt: c.died_at,
-    save:
-      save && c.status === 'alive'
-        ? {
-            version: save.version,
-            sizeBytes: save.size_bytes,
-            gameDay: save.game_day,
-            updatedAt: save.updated_at,
-          }
-        : null,
-    lastLocation: lastLocation(c),
-  };
+/** 409 `save_version_conflict` with the save currently stored on the server (`server`). */
+function saveConflict(current: SaveRow | undefined): HttpError {
+  const base = versionConflict();
+  return new HttpError(base.statusCode, base.code, base.message, {
+    server: conflictServer(current),
+  });
 }
 
 /** Translates a database rule violation to the API error of docs/backend.md §5.1. */
@@ -207,6 +175,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
   // Player settings share the JWT/account check and the per-IP limit above.
   registerSettingsRoutes(app, { store, user });
+  registerExportRoutes(app, { store, blobs, user, rateLimits, limits, now });
 
   async function ownedCharacter(userId: string, id: string): Promise<CharacterRow> {
     const c = await store.getCharacter(userId, id);
@@ -340,7 +309,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
       // Cheap pre-checks; commit_save repeats both atomically.
       const current = await store.getSave(id);
-      if ((current?.version ?? 0) !== expected) throw versionConflict();
+      if ((current?.version ?? 0) !== expected) throw saveConflict(current);
       const used = await store.accountSaveBytes(userId);
       if (used - (current?.size_bytes ?? 0) + env.sizeBytes > limits.maxAccountSaveBytes) {
         throw new HttpError(413, 'save_quota_exceeded', 'account save quota exceeded');
@@ -361,11 +330,16 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
           gameDay: env.header.gameDay,
           // From the validated state in the worker (sim `saveSummary`), never from the client.
           location: env.location,
+          minuteOfDay: env.minuteOfDay,
         });
       } catch (err) {
         await blobs
           .remove(path)
           .catch(() => req.log.warn('orphan save blob left after failed commit'));
+        if (err instanceof DataRuleError && err.code === 'save_version_conflict') {
+          // Lost the race to another session: name the save that won.
+          throw saveConflict(await store.getSave(id).catch(() => undefined));
+        }
         ruleToHttp(err);
       }
       if (committed.previousPath && committed.previousPath !== path) {

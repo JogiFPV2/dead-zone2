@@ -129,6 +129,7 @@ Dokładnie jeden wiersz na postać:
 | `size_bytes` | rozmiar skompresowanej koperty |
 | `checksum` | checksum całej koperty, SHA-256 |
 | `game_day` | dzień gry, nieujemny |
+| `minute_of_day` | minuta doby gry (0–1439) z zegara sima nad `tick` zwalidowanego stanu; pusta dla wierszy sprzed kolumny |
 | `updated_at` | czas ostatniej aktualizacji |
 
 Zapis nadpisuje poprzedni stan. Klient wysyła oczekiwaną `version`; serwer atomowo sprawdza zgodność i zwiększa wersję. Niezgodność zwraca **HTTP 409** (`save_version_conflict`) i nie zmienia ani pliku, ani wiersza. Nie ma punktów przywracania, ręcznego wczytywania starszej wersji ani historii.
@@ -203,6 +204,7 @@ Rozmiar: według pomiaru Symulacji zapis po około 50 h gry ma **0,75–1,96 MiB
 | `DELETE /v1/me` | Usunięcie konta i wszystkich danych (RODO) |
 | `GET /v1/me/settings` | Ustawienia gracza: `{ settings, version, updatedAt }` i nagłówek `ETag: "<version>"` |
 | `PUT /v1/me/settings` | Nadpisanie ustawień; body JSON (obiekt, najwyżej 16 KB), `If-Match: "<version>"` |
+| `GET /v1/me/export` | Eksport danych konta (RODO): JSON do pobrania, podpisane URL-e zapisów na 10 min |
 
 `GET /v1/characters` zwraca (typy `ListCharactersResponse` i `CharacterSummary` w `packages/protocol`):
 
@@ -213,7 +215,11 @@ Lokacji nie podaje klient. Przy `PUT .../save` worker walidacji, po pełnej wali
 
 Nie ma endpointu do listowania, pobierania ani przywracania starszych zapisów. Nie ma osobnego endpointu „Zapisz”, bo zapis wynika z poniższych wyzwalaczy.
 
-Ustawienia (`/v1/me/settings`, typ `PlayerSettingsResponse` w `packages/protocol`): serwer sprawdza body funkcją `validatePlayerSettings` z `@deadzone/ui/settings` i zapisuje tylko jej wynik `data` (nieznane klucze usunięte, brakujące pola z domyślnymi). Brak `If-Match` daje `428 precondition_required`, nieaktualny `412 settings_version_conflict` (klient robi `GET` i scala). Body ponad 16 KB albo `reason: 'too-large'` daje `413 payload_too_large`, `reason: 'invalid'` daje `422 invalid_settings` z polem `issues` (`path`, `code`, `message`, najwyżej 20). Body niebędące obiektem JSON daje 400. Oba endpointy liczą się do limitu żądań na IP i wymagają istniejącego konta (inaczej 401). `DELETE /v1/me` usuwa ustawienia razem z profilem.
+Ustawienia (`/v1/me/settings`, typ `PlayerSettingsResponse` w `packages/protocol`): body `PUT` to **sam obiekt ustawień** (np. `{"version":1,"audio":{"muted":true}}`), bez opakowania `{settings}`; odpowiedź ma kształt `{ settings, version, updatedAt }`. Serwer sprawdza body funkcją `validatePlayerSettings` z `@deadzone/ui/settings` i zapisuje tylko jej wynik `data` (nieznane klucze usunięte, brakujące pola z domyślnymi). Brak `If-Match` daje `428 precondition_required`, nieaktualny `412 settings_version_conflict` (klient robi `GET` i scala). Body ponad 16 KB albo `reason: 'too-large'` daje `413 payload_too_large`, `reason: 'invalid'` daje `422 invalid_settings` z polem `issues` (`path`, `code`, `message`, najwyżej 20). Body niebędące obiektem JSON daje 400. Oba endpointy liczą się do limitu żądań na IP i wymagają istniejącego konta (inaczej 401). `DELETE /v1/me` usuwa ustawienia razem z profilem.
+
+Konflikt zapisu: `409 save_version_conflict` z `PUT /v1/characters/:id/save` ma oprócz `error` i `message` pole `server: { version, gameDay, minuteOfDay, updatedAt } | null` — bieżący zapis na serwerze (null, gdy go nie ma; `minuteOfDay` null dla zapisów sprzed kolumny). Tak samo przy przegranym wyścigu w `commit_save`.
+
+Eksport (`GET /v1/me/export`, typ `AccountExport` w `packages/protocol`): `{ format: 'deadzone-account-export', formatVersion: 1, exportedAt, profile: { id, displayName, createdAt }, settings: { settings, version, updatedAt }, usage, characters }`. `characters` to wszystkie postacie razem z nagrobkami: metadane jak w `CharacterSummary`, `lastLocation` (zapisana, także dla nagrobków) i `save: { version, sizeBytes, sha256, gameDay, minuteOfDay, updatedAt, downloadUrl, expiresInSeconds } | null` dla żywych z zapisem; `downloadUrl` to podpisany URL pliku DZSV z prywatnego bucketu, ważny 600 s (bez wklejania plików). Nagłówki: `Content-Disposition: attachment; filename=deadzone-export-<RRRR-MM-DD>.json`, `Cache-Control: no-store`. Wymaga istniejącego konta (401), limit 5 na godzinę na konto (`LIMIT_EXPORTS_PER_HOUR`) plus limit na IP.
 
 Kody: `400` (format), `401` (JWT), `403` (brak własności lub ban), `404` (postać), `409` (konflikt wersji, postać martwa, limit żywych postaci), `412` (nieaktualny ETag ustawień), `413` (rozmiar lub quota), `422` (walidacja stanu lub ustawień), `428` (brak `If-Match` ustawień), `426` (wersja formatu), `429` (rate limit).
 
@@ -256,6 +262,7 @@ Wartości startowe są konfigurowalne w env serwera, ale serwer nie może ich po
 | Zapisy HTTP | 120 na godzinę na konto, 200 MiB uploadu na dobę | Ochrona przed spamem; zwykła gra robi znacznie mniej |
 | Żądania z IP | 300 na 5 min | Niezależnie od konta |
 | Nowe postacie | 10 na dobę na konto | Ochrona przed spamem |
+| Eksport danych konta | 5 na godzinę na konto | Podpisuje URL-e wszystkich zapisów |
 
 Limit 20 żywych postaci zachowuje poprzedni wynik kalkulacji kosztów i pojemności. Nagrobki zajmują tylko małe metadane `characters`, a po śmierci nie mają pliku DZSV.
 

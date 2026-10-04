@@ -14,6 +14,8 @@ export const MAX_NEW_CHARACTERS_PER_DAY = 10;
 export const MAX_SAVES_PER_HOUR = 120;
 export const MAX_UPLOAD_BYTES_PER_DAY = 200 * 1024 * 1024;
 export const MAX_IP_REQUESTS_PER_5_MIN = 300;
+/** `GET /v1/me/export` per account per hour. */
+export const MAX_EXPORTS_PER_HOUR = 5;
 export const CHARACTER_NAME_MAX = 40;
 /** Serialized size limit of `appearance` and `world_settings` (UTF-8 JSON bytes). */
 export const CHARACTER_JSON_MAX_BYTES = 4096;
@@ -178,6 +180,59 @@ export interface ApiError {
   message: string;
   /** `invalid_settings`: zod issues of `validatePlayerSettings` (path, code, message). */
   issues?: { path: (string | number)[]; code: string; message: string }[];
+}
+
+/**
+ * Body of `409 save_version_conflict` from `PUT /v1/characters/:id/save`: the `ApiError` fields plus
+ * the save currently on the server (null when the server has none, e.g. never uploaded).
+ */
+export interface SaveConflictError extends ApiError {
+  error: 'save_version_conflict';
+  server: SaveConflictServer | null;
+}
+
+/** The current server save named by a 409 `save_version_conflict`. */
+export interface SaveConflictServer {
+  version: number;
+  gameDay: number;
+  /** Minute of the game day (0..1439, sim clock); null for saves stored before it was recorded. */
+  minuteOfDay: number | null;
+  updatedAt: string;
+}
+
+/**
+ * `GET /v1/me/export` (RODO, data access): everything the server keeps about the account, as one
+ * JSON download. Save blobs are not inlined: each living save carries a short-lived signed URL.
+ */
+export interface AccountExport {
+  format: 'deadzone-account-export';
+  formatVersion: 1;
+  exportedAt: string;
+  profile: { id: string; displayName: string | null; createdAt: string };
+  settings: PlayerSettingsResponse;
+  usage: AccountUsage;
+  /** All characters, tombstones included. */
+  characters: AccountExportCharacter[];
+}
+
+export interface AccountExportCharacter extends Omit<CharacterSummary, 'save' | 'lastLocation'> {
+  /** Stored last location (kept for tombstones too). */
+  lastLocation: LastLocation | null;
+  /** Current save of a living character; null for tombstones and characters without a save. */
+  save: AccountExportSave | null;
+}
+
+export interface AccountExportSave {
+  version: number;
+  sizeBytes: number;
+  /** SHA-256 of the DZSV envelope (hex). */
+  sha256: string;
+  gameDay: number;
+  minuteOfDay: number | null;
+  updatedAt: string;
+  /** Signed URL of the DZSV blob (private bucket), valid for `expiresInSeconds`. */
+  downloadUrl: string;
+  expiresInSeconds: number;
 }
 
 /**

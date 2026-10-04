@@ -97,6 +97,7 @@ export class MemoryStore implements GameStore {
       size_bytes: c.sizeBytes,
       checksum: c.checksum,
       game_day: c.gameDay,
+      minute_of_day: c.minuteOfDay,
       updated_at: this.iso(),
     });
     ch.last_played_at = this.iso();
@@ -128,6 +129,17 @@ export class MemoryStore implements GameStore {
     this.saves.delete(id);
     this.characters.delete(id);
     return Promise.resolve({ storagePath: s?.storage_path ?? null });
+  }
+  /** Profile creation time per account (tests); default = the store clock at first read. */
+  profileCreated = new Map<string, string>();
+  getProfile(userId: string) {
+    if (!this.profiles.has(userId)) return Promise.resolve(undefined);
+    if (!this.profileCreated.has(userId)) this.profileCreated.set(userId, this.iso());
+    return Promise.resolve({
+      id: userId,
+      display_name: null,
+      created_at: this.profileCreated.get(userId)!,
+    });
   }
   getSettings(userId: string) {
     if (!this.profiles.has(userId)) return Promise.resolve(undefined);
