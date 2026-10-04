@@ -62,3 +62,36 @@ describe('BuildingLookup', () => {
     expect(lookup.edge('N', 5, 5, 0)).toBe(NO_BUILDING);
   });
 });
+
+describe('chunk-local room ids (docs/sim-architecture.md 9.24)', () => {
+  it('keys on the global building id, never on the room id', () => {
+    const roomsOf = (pairs: [number, number][]) =>
+      new Map(
+        pairs.map(([room, b]) => [room, { type: 'base:room-kitchen' as const, buildingId: b }]),
+      );
+    const mk = (
+      cx: number,
+      rooms: ReadonlyMap<number, { type: 'base:room-kitchen'; buildingId: number }>,
+    ) => {
+      const room = new Uint16Array(CHUNK_TILES).fill(1);
+      return {
+        coord: { cx, cy: 0, z: 0 },
+        floor: new Uint16Array(CHUNK_TILES),
+        room,
+        rooms,
+      } as ChunkData;
+    };
+    // Room 1 of chunk 0 and room 1 of chunk 1 are different buildings; room 1 of chunk 2 is the
+    // same building as chunk 1 (one house over the chunk border, different local ids are fine).
+    const chunks = [
+      mk(0, roomsOf([[1, 100]])),
+      mk(1, roomsOf([[1, 4_000_000_000]])),
+      mk(2, roomsOf([[1, 4_000_000_000]])),
+    ];
+    const lookup = new BuildingLookup({ getChunk: (cx) => chunks[cx] });
+    expect(lookup.at(5, 5, 0)).toBe(100);
+    expect(lookup.at(40, 5, 0)).toBe(4_000_000_000);
+    expect(lookup.at(70, 5, 0)).toBe(lookup.at(40, 5, 0));
+    expect(lookup.at(5, 5, 0)).not.toBe(lookup.at(40, 5, 0));
+  });
+});

@@ -40,6 +40,7 @@ import { SnapshotBuffer } from './sim/interpolate.js';
 import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
 import { TICK_MS } from '@deadzone/sim';
 import { MockSimClient } from './sim/mock-sim-client.js';
+import { SimStreamSync } from './world/streaming/sim-sync.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
@@ -387,6 +388,15 @@ gameState.subscribe((_next, _prev, action) => {
   }
 });
 const stamper = new CommandStamper(PLAYER_ID);
+// Chunk streaming ↔ sim (docs/sim-architecture.md 9.24): the near ring around the camera target
+// is the sim's area of interest; `chunkChanged` rebuilds that chunk. Mock sim: neither.
+const simStreamSync = simWorker
+  ? new SimStreamSync(
+      (i) => sim.send(stamper.stamp({ type: 'setInterest', ...i })),
+      (cx, cy) => streaming.streamer.invalidate(cx, cy),
+    )
+  : undefined;
+simWorker?.onEvents((events) => simStreamSync?.onEvents(events));
 const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
 const snapshots = new SnapshotBuffer();
 // Physics / animation state per entity: the snapshot physics body + `physics` events (sim #62),
@@ -1154,6 +1164,7 @@ renderer.setAnimationLoop((time) => {
         ]
       : [startPoint],
   );
+  simStreamSync?.update({ x: rig.target.x, y: rig.target.z }, streaming.streamer.config);
   lightMinute = currentMinute(performance.now());
   lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
   if (townKit && townStructures) {
