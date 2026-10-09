@@ -22,8 +22,10 @@ const host = (): HTMLElement => {
   document.body.appendChild(el);
   return el;
 };
-const session = (signedInAs?: 'google' | 'email', o: { failList?: boolean } = {}) =>
-  new AccountSession({ api: createMockAccountApi({ latencyMs: 0, signedInAs, ...o }) });
+const session = (
+  signedInAs?: 'google' | 'email',
+  o: { failList?: boolean; now?: () => number } = {},
+) => new AccountSession({ api: createMockAccountApi({ latencyMs: 0, signedInAs, ...o }) });
 const type = (root: HTMLElement, name: string, value: string): void => {
   const i = root.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
   i.value = value;
@@ -305,17 +307,18 @@ describe('Ustawienia › Konto', () => {
   });
 
   it('Pobierz moje dane downloads the AccountExport under the server file name', async () => {
-    const account = session('email');
+    // Fixed clock for both the panel and the mock API (the server file name carries the date).
+    const now = (): number => Date.UTC(2026, 9, 4, 12);
+    const account = session('email', { now });
     await account.restore();
     const download = vi.fn();
-    const p = createAccountPanel({ account, download, now: () => new Date(2026, 9, 4).getTime() });
+    const p = createAccountPanel({ account, download, now });
     host().appendChild(p.el);
     await flush();
     expect(p.el.textContent).toContain('E-mail i hasło');
     click(p.el, 'export');
     await flush();
-    const name = `deadzone-export-${new Date(2026, 9, 4).toISOString().slice(0, 10)}.json`;
-    expect(download).toHaveBeenCalledWith(name, expect.any(String));
+    expect(download).toHaveBeenCalledWith('deadzone-export-2026-10-04.json', expect.any(String));
     const file = JSON.parse(String(download.mock.calls[0]?.[1])) as AccountExport;
     expect(file.format).toBe('deadzone-account-export');
     expect(file.characters.find((c) => c.status === 'alive')?.save?.expiresInSeconds).toBe(600);
