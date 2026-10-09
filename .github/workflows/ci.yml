@@ -34,7 +34,8 @@ jobs:
       - run: pnpm typecheck
       # Testy wydajności sima (packages/sim *.perf / *-perf) nie w równoległym `pnpm test`
       # (obciążenie współdzielonego boxa zawyża czasy), tylko osobno, na push do main i workflow_dispatch.
-      - run: pnpm test
+      # Najwyżej 2 pakiety naraz: na współdzielonym boxie pełna równoległość dawała losowe timeouty 5 s.
+      - run: pnpm turbo run test --concurrency=2
         env:
           SKIP_PERF: '1'
       - name: Testy wydajności sima (main / ręcznie)

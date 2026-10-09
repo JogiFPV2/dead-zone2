@@ -1,68 +1,15 @@
-import type { SimEvent, SimMap, SimZombieSpawn } from '@deadzone/protocol';
+import type { SimEvent } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COMBAT_CONFIG } from '../combat/config.js';
 import { sortedQuery } from '../core/world.js';
-import { createSim, type Sim, type SimOptions } from '../sim.js';
+import { createSim, type Sim } from '../sim.js';
 import { eventsOf, NOON } from '../test/ai-fixtures.js';
 import { fixtureContent } from '../test/content-fixtures.js';
-import { buildLevels, commander } from '../test/level-fixtures.js';
+import { commander } from '../test/level-fixtures.js';
 import { floorZ, hasFloor, stairsAt } from '../world/levels.js';
 import { TileGrid } from '../world/grid.js';
 import { DEFAULT_PHYSICS_CONFIG, type PhysicsConfig } from './constants.js';
 import { physicsHit } from './system.js';
-
-/**
- * Map A, level 0: floor everywhere; flight (20..23, 20) climbing E inside a walled corridor
- * (walls on its north and south side), entrance on x = 20. Level 1: floor except the stairwell.
- * Flight B (30, 28..30) climbing N, open on both sides (entrance on y = 31).
- */
-const inA = (x: number, y: number) => y === 20 && x >= 20 && x < 24;
-const inB = (x: number, y: number) => x === 30 && y >= 28 && y <= 30;
-const mapA = () =>
-  buildLevels(
-    [
-      { z: 0, wallN: (x, y) => (y === 20 || y === 21) && x >= 20 && x < 24 },
-      { z: 1, floor: (x, y) => !inA(x, y) && !inB(x, y) },
-    ],
-    [
-      { x: 20, y: 20, z: 0, dir: 'E', len: 4 },
-      { x: 30, y: 30, z: 0, dir: 'N', len: 3 },
-    ],
-  );
-
-/** Levels 0..4, a shaft at (40, 40) without floor on levels 1..4 (floor at the bottom). */
-const shaftMap = () =>
-  buildLevels(
-    [0, 1, 2, 3, 4].map((z) => ({
-      z,
-      floor: (x: number, y: number) => z === 0 || !(x === 40 && y === 40),
-    })),
-  );
-
-/** Zombies attack but never hit (the player survives the crowd tests). */
-const harmless = {
-  ...DEFAULT_COMBAT_CONFIG,
-  zombie: { ...DEFAULT_COMBAT_CONFIG.zombie, hitChance: 0 },
-};
-
-function levelSim(
-  map: SimMap,
-  spawn: { x: number; y: number; z?: number },
-  zombies: SimZombieSpawn[] = [],
-  extra: Partial<SimOptions> = {},
-): Sim {
-  return createSim({
-    seed: 7,
-    map,
-    spawn,
-    content: fixtureContent(),
-    dev: true,
-    clockStart: NOON,
-    combatConfig: harmless,
-    ...(zombies.length ? { spawnZombies: zombies } : {}),
-    ...extra,
-  });
-}
+import { mapA, shaftMap, harmless, levelSim } from '../test/stairs-fixtures.js';
 
 const player = (sim: Sim) => sim.getPlayer()!;
 const pbody = (sim: Sim) =>
@@ -335,48 +282,4 @@ describe('stairs: crowds', () => {
     }
     expect(b.hash()).toBe(sim.hash());
   });
-});
-
-interface PerfHost {
-  performance: { now(): number };
-  process: { stderr: { write(s: string): void } };
-}
-// Test-only access to the host clock; the sim itself never reads real time.
-// eslint-disable-next-line no-restricted-globals -- perf test measures wall time on purpose
-const host = globalThis as unknown as PerfHost;
-
-describe('stairs: performance', () => {
-  it(
-    '200 zombies on a map with levels and stairs cost about the same as without',
-    { timeout: 120_000 },
-    () => {
-      const zombies = Array.from({ length: 200 }, (_, i) => ({
-        x: 4.5 + (i % 20) * 1.1,
-        y: 30.5 + Math.floor(i / 20) * 1.1,
-      }));
-      const time = (map: SimMap) => {
-        const sim = levelSim(map, { x: 18.5, y: 20.5 }, zombies);
-        const c = commander(sim);
-        for (let i = 0; i < 100; i++) {
-          if (i % 20 === 0) c.move(i % 40 === 0 ? 1 : -1, 0);
-          sim.step();
-        }
-        let best = Infinity;
-        for (let b = 0; b < 3; b++) {
-          const t0 = host.performance.now();
-          for (let i = 0; i < 100; i++) sim.step();
-          best = Math.min(best, (host.performance.now() - t0) / 100);
-        }
-        return best;
-      };
-      const flat = time(
-        buildLevels([{ z: 0, wallN: (x, y) => (y === 20 || y === 21) && x >= 20 && x < 24 }]),
-      );
-      const levels = time(mapA());
-      host.process.stderr.write(
-        `[perf] 200 zombies: levels+stairs ${levels.toFixed(2)} ms vs single level ${flat.toFixed(2)} ms\n`,
-      );
-      expect(levels).toBeLessThanOrEqual(flat * 1.5 + 0.5);
-    },
-  );
 });

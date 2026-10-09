@@ -1,74 +1,14 @@
-import type { SimZombieSpawn } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent } from '../test/content-fixtures.js';
 import { NOON, runTicks, runUntil, zombie } from '../test/ai-fixtures.js';
-import { buildLevels, type LevelSpec, type StairSpec } from '../test/level-fixtures.js';
+import { buildLevels } from '../test/level-fixtures.js';
 import { canStep } from '../nav/grid-nav.js';
 import { walkableLine } from '../world/los.js';
 import { gridOf } from './commands.js';
-import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from './config.js';
 import { crossFloorWaypoint, nearestPassage } from './floors.js';
 import { ZombieState } from './state.js';
-
-/**
- * Zombies walking to goals on other floors over stairs (ai/floors.ts, physics walks the flight).
- * Map: levels 0..2 on 64×64, floor everywhere except the stairwells above the flights.
- * Flight A (20..23, 30) climbs E from level 0 (entrance x = 19, landing (24, 30) on level 1).
- * Flight B (40, 20..17) climbs N from level 1 (entrance y = 21, landing (40, 16) on level 2).
- */
-const A: StairSpec = { x: 20, y: 30, z: 0, dir: 'E', len: 4 };
-const B: StairSpec = { x: 40, y: 20, z: 1, dir: 'N', len: 4 };
-const inA = (x: number, y: number) => y === 30 && x >= 20 && x < 24;
-const inB = (x: number, y: number) => x === 40 && y <= 20 && y > 16;
-
-function stairsMap(withStairs = true) {
-  const levels: LevelSpec[] = [
-    { z: 0 },
-    { z: 1, floor: (x, y) => !withStairs || !inA(x, y) },
-    { z: 2, floor: (x, y) => !withStairs || !inB(x, y) },
-  ];
-  return buildLevels(levels, withStairs ? [A, B] : []);
-}
-
-const WIDE: Stage4Config = {
-  ...DEFAULT_STAGE4_CONFIG,
-  vision: { ...DEFAULT_STAGE4_CONFIG.vision, fovHalfAngleDeg: 180 },
-};
-
-function stairsSim(zombies: SimZombieSpawn[], opts: { stairs?: boolean; seed?: number } = {}): Sim {
-  return createSim({
-    seed: opts.seed ?? 5,
-    map: stairsMap(opts.stairs ?? true),
-    // The player far away on level 2 (not seen, footsteps not heard).
-    spawn: { x: 60.5, y: 60.5, z: 2 },
-    content: fixtureContent(),
-    dev: true,
-    clockStart: NOON,
-    aiConfig: WIDE,
-    spawnZombies: zombies,
-  });
-}
-
-const eidOf = (sim: Sim, i = 0): number => {
-  const sid = zombie(sim, i).stableId;
-  const { StableId, Zombie } = sim.world.c;
-  for (let eid = 0; eid < sim.world.capacity; eid++)
-    if (Zombie.is[eid] && StableId.value[eid] === sid) return eid;
-  return -1;
-};
-
-/** Sends the zombie to investigate (x, y) on floor z (as if it heard a noise there). */
-function sendTo(sim: Sim, i: number, x: number, y: number, z: number): void {
-  const eid = eidOf(sim, i);
-  const { Zombie } = sim.world.c;
-  Zombie.state[eid] = ZombieState.investigate;
-  Zombie.stateTick[eid] = 0;
-  Zombie.memoryUntil[eid] = 6000; // long linger: stays at the spot
-  Zombie.tx[eid] = Math.fround(x);
-  Zombie.ty[eid] = Math.fround(y);
-  Zombie.tz[eid] = z;
-}
+import { stairsMap, WIDE, stairsSim, eidOf, sendTo } from '../test/stairs-ai-fixtures.js';
 
 const near = (sim: Sim, x: number, y: number, z: number, d = 1.2, i = 0): boolean => {
   const zz = zombie(sim, i);
@@ -221,14 +161,6 @@ describe('stairs AI: walking to another floor', () => {
   });
 });
 
-interface PerfHost {
-  performance: { now(): number };
-  process: { stderr: { write(s: string): void } };
-}
-// Test-only access to the host clock; the sim itself never reads real time.
-// eslint-disable-next-line no-restricted-globals -- perf test measures wall time on purpose
-const host = globalThis as unknown as PerfHost;
-
 describe('stairs AI: determinism and cost', () => {
   it('same seed = same hash; save in the middle of the climb and load = same continuation', () => {
     const run = (): Sim => {
@@ -268,34 +200,4 @@ describe('stairs AI: determinism and cost', () => {
     expect(b.hash()).toBe(a.hash());
     expect(loaded.hash()).toBe(a.hash());
   });
-
-  it(
-    '200 zombies with goals upstairs cost about the same as with goals on their floor',
-    { timeout: 120_000 },
-    () => {
-      const zs: SimZombieSpawn[] = [];
-      for (let i = 0; i < 200; i++)
-        zs.push({ x: 2.5 + (i % 20) * 3, y: 2.5 + Math.floor(i / 20) * 2, z: 0 });
-      const time = (goalZ: number) => {
-        const sim = stairsSim(zs);
-        for (let i = 0; i < sim.getZombies().length; i++)
-          sendTo(sim, i, 30.5 + (i % 10), 40.5, goalZ);
-        runTicks(sim, 20);
-        let best = Infinity;
-        for (let b = 0; b < 3; b++) {
-          const t0 = host.performance.now();
-          runTicks(sim, 100);
-          best = Math.min(best, (host.performance.now() - t0) / 100);
-        }
-        return { best, sim };
-      };
-      const same = time(0);
-      const up = time(1);
-      host.process.stderr.write(
-        `[perf] 200 zombies: goals upstairs ${up.best.toFixed(2)} ms vs same floor ${same.best.toFixed(2)} ms\n`,
-      );
-      expect(up.best).toBeLessThanOrEqual(same.best * 1.5 + 0.5);
-      expect(up.sim.getZombies().some((z) => z.z >= 0.5)).toBe(true);
-    },
-  );
 });
