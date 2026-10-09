@@ -58,7 +58,8 @@ describe('HUD editor', () => {
     ed.onKey(key('ArrowUp', { shiftKey: true }));
     const hot = ed.layout.elements.hotbar;
     expect(hot).toBeDefined();
-    expect(hot!.anchor).toBe('bc');
+    // An unsaved element moves from its DEFAULT_HUD_LAYOUT anchor (quickbar: bottom right).
+    expect(hot!.anchor).toBe('br');
     ed.onKey(key('Enter'));
     expect(onSave).toHaveBeenCalledOnce();
     expect((onSave.mock.calls[0]![0] as HudLayout).elements.hotbar).toEqual(hot);

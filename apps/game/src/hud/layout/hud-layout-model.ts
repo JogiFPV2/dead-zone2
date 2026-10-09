@@ -11,6 +11,7 @@ import {
   HUD_SCALE_MIN,
   anchorAxes,
   clampToViewport,
+  defaultElementLayout,
   sanitizeHudLayout,
   type HudAnchor,
   type HudElementLayout,
@@ -126,7 +127,9 @@ export function layoutFromRect(
   base: Pick<HudElementLayout, 'scale' | 'opacity' | 'visible'>,
   anchor: HudAnchor = anchorForRect(r, vp),
 ): HudElementLayout {
-  return { anchor, ...offsetsForRect(r, anchor, vp), ...base };
+  // Only scale / opacity / visible from `base` (callers may pass a whole element layout).
+  const { scale, opacity, visible } = base;
+  return { anchor, ...offsetsForRect(r, anchor, vp), scale, opacity, visible };
 }
 
 export const overlaps = (a: Rect, b: Rect, tol = 1): boolean =>
@@ -273,13 +276,33 @@ export function changedSlots(layout: HudLayout): HudLayoutSlot[] {
 }
 
 /** Copy of a sparse layout with one slot set (or removed = default). */
+/** Offset tolerance (fraction of the screen) for „same as default”: < 0.5 px at 1280×720. */
+const DEFAULT_EPS = 0.0004;
+
+/** True when an element layout is the slot's DEFAULT_HUD_LAYOUT entry (within rounding). */
+export function isDefaultLayout(slot: HudLayoutSlot, el: HudElementLayout): boolean {
+  const d = defaultElementLayout(slot);
+  return (
+    el.anchor === d.anchor &&
+    Math.abs(el.x - d.x) < DEFAULT_EPS &&
+    Math.abs(el.y - d.y) < DEFAULT_EPS &&
+    Math.abs(el.scale - d.scale) < 0.001 &&
+    Math.abs(el.opacity - d.opacity) < 0.001 &&
+    el.visible === d.visible
+  );
+}
+
+/**
+ * Layout with one slot set; a slot equal to its DEFAULT_HUD_LAYOUT entry (or undefined) is left
+ * out, so only changed elements are saved and the rest keep the stylesheet place (= the default).
+ */
 export function withSlot(
   layout: HudLayout,
   slot: HudLayoutSlot,
   el: HudElementLayout | undefined,
 ): HudLayout {
   const elements = { ...layout.elements };
-  if (el) elements[slot] = el;
+  if (el && !isDefaultLayout(slot, el)) elements[slot] = el;
   else delete elements[slot];
   return { version: layout.version, elements };
 }

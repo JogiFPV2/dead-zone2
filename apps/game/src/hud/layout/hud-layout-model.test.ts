@@ -1,14 +1,17 @@
+import { HUD_LAYOUT_VERSION, defaultElementLayout, type HudLayout } from '@deadzone/ui/settings';
 import { describe, expect, it } from 'vitest';
 import {
   GAP_PX,
   anchorForRect,
   changedLabel,
+  isDefaultLayout,
   layoutFromRect,
   offsetsForRect,
   placeRect,
   positionText,
   snapRect,
   snapScale,
+  withSlot,
   type Rect,
 } from './hud-layout-model.js';
 
@@ -103,5 +106,24 @@ describe('HUD layout model', () => {
       x: 0,
       y: 0,
     });
+  });
+});
+
+describe('withSlot keeps only changed elements (DEFAULT_HUD_LAYOUT)', () => {
+  it('drops a slot equal to its default and keeps a moved one', () => {
+    const base: HudLayout = { version: HUD_LAYOUT_VERSION, elements: {} };
+    const def = defaultElementLayout('status');
+    expect(isDefaultLayout('status', def)).toBe(true);
+    // Rounded offsets (4 decimals, as offsetsForRect gives) still count as default.
+    const rounded = { ...def, x: Math.round(def.x * 1e4) / 1e4, y: Math.round(def.y * 1e4) / 1e4 };
+    expect(withSlot(base, 'status', rounded).elements.status).toBeUndefined();
+    const moved = { ...def, x: def.x + 0.05 };
+    const next = withSlot(base, 'status', moved);
+    expect(next.elements.status).toEqual(moved);
+    expect(withSlot(next, 'status', defaultElementLayout('status')).elements).toEqual({});
+    expect(
+      withSlot(base, 'hints', { ...defaultElementLayout('hints'), visible: false }).elements.hints
+        ?.visible,
+    ).toBe(false);
   });
 });

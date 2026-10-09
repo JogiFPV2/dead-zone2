@@ -9,6 +9,7 @@ import {
   HUD_LAYOUT_SLOTS,
   HUD_LAYOUT_VERSION,
   anchorAxes,
+  defaultElementLayout,
   type HudElementLayout,
   type HudLayout,
   type HudLayoutSlot,
@@ -110,12 +111,9 @@ export function createHudEditor(o: HudEditorOptions): HudEditor {
   const vp = (): Size => ({ w: root.clientWidth, h: root.clientHeight });
   const dirty = (): boolean => JSON.stringify(draft.elements) !== JSON.stringify(start.elements);
 
-  /** Element layout of a slot: the saved one, or one derived from where it stands now. */
-  function layoutOf(slot: HudLayoutSlot): HudElementLayout | undefined {
-    const saved = draft.elements[slot];
-    if (saved) return saved;
-    const r = rects[slot];
-    return r ? layoutFromRect(r, vp(), { scale: 1, opacity: 1, visible: true }) : undefined;
+  /** Element layout of a slot: the saved one, or its DEFAULT_HUD_LAYOUT entry (#174). */
+  function layoutOf(slot: HudLayoutSlot): HudElementLayout {
+    return draft.elements[slot] ?? defaultElementLayout(slot);
   }
 
   function setDraft(next: HudLayout, keepUndo = false): void {
@@ -527,7 +525,8 @@ ${small ? '<div class="dz-hed__warn">Tekst może być nieczytelny</div>' : ''}
         save();
         break;
       case 'reset':
-        if (sel && draft.elements[sel]) setSlot(sel, undefined);
+        // Back to DEFAULT_HUD_LAYOUT; withSlot drops a default entry (only changes are saved).
+        if (sel && draft.elements[sel]) setSlot(sel, defaultElementLayout(sel));
         break;
       case 'visible': {
         const lay = sel ? layoutOf(sel) : undefined;
