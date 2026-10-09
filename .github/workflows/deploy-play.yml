@@ -3,10 +3,14 @@ name: Publiczny build
 # Statyczny build apps/game publikowany w publicznym repo JogiFPV2/deadzone-play (GitHub Pages).
 # push do main -> katalog główny strony; ręczne uruchomienie z gałęzią -> preview/<gałąź>/.
 
+# UWAGA (2026-10-09): automatyczny trigger na push do main wyłączony. Box z self-hosted runnerem
+# blokuje wychodzące SSH do GitHuba, więc push kluczem PLAY_DEPLOY_KEY pada. Do odwołania deploy main
+# robimy ręcznie z boxa przez HTTPS (skrypt /workspace/bin/deploy-play.sh poza repo, logowanie gh usera box).
+# Przywróć blok `push:` poniżej, gdy SSH wróci albo deploy przejdzie na token HTTPS.
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
+  # push:
+  #   branches: [main]
+  #   paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
   workflow_dispatch:
 
 concurrency:
