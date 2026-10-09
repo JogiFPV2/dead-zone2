@@ -21,9 +21,6 @@ jobs:
     name: lint, typecheck, test, build
     runs-on: [self-hosted, deadzone]
     timeout-minutes: 20
-    env:
-      # Testy wydajności sima (packages/sim *.perf / *-perf) tylko na push do main i workflow_dispatch.
-      SKIP_PERF: ${{ github.event_name == 'pull_request' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -35,6 +32,13 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      # Testy wydajności sima (packages/sim *.perf / *-perf) nie w równoległym `pnpm test`
+      # (obciążenie współdzielonego boxa zawyża czasy), tylko osobno, na push do main i workflow_dispatch.
       - run: pnpm test
+        env:
+          SKIP_PERF: '1'
+      - name: Testy wydajności sima (main / ręcznie)
+        if: github.event_name != 'pull_request'
+        run: pnpm --filter @deadzone/sim exec vitest run perf
       - run: pnpm --filter @deadzone/map map build tools/map/blueprints/demo-house.json tools/map/blueprints/test-town.json --check
       - run: pnpm build
