@@ -107,6 +107,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Profil i lista zapisów, przycisk „Graj” (Designer + Silnik)
 - [x] Ostatnia lokacja na karcie postaci i zajęte miejsce konta (Serwer) — `lastLocation` z `saveSummary` sima w workerze walidacji, `usage {usedBytes, limitBytes, alive, aliveLimit}` w `GET /v1/characters`; `place` pusty, dopóki serwer nie ma lekkiej listy miejscowości planu świata
 - [x] Ustawienia gracza w chmurze (Serwer) — `GET`/`PUT /v1/me/settings`: `profiles.settings jsonb` + `settings_version` (ETag), najwyżej 16 KB, `If-Match` (428 bez, 412 nieaktualny), walidacja `validatePlayerSettings` z `@deadzone/ui/settings` (zapisywane tylko `data`), 413 `too-large`, 422 `invalid_settings` z `issues`; limit żądań na IP
+- [ ] CAPTCHA Turnstile (Serwer + Silnik) — konfiguracja w Supabase Auth (Auth › Attack Protection: dostawca Turnstile + secret key); Supabase Auth sam weryfikuje token przy logowaniu i rejestracji, bez osobnej kontroli w naszym API. Klient przekazuje `captchaToken` w opcjach `signInWithOtp` / `signUp` (i logowania hasłem); site key to publiczna zmienna env klienta
+- [x] Strona polityki prywatności (Serwer) — `apps/game/public/privacy/index.html` → https://jogifpv2.github.io/deadzone-play/privacy/; administrator i kontakt: Paweł Rosol, pawelrosol@gmail.com
 
 ## Etap 9 — Grywalne demo
 - [ ] Dźwięki CC0 (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze brak
