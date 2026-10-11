@@ -42,6 +42,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Kontenery i akcja „Przeszukaj” z czasem (Symulacja)
 - [ ] Okno ekwipunku i przeciąganie przedmiotów (Silnik + Designer)
 - [x] Psucie się jedzenia (Symulacja)
+- [x] Test pokrycia ikon: każdy przedmiot ma ikonę w `public/icons` albo jest na `MISSING_ICONS_ALLOWLIST` (`apps/game/src/hud/`), lista tylko maleje (Modules)
+- [x] Ikony 107 brakujących przedmiotów (Designer + Silnik) — #189, #190; `MISSING_ICONS_ALLOWLIST` pusta
 
 ## Etap 4 — Zombie i walka
 - [x] AI: wzrok, słuch, wędrowanie, gonienie (Symulacja)
