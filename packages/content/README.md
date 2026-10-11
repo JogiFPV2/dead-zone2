@@ -62,7 +62,8 @@ Obok każdego modelu słupa leży `<modelId>.attach.json` (np. `apps/game/public
 ```
 
 - `x`, `y`, `z` w metrach względem podstawy słupa; y w górę (> 0), słup stoi wzdłuż osi x (w poprzek linii).
-- `kind` → dozwolone `id` (`WIRE_RULES`): `hv110`/`hv400`: `L1`, `L2`, `L3` + opcjonalny `GW` (odgromowy);
+- `kind` → dozwolone `id` (`WIRE_RULES`): `hv110`/`hv220`/`hv400`: `L1`–`L3` wymagane; opcjonalnie komplet
+  drugiego toru `L4`–`L6` (wszystkie trzy albo żaden), opcjonalny `GW` (odgromowy) oraz `GW2` tylko razem z `GW`;
   `lv`: `N` + opcjonalnie komplet `L1`–`L3`; `catenary`: `CW` (jezdny) i `MW` (lina nośna). Id bez powtórzeń.
 - Test `wire-attach-files.test.ts` waliduje każdy `*.attach.json` w `apps/game/public/models`, `packages`
   i `tools/assets`: schemat, `modelId` = nazwa pliku i model `.glb`/`.gltf` obok.

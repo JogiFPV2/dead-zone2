@@ -39,6 +39,15 @@ function checkIds(kind: PoleKind, ids: readonly WireId[], ctx: z.RefinementCtx):
       message: `${group.join(', ')}: wszystkie albo żaden`,
     });
   }
+  for (const [id, need] of Object.entries(rule.requires ?? {}) as [WireId, WireId][]) {
+    if (seen.has(id) && !seen.has(need)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['attach'],
+        message: `${id} tylko razem z ${need}`,
+      });
+    }
+  }
 }
 
 /** Plik `<modelId>.attach.json` obok modelu słupa. */

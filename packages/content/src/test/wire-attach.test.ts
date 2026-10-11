@@ -13,13 +13,27 @@ const hv = {
     { id: 'GW', x: 0, y: 26, z: 0 },
   ],
 };
+const dual = [
+  { id: 'L4', x: -3.5, y: 14, z: 0 },
+  { id: 'L5', x: 3.5, y: 14, z: 0 },
+  { id: 'L6', x: -3, y: 16, z: 0 },
+];
 const p = (id: string, y = 8) => ({ id, x: 0, y, z: 0 });
 const ok = (v: unknown) => attachFileSchema.safeParse(v).success;
 
 describe('attachFileSchema', () => {
-  it('przyjmuje 110/400 kV z GW i bez', () => {
+  it('przyjmuje 110/220/400 kV z GW i bez, oraz drugi tor L4–L6', () => {
     expect(ok(hv)).toBe(true);
+    expect(ok({ ...hv, kind: 'hv220', attach: hv.attach.slice(0, 3) })).toBe(true);
     expect(ok({ ...hv, kind: 'hv400', attach: hv.attach.slice(0, 3) })).toBe(true);
+    expect(ok({ ...hv, attach: [...hv.attach, ...dual] })).toBe(true);
+    expect(
+      ok({
+        ...hv,
+        kind: 'hv220',
+        attach: [...hv.attach.slice(0, 3), ...dual, p('GW', 26), p('GW2', 27)],
+      }),
+    ).toBe(true);
   });
   it('nN: N albo N + L1–L3; trakcja: CW + MW', () => {
     expect(ok({ modelId: 'lv', kind: 'lv', attach: [p('N')] })).toBe(true);
@@ -35,11 +49,15 @@ describe('attachFileSchema', () => {
     ['CW na nN', { modelId: 'lv', kind: 'lv', attach: [p('N'), p('CW')] }],
     ['nN z częścią faz', { modelId: 'lv', kind: 'lv', attach: [p('N'), p('L1')] }],
     ['trakcja bez MW', { modelId: 'c', kind: 'catenary', attach: [p('CW')] }],
-    ['nieznany kind', { ...hv, kind: 'hv220' }],
-    ['nieznane id', { ...hv, attach: [...hv.attach, p('L4')] }],
+    ['nieznany kind', { ...hv, kind: 'hv750' }],
+    ['nieznane id', { ...hv, attach: [...hv.attach, p('XX')] }],
     ['pusta lista', { modelId: 'x', kind: 'catenary', attach: [] }],
     ['zły modelId', { ...hv, modelId: '../x' }],
     ['nieznane pole', { ...hv, extra: 1 }],
+    ['L4 bez L5–L6', { ...hv, attach: [...hv.attach, dual[0]] }],
+    ['L4–L5 bez L6', { ...hv, attach: [...hv.attach, dual[0], dual[1]] }],
+    ['GW2 bez GW', { ...hv, attach: [...hv.attach.slice(0, 3), p('GW2', 27)] }],
+    ['L4 na nN', { modelId: 'lv', kind: 'lv', attach: [p('N'), p('L4')] }],
   ])('odrzuca: %s', (_, v) => {
     expect(ok(v)).toBe(false);
   });
@@ -56,6 +74,16 @@ describe('attachFileSchema', () => {
   it('każda reguła: wymagane i opcjonalne są rozłączne', () => {
     for (const r of Object.values(WIRE_RULES)) {
       expect(r.required.filter((id) => r.optional.includes(id))).toEqual([]);
+    }
+  });
+  it('allOrNone i requires wskazują id z required∪optional', () => {
+    for (const r of Object.values(WIRE_RULES)) {
+      const allowed = new Set([...r.required, ...r.optional]);
+      for (const id of r.allOrNone ?? []) expect(allowed.has(id)).toBe(true);
+      for (const [id, need] of Object.entries(r.requires ?? {})) {
+        expect(allowed.has(id as never)).toBe(true);
+        expect(allowed.has(need as never)).toBe(true);
+      }
     }
   });
 });
