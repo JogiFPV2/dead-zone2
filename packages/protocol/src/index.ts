@@ -6,6 +6,7 @@ export * from './commands.js';
 export * from './events.js';
 export * from './map.js';
 export * from './snapshot.js';
+export * from './sun.js';
 export * from './vehicles.js';
 export * from './views.js';
 export * from './worker-messages.js';
