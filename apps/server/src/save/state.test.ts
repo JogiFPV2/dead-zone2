@@ -204,3 +204,54 @@ describe('protocol 22 additions (map rooms, marker z, item wear)', () => {
     rejects(withItem(save(), { wear: 'x' }), /items/);
   });
 });
+
+describe('protocol 25–27 additions (utilities, item thaw, building keys)', () => {
+  type Items = { items: { $m: [number, Json][] } } & Json;
+  const items = (s: Json): Items => s.items as Items;
+  const withItem = (s: Json, item: Json): Json => {
+    items(s).items.$m.push([1, { id: 1, def: 0, loc: 1, count: 1, ...item }]);
+    return s;
+  };
+
+  it('the real save of the current sim carries the utilities and passes', () => {
+    const s = save();
+    expect(items(s)).toHaveProperty('powered');
+    expect(items(s)).toHaveProperty('water');
+    expect(items(s)).toHaveProperty('powerOffDay');
+    expect(items(s)).toHaveProperty('waterOffDay');
+    expect(() => check(s)).not.toThrow();
+  });
+
+  it('accepts older saves without utilities, refuses bad utility values', () => {
+    const old = save();
+    for (const k of ['powered', 'water', 'powerOffDay', 'waterOffDay']) delete items(old)[k];
+    expect(() => check(old)).not.toThrow();
+    for (const [k, v] of [
+      ['powered', 'yes'],
+      ['water', 1],
+      ['powerOffDay', -1],
+      ['waterOffDay', 1.5],
+      ['powerOffDay', 2_000_000],
+    ] as const) {
+      const s = save();
+      items(s)[k] = v;
+      rejects(s, /items/);
+    }
+  });
+
+  it('accepts thawUntil and buildingId on items, refuses bad ones', () => {
+    expect(() => check(withItem(save(), { thawUntil: 12_345 }))).not.toThrow();
+    expect(() => check(withItem(save(), { buildingId: 77 }))).not.toThrow();
+    expect(() => check(withItem(save(), {}))).not.toThrow();
+    rejects(withItem(save(), { thawUntil: -1 }), /items/);
+    rejects(withItem(save(), { thawUntil: 1.5 }), /items/);
+    rejects(withItem(save(), { buildingId: 0 }), /items/);
+    rejects(withItem(save(), { buildingId: 'b' }), /items/);
+  });
+
+  it('wound care stays in the opaque survival section', () => {
+    const s = save();
+    (s.survival as Json).wounds = { anything: [{ stitched: 'not checked' }] };
+    expect(() => check(s)).not.toThrow();
+  });
+});

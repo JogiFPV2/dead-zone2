@@ -7,8 +7,11 @@ import {
 } from '@deadzone/protocol';
 import {
   MAX_INTEREST_RADIUS_CHUNKS,
+  saveItemBuildingSchema,
+  saveItemThawSchema,
   saveMapRoomsSchema,
   saveMarkersSchema,
+  saveUtilitiesSchema,
 } from '@deadzone/protocol/schema';
 import { SAVE_FORMAT, SAVE_READABLE_VERSIONS, decodeTrail, zeroRleStats } from '@deadzone/sim';
 import { z } from 'zod';
@@ -169,10 +172,18 @@ const savedItemSchema = z.looseObject({
   wear: z.number().finite().min(0).optional(),
   fuelL: z.number().finite().min(0).optional(),
   vehicle: nat.optional(),
+  // Protocol 25: thawing frozen food; protocol 26: building keys (`@deadzone/protocol/schema`).
+  ...saveItemThawSchema.shape,
+  ...saveItemBuildingSchema.shape,
 });
 
-/** Item store section (`items` of the save): loose, with the item map checked when present. */
+/**
+ * Item store section (`items` of the save): loose, with the item map and the mains utilities
+ * (protocol 25, `saveUtilitiesSchema`) checked when present. Wound care (protocol 27,
+ * `saveWoundCareSchema`) lives in the opaque `survival` section and is not checked here.
+ */
 const itemsSectionSchema = z.looseObject({
+  ...saveUtilitiesSchema.shape,
   items: z
     .looseObject({ $m: z.array(z.tuple([nat, savedItemSchema])).max(MAX_CAPACITY) })
     .optional(),
