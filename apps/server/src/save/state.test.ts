@@ -162,3 +162,45 @@ describe('LOD world delta (#104)', () => {
     rejects(link, /lod\.links/);
   });
 });
+
+describe('protocol 22 additions (map rooms, marker z, item wear)', () => {
+  type Items = { items: { $m: [number, Json][] } };
+  const withItem = (s: Json, item: Json): Json => {
+    (s.items as Items).items.$m.push([1, { id: 1, def: 0, loc: 1, count: 1, ...item }]);
+    return s;
+  };
+
+  it('accepts PlayerMapSave.rooms (base64), absent rooms and rejects non-base64 or too long', () => {
+    const s = save();
+    expect(check(s).playerMaps?.[0]).not.toHaveProperty('rooms');
+    (map0(s) as Map0 & { rooms?: string }).rooms = 'AgQGCA==';
+    expect((check(s).playerMaps?.[0] as { rooms?: string }).rooms).toBe('AgQGCA==');
+    const bad = save();
+    (map0(bad) as Map0 & { rooms?: unknown }).rooms = 'not base64!';
+    rejects(bad, /rooms/);
+    const big = save();
+    (map0(big) as Map0 & { rooms?: unknown }).rooms = 'A'.repeat(4 * 1024 * 1024);
+    rejects(big, /rooms/);
+    const num = save();
+    (map0(num) as Map0 & { rooms?: unknown }).rooms = 5;
+    rejects(num, /rooms/);
+  });
+
+  it('accepts the optional 8th marker element z (floor), refuses a bad one', () => {
+    const s = save();
+    const m = map0(s);
+    m.markers[0] = [...m.markers[0]!.slice(0, 6), true, 2];
+    m.markers[1] = [...m.markers[1]!.slice(0, 6), false, -1];
+    expect(() => check(s)).not.toThrow();
+    const bad = save();
+    map0(bad).markers[0] = [...map0(bad).markers[0]!.slice(0, 6), true, 1.5];
+    rejects(bad, /markers/);
+  });
+
+  it('accepts ItemInstance.wear (and items without it), refuses a negative or non-numeric wear', () => {
+    expect(() => check(withItem(save(), { condition: 0, wear: 3 }))).not.toThrow();
+    expect(() => check(withItem(save(), { condition: 5 }))).not.toThrow();
+    rejects(withItem(save(), { wear: -1 }), /items/);
+    rejects(withItem(save(), { wear: 'x' }), /items/);
+  });
+});

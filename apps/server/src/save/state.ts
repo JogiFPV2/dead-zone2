@@ -5,7 +5,11 @@ import {
   PLAYER_MAP_TRAIL_MAX_POINTS,
   PLAYER_MAP_TRAIL_SPACING_M,
 } from '@deadzone/protocol';
-import { MAX_INTEREST_RADIUS_CHUNKS, saveMarkersSchema } from '@deadzone/protocol/schema';
+import {
+  MAX_INTEREST_RADIUS_CHUNKS,
+  saveMapRoomsSchema,
+  saveMarkersSchema,
+} from '@deadzone/protocol/schema';
 import { SAVE_FORMAT, SAVE_READABLE_VERSIONS, decodeTrail, zeroRleStats } from '@deadzone/sim';
 import { z } from 'zod';
 import { invalidState } from '../errors.js';
@@ -53,7 +57,11 @@ function rle(
   }
 }
 
-/** One character map (`PlayerMapSave`, map/player-map.ts). */
+/**
+ * One character map (`PlayerMapSave`, map/player-map.ts). Markers may carry the optional 8th
+ * element `z` (floor, protocol 22; `saveMarkerSchema`). `rooms` (floor plan rooms, protocol 22) is
+ * optional: base64 within `MAX_MAP_ROOMS_CHARS`; the sim decoder checks the records on load.
+ */
 const playerMapSchema = z
   .looseObject({
     sid: nat,
@@ -61,6 +69,7 @@ const playerMapSchema = z
     trail: base64.max(MAX_TRAIL_CHARS),
     markers: saveMarkersSchema,
     nextId: int.min(1),
+    rooms: saveMapRoomsSchema.optional(),
   })
   .superRefine((m, ctx) => {
     rle(ctx, ['discovered'], m.discovered, { max: EXPLORED_BITMAP_BYTES, maxValue: 0xff });
@@ -151,6 +160,24 @@ const lodSchema = z
     });
   });
 
+/**
+ * One saved item (`ItemInstance`, items/store.ts) in the item store map (`{ $m: [[id, item]] }`).
+ * Only the optional fields are checked; the rest stays opaque like the other sim sections.
+ * `wear` (improvised weapon wear, protocol 21) is a non-negative number, absent = 0.
+ */
+const savedItemSchema = z.looseObject({
+  wear: z.number().finite().min(0).optional(),
+  fuelL: z.number().finite().min(0).optional(),
+  vehicle: nat.optional(),
+});
+
+/** Item store section (`items` of the save): loose, with the item map checked when present. */
+const itemsSectionSchema = z.looseObject({
+  items: z
+    .looseObject({ $m: z.array(z.tuple([nat, savedItemSchema])).max(MAX_CAPACITY) })
+    .optional(),
+});
+
 const stateSchema = z.looseObject({
   format: z.literal(SAVE_FORMAT),
   version: int.refine((v) => SAVE_READABLE_VERSIONS.includes(v), {
@@ -171,6 +198,7 @@ const stateSchema = z.looseObject({
     .max(MAX_CAPACITY)
     .optional(),
   components: z.record(z.string(), z.unknown()).optional(),
+  items: itemsSectionSchema.optional(),
   rng: z.record(z.string(), rngState).optional(),
   world: z
     .looseObject({ seed: nat, generatorVersion: nat, contentVersion: z.string().max(256) })
