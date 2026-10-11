@@ -4,6 +4,7 @@ import type { RefList } from './ref-collector.js';
 /** Wszystkie referencje z przedmiotu, zależnie od `kind`. */
 export function collectItemRefs(item: Item, r: RefList): void {
   r.add('item', item.throwable?.brokenInto, 'throwable', 'brokenInto');
+  r.add('skill', item.improvisedWeapon?.skill, 'improvisedWeapon', 'skill');
   switch (item.kind) {
     case 'weapon_melee':
       r.add('skill', item.melee.skill, 'melee', 'skill');

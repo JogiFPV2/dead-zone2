@@ -1,5 +1,6 @@
 export * from './base.js';
 export * from './throwable.js';
+export * from './improvised-weapon.js';
 export * from './durability.js';
 export * from './equip-slot.js';
 export * from './spoilage.js';

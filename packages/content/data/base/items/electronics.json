@@ -28,7 +28,14 @@
     "name": "item.base.radio.name",
     "kind": "misc",
     "weightKg": 1.2,
-    "tags": ["base:electronics-salvage"]
+    "tags": ["base:electronics-salvage"],
+    "improvisedWeapon": {
+      "damage": { "min": 3, "max": 6 },
+      "rangeTiles": 0.6,
+      "attackSpeed": 1.0,
+      "durability": 5,
+      "breakChancePct": 40
+    }
   },
   {
     "id": "base:noise-maker",
@@ -51,6 +58,13 @@
       "coneDeg": 50,
       "batteryTag": "base:battery",
       "batteryLifeMin": 600
+    },
+    "improvisedWeapon": {
+      "damage": { "min": 2, "max": 5 },
+      "rangeTiles": 0.6,
+      "attackSpeed": 1.4,
+      "durability": 10,
+      "breakChancePct": 30
     }
   },
   {
@@ -67,6 +81,13 @@
       "coneDeg": 360,
       "batteryTag": "base:battery",
       "batteryLifeMin": 900
+    },
+    "improvisedWeapon": {
+      "damage": { "min": 3, "max": 6 },
+      "rangeTiles": 0.6,
+      "attackSpeed": 1.1,
+      "durability": 6,
+      "breakChancePct": 40
     }
   }
 ]

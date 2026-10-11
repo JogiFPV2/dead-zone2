@@ -30,6 +30,14 @@
     "name": "item.base.gas-can.name",
     "kind": "misc",
     "weightKg": 4.5,
-    "tags": ["base:fuel"]
+    "tags": ["base:fuel"],
+    "improvisedWeapon": {
+      "damage": { "min": 4, "max": 8 },
+      "rangeTiles": 0.8,
+      "attackSpeed": 0.6,
+      "durability": 25,
+      "breakChancePct": 10,
+      "twoHanded": true
+    }
   }
 ]

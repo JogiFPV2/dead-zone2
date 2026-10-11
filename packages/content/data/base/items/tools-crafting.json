@@ -5,7 +5,15 @@
     "kind": "tool",
     "weightKg": 1.2,
     "tags": ["base:tool-saw"],
-    "tool": { "durability": { "max": 80, "lossChancePerUse": 0.3 } }
+    "tool": { "durability": { "max": 80, "lossChancePerUse": 0.3 } },
+    "improvisedWeapon": {
+      "damage": { "min": 4, "max": 8 },
+      "rangeTiles": 0.9,
+      "attackSpeed": 1.0,
+      "durability": 15,
+      "breakChancePct": 30,
+      "damageType": "sharp"
+    }
   },
   {
     "id": "base:matches",
@@ -29,7 +37,14 @@
     "kind": "tool",
     "weightKg": 1.1,
     "tags": ["base:cookware", "base:cooking-pot"],
-    "tool": {}
+    "tool": {},
+    "improvisedWeapon": {
+      "damage": { "min": 5, "max": 9 },
+      "rangeTiles": 0.8,
+      "attackSpeed": 1.0,
+      "durability": 40,
+      "breakChancePct": 15
+    }
   },
   {
     "id": "base:sewing-needle",
@@ -45,7 +60,14 @@
     "kind": "tool",
     "weightKg": 3.5,
     "tags": ["base:tool-welding"],
-    "tool": { "durability": { "max": 30 } }
+    "tool": { "durability": { "max": 30 } },
+    "improvisedWeapon": {
+      "damage": { "min": 6, "max": 11 },
+      "rangeTiles": 0.8,
+      "attackSpeed": 0.6,
+      "durability": 30,
+      "breakChancePct": 15
+    }
   },
   {
     "id": "base:stone-hammer",
@@ -53,6 +75,13 @@
     "kind": "tool",
     "weightKg": 1.0,
     "tags": ["base:tool-hammer"],
-    "tool": { "durability": { "max": 15, "lossChancePerUse": 0.5 }, "speedMultiplier": 0.7 }
+    "tool": { "durability": { "max": 15, "lossChancePerUse": 0.5 }, "speedMultiplier": 0.7 },
+    "improvisedWeapon": {
+      "damage": { "min": 5, "max": 9 },
+      "rangeTiles": 0.8,
+      "attackSpeed": 1.1,
+      "durability": 30,
+      "breakChancePct": 20
+    }
   }
 ]

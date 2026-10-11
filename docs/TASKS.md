@@ -49,6 +49,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Pathfinding + flow field dla hord (Symulacja)
 - [ ] Walka wręcz, stamina, pchnięcie (Symulacja) — fizyka (masa, bezwładność, obciążenie, odrzut, zachwianie, przewrócenie, wstawanie) w `sim/src/physics`, podpięta do ruchu, walki i snapshotu (protokół v7); napór tłumu zombie na drzwi / okna / płoty i odpychanie w tłumie (`physics/crowd.ts`)
 - [x] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules) — `items/weapons-*.json` (#14)
+- [x] Improwizowana broń: blok `improvisedWeapon` w przedmiocie, `meleeStatsFor(item)` dla każdego przedmiotu w ręku (Modules)
+- [ ] Podpiąć `meleeStatsFor` (`@deadzone/content`) pod atak wręcz: obrażenia, zasięg, tempo, trwałość i psucie się przedmiotu, XP dla `skill` (Symulacja)
 - [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
 - [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)
 - [x] Wabiki jako dane: elektroniczny z pilotem i baterią, biegający z craftingu (Modules)

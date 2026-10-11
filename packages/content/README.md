@@ -52,6 +52,25 @@ const place = nearestPlace(places, x, y); // string | null
 Surowy JSON jest też pod `@deadzone/content/places/stalowa-wola.json`. Nowa mapa z nazwami: plik w `places/`
 i wpis w `src/places/places-files.ts`; test sprawdza, że każdy plik z rejestru przechodzi schemat.
 
+## Improwizowana broń
+
+Każdy przedmiot w ręku jest bronią (jak w Project Zomboid). Przedmiot, który nie jest bronią białą, może mieć
+opcjonalny blok `improvisedWeapon` (`src/schemas/item/improvised-weapon.ts`): `damage {min,max}`, `rangeTiles`,
+`attackSpeed` (ataki/s, jak `attacksPerSec`), `durability` (punkty), `breakChancePct` (0–100, szansa utraty punktu
+trwałości przy trafieniu), opcjonalnie `skill`, `damageType` (`blunt` | `sharp`), `twoHanded`, `staminaCost`.
+
+```ts
+import { meleeStatsFor, type MeleeStatsView } from '@deadzone/content';
+
+const s = meleeStatsFor(item);
+// { damage: {min,max}, rangeTiles, attackSpeed, durability, breakChancePct, skill,
+//   twoHanded, damageType, staminaCost, critChance, source: 'weapon' | 'improvised' | 'default' }
+```
+
+Kolejność: `melee` broni z katalogu → blok `improvisedWeapon` → słabe wartości domyślne z wagi
+(`defaultMeleeStats(weightKg)`, `IMPROVISED_DEFAULTS`; też broń palna jako pałka). Bez bloku `skill` to
+`base:blunt` (tępa) albo `base:blade-short` (ostra).
+
 ## Walidacja
 
 ```sh

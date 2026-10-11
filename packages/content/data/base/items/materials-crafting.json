@@ -4,7 +4,15 @@
     "name": "item.base.log.name",
     "kind": "material",
     "weightKg": 8,
-    "tags": ["base:wood-log"]
+    "tags": ["base:wood-log"],
+    "improvisedWeapon": {
+      "damage": { "min": 8, "max": 14 },
+      "rangeTiles": 0.9,
+      "attackSpeed": 0.35,
+      "durability": 40,
+      "breakChancePct": 10,
+      "twoHanded": true
+    }
   },
   {
     "id": "base:duct-tape",
@@ -35,7 +43,16 @@
     "kind": "material",
     "weightKg": 2.5,
     "maxStack": 5,
-    "tags": ["base:metal-sheet"]
+    "tags": ["base:metal-sheet"],
+    "improvisedWeapon": {
+      "damage": { "min": 5, "max": 10 },
+      "rangeTiles": 0.9,
+      "attackSpeed": 0.7,
+      "durability": 20,
+      "breakChancePct": 20,
+      "damageType": "sharp",
+      "twoHanded": true
+    }
   },
   {
     "id": "base:glass-shards",
@@ -43,7 +60,15 @@
     "kind": "material",
     "weightKg": 0.05,
     "maxStack": 20,
-    "tags": ["base:glass", "base:sharp"]
+    "tags": ["base:glass", "base:sharp"],
+    "improvisedWeapon": {
+      "damage": { "min": 2, "max": 5 },
+      "rangeTiles": 0.5,
+      "attackSpeed": 1.6,
+      "durability": 3,
+      "breakChancePct": 60,
+      "damageType": "sharp"
+    }
   },
   {
     "id": "base:scrap-metal",
@@ -51,7 +76,14 @@
     "kind": "material",
     "weightKg": 0.5,
     "maxStack": 10,
-    "tags": ["base:metal-scrap"]
+    "tags": ["base:metal-scrap"],
+    "improvisedWeapon": {
+      "damage": { "min": 3, "max": 6 },
+      "rangeTiles": 0.6,
+      "attackSpeed": 1.2,
+      "durability": 20,
+      "breakChancePct": 15
+    }
   },
   {
     "id": "base:barricade-planks",
@@ -73,7 +105,14 @@
     "kind": "material",
     "weightKg": 0.4,
     "maxStack": 5,
-    "tags": ["base:wood-stick"]
+    "tags": ["base:wood-stick"],
+    "improvisedWeapon": {
+      "damage": { "min": 2, "max": 5 },
+      "rangeTiles": 1.0,
+      "attackSpeed": 1.3,
+      "durability": 8,
+      "breakChancePct": 30
+    }
   },
   {
     "id": "base:barricade-reinforced",

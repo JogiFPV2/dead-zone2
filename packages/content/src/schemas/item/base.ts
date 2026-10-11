@@ -6,6 +6,7 @@ import {
   TagListSchema,
   WeightKgSchema,
 } from '../common/index.js';
+import { ImprovisedWeaponSchema } from './improvised-weapon.js';
 import { ThrowableSchema } from './throwable.js';
 
 /**
@@ -25,5 +26,7 @@ export const itemBaseShape = {
   model: z.string().optional(),
   /** Każdy przedmiot można opcjonalnie rzucić (butelka, kamień → hałas jako wabik). */
   throwable: ThrowableSchema.optional(),
+  /** Każdy przedmiot w ręku jest bronią; blok nadpisuje słabe wartości domyślne (`meleeStatsFor`). */
+  improvisedWeapon: ImprovisedWeaponSchema.optional(),
   ext: ExtSchema,
 } as const;

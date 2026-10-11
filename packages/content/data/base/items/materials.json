@@ -20,7 +20,14 @@
     "kind": "material",
     "weightKg": 1.8,
     "maxStack": 10,
-    "tags": ["base:wood-plank"]
+    "tags": ["base:wood-plank"],
+    "improvisedWeapon": {
+      "damage": { "min": 5, "max": 9 },
+      "rangeTiles": 1.1,
+      "attackSpeed": 0.9,
+      "durability": 15,
+      "breakChancePct": 25
+    }
   },
   {
     "id": "base:nails",
