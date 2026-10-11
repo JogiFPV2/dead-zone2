@@ -378,6 +378,7 @@ export function solveBuilding(
     seed: (ib.b.id % 1000003) + 1,
     outdoorFloor: (id) => OUTDOOR_FLOORS.has(id),
     propFloor: (id) => PROP_FLOORS.has(id),
+    streetFloor: (id) => id === 'base:sidewalk' || id === 'base:asphalt' || id === 'base:parking',
   });
   let bx0 = Infinity;
   let by0 = Infinity;

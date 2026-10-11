@@ -2050,12 +2050,6 @@
       "rot": 0
     },
     {
-      "contentId": "base:firewood-pile",
-      "x": 24,
-      "y": 7,
-      "rot": 2
-    },
-    {
       "contentId": "base:metal-shelf",
       "x": 5,
       "y": 8,
@@ -2172,12 +2166,6 @@
     {
       "contentId": "base:fridge",
       "x": 7,
-      "y": 18,
-      "rot": 2
-    },
-    {
-      "contentId": "base:firewood-pile",
-      "x": 29,
       "y": 18,
       "rot": 2
     },

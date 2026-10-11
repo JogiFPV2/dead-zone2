@@ -8,6 +8,9 @@ const OUTDOOR = 'base:outdoor';
 /** Outdoor floors where props (bins, benches, firewood) may stand: not the road or the parking. */
 const PROP_FLOORS = new Set(['base:grass', 'base:sidewalk', 'base:dirt']);
 
+/** Street floors: only bins, dumpsters and benches stand there (no firewood, crates). */
+const STREET_FLOORS = new Set(['base:sidewalk', 'base:asphalt', 'base:parking']);
+
 /** Floor tiles of the base pack tagged `base:outdoor`. */
 export function baseOutdoorFloors(): Set<string> {
   const dir = join(BASE_PACK_DIR, 'tiles');
@@ -29,5 +32,6 @@ export function baseFurnishOptions(seed = 1): FurnishOptions {
     seed,
     outdoorFloor: (id) => outdoor.has(id),
     propFloor: (id) => PROP_FLOORS.has(id),
+    streetFloor: (id) => STREET_FLOORS.has(id),
   };
 }

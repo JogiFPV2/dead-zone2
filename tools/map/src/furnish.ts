@@ -24,6 +24,8 @@ export interface FurnishOptions {
   outdoorFloor: (tileId: string) => boolean;
   /** Floors where outdoor props may stand (e.g. grass, sidewalk; not the road). */
   propFloor: (tileId: string) => boolean;
+  /** Street floors (sidewalk, road): only bins, dumpsters and benches may stand there. */
+  streetFloor?: (tileId: string) => boolean;
 }
 
 export interface PlacedObject {
@@ -392,8 +394,10 @@ export function furnishView(
     const near = (x: number, y: number) => Math.abs(x - main[0]) + Math.abs(y - main[1]);
     const sideTiles = wallside(b);
     const pick = (score: (x: number, y: number) => number, id: string) => {
+      const street = !STREET_PROPS.has(id) && opt.streetFloor;
       const c = sideTiles
         .filter(([x, y]) => !taken.has(key(x, y, 0)))
+        .filter(([x, y]) => !street || !street(view.floor(x, y, 0) ?? ''))
         .map(([x, y, rot]) => ({ x, y, rot, s: score(x, y) + rand() * 0.5 }))
         .filter((c) => Number.isFinite(c.s))
         .sort((p, q) => q.s - p.s)[0];
@@ -419,6 +423,13 @@ export function furnishView(
   }
   return out.sort((a, b) => a.z - b.z || a.y - b.y || a.x - b.x);
 }
+
+/** Props that may stand on a sidewalk (street furniture). */
+const STREET_PROPS: ReadonlySet<string> = new Set([
+  'base:trash-bin',
+  'base:dumpster',
+  'base:bench',
+]);
 
 const opposite = (s: Side): Side => ({ n: 's', s: 'n', e: 'w', w: 'e' })[s] as Side;
 

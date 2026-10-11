@@ -3098,12 +3098,6 @@
       "rot": 3
     },
     {
-      "contentId": "base:firewood-pile",
-      "x": 25,
-      "y": 26,
-      "rot": 0
-    },
-    {
       "contentId": "base:kitchen-counter",
       "x": 7,
       "y": 29,

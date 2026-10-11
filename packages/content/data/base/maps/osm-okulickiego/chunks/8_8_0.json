@@ -1058,6 +1058,12 @@
   ],
   "objects": [
     {
+      "contentId": "base:firewood-pile",
+      "x": 9,
+      "y": 0,
+      "rot": 1
+    },
+    {
       "contentId": "base:kitchen-counter",
       "x": 29,
       "y": 0,

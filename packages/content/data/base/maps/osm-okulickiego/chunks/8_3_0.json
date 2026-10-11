@@ -1311,18 +1311,6 @@
       "rot": 2
     },
     {
-      "contentId": "base:firewood-pile",
-      "x": 21,
-      "y": 17,
-      "rot": 0
-    },
-    {
-      "contentId": "base:firewood-pile",
-      "x": 0,
-      "y": 30,
-      "rot": 2
-    },
-    {
       "contentId": "base:kitchen-cabinet",
       "x": 3,
       "y": 31,

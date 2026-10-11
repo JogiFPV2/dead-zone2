@@ -28,13 +28,14 @@ describe('map objects and rooms reach the sim', () => {
     const sim = createSim({
       seed: 1,
       map: chunkSourceToSimMap(map.source, map.range),
-      spawn,
+      // Next to the start crate in the yard by the start (crates never stand on the street).
+      spawn: { ...spawn, x: -57.5, y: 6.5 },
       content,
     });
     sim.step();
     const nearby = sim.drainView()?.nearby ?? [];
     expect(nearby).toContainEqual(
-      expect.objectContaining({ kind: 'world', type: 'base:crate', x: -62, y: 1, z: 0 }),
+      expect.objectContaining({ kind: 'world', type: 'base:crate', x: -58, y: 6, z: 0 }),
     );
   });
 

@@ -388,8 +388,8 @@
   "objects": [
     {
       "contentId": "base:crate",
-      "x": -62,
-      "y": 1,
+      "x": -58,
+      "y": 6,
       "rot": 0
     },
     {
@@ -706,8 +706,8 @@
     },
     {
       "contentId": "base:crate",
-      "x": -59,
-      "y": 5,
+      "x": -56,
+      "y": 7,
       "rot": 0
     }
   ]

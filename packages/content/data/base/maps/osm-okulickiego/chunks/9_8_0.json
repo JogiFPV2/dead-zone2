@@ -1535,12 +1535,6 @@
       "x": 22,
       "y": 13,
       "rot": 2
-    },
-    {
-      "contentId": "base:firewood-pile",
-      "x": 19,
-      "y": 14,
-      "rot": 0
     }
   ],
   "rooms": {

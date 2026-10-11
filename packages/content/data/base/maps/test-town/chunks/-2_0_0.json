@@ -143,8 +143,8 @@
   "objects": [
     {
       "contentId": "base:crate",
-      "x": 2,
-      "y": 1,
+      "x": 6,
+      "y": 6,
       "rot": 0
     },
     {
@@ -167,8 +167,8 @@
     },
     {
       "contentId": "base:crate",
-      "x": 5,
-      "y": 5,
+      "x": 8,
+      "y": 7,
       "rot": 0
     }
   ],
