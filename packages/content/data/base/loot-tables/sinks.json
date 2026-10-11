@@ -1,0 +1,29 @@
+[
+  {
+    "id": "base:under-sink",
+    "containers": ["base:kitchen-sink", "base:bathroom-sink"],
+    "chance": 0.5,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "item": "base:rag",
+        "weight": 5
+      },
+      {
+        "item": "base:garbage-bag",
+        "weight": 4
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 3
+      },
+      {
+        "item": "base:sheet",
+        "weight": 1
+      }
+    ]
+  }
+]

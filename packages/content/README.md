@@ -240,6 +240,12 @@ pomieszczeniach zwykle stoi. Test sprawdza każdą parę schowek × pomieszczeni
 Mebel z kilkoma schowkami: `compartments` (lodówka z zamrażarką `base:fridge-freezer` = część lodówkowa +
 `["base:freezer"]`); mapa stawia jeden obiekt, każda przegroda ma własną tabelę, `lootAccepts` i psucie.
 Piekarnik elektryczny `base:oven` ma `requiresPower`, kuchenka gazowa `base:gas-stove` nie.
+Kuchenka z piekarnikiem `base:range` (kuchnia gazowo-elektryczna): palniki gazowe i szuflada bez prądu, przegroda
+`base:oven` (piekarnik elektryczny, `requiresPower`). Mapa stawia przedmiot `base:range` (ten sam id): `containerType`
+daje schowki, `station` (`base:station-fire` 3) gotowanie. Meble stałe bez schowka (`items/furniture-fixtures.json`):
+wanna `base:bathtub`, prysznic `base:shower`, magnetowid `base:vcr` (tag `base:station-vcr`, prąd) i radioodbiornik
+`base:radio-set` (tag `base:station-radio`, prąd; przenośne `base:radio` zostaje zwykłym przedmiotem). Zlew kuchenny
+`base:kitchen-sink` i umywalka `base:bathroom-sink` to schowki (szafka pod spodem, tabela `base:under-sink`).
 Klucze do budynku: `buildingKey` (szansa) w tabeli — sim dokłada przedmiot z tagiem `base:building-key`
 przypisany do budynku schowka (w tabeli zwłok: do budynku zombie). Przedmiotu klucza jeszcze nie ma. Lodówka i zamrażarka mają
 `requiresPower` i `spoilageMultiplier` (0.3 i 0.05): chłodzą tylko z prądem, bez prądu jedzenie psuje się ×1.
@@ -257,6 +263,9 @@ przypisany do budynku schowka (w tabeli zwłok: do budynku zombie). Przedmiotu k
 | `base:desk`                       | `base:desk`                                               | czasopisma, książki, baterie, zapałki            |
 | `base:tv-stand`                   | `base:living-room`                                        | kasety VHS, baterie, radio, latarka              |
 | `base:bathroom-cabinet`           | `base:bathroom`                                           | bandaże, szmaty                                  |
+| `base:bathroom-sink`              | `base:under-sink`                                         | szmaty, worki na śmieci, reklamówki              |
+| `base:kitchen-sink`               | `base:under-sink`                                         | szmaty, worki na śmieci, reklamówki              |
+| `base:range`                      | `base:gas-stove` + przegroda `base:oven`                  | patelnia, garnek albo pusto                      |
 | `base:tool-chest`                 | `base:toolbox`                                            | narzędzia, gwoździe, taśma, drut                 |
 | `base:trash-bin`, `base:dumpster` | `base:trash`                                              | butelki, worki, złom                             |
 

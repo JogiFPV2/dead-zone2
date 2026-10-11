@@ -43,4 +43,10 @@ describe('każdy typ mebla/schowka z paczki bazowej ma polską etykietę (labels
     expect(containerName('base:bathroom-cabinet', 'world')).toBe('Szafka łazienkowa');
     expect(containerName('base:shop-counter', 'world')).toBe('Lada sklepowa');
   });
+
+  it('zlewy i kuchenka z piekarnikiem mają ustalone nazwy', () => {
+    expect(containerName('base:kitchen-sink', 'world')).toBe('Zlew kuchenny');
+    expect(containerName('base:bathroom-sink', 'world')).toBe('Umywalka');
+    expect(containerName('base:range', 'world')).toBe('Kuchenka z piekarnikiem');
+  });
 });

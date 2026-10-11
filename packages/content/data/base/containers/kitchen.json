@@ -71,5 +71,25 @@
     "defaultLootTable": "base:gas-stove",
     "lootAccepts": ["cookware"],
     "placeIn": ["base:room-kitchen"]
+  },
+  {
+    "id": "base:kitchen-sink",
+    "name": "container.base.kitchen-sink.name",
+    "category": "cabinet",
+    "capacityKg": 15,
+    "defaultLootTable": "base:under-sink",
+    "lootAccepts": ["household", "fabric"],
+    "placeIn": ["base:room-kitchen"]
+  },
+  {
+    "id": "base:range",
+    "name": "container.base.range.name",
+    "category": "other",
+    "capacityKg": 10,
+    "searchMin": 0.5,
+    "defaultLootTable": "base:gas-stove",
+    "lootAccepts": ["cookware"],
+    "placeIn": ["base:room-kitchen"],
+    "compartments": ["base:oven"]
   }
 ]

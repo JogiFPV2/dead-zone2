@@ -209,7 +209,7 @@
   },
   {
     "id": "base:gas-stove",
-    "containers": ["base:gas-stove"],
+    "containers": ["base:gas-stove", "base:range"],
     "chance": 0.4,
     "rolls": {
       "min": 1,

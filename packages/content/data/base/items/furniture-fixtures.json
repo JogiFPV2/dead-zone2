@@ -1,0 +1,45 @@
+[
+  {
+    "id": "base:range",
+    "name": "item.base.range.name",
+    "kind": "placeable",
+    "weightKg": 45,
+    "tags": ["base:furniture"],
+    "placeable": {
+      "containerType": "base:range",
+      "station": { "id": "base:station-fire", "level": 3 }
+    }
+  },
+  {
+    "id": "base:bathtub",
+    "name": "item.base.bathtub.name",
+    "kind": "placeable",
+    "weightKg": 60,
+    "tags": ["base:furniture"],
+    "placeable": {}
+  },
+  {
+    "id": "base:shower",
+    "name": "item.base.shower.name",
+    "kind": "placeable",
+    "weightKg": 40,
+    "tags": ["base:furniture"],
+    "placeable": {}
+  },
+  {
+    "id": "base:vcr",
+    "name": "item.base.vcr.name",
+    "kind": "placeable",
+    "weightKg": 4,
+    "tags": ["base:station-vcr"],
+    "placeable": { "power": { "consumesW": 20 } }
+  },
+  {
+    "id": "base:radio-set",
+    "name": "item.base.radio-set.name",
+    "kind": "placeable",
+    "weightKg": 3,
+    "tags": ["base:station-radio"],
+    "placeable": { "power": { "consumesW": 15 } }
+  }
+]

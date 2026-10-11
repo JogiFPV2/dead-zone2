@@ -61,5 +61,14 @@
     "defaultLootTable": "base:bathroom",
     "lootAccepts": ["medical", "fabric", "household"],
     "placeIn": ["base:room-bathroom"]
+  },
+  {
+    "id": "base:bathroom-sink",
+    "name": "container.base.bathroom-sink.name",
+    "category": "cabinet",
+    "capacityKg": 8,
+    "defaultLootTable": "base:under-sink",
+    "lootAccepts": ["household", "fabric", "medical"],
+    "placeIn": ["base:room-bathroom"]
   }
 ]

@@ -42,4 +42,38 @@ describe('meble ze schowkami: przegrody, prąd, pomieszczenia, klucze', () => {
       expect(b.lootTables[`base:${id}`]?.buildingKey, id).toBeGreaterThan(0);
     expect(b.lootTables['base:kitchen-fridge']?.buildingKey).toBeUndefined();
   });
+
+  it('zlewy, kuchenka z piekarnikiem, wanna, prysznic, magnetowid i radio (meble stałe)', async () => {
+    const b = await baseBundle();
+    const range = b.containers['base:range']!;
+    expect(range.requiresPower, 'palniki gazowe działają bez prądu').toBe(false);
+    expect(range.compartments).toEqual(['base:oven']);
+    expect(b.containers['base:oven']!.requiresPower, 'piekarnik elektryczny').toBe(true);
+    for (const id of ['kitchen-sink', 'bathroom-sink'])
+      expect(b.containers[`base:${id}`]?.defaultLootTable, id).toBe('base:under-sink');
+    const placeable = (id: string) => {
+      const it = b.items[id];
+      if (it?.kind !== 'placeable') throw new Error(`${id}: brak placeable`);
+      return it;
+    };
+    expect(placeable('base:range').placeable).toMatchObject({
+      containerType: 'base:range',
+      station: { id: 'base:station-fire' },
+    });
+    for (const id of ['base:bathtub', 'base:shower'])
+      expect(placeable(id).placeable.containerType, `${id}: bez schowka`).toBeUndefined();
+    for (const [id, tag] of [
+      ['base:vcr', 'base:station-vcr'],
+      ['base:radio-set', 'base:station-radio'],
+      ['base:tv', 'base:station-tv'],
+    ] as const) {
+      expect(placeable(id).placeable.power?.consumesW, id).toBeGreaterThan(0);
+      expect(placeable(id).tags, id).toContain(tag);
+    }
+    expect(b.items['base:radio']?.kind, 'przenośne radio zostaje przedmiotem').not.toBe(
+      'placeable',
+    );
+    for (const id of ['base:range', 'base:bathtub', 'base:shower', 'base:vcr', 'base:radio-set'])
+      expect(b.items[id]!.tags, id).not.toContain('base:outdoor-ok');
+  });
 });

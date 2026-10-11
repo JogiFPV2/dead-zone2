@@ -206,6 +206,11 @@
     "base:car-battery": "Akumulator samochodowy",
     "base:fuel-tank": "Bak paliwa",
     "base:rubber-hose": "Wąż gumowy",
-    "base:fuel-pump": "Dystrybutor paliwa"
+    "base:fuel-pump": "Dystrybutor paliwa",
+    "base:range": "Kuchenka z piekarnikiem",
+    "base:bathtub": "Wanna",
+    "base:shower": "Prysznic",
+    "base:vcr": "Magnetowid",
+    "base:radio-set": "Radioodbiornik"
   }
 }
