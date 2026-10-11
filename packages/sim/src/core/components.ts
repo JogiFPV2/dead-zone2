@@ -16,8 +16,16 @@ export function createComponents(capacity: number) {
     /** Binary angle (u16, 65536 = 360°) from +x towards +y. */
     Facing: { angle: new Uint16Array(capacity) },
     Collider: { radius: f32() },
-    /** Held movement direction, length ≤ 1; `gait` = index in GAITS (0 sneak, 1 walk, 2 run, 3 sprint). */
-    MoveIntent: { dx: f32(), dy: f32(), gait: new Uint8Array(capacity).fill(1) },
+    /**
+     * Held movement direction, length ≤ 1; `gait` = index in GAITS (0 sneak, 1 walk, 2 run, 3
+     * sprint); `sneak` = 1 while the `setSneak` toggle is on (walking moves become sneaking).
+     */
+    MoveIntent: {
+      dx: f32(),
+      dy: f32(),
+      gait: new Uint8Array(capacity).fill(1),
+      sneak: new Uint8Array(capacity),
+    },
     /** World point the entity aims at; `active` = 0 until the first aim command. */
     AimIntent: { x: f32(), y: f32(), active: new Uint8Array(capacity) },
     /**

@@ -645,6 +645,17 @@ export interface CharacterView {
   weaponKind: WeaponKind;
   /** The primary item takes both hands. */
   twoHanded: boolean;
+  /**
+   * Sneaking now (protocol 23): the `setSneak` toggle with a walking gait, or a `move` with gait
+   * `sneak`. HUD: sneak icon next to the bar.
+   */
+  sneaking?: boolean;
+  /**
+   * Footstep noise radius (m = tiles, open ground, before walls) of the current gait with the
+   * character's skills and traits (protocol 23); the `playerNoise` circle while moving. 0 when
+   * standing still or in a vehicle.
+   */
+  stepNoiseTiles?: number;
 }
 
 export interface LureView {

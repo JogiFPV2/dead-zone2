@@ -6,6 +6,7 @@ import { defOf } from '../items/store.js';
 import type { VisionConfig } from './config.js';
 import type { AiWorld } from './state.js';
 import { floorZ } from '../world/levels.js';
+import { sneakVisibilityMul } from './sneak.js';
 
 /**
  * Sight model shared by players and zombies: range = base range × light at the target. Daylight
@@ -109,7 +110,7 @@ export function playerVisibility(w: SimWorld, ai: AiWorld, eid: number, day: num
   const light = lightAt(w, ai, x, y, z);
   if (dark && light <= 0) return 0;
   let v = lit(vc, dark ? vc.nightFactor : day, light);
-  if (GAITS[MoveIntent.gait[eid] ?? 1] === 'sneak') v *= ai.cfg.vision.sneakVisibilityMul;
+  if (GAITS[MoveIntent.gait[eid] ?? 1] === 'sneak') v *= sneakVisibilityMul(w, eid);
   return Math.fround(v);
 }
 

@@ -1,5 +1,6 @@
-import { GAITS, type Command, type CommandRejectReason } from '@deadzone/protocol';
+import { type Command, type CommandRejectReason } from '@deadzone/protocol';
 import { applyAiCommand, isAiCommand } from '../ai/commands.js';
+import { applySetSneak, moveGait } from '../ai/sneak.js';
 import { applyAnimalCommand, isAnimalCommand } from '../animals/commands.js';
 import { queueAttack } from '../combat/commands.js';
 import { applySetTarget } from '../combat/target.js';
@@ -59,7 +60,7 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       }
       MoveIntent.dx[eid] = Math.fround(dx);
       MoveIntent.dy[eid] = Math.fround(dy);
-      MoveIntent.gait[eid] = GAITS.indexOf(cmd.gait ?? 'walk');
+      MoveIntent.gait[eid] = moveGait(w, eid, cmd.gait);
     } else if (cmd.type === 'attack' || cmd.type === 'shove') {
       const reason = queueAttack(w, eid, cmd.type === 'shove');
       if (reason) reject(w, cmd, reason);
@@ -75,6 +76,8 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
     } else if (isAiCommand(cmd)) {
       const reason = applyAiCommand(w, eid, cmd);
       if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'setSneak') {
+      applySetSneak(w, eid, cmd.on);
     } else if (cmd.type === 'setTarget') {
       const reason = applySetTarget(w, grid, eid, cmd.id);
       if (reason) reject(w, cmd, reason);

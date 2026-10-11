@@ -1,4 +1,3 @@
-import { SPRINT_NOISE_MUL } from '../physics/constants.js';
 import {
   GAITS,
   PLAYER_NOISE_CONTINUOUS,
@@ -7,9 +6,8 @@ import {
   type NoiseSource,
   type PlayerNoiseKind,
 } from '@deadzone/protocol';
-import { ModSlot } from '../content/adapter.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
-import { modded } from '../survival/state.js';
+import { footstepRadius, sneakStepXp } from './sneak.js';
 import { edgesBetween } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
 import { noiseSourceIndex, type AiWorld, type Noise } from './state.js';
@@ -158,11 +156,11 @@ export function noiseCollectSystem(w: SimWorld): void {
 
 /**
  * Pipeline `noise.footsteps` (after movement): players that actually moved make a footstep noise
- * every `footstepEveryTicks` (gait radius × stat `footstep-noise`).
+ * every `footstepEveryTicks` (`footstepRadius`: gait radius × sneaking / lightfoot skills × stat
+ * `footstep-noise`); sneak footsteps near zombies give sneaking XP (ai/sneak.ts).
  */
 export function footstepSystem(w: SimWorld): void {
   const ai = w.ai;
-  const s = w.survival;
   if (!ai) return;
   const cfg = ai.cfg.noise;
   const { Position, Velocity, MoveIntent, StableId } = w.c;
@@ -171,8 +169,8 @@ export function footstepSystem(w: SimWorld): void {
     if ((w.tick + (StableId.value[eid] ?? 0)) % cfg.footstepEveryTicks !== 0) continue;
     const gait = GAITS[MoveIntent.gait[eid] ?? 1] ?? 'walk';
     const f = cfg.footsteps[gait === 'sprint' ? 'run' : gait];
-    const base = gait === 'sprint' ? f.radiusTiles * SPRINT_NOISE_MUL : f.radiusTiles;
-    const radius = s ? modded(s, eid, ModSlot['footstep-noise'], base) : base;
+    const radius = footstepRadius(w, eid, gait);
+    if (gait === 'sneak') sneakStepXp(w, eid);
     emitNoise(
       w,
       Position.x[eid] ?? 0,

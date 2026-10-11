@@ -1,3 +1,4 @@
+import { footstepRadius, isSneaking } from '../ai/sneak.js';
 import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
 import type { TileGrid } from '../world/grid.js';
@@ -10,6 +11,7 @@ import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
 import { openingView } from '../openings/state.js';
 import {
   BODY_PARTS,
+  GAITS,
   GROUND_PILE_MARKER_TILES,
   STORAGE_MARKER_TILES,
   VIEW_STATS,
@@ -140,7 +142,18 @@ export function characterView(w: SimWorld, eid: number): CharacterView | undefin
     equippedBack: at('back')?.id ?? null,
     weaponKind: weaponKind(primary),
     twoHanded: primaryItem ? twoHanded(st, primaryItem) : false,
+    sneaking: isSneaking(w, eid),
+    stepNoiseTiles: stepNoiseTiles(w, eid),
   };
+}
+
+/** Footstep radius of the current gait while moving on foot (0 standing / in a vehicle). */
+function stepNoiseTiles(w: SimWorld, eid: number): number {
+  const { Velocity, MoveIntent, StableId } = w.c;
+  if ((Velocity.x[eid] ?? 0) === 0 && (Velocity.y[eid] ?? 0) === 0) return 0;
+  if (w.physics.bodies.get(StableId.value[eid] ?? 0)?.vehicle) return 0;
+  const gait = GAITS[MoveIntent.gait[eid] ?? 1] ?? 'walk';
+  return Math.round(footstepRadius(w, eid, gait) * 10) / 10;
 }
 
 const round1 = (v: number): number => Math.round(v * 10) / 10;

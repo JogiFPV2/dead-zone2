@@ -45,6 +45,12 @@ export const aimCommandSchema = z.strictObject({
   y: coord,
 });
 
+export const setSneakCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setSneak'),
+  on: z.boolean(),
+});
+
 export const setTargetCommandSchema = z.strictObject({
   ...header,
   type: z.literal('setTarget'),
@@ -523,6 +529,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   vehicleEngineCommandSchema,
   hornCommandSchema,
   setTargetCommandSchema,
+  setSneakCommandSchema,
   refuelVehicleCommandSchema,
   fillFuelCanCommandSchema,
   siphonFuelCommandSchema,

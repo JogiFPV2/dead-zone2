@@ -92,6 +92,8 @@ describe('characters view: visible equipment', () => {
         equippedBack: null,
         weaponKind: 'unarmed',
         twoHanded: false,
+        sneaking: false,
+        stepNoiseTiles: 0,
       },
     ]);
     send(sim, { type: 'debugGiveItem', itemId: WEAPON });

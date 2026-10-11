@@ -37,6 +37,17 @@ export interface MoveCommand extends CommandHeader {
   gait?: Gait | undefined;
 }
 
+/**
+ * Sneak toggle (client: key `C`, protocol 23). While on, a `move` with `walk` (or no gait) sneaks:
+ * × `movement.sneakSpeedMul` speed, quiet footsteps (scaled by `base:sneaking` / `base:lightfoot`)
+ * and lower visibility to zombies. A `move` with `run` / `sprint` turns it off (running cancels
+ * sneaking, as in PZ). State in `CharacterView.sneaking`.
+ */
+export interface SetSneakCommand extends CommandHeader {
+  type: 'setSneak';
+  on: boolean;
+}
+
 /** World-space point (tiles) the player is aiming at; the sim derives facing from it. */
 export interface AimCommand extends CommandHeader {
   type: 'aim';
@@ -860,6 +871,7 @@ export type Command =
   | VehicleEngineCommand
   | HornCommand
   | SetTargetCommand
+  | SetSneakCommand
   | RefuelVehicleCommand
   | FillFuelCanCommand
   | SiphonFuelCommand

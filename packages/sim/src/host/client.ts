@@ -81,6 +81,8 @@ export interface SimWorkerClient {
   /** Held movement for the local player; fills tick/playerId/seq. */
   /** `gait` default walk (sneak / run change speed, footstep noise and needs). */
   move(dx: number, dy: number, gait?: Gait): void;
+  /** Sneak toggle (key `C`): walking becomes sneaking until off or a run (`CharacterView.sneaking`). */
+  setSneak(on: boolean): void;
   /** Aim at a world point (tiles) for the local player. */
   aim(x: number, y: number): void;
   sleep(): void;
@@ -376,6 +378,7 @@ export function createSimWorkerClient(
     vehicleEngine: (on) => cmd({ type: 'vehicleEngine', on }),
     horn: () => cmd({ type: 'horn' }),
     setTarget: (id) => cmd({ type: 'setTarget', id }),
+    setSneak: (on) => cmd({ type: 'setSneak', on }),
     drive: (throttle, brake, steer, handbrake = false, headlights) =>
       cmd({
         type: 'drive',
