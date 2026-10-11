@@ -25,18 +25,27 @@ const MOODLES: Record<string, string> = {
   'base:wet': 'Przemoczenie',
 };
 
-const CONTAINERS: Record<string, string> = {
+/** Polish names for every container type in `packages/content/data/base/containers`. */
+export const CONTAINER_LABELS: Record<string, string> = {
   'base:kitchen-cabinet': 'Szafka kuchenna',
   'base:kitchen-counter': 'Blat kuchenny',
   'base:fridge': 'Lodówka',
+  'base:freezer': 'Zamrażarka',
+  'base:fridge-freezer': 'Lodówka z zamrażarką',
+  'base:oven': 'Piekarnik',
+  'base:gas-stove': 'Kuchenka gazowa',
   'base:car-trunk': 'Bagażnik',
   'base:car-glovebox': 'Schowek',
-  'base:freezer': 'Zamrażarka',
   'base:wardrobe': 'Szafa',
   'base:dresser': 'Komoda',
   'base:bookshelf': 'Regał na książki',
+  'base:desk': 'Biurko',
+  'base:tv-stand': 'Szafka RTV',
+  'base:bathroom-cabinet': 'Szafka łazienkowa',
   'base:wooden-chest': 'Skrzynia',
   'base:crate': 'Skrzynka',
+  'base:wooden-crate': 'Skrzynia drewniana',
+  'base:large-wooden-crate': 'Duża skrzynia',
   'base:metal-shelf': 'Regał',
   'base:tool-chest': 'Skrzynka narzędziowa',
   'base:locker': 'Szafka',
@@ -44,6 +53,7 @@ const CONTAINERS: Record<string, string> = {
   'base:trash-bin': 'Kosz na śmieci',
   'base:dumpster': 'Kontener na śmieci',
   'base:firewood-pile': 'Stos drewna',
+  'base:shop-counter': 'Lada sklepowa',
 };
 
 /** `base:kitchen-knife` → `Kitchen knife` (fallback until i18n). */
@@ -55,7 +65,7 @@ export function humanizeId(id: string): string {
 export const moodleName = (id: string): string => MOODLES[id] ?? humanizeId(id);
 export const containerName = (type: string | undefined, kind: string): string =>
   type
-    ? (CONTAINERS[type] ?? humanizeId(type))
+    ? (CONTAINER_LABELS[type] ?? humanizeId(type))
     : kind === 'vehicle-trunk'
       ? 'Bagażnik'
       : kind === 'vehicle-glovebox'
