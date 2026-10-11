@@ -22,7 +22,9 @@ const SAVE_MODES: readonly MockSaveMode[] = [
  * - `?online=mock` → demo account in memory (review / screenshots; any build, nothing is sent).
  *   Extra params: `as=google|email` (start logged in), `chars=empty`, `save=conflict|
  *   conflict-nominute|conflict-bare|gone`, `net=down` (Postacie fails like a lost connection).
- * - a configured server (`apiUrl` + `auth`) → `/v1` over HTTP;
+ * - `?online=1` with a configured server (`apiUrl` + `auth`, from the build's vite env) →
+ *   `/v1` over HTTP. Opt-in while the server is rolled out; the default switches once the API
+ *   answers (then `?online=0` will keep a page offline);
  * - otherwise offline: no account, local saves only (today's behaviour).
  */
 export function resolveAccountApi(search: string, config: AccountConfig = {}): AccountApi {
@@ -37,8 +39,18 @@ export function resolveAccountApi(search: string, config: AccountConfig = {}): A
       failList: q.get('net') === 'down',
     });
   }
-  if (q.get('online') !== 'off' && config.apiUrl && config.auth) {
+  if (q.get('online') === '1' && config.apiUrl && config.auth) {
     return createHttpAccountApi({ baseUrl: config.apiUrl, auth: config.auth });
   }
   return createOfflineAccountApi();
+}
+
+/** The page's account config: the build's online config with Supabase Auth (lazy). */
+export async function pageAccountConfig(search: string): Promise<AccountConfig> {
+  if (new URLSearchParams(search).get('online') !== '1') return {};
+  const { buildOnlineConfig } = await import('./config.js');
+  const c = buildOnlineConfig();
+  if (!c) return {};
+  const { createSupabaseAuth } = await import('./supabase-auth.js');
+  return { apiUrl: c.apiUrl, auth: createSupabaseAuth({ url: c.supabaseUrl, key: c.supabaseKey }) };
 }

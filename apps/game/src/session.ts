@@ -1,6 +1,7 @@
 import type { CharacterSpec } from '@deadzone/protocol';
 import type { CharacterRecord, SaveRecord } from './characters/schema.js';
 import type { RenderLook } from './creator/appearance-map.js';
+import type { AccountApi } from './account/account-api.js';
 
 /**
  * Hand-off from the menu / creator to the game boot (same page, no reload): the new character
@@ -30,6 +31,19 @@ export interface GameSession {
   character: CharacterRecord;
   save?: SaveRecord | undefined;
   created?: NewCharacter | undefined;
+  /**
+   * Account character (`?online=1` / `?online=mock`): saves go to `PUT /v1/characters/:id/save`
+   * from `version` (0 = none yet) instead of the local IndexedDB slot.
+   */
+  cloud?:
+    | {
+        api: AccountApi;
+        version: number;
+        worldgenVersion: number;
+        /** `ETag` of `POST …/open` as received (next `If-Match`, unchanged). */
+        etag?: string | undefined;
+      }
+    | undefined;
 }
 
 let session: GameSession | undefined;

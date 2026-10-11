@@ -13,12 +13,25 @@ import type { MenuScene } from './menu-scene.js';
 import { MENU_TRACK as TRACK } from './track.js';
 import { bindUiScale } from '../ui/ui-scale.js';
 import { AccountSession } from '../account/account-session.js';
-import { resolveAccountApi } from '../account/resolve.js';
+import { pageAccountConfig, resolveAccountApi } from '../account/resolve.js';
 import { displayName } from '../characters/display-name.js';
 import { portraitOf } from '../characters/portrait.js';
+import type { CloudCharacter } from '../account/account-api.js';
+import { takeCloudReturn } from '../account/cloud-play.js';
+import { openCloudSession } from '../account/cloud-session.js';
 
 /** Query keys that keep the menu (online review flags), unlike dev/test game URLs. */
-const MENU_KEYS = new Set(['menu', 'online', 'as', 'chars', 'save', 'net', 'screen']);
+const MENU_KEYS = new Set([
+  'menu',
+  'online',
+  'as',
+  'chars',
+  'save',
+  'net',
+  'screen',
+  'code',
+  'autosave',
+]);
 
 /** Menu only when the page has no query (dev/test URLs go straight to the game), or `?menu=1`. */
 export function shouldShowMenu(search: string): boolean {
@@ -39,10 +52,6 @@ function localStorageOrUndefined(): Storage | undefined {
   }
 }
 
-/** Online preview without the cloud save pipeline (Serwer's DZSV upload is not wired yet). */
-const CLOUD_PLAY_NOTE =
-  'Podgląd konta: gra z zapisu w chmurze ruszy po podłączeniu serwera zapisów.';
-
 /** Map of a new character's world: the page's default (prod: test-town; dev: test map). */
 const newWorldMap = (): string => parseBootOptions('').map;
 
@@ -60,7 +69,7 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
   const unbindUiScale = bindUiScale(settings);
   // Konto: offline by default; `?online=mock` = demo account (account/resolve.ts).
   const account = new AccountSession({
-    api: resolveAccountApi(window.location.search),
+    api: resolveAccountApi(window.location.search, await pageAccountConfig(window.location.search)),
     settings: new LocalPlayerSettingsStore(settings, localStorageOrUndefined()),
     storage: localStorageOrUndefined(),
   });
@@ -135,6 +144,35 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
         ? 'login'
         : undefined;
   let charactersNote: string | undefined;
+  // Back from a cloud game (conflict window): Postacie, or WCZYTAJ NOWSZY STAN of that character.
+  const back = account.cloud ? takeCloudReturn() : undefined;
+  let resumeId: string | undefined;
+  if (back && 'play' in back) resumeId = back.play;
+  else if (back) startView = 'characters';
+  /** Graj / Nowa postać on the account: the cloud session, or back to Postacie with a note. */
+  const openCloud = async (
+    character: CloudCharacter,
+    created?: GameSession['created'],
+  ): Promise<GameSession | undefined> => {
+    account.setSyncing(character.id, true);
+    const r = await openCloudSession(account.api, character, newWorldMap(), created);
+    account.setSyncing(character.id, false);
+    if (r.ok) return r.session;
+    if (r.reason === 'unauthorized') {
+      account.expired();
+      startView = 'login';
+    } else {
+      startView = 'characters';
+      charactersNote = r.message;
+    }
+    return undefined;
+  };
+  if (resumeId) {
+    const list = await account.api.listCharacters();
+    const c = list.ok ? list.characters.find((x) => x.id === resumeId) : undefined;
+    if (c && c.status === 'alive') session = await openCloud(c);
+    else startView = 'characters';
+  }
   while (!session) {
     const recent = await store.mostRecentAlive();
     const c = await showMenu({
@@ -146,9 +184,7 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
     startView = undefined;
     charactersNote = undefined;
     if (c.kind === 'cloud-play') {
-      // TODO(cloud saves): open + download the DZSV save (`POST …/open`), then boot the game.
-      startView = 'characters';
-      charactersNote = CLOUD_PLAY_NOTE;
+      session = await openCloud(c.character);
     } else if (c.kind === 'cloud-new') {
       dimmed = true;
       scene?.setDimmed(true);
@@ -164,9 +200,17 @@ export async function runMenu(root: HTMLElement): Promise<GameSession> {
         appearance: { portrait: portraitOf(created.look), spec: created.spec },
         worldSettings: { map: newWorldMap(), mode: c.mode },
       });
-      charactersNote = r.ok
-        ? CLOUD_PLAY_NOTE
-        : r.reason === 'error' && r.code === 'alive_character_limit'
+      if (r.ok) {
+        session = await openCloud(r.character, { spec: created.spec, look: created.look });
+        continue;
+      }
+      if (r.reason === 'unauthorized') {
+        account.expired();
+        startView = 'login';
+        continue;
+      }
+      charactersNote =
+        r.reason === 'error' && r.code === 'alive_character_limit'
           ? 'Limit żywych postaci na koncie: usuń postać, aby zacząć nową grę.'
           : 'Nie udało się założyć postaci na koncie. Spróbuj ponownie.';
     } else if (c.kind === 'continue' && recent) session = await sessionOf(store, recent);

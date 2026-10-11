@@ -13,6 +13,7 @@ import type {
   CloudSaveReason,
   LastLocation,
   ListCharactersResponse,
+  OpenSaveResponse,
   PlayerSettingsResponse,
   SaveConflictServer,
 } from '@deadzone/protocol';
@@ -84,8 +85,14 @@ export type ServerSaveInfo = SaveConflictServer;
  * newer state (409 `save_version_conflict`), or the character is gone (410 / 409
  * `character_dead`: died on another device).
  */
+/**
+ * `If-Match` value: the ETag exactly as the server (or the Supabase gateway, which weakens it to
+ * `W/"7"`) sent it, or a bare version number (sent as `"7"`). Never rewritten by the client.
+ */
+export type IfMatch = number | string;
+
 export type SaveResult =
-  | { ok: true; version: number; sizeBytes: number }
+  | { ok: true; version: number; sizeBytes: number; etag?: string | undefined }
   | {
       ok: false;
       reason: 'conflict';
@@ -104,10 +111,22 @@ export interface SaveUpload {
 }
 
 /**
+ * `POST /v1/characters/:id/open`: the current cloud save of a character (version 0 / `url` null =
+ * none yet: new world, the first `PUT` sends `If-Match: "0"`). `url` is a short-lived signed link.
+ */
+export type CloudSaveOpen = Pick<OpenSaveResponse, 'version' | 'url' | 'checksum' | 'sizeBytes'> & {
+  /** `ETag` of the answer, as received (next `If-Match`). */
+  etag?: string | undefined;
+};
+
+/**
  * `GET /v1/me/settings` (and the `PUT` answer): the whole settings object, its version (`ETag`)
  * and time. Version 0 / `settings: null` = never stored (first `PUT` sends `If-Match: "0"`).
  */
-export type RemoteSettings = PlayerSettingsResponse;
+export type RemoteSettings = PlayerSettingsResponse & {
+  /** `ETag` as received (`W/"3"` through the Supabase gateway): the next `If-Match`. */
+  etag?: string | undefined;
+};
 
 /** One rejected field of a 422 `invalid_settings` (`ApiError.issues`). */
 export type SettingsIssue = NonNullable<ApiError['issues']>[number];
@@ -152,10 +171,16 @@ export interface AccountApi {
   /** `POST /v1/characters` (Nowa postać); the first save follows right after the start. */
   createCharacter(c: NewCloudCharacter): Promise<ApiResult<{ character: CloudCharacter }>>;
   deleteCharacter(id: string): Promise<ApiResult<object>>;
-  putSave(id: string, ifMatch: number, save: SaveUpload): Promise<SaveResult>;
+  putSave(id: string, ifMatch: IfMatch, save: SaveUpload): Promise<SaveResult>;
+  /** `POST /v1/characters/:id/open` (Graj on an account character). */
+  openSave(id: string): Promise<ApiResult<{ save: CloudSaveOpen }>>;
+  /** Downloads the DZSV envelope behind `CloudSaveOpen.url` (signed, no bearer). */
+  downloadSave(url: string): Promise<ApiResult<{ bytes: Uint8Array }>>;
+  /** `POST /v1/characters/:id/death` with a `death` snapshot: the character becomes a tombstone. */
+  reportDeath(id: string, save: SaveUpload): Promise<ApiResult<object>>;
 
   getSettings(): Promise<ApiResult<RemoteSettings>>;
-  putSettings(settings: unknown, ifMatch: number): Promise<SettingsPutResult>;
+  putSettings(settings: unknown, ifMatch: IfMatch): Promise<SettingsPutResult>;
 
   /**
    * `GET /v1/me/export` (RODO): account, settings, characters (tombstones too) and per living save

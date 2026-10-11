@@ -13,15 +13,18 @@ import type {
   AuthResult,
   CharacterList,
   CloudCharacter,
+  CloudSaveOpen,
+  IfMatch,
   MailResult,
+  RemoteSettings,
   SaveResult,
   ServerSaveInfo,
   SettingsPutResult,
 } from './account-api.js';
 
 /**
- * Sign-in side of the account (Supabase Auth later, configured by Serwer). Not part of this
- * client: without a provider the HTTP API is not "configured" and the game stays offline.
+ * Sign-in side of the account (Supabase Auth: account/supabase-auth.ts). Without a provider the
+ * HTTP API is not "configured" and the game stays offline.
  */
 export interface AuthProvider {
   session(): Promise<AccountUser | undefined>;
@@ -63,7 +66,9 @@ export function conflictInfo(body: unknown): ServerSaveInfo | null | undefined {
   const s = b.server as Partial<Record<keyof ServerSaveInfo, unknown>> | null;
   if (s === null) return null;
   if (typeof s !== 'object') return undefined;
-  const version = num(s.version);
+  // A number in JSON; an ETag-like string (`W/"15"`, `"15"`) is read too.
+  const version =
+    num(s.version) ?? (typeof s.version === 'string' ? etagVersion(s.version) : undefined);
   const gameDay = num(s.gameDay);
   const updatedAt = typeof s.updatedAt === 'string' ? s.updatedAt : undefined;
   if (version === undefined || gameDay === undefined || updatedAt === undefined) return undefined;
@@ -122,10 +127,16 @@ export function saveResultOf(
   status: number,
   body: unknown,
   retryAfter: string | null = null,
+  etag: string | null = null,
 ): SaveResult {
   const b = body as (ErrorBody & { version?: number; sizeBytes?: number }) | undefined;
   if (status >= 200 && status < 300) {
-    return { ok: true, version: num(b?.version) ?? 0, sizeBytes: num(b?.sizeBytes) ?? 0 };
+    return {
+      ok: true,
+      version: num(b?.version) ?? versionOf(etag),
+      sizeBytes: num(b?.sizeBytes) ?? 0,
+      ...(etag ? { etag } : {}),
+    };
   }
   if (status === 410 || (status === 409 && b?.error === 'character_dead')) {
     return { ok: false, reason: 'gone' };
@@ -137,13 +148,14 @@ export function saveResultOf(
 }
 
 /** `GET`/`PUT /v1/me/settings` body → `PlayerSettingsResponse` (ETag as the fallback version). */
-export function remoteSettingsOf(body: unknown, etag: string | null): PlayerSettingsResponse {
+export function remoteSettingsOf(body: unknown, etag: string | null): RemoteSettings {
   const b = body as Partial<PlayerSettingsResponse> | undefined;
   const s = b?.settings;
   return {
     settings: s !== null && typeof s === 'object' && !Array.isArray(s) ? s : null,
     version: num(b?.version) ?? versionOf(etag),
     updatedAt: typeof b?.updatedAt === 'string' ? b.updatedAt : null,
+    ...(etag?.trim() ? { etag: etag.trim() } : {}),
   };
 }
 
@@ -170,14 +182,38 @@ export function settingsResultOf(
   return failureOf(status, body, retryAfter);
 }
 
-/** `ETag: "7"` / `7` → 7 (0 when absent). */
-export function versionOf(etag: string | null): number {
+/** `POST …/open` body → `CloudSaveOpen` (no usable save → version 0, no URL). */
+export function cloudSaveOf(body: unknown, etag: string | null = null): CloudSaveOpen {
+  const b = body as Partial<Record<keyof CloudSaveOpen, unknown>> | undefined;
+  const version = num(b?.version) ?? versionOf(etag);
+  const url = typeof b?.url === 'string' && b.url ? b.url : null;
+  return {
+    version: Math.max(0, Math.floor(version)),
+    url,
+    checksum: typeof b?.checksum === 'string' ? b.checksum : null,
+    sizeBytes: num(b?.sizeBytes) ?? 0,
+    ...(etag?.trim() ? { etag: etag.trim() } : {}),
+  };
+}
+
+/** `ETag` → version: strong `"7"`, weak `W/"7"` (Supabase gateway) or bare `7`; else undefined. */
+export function etagVersion(etag: string | null | undefined): number | undefined {
   const v =
     etag
       ?.trim()
-      .replace(/^W\//, '')
+      .replace(/^W\//i, '')
       .replace(/^"(.*)"$/, '$1') ?? '';
-  return /^\d{1,9}$/.test(v) ? Number(v) : 0;
+  return /^\d{1,9}$/.test(v) ? Number(v) : undefined;
+}
+
+/** `ETag: "7"` / `W/"7"` / `7` → 7 (0 when absent or unreadable). */
+export function versionOf(etag: string | null): number {
+  return etagVersion(etag) ?? 0;
+}
+
+/** `If-Match` header: a received ETag goes back byte for byte; a version number as `"7"`. */
+export function ifMatchHeader(v: IfMatch): string {
+  return typeof v === 'string' && v.trim() ? v.trim() : `"${typeof v === 'number' ? v : 0}"`;
 }
 
 /** Server summary → card data (`lastLocation` and `usage` from Serwer #157; older servers lack them). */
@@ -192,8 +228,8 @@ function characterOf(c: Record<string, unknown>): CloudCharacter {
 }
 
 /**
- * The real `/v1` API (docs/backend.md §5). Auth comes from an `AuthProvider`; every request
- * carries `Authorization: Bearer`. Not wired to any server yet (no Supabase config in the client).
+ * The real `/v1` API (docs/backend.md §5). Auth comes from an `AuthProvider` (Supabase Auth,
+ * account/supabase-auth.ts); every request carries `Authorization: Bearer`. Opt-in with `?online=1`.
  */
 export function createHttpAccountApi(o: HttpAccountOptions): AccountApi {
   const base = o.baseUrl.replace(/\/+$/, '');
@@ -293,11 +329,41 @@ export function createHttpAccountApi(o: HttpAccountOptions): AccountApi {
         body: s.bytes as unknown as BodyInit,
         headers: {
           'content-type': 'application/octet-stream',
-          'if-match': `"${ifMatch}"`,
+          'if-match': ifMatchHeader(ifMatch),
           'x-dzsv-sha256': s.sha256,
         },
       });
-      return isFailure(r) ? r : saveResultOf(r.status, r.body, r.headers.get('retry-after'));
+      return isFailure(r)
+        ? r
+        : saveResultOf(r.status, r.body, r.headers.get('retry-after'), r.headers.get('etag'));
+    },
+    async openSave(id) {
+      const r = await call('POST', `/v1/characters/${encodeURIComponent(id)}/open`);
+      if (isFailure(r)) return r;
+      return okOr(r, () => ({ save: cloudSaveOf(r.body, r.headers.get('etag')) }));
+    },
+    async downloadSave(url) {
+      // Signed storage URL: no bearer (the signature is the access), same timeout.
+      if (!/^https:\/\//.test(url))
+        return { ok: false, reason: 'error', status: 0, code: 'bad_url' };
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs * 3);
+      try {
+        const res = await doFetch(url, { method: 'GET', signal: ctrl.signal });
+        if (!res.ok) return { ok: false, reason: 'error', status: res.status };
+        return { ok: true, bytes: new Uint8Array(await res.arrayBuffer()) };
+      } catch {
+        return { ok: false, reason: 'network' };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    async reportDeath(id, s) {
+      const r = await call('POST', `/v1/characters/${encodeURIComponent(id)}/death`, {
+        body: s.bytes as unknown as BodyInit,
+        headers: { 'content-type': 'application/octet-stream', 'x-dzsv-sha256': s.sha256 },
+      });
+      return isFailure(r) ? r : okOr(r, () => ({}));
     },
     async getSettings() {
       const r = await call('GET', '/v1/me/settings');
@@ -308,7 +374,7 @@ export function createHttpAccountApi(o: HttpAccountOptions): AccountApi {
       const r = await call('PUT', '/v1/me/settings', {
         // The body IS the settings object (Serwer validates it with `validatePlayerSettings`).
         body: JSON.stringify(settings),
-        headers: { 'content-type': 'application/json', 'if-match': `"${ifMatch}"` },
+        headers: { 'content-type': 'application/json', 'if-match': ifMatchHeader(ifMatch) },
       });
       if (isFailure(r)) return r;
       return settingsResultOf(

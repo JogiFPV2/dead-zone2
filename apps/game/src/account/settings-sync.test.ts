@@ -131,3 +131,39 @@ describe('AccountSession', () => {
     expect(new AccountSession({ api: createOfflineAccountApi() }).needsLogin).toBe(false);
   });
 });
+
+describe('settings sync with a weak ETag (Supabase gateway)', () => {
+  it('sends the received W/"n" back unchanged as If-Match', async () => {
+    const { store } = player();
+    const sent: unknown[] = [];
+    let n = 3;
+    const api = {
+      getSettings: () =>
+        Promise.resolve({
+          ok: true as const,
+          settings: null,
+          version: 0,
+          updatedAt: null,
+          etag: 'W/"0"',
+        }),
+      putSettings: (_s: unknown, ifMatch: number | string) => {
+        sent.push(ifMatch);
+        n += 1;
+        return Promise.resolve({
+          ok: true as const,
+          settings: {},
+          version: n,
+          updatedAt: 'T',
+          etag: `W/"${n}"`,
+        });
+      },
+    };
+    const sync = await startSettingsSync({ api, store, debounceMs: 0 });
+    store.save({ ...store.load(), audio: { ...store.load().audio, music: 0.3 } });
+    await tick();
+    await sync.flush();
+    expect(sent).toEqual(['W/"0"', 'W/"4"']);
+    expect(sync.version).toBe(5);
+    sync.stop();
+  });
+});

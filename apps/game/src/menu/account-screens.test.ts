@@ -11,7 +11,7 @@ import {
 } from './account-panel.js';
 import { createCloudCharactersScreen } from './cloud-characters-screen.js';
 import { createLoginScreen } from './login-screen.js';
-import { compareRows, showSaveConflict, toastMeta } from './session-conflict.js';
+import { compareRows, overwriteLoss, showSaveConflict, toastMeta } from './session-conflict.js';
 import { settingsTabs, stepTab } from './settings-tabs.js';
 import { shouldShowMenu } from './boot-menu.js';
 
@@ -256,6 +256,103 @@ describe('Konflikt sesji', () => {
     d.onKey(key('Enter'));
     expect(on.menu).toHaveBeenCalled();
     expect(on.load).not.toHaveBeenCalled();
+  });
+
+  it('same in game and pause: WCZYTAJ NOWSZY STAN primary on the right, WYJDŹ DO MENU left', () => {
+    for (const trigger of ['autosave', 'exit'] as const) {
+      const el = host();
+      const on = { load: vi.fn(), menu: vi.fn() };
+      const d = showSaveConflict({
+        host: el,
+        kind: 'conflict',
+        name: 'Marta Nowak',
+        female: true,
+        trigger,
+        local,
+        server: { version: 15, gameDay: 14, minuteOfDay: 664, updatedAt: local.savedAt.toString() },
+        now,
+        onLoadNewer: on.load,
+        onMenu: on.menu,
+      });
+      const acts = [...el.querySelectorAll<HTMLElement>('.dza-conflict-foot .dza-btn')].map(
+        (b) => b.dataset.act,
+      );
+      expect(acts).toEqual(['menu', 'load']);
+      expect(el.querySelector('[data-act="load"]')?.classList.contains('dza-btn--pri')).toBe(true);
+      expect(el.querySelector('[data-act="menu"]')?.classList.contains('dza-btn--pri')).toBe(false);
+      d.onKey(key('Enter'));
+      expect(on.load).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('NADPISZ SERWER: red row, second step with the server day and a tick box', () => {
+    const el = host();
+    const on = { load: vi.fn(), menu: vi.fn(), overwrite: vi.fn() };
+    const d = showSaveConflict({
+      host: el,
+      kind: 'conflict',
+      name: 'Marta Nowak',
+      female: true,
+      trigger: 'autosave',
+      local,
+      server: { version: 15, gameDay: 14, minuteOfDay: 664, updatedAt: '2026-10-11T09:04:00Z' },
+      now,
+      onLoadNewer: on.load,
+      onMenu: on.menu,
+      onOverwrite: on.overwrite,
+    });
+    const ow = el.querySelector<HTMLElement>('[data-act="overwrite"]')!;
+    expect(ow.classList.contains('dza-btn--danger')).toBe(true);
+    expect(ow.classList.contains('dza-btn--overwrite')).toBe(true);
+    ow.click();
+    expect(on.overwrite).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('NADPISAĆ SERWER?');
+    expect(el.textContent).toContain('Stracisz postęp z dnia 14 (11:04) na serwerze.');
+    const yes = el.querySelector<HTMLButtonElement>('[data-act="confirm-overwrite"]')!;
+    expect(yes.disabled).toBe(true);
+    // Enter before ticking does nothing; Esc goes back to the first step.
+    d.onKey(key('Enter'));
+    expect(on.overwrite).not.toHaveBeenCalled();
+    d.onKey(key('Escape'));
+    expect(on.menu).not.toHaveBeenCalled();
+    expect(el.textContent).toContain('WCZYTAJ NOWSZY STAN');
+    el.querySelector<HTMLElement>('[data-act="overwrite"]')!.click();
+    const box = el.querySelector<HTMLInputElement>('[data-confirm-check]')!;
+    box.checked = true;
+    box.dispatchEvent(new Event('change'));
+    expect(el.querySelector<HTMLButtonElement>('[data-act="confirm-overwrite"]')!.disabled).toBe(
+      false,
+    );
+    el.querySelector<HTMLElement>('[data-act="confirm-overwrite"]')!.click();
+    expect(on.overwrite).toHaveBeenCalledOnce();
+    expect(el.querySelector('.dza-conflict-layer')).toBeNull();
+  });
+
+  it('NADPISZ SERWER: day only without minuteOfDay; not offered for server: null, unknown or 410', () => {
+    expect(overwriteLoss({ version: 2, gameDay: 9, minuteOfDay: null, updatedAt: 'T' })).toBe(
+      'Stracisz postęp z dnia 9 na serwerze.',
+    );
+    for (const [kind, server] of [
+      ['conflict', null],
+      ['conflict', undefined],
+      ['gone', undefined],
+    ] as const) {
+      const el = host();
+      showSaveConflict({
+        host: el,
+        kind,
+        name: 'Marta Nowak',
+        female: true,
+        trigger: 'autosave',
+        local,
+        server,
+        now,
+        onLoadNewer: vi.fn(),
+        onMenu: vi.fn(),
+        onOverwrite: vi.fn(),
+      });
+      expect(el.querySelector('[data-act="overwrite"]')).toBeNull();
+    }
   });
 
   it('410: TA POSTAĆ NIE ŻYJE, one button to the menu', () => {

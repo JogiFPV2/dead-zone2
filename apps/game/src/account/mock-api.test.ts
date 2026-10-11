@@ -16,6 +16,10 @@ describe('account API selection', () => {
     expect(resolveAccountApi('?online=mock').mode).toBe('mock');
     // A server URL without a sign-in provider is not "configured".
     expect(resolveAccountApi('', { apiUrl: 'https://x' }).mode).toBe('offline');
+    // A configured server is opt-in: only `?online=1` talks to it.
+    const auth = { accessToken: () => Promise.resolve('t') } as never;
+    expect(resolveAccountApi('', { apiUrl: 'https://x', auth }).mode).toBe('offline');
+    expect(resolveAccountApi('?online=1', { apiUrl: 'https://x', auth }).mode).toBe('http');
     expect((await createOfflineAccountApi().signInWithGoogle()).ok).toBe(false);
   });
 });

@@ -2,8 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   accountExportOf,
   attachmentName,
+  cloudSaveOf,
   conflictInfo,
   createHttpAccountApi,
+  etagVersion,
+  ifMatchHeader,
   retryAfterSec,
   saveResultOf,
   settingsResultOf,
@@ -100,10 +103,11 @@ describe('save answers (409 / 410)', () => {
       version: 7,
       settings: null,
       updatedAt: null,
+      etag: '"7"',
     });
     expect(
       settingsResultOf(200, { settings: { version: 1 }, version: 3, updatedAt: 'T' }, '"3"'),
-    ).toEqual({ ok: true, version: 3, settings: { version: 1 }, updatedAt: 'T' });
+    ).toEqual({ ok: true, version: 3, settings: { version: 1 }, updatedAt: 'T', etag: '"3"' });
     expect(versionOf('W/"12"')).toBe(12);
     expect(versionOf(null)).toBe(0);
   });
@@ -213,5 +217,106 @@ describe('createHttpAccountApi', () => {
     expect((init?.headers as Record<string, string>)['if-match']).toBe('"1"');
     // The body is the settings object itself (Serwer validates `req.body`).
     expect(JSON.parse(init?.body as string)).toEqual({ a: 1 });
+  });
+
+  it('POST …/open, signed download without bearer, POST …/death with the checksum', async () => {
+    const fetch = vi.fn((url: string, _init: RequestInit) =>
+      Promise.resolve(
+        url.endsWith('/open')
+          ? json(200, {
+              characterId: 'c',
+              version: 4,
+              url: 'https://s/x',
+              checksum: 'ab',
+              sizeBytes: 9,
+              expiresInSeconds: 600,
+            })
+          : url.startsWith('https://s/')
+            ? new Response(new Uint8Array([1, 2, 3]), { status: 200 })
+            : json(200, { id: 'c', status: 'dead' }),
+      ),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test/', auth: auth(), fetch });
+    expect(await api.openSave('c')).toEqual({
+      ok: true,
+      save: { version: 4, url: 'https://s/x', checksum: 'ab', sizeBytes: 9 },
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe('https://api.test/v1/characters/c/open');
+    expect(fetch.mock.calls[0]?.[1].method).toBe('POST');
+    const dl = await api.downloadSave('https://s/x');
+    expect(dl.ok && [...dl.bytes]).toEqual([1, 2, 3]);
+    expect(fetch.mock.calls[1]?.[1].headers).toBeUndefined();
+    expect((await api.downloadSave('http://insecure/x')).ok).toBe(false);
+    const up = { bytes: new Uint8Array([9]), sha256: 'f'.repeat(64), reason: 'death' as const };
+    expect(await api.reportDeath('c', up)).toEqual({ ok: true });
+    const init = fetch.mock.calls[2]?.[1];
+    expect(fetch.mock.calls[2]?.[0]).toBe('https://api.test/v1/characters/c/death');
+    expect((init?.headers as Record<string, string>)['x-dzsv-sha256']).toBe('f'.repeat(64));
+    expect(cloudSaveOf({ version: 0, url: null })).toEqual({
+      version: 0,
+      url: null,
+      checksum: null,
+      sizeBytes: 0,
+    });
+  });
+
+  it('weak ETag from the Supabase gateway goes back in If-Match exactly as received', async () => {
+    const fetch = vi.fn((_url: string, init: RequestInit) =>
+      Promise.resolve(
+        init.method === 'GET'
+          ? json(200, { settings: { a: 1 }, version: 3, updatedAt: 'T' }, { etag: 'W/"3"' })
+          : json(200, { settings: { a: 2 }, version: 4, updatedAt: 'T' }, { etag: 'W/"4"' }),
+      ),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(), fetch });
+    const got = await api.getSettings();
+    expect(got).toMatchObject({ ok: true, version: 3, etag: 'W/"3"' });
+    if (!got.ok) throw new Error('get');
+    const put = await api.putSettings({ a: 2 }, got.etag!);
+    expect(put).toMatchObject({ ok: true, version: 4, etag: 'W/"4"' });
+    expect((fetch.mock.calls[1]?.[1].headers as Record<string, string>)['if-match']).toBe('W/"3"');
+    // A bare version is sent strong and quoted.
+    await api.putSettings({ a: 2 }, 4);
+    expect((fetch.mock.calls[2]?.[1].headers as Record<string, string>)['if-match']).toBe('"4"');
+  });
+
+  it('save: ETag of the answer kept, If-Match unchanged; versions parse from both formats', async () => {
+    const fetch = vi.fn((_url: string, _init: RequestInit) =>
+      Promise.resolve(json(200, { sizeBytes: 3 }, { etag: 'W/"8"' })),
+    );
+    const api = createHttpAccountApi({ baseUrl: 'https://api.test', auth: auth(), fetch });
+    const up = { bytes: new Uint8Array([1]), sha256: 'a'.repeat(64), reason: 'autosave' as const };
+    expect(await api.putSave('c', 'W/"7"', up)).toEqual({
+      ok: true,
+      version: 8,
+      sizeBytes: 3,
+      etag: 'W/"8"',
+    });
+    expect((fetch.mock.calls[0]?.[1].headers as Record<string, string>)['if-match']).toBe('W/"7"');
+    expect(ifMatchHeader(7)).toBe('"7"');
+    expect(ifMatchHeader('W/"7"')).toBe('W/"7"');
+    expect(ifMatchHeader('"7"')).toBe('"7"');
+    expect(versionOf('W/"15"')).toBe(15);
+    expect(versionOf('w/"15"')).toBe(15);
+    expect(versionOf('"15"')).toBe(15);
+    expect(versionOf('15')).toBe(15);
+    expect(versionOf('W/"x"')).toBe(0);
+    expect(etagVersion(null)).toBeUndefined();
+    // 409 `server.version` as a number or an ETag-like string.
+    expect(
+      conflictInfo({
+        server: { version: 'W/"15"', gameDay: 14, minuteOfDay: 664, updatedAt: 'T' },
+      }),
+    ).toMatchObject({ version: 15 });
+    expect(
+      conflictInfo({ server: { version: '"15"', gameDay: 14, minuteOfDay: 664, updatedAt: 'T' } }),
+    ).toMatchObject({ version: 15 });
+    expect(cloudSaveOf({ url: null }, 'W/"5"')).toEqual({
+      version: 5,
+      url: null,
+      checksum: null,
+      sizeBytes: 0,
+      etag: 'W/"5"',
+    });
   });
 });

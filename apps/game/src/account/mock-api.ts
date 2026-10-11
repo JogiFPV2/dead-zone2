@@ -11,6 +11,7 @@ import type {
   AuthResult,
   CharacterList,
   CloudCharacter,
+  CloudSaveOpen,
   MailResult,
   RemoteSettings,
   SaveResult,
@@ -18,6 +19,7 @@ import type {
   SettingsPutResult,
 } from './account-api.js';
 import { validatePlayerSettings } from '@deadzone/ui/settings';
+import { versionOf } from './http-api.js';
 
 const MB = 1024 * 1024;
 
@@ -143,6 +145,10 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
   let saveMode: MockSaveMode = o.save ?? 'ok';
   let failList = o.failList ?? false;
   let settings: RemoteSettings = { version: 0, settings: null, updatedAt: null };
+  /** Version each character's last 409 named (`If-Match` of NADPISZ SERWER). */
+  const announced = new Map<string, number>();
+  /** Uploaded envelopes (Graj after a save in the same page). */
+  const blobs = new Map<string, Uint8Array>();
   /** Times of the exports of the last hour (`MAX_EXPORTS_PER_HOUR`). */
   let exports: number[] = [];
 
@@ -266,12 +272,25 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
         return { ok: true };
       });
     },
-    putSave(id, ifMatch, s) {
+    putSave(id, tag, s) {
+      const ifMatch = typeof tag === 'number' ? tag : versionOf(tag);
       return authed<SaveResult>(() => {
         const c = chars.find((x) => x.id === id);
         if (!c || c.status === 'dead' || saveMode === 'gone') return { ok: false, reason: 'gone' };
         const current = c.save?.version ?? 0;
-        if (saveMode.startsWith('conflict') || current !== ifMatch) {
+        // NADPISZ SERWER: a retry with the version the 409 named wins (Serwer: If-Match = current).
+        const overwrite = saveMode.startsWith('conflict') && announced.get(id) === ifMatch;
+        if (overwrite) {
+          saveMode = 'ok';
+          if (c.save) c.save = { ...c.save, version: ifMatch };
+          else if (ifMatch > 0)
+            c.save = {
+              version: ifMatch,
+              sizeBytes: 0,
+              gameDay: 14,
+              updatedAt: at(now(), 0, 11, 4),
+            };
+        } else if (saveMode.startsWith('conflict') || current !== ifMatch) {
           // `SaveConflictError.server` of Serwer #167.
           const server: ServerSaveInfo | null =
             saveMode === 'conflict-bare'
@@ -282,9 +301,11 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
                   minuteOfDay: saveMode === 'conflict-nominute' ? null : 11 * 60 + 4,
                   updatedAt: at(now(), 0, 11, 4),
                 };
+          announced.set(id, server?.version ?? 0);
           return { ok: false, reason: 'conflict', server };
         }
-        const version = current + 1;
+        const version = (c.save?.version ?? 0) + 1;
+        blobs.set(id, s.bytes.slice());
         c.save = {
           version,
           sizeBytes: s.bytes.length,
@@ -294,8 +315,46 @@ export function createMockAccountApi(o: MockAccountOptions = {}): AccountApi & {
         return { ok: true, version, sizeBytes: s.bytes.length };
       });
     },
+    openSave(id) {
+      return authed<ApiResult<{ save: CloudSaveOpen }>>(() => {
+        const c = chars.find((x) => x.id === id);
+        if (!c) return { ok: false, reason: 'error', status: 404, code: 'character_not_found' };
+        if (c.status === 'dead')
+          return { ok: false, reason: 'error', status: 410, code: 'character_dead' };
+        const bytes = blobs.get(id);
+        // Demo characters have a save version but no bytes: they start a fresh world.
+        return {
+          ok: true,
+          save: {
+            version: c.save?.version ?? 0,
+            url: bytes ? `mock://saves/${id}` : null,
+            checksum: null,
+            sizeBytes: bytes?.byteLength ?? 0,
+          },
+        };
+      });
+    },
+    downloadSave(url) {
+      const bytes = blobs.get(url.replace(/^mock:\/\/saves\//, ''));
+      return wait<ApiResult<{ bytes: Uint8Array }>>(
+        bytes ? { ok: true, bytes: bytes.slice() } : { ok: false, reason: 'error', status: 404 },
+      );
+    },
+    reportDeath(id) {
+      return authed<ApiResult<object>>(() => {
+        const c = chars.find((x) => x.id === id);
+        if (!c) return { ok: false, reason: 'error', status: 404, code: 'character_not_found' };
+        if (c.save) usedBytes = Math.max(0, usedBytes - c.save.sizeBytes);
+        blobs.delete(id);
+        c.status = 'dead';
+        c.diedAt = new Date(now()).toISOString();
+        c.save = null;
+        return { ok: true };
+      });
+    },
     getSettings: () => authed<ApiResult<RemoteSettings>>(() => ({ ok: true, ...settings })),
-    putSettings(value, ifMatch) {
+    putSettings(value, tag) {
+      const ifMatch = typeof tag === 'number' ? tag : versionOf(tag);
       return authed<SettingsPutResult>(() => {
         // Same rules as Serwer #164: 412 stale If-Match, 413 / 422 from `validatePlayerSettings`.
         if (ifMatch !== settings.version) return { ok: false, reason: 'conflict' };

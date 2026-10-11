@@ -3,7 +3,7 @@ import type {
   PlayerSettings,
   PlayerSettingsStore,
 } from '../settings/player-settings-store.js';
-import type { AccountApi } from './account-api.js';
+import type { AccountApi, IfMatch } from './account-api.js';
 
 export interface SettingsSyncOptions {
   api: Pick<AccountApi, 'getSettings' | 'putSettings'>;
@@ -31,6 +31,8 @@ export interface SettingsSync {
 export async function startSettingsSync(o: SettingsSyncOptions): Promise<SettingsSync> {
   const debounceMs = o.debounceMs ?? 1500;
   let version = 0;
+  /** `If-Match` of the next PUT: the ETag exactly as received (`W/"3"`), else the version. */
+  let tag: IfMatch = 0;
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let inflight: Promise<void> = Promise.resolve();
@@ -46,6 +48,7 @@ export async function startSettingsSync(o: SettingsSyncOptions): Promise<Setting
       return false;
     }
     version = r.version;
+    tag = r.etag ?? r.version;
     if (r.version > 0 && r.settings) o.store.applyRemote(r.settings);
     state('synced');
     return true;
@@ -54,10 +57,11 @@ export async function startSettingsSync(o: SettingsSyncOptions): Promise<Setting
   async function push(s: PlayerSettings): Promise<void> {
     if (stopped) return;
     state('syncing');
-    const r = await o.api.putSettings(s, version);
+    const r = await o.api.putSettings(s, tag);
     if (stopped) return;
     if (r.ok) {
       version = r.version;
+      tag = r.etag ?? r.version;
       state('synced');
     } else if (r.reason === 'conflict') {
       await pull();

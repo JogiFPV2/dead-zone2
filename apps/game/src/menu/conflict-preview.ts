@@ -44,6 +44,8 @@ export function previewSaveConflict(root: HTMLElement, kind: ConflictPreview): P
             },
       onLoadNewer: finish,
       onMenu: finish,
+      // In game NADPISZ SERWER re-sends the refused save (account/cloud-save.ts).
+      ...(kind === 'gone' ? {} : { onOverwrite: finish }),
     });
     function onKey(e: KeyboardEvent): void {
       if (dialog.onKey(e)) {

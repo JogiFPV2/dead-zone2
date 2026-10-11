@@ -43,7 +43,8 @@ import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
 import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
 import { SnapshotEntityKind } from '@deadzone/protocol';
-import { TICK_MS } from '@deadzone/sim';
+import { SAVE_VERSION, TICK_MS } from '@deadzone/sim';
+import type { CloudPlay } from './account/cloud-play.js';
 import { MockSimClient } from './sim/mock-sim-client.js';
 import { SimStreamSync } from './world/streaming/sim-sync.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
@@ -541,7 +542,51 @@ simWorker?.onView((view) => bigMapSource.applyView(view.worldMap));
 simWorker?.onEvents((events) => bigMapSource.applyEvents(events));
 // The character's single save slot: exit, daily autosave and after-sleep saves all go there.
 let saver: CharacterSaver | undefined;
-if (session && simWorker) {
+/** Account character (`?online=1` / mock): saves go to the cloud slot (account/cloud-play.ts). */
+let cloudPlay: CloudPlay | undefined;
+if (session?.cloud && simWorker) {
+  const { CloudPlay, menuUrlOf, CLOUD_RETURN_KEY } = await import('./account/cloud-play.js');
+  cloudPlay = new CloudPlay({
+    session: { ...session, cloud: session.cloud },
+    formatVersion: SAVE_VERSION,
+    settings: playerSettings,
+    host: {
+      root: container,
+      setPaused: (paused) => {
+        sim.setPaused(paused);
+        input.setSuspended(paused);
+      },
+      goToMenu: (back) => {
+        try {
+          window.sessionStorage.setItem(CLOUD_RETURN_KEY, JSON.stringify(back));
+        } catch {
+          // Storage disabled: plain menu.
+        }
+        window.location.assign(menuUrlOf(window.location.pathname, window.location.search));
+      },
+    },
+  });
+  const cloud = cloudPlay;
+  // Review (mock account only): `&autosave=N` makes one save N s after the start, so the
+  // conflict window of `&save=conflict` can be seen in game without waiting for 06:00.
+  const reviewSaveSec = Number(new URLSearchParams(window.location.search).get('autosave'));
+  if (session.cloud.api.mode === 'mock' && reviewSaveSec > 0) {
+    const w = simWorker;
+    setTimeout(() => void w.save('manual').catch(() => undefined), reviewSaveSec * 1000);
+  }
+  simWorker.onSaved((save) => {
+    if (save.reason === 'exit') return;
+    void cloud
+      .autosave({
+        tick: save.tick,
+        day: save.day,
+        minuteOfDay: lightMinute,
+        reason: save.reason,
+        data: save.buf,
+      })
+      .catch((e: unknown) => console.error('Zapis postaci w chmurze nie powiódł się', e));
+  });
+} else if (session && simWorker) {
   const { characterStore } = await import('./characters/open-store.js');
   const s = session.save;
   saver = new CharacterSaver(
@@ -922,8 +967,23 @@ const pause = new PauseController({
         location: locationName(),
       };
     },
-    lastSave: () => saver?.lastSave,
+    lastSave: () => cloudPlay?.lastSave ?? saver?.lastSave,
     async saveAndExit() {
+      if (simWorker && cloudPlay) {
+        const save = await simWorker.save('exit');
+        try {
+          await cloudPlay.saveAndExit({
+            tick: save.tick,
+            day: save.day,
+            minuteOfDay: lightMinute,
+            reason: 'exit',
+            data: save.buf,
+          });
+        } catch (e) {
+          throw new SaveRefusedError(e instanceof Error ? e.message : String(e));
+        }
+        return;
+      }
       // Permadeath: the character's single slot is overwritten, then back to the main menu.
       if (simWorker && saver) {
         const save = await simWorker.save('exit');
@@ -1024,7 +1084,7 @@ gameState.subscribe((next) => {
   if (!newCharacter && next.characterProfile) dressFromProfile();
 });
 // A character migrated from the old single save gets its name and portrait from the save.
-if (session && !session.character.appearance.look) {
+if (session && !session.cloud && !session.character.appearance.look) {
   const id = session.character.id;
   let adopted = false;
   gameState.subscribe((next) => {
@@ -1057,6 +1117,18 @@ gameState.subscribe((next) => {
   showDeathScreen(container, next.death, boot.map === 'test' ? 'test' : boot.map);
   // Permadeath: the character becomes a tombstone and its save is deleted.
   const d = next.death;
+  if (cloudPlay && simWorker) {
+    const cloud = cloudPlay;
+    void simWorker
+      .save('manual')
+      .then((save) =>
+        cloud.die({ tick: save.tick, day: save.day, reason: 'death', data: save.buf }),
+      )
+      .then((ok) => {
+        if (!ok) console.warn('Śmierć nie zapisana na koncie');
+      })
+      .catch((e: unknown) => console.error('Zapis śmierci na koncie nie powiódł się', e));
+  }
   void saver
     ?.die(d.cause, d.daysSurvived ?? Math.max(0, d.day - 1))
     .then((r) => {
