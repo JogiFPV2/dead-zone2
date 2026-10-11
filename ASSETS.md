@@ -96,6 +96,20 @@ sekcje „batch 3” i „partia 5”.
 | car-tire                      | `wheel-default.glb`, Car Kit (kenney.nl/assets/car-kit)                | Kenney   | CC0-1.0  |
 | car-window                    | `debris-door-window.glb`, Car Kit (kenney.nl/assets/car-kit)           | Kenney   | CC0-1.0  |
 
+### Ikony, partia 6 (gotowe PNG od Designera, 11.10.2026)
+
+92 ikony 128 px z tego samego rigu, lista w `tools/assets/icons/prerendered.json`. Zamykają luki z audytu
+ikon (`/workspace/deadzone-icons/missing-audit.md`): książki i czasopisma, kasety VHS, torby i plecaki, ubrania,
+broń biała, magazynki, latarki, meble i sprzęty. Lista renderu: `/workspace/deadzone-icons/render/items-batch6.json`,
+modele własne z `generate-batch6.html` (three.js, eksport do `/workspace/assets-src/custom/batch6/`), poza repo.
+
+| Ikony                                                                                                                                                                        | Źródło                                                              | Autor    | Licencja |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------- | -------- |
+| tv (`televisionModern`), bed (`bedSingle`), sofa (`loungeSofa`), bench                                                                                                       | Furniture Kit (kenney.nl/assets/furniture-kit)                      | Kenney   | CC0-1.0  |
+| axe (`tool-axe`), shovel (`tool-shovel`)                                                                                                                                     | Survival Kit (kenney.nl/assets/survival-kit)                        | Kenney   | CC0-1.0  |
+| frying-pan, rolling-pin (`rollingPin`)                                                                                                                                       | Food Kit (kenney.nl/assets/food-kit)                                | Kenney   | CC0-1.0  |
+| pozostałe 84 (książki, czasopisma, VHS, torby, plecaki, hoodie, jeans, broń biała, magazynki, latarki, lampa sufitowa, generator, akumulator, bak, dystrybutor, zapalniczka) | modele własne Deadzone (Designer, `generate-batch6.html`, three.js) | Deadzone | CC0-1.0  |
+
 ## Dźwięki (`apps/game/public/audio/`)
 
 Każdy plik jest w dwóch formatach: `.ogg` (Vorbis) i `.mp3` (fallback dla Safari). Przekodowane ffmpeg
