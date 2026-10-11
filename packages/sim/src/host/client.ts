@@ -2,6 +2,7 @@ import type {
   CharacterSpec,
   SaveReason,
   BodyPart,
+  WoundTreatment,
   Command,
   ContainerId,
   EquipSlot,
@@ -91,6 +92,8 @@ export interface SimWorkerClient {
   watchTv(vhs?: ItemId): void;
   /** Timed action with a bandage from the inventory (`itemId` = content id filter). */
   bandage(part: BodyPart, itemId?: string): void;
+  /** Disinfect / stitch the wounds of `part` (protocol 27); `item` = disinfectant or thread. */
+  treatWound(part: BodyPart, treatment: WoundTreatment, item?: ItemId): void;
   pickUp(item: ItemId, count?: number): void;
   drop(item: ItemId, count?: number): void;
   moveItem(item: ItemId, to: ContainerId, count?: number): void;
@@ -355,6 +358,8 @@ export function createSimWorkerClient(
         kind: 'cmd',
         cmd: { ...nextHeader(), type: 'bandage', part, ...(itemId ? { itemId } : {}) },
       }),
+    treatWound: (part, treatment, item) =>
+      cmd({ type: 'treatWound', part, treatment, ...(item !== undefined ? { item } : {}) }),
     pickUp: (item, count) => cmd({ type: 'pickUp', item, ...(count ? { count } : {}) }),
     drop: (item, count) => cmd({ type: 'drop', item, ...(count ? { count } : {}) }),
     moveItem: (item, to, count) => cmd({ type: 'moveItem', item, to, ...(count ? { count } : {}) }),

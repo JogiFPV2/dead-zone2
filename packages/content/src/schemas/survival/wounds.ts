@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { frac, minutes, num, stat } from './num.js';
+import { DisinfectSettingsSchema, StitchSettingsSchema } from './wound-care.js';
 
 /** Rodzaje ran z dokumentu architektury Symulacji (złamania w późniejszym etapie). */
 export const WOUND_TYPES = ['scratch', 'laceration', 'bite', 'deep'] as const;
@@ -60,6 +61,10 @@ export const WoundSettingsSchema = z
         healthLossPerMin: num(0.01, 10),
       })
       .prefault({}),
+    /** Odkażanie (woda utleniona, jałowy opatrunek, wódka). */
+    disinfect: DisinfectSettingsSchema,
+    /** Szycie igłą i nicią. */
+    stitch: StitchSettingsSchema,
   })
   .prefault({});
 

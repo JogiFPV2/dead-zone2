@@ -91,8 +91,12 @@ export interface WoundView {
   healed: number;
   bandaged: boolean;
   bandageDirty: boolean;
-  /** Dirt infection (curable later with disinfectant; the zombie virus is never shown). */
+  /** Dirt infection (cured by `treatWound` `disinfect`; the zombie virus is never shown). */
   infected: boolean;
+  /** Stitched (protocol 27): bleeding × `wounds.stitch.bleedingMul`, heals faster. */
+  stitched?: boolean;
+  /** Disinfected recently (protocol 27): no new dirt infection for now. */
+  disinfected?: boolean;
 }
 
 export interface PlayerView {

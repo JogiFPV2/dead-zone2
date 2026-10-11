@@ -14,6 +14,7 @@ import {
   OPENING_ACTION_COMMANDS,
   U32_MAX,
   WOUND_KINDS,
+  WOUND_TREATMENTS,
   type Command,
   type CommandParseResult,
 } from './commands.js';
@@ -76,6 +77,15 @@ export const bandageCommandSchema = z.strictObject({
 
 const u32 = z.number().int().min(0).max(U32_MAX);
 const itemId = u32;
+
+/** `treatWound` (protocol 27). */
+export const treatWoundCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('treatWound'),
+  part: bodyPart,
+  treatment: z.enum(WOUND_TREATMENTS),
+  item: itemId.optional(),
+});
 const containerId = u32;
 const count = z.number().int().min(1).max(100_000).optional();
 const tileCoord = z.number().int().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
@@ -515,6 +525,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   setTimeScaleCommandSchema,
   watchTvCommandSchema,
   bandageCommandSchema,
+  treatWoundCommandSchema,
   pickUpCommandSchema,
   dropCommandSchema,
   moveItemCommandSchema,

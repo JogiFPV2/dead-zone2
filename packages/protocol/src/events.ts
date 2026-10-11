@@ -1,5 +1,13 @@
 import type { VehicleImpactTarget, VehiclePart } from './vehicles.js';
-import type { BodyPart, Command, ContainerId, ItemId, PlayerId, WoundKind } from './commands.js';
+import type {
+  BodyPart,
+  Command,
+  ContainerId,
+  ItemId,
+  PlayerId,
+  WoundKind,
+  WoundTreatment,
+} from './commands.js';
 import type { EdgeSide, OpeningState } from './map.js';
 import type {
   CharacterProfileView,
@@ -138,6 +146,10 @@ export type ActionKind =
   | 'pickLock'
   /** Lock / unlock a door with its building key (`useFurniture` `unlock-key` / `lock-key`). */
   | 'useKey'
+  /** Disinfect the wounds of a body part (`treatWound`, protocol 27). */
+  | 'disinfect'
+  /** Stitch a wound with needle and thread (`treatWound`, protocol 27). */
+  | 'stitch'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -742,6 +754,20 @@ export type SimEvent =
       item: string;
       success: boolean;
       broke: boolean;
+    }
+  /**
+   * Wound treatment finished (protocol 27, `treatWound`): `disinfect` always succeeds (the
+   * wounds of `part` are clean, `infected` false); `stitch` may fail (pain, thread used up).
+   */
+  | {
+      type: 'woundTreated';
+      tick: number;
+      playerId: PlayerId;
+      part: BodyPart;
+      treatment: WoundTreatment;
+      /** Item def used (disinfectant / thread). */
+      item: string;
+      success: boolean;
     }
   /** Someone knocked on a door (protocol 26, `useFurniture` `knock`): a small noise. */
   | {

@@ -146,6 +146,24 @@ export interface BandageCommand extends CommandHeader {
   itemId?: string | undefined;
 }
 
+/** Wound treatments of `treatWound` (protocol 27, docs 9.48). */
+export const WOUND_TREATMENTS = ['disinfect', 'stitch'] as const;
+export type WoundTreatment = (typeof WOUND_TREATMENTS)[number];
+
+/**
+ * Treat the wounds of `part` (protocol 27): `disinfect` with `item` (a medical item with the
+ * `disinfect` effect, e.g. hydrogen peroxide, or a liquid tagged
+ * `wounds.disinfect.liquidTag`, e.g. vodka); omitted = the first carried one. `stitch` needs a
+ * carried needle (`wounds.stitch.needleTag`) and thread (`threadTag`, one is used up); `item` =
+ * the thread to use. Timed actions `disinfect` / `stitch`, event `woundTreated`.
+ */
+export interface TreatWoundCommand extends CommandHeader {
+  type: 'treatWound';
+  part: BodyPart;
+  treatment: WoundTreatment;
+  item?: number | undefined;
+}
+
 /** Item instance id (u32, stable, from views). */
 export type ItemId = number;
 /** Container id (u32): inventory, bag, world storage or ground pile (from views). */
@@ -857,6 +875,7 @@ export type Command =
   | SetTimeScaleCommand
   | WatchTvCommand
   | BandageCommand
+  | TreatWoundCommand
   | PickUpCommand
   | DropCommand
   | MoveItemCommand

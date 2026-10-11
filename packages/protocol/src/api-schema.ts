@@ -122,3 +122,13 @@ export const saveItemThawSchema = z.object({
 export const saveItemBuildingSchema = z.object({
   buildingId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
 });
+
+/**
+ * Wound care fields of a saved wound (protocol 27, survival section `wounds`): `stitched`, and
+ * `cleanUntilAge` = wound age (minutes) until which it cannot get a dirt infection after
+ * disinfecting. Written only when set; older saves have neither.
+ */
+export const saveWoundCareSchema = z.object({
+  stitched: z.boolean().optional(),
+  cleanUntilAge: z.number().int().min(0).max(0xffff_ffff).optional(),
+});

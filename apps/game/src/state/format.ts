@@ -21,6 +21,8 @@ export function describeEvent(e: SimEvent): string {
       return `${e.utility} ${e.on ? 'on' : 'off'}`;
     case 'lockPicked':
       return e.success ? 'lock picked' : e.broke ? 'lockpick broke' : 'lockpick failed';
+    case 'woundTreated':
+      return `${e.treatment} ${e.part}${e.success ? '' : ' failed'}`;
     case 'knocked':
       return 'knock knock';
     case 'fellAsleep':

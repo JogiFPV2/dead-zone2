@@ -9,6 +9,7 @@ import { registerLeisureActions } from '../leisure/leisure.js';
 import { registerVehicleActions } from '../vehicles/actions.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { registerLockActions } from '../furniture/locks.js';
+import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -89,7 +90,7 @@ export function addPieces(
 }
 
 /** One use of an item is gone: `uses − 1`, then the stack shrinks; `emptyInto` replaces it. */
-function consumeUse(w: SimWorld, item: ItemInstance, emptyInto: string | undefined): void {
+export function consumeUse(w: SimWorld, item: ItemInstance, emptyInto: string | undefined): void {
   const st = w.items!;
   const def = defOf(st, item);
   item.uses = Math.max(0, item.uses - 1);
@@ -169,6 +170,7 @@ export function registerItemActions(): void {
   registerLeisureActions();
   registerOpeningActions();
   registerLockActions();
+  registerWoundCareActions();
   registerVehicleActions();
 
   registerAction('search', {
@@ -277,6 +279,10 @@ export function registerItemActions(): void {
       const item = w.items!.items.get(a.item)!;
       itemUsed(w, eid, a, item);
       bandagePart(w, eid, a.part);
+      // Sterile dressing (`disinfect` effect): also cleans the wounds.
+      const def = defOf(w.items!, item);
+      if (def.kind === 'medical' && def.medical.effects.includes('disinfect'))
+        disinfectPart(w, eid, a.part, def.medical.potency);
       consumeUse(w, item, undefined);
     },
   });

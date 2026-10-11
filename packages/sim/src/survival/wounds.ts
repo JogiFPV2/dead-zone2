@@ -19,7 +19,8 @@ export function woundBleeding(cfg: WoundSettings, w: Wound): number {
       ? cfg.bandage.dirtyBleedingMul
       : cfg.bandage.bleedingMul
     : 1;
-  return t.bleeding * (1 - w.healed) * bandage;
+  const stitch = w.stitched ? cfg.stitch.bleedingMul : 1;
+  return t.bleeding * (1 - w.healed) * bandage * stitch;
 }
 
 export function woundPain(cfg: WoundSettings, w: Wound): number {

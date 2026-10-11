@@ -1,3 +1,4 @@
+import { applyTreatWound } from '../survival/wound-care.js';
 import type { Command, CommandRejectReason } from '@deadzone/protocol';
 import { markChunk } from '../world/chunk-events.js';
 import { gameMinuteAt } from '../core/clock.js';
@@ -91,6 +92,7 @@ export type ItemCommand = Extract<
       | 'placeStorage'
       | 'pickUpStorage'
       | 'bandage'
+      | 'treatWound'
       | 'debugGiveItem';
   }
 >;
@@ -112,6 +114,7 @@ const ITEM_COMMANDS = new Set<string>([
   'placeStorage',
   'pickUpStorage',
   'bandage',
+  'treatWound',
   'debugGiveItem',
 ]);
 export const isItemCommand = (cmd: Command): cmd is ItemCommand => ITEM_COMMANDS.has(cmd.type);
@@ -233,6 +236,11 @@ export function applyItemCommand(
       if (kind === 'medical') {
         if (!cmd.part) return 'invalid-target';
         const part = bodyPartIndex(cmd.part);
+        const def = defOf(st, item);
+        // Disinfectant only (hydrogen peroxide): the `disinfect` treatment with this item.
+        if (def.kind === 'medical' && !def.medical.effects.includes('stop_bleeding'))
+          if (def.medical.effects.includes('disinfect'))
+            return applyTreatWound(w, eid, part, 'disinfect', item.id);
         return startAction(w, eid, newAction('bandage', { item: item.id, part }));
       }
       return 'no-item';
@@ -249,6 +257,8 @@ export function applyItemCommand(
       const part = bodyPartIndex(cmd.part);
       return startAction(w, eid, newAction('bandage', { item: item.id, part }));
     }
+    case 'treatWound':
+      return applyTreatWound(w, eid, bodyPartIndex(cmd.part), cmd.treatment, cmd.item);
     case 'cancelAction':
       if (!p.current) return 'invalid-state';
       interruptActions(w, eid, 'cancelled');

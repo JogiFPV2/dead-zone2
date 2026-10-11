@@ -1397,3 +1397,37 @@ Paweł zgłosił, że zombie goni za długo. Były dwie przyczyny. Po pierwsze, 
 **Dla Silnika 2 (`SimChunk`).** `roomBuildings` (pokój → budynek) jest potrzebne do kluczy i do rozróżnienia środek/zewnątrz. `lockedDoors` jest opcjonalne. Lampy i włączniki światła przyjdą w etapie 7 (propozycja: obiekty z `contentId` `base:light-switch` i `room`, lampy jako placeable `requiresPower`).
 
 **Testy:** `furniture/menu.test.ts` (menu drzwi i okna, zamki domyślne i `lockedDoors`, klucz z łupów, wytrych, pukanie, rękawice, schowki z przegrodą, odrzucenia, kody powodów vs teksty PL) oraz `content/src/i18n/furniture-labels.test.ts`.
+
+### 9.48 Opatrywanie ran: odkażanie i szycie (protokół 27) — kontrakt dla Silnika, Designera i Serwera
+
+- **Komenda `treatWound {part, treatment: 'disinfect' | 'stitch', item?}`** (`client.treatWound(part, treatment, item?)`, `treatWoundCommandSchema`, stałe `WOUND_TREATMENTS`). Uruchamia czynności z czasem `disinfect` / `stitch` (nowe `ActionKind`). Przerywa je zombie, jak inne czynności. Na koniec przychodzi zdarzenie `woundTreated {part, treatment, item, success}`.
+- **Odkażanie (`worldSettings.survival.wounds.disinfect`):**
+  - Środki:
+    - przedmiot `medical` z efektem `disinfect` (woda utleniona) — działa też `useItem {item, part}`, gdy przedmiot nie tamuje krwi;
+    - płyn z tagiem `liquidTag` (`base:disinfectant-liquid`, np. wódka; siła `liquidPotency` 0,5).
+
+    Zużywa jedno użycie.
+  - Działanie na wszystkie rany części ciała:
+    - zakażenie brudem znika;
+    - przez `protectMin` (720 min) rana nie zakaża się na nowo (`Wound.cleanUntilAge`);
+    - gojenie skacze o `healBonus` × siła (0,1 × 0,8 dla wody utlenionej): rana „się zmniejsza”;
+    - chwilowy ból `painAdd` (10).
+  - Czas `min` (1 min gry), XP `skill` (`base:first-aid`).
+  - Jałowy opatrunek (`stop_bleeding` + `disinfect`) przy `bandage` / `useItem` też odkaża.
+- **Szycie (`wounds.stitch`):**
+  - Wymaga noszonej igły (tag `needleTag` `base:tool-needle`, czyli `base:sewing-needle`) i nici (`threadTag` `base:thread`; `item` = która nić). Nić zużywa się zawsze.
+  - Dotyczy ran z `kinds` (`laceration`, `bite`, `deep`; zadrapań nie).
+  - Szansa powodzenia: `chance` 0,6 + `chancePerLevel` 0,05 × poziom pierwszej pomocy (najwyżej 0,95).
+  - Sukces: `Wound.stitched`, krwawienie × `bleedingMul` (0,1), gojenie × `healMul` (2).
+  - Porażka: ból `failPain` (20).
+  - Czas `min` (8 min gry), XP 3.
+- **Odrzucenia:**
+  - `invalid-target`: brak rany na tej części albo nic do zszycia;
+  - `missing-item`: brak środka odkażającego albo nici;
+  - `missing-tool`: brak igły.
+- **Widok:** `WoundView.stitched?` i `WoundView.disinfected?` (ochrona przed zakażeniem trwa). `infected` jak dotąd.
+- **Zapis (`SAVE_VERSION` 3):** opcjonalne pola rany `stitched`, `cleanUntilAge` (wiek rany w minutach) w sekcji przetrwania. Serwer: `saveWoundCareSchema` w `@deadzone/protocol/schema`. Hasz dopisuje je tylko wtedy, gdy są ustawione.
+- **Treść:**
+  - Wody utlenionej nie ma jeszcze w `base` (#213 Modules: `medical`, `effects: ['disinfect']`, np. `potency` 0,8, `uses` 3); testy używają fikstur.
+  - Igła i nić już są. Jałowe opatrunki (`base:sterilized-*`) zaczynają teraz naprawdę odkażać.
+- **Testy:** `survival/wound-care.test.ts`.

@@ -40,7 +40,8 @@ function healthMinute(w: SimWorld, s: SurvivalWorld, eid: number, minute: number
       wd.ageMin++;
       if (wd.bandaged) wd.bandageAgeMin++;
       const dirty = bandageDirty(wc, wd);
-      if (!wd.dirt) {
+      const clean = wd.cleanUntilAge !== undefined && wd.ageMin < wd.cleanUntilAge;
+      if (!wd.dirt && !clean) {
         const p = !wd.bandaged
           ? wc.dirtInfection.unbandagedChancePerMin
           : dirty
@@ -54,6 +55,7 @@ function healthMinute(w: SimWorld, s: SurvivalWorld, eid: number, minute: number
         (t.healMin > 0 ? 1 / t.healMin : 1) *
         (wd.bandaged && !dirty ? wc.bandage.healMul : 1) *
         (wd.dirt ? wc.dirtInfection.healMul : 1) *
+        (wd.stitched ? wc.stitch.healMul : 1) *
         healingRate;
       wd.healed = Math.fround(Math.min(1, wd.healed + rate));
     }

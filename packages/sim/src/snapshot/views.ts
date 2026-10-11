@@ -176,6 +176,10 @@ export function woundViews(w: SimWorld, eid: number): WoundView[] {
     bandaged: wd.bandaged,
     bandageDirty: bandageDirty(cfg, wd),
     infected: wd.dirt,
+    ...(wd.stitched ? { stitched: true } : {}),
+    ...(wd.cleanUntilAge !== undefined && wd.ageMin < wd.cleanUntilAge
+      ? { disinfected: true }
+      : {}),
   }));
 }
 

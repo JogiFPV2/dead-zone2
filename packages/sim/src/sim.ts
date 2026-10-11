@@ -611,6 +611,11 @@ export function createSim(input: SimOptions): Sim {
           h.u32(wd.bandaged ? 1 : 0)
             .u32(wd.bandageAgeMin)
             .u32(wd.dirt ? 1 : 0);
+          // Wound care (protocol 27): only when set (keeps older goldens).
+          if (wd.stitched || wd.cleanUntilAge !== undefined)
+            h.u32(0xca2e_0001)
+              .u32(wd.stitched ? 1 : 0)
+              .u32(wd.cleanUntilAge ?? 0);
         }
         h.f32(s.carryLoad[eid] ?? 0).f32(s.bagSpeed[eid] ?? 1);
       }

@@ -57,6 +57,10 @@ export interface Wound {
   bandageAgeMin: number;
   /** Dirt infection (not the zombie virus). */
   dirt: boolean;
+  /** Disinfected (`treatWound`): no new dirt infection while `ageMin` < this (optional, saved). */
+  cleanUntilAge?: number;
+  /** Stitched with needle and thread (optional, saved). */
+  stitched?: true;
 }
 
 export const bodyPartIndex = (p: string): number => (BODY_PARTS as readonly string[]).indexOf(p);
