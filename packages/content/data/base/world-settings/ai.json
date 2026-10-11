@@ -1,6 +1,9 @@
 {
   "ai": {
-    "lostTrackSec": 10,
-    "lostTrackDistM": 25
+    "lostTrackSec": 12,
+    "lostTrackSpread": 0.2,
+    "lostTrackDistM": 3,
+    "lostTrackCoverMul": 0.6,
+    "searchSec": { "min": 2, "max": 5 }
   }
 }

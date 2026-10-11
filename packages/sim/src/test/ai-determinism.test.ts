@@ -23,6 +23,6 @@ describe('ai determinism', () => {
 
   it('matches the golden hash (update consciously with `vitest -u` and a note in the PR)', () => {
     const hashes = run(600);
-    expect(hashes[hashes.length - 1]!.toString(16)).toMatchInlineSnapshot(`"fb360a2f"`);
+    expect(hashes[hashes.length - 1]!.toString(16)).toMatchInlineSnapshot(`"3571826c"`);
   });
 });

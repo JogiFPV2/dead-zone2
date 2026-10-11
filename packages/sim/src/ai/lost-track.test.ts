@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { send, fixtureContent } from '../test/content-fixtures.js';
-import { aiSim, runTicks, zombie } from '../test/ai-fixtures.js';
+import { aiSim, runTicks, runUntil, zombie } from '../test/ai-fixtures.js';
 import { sortedQuery } from '../core/world.js';
 import type { Sim } from '../sim.js';
+import { refreshTrack } from './brain.js';
 import { ZombieState } from './state.js';
 import { secToTicks } from './zombies.js';
 
@@ -43,22 +44,31 @@ function ticksUntilLost(sim: Sim, limit: number, each?: (t: number) => void): nu
   return -1;
 }
 
+/** Exact timing: no spread, no cover shortening, lostTrackSec 10, 5 m. */
+const EXACT = { lostTrackSec: 10, lostTrackSpread: 0, lostTrackCoverMul: 1, lostTrackDistM: 5 };
+
 describe('ai: losing the track (worldSettings.ai)', () => {
-  it('data: lostTrackSec / lostTrackDistM from worldSettings.ai (defaults 10 s, 25 m)', () => {
-    expect(setup().world.ai!.cfg.ai).toMatchObject({ lostTrackSec: 10, lostTrackDistTiles: 25 });
+  it('data: worldSettings.ai (defaults 12 s ± 20 %, 3 m, cover × 0.6, search 2–5 s)', () => {
+    expect(setup().world.ai!.cfg.ai).toMatchObject({
+      lostTrackSec: 12,
+      lostTrackSpread: 0.2,
+      lostTrackDistTiles: 3,
+      lostTrackCoverMul: 0.6,
+      searchSec: { min: 2, max: 5 },
+    });
     const custom = setup({ ai: { lostTrackSec: 4, lostTrackDistM: 7 } });
     expect(custom.world.ai!.cfg.ai).toMatchObject({ lostTrackSec: 4, lostTrackDistTiles: 7 });
   });
 
   it('closer than lostTrackDistM the zombie keeps the track although it neither sees nor hears', () => {
-    const sim = setup();
+    const sim = setup({ ai: { lostTrackDistM: 20 } });
     // 12.5 tiles away behind walls, silent (standing still), for 30 s.
     expect(ticksUntilLost(sim, 600)).toBe(-1);
     expect(zombie(sim).targetId).toBe(sim.world.c.StableId.value[sim.world.players.get(0)!]);
   });
 
   it('farther than lostTrackDistM: lost after lostTrackSec without sight or sound', () => {
-    const sim = setup({ ai: { lostTrackDistM: 5 } });
+    const sim = setup({ ai: EXACT });
     const t = ticksUntilLost(sim, 600);
     // 10 s = 200 ticks (+ up to one think interval).
     expect(t).toBeGreaterThanOrEqual(200);
@@ -67,7 +77,7 @@ describe('ai: losing the track (worldSettings.ai)', () => {
   });
 
   it('hearing the player (noise at its position) keeps the track fresh', () => {
-    const sim = setup({ ai: { lostTrackDistM: 5 } });
+    const sim = setup({ ai: EXACT });
     // A noise at the player every second for 20 s: never lost meanwhile.
     const noisy = (t: number) => {
       if (t % 20 === 0) send(sim, { type: 'debugNoise', x: 25.5, y: 25.5, radiusTiles: 40 });
@@ -80,7 +90,7 @@ describe('ai: losing the track (worldSettings.ai)', () => {
   });
 
   it('a noise far from the player does not count as hearing the player', () => {
-    const sim = setup({ ai: { lostTrackDistM: 5 } });
+    const sim = setup({ ai: EXACT });
     const elsewhere = (t: number) => {
       if (t % 20 === 0) send(sim, { type: 'debugNoise', x: 10.5, y: 10.5, radiusTiles: 40 });
     };
@@ -91,7 +101,7 @@ describe('ai: losing the track (worldSettings.ai)', () => {
   });
 
   it('after losing it walks to the last known spot, looks around, then wanders again', () => {
-    const sim = setup({ ai: { lostTrackDistM: 5 } });
+    const sim = setup({ ai: EXACT });
     expect(ticksUntilLost(sim, 600)).toBeGreaterThan(0);
     const w = sim.world;
     const zid = sortedQuery(w, 'zombies', [w.c.Zombie])[0]!;
@@ -106,9 +116,45 @@ describe('ai: losing the track (worldSettings.ai)', () => {
     expect(['idle', 'wander']).toContain(zombie(sim).state);
   });
 
+  it('out of sight (closed room): lost after lostTrackSec × lostTrackCoverMul', () => {
+    const sim = setup({ ai: { ...EXACT, lostTrackCoverMul: 0.6 } });
+    const t = ticksUntilLost(sim, 600);
+    // 10 s × 0.6 = 120 ticks (+ think intervals).
+    expect(t).toBeGreaterThanOrEqual(120);
+    expect(t).toBeLessThanOrEqual(130);
+  });
+
+  it('lostTrackSpread: each zombie / refresh loses within lostTrackSec ± 20 %', () => {
+    const times = new Set<number>();
+    for (let i = 0; i < 6; i++) {
+      const sim = setup({ ai: { ...EXACT, lostTrackSpread: 0.2 } });
+      runTicks(sim, i * 3); // different refresh ticks → different draws
+      const w = sim.world;
+      const zid = sortedQuery(w, 'zombies', [w.c.Zombie])[0]!;
+      refreshTrack(w, zid, 25.5, 25.5, 0);
+      const t = ticksUntilLost(sim, 600);
+      expect(t).toBeGreaterThanOrEqual(160 - 1);
+      expect(t).toBeLessThanOrEqual(240 + 6);
+      times.add(t);
+    }
+    expect(times.size).toBeGreaterThan(1);
+  });
+
+  it('looks around the last known spot for searchSec (2–5 s), then wanders', () => {
+    const sim = setup({ ai: EXACT });
+    expect(ticksUntilLost(sim, 600)).toBeGreaterThan(0);
+    const w = sim.world;
+    const zid = sortedQuery(w, 'zombies', [w.c.Zombie])[0]!;
+    // Walk there (stateTick 0), then the look-around timer.
+    expect(runUntil(sim, () => (w.c.Zombie.stateTick[zid] ?? 0) !== 0, 800)).toBeGreaterThan(0);
+    const look = (w.c.Zombie.stateTick[zid] ?? 0) - w.tick;
+    expect(look).toBeGreaterThanOrEqual(secToTicks(2) - 1);
+    expect(look).toBeLessThanOrEqual(secToTicks(5));
+  });
+
   it('is deterministic', () => {
     const run = () => {
-      const sim = setup({ ai: { lostTrackDistM: 5 } });
+      const sim = setup({ ai: EXACT });
       runTicks(sim, 500);
       return sim.hash();
     };

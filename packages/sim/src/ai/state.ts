@@ -106,6 +106,8 @@ export interface AiWorld {
   readonly spawnWeights: number[];
   readonly lights: StaticLight[];
   readonly darkZones: SimZone[];
+  /** Zones that hide a player in dense cover (`COVER_ZONES`: bushes): zombies lose the track faster. */
+  readonly coverZones: SimZone[];
   /** Noises of the last `farThinkEveryTicks` ticks, in emission order (state, hashed). */
   noises: Noise[];
   readonly spatial: SpatialHash;
@@ -144,6 +146,9 @@ export interface AiWorld {
   readonly combat: CombatWorld;
 }
 
+/** Zone roles / ids / tags of dense cover (bushes, hedges). */
+export const COVER_ZONES: readonly string[] = ['bushes', 'cover'];
+
 export function createAiWorld(
   content: ContentIndex,
   map: SimMap,
@@ -173,7 +178,14 @@ export function createAiWorld(
   if (a)
     cfg = {
       ...cfg,
-      ai: { ...cfg.ai, lostTrackSec: a.lostTrackSec, lostTrackDistTiles: a.lostTrackDistM },
+      ai: {
+        ...cfg.ai,
+        lostTrackSec: a.lostTrackSec,
+        lostTrackDistTiles: a.lostTrackDistM,
+        lostTrackSpread: a.lostTrackSpread,
+        lostTrackCoverMul: a.lostTrackCoverMul,
+        searchSec: { ...a.searchSec },
+      },
     };
   return {
     cfg,
@@ -185,6 +197,12 @@ export function createAiWorld(
     spawnWeights: content.zombieTypes.map((t) => Math.round((t.spawnWeight ?? 1) * 1000)),
     lights: collectLights(content, map),
     darkZones: (map.zones ?? []).filter((zn) => zn.role === 'dark'),
+    coverZones: (map.zones ?? []).filter(
+      (zn) =>
+        COVER_ZONES.includes(zn.role) ||
+        COVER_ZONES.includes(zn.id) ||
+        (zn.tags ?? []).some((t) => COVER_ZONES.includes(t)),
+    ),
     noises: [],
     spatial: new SpatialHash(),
     paths: new Map(),

@@ -57,14 +57,22 @@ export interface AiConfig {
   farTiles: number;
   farThinkEveryTicks: number;
   /**
-   * `worldSettings.ai.lostTrackSec` (data wins): a chase is lost only after this long without
-   * seeing or hearing the target (and only when it is farther than `lostTrackDistTiles`).
+   * `worldSettings.ai.lostTrackSec` (data wins): a chase is lost after this long without seeing or
+   * hearing the target (only when it is farther than `lostTrackDistTiles`), × 1 ± `lostTrackSpread`
+   * per refresh, × `lostTrackCoverMul` once the target is out of line of sight or in cover.
    */
   lostTrackSec: number;
+  lostTrackSpread: number;
+  lostTrackCoverMul: number;
   /** `worldSettings.ai.lostTrackDistM` (1 tile = 1 m): closer than this the trail is never lost. */
   lostTrackDistTiles: number;
   /** `ai.searchSec`: after losing the track it walks to the last known spot and looks around this long. */
-  searchSec: number;
+  searchSec: { min: number; max: number };
+  /**
+   * A chaser follows the player's flow field only while the player is this close to its last
+   * known spot (fresh sighting); otherwise it paths to the last known spot (no omniscience).
+   */
+  flowTrackTiles: number;
   /** `ai.investigateLingerSec`: time spent at a noise (lures use their own `lingerSec`). */
   investigateLingerSec: { min: number; max: number };
   /** `ai.wander*`: wander goal radius and pause between goals (real seconds). */
@@ -141,9 +149,12 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     thinkEveryTicks: 4,
     farTiles: 64,
     farThinkEveryTicks: 20,
-    lostTrackSec: 10,
-    lostTrackDistTiles: 25,
-    searchSec: 8,
+    lostTrackSec: 12,
+    lostTrackSpread: 0.2,
+    lostTrackCoverMul: 0.6,
+    lostTrackDistTiles: 3,
+    searchSec: { min: 2, max: 5 },
+    flowTrackTiles: 2,
     investigateLingerSec: { min: 4, max: 10 },
     wanderRadiusTiles: 6,
     wanderPauseSec: { min: 2, max: 8 },

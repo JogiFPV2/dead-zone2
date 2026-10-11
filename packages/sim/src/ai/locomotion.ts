@@ -266,8 +266,18 @@ function bash(
   damageOpening(w, key, kind, dmg, 'zombie');
 }
 
+/**
+ * The chased player's flow field, only while the player is within `ai.flowTrackTiles` of the
+ * zombie's last known spot (a fresh sighting): a zombie that lost sight paths to the last known
+ * spot instead of following the player around corners.
+ */
 function flowFor(w: SimWorld, eid: number, z: number) {
   const p = findPlayer(w, w.c.Zombie.targetId[eid] ?? 0);
   const f = p === undefined ? undefined : w.ai?.flows.get(p);
-  return f && f.z === z ? f : undefined;
+  if (!f || f.z !== z) return undefined;
+  const { Position, Zombie } = w.c;
+  const dx = (Position.x[p!] ?? 0) - (Zombie.tx[eid] ?? 0);
+  const dy = (Position.y[p!] ?? 0) - (Zombie.ty[eid] ?? 0);
+  const r = w.ai!.cfg.ai.flowTrackTiles;
+  return dx * dx + dy * dy <= r * r ? f : undefined;
 }

@@ -57,6 +57,7 @@ const SKIP_AI = [
   'animalSpawnWeights',
   'lights',
   'darkZones',
+  'coverZones',
   'spatial',
   'combat',
 ];

@@ -4,6 +4,7 @@ import { BODY_PARTS, type HitSource } from '@deadzone/protocol';
 import { emitNoise } from '../ai/noise.js';
 import { ZombieState, type AiWorld } from '../ai/state.js';
 import { secToTicks } from '../ai/zombies.js';
+import { refreshTrack } from '../ai/brain.js';
 import { atan2Bam } from '../core/dmath.js';
 import { detach, sortedQuery, type SimWorld } from '../core/world.js';
 import { meleeStatsFor } from '@deadzone/content';
@@ -324,8 +325,13 @@ export function damageZombie(
     // Hurt zombies turn on the attacker.
     Zombie.state[zid] = ZombieState.chase;
     Zombie.targetId[zid] = StableId.value[attacker] ?? 0;
-    Zombie.tz[zid] = floorZ(w, attacker);
-    Zombie.memoryUntil[zid] = w.tick + secToTicks(ai.cfg.ai.lostTrackSec);
+    refreshTrack(
+      w,
+      zid,
+      w.c.Position.x[attacker] ?? 0,
+      w.c.Position.y[attacker] ?? 0,
+      floorZ(w, attacker),
+    );
     return false;
   }
   killZombie(w, ai, cb, zid, attacker);
