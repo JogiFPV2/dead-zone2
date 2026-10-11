@@ -1,3 +1,4 @@
+import type { NamedPoint } from '@deadzone/content/places';
 import type { LastLocation, SaveEnvelopeHeader } from '@deadzone/protocol';
 import { parseEnvelope } from './envelope.js';
 import {
@@ -14,6 +15,8 @@ export interface ValidateOptions {
   maxStateBytes: number;
   /** `world_settings.dayLengthMinutes` of the character (the sim clock is not in the save). */
   dayLengthMinutes?: number | undefined;
+  /** Named places of the character's map (`world_settings.map`); null = none, `place` stays null. */
+  places?: readonly NamedPoint[] | null | undefined;
 }
 
 /** What the routes need from a valid envelope; the state itself stays in the worker. */
@@ -40,9 +43,12 @@ export function validateEnvelope(
 ): ValidatedEnvelope {
   const env = parseEnvelope(bytes, opts);
   const state = validateState(env.state, env.header.formatVersion, env.header.world_seed);
-  const { location, failure } = summarizeLocation(state, summary, {
-    dayLengthMinutes: opts.dayLengthMinutes,
-  });
+  const { location, failure } = summarizeLocation(
+    state,
+    summary,
+    { dayLengthMinutes: opts.dayLengthMinutes },
+    opts.places,
+  );
   return {
     header: env.header,
     sha256: env.sha256,

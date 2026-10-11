@@ -7,6 +7,7 @@ import {
   gameMinuteAt,
   minuteOfDay,
 } from '@deadzone/sim';
+import { nearestPlace, type NamedPoint } from '@deadzone/content/places';
 import { SaveError, saveSummary, type SaveSummaryOptions } from '@deadzone/sim/save-summary';
 
 export type { SaveSummaryOptions };
@@ -17,8 +18,9 @@ export type { SaveSummaryOptions };
  * validation worker; nothing the client sends besides the save itself is trusted. A failing or
  * broken summary gives `null` and never fails a save that passed validation.
  *
- * `place` stays null for now: the settlement list lives in `planWorld` of `tools/map` (a dev tool
- * with the whole generator), not in a light runtime package the server could import.
+ * `place` is the nearest named place (`nearestPlace` of `@deadzone/content/places`) of the places
+ * file of the character's map (`world_settings.map`, `loadPlaces` of `@deadzone/content/node`),
+ * looked up by the route and passed to the worker. Maps without a places file keep `place` null.
  */
 
 /** Longest stored place name (`characters.last_place`, code points). */
@@ -94,6 +96,8 @@ export function summarizeLocation(
   state: unknown,
   fn: SaveSummaryFn = defaultSaveSummary,
   opts: SaveSummaryOptions = {},
+  /** Places of the character's map; null/undefined = no places file. */
+  places?: readonly NamedPoint[] | null,
 ): SummaryResult {
   let raw: unknown;
   try {
@@ -106,5 +110,9 @@ export function summarizeLocation(
     };
   }
   const location = sanitizeLocation(raw);
-  return location ? { location } : { location: null, failure: { kind: 'invalid-summary' } };
+  if (!location) return { location: null, failure: { kind: 'invalid-summary' } };
+  if (places && places.length > 0) {
+    location.place = placeName(nearestPlace(places, location.x, location.y));
+  }
+  return { location };
 }

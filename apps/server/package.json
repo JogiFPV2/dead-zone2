@@ -12,6 +12,7 @@
     "test": "vitest run --testTimeout=30000"
   },
   "dependencies": {
+    "@deadzone/content": "workspace:*",
     "@deadzone/protocol": "workspace:*",
     "@deadzone/sim": "workspace:*",
     "@deadzone/ui": "workspace:*",
@@ -21,7 +22,6 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@deadzone/content": "workspace:*",
     "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^22.20.4",
     "tsx": "^4.23.15"

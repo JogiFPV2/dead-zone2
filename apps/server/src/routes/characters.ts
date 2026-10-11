@@ -1,5 +1,7 @@
 import { randomBytes, randomInt } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { createPlacesCache } from '@deadzone/content/node';
+import type { Place } from '@deadzone/content/places';
 import type {
   CharacterSummary,
   ListCharactersResponse,
@@ -31,7 +33,7 @@ import type { ValidatedEnvelope } from '../save/validate.js';
 import type { SaveValidator } from '../save/worker-pool.js';
 import { registerSettingsRoutes } from './settings.js';
 import { registerExportRoutes } from './export.js';
-import { conflictServer, dayLengthMinutes, toSummary } from './summary.js';
+import { conflictServer, dayLengthMinutes, mapId, toSummary } from './summary.js';
 
 export interface CharacterRouteDeps {
   config: Pick<
@@ -47,6 +49,11 @@ export interface CharacterRouteDeps {
   rateLimits: RateLimitStore;
   /** DZSV validation in `worker_threads` (timeout + heap cap); closed with the app. */
   validator: SaveValidator;
+  /**
+   * Named places per map id (`createPlacesCache` of `@deadzone/content/node`: one file read per
+   * map and process); null = the map has no places file. Default: the content package files.
+   */
+  places?: (mapId: string | null) => Promise<readonly Place[] | null>;
   /** Injectable for tests. */
   now?: () => Date;
   newSeed?: () => number;
@@ -115,6 +122,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
   const newSeed = deps.newSeed ?? (() => randomInt(0, 0x1_0000_0000));
 
   const { rateLimits, validator } = deps;
+  const placesFor = deps.places ?? createPlacesCache();
   app.addHook('onClose', () => validator.close());
   // One JWT verification per request even when a route hook already authenticated.
   const authed = new WeakMap<FastifyRequest, Promise<AuthUser>>();
@@ -184,6 +192,17 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
   }
 
   /** Envelope + state checks shared by save and death; values must match the character row. */
+  /** Places of the character's map; a broken places file is logged and only costs the name. */
+  async function mapPlaces(req: FastifyRequest, c: CharacterRow): Promise<readonly Place[] | null> {
+    const map = mapId(c);
+    try {
+      return await placesFor(map);
+    } catch {
+      req.log.warn({ map }, 'places file unreadable, place not set');
+      return null;
+    }
+  }
+
   async function checkEnvelope(req: FastifyRequest, c: CharacterRow): Promise<ValidatedEnvelope> {
     const bytes = bodyBytes(req);
     const claimed = req.headers['x-dzsv-sha256'];
@@ -195,6 +214,7 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
       saveFormatVersion: config.saveFormatVersion,
       maxStateBytes: limits.maxStateBytes,
       dayLengthMinutes: dayLengthMinutes(c),
+      places: await mapPlaces(req, c),
     });
     if (env.sha256 !== claimed.toLowerCase()) {
       throw new HttpError(400, 'checksum_mismatch', 'SHA-256 does not match the envelope');

@@ -28,6 +28,12 @@ function lastLocation(c: CharacterRow): LastLocation | null {
   return c.status === 'alive' ? storedLocation(c) : null;
 }
 
+/** `world_settings.map` (content map id) when it is a string, else null. */
+export function mapId(c: CharacterRow): string | null {
+  const v = c.world_settings.map;
+  return typeof v === 'string' ? v : null;
+}
+
 /** `world_settings.dayLengthMinutes` when it is a sane number (sim default otherwise). */
 export function dayLengthMinutes(c: CharacterRow): number | undefined {
   const v = c.world_settings.dayLengthMinutes;

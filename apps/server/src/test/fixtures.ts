@@ -5,6 +5,7 @@ import { SAVE_VERSION } from '@deadzone/sim';
 import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from 'jose';
 import { buildApp } from '../app.js';
 import { createJwtVerifier } from '../auth.js';
+import type { CharacterRouteDeps } from '../routes/characters.js';
 import { DEFAULT_LIMITS, type Limits } from '../config.js';
 import { sha256Hex } from '../save/envelope.js';
 import { realSave } from './sim-save.js';
@@ -42,7 +43,12 @@ export async function token(
 
 export function setup(
   limits: Partial<Limits> = {},
-  opts: { trustProxyHops?: number; validator?: SaveValidator; corsOrigins?: string[] } = {},
+  opts: {
+    trustProxyHops?: number;
+    validator?: SaveValidator;
+    corsOrigins?: string[];
+    places?: CharacterRouteDeps['places'];
+  } = {},
 ) {
   const l = { ...DEFAULT_LIMITS, ...limits };
   const store = new MemoryStore(l.maxAliveCharacters, l.maxAccountSaveBytes);
@@ -74,6 +80,7 @@ export function setup(
       rateLimits,
       now: () => new Date(store.clock),
       newSeed: () => seed++,
+      ...(opts.places ? { places: opts.places } : {}),
     },
   });
   return { app, store, blobs, accounts, rateLimits };

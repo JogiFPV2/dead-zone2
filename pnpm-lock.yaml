@@ -236,6 +236,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@deadzone/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@deadzone/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -258,9 +261,6 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@deadzone/content':
-        specifier: workspace:*
-        version: link:../../packages/content
       '@electric-sql/pglite':
         specifier: ^0.5.8
         version: 0.5.8
