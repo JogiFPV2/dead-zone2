@@ -13,7 +13,12 @@
       "types": "./dist/node/index.d.ts",
       "default": "./dist/node/index.js"
     },
-    "./data/*": "./data/*"
+    "./places": {
+      "types": "./dist/places/index.d.ts",
+      "default": "./dist/places/index.js"
+    },
+    "./data/*": "./data/*",
+    "./places/*": "./places/*"
   },
   "files": [
     "dist",

@@ -13,9 +13,11 @@ src/
     map/      manifest i chunk mapy, kodeki warstw (RLE, base64)
   validate/   walidator (czysty TS, bez API Node), referencje (checks/) i mapy (maps/)
   bundle/     ContentBundle i buildContentBundle(packs)
-  node/       wczytywanie paczek z dysku i CLI (`@deadzone/content/node`)
+  places/     schemat miejsc, `nearestPlace`, rejestr plików per mapa (`@deadzone/content/places`)
+  node/       wczytywanie paczek z dysku, `loadPlaces` i CLI (`@deadzone/content/node`)
   test/       testy Vitest
 data/base/    paczka bazowa
+places/       nazwy miejsc map (JSON `{ name, x, y }`), np. stalowa-wola.json
 ```
 
 Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w przeglądarce i w `packages/sim`.
@@ -31,6 +33,24 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   `ContentBundle` (Recordy po id: `items`, `recipes`, `skills`, `traits`, `professions`, `moodles`,
   `lootTables`, `zombieTypes`, `containers`, `tiles`, `gameModes`, `stations`, `appearanceParts`, `palettes` oraz `worldSettings`). Mapy są w wyniku walidacji
   (`validatePacks(…).maps`), nie w bundlu.
+
+## Miejsca
+
+Pliki `places/<plik>.json` to tablice `{ name, x, y, kind? }` (x, y w kaflach, układ mapy świata; `kind`:
+`district` | `town` | `village`, opcjonalne). Mapa → plik: `PLACES_FILES` (`osm-stw` → `stalowa-wola.json`).
+
+```ts
+// lekkie wejście (tylko zod, bez DOM, bez tools/map): przeglądarka, sim, serwer
+import { placesFileSchema, nearestPlace, placesFileFor } from '@deadzone/content/places';
+// Node (serwer): odczyt + walidacja + zamrożenie; null, gdy mapa nie ma pliku albo pliku jeszcze nie ma
+import { loadPlaces, createPlacesCache } from '@deadzone/content/node';
+
+const places = await loadPlaces(character.world_settings.map); // readonly Place[] | null
+const place = nearestPlace(places, x, y); // string | null
+```
+
+Surowy JSON jest też pod `@deadzone/content/places/stalowa-wola.json`. Nowa mapa z nazwami: plik w `places/`
+i wpis w `src/places/places-files.ts`; test sprawdza, że każdy plik z rejestru przechodzi schemat.
 
 ## Walidacja
 

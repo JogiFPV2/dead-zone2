@@ -5,6 +5,7 @@ import { readPackDir } from './read-pack-dir.js';
 
 export { readPackDir } from './read-pack-dir.js';
 export { BASE_PACK_DIR } from './base-pack.js';
+export { PLACES_DIR, loadPlaces, createPlacesCache } from './places.js';
 
 /** Waliduje paczki z katalogów na dysku. */
 export async function validatePackDirs(dirs: readonly string[]): Promise<ValidationResult> {
