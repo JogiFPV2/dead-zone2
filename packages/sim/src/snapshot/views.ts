@@ -47,7 +47,8 @@ import {
 import { restCapOf, sleepRealSec, threatNearby } from '../systems/sleep.js';
 import { SLEEP_SURFACES } from '../survival/state.js';
 import { threatLevel } from '../ai/threat.js';
-import { meleeOf } from '../combat/system.js';
+import { heldCondition, meleeOf } from '../combat/system.js';
+import { twoHanded } from '../items/inventory.js';
 import {
   capacityOf,
   effectiveSpread,
@@ -67,13 +68,30 @@ function combatView(w: SimWorld, eid: number): CombatView {
   const id = gun ? gun.item.id : m.item;
   const item = id === undefined ? undefined : w.items?.items.get(id);
   const def = item && w.items ? defOf(w.items, item) : undefined;
+  const held = item && w.items && !gun ? heldCondition(w.items, item) : undefined;
   const v: CombatView = {
     zombiesKilled: cb.kills[eid] ?? 0,
     weapon: def?.id ?? null,
-    condition: item ? item.condition : null,
-    maxCondition: def ? maxCondition(def) : null,
+    condition: held ? held.condition : item ? item.condition : null,
+    maxCondition: held ? held.max : def ? maxCondition(def) : null,
     readyTick: cb.readyTick[eid] ?? 0,
   };
+  if (!gun) {
+    v.melee = {
+      source: m.source,
+      damage: { min: m.damage.min, max: m.damage.max },
+      rangeTiles: m.rangeTiles,
+      attacksPerSec: m.attacksPerSec,
+      staminaCost: m.staminaCost,
+      critChance: m.critChance,
+      twoHanded: m.twoHanded,
+      ...(m.skill ? { skill: m.skill } : {}),
+      breakChancePct: Math.round(m.lossChancePerUse * 1000) / 10,
+      ...(held
+        ? { conditionPct: held.max > 0 ? Math.round((held.condition / held.max) * 100) : 100 }
+        : {}),
+    };
+  }
   if (gun && w.items) {
     v.ammo = gun.item.uses;
     v.capacity = capacityOf(w.items, gun.item, gun.def);
@@ -114,17 +132,14 @@ export function characterView(w: SimWorld, eid: number): CharacterView | undefin
     return item ? defOf(st, item) : undefined;
   };
   const primary = at('hand_primary');
+  const primaryId = p.slots.get('hand_primary');
+  const primaryItem = primaryId === undefined ? undefined : st.items.get(primaryId);
   return {
     stableId: w.c.StableId.value[eid] ?? 0,
     equippedPrimary: primary?.id ?? null,
     equippedBack: at('back')?.id ?? null,
     weaponKind: weaponKind(primary),
-    twoHanded:
-      primary?.kind === 'weapon_melee'
-        ? primary.melee.twoHanded
-        : primary?.kind === 'weapon_ranged'
-          ? primary.ranged.twoHanded
-          : false,
+    twoHanded: primaryItem ? twoHanded(st, primaryItem) : false,
   };
 }
 

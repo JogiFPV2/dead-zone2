@@ -6,7 +6,15 @@ import { ZombieState, type AiWorld } from '../ai/state.js';
 import { secToTicks } from '../ai/zombies.js';
 import { atan2Bam } from '../core/dmath.js';
 import { detach, sortedQuery, type SimWorld } from '../core/world.js';
-import { defOf, destroyItem } from '../items/store.js';
+import { meleeStatsFor } from '@deadzone/content';
+import { addXp } from '../progress/skills.js';
+import {
+  defOf,
+  destroyItem,
+  maxCondition,
+  type ItemInstance,
+  type ItemStore,
+} from '../items/store.js';
 import { createCorpse } from '../items/search.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
@@ -40,7 +48,7 @@ export function combatSystem(w: SimWorld, grid: TileGrid): void {
   if (ai.zombieCount > 0) zombieAttacks(w, ai, cb, grid);
 }
 
-/** Melee stats of the weapon in `hand_primary` (bare hands without one). */
+/** Melee stats of what is in `hand_primary` (bare hands without anything). */
 export interface MeleeStats {
   item: number | undefined;
   damage: { min: number; max: number };
@@ -51,9 +59,22 @@ export interface MeleeStats {
   knockback: number;
   maxTargets: number;
   noise: { radiusTiles: number; volume: number };
+  /** Chance per swing with a hit to lose one durability point (0..1). */
   lossChancePerUse: number;
+  /** Skill that gets XP per swing with a hit (none: bare hands). */
+  skill: string | undefined;
+  twoHanded: boolean;
+  /** `weapon` (melee catalogue), `improvised` / `default` (any other item, `meleeStatsFor`), `unarmed`. */
+  source: 'weapon' | 'improvised' | 'default' | 'unarmed';
+  /** Durability pool (0 = none, bare hands). */
+  durability: number;
 }
 
+/**
+ * Any item in `hand_primary` is a melee weapon (like Project Zomboid): catalogue melee weapons
+ * with their `melee` block, every other item with `meleeStatsFor` (`improvisedWeapon` block, else
+ * weak defaults from its weight). A firearm only bashes when `fire` does not take the attack.
+ */
 export function meleeOf(w: SimWorld, cb: CombatWorld, eid: number): MeleeStats {
   const st = w.items;
   const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
@@ -74,8 +95,29 @@ export function meleeOf(w: SimWorld, cb: CombatWorld, eid: number): MeleeStats {
         maxTargets: m.maxTargets,
         noise: m.hitNoise ?? cb.cfg.attackNoise,
         lossChancePerUse: m.durability.lossChancePerUse,
+        skill: m.skill,
+        twoHanded: m.twoHanded,
+        source: 'weapon',
+        durability: m.durability.max,
       };
     }
+    const s = meleeStatsFor(def);
+    return {
+      item: item.id,
+      damage: s.damage,
+      rangeTiles: s.rangeTiles,
+      attacksPerSec: s.attackSpeed,
+      staminaCost: s.staminaCost,
+      critChance: s.critChance,
+      knockback: cb.cfg.improvisedKnockback,
+      maxTargets: 1,
+      noise: cb.cfg.attackNoise,
+      lossChancePerUse: s.breakChancePct / 100,
+      skill: s.skill,
+      twoHanded: s.twoHanded,
+      source: s.source === 'weapon' ? 'improvised' : s.source,
+      durability: s.durability,
+    };
   }
   const u = cb.cfg.unarmed;
   return {
@@ -85,7 +127,27 @@ export function meleeOf(w: SimWorld, cb: CombatWorld, eid: number): MeleeStats {
     maxTargets: 1,
     noise: cb.cfg.attackNoise,
     lossChancePerUse: 0,
+    skill: undefined,
+    twoHanded: false,
+    source: 'unarmed',
+    durability: 0,
   };
+}
+
+/**
+ * Condition of the item held as a melee weapon: items with their own durability (weapons,
+ * tools, clothing) use `condition` / `maxCondition`; other items count improvised wear
+ * (`ItemInstance.wear`) against `meleeStatsFor(item).durability`.
+ */
+export function heldCondition(
+  st: ItemStore,
+  item: ItemInstance,
+): { condition: number; max: number } {
+  const def = defOf(st, item);
+  const max = maxCondition(def);
+  if (max > 0) return { condition: item.condition, max };
+  const pool = meleeStatsFor(def).durability;
+  return { condition: Math.max(0, pool - (item.wear ?? 0)), max: pool };
 }
 
 /**
@@ -166,7 +228,10 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
     physicsHit(w, eid, t.eid, 'melee', m.knockback, killed);
   }
   emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack', 0, { eid, kind: 'melee' });
-  if (targets.length > 0 && m.item !== undefined && m.lossChancePerUse > 0) wear(w, eid, m.item);
+  if (targets.length > 0 && m.skill) addXp(w, eid, m.skill, cfg.meleeXpPerHit);
+  if (targets.length > 0 && m.item !== undefined && m.lossChancePerUse > 0) {
+    wear(w, eid, m.item, m.lossChancePerUse);
+  }
   void StableId;
 }
 
@@ -181,17 +246,33 @@ function shove(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   }
 }
 
-function wear(w: SimWorld, eid: number, itemId: number): void {
+/**
+ * One swing with a hit: with `chance` the held item loses a durability point. At 0 it breaks
+ * (`weaponBroke`): one piece of a stack goes (the rest keeps fighting, fresh), a single item is
+ * destroyed. Bags never wear (their contents would go with them).
+ */
+function wear(w: SimWorld, eid: number, itemId: number, chance: number): void {
   const st = w.items;
   const item = st?.items.get(itemId);
   if (!st || !item) return;
   const def = defOf(st, item);
-  if (def.kind !== 'weapon_melee') return;
-  if (!w.rng.combat.chance(def.melee.durability.lossChancePerUse)) return;
-  item.condition = Math.max(0, item.condition - 1);
+  if (def.kind === 'container' || item.inner) return;
+  if (!w.rng.combat.chance(chance)) return;
   st.version++;
-  if (item.condition > 0) return;
-  destroyItem(st, item);
+  if (maxCondition(def) > 0) {
+    item.condition = Math.max(0, item.condition - 1);
+    if (item.condition > 0) return;
+  } else {
+    item.wear = (item.wear ?? 0) + 1;
+    if (item.wear < meleeStatsFor(def).durability) return;
+  }
+  if (item.count > 1) {
+    item.count--;
+    item.condition = maxCondition(def);
+    delete item.wear;
+  } else {
+    destroyItem(st, item);
+  }
   w.events.push({
     type: 'weaponBroke',
     tick: w.tick,

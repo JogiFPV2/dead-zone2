@@ -632,13 +632,38 @@ export interface OpeningView {
 /** Edge kinds with a state (`openings`). */
 export type OpeningEdgeKind = Extract<SimEdgeKind, 'door' | 'window' | 'fence' | 'gate'>;
 
+/**
+ * Melee stats of what is in `hand_primary` (PROTOCOL_VERSION 21): any item is a weapon (catalogue
+ * melee weapons, improvised ones, weak defaults from weight; `@deadzone/content` `meleeStatsFor`).
+ */
+export interface MeleeWeaponView {
+  source: 'weapon' | 'improvised' | 'default' | 'unarmed';
+  damage: { min: number; max: number };
+  rangeTiles: number;
+  attacksPerSec: number;
+  staminaCost: number;
+  critChance: number;
+  twoHanded: boolean;
+  /** Skill that gets XP per hit (none for bare hands). */
+  skill?: string;
+  /** Chance per swing with a hit to lose a durability point, 0..100. */
+  breakChancePct: number;
+  /** Condition 0..100 (integer); none for bare hands. */
+  conditionPct?: number;
+}
+
 export interface CombatView {
   zombiesKilled: number;
-  /** Content id of the weapon (melee or firearm) in `hand_primary`, null = bare hands. */
+  /** Content id of the item (any item: melee, firearm, improvised) in `hand_primary`, null = bare hands. */
   weapon: string | null;
-  /** Weapon condition 0..max (null = bare hands). */
+  /**
+   * Weapon condition 0..max (null = bare hands). Improvised weapons without own durability:
+   * `meleeStatsFor(item).durability` minus the wear (0 = breaks).
+   */
   condition: number | null;
   maxCondition: number | null;
+  /** Melee stats of the held item (also bare hands); absent while a firearm is held. */
+  melee?: MeleeWeaponView;
   /** Tick from which the next attack is possible. */
   readyTick: number;
   /** Firearm in hand: rounds loaded, capacity (magazine feed: of the inserted magazine, 0 = none). */

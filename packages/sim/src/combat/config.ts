@@ -33,6 +33,10 @@ export interface CombatConfig {
   zombieWoundWeights: { scratch: number; laceration: number };
   /** Snapshot `anim = attack` this long after a swing. */
   attackAnimSec: number;
+  /** XP to the held item's melee skill per swing that hits (`meleeStatsFor(item).skill`). */
+  meleeXpPerHit: number;
+  /** Knock-back of items without a `melee` block (improvised weapons), like bare hands. */
+  improvisedKnockback: number;
   /** `worldSettings.firearms` (data wins, see ai/state.ts). */
   firearms: {
     hitFalloffAtRange: number;
@@ -70,6 +74,8 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   zombie: { hitChance: 0.7, reachTiles: 0.9, windupSec: 0.5 },
   zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },
   attackAnimSec: 0.4,
+  meleeXpPerHit: 1,
+  improvisedKnockback: 0.3,
   firearms: {
     hitFalloffAtRange: 0.6,
     spread: { pistol: 0.03, revolver: 0.03, shotgun: 0.12, rifle: 0.015 },

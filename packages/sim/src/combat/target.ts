@@ -23,7 +23,7 @@ import { floorZ } from '../world/levels.js';
 import { lineOfSight } from '../world/los.js';
 import { firearmOf } from './firearms.js';
 import type { PlayerTargetState, TargetRef } from './state.js';
-import { meleeOf } from './system.js';
+import { heldCondition, meleeOf } from './system.js';
 
 /**
  * HUD target card (docs 9.40). UI only: reads the world, never changes the simulation; the lock
@@ -327,8 +327,11 @@ function weaponOf(w: SimWorld, eid: number): Pick<TargetView, 'weapon'> {
   const item = id === undefined ? undefined : st.items.get(id);
   if (!item) return {};
   const def = defOf(st, item);
-  const max = maxCondition(def);
+  // Improvised weapons count their wear against `meleeStatsFor(item).durability` (docs 9.41).
+  const { condition, max } = gun
+    ? { condition: item.condition, max: maxCondition(def) }
+    : heldCondition(st, item);
   return {
-    weapon: { id: def.id, conditionPct: max > 0 ? pct(item.condition / max) : 100 },
+    weapon: { id: def.id, conditionPct: max > 0 ? pct(condition / max) : 100 },
   };
 }

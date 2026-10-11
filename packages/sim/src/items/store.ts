@@ -33,6 +33,11 @@ export interface ItemInstance {
   vehicle?: number;
   /** Gas can: litres inside (`vehicles/fuel.ts`); absent = empty. */
   fuelL?: number;
+  /**
+   * Improvised weapon wear: durability points lost while fighting with an item that has no own
+   * durability (`meleeStatsFor(item).durability` is the pool, `combat/system.ts`); absent = 0.
+   */
+  wear?: number;
 }
 
 /**

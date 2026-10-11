@@ -113,6 +113,12 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
     h.u32(0x6e70_0002).u32(cans.length);
     for (const id of cans) h.u32(id).f32(st.items.get(id)!.fuelL!);
   }
+  // Improvised weapon wear (only when there is any: older goldens stay valid).
+  const worn = iids.filter((id) => st.items.get(id)!.wear !== undefined);
+  if (worn.length > 0) {
+    h.u32(0x6e70_0004).u32(worn.length);
+    for (const id of worn) h.u32(id).u32(st.items.get(id)!.wear!);
+  }
   if (st.pumps.size > 0) {
     h.u32(0x6e70_0003).u32(st.pumps.size);
     for (const k of [...st.pumps.keys()].sort()) {

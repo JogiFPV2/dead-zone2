@@ -1,3 +1,4 @@
+import { meleeStatsFor } from '@deadzone/content';
 import type { CommandRejectReason, EquipSlot } from '@deadzone/protocol';
 import { ModSlot } from '../content/adapter.js';
 import { gameMinuteAt } from '../core/clock.js';
@@ -235,11 +236,13 @@ export function allowedSlots(st: ItemStore, item: ItemInstance): readonly EquipS
   return backWeapon(st, item) ? [...HANDS, 'back'] : HANDS;
 }
 
+/** Held with both hands: weapons by their data, any other item by `meleeStatsFor` (heavy ones). */
 export function twoHanded(st: ItemStore, item: ItemInstance): boolean {
   const def = defOf(st, item);
   if (def.kind === 'weapon_melee') return def.melee.twoHanded;
   if (def.kind === 'weapon_ranged') return def.ranged.twoHanded;
-  return false;
+  if (def.kind === 'container' || def.kind === 'clothing') return false;
+  return meleeStatsFor(def).twoHanded;
 }
 
 /** Puts an item that lies in the main inventory into `slot` (displacing what was there). */
