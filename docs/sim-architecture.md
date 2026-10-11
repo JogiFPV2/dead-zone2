@@ -553,7 +553,7 @@ Stan po Etapie 4 (PR 1, `PROTOCOL_VERSION = 5`): bez nagłówka, `SNAPSHOT_ENTIT
 Od `PROTOCOL_VERSION = 6` stride wynosi 8: na końcu rekordu jest `hpPct` (f32, 0–1). Dla gracza to zdrowie / 100 (1 bez contentu), dla zombie HP / `health` jego typu, a martwa encja ma 0 (`SnapshotField.hpPct = 7`).
 
 ### 4.2 Widoki UI (przy zmianie)
-HUD i React UI potrzebują danych bogatszych, ale rzadziej zmiennych: ekwipunek, statystyki, moodle, umiejętności, aktualna akcja, lista przedmiotów otwartego kontenera. `snapshot/views.ts` utrzymuje wersję każdego widoku i wysyła **deltę tylko przy zmianie**, maksymalnie raz na tick:
+HUD i UI (DOM z `packages/ui`) potrzebują danych bogatszych, ale rzadziej zmiennych: ekwipunek, statystyki, moodle, umiejętności, aktualna akcja, lista przedmiotów otwartego kontenera. `snapshot/views.ts` utrzymuje wersję każdego widoku i wysyła **deltę tylko przy zmianie**, maksymalnie raz na tick:
 ```ts
 type ViewPatch =
   | { v: 'player'; stats: {...}; moodles: [id, level][] }
@@ -580,7 +580,7 @@ Stan po Etapie 4 (PR 1): `SimViewPatch.threat` to poziom zagrożenia 0–100 dla
 ## 5. Działanie w Web Workerze
 
 ### 5.1 Podział
-- **Main thread** (`apps/game`): Three.js, React HUD, wejście (klawiatura, mysz) → komendy, dźwięk, IndexedDB (albo worker, patrz 7.4).
+- **Main thread** (`apps/game`): Three.js, HUD w DOM (`packages/ui`), wejście (klawiatura, mysz) → komendy, dźwięk, IndexedDB (albo worker, patrz 7.4).
 - **Worker** (`@deadzone/sim/worker`): trzyma `SimWorld`, prowadzi pętlę czasu rzeczywistego i wysyła snapshoty. To jedyne miejsce z `performance.now()` i `setTimeout`, ale poza pakietem rdzenia (`src/host`).
 
 ### 5.2 Protokół wiadomości

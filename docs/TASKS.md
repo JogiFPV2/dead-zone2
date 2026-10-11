@@ -48,7 +48,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] System hałasu (Symulacja)
 - [x] Pathfinding + flow field dla hord (Symulacja)
 - [ ] Walka wręcz, stamina, pchnięcie (Symulacja) — fizyka (masa, bezwładność, obciążenie, odrzut, zachwianie, przewrócenie, wstawanie) w `sim/src/physics`, podpięta do ruchu, walki i snapshotu (protokół v7); napór tłumu zombie na drzwi / okna / płoty i odpychanie w tłumie (`physics/crowd.ts`)
-- [ ] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules)
+- [x] Katalog broni: improwizowana, krótka i długa ostra, tępa, włócznie (Modules) — `items/weapons-*.json` (#14)
 - [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
 - [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)
 - [x] Wabiki jako dane: elektroniczny z pilotem i baterią, biegający z craftingu (Modules)
@@ -67,7 +67,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Kasety VHS, telewizor i generator jako dane (Modules)
 - [ ] Oglądanie kaset na zasilanym telewizorze, prąd z generatora (Symulacja)
 - [ ] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)
-- [ ] Książki i magazyny: mnożniki XP i odblokowanie receptur (Modules + Symulacja)
+- [x] Książki i magazyny: mnożniki XP i odblokowanie receptur (Modules + Symulacja) — dane `items/books-*.json`, `magazines.json`, `recipe-magazines.json` (#18); sim: `xpMul` w `progress/skills.ts`, czytanie w `crafting.ts`
 - [ ] Toasty XP i obrażeń (Designer + Silnik)
 
 ## Etap 6 — Crafting
@@ -84,7 +84,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Format mapy w chunkach + narzędzie do budowania mapy (Silnik)
 - [x] Tempo chodu pod mapę 8 × 8 km: chód 1,5 m/s (ok. 91 min przez mapę), bieg × 2,5, `worldSettings.movement` (Symulacja)
 - [ ] Miasteczko demo: około 20 budynków, stacja, sklep, apteka (Designer + Silnik)
-- [ ] Loot tables zależne od pomieszczeń (Modules)
+- [x] Loot tables zależne od pomieszczeń (Modules) — `rooms` w loot tables (`base:room-*`), sim wybiera tabelę wg `chunk.rooms` (`items/loot.ts`)
 - [x] Drzwi i okna: zamykanie, rozbijanie, wchodzenie przez okno, barykady z desek, wyważanie zamkniętych drzwi, brama w ogrodzeniu (Symulacja) — klucze do budynków: TODO
 - [ ] Minimapa i licznik dni (Designer + Silnik)
 - [ ] Cele i zadania (Symulacja + Designer)

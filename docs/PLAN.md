@@ -37,8 +37,8 @@ Tryby są danymi (`packages/content`, katalog `game-modes/`): cel wygranej i prz
 
 ## Stack
 - Monorepo: pnpm + Turborepo, TypeScript strict, ESLint, Prettier, Vitest, Playwright.
-- Klient gry: Three.js + Vite. UI gry (HUD, ekwipunek) w React nad canvasem.
-- Landing i konto: React + Vite (albo Astro), Tailwind + shadcn.
+- Klient gry: Three.js + Vite. UI gry (HUD, ekwipunek, menu) to zwykły DOM nad canvasem, bez frameworka: komponenty z `packages/ui` (fabryki `createX(props) → { el, update, destroy }`, stan w atrybutach `data-*`, style z tokenów CSS).
+- Landing i konto (`apps/web`): React + Vite. To jedyne miejsce z Reactem.
 - Backend: Supabase (Auth, Postgres, Storage na zapisy gry) plus serwer Node (Fastify) na walidację i przyszły multiplayer (Colyseus albo własne WebSockety).
 - Hosting: statyczny front (Vercel/Cloudflare/Hostinger), serwer na VPS.
 
@@ -50,7 +50,7 @@ apps/server     API zapisów, walidacja, później serwer multiplayer
 packages/sim    symulacja (przetrwanie, walka, AI, crafting, umiejętności)
 packages/content  definicje JSON + schematy (baza pod mody)
 packages/protocol typy komend i snapshotów (klient ↔ serwer)
-packages/ui     wspólne komponenty UI (design system)
+packages/ui     design system HUD: tokeny i komponenty DOM bez frameworka
 tools/          edytor/konwerter map, walidator contentu
 ```
 
