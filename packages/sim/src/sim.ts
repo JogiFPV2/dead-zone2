@@ -640,7 +640,7 @@ export function createSim(input: SimOptions): Sim {
 
   primeChunkWatch(w);
   // A loaded save already has its map; priming again would add a trail point the original lacks.
-  if (!opts.load) primePlayerMaps(w);
+  if (!opts.load) primePlayerMaps(w, ctx.grid);
   return {
     get tick() {
       return w.tick;

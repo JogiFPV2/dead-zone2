@@ -345,6 +345,8 @@ export const openingActionCommandSchemas = OPENING_ACTION_COMMANDS.map((type) =>
 );
 
 const markerCoord = z.number().finite().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
+/** Marker floor (`z`), the int16 range of the other tile commands. */
+const markerFloor = z.number().int().min(-0x8000).max(0x7fff);
 const markerIcon = z
   .string()
   .regex(/^[a-z0-9-]+:[a-z0-9-]+$/)
@@ -355,6 +357,7 @@ export const addMarkerCommandSchema = z.strictObject({
   type: z.literal('addMarker'),
   x: markerCoord,
   y: markerCoord,
+  z: markerFloor.optional(),
   icon: markerIcon,
   color: z.enum(MARKER_COLORS),
   text: markerText.optional(),
@@ -366,6 +369,7 @@ export const editMarkerCommandSchema = z.strictObject({
   id: z.number().int().min(1).max(0x7fffffff),
   x: markerCoord.optional(),
   y: markerCoord.optional(),
+  z: markerFloor.optional(),
   icon: markerIcon.optional(),
   color: z.enum(MARKER_COLORS).optional(),
   text: markerText.optional(),

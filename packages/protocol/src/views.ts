@@ -410,6 +410,12 @@ export interface SimViewPatch {
   /** The character's world map: fog of war, trail and markers (docs 9.29). */
   worldMap?: WorldMapView;
   /**
+   * StableIds of the zombies the player senses now (protocol 22): seen (same floor, sight range,
+   * line of sight) or heard (within `PlayerMapConfig.hearTiles`, ±1 floor). Ascending, full list
+   * when it changes.
+   */
+  sensedZombies?: number[];
+  /**
    * Vehicles within `VEHICLE_VIEW_TILES` (and the one the player sits in): lock, key, fuel,
    * containers; full list (by id) when anything in it changes.
    */
@@ -494,6 +500,38 @@ export interface MapMarkerView {
   text: string;
   /** Shown on the minimap too (default true; the sim always sets it). */
   showOnMinimap?: boolean;
+  /** Floor (protocol 22): `addMarker` without `z` = 0; markers of older saves are on 0. */
+  z: number;
+}
+
+/** What the character knows about a room (`RoomIntelView.state`); only grows. */
+export const ROOM_INTEL_STATES = ['seen', 'searched'] as const;
+export type RoomIntelState = (typeof ROOM_INTEL_STATES)[number];
+
+/**
+ * A room on the character's floor plan (protocol 22, docs/sim-architecture.md 9.42,
+ * docs/floors-ui.md). Same identity as the map data: chunk `(cx, cy)`, level `z` and the
+ * chunk-local `RoomId` of its `room` layer; a room crossing chunks is one entry per chunk.
+ * - `seen`: some floor tile of the room was in the player's sight (sight range, line of sight).
+ * - `searched`: every world storage of the room (this chunk's part) was searched (opened) by the
+ *   player; a room without storages becomes `searched` when the player stands in it.
+ */
+export interface RoomIntelView {
+  cx: number;
+  cy: number;
+  z: number;
+  room: number;
+  state: RoomIntelState;
+}
+
+/** Last observation of a zombie (`WorldMapView.zombieSightings`). */
+export interface ZombieSightingView {
+  x: number;
+  y: number;
+  /** Floor (`Math.floor` of the zombie's z). */
+  z: number;
+  /** Sim tick of the observation. */
+  tick: number;
 }
 
 /**
@@ -517,6 +555,16 @@ export interface WorldMapView {
   /** Points appended since the last view, same layout. */
   trailAdd?: number[];
   markers?: MapMarkerView[];
+  /** Floor plan rooms (all floors): full list in the first view, after a load and a reset. */
+  rooms?: RoomIntelView[];
+  /** Rooms new or changed (`seen` → `searched`) since the last view, like `trailAdd`. */
+  roomsAdd?: RoomIntelView[];
+  /**
+   * Last observation per zombie the player sensed (`sensedZombies`), at most
+   * `MAX_ZOMBIE_SIGHTINGS`, newest first; full list when it changes (about once a second while
+   * zombies are sensed). Not saved.
+   */
+  zombieSightings?: ZombieSightingView[];
 }
 
 export interface SkillView {

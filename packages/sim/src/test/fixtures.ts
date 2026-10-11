@@ -21,6 +21,10 @@ export interface MapSpec {
   /** Room id per world tile (0 = outside) and room id → room type (same for every chunk). */
   room?: (x: number, y: number) => number;
   rooms?: Record<string, string>;
+  /** Room id → building id (same for every chunk). */
+  roomBuildings?: Record<string, number>;
+  /** Floors 0..levels − 1, all the same as level 0 (default 1). */
+  levels?: number;
   /** Edge id of walls (default 1), with `edgeKinds` as the palette (e.g. 2 = window). */
   edgeId?: (x: number, y: number) => number;
   edgeKinds?: readonly (SimEdgeKind | null)[];
@@ -66,16 +70,19 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           x: o.x - cx * CHUNK_SIZE,
           y: o.y - cy * CHUNK_SIZE,
         }));
-      chunks.push({
-        cx,
-        cy,
-        z: 0,
-        floor,
-        edgeN,
-        edgeW,
-        ...(spec.room ? { room, rooms: spec.rooms ?? {} } : {}),
-        ...(objects.length > 0 ? { objects } : {}),
-      });
+      for (let z = 0; z < (spec.levels ?? 1); z++) {
+        chunks.push({
+          cx,
+          cy,
+          z,
+          floor,
+          edgeN,
+          edgeW,
+          ...(spec.room ? { room, rooms: spec.rooms ?? {} } : {}),
+          ...(spec.room && spec.roomBuildings ? { roomBuildings: spec.roomBuildings } : {}),
+          ...(objects.length > 0 && z === 0 ? { objects } : {}),
+        });
+      }
     }
   }
   return simMapFromData({

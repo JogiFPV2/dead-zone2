@@ -1,4 +1,4 @@
-import { worldMapPatch } from '../map/player-map.js';
+import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
 import type { TileGrid } from '../world/grid.js';
 import { vehicleStateViews } from '../vehicles/views.js';
@@ -286,6 +286,8 @@ export class ViewTracker {
     if (eid !== undefined) {
       const map = worldMapPatch(w, w.c.StableId.value[eid] ?? 0);
       if (map) patch.worldMap = map;
+      const sensed = sensedZombiesPatch(w, w.c.StableId.value[eid] ?? 0);
+      if (sensed) patch.sensedZombies = sensed;
     }
     if (w.items && eid !== undefined) {
       const ch = w.items.characters.get(w.c.StableId.value[eid] ?? 0);

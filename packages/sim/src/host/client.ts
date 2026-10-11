@@ -170,12 +170,15 @@ export interface SimWorkerClient {
     color: MarkerColor,
     text?: string,
     showOnMinimap?: boolean,
+    /** Floor; default the player's current floor. */
+    z?: number,
   ): void;
   editMarker(
     id: number,
     patch: {
       x?: number;
       y?: number;
+      z?: number;
       icon?: string;
       color?: MarkerColor;
       text?: string;
@@ -403,7 +406,7 @@ export function createSimWorkerClient(
     throwItem: (item, x, y, opts) => cmd({ type: 'throw', item, x, y, ...opts }),
     pickUpStorage: (container) => cmd({ type: 'pickUpStorage', container }),
     setInterest: (cx, cy, radiusChunks) => cmd({ type: 'setInterest', cx, cy, radiusChunks }),
-    addMarker: (x, y, icon, color, text, showOnMinimap) =>
+    addMarker: (x, y, icon, color, text, showOnMinimap, z) =>
       cmd({
         type: 'addMarker',
         x,
@@ -412,6 +415,7 @@ export function createSimWorkerClient(
         color,
         ...(text !== undefined ? { text } : {}),
         ...(showOnMinimap !== undefined ? { showOnMinimap } : {}),
+        ...(z !== undefined ? { z } : {}),
       }),
     editMarker: (id, patch) => cmd({ type: 'editMarker', id, ...patch }),
     removeMarker: (id) => cmd({ type: 'removeMarker', id }),

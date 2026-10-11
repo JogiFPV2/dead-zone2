@@ -1,4 +1,5 @@
 import type { CommandRejectReason } from '@deadzone/protocol';
+import { noteContainerSearched } from '../map/player-map.js';
 import { ModSlot, type ItemDef } from '../content/adapter.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
@@ -207,6 +208,7 @@ export function registerItemActions(): void {
       generateLoot(st, c, w.clock.startMinute);
       const sid = stableIdOf(w, eid);
       if (!c.searchedBy.includes(sid)) c.searchedBy.push(sid);
+      noteContainerSearched(w, eid, c);
       const p = playerItems(w, eid)!;
       p.open = c.id;
       st.version++;

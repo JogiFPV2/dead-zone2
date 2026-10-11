@@ -645,6 +645,8 @@ export interface AddMarkerCommand extends CommandHeader {
   type: 'addMarker';
   x: number;
   y: number;
+  /** Floor; default the player's current floor. */
+  z?: number | undefined;
   icon: string;
   color: MarkerColor;
   text?: string | undefined;
@@ -657,6 +659,7 @@ export interface EditMarkerCommand extends CommandHeader {
   id: number;
   x?: number | undefined;
   y?: number | undefined;
+  z?: number | undefined;
   icon?: string | undefined;
   color?: MarkerColor | undefined;
   text?: string | undefined;

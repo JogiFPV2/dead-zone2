@@ -65,8 +65,8 @@ describe('SimBigMapSource (protocol)', () => {
         change: 'added',
         changed: 7,
         markers: [
-          { ...m, showOnMinimap: false },
-          { ...m, id: 8 },
+          { ...m, z: 0, showOnMinimap: false },
+          { ...m, z: 0, id: 8 },
         ],
       },
     ]);

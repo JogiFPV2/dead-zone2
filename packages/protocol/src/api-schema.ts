@@ -6,6 +6,7 @@ import {
   MAP_MARKER_TEXT_MAX,
   MAP_MARKER_ICONS,
   MAX_MAP_MARKERS,
+  MAX_MAP_ROOMS_CHARS,
   SAVE_MARKER_COLORS,
   CLOUD_SAVE_REASONS,
   type CreateCharacterRequest,
@@ -55,9 +56,10 @@ export const saveEnvelopeHeaderSchema: z.ZodType<SaveEnvelopeHeader> = z.strictO
 });
 
 /**
- * One map marker as saved by the sim: `[id, x, y, icon, color, text, showOnMinimap?]`. The 7th
- * element is written only when false (hidden from the minimap); missing = true, so older saves
- * and markers shown on the minimap keep the 6-element form.
+ * One map marker as saved by the sim: `[id, x, y, icon, color, text, showOnMinimap?, z?]`. The
+ * 7th element is written only when false (hidden from the minimap) or when `z` follows; missing
+ * = true. The 8th is the floor, written only when not 0 (protocol 22); missing = 0. Older saves
+ * keep the 6- or 7-element form.
  */
 export const saveMarkerSchema = z.tuple([
   z.number().int().min(0).max(U32),
@@ -75,6 +77,18 @@ export const saveMarkerSchema = z.tuple([
     // eslint-disable-next-line no-control-regex
     .refine((t) => !/[\u0000-\u001f\u007f]/.test(t), { message: 'control characters' }),
   z.boolean().optional(),
+  z.number().int().min(-0x8000).max(0x7fff).optional(),
 ]);
 
 export const saveMarkersSchema = z.array(saveMarkerSchema).max(MAX_MAP_MARKERS);
+
+/**
+ * Floor plan rooms as saved by the sim (`PlayerMapSave.rooms`, optional, protocol 22): base64
+ * of zigzag varint records (sim `encodeRooms`); the sim's decoder checks the content.
+ */
+export const saveMapRoomsSchema = z
+  .string()
+  .max(MAX_MAP_ROOMS_CHARS)
+  .regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/, {
+    message: 'not base64',
+  });

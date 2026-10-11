@@ -197,6 +197,7 @@ describe('player map: markers', () => {
         color: 'red',
         text: 'Sklep',
         showOnMinimap: true,
+        z: 0,
       },
       {
         id: 2,
@@ -206,6 +207,7 @@ describe('player map: markers', () => {
         color: 'blue',
         text: '',
         showOnMinimap: true,
+        z: 0,
       },
     ]);
     expect(
@@ -222,6 +224,7 @@ describe('player map: markers', () => {
         color: 'white',
         text: 'x'.repeat(40),
         showOnMinimap: true,
+        z: 0,
       },
     ]);
     expect(sim.tick).toBe(0);
@@ -296,7 +299,16 @@ describe('player map: markers', () => {
     marker(sim, { type: 'editMarker', id: 2, text: 'Auto' });
     const last = of(sim.drainEvents(), 'markersChanged').at(-1)!.markers;
     expect(last).toEqual([
-      { id: 1, x: 5, y: 5, icon: 'base:marker-note', color: 'red', text: '', showOnMinimap: false },
+      {
+        id: 1,
+        x: 5,
+        y: 5,
+        icon: 'base:marker-note',
+        color: 'red',
+        text: '',
+        showOnMinimap: false,
+        z: 0,
+      },
       {
         id: 2,
         x: 5,
@@ -305,6 +317,7 @@ describe('player map: markers', () => {
         color: 'red',
         text: 'Auto',
         showOnMinimap: false,
+        z: 0,
       },
     ]);
     marker(sim, { type: 'editMarker', id: 2, showOnMinimap: true });
@@ -411,7 +424,9 @@ describe('player map: save, character', () => {
     expect(saveMarkersSchema.safeParse(saved).success).toBe(true);
     expect(saveMarkersSchema.safeParse([[...saved[0]!, true]]).success).toBe(true);
     expect(saveMarkersSchema.safeParse([[...saved[0]!, 'no']]).success).toBe(false);
-    expect(saveMarkersSchema.safeParse([[...saved[1]!, 1]]).success).toBe(false);
+    expect(saveMarkersSchema.safeParse([[...saved[1]!, 1.5]]).success).toBe(false);
+    expect(saveMarkersSchema.safeParse([[...saved[1]!, 1]]).success).toBe(true);
+    expect(saveMarkersSchema.safeParse([[...saved[1]!, 1, 0]]).success).toBe(false);
     const load = (bytes: Uint8Array) =>
       createSim({
         seed: 7,

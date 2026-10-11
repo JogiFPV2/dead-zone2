@@ -40,6 +40,12 @@ export const MAP_MARKER_TEXT_MAX = 40;
 /** Trail of the character map: a point every 16 m, at most 20 000 points (docs/backend.md §4.2). */
 export const PLAYER_MAP_TRAIL_SPACING_M = 16;
 export const PLAYER_MAP_TRAIL_MAX_POINTS = 20_000;
+/** Floor plan: at most this many rooms per character (protocol 22, sim-architecture 9.42). */
+export const MAX_MAP_ROOMS = 20_000;
+/** Saved rooms (`PlayerMapSave.rooms`): base64 of at most 15 varint bytes per room. */
+export const MAX_MAP_ROOMS_CHARS = Math.ceil((MAX_MAP_ROOMS * 15) / 3) * 4;
+/** `WorldMapView.zombieSightings`: newest observations kept per character. */
+export const MAX_ZOMBIE_SIGHTINGS = 64;
 /**
  * Map marker icons (content ids, drawn by the client). Single source for the sim, the client and
  * the server's save validation; Symulacja's `worldSettings.mapMarkers.icons` default (#109) is the

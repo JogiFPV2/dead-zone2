@@ -1287,3 +1287,22 @@ Atak wręcz (`attack` bez broni palnej) używa tego, co leży w `hand_primary`, 
 - **Dwuręczność.** `twoHanded()` (inventory) bierze dla zwykłych przedmiotów `meleeStatsFor`, więc ≥ 5 kg oznacza oburącz. Pojemniki i ubrania są zawsze jednoręczne. `CharacterView.twoHanded` liczy to tak samo.
 - **Widok.** `CombatView.melee?: MeleeWeaponView` = `{ source: 'weapon'|'improvised'|'default'|'unarmed', damage:{min,max}, rangeTiles, attacksPerSec, staminaCost, critChance, twoHanded, skill?, breakChancePct (0–100), conditionPct? (0–100) }`. Nie ma go, gdy w ręku jest broń palna. `weapon` to id dowolnego przedmiotu w ręku. `condition`/`maxCondition` dla improwizowanej broni to `durability − wear` / `durability`.
 - **Hash i zapis.** `wear` wchodzi do hasha przedmiotów (sekcja dopisywana tylko wtedy, gdy któryś przedmiot ma `wear`, więc stare złote hashe się nie zmieniają). Trafia też do sygnatury chunka i do zapisu (ogólne pola przedmiotu, `SAVE_VERSION` 3, wstecznie zgodny). Serwer nie musi nic robić.
+
+### 9.42 Mapa gracza: wiedza o pomieszczeniach, piętra znaczników, wyczute zombie (protokół 22) — kontrakt dla Silnika (docs/floors-ui.md) i Serwera
+
+Klient sam składa rzut pięter z chunków mapy (`floors/building-plan.ts`). Sim podaje tylko to, co wie postać, czyli interfejs `FloorIntel` z docs/floors-ui.md.
+
+- **Pomieszczenia (`RoomIntelView {cx, cy, z, room, state: 'seen'|'searched'}`).** Identyfikator jest taki jak w danych mapy: chunk, poziom i lokalny `RoomId` z warstwy `room`. Pomieszczenie na kilku chunkach to kilka wpisów.
+  - `seen`: co `discoverEverySec` (system `playerMap`) każdy kafel pomieszczenia na piętrze gracza w zasięgu wzroku (`playerSightRange`, maks. 30 kafli) z linią wzroku do środka kafla (`lineOfSight`: ściany zasłaniają, okna nie). Stanie w pomieszczeniu też się liczy.
+  - `searched`: gracz przeszukał każdy pojemnik świata (`kind 'world'`) tej części pomieszczenia (`items/actions.ts` → `noteContainerSearched`). Pomieszczenie bez pojemników dostaje `searched`, gdy gracz w nim stanie.
+  - Stan tylko rośnie, per postać. Limit to `MAX_MAP_ROOMS` (20 000).
+  - Koszt: najgorszy przypadek (każdy kafel osobnym, niewidocznym pokojem w promieniu 30) to około 2 ms raz na sekundę gry przy obciążonej maszynie. Pokoje już znane są pomijane.
+- **View.** `WorldMapView.rooms?: RoomIntelView[]` to pełna lista (pierwszy view, po wczytaniu, po resecie). `roomsAdd?: RoomIntelView[]` to nowe albo zmienione (`seen` → `searched`) od ostatniego view, jak `trailAdd`. Stałe: `ROOM_INTEL_STATES`.
+- **Znaczniki.** `MapMarkerView.z: number` (wymagane). `AddMarkerCommand.z?` (domyślnie 0), `EditMarkerCommand.z?`. `z` spoza pięter świata (`bounds.z0..z1`) daje `invalid-target`. Klient: `addMarker(x, y, icon, color, text?, showOnMinimap?, z?)`, `editMarker(id, {z})`.
+- **Zombie.** `SimViewPatch.sensedZombies?: number[]` to stableId zombie, które gracz teraz wyczuwa (rosnąco, pełna lista przy zmianie, liczone co `senseEveryTicks` = 5):
+  - widzi: to samo piętro, zasięg wzroku, linia wzroku;
+  - słyszy: ≤ `hearTiles` (6) kafli, najwyżej jedno piętro różnicy, także przez ściany.
+
+  `WorldMapView.zombieSightings?: ZombieSightingView[] {x, y, z, tick}` to ostatnia obserwacja każdego wyczutego zombie, aktualizowana raz na sekundę. Najwyżej `MAX_ZOMBIE_SIGHTINGS` (64), najnowsze pierwsze, pełna lista przy zmianie. Obserwacje nie idą do zapisu.
+- **Zapis (`SAVE_VERSION` 3, wstecznie zgodny).** Znacznik z `z ≠ 0` ma 8 elementów `[id, x, y, icon, color, text, showOnMinimap, z]`; stare 6- i 7-elementowe oznaczają `z = 0` (`saveMarkerSchema` przyjmuje opcjonalny 8. element). Pokoje trafiają do opcjonalnego `PlayerMapSave.rooms`: base64 z rekordów zigzag-varint (Δcx, Δcy, Δz, room, stan), około 5 B na pokój. W teście `big-world` jest 5000 pokoi. Stary zapis bez `rooms` oznacza pustą wiedzę. `saveSummary` się nie zmienia.
+- **Serwer.** `playerMapSchema` w `apps/server` jest `looseObject`, więc `rooms` przechodzi bez zmian. Zalecamy dopisać `rooms: saveMapRoomsSchema.optional()` (`@deadzone/protocol/schema`, base64 do `MAX_MAP_ROOMS_CHARS`). Znaczniki są walidowane `saveMarkersSchema`, więc `z` działa automatycznie.

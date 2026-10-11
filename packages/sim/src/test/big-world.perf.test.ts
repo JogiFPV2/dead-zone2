@@ -10,7 +10,7 @@ import { gzipSize, testLog, WORLD_CHUNKS, worldMapKind } from './world-map-fixtu
 import { addCoarseZombies, ChunkLoot, chunkIndex, coarseTotal } from '../lod/state.js';
 import { spawnChunkLoot } from '../lod/chunks.js';
 import { generateLoot } from '../items/loot.js';
-import { playerMapOf } from '../map/player-map.js';
+import { playerMapOf, roomKey } from '../map/player-map.js';
 
 /**
  * docs 9.24 / 9.29: a 16 × 16 km world (512 × 512 chunks; the size is only `WorldSource.bounds`).
@@ -140,10 +140,24 @@ describe('16 × 16 km world (512 × 512 chunks)', () => {
             id: i + 1,
             x: 100 + i,
             y: 200,
+            z: i % 3,
             icon: 'base:marker-loot',
             color: 'red',
             text: 'x'.repeat(40),
           });
+        // Floor plan: 5000 rooms known (a few hundred buildings).
+        for (let i = m.rooms.size; i < 5000; i++) {
+          const r = {
+            cx: 250 + (i % 70),
+            cy: 250 + Math.floor(i / 70),
+            z: i % 3,
+            room: 1 + (i % 40),
+          };
+          m.rooms.set(roomKey(r.cx, r.cy, r.z, r.room), {
+            ...r,
+            state: i % 2 ? 'seen' : 'searched',
+          });
+        }
         const bytes = sim.save();
         gz = await gzipSize(bytes);
         sizes.push(

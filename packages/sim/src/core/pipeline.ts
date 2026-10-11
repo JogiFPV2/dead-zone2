@@ -68,5 +68,5 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'penalties', run: (w) => penaltiesSystem(w) },
     { name: 'combat', run: (w, ctx) => combatSystem(w, ctx.grid) },
     { name: 'lifecycle', run: (w) => lifecycleSystem(w) },
-    { name: 'playerMap', run: (w) => playerMapSystem(w) },
+    { name: 'playerMap', run: (w, ctx) => playerMapSystem(w, ctx.grid) },
   ];
