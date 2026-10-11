@@ -3,6 +3,7 @@ import { floorZ } from '../world/levels.js';
 import { lightLevelAt, playerVisibility, stealthOf } from '../ai/light.js';
 import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
+import { furnitureActionsView } from '../furniture/menu.js';
 import type { TileGrid } from '../world/grid.js';
 import { vehicleStateViews } from '../vehicles/views.js';
 import { pumpViews } from '../vehicles/pumps.js';
@@ -214,6 +215,7 @@ export class ViewTracker {
   private pumpsKey = '';
   private targetKey = '';
   private stealthKey = '';
+  private furnitureKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -387,6 +389,15 @@ export class ViewTracker {
         patch.visibility = vis;
         patch.stealth = stealthOf(vis);
         patch.lightLevel = light;
+      }
+    }
+    // Furniture / edge context menu: every 4 ticks (200 ms), full list on change.
+    if (eid !== undefined && w.items && grid && w.tick % 4 === 0) {
+      const furniture = furnitureActionsView(w, grid, eid);
+      const key = JSON.stringify(furniture);
+      if (key !== this.furnitureKey) {
+        if (this.furnitureKey !== '' || furniture.length > 0) patch.furnitureActions = furniture;
+        this.furnitureKey = key;
       }
     }
     if (w.openings.version !== this.openingsVersion) {

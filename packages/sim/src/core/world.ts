@@ -121,7 +121,11 @@ export function createSimWorld(opts: {
     survival,
     items: survival && opts.items ? opts.items(survival) : undefined,
     ai: survival && opts.ai ? opts.ai(survival) : undefined,
-    openings: createOpeningsWorld(opts.map, survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG),
+    openings: createOpeningsWorld(
+      opts.map,
+      survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG,
+      opts.seed,
+    ),
     physics: createPhysicsWorld(rng.physics, opts.physicsConfig),
     dev: opts.dev ?? false,
     events: [],

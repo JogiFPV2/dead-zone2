@@ -45,6 +45,12 @@ export interface SimChunk {
    */
   readonly objects?: readonly SimMapObject[] | undefined;
   /**
+   * Doors / gates locked at the start (protocol 26, generator's choice): `tileIndex(x, y) * 2 +
+   * side` (side 0 = north edge, 1 = west edge of that tile). Present (even empty) = the sim does
+   * not roll `openings.locks.exteriorLockedChance` for this chunk. Keys: `roomBuildings`.
+   */
+  readonly lockedDoors?: readonly number[] | undefined;
+  /**
    * Flights of stairs starting on this chunk's level `z` and leading to z + 1 (sim
    * `world/levels.ts`). Optional; a chunk without stairs omits it.
    */

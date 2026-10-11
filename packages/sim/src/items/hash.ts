@@ -56,6 +56,10 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       .u32(i.placed ? 1 : 0);
     // Only when thawing (older goldens unchanged).
     if (i.thawUntil !== undefined) h.u32(0x7468_6177).u32(i.thawUntil);
+    if (i.buildingId !== undefined)
+      h.u32(0x6b65_7901)
+        .u32(i.buildingId % 0x1_0000_0000)
+        .u32(Math.floor(i.buildingId / 0x1_0000_0000));
   }
   const pids = [...st.players.keys()].sort(byNumber);
   h.u32(pids.length);

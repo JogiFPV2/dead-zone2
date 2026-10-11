@@ -44,6 +44,8 @@ export interface ItemInstance {
    * Unset = not thawing.
    */
   thawUntil?: number;
+  /** Building key: map-global building id it opens (`SimChunk.roomBuildings`). */
+  buildingId?: number;
 }
 
 /**
@@ -111,6 +113,8 @@ export interface ActionState {
   spot?: { x: number; y: number; z: number } | undefined;
   /** Openings actions (`openings/timed.ts`): the edge (`openingKey`). */
   edge?: number | undefined;
+  /** `forceDoor` from the menu: crowbar or kick (absent = crowbar when carried). `useKey`: lock. */
+  method?: 'pry' | 'kick' | 'lock' | 'unlock' | undefined;
   /** Vehicle actions (`vehicles/actions.ts`): the vehicle's StableId and the seat / part. */
   vehicle?: number | undefined;
   seat?: number | undefined;

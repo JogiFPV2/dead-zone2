@@ -14,6 +14,7 @@ import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applyLeisureCommand, isLeisureCommand } from '../leisure/leisure.js';
 import { applyLureCommand, isLureCommand } from '../lures/lures.js';
 import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
+import { applyUseFurniture } from '../furniture/menu.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 import type { TileGrid } from '../world/grid.js';
 import { applyMarkerCommand, isMarkerCommand } from '../map/player-map.js';
@@ -99,6 +100,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       if (reason) reject(w, cmd, reason);
     } else if (isLureCommand(cmd)) {
       const reason = applyLureCommand(w, grid, eid, cmd);
+      if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'useFurniture') {
+      const reason = grid ? applyUseFurniture(w, grid, eid, cmd) : 'invalid-state';
       if (reason) reject(w, cmd, reason);
     } else if (isOpeningCommand(cmd)) {
       const reason = applyOpeningCommand(w, grid, eid, cmd);

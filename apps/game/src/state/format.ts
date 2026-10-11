@@ -19,6 +19,10 @@ export function describeEvent(e: SimEvent): string {
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
     case 'utilityChanged':
       return `${e.utility} ${e.on ? 'on' : 'off'}`;
+    case 'lockPicked':
+      return e.success ? 'lock picked' : e.broke ? 'lockpick broke' : 'lockpick failed';
+    case 'knocked':
+      return 'knock knock';
     case 'fellAsleep':
       return 'fell asleep';
     case 'characterCreated':

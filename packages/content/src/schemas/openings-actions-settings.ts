@@ -64,10 +64,16 @@ export const WindowActionsSettingsSchema = z
      * nich to `laceration`, reszta `scratch`.
      */
     climbLacerationShare: FractionSchema.default(0.4),
+    /**
+     * Usuwanie szkła bez rękawic (żaden noszony przedmiot nie ma tagu `gloveTag`): szansa
+     * skaleczenia dłoni (`laceration`) na koniec akcji.
+     */
+    clearGlassCutChance: FractionSchema.default(0.3),
+    gloveTag: TagSchema.default('base:gloves'),
   })
   .prefault({});
 
-/** Wyważanie zamkniętych na klucz drzwi / bram (`forceDoor`). Klucze: TODO. */
+/** Wyważanie zamkniętych na klucz drzwi / bram (`forceDoor`). Klucze i wytrychy: `locks`. */
 export const ForceSettingsSchema = z
   .strictObject({
     /** Łomem (tag `barricade.pryTag`): czas, szansa, hałas. */

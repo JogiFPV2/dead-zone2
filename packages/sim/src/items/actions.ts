@@ -8,6 +8,7 @@ import { registerCraftActions } from '../crafting/crafting.js';
 import { registerLeisureActions } from '../leisure/leisure.js';
 import { registerVehicleActions } from '../vehicles/actions.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
+import { registerLockActions } from '../furniture/locks.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -167,6 +168,7 @@ export function registerItemActions(): void {
   registerCraftActions();
   registerLeisureActions();
   registerOpeningActions();
+  registerLockActions();
   registerVehicleActions();
 
   registerAction('search', {
@@ -205,7 +207,12 @@ export function registerItemActions(): void {
       }
       const c = st.containers.get(a.container)!;
       const first = !c.lootDone;
-      generateLoot(st, c, w.clock.startMinute);
+      const locks = w.openings.cfg.locks;
+      generateLoot(st, c, w.clock.startMinute, {
+        map: w.map,
+        keyTag: locks?.keyTag ?? 'base:building-key',
+        corpseRadiusTiles: locks?.corpseKeyRadiusTiles ?? 24,
+      });
       const sid = stableIdOf(w, eid);
       if (!c.searchedBy.includes(sid)) c.searchedBy.push(sid);
       noteContainerSearched(w, eid, c);

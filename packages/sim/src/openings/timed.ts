@@ -7,7 +7,13 @@ import { gameMinuteAt, ticksPerGameMinute } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces, carriedItems, hasToolTag } from '../items/actions.js';
 import { carriedLoad, hardLimit, playerItems } from '../items/inventory.js';
-import { destroyItem, groundPile, type ActionState, type ItemInstance } from '../items/store.js';
+import {
+  defOf,
+  destroyItem,
+  groundPile,
+  type ActionState,
+  type ItemInstance,
+} from '../items/store.js';
 import { canVault, startVault, type VaultTarget } from '../physics/vault.js';
 import { addXp, skillLevel } from '../progress/skills.js';
 import { woundKindIndex } from '../survival/state.js';
@@ -124,9 +130,26 @@ const vaultTarget = (key: number): VaultTarget => {
   return { side: key % 2, tx: k.tx, ty: k.ty };
 };
 
-/** `forceDoor` method: a crowbar when carried, else a kick. */
-const forceMethod = (w: SimWorld, eid: number): 'pry' | 'kick' =>
-  hasToolTag(w, eid, w.openings.cfg.barricade.pryTag) ? 'pry' : 'kick';
+/** `forceDoor` method: chosen in the menu (`force-pry` / `force-kick`), else a crowbar when carried. */
+export const forceMethod = (w: SimWorld, eid: number, a?: ActionState): 'pry' | 'kick' =>
+  a?.method === 'kick' || a?.method === 'pry'
+    ? a.method
+    : hasToolTag(w, eid, w.openings.cfg.barricade.pryTag)
+      ? 'pry'
+      : 'kick';
+
+/** Wears something with `window.gloveTag` (gloves) in any equipment slot. */
+export function wearsGloves(w: SimWorld, eid: number): boolean {
+  const st = w.items;
+  const p = playerItems(w, eid);
+  if (!st || !p) return false;
+  const tag = w.openings.cfg.window.gloveTag ?? 'base:gloves';
+  for (const id of p.slots.values()) {
+    const item = st.items.get(id);
+    if (item && defOf(st, item).tags.includes(tag)) return true;
+  }
+  return false;
+}
 
 let registered = false;
 
@@ -193,6 +216,9 @@ export function registerOpeningActions(): void {
       const g = w.openings.cfg.window;
       give(w, eid, g.glassItem, g.glassPieces);
       emitOpeningChanged(w, t.key, t.kind, 'player');
+      // Bare hands on broken glass (PZ): a chance to cut the hand.
+      if (!wearsGloves(w, eid) && w.rng.actions.nextFloat() < (g.clearGlassCutChance ?? 0))
+        inflictWound(w, eid, HAND_R, woundKindIndex('laceration'));
     },
   });
 
@@ -260,24 +286,26 @@ export function registerOpeningActions(): void {
     },
   });
 
-  // TODO(openings): building keys (unlock a locked door with its key) and lockpicking.
+  // Building keys and lockpicks: furniture/locks.ts (`useKey`, `pickLock`).
   registerAction('forceDoor', {
     validate(w, eid, a) {
       const t = target(w, eid, a);
       if (typeof t === 'string') return t;
       if (!isDoorLike(t.kind)) return 'invalid-target';
       if (t.planks > 0 || t.state !== OS.locked) return 'invalid-state';
+      if (a.method === 'pry' && !hasToolTag(w, eid, w.openings.cfg.barricade.pryTag))
+        return 'missing-tool';
       return undefined;
     },
-    durationMin: (w, eid) => {
+    durationMin: (w, eid, a) => {
       const f = w.openings.cfg.force;
-      return secMin(w, forceMethod(w, eid) === 'pry' ? f.prySec : f.kickSec);
+      return secMin(w, forceMethod(w, eid, a) === 'pry' ? f.prySec : f.kickSec);
     },
     ignore: ['threat'],
     complete(w, eid, a) {
       const t = target(w, eid, a) as Target;
       const f = w.openings.cfg.force;
-      const method = forceMethod(w, eid);
+      const method = forceMethod(w, eid, a);
       noiseAt(w, t.key, method === 'pry' ? f.pryNoise : f.kickNoise, { eid, kind: method });
       const chance =
         (method === 'pry' ? f.pryChance : f.kickChance) +

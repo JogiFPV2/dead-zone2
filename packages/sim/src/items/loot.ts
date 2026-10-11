@@ -2,6 +2,7 @@ import { lootTableForContainer } from '@deadzone/content';
 import { CHUNK_SIZE, tileIndex, type SimChunkAddress, type SimMap } from '@deadzone/protocol';
 import type { LootTableDef } from '../content/adapter.js';
 import { deriveSeed, Rng } from '../core/rng.js';
+import { roomAt } from '../openings/state.js';
 import {
   addContainer,
   createItem,
@@ -67,7 +68,7 @@ export function createChunkContainers(
  * then one more storage per `compartments` entry of that type (fridge-freezer = fridge + freezer
  * on one tile, each with its own loot key, table and spoilage). Compartments have none of their own.
  */
-function storageTypesOf(st: ItemStore, contentId: string): number[] {
+export function storageTypesOf(st: ItemStore, contentId: string): number[] {
   let main = st.content.containerTypeIndex.get(contentId);
   if (main === undefined) {
     const def = st.content.items[st.content.itemIndex.get(contentId) ?? -1];
@@ -117,7 +118,12 @@ const MAX_TABLE_DEPTH = 8;
  * Fills a world storage from its loot table with the storage's derived RNG. Items are aged since
  * the world start (food in houses is as old as the apocalypse), stacks split by `maxStack`.
  */
-export function generateLoot(st: ItemStore, c: ItemContainer, worldStartMinute: number): void {
+export function generateLoot(
+  st: ItemStore,
+  c: ItemContainer,
+  worldStartMinute: number,
+  keys?: BuildingKeys,
+): void {
   if (c.lootDone) return;
   c.lootDone = true;
   st.version++;
@@ -139,6 +145,65 @@ export function generateLoot(st: ItemStore, c: ItemContainer, worldStartMinute: 
       left -= n;
     }
   }
+  if (table.buildingKey && keys) addBuildingKey(st, c, table.buildingKey, worldStartMinute, keys);
+}
+
+/** What a loot roll needs to hand out building keys (map rooms, `openings.locks`). */
+export interface BuildingKeys {
+  readonly map: SimMap;
+  readonly keyTag: string;
+  /** Corpses: nearest building within this many tiles of the corpse. */
+  readonly corpseRadiusTiles: number;
+}
+
+/** Building at (x, y, z), else (radius > 0) the nearest one within `radius` tiles (ring order). */
+function buildingNear(map: SimMap, x: number, y: number, z: number, radius: number): number {
+  for (let r = 0; r <= radius; r++) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const b = roomAt(map, x + dx, y + dy, z)?.building ?? 0;
+        const d = dx * dx + dy * dy;
+        if (b > 0 && d < bestD) {
+          best = b;
+          bestD = d;
+        }
+      }
+    }
+    if (best > 0) return best;
+  }
+  return 0;
+}
+
+/**
+ * Loot table `buildingKey` (Modules): with that chance a key to the storage's building (a
+ * corpse: the building nearest to where the zombie fell) — the first item with `keyTag`.
+ * Own derived RNG, so the rest of the loot does not change.
+ */
+function addBuildingKey(
+  st: ItemStore,
+  c: ItemContainer,
+  chance: number,
+  minute: number,
+  keys: BuildingKeys,
+): void {
+  const def = st.content.items.findIndex((d) => d.tags.includes(keys.keyTag));
+  if (def < 0) return;
+  if (Rng.fromSeed(deriveSeed(c.lootKey, 'building-key')).nextFloat() >= chance) return;
+  const x = Math.floor(c.x);
+  const y = Math.floor(c.y);
+  const building = buildingNear(
+    keys.map,
+    x,
+    y,
+    c.z,
+    c.kind === 'corpse' ? keys.corpseRadiusTiles : 0,
+  );
+  if (building <= 0) return;
+  const key = createItem(st, def, c.id, 1, minute);
+  key.buildingId = building;
 }
 
 /**

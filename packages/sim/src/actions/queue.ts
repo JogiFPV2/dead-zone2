@@ -43,6 +43,8 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'fillFuel',
   'siphonFuel',
   'repairVehicle',
+  'pickLock',
+  'useKey',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;
@@ -269,6 +271,31 @@ export function actionsSystem(w: SimWorld): void {
     }
     next(w, eid, p);
   }
+}
+
+/**
+ * Context menu preview (furniture/menu.ts): the reason `startAction` would reject with — or
+ * `threat` when zombies near would interrupt it at once — and its base duration (game minutes,
+ * before the wound slowdown; undefined for actions timed in ticks).
+ */
+export function previewAction(
+  w: SimWorld,
+  eid: number,
+  a: ActionState,
+): { reason: CommandRejectReason | undefined; durationMin: number | undefined } {
+  const h = handlers.get(a.kind);
+  const p = playerItems(w, eid);
+  if (!h || !p) return { reason: 'invalid-state', durationMin: undefined };
+  let reason = w.survival?.asleep[eid] ? 'invalid-state' : h.validate(w, eid, a);
+  if (!reason && p.current && p.queue.length >= MAX_QUEUED_ACTIONS) reason = 'busy';
+  if (
+    !reason &&
+    !THREAT_IMMUNE.has(a.kind) &&
+    !h.ignore?.includes('threat') &&
+    threatNearby(w, eid)
+  )
+    reason = 'threat';
+  return { reason, durationMin: h.ticks ? undefined : h.durationMin(w, eid, a) };
 }
 
 export const actionPart = (a: ActionState) => (a.part >= 0 ? BODY_PARTS[a.part] : undefined);

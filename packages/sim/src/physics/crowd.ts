@@ -2,7 +2,7 @@ import type { SimEvent } from '@deadzone/protocol';
 import { ZombieState } from '../ai/state.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { damageOpening, edgeCentre } from '../openings/actions.js';
-import { maxHp, OpeningKind, openingView, OS, unpackKey } from '../openings/state.js';
+import { baseState, maxHp, OpeningKind, openingView, OS, unpackKey } from '../openings/state.js';
 import type { TileGrid } from '../world/grid.js';
 import { canAct, canMove } from './modifiers.js';
 import { PHYS_TICKS_PER_SECOND } from './constants.js';
@@ -137,7 +137,7 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
   const side = key % 2;
   const kind = grid.kindOf(side === 0 ? grid.edgeN(k.tx, k.ty, k.z) : grid.edgeW(k.tx, k.ty, k.z));
   const e = w.openings.states.get(key);
-  const state = e?.state ?? OS.closed;
+  const state = e?.state ?? baseState(w.openings, key);
   const prev = w.physics.pressure.get(key) ?? 0;
   const passable = (state === OS.open || state === OS.broken) && !e?.planks;
   if (kind === OpeningKind.wall || passable || !eids.length) {

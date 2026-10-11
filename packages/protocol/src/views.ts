@@ -148,6 +148,8 @@ export interface ItemView {
   frozen?: boolean;
   /** Thawing: game minutes left until thawed (then it spoils at the normal rate). */
   thawMin?: number;
+  /** Building key (protocol 26): map-global building id it opens (`SimChunk.roomBuildings`). */
+  buildingId?: number;
   /** Own container (bags, placed storage), opened like any other container. */
   container?: ContainerId;
   /** Slots this item is equipped in (two-handed: both hands). */
@@ -402,6 +404,77 @@ export interface UtilitiesView {
   powerSource: PowerSource | null;
 }
 
+/**
+ * Reason codes of a disabled furniture action (`FurnitureActionView.reason`), the same codes the
+ * sim rejects `useFurniture` with. Polish texts: `FURNITURE_REASONS_PL` (`@deadzone/content`).
+ */
+export const FURNITURE_REASONS = [
+  'no-power',
+  'no-water',
+  'no-gas',
+  'threat',
+  'too-heavy',
+  'locked',
+  'no-key',
+  'missing-tool',
+  'missing-item',
+  'missing-parts',
+  'invalid-state',
+  'blocked',
+  'out-of-range',
+  'busy',
+  'tired',
+  'not-tired',
+] as const;
+export type FurnitureReason = (typeof FURNITURE_REASONS)[number];
+
+/** One entry of a furniture / edge context menu (protocol 26). */
+export interface FurnitureActionView {
+  /**
+   * Stable action id (`open`, `close`, `smash`, `clear-glass`, `climb-through`, `barricade`,
+   * `unbarricade`, `lock`, `unlock`, `unlock-key`, `lock-key`, `lockpick:<itemId>`, `force-pry`,
+   * `force-kick`, `knock`, `open-storage`, `watch`, `insert-tape:<itemId>`, …). Actions that use
+   * a carried item are `<action>:<itemId>` (one entry per usable item); the prefix groups a
+   * submenu.
+   */
+  id: string;
+  labelPl: string;
+  enabled: boolean;
+  reason?: FurnitureReason;
+  /** Polish reason (may be more specific than the code, e.g. "Brak młotka"). */
+  reasonPl?: string;
+  /** Duration in game minutes (timed actions; absent = instant). */
+  durationMin?: number;
+  /** Success chance (lockpick, forcing a door). */
+  chancePct?: number;
+  /** Chance the tool breaks (lockpick). */
+  breakChancePct?: number;
+  /** Chance of an injury (smash with a bare hand, glass without gloves, climbing over glass). */
+  injuryChancePct?: number;
+  /** Noise radius in tiles (smash, force, knock, barricade). */
+  noiseTiles?: number;
+  /** The item this entry uses (`lockpick:<itemId>`): instance id and content id. */
+  item?: { id: ItemId; def: string };
+}
+
+export interface FurnitureView {
+  /**
+   * Stable id: edges (doors, windows, gates) = the edge key `openingKey(side, tx, ty, z)`
+   * (< 2^42); map objects = 2^42 + ((z + 128) · 2^32 + (y + 2^15) · 2^16 + (x + 2^15)) · 16 + n
+   * (n = the object's index among the objects on that tile).
+   */
+  furnitureId: number;
+  /** `door`, `window`, `gate`, or the object's kind (`fridge`, `cabinet`, `tv`, …). */
+  typeId: string;
+  /** Content id of a map object (absent for edges). */
+  contentId?: string;
+  /** Position in world metres (tile = 1 m): the tile centre, or the edge centre; `z` = floor. */
+  x: number;
+  y: number;
+  z: number;
+  actions: FurnitureActionView[];
+}
+
 export interface SimViewPatch {
   clock?: ClockView;
   /** Local player (id 0). */
@@ -459,6 +532,12 @@ export interface SimViewPatch {
   worldMap?: WorldMapView;
   /** Mains power / water: first view and on change (protocol 25). */
   utilities?: UtilitiesView;
+  /**
+   * Context menu (protocol 26): furniture and edges (doors, windows, …) in reach of the player,
+   * the one nearest to the aim point (or the player) first. Full list on change; `[]` = none.
+   * Run an action with `useFurniture {furnitureId, actionId}`.
+   */
+  furnitureActions?: FurnitureView[];
   /**
    * StableIds of the zombies the player senses now (protocol 22): seen (same floor, sight range,
    * line of sight) or heard (within `PlayerMapConfig.hearTiles`, ±1 floor). Ascending, full list

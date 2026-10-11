@@ -11,6 +11,7 @@ import { emitNoise } from '../ai/noise.js';
 import type { SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
 import {
+  baseState,
   isDoorLike,
   maxHp,
   openingKey,
@@ -91,7 +92,7 @@ export function damageOpening(
 ): void {
   const o = w.openings;
   const e = o.states.get(key);
-  const state = e?.state ?? OS.closed;
+  const state = e?.state ?? baseState(o, key);
   const hp = e?.hp ?? maxHp(o.cfg, kind, state);
   if (e && e.planks > 0) {
     const ph = o.cfg.barricade.plankHp;
@@ -134,7 +135,7 @@ export function edgeAt(
   const kind = grid.kindOf(id);
   const key = openingKey(side, tx, ty, z);
   const e = w.openings.states.get(key);
-  return { key, kind, e, state: e?.state ?? OS.closed, planks: e?.planks ?? 0 };
+  return { key, kind, e, state: e?.state ?? baseState(w.openings, key), planks: e?.planks ?? 0 };
 }
 
 /** The player is within `reachTiles` of the edge centre. */

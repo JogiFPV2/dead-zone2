@@ -1363,3 +1363,37 @@ Paweł zgłosił, że zombie goni za długo. Były dwie przyczyny. Po pierwsze, 
 - View: `ItemView.frozen?`, `ItemView.thawMin?` (minuty do rozmrożenia).
 - `UtilitiesView.powerSource: 'grid' | 'generator' | null` (generator przewidziany, jeszcze nie symulowany).
 - Schematy zapisu dla Serwera: `saveUtilitiesSchema`, `saveItemThawSchema` w `@deadzone/protocol/schema`.
+
+### 9.47 Drzwi, okna, klucze i wytrych w menu mebli (protokół 26) — kontrakt dla Silnika, Designera, Serwera i Silnika 2
+
+**Menu (`SimViewPatch.furnitureActions?: FurnitureView[]`).** Lista mebli i krawędzi (drzwi, okna, bramy, schowki, TV) w zasięgu gracza, najbliższe pierwsze, najwyżej `MAX_FURNITURE_ENTRIES` (8). Liczona co 4 ticki (200 ms), wysyłana w całości przy zmianie.
+
+- `FurnitureView {furnitureId, typeId, contentId?, x, y, z, actions}`. `x`, `y`, `z` to środek krawędzi albo kafla w metrach świata.
+  - `typeId`: `door`, `gate`, `window`, a dla obiektów kategoria schowka (`fridge`, `freezer`, `cabinet`, …) albo `tv`. Polskie nazwy: `furnitureTypePl` (`@deadzone/content`).
+  - `furnitureId` jest stabilny. Krawędź ma `openingKey(side, tx, ty, z)` (< 2^42). Obiekt ma `2^42 + (((z+128)·2^16 + (y+2^15))·2^16 + (x+2^15))·16 + n`, gdzie `n` to indeks obiektu na kaflu (`objectFurnitureId` / `unpackObjectId` w sim).
+- `FurnitureActionView {id, labelPl, enabled, reason?, reasonPl?, durationMin?, chancePct?, breakChancePct?, injuryChancePct?, noiseTiles?, item?: {id, def}}`.
+  - `reason` pochodzi z `FURNITURE_REASONS`: `no-power`, `no-water`, `no-gas`, `threat`, `too-heavy`, `locked`, `no-key`, `missing-tool`, `missing-item`, `missing-parts`, `invalid-state`, `blocked`, `out-of-range`, `tired`, `not-tired`.
+  - Polskie teksty są w `FURNITURE_REASONS_PL` / `FURNITURE_ACTIONS_PL` (`@deadzone/content`). `reasonPl` bywa dokładniejszy (np. „Brak łomu”, „Brak młotka”).
+  - `threat` oznacza, że zombie przerwałby czynność (`previewAction`).
+- **Komenda `useFurniture {furnitureId, actionId}`** (`client.useFurniture`, `useFurnitureCommandSchema`). Sim buduje wpis tym samym kodem co view. Wyłączony wpis daje `commandRejected` z jego `reason`. Nieznany mebel daje `out-of-range`, a nieznana akcja `invalid-target`. Akcje z przedmiotem mają postać `<akcja>:<itemId>`. Stare komendy (`toggleOpening`, `smashWindow`, `barricade`, `forceDoor`, `climbThrough`, `openContainer`, `watchTv`, …) zostają.
+
+**Id akcji.**
+- **Drzwi i brama:** `open` / `close`, `lock` / `unlock` (od środka, bez klucza), `unlock-key` / `lock-key` (z zewnątrz, klucz do budynku), `lockpick:<itemId>` (albo wyłączone `lockpick`: `missing-item`), `force-pry` (łom, `chancePct`), `force-kick` (`chancePct`, `noiseTiles`), `knock`, `barricade` / `unbarricade`.
+- **Okno:** `open` / `close`, `smash` (`noiseTiles`, `injuryChancePct` gołą ręką), `clear-glass` (bez rękawic `injuryChancePct` = `window.clearGlassCutChance`, 30 %), `climb-through` (z odłamkami `injuryChancePct`), `barricade` / `unbarricade`.
+- **Schowek:** `open-storage` (główny) i `open-storage:<containerId>` (przegroda `compartments`, np. zamrażarka). Gdy gracz jeszcze nie przeszukał schowka, ten sam wpis ma etykietę „Przeszukaj” i `durationMin`, a uruchamia przeszukanie.
+- **TV:** `watch`, `insert-tape:<itemId>`.
+
+**Zamki i klucze (`openings.locks` w `worldSettings`).**
+- Drzwi zamknięte na klucz na starcie nie są zapisywane: `SimChunk.lockedDoors?: number[]` (`tileIndex(x, y) * 2 + side`, `side` 0 = N, 1 = W) od Silnika 2. Gdy pola nie ma, sim losuje dla drzwi zewnętrznych (pokój po jednej stronie, ulica po drugiej) z `exteriorLockedChance`, ziarno `deriveSeed(seed, 'door-lock', tx, ty, z, side)`. **Domyślnie 0**, więc nic się nie zmienia, dopóki Modules albo Silnik 2 tego nie ustawią. Zapis trzyma tylko stany różne od bazowego (otwarte albo odryglowane drzwi).
+- Od środka (gracz w pokoju tego budynku) zamek obraca się bez klucza. Z zewnątrz potrzebny jest klucz: przedmiot z tagiem `keyTag` (`base:building-key`) i `ItemInstance.buildingId` = id budynku drzwi (`SimChunk.roomBuildings`). Czas `keySec` (1 s).
+- **Klucze w łupach:** tabela z `buildingKey` (Modules) z tą szansą dokłada pierwszy przedmiot z tagiem `base:building-key`. Dostaje on `buildingId` budynku schowka, a w zwłokach zombie najbliższego budynku w promieniu `corpseKeyRadiusTiles` (24) od miejsca śmierci. RNG jest osobny (`deriveSeed(lootKey, 'building-key')`), więc reszta łupów się nie zmienia. **W treści nie ma jeszcze przedmiotu `base:building-key`**: działa to tylko na fixture w testach.
+- **Wytrych:** `lockpick` {tag `base:lockpick`, 8 s, szansa 0,25 + 0,06 × poziom `skill` (`base:nimble`), `breakChance` 0,35 przy porażce (przedmiot znika), XP 2, hałas 2 kafle}. Zdarzenie `lockPicked {tx, ty, z, side, item, success, broke}`. Przedmiotu z tagiem `base:lockpick` też jeszcze nie ma w treści.
+- **Pukanie:** `knock` daje hałas `knockNoise` (6 kafli) i zdarzenie `knocked`. Hałas gracza ma rodzaj `knock`, a wytrych `lockpick`.
+- **Rękawice:** dowolny założony przedmiot z tagiem `window.gloveTag` (`base:gloves`) usuwa ryzyko skaleczenia dłoni przy `clear-glass`. Bez rękawic z szansą `clearGlassCutChance` pojawia się rana `hand_r`. Przedmiotu z tagiem `base:gloves` jeszcze nie ma w treści.
+- `force-pry` bez łomu daje `missing-tool` (wcześniej był to po cichu kopniak).
+
+**Zapis (`SAVE_VERSION` 3).** Jedyne nowe pole to `ItemInstance.buildingId` (opcjonalne, zapisywane tylko gdy jest). Serwer: `saveItemBuildingSchema` w `@deadzone/protocol/schema`. Stan zamków to już istniejąca mapa stanów krawędzi.
+
+**Dla Silnika 2 (`SimChunk`).** `roomBuildings` (pokój → budynek) jest potrzebne do kluczy i do rozróżnienia środek/zewnątrz. `lockedDoors` jest opcjonalne. Lampy i włączniki światła przyjdą w etapie 7 (propozycja: obiekty z `contentId` `base:light-switch` i `room`, lampy jako placeable `requiresPower`).
+
+**Testy:** `furniture/menu.test.ts` (menu drzwi i okna, zamki domyślne i `lockedDoors`, klucz z łupów, wytrych, pukanie, rękawice, schowki z przegrodą, odrzucenia, kody powodów vs teksty PL) oraz `content/src/i18n/furniture-labels.test.ts`.

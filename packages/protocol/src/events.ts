@@ -65,7 +65,23 @@ export type CommandRejectReason =
   /** Vehicles: the car's key is needed (`lockVehicle` from outside, `vehicleEngine` start). */
   | 'no-key'
   /** Vehicles: no fuel (engine start with an empty tank, `refuel` from an empty can). */
-  | 'no-fuel';
+  | 'no-fuel'
+  /** Furniture menu (protocol 26): a zombie is near (`threat`, the action would be interrupted). */
+  | 'threat'
+  /** A needed item is not carried (lockpick, empty bottle). */
+  | 'missing-item'
+  /** No mains water (tap, bath). */
+  | 'no-water'
+  /** No gas (gas stove). */
+  | 'no-gas'
+  /** Too tired for it (learning). */
+  | 'tired'
+  /** Not tired enough (sleep, rest). */
+  | 'not-tired'
+  /** Furniture too heavy to lift / push alone (Physics). */
+  | 'too-heavy'
+  /** The target place is taken. */
+  | 'blocked';
 
 /**
  * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
@@ -118,6 +134,10 @@ export type ActionKind =
   | 'removeBarricade'
   /** Force a locked door / gate: crowbar or kick (`forceDoor`). */
   | 'forceDoor'
+  /** Pick a locked door's lock (`useFurniture` `lockpick:<itemId>`, protocol 26). */
+  | 'pickLock'
+  /** Lock / unlock a door with its building key (`useFurniture` `unlock-key` / `lock-key`). */
+  | 'useKey'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -206,6 +226,10 @@ export const PLAYER_NOISE_KINDS = [
   'horn',
   /** Hotwiring a car (`hotwire`, on start). */
   'hotwire',
+  /** Knocking on a door (`useFurniture` `knock`, protocol 26). */
+  'knock',
+  /** Picking a lock (`useFurniture` `lockpick:<itemId>`, on start). */
+  'lockpick',
 ] as const;
 export type PlayerNoiseKind = (typeof PLAYER_NOISE_KINDS)[number];
 /** Continuous `playerNoise` kinds: at most one event per player and kind per this many ticks. */
@@ -703,6 +727,32 @@ export type SimEvent =
    * `forceDoor` finished: `success` = the locked door / gate gave way (state `broken`);
    * otherwise it only took damage (`openingChanged`). `method`: crowbar (`pry`) or `kick`.
    */
+  /**
+   * Lockpicking finished (protocol 26, `useFurniture` `lockpick:<itemId>`): `success` = the door
+   * is unlocked (`closed`); `broke` = the pick broke (used up).
+   */
+  | {
+      type: 'lockPicked';
+      tick: number;
+      playerId: PlayerId;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      item: string;
+      success: boolean;
+      broke: boolean;
+    }
+  /** Someone knocked on a door (protocol 26, `useFurniture` `knock`): a small noise. */
+  | {
+      type: 'knocked';
+      tick: number;
+      playerId: PlayerId;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+    }
   | {
       type: 'doorForced';
       tick: number;

@@ -323,6 +323,16 @@ export const toggleDoorCommandSchema = z.strictObject({
   side: edgeSide,
   lock: z.boolean().optional(),
 });
+/** `useFurniture` (protocol 26): ids from `SimViewPatch.furnitureActions`. */
+export const useFurnitureCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('useFurniture'),
+  furnitureId: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  actionId: z
+    .string()
+    .max(96)
+    .regex(/^[a-z][a-z0-9-]*(?::[A-Za-z0-9:_.-]+)?$/),
+});
 export const breakWindowCommandSchema = z.strictObject({
   ...header,
   type: z.literal('breakWindow'),
@@ -545,6 +555,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   debugDamageVehicleCommandSchema,
   debugNoiseCommandSchema,
   toggleDoorCommandSchema,
+  useFurnitureCommandSchema,
   breakWindowCommandSchema,
   ...openingActionCommandSchemas,
   debugOpeningCommandSchema,

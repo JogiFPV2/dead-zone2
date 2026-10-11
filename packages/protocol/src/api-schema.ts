@@ -114,3 +114,11 @@ export const saveUtilitiesSchema = z.object({
 export const saveItemThawSchema = z.object({
   thawUntil: z.number().int().min(0).max(0xffff_ffff).optional(),
 });
+
+/**
+ * Building key field in the saved item map (protocol 26): `buildingId` = map-global building id
+ * (`SimChunk.roomBuildings`) the key opens; written only on keys.
+ */
+export const saveItemBuildingSchema = z.object({
+  buildingId: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
+});

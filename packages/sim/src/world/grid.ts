@@ -1,11 +1,11 @@
 import { buildingIdAt, CHUNK_SIZE, roomIdAt, type SimChunk, type SimMap } from '@deadzone/protocol';
 import {
+  baseState,
   createOpeningsWorld,
   DEFAULT_OPENINGS_CONFIG,
   EF,
   openingFlags,
   openingKey,
-  OS,
   type OpeningsWorld,
 } from '../openings/state.js';
 import { STAIR_STEP, type Stair } from './levels.js';
@@ -165,10 +165,11 @@ export class TileGrid {
     if (id < 0) return WALL;
     const kind = this.openings.kinds[id] ?? 0;
     if (kind === 0) return WALL;
-    const e = this.openings.states.get(openingKey(side, tx, ty, z));
+    const key = openingKey(side, tx, ty, z);
+    const e = this.openings.states.get(key);
     return openingFlags(
       kind,
-      e?.state ?? OS.closed,
+      e?.state ?? baseState(this.openings, key),
       e?.planks ?? 0,
       this.openings.cfg.barricade.sightBlockPlanks,
     );

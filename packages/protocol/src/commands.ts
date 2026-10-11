@@ -580,6 +580,16 @@ export interface ToggleDoorCommand extends CommandHeader {
   lock?: boolean | undefined;
 }
 
+/**
+ * Runs one entry of the furniture / edge context menu (`SimViewPatch.furnitureActions`,
+ * protocol 26). Rejected with the entry's `reason` when it is disabled.
+ */
+export interface UseFurnitureCommand extends CommandHeader {
+  type: 'useFurniture';
+  furnitureId: number;
+  actionId: string;
+}
+
 /** Same as `smashWindow` (kept for older clients). */
 export interface BreakWindowCommand extends CommandHeader {
   type: 'breakWindow';
@@ -887,6 +897,7 @@ export type Command =
   | DebugDamageVehicleCommand
   | DebugNoiseCommand
   | ToggleDoorCommand
+  | UseFurnitureCommand
   | BreakWindowCommand
   | OpeningActionCommand
   | DebugOpeningCommand

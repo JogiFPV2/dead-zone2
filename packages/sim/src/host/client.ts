@@ -135,6 +135,8 @@ export interface SimWorkerClient {
   horn(): void;
   /** Lock the HUD target card on an entity / vehicle id, or clear the lock (`null`). */
   setTarget(id: number | null): void;
+  /** Run a furniture / door / window menu entry (`SimViewPatch.furnitureActions`, protocol 26). */
+  useFurniture(furnitureId: number, actionId: string): void;
   /** Driver controls (held until the next call): throttle / brake 0..1, steer −1..1 (+ = right). */
   drive(
     throttle: number,
@@ -378,6 +380,7 @@ export function createSimWorkerClient(
     vehicleEngine: (on) => cmd({ type: 'vehicleEngine', on }),
     horn: () => cmd({ type: 'horn' }),
     setTarget: (id) => cmd({ type: 'setTarget', id }),
+    useFurniture: (furnitureId, actionId) => cmd({ type: 'useFurniture', furnitureId, actionId }),
     setSneak: (on) => cmd({ type: 'setSneak', on }),
     drive: (throttle, brake, steer, handbrake = false, headlights) =>
       cmd({

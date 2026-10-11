@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LocksSettingsSchema } from './locks-settings.js';
 import { FractionSchema, NoiseSchema, TilesSchema } from './common/index.js';
 import {
   BarricadeSettingsSchema,
@@ -35,6 +36,7 @@ export const OpeningsSettingsSchema = z
     barricade: BarricadeSettingsSchema,
     window: WindowActionsSettingsSchema,
     force: ForceSettingsSchema,
+    locks: LocksSettingsSchema,
   })
   .prefault({});
 

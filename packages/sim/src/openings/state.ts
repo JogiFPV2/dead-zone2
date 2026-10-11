@@ -1,5 +1,7 @@
 import {
+  CHUNK_SIZE,
   OPENING_STATES,
+  tileIndex,
   type EdgeSide,
   type OpeningState,
   type OpeningView,
@@ -7,6 +9,7 @@ import {
   type SimMap,
 } from '@deadzone/protocol';
 import type { ContentBundle } from '@deadzone/content';
+import { deriveSeed, Rng } from '../core/rng.js';
 import { FENCE_HP } from '../physics/constants.js';
 
 /** `worldSettings.openings` (defaults = the schema defaults in packages/content). */
@@ -48,6 +51,8 @@ export const DEFAULT_OPENINGS_CONFIG: OpeningsConfig = {
     glassItem: 'base:glass-shards',
     glassPieces: 1,
     climbLacerationShare: 0.4,
+    clearGlassCutChance: 0.3,
+    gloveTag: 'base:gloves',
   },
   force: {
     prySec: 3,
@@ -59,6 +64,23 @@ export const DEFAULT_OPENINGS_CONFIG: OpeningsConfig = {
     chancePerStrength: 0.03,
     strengthSkill: 'base:strength',
     failDamage: 8,
+  },
+  locks: {
+    exteriorLockedChance: 0,
+    keyTag: 'base:building-key',
+    keySec: 1,
+    corpseKeyRadiusTiles: 24,
+    lockpick: {
+      tag: 'base:lockpick',
+      sec: 8,
+      chance: 0.25,
+      chancePerLevel: 0.06,
+      skill: 'base:nimble',
+      breakChance: 0.35,
+      xp: 2,
+      noise: { radiusTiles: 2, volume: 0.15 },
+    },
+    knockNoise: { radiusTiles: 6, volume: 0.4 },
   },
 };
 
@@ -121,9 +143,14 @@ export interface OpeningsWorld {
   readonly bashAt: Map<number, number>;
   /** Bumped on every change (views). */
   version: number;
+  /** Map and world seed for the default lock of each door (derived, not saved). */
+  readonly map: SimMap;
+  readonly seed: number;
+  /** Edge key → locked at the start (`baseState`; derived cache, not saved). */
+  readonly lockCache: Map<number, boolean>;
 }
 
-export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig): OpeningsWorld {
+export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0): OpeningsWorld {
   const edgeKinds = map.edgeKinds ?? [];
   const kinds = new Uint8Array(Math.max(1, edgeKinds.length));
   edgeKinds.forEach((k: SimEdgeKind | null, id) => {
@@ -138,7 +165,16 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig): OpeningsW
               ? OpeningKind.gate
               : 0;
   });
-  return { cfg, kinds, states: new Map(), bashAt: new Map(), version: 0 };
+  return {
+    cfg,
+    kinds,
+    states: new Map(),
+    bashAt: new Map(),
+    version: 0,
+    map,
+    seed,
+    lockCache: new Map(),
+  };
 }
 
 const SIDE_N = 0;
@@ -230,7 +266,8 @@ export function setOpening(
   const planks = extra.planks ?? prev?.planks ?? 0;
   const bhp = planks > 0 ? (extra.bhp ?? prev?.bhp ?? 0) : 0;
   const cleared = state === OS.broken ? (extra.cleared ?? prev?.cleared ?? 0) : 0;
-  if (state === OS.closed && hp >= maxHp(o.cfg, kind, state) && planks === 0) o.states.delete(key);
+  if (state === baseState(o, key) && hp >= maxHp(o.cfg, kind, state) && planks === 0)
+    o.states.delete(key);
   else
     o.states.set(key, {
       kind,
@@ -248,7 +285,7 @@ const KIND_NAMES = ['window', 'door', 'window', 'fence', 'gate'] as const;
 export function openingView(o: OpeningsWorld, key: number, kind: number): OpeningView {
   const e = o.states.get(key);
   if (e) kind = e.kind;
-  const state = e?.state ?? OS.closed;
+  const state = e?.state ?? baseState(o, key);
   const { side, tx, ty, z } = unpackKey(key);
   const planks = e?.planks ?? 0;
   const edgeHp = e?.hp ?? maxHp(o.cfg, kind, state);
@@ -265,3 +302,89 @@ export function openingView(o: OpeningsWorld, key: number, kind: number): Openin
     glass: kind === OpeningKind.window && !(state === OS.broken && e?.cleared),
   };
 }
+
+/** Kind of the edge `key` from the map (0 = wall / unknown / chunk not loaded). */
+export function edgeKindOf(o: OpeningsWorld, key: number): number {
+  const k = unpackKey(key);
+  const cx = Math.floor(k.tx / CHUNK_SIZE);
+  const cy = Math.floor(k.ty / CHUNK_SIZE);
+  const chunk = o.map.getChunk(cx, cy, k.z);
+  if (!chunk) return 0;
+  const i = tileIndex(k.tx - cx * CHUNK_SIZE, k.ty - cy * CHUNK_SIZE);
+  const id = (k.side === 'n' ? chunk.edgeN : chunk.edgeW)[i] ?? 0;
+  return id > 0 ? (o.kinds[id] ?? 0) : 0;
+}
+
+/** Room id of tile (x, y, z) and its building (0 = outside / unknown); undefined = not loaded. */
+export function roomAt(
+  map: SimMap,
+  x: number,
+  y: number,
+  z: number,
+): { room: number; building: number } | undefined {
+  const cx = Math.floor(x / CHUNK_SIZE);
+  const cy = Math.floor(y / CHUNK_SIZE);
+  const chunk = map.getChunk(cx, cy, z);
+  if (!chunk) return undefined;
+  const room = chunk.room?.[tileIndex(x - cx * CHUNK_SIZE, y - cy * CHUNK_SIZE)] ?? 0;
+  const building = room ? (chunk.roomBuildings?.[String(room)] ?? 0) : 0;
+  return { room, building };
+}
+
+/** The two tiles an edge separates: north edge (tx, ty−1 | tx, ty), west edge (tx−1, ty | tx, ty). */
+export function edgeTiles(key: number): [{ x: number; y: number }, { x: number; y: number }] {
+  const k = unpackKey(key);
+  return k.side === 'n'
+    ? [
+        { x: k.tx, y: k.ty - 1 },
+        { x: k.tx, y: k.ty },
+      ]
+    : [
+        { x: k.tx - 1, y: k.ty },
+        { x: k.tx, y: k.ty },
+      ];
+}
+
+/**
+ * Door / gate locked at the start: `SimChunk.lockedDoors` when the generator gave it, else an
+ * exterior door (a room on one side, outside on the other) with `locks.exteriorLockedChance`,
+ * rolled from the world seed per door. Cached; not saved (derived from map + seed).
+ */
+export function lockedAtStart(o: OpeningsWorld, key: number): boolean {
+  const hit = o.lockCache.get(key);
+  if (hit !== undefined) return hit;
+  const k = unpackKey(key);
+  const cx = Math.floor(k.tx / CHUNK_SIZE);
+  const cy = Math.floor(k.ty / CHUNK_SIZE);
+  const chunk = o.map.getChunk(cx, cy, k.z);
+  if (!chunk) return false;
+  let locked = false;
+  const kind = edgeKindOf(o, key);
+  if (kind === OpeningKind.door || kind === OpeningKind.gate) {
+    if (chunk.lockedDoors) {
+      const code = tileIndex(k.tx - cx * CHUNK_SIZE, k.ty - cy * CHUNK_SIZE) * 2 + (key % 2);
+      locked = chunk.lockedDoors.includes(code);
+    } else {
+      const chance = o.cfg.locks?.exteriorLockedChance ?? 0;
+      if (chance > 0) {
+        const [a, b] = edgeTiles(key);
+        const ra = roomAt(o.map, a.x, a.y, k.z);
+        const rb = roomAt(o.map, b.x, b.y, k.z);
+        if (ra && rb && (ra.room === 0) !== (rb.room === 0)) {
+          const roll = Rng.fromSeed(deriveSeed(o.seed, 'door-lock', k.tx, k.ty, k.z, key % 2));
+          locked = roll.nextFloat() < chance;
+        } else if (!ra || !rb) return false;
+      }
+    }
+  }
+  o.lockCache.set(key, locked);
+  return locked;
+}
+
+/** State of an edge with no stored entry: `locked` for doors locked at the start, else `closed`. */
+export const baseState = (o: OpeningsWorld, key: number): number =>
+  lockedAtStart(o, key) ? OS.locked : OS.closed;
+
+/** Current state of an edge (stored entry, else `baseState`). */
+export const currentState = (o: OpeningsWorld, key: number): number =>
+  o.states.get(key)?.state ?? baseState(o, key);

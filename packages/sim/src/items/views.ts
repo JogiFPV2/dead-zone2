@@ -116,6 +116,7 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
     if (left > 0) v.thawMin = left;
   }
   if (item.inner) v.container = item.inner;
+  if (item.buildingId !== undefined) v.buildingId = item.buildingId;
   if (item.placed) v.placed = true;
   if (item.vehicle !== undefined) v.vehicle = item.vehicle;
   const fuel = st.content.vehicles?.fuel;
