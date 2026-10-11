@@ -7,6 +7,7 @@ import type {
   MapMarkerView,
   OpeningEdgeKind,
   ReloadKind,
+  UtilityKind,
 } from './views.js';
 
 export type CommandRejectReason =
@@ -735,6 +736,16 @@ export type SimEvent =
    * Uninterrupted sleep long enough (`sleep.saveAfterRealSec`, 2 real minutes at ×1): the host
    * saves the game now (the worker posts `saved` with reason `sleep`).
    */
+  /**
+   * Mains power or water went off (protocol 25, `worldSettings.utilities`; generators later).
+   * Fridges and freezers stop cooling, TVs / electric stoves stop; taps run dry.
+   */
+  | {
+      type: 'utilityChanged';
+      tick: number;
+      utility: UtilityKind;
+      on: boolean;
+    }
   | {
       type: 'sleepSaved';
       tick: number;

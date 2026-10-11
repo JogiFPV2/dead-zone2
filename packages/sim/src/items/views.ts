@@ -25,7 +25,7 @@ import {
   stableIdOf,
   tileInReach,
 } from './inventory.js';
-import { freshness } from './spoilage.js';
+import { freshness, isFrozen, thawLeftMin } from './spoilage.js';
 import { combineMarks } from '../crafting/crafting.js';
 import {
   containerWeight,
@@ -110,6 +110,11 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
   if (item.uses > 0 || def.kind === 'weapon_ranged' || def.kind === 'magazine') v.uses = item.uses;
   const fr = freshness(st, item, minute);
   if (fr) v.freshness = fr;
+  if (fr && isFrozen(st, item, minute)) {
+    v.frozen = true;
+    const left = thawLeftMin(st, item, minute);
+    if (left > 0) v.thawMin = left;
+  }
   if (item.inner) v.container = item.inner;
   if (item.placed) v.placed = true;
   if (item.vehicle !== undefined) v.vehicle = item.vehicle;

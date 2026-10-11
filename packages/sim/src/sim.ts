@@ -99,6 +99,7 @@ import { addPhysicsBody, physicsMovementModifier } from './physics/system.js';
 import { writePhysicsHash } from './physics/step.js';
 import { registerMovementModifier } from './systems/movement.js';
 import { TileGrid } from './world/grid.js';
+import { initUtilities } from './items/utilities.js';
 
 export interface SimOptions {
   seed: number;
@@ -471,6 +472,8 @@ export function createSim(input: SimOptions): Sim {
         : {}),
     });
   }
+  // Before a load restores them (older saves keep the rolled days).
+  initUtilities(w);
   if (w.items && !opts.load && !w.lod) {
     createWorldContainers(w.items, opts.map, w.seed);
     if (opts.floorLoot) {

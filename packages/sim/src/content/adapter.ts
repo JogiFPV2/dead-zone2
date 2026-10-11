@@ -128,6 +128,8 @@ export interface ContentIndex {
   simLod: ContentBundle['worldSettings']['simLod'] | undefined;
   /** `worldSettings.vehicles` (vehicle gameplay; optional for older bundles). */
   vehicles: ContentBundle['worldSettings']['vehicles'] | undefined;
+  /** `worldSettings.utilities` (mains power / water shutoff; optional for older bundles). */
+  utilities: ContentBundle['worldSettings']['utilities'] | undefined;
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -260,6 +262,9 @@ export function compileContent(content: SimContent): ContentIndex {
     simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,
     vehicles: (content.worldSettings as { vehicles?: ContentBundle['worldSettings']['vehicles'] })
       .vehicles,
+    utilities: (
+      content.worldSettings as { utilities?: ContentBundle['worldSettings']['utilities'] }
+    ).utilities,
     search: {
       searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
       spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,

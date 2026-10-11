@@ -17,6 +17,8 @@ export function describeEvent(e: SimEvent): string {
       return `wounded ${e.part} ${e.wound}`;
     case 'moodleChanged':
       return `moodle ${e.moodle} ${e.from}→${e.to}`;
+    case 'utilityChanged':
+      return `${e.utility} ${e.on ? 'on' : 'off'}`;
     case 'fellAsleep':
       return 'fell asleep';
     case 'characterCreated':

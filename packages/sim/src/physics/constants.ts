@@ -142,8 +142,8 @@ export interface VaultConfig {
   /** Lying time after a trip (then getup). */
   tripKnockdownTicks: number;
   /**
-   * Chance that a broken window cuts (laceration on a forearm / hand / thigh). There is no
-   * "glass cleared" state yet, so every broken window counts as not cleared.
+   * Chance that a broken window cuts (laceration on a forearm / hand / thigh). Only a frame with
+   * glass left in it cuts: `removeGlass` sets the opening's `cleared` flag (physics/vault.ts).
    */
   glassChance: number;
 }

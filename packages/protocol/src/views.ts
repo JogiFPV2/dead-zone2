@@ -141,6 +141,13 @@ export interface ItemView {
   uses?: number;
   /** Items with `spoilage` only. */
   freshness?: Freshness;
+  /**
+   * Frozen (protocol 25): in a working freezer for `utilities.freezer.freezeAfterMin`, or thawing
+   * after it was taken out / the power went off.
+   */
+  frozen?: boolean;
+  /** Thawing: game minutes left until thawed (then it spoils at the normal rate). */
+  thawMin?: number;
   /** Own container (bags, placed storage), opened like any other container. */
   container?: ContainerId;
   /** Slots this item is equipped in (two-handed: both hands). */
@@ -371,6 +378,29 @@ export const STEALTH_LEVELS = ['lit', 'dim', 'hidden'] as const;
 export type StealthLevel = (typeof STEALTH_LEVELS)[number];
 export const STEALTH_HIDDEN_MAX = 0.1;
 export const STEALTH_DIM_MAX = 0.55;
+/** Mains utilities (`utilityChanged`, `SimViewPatch.utilities`). */
+export const UTILITY_KINDS = ['power', 'water'] as const;
+export type UtilityKind = (typeof UTILITY_KINDS)[number];
+
+/**
+ * Where a building's power comes from: mains (`grid`, until the shutoff day) or a running
+ * generator in range (`generator`; planned, not simulated yet).
+ */
+export const POWER_SOURCES = ['grid', 'generator'] as const;
+export type PowerSource = (typeof POWER_SOURCES)[number];
+
+/** Mains power and water now (protocol 25); the shutoff day is not revealed (like PZ). */
+export interface UtilitiesView {
+  /** Mains power is on. */
+  power: boolean;
+  /** Mains water is on (taps, bath, toilet). */
+  water: boolean;
+  /**
+   * Source of power for the player's surroundings: `grid` while mains is on, later `generator`
+   * near a running generator; null = no power.
+   */
+  powerSource: PowerSource | null;
+}
 
 export interface SimViewPatch {
   clock?: ClockView;
@@ -427,6 +457,8 @@ export interface SimViewPatch {
   crafting?: CraftingView;
   /** The character's world map: fog of war, trail and markers (docs 9.29). */
   worldMap?: WorldMapView;
+  /** Mains power / water: first view and on change (protocol 25). */
+  utilities?: UtilitiesView;
   /**
    * StableIds of the zombies the player senses now (protocol 22): seen (same floor, sight range,
    * line of sight) or heard (within `PlayerMapConfig.hearTiles`, ±1 floor). Ascending, full list

@@ -295,6 +295,23 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
             searchMin: 0.5,
             pickupItem: 'fixture:crate-item',
           },
+          {
+            id: 'fixture:icebox',
+            name: 'container.fixture.icebox',
+            category: 'fridge',
+            capacityKg: 30,
+            spoilageMultiplier: 0.3,
+            requiresPower: true,
+            compartments: ['fixture:icebox-freezer'],
+          },
+          {
+            id: 'fixture:icebox-freezer',
+            name: 'container.fixture.icebox-freezer',
+            category: 'freezer',
+            capacityKg: 20,
+            spoilageMultiplier: 0.05,
+            requiresPower: true,
+          },
         ],
       },
       {

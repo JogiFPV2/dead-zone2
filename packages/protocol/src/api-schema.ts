@@ -92,3 +92,25 @@ export const saveMapRoomsSchema = z
   .regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/, {
     message: 'not base64',
   });
+
+const GAME_DAY = z.number().int().min(0).max(1_000_000);
+
+/**
+ * Mains utilities as saved by the sim in the `items` section (protocol 25, all optional: older
+ * saves roll the shutoff days from the world seed on load). `powerOffDay` / `waterOffDay` are
+ * absolute game days (0 = never).
+ */
+export const saveUtilitiesSchema = z.object({
+  powered: z.boolean().optional(),
+  water: z.boolean().optional(),
+  powerOffDay: GAME_DAY.optional(),
+  waterOffDay: GAME_DAY.optional(),
+});
+
+/**
+ * Per-item freezing field in the saved item map (protocol 25): `thawUntil` = absolute game
+ * minute a frozen item out of the cold is thawed; written only while thawing.
+ */
+export const saveItemThawSchema = z.object({
+  thawUntil: z.number().int().min(0).max(0xffff_ffff).optional(),
+});

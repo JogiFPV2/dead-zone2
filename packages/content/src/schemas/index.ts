@@ -26,6 +26,7 @@ export * from './map-markers-settings.js';
 export * from './ai-settings.js';
 export * from './openings-settings.js';
 export * from './vehicles-settings.js';
+export * from './utilities-settings.js';
 export * from './vehicles-repair-settings.js';
 export * from './vehicles-spawn-settings.js';
 export * from './firearms-settings.js';

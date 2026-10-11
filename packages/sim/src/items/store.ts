@@ -38,6 +38,12 @@ export interface ItemInstance {
    * durability (`meleeStatsFor(item).durability` is the pool, `combat/system.ts`); absent = 0.
    */
   wear?: number;
+  /**
+   * Frozen food out of the cold (taken out of a freezer or the power went off): thaws until this
+   * absolute game minute, ageing at `utilities.freezer.frozenSpoilageMultiplier` (items/spoilage.ts).
+   * Unset = not thawing.
+   */
+  thawUntil?: number;
 }
 
 /**
@@ -142,8 +148,13 @@ export interface ItemStore {
   readonly vhsWatched: Map<number, string[]>;
   /** Fuel pumps: `tileKey` → litres left (`vehicles/fuel.ts`; rolled on first use). */
   readonly pumps: Map<string, number>;
-  /** Mains power (fridges need it). No electricity system yet: always on. */
+  /** Mains power (fridges, TVs, stoves, pumps); goes off on `powerOffDay` (items/utilities.ts). */
   powered: boolean;
+  /** Mains water (taps); goes off on `waterOffDay`. */
+  water: boolean;
+  /** Absolute game day (`dayOf`) the power goes off; 0 = never. Rolled from the seed at init. */
+  powerOffDay: number;
+  waterOffDay: number;
   /** Bumped on any change (views and carry-load recompute). Not state. */
   version: number;
 }
@@ -170,6 +181,9 @@ export function createItemStore(content: ContentIndex): ItemStore {
     nextContainerId: 1,
     pumps: new Map(),
     powered: true,
+    water: true,
+    powerOffDay: 0,
+    waterOffDay: 0,
     version: 0,
   };
 }

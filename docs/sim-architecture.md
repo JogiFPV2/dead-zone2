@@ -1333,3 +1333,33 @@ Paweł zgłosił, że zombie goni za długo. Były dwie przyczyny. Po pierwsze, 
 - **Widoczność (`playerVisibility`)** = `sightFactor(światło)` × ruch × skradanie, najwyżej 1. Ruch: stojąc w ciemności × `stillDarkMul` 0,1, co rośnie do × 1 przy świetle 0,6 (`stillFullLight`); bieg × 1,15, sprint × 1,3; skradanie × `sneakVisibilityMul` z umiejętnością (9.43). Zasięg wzroku zombie to `sightRangeTiles` × widoczność. Przykład dla `base:walker`, 18 kafli: w dzień na otwartym 18; nocą w ruchu 7,2; nocą stojąc 0,7, więc praktycznie niewidoczny (zostaje słuch i bliskość 2,5 kafla w stożku); w dzień stojąc w cieniu ≈ 9,1; w budynku w dzień stojąc ≈ 6,9.
 - **Widok:** `SimViewPatch.visibility` (0..1, krok 0,05), `stealth: 'lit'|'dim'|'hidden'` oraz `lightLevel` (0..1, krok 0,05), wysyłane przy zmianie. Progi to stałe w protokole: `STEALTH_HIDDEN_MAX` 0,1 i `STEALTH_DIM_MAX` 0,55 (`STEALTH_LEVELS`).
 - **Do zrobienia później:** światło w oknach z prądem jako osobne źródła (dziś tylko obiekty z blokiem `light`), stożek latarki i bateria, zapalone światło w nocy wabiące zombie.
+
+### 9.46 Meble i czynności — audyt (origin/main 354ace2) i prąd/woda (protokół 25)
+
+**Audyt** (stan przed zadaniem F; ✓ działa, ◐ częściowo, ✗ brak):
+
+| Czynność | Stan | Gdzie / czego brak |
+|---|---|---|
+| Sen (łóżko > kanapa > podłoga) | ◐ | `systems/sleep.ts`: `sleepSurface` placeable (`bed`/`sofa`) w 1,5 kratki, `survival.sleep.surfaces` (limit regeneracji 50/35/25). Brak materaca i śpiwora; sen nie jest akcją przy meblu. |
+| Odpoczynek (kanapa/krzesło) | ✗ | Brak akcji i pola „siedzisko” w placeable. |
+| Gotowanie (kuchenka/piekarnik) | ◐ | Receptury `recipes/cooking.json` przy stacji `base:station-fire` (ognisko, piec, `base:kitchen-oven`). Brak wymogu prądu/gazu, brak przypalania, brak kuchenki elektrycznej. |
+| Lodówka / zamrażarka | ◐ | `base:fridge` ×0,3, `base:freezer` ×0,05 (`requiresPower`) w psuciu leniwym. Prąd był zawsze włączony; przy zmianie prądu brak przestemplowania wieku. |
+| TV + VHS | ✓ | `leisure/leisure.ts`: akcja `watch`, komenda `watchTv {vhs?}`, tag `base:station-tv`, `no-power`, VHS raz na postać (XP). Brak osobnego magnetowidu (TV gra kasety). |
+| Radio | ✗ | `base:radio` to tylko złom. |
+| Zlew / kran | ✗ | Brak modelu wody. |
+| Wanna / prysznic, toaleta | ✗ | Opcjonalne, poza zakresem F. |
+| Prąd | ◐ | `ItemStore.powered` zawsze `true` („No electricity system yet”). |
+| Woda | ✗ | — |
+
+**Prąd i woda (PR F1).** `worldSettings.utilities = { power, water }`, każde `{ enabled (true), offAfterDays: { min, max } }` (domyślnie 7–30 dni, jak PZ). Przy tworzeniu świata (`initUtilities`, `deriveSeed(seed, 'utilities')`) losowany jest bezwzględny dzień wyłączenia `ItemStore.powerOffDay` / `waterOffDay` = dzień startu + `int(min..max)`; 0 = nigdy (`enabled: false`). Krok potoku `utilities` (po `clock`) w dniu wyłączenia: najpierw przestemplowuje wiek jedzenia w pojemnikach `requiresPower` (czas dotąd liczy się ×0,3 / ×0,05, od teraz ×1, czyli rozmrażanie i normalne psucie), potem `powered = false` / `water = false`, zdarzenie `utilityChanged { utility: 'power' | 'water', on }`. Prąd i woda już nie wracają (generatory później). Prąd wyłącza też TV (`no-power`), światła `requiresPower` i szybkie pompy.
+
+- View: `SimViewPatch.utilities?: { power: boolean; water: boolean }` — w pierwszym view i przy zmianie. Dzień wyłączenia nie jest ujawniany.
+- Zapis: pola `water`, `powerOffDay`, `waterOffDay` w magazynie przedmiotów (zapis v3, pola opcjonalne; stare zapisy dostają dni wylosowane przy wczytaniu z ziarna świata). Hasz: `water` tylko gdy wyłączona (stare złote hasze bez zmian).
+
+**Lodówka z zamrażarką, mrożenie (PR F1).**
+- Przegrody (`compartments`, typ schowka od Modules): obiekt mapy dostaje schowek swojego typu i po jednym na każdą przegrodę, każdy z własnym `lootKey`, tabelą i psuciem. `base:fridge-freezer` (×0,3) + przegroda `base:freezer` (×0,05). Tabela łupów schowka z `lootTableForContainer` (`@deadzone/content`).
+- Schowek kategorii `freezer` z prądem zamraża jedzenie po `utilities.freezer.freezeAfterMin` (360 min).
+- Zamrożone jedzenie, gdy zostanie wyjęte albo zabraknie prądu, dostaje `ItemInstance.thawUntil` (+`thawMin` 720 min). Do tego czasu psuje się ×`frozenSpoilageMultiplier` (0,05), potem normalnie.
+- View: `ItemView.frozen?`, `ItemView.thawMin?` (minuty do rozmrożenia).
+- `UtilitiesView.powerSource: 'grid' | 'generator' | null` (generator przewidziany, jeszcze nie symulowany).
+- Schematy zapisu dla Serwera: `saveUtilitiesSchema`, `saveItemThawSchema` w `@deadzone/protocol/schema`.

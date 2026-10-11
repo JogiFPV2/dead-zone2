@@ -30,6 +30,7 @@ import {
   type SleepView,
   type ViewStat,
   type WoundView,
+  type UtilitiesView,
 } from '@deadzone/protocol';
 import {
   dayOf,
@@ -203,6 +204,7 @@ export class ViewTracker {
   private deathSent = false;
   private openingsVersion = 0;
   private luresKey = '';
+  private utilitiesKey = '';
   private penaltiesKey = '';
   private skillsKey = '';
   private characterKey = '';
@@ -291,6 +293,18 @@ export class ViewTracker {
       if (Object.keys(p).length > 0) patch.player = p;
     }
     if (w.items && eid !== undefined) this.diffItems(w, eid, patch);
+    if (w.items) {
+      const u: UtilitiesView = {
+        power: w.items.powered,
+        water: w.items.water,
+        powerSource: w.items.powered ? 'grid' : null,
+      };
+      const uk = `${u.power ? 1 : 0}${u.water ? 1 : 0}`;
+      if (uk !== this.utilitiesKey) {
+        this.utilitiesKey = uk;
+        patch.utilities = u;
+      }
+    }
     if (w.items) {
       const lures = lureViews(w.items);
       const lk = JSON.stringify(lures);

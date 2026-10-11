@@ -1,3 +1,4 @@
+import { lootTableForContainer } from '@deadzone/content';
 import { CHUNK_SIZE, tileIndex, type SimChunkAddress, type SimMap } from '@deadzone/protocol';
 import type { LootTableDef } from '../content/adapter.js';
 import { deriveSeed, Rng } from '../core/rng.js';
@@ -13,7 +14,7 @@ import {
 
 /**
  * World storage from map objects: storage types (`containers/`) and placeables with
- * `containerType`. Created once at init in chunk order (z, cy, cx) and object order, so the ids
+ * `containerType`, plus one storage per `compartments` entry. Created once at init in chunk order (z, cy, cx) and object order, so the ids
  * are stable for a given map. Contents are generated lazily on the first search.
  */
 export function createWorldContainers(st: ItemStore, map: SimMap, seed: number): void {
@@ -32,8 +33,9 @@ export function createChunkContainers(
 ): void {
   const chunk = map.getChunk(addr.cx, addr.cy, addr.z);
   for (const obj of chunk?.objects ?? []) {
-    const type = storageTypeOf(st, obj.contentId);
-    if (type < 0) continue;
+    for (const type of storageTypesOf(st, obj.contentId)) addWorldStorage(type, obj);
+  }
+  function addWorldStorage(type: number, obj: { x: number; y: number }): void {
     const x = addr.cx * CHUNK_SIZE + obj.x;
     const y = addr.cy * CHUNK_SIZE + obj.y;
     const key = tileKey(x, y, addr.z);
@@ -60,34 +62,42 @@ export function createChunkContainers(
   }
 }
 
-function storageTypeOf(st: ItemStore, contentId: string): number {
-  const direct = st.content.containerTypeIndex.get(contentId);
-  if (direct !== undefined) return direct;
-  const def = st.content.items[st.content.itemIndex.get(contentId) ?? -1];
-  if (def?.kind === 'placeable' && def.placeable.containerType) {
-    return st.content.containerTypeIndex.get(def.placeable.containerType) ?? -1;
+/**
+ * Storage types of a map object: a container type id directly or a placeable's `containerType`,
+ * then one more storage per `compartments` entry of that type (fridge-freezer = fridge + freezer
+ * on one tile, each with its own loot key, table and spoilage). Compartments have none of their own.
+ */
+function storageTypesOf(st: ItemStore, contentId: string): number[] {
+  let main = st.content.containerTypeIndex.get(contentId);
+  if (main === undefined) {
+    const def = st.content.items[st.content.itemIndex.get(contentId) ?? -1];
+    const ref = def?.kind === 'placeable' ? def.placeable.containerType : undefined;
+    main = ref === undefined ? undefined : st.content.containerTypeIndex.get(ref);
   }
-  return -1;
+  if (main === undefined) return [];
+  const out = [main];
+  for (const id of st.content.containerTypes[main]!.compartments ?? []) {
+    const t = st.content.containerTypeIndex.get(id);
+    if (t !== undefined) out.push(t);
+  }
+  return out;
 }
 
 /**
- * Loot table of a storage (content README "Loot"): the first table (by id) whose `rooms` has the
- * storage's room type and whose `containers` has its type (empty = any); otherwise the type's
- * `defaultLootTable`; otherwise nothing.
+ * Loot table of a storage (content README "Loot", `lootTableForContainer`): a room table naming
+ * this type in `containers`, else the type's own `defaultLootTable`, else the room's general
+ * table (`containers` empty). Zombie corpses: the zombie type's `lootTable`.
  */
 export function lootTableFor(st: ItemStore, c: ItemContainer): LootTableDef | undefined {
-  // Zombie corpse: the zombie type's `lootTable`.
   if (c.kind === 'corpse')
     return c.lootTable ? st.content.lootTableById.get(c.lootTable) : undefined;
   if (c.type < 0) return undefined;
-  const t = st.content.containerTypes[c.type]!;
-  if (c.roomType) {
-    for (const table of st.content.lootTables) {
-      if (!table.rooms.includes(c.roomType)) continue;
-      if (table.containers.length === 0 || table.containers.includes(t.id)) return table;
-    }
-  }
-  return t.defaultLootTable ? st.content.lootTableById.get(t.defaultLootTable) : undefined;
+  return lootTableForContainer(
+    st.content.lootTables,
+    (id) => st.content.lootTableById.get(id),
+    st.content.containerTypes[c.type]!,
+    c.roomType,
+  );
 }
 
 /**

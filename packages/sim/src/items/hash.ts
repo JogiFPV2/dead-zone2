@@ -1,3 +1,4 @@
+import { hashUtilities } from './utilities.js';
 import { EQUIP_SLOTS } from '@deadzone/protocol';
 import { hashString32 } from '../core/rng.js';
 import type { HashWriter } from '../core/hash.js';
@@ -53,6 +54,8 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       .u32(i.ageStamp)
       .u32(i.inner)
       .u32(i.placed ? 1 : 0);
+    // Only when thawing (older goldens unchanged).
+    if (i.thawUntil !== undefined) h.u32(0x7468_6177).u32(i.thawUntil);
   }
   const pids = [...st.players.keys()].sort(byNumber);
   h.u32(pids.length);
@@ -130,6 +133,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   hashProgress(st, h);
   hashCharacters(st, h);
   hashVhsWatched(st, h);
+  hashUtilities(st, h);
   if (st.magOf.size > 0 || st.jammed.size > 0) {
     h.u32(st.magOf.size).u32(st.jammed.size);
     for (const id of [...st.magOf.keys()].sort(byNumber)) h.u32(id).u32(st.magOf.get(id)!);
