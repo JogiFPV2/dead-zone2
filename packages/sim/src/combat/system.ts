@@ -12,7 +12,7 @@ import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js
 import { inflictWound } from '../survival/wounds.js';
 import { lineOfSight } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
-import type { CombatWorld } from './state.js';
+import { noteHit, type CombatWorld } from './state.js';
 import { fire, firearmOf, reloadSystem } from './firearms.js';
 import { bodyOf, physicsBeginAttack, physicsCanAct, physicsHit } from '../physics/system.js';
 import { floorZ } from '../world/levels.js';
@@ -209,6 +209,7 @@ function hitEvent(
   killed: boolean,
 ): void {
   const { StableId, Position } = w.c;
+  if (source !== 'zombie') noteHit(w, attacker, StableId.value[target] ?? 0);
   w.events.push({
     type: 'hit',
     tick: w.tick,

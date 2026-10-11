@@ -131,6 +131,8 @@ export interface SimWorkerClient {
   vehicleEngine(on: boolean): void;
   /** Sound the horn of the car the player sits in. */
   horn(): void;
+  /** Lock the HUD target card on an entity / vehicle id, or clear the lock (`null`). */
+  setTarget(id: number | null): void;
   /** Driver controls (held until the next call): throttle / brake 0..1, steer −1..1 (+ = right). */
   drive(
     throttle: number,
@@ -370,6 +372,7 @@ export function createSimWorkerClient(
     takeVehicleKey: () => cmd({ type: 'takeVehicleKey' }),
     vehicleEngine: (on) => cmd({ type: 'vehicleEngine', on }),
     horn: () => cmd({ type: 'horn' }),
+    setTarget: (id) => cmd({ type: 'setTarget', id }),
     drive: (throttle, brake, steer, handbrake = false, headlights) =>
       cmd({
         type: 'drive',

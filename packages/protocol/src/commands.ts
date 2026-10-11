@@ -45,6 +45,20 @@ export interface AimCommand extends CommandHeader {
 }
 
 /**
+ * Locks the HUD target card (`SimViewPatch.target`) on entity `id` (StableId of a zombie, animal
+ * or player, or a vehicle id), or clears the lock with `null`. UI only: it never changes what an
+ * attack hits. Without a lock the card shows the entity under the aim point, else the last one
+ * the player hit within `TARGET_LAST_HIT_SEC`. The lock drops by itself when the target is gone,
+ * on another floor, farther than `TARGET_MAX_TILES` or out of sight. Rejects: `invalid-target`
+ * (unknown id, the player itself, a dead body), `out-of-range` (farther than `TARGET_MAX_TILES`,
+ * another floor, no line of sight).
+ */
+export interface SetTargetCommand extends CommandHeader {
+  type: 'setTarget';
+  id: number | null;
+}
+
+/**
  * Body parts (17, as in Project Zomboid). Order is fixed: it is part of the state hash and the
  * wound view. `_l` / `_r` = the character's left / right.
  */
@@ -842,6 +856,7 @@ export type Command =
   | TakeVehicleKeyCommand
   | VehicleEngineCommand
   | HornCommand
+  | SetTargetCommand
   | RefuelVehicleCommand
   | FillFuelCanCommand
   | SiphonFuelCommand

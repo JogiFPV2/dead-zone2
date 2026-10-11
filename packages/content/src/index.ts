@@ -5,3 +5,4 @@ export * from './validate/index.js';
 export * from './bundle/index.js';
 export * from './places/index.js';
 export * from './combat/index.js';
+export * from './i18n/entity-names.js';

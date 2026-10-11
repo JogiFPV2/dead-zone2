@@ -45,6 +45,12 @@ export const aimCommandSchema = z.strictObject({
   y: coord,
 });
 
+export const setTargetCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setTarget'),
+  id: z.number().int().min(1).max(U32_MAX).nullable(),
+});
+
 const bodyPart = z.enum(BODY_PARTS);
 /** Content id (`namespace:kebab-name`), same shape as in packages/content. */
 const contentId = z
@@ -512,6 +518,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   takeVehicleKeyCommandSchema,
   vehicleEngineCommandSchema,
   hornCommandSchema,
+  setTargetCommandSchema,
   refuelVehicleCommandSchema,
   fillFuelCanCommandSchema,
   siphonFuelCommandSchema,

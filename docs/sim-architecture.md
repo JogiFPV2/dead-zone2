@@ -1242,3 +1242,37 @@ Daleka symulacja (9.24) liczy teraz zombie osobno dla każdego poziomu `z` z `Wo
 - **Zapis (`LodSave`, wersja 3, wstecznie zgodny).** Dochodzą dwa opcjonalne pola: `floors?: [cell, number[]][]` (cały wektor `levels × types`) i `links?: [cell, mask][]`. Pomijamy je, gdy są puste, więc zapis świata jednopoziomowego wygląda dokładnie jak wcześniej. Zapis sprzed tej zmiany wczytuje się bez problemu. Jego komórki, także te już aktywne, dzielą się na poziomy przy najbliższej aktualizacji obszaru. Serwer (`apps/server/src/save/state.ts`) sprawdza, czy `cell < cellsW × cellsH` i czy długość wektora jest wielokrotnością `types`. Hash stanu obejmuje `floors` i `links` tylko na światach wielopoziomowych.
 - **Poprawka przy okazji (AI pięter).** Cache przejść schodowych (`ai/floors.ts`, `passagesOf`) był liczony raz na siatkę. Na leniwym świecie LOD schody dochodzą chunk po chunku, więc przebieg i jego wczytany zapis widziały różne przejścia, a stan rozjeżdżał się po wczytaniu. Teraz cache przebudowuje się, gdy `grid.stairs` urośnie.
 - **Wydajność** (`src/test/lod-floors.perf.test.ts`): pełna mapa 512 × 512 chunków, 11 poziomów, co drugi chunk to blok ze schodami, a każda komórka bloku jest już podzielona. To około 210 000 zombie zgrubnych, z czego około 52 000 poza parterem; liczniki pięter zajmują około 1,1 MiB. Średni tick samego LOD (bez encji zombie) wynosi około 0,5 ms przy budżecie 2 ms. Z 200 aktywnymi zombie tick trwa około 1,5 ms przy budżecie 4 ms, tak jak w `big-world`.
+
+### 9.40 Karta celu w HUD (protokół 20) — kontrakt dla Silnika i Designera
+
+Sim wystawia, w co gracz celuje. Kartę rysuje Silnik. To czysto UI: nic z tego nie wpływa na symulację (atak trafia jak dotąd, w łuk przed postacią albo wzdłuż strzału), stan nie wchodzi do hasha ani zapisu (`CombatWorld.targets`, `combat/target.ts`).
+
+- **Źródło celu, po kolei:**
+  1. `lock`: blokada komendą `setTarget {id}`,
+  2. `aim`: żywy zombie, zwierzę albo inny gracz najbliżej punktu `aim` (w promieniu ciała + `TARGET_PICK_TILES` 0,6), a gdy nikogo nie ma, auto, nad którego obrysem (+ 0,6) jest kursor,
+  3. `hit`: ostatnia encja trafiona przez gracza (cios, pchnięcie, strzał, polowanie) w ciągu `TARGET_LAST_HIT_SEC` = 4 s, także martwa (`state: 'dead'`, `hpPct` 0).
+
+  Klient wysyła `aim` z kursorem cały czas, więc karta pokazuje to, nad czym jest kursor; przytrzymany PPM nic tu nie zmienia (sim go nie zna). Warunek dla `lock` i `aim`: to samo piętro, ≤ `TARGET_MAX_TILES` 40 m, linia wzroku.
+- **Komenda `setTarget {id: number | null}`** (`client.setTarget(id)`): `id` = StableId zombie / zwierzęcia / gracza albo id auta; `null` zdejmuje blokadę. Odrzucenia: `invalid-target` (nieznane id, sam gracz, martwe ciało), `out-of-range` (inne piętro, > 40 m, brak linii wzroku). Blokada znika sama, gdy cel zginie, zniknie, zmieni piętro, oddali się albo zniknie z oczu.
+- **View `SimViewPatch.target?: TargetView | null`** (przy zmianie; `null` = brak celu; świeży tracker nie wysyła nic, dopóki celu nie ma):
+
+  ```ts
+  interface TargetView {
+    id: number;                    // StableId albo id auta
+    kind: 'zombie' | 'animal' | 'npc' | 'vehicle' | 'player'; // npc zarezerwowane (brak NPC w simie)
+    typeId: string;                // 'base:walker', 'base:deer', 'base:sedan'; gracz: ''
+    name: string;                  // polska nazwa (ENTITY_NAMES_PL), gracz: imię i nazwisko
+    hpPct: number;                 // 0..100 całkowite; auto: średnie hp stref nadwozia
+    distanceM: number;             // 0,1 m, środek–środek
+    state?: 'idle' | 'wander' | 'chasing' | 'attacking' | 'fleeing' | 'downed' | 'dead';
+    hitChancePct?: number;         // brak dla aut i martwych
+    weapon?: { id: string; conditionPct: number }; // broń w hand_primary; nazwa z pl.json klienta
+    source: 'lock' | 'aim' | 'hit';
+  }
+  ```
+
+  Stany: zombie `chasing`, a w zasięgu ciosu (`zombieReady`) `attacking`; `wander`, reszta (`investigate`, `search`, `idle`) to `idle`. Przewrócony albo wstający (fizyka `knockdown` / `getup` / `fall`) to `downed`. Zwierzę: `idle` (pasie się), `wander`, `fleeing`, `dead`. Gracz: `downed` albo `dead`. Auto: bez stanu.
+- **`hitChancePct`:** broń palna liczona tym samym wzorem co strzał: `accuracy × (1 − hitFalloffAtRange × d / range) × kara z ran × (1 + accuracyPerSkillLevel × poziom)`, 0 poza zasięgiem; rozrzut się nie liczy. Wręcz / gołe ręce: 100 w zasięgu (`rangeTiles` + promień celu), inaczej 0 (cios wręcz nie ma rzutu na trafienie). 0 bez linii wzroku albo na innym piętrze.
+- **Nazwy:** `@deadzone/content` `ENTITY_NAMES_PL` / `entityNamePl(kind, typeId)` (zombie, zwierzęta, auta paczki bazowej; test pilnuje kompletności). Nieznane id: id bez przestrzeni nazw.
+- **Protokół 20:** komenda `setTarget` (+ schemat), `SimViewPatch.target`, stałe `TARGET_KINDS`, `TARGET_STATES`, `TARGET_MAX_TILES`, `TARGET_LAST_HIT_SEC`, `TARGET_PICK_TILES`. `SAVE_VERSION` 3 bez zmian, złote hashe bez zmian.
+- **Testy (`combat/target.test.ts`):** najechanie i `null`; 100 % w zasięgu; ostatnie trafienie przez 4 s i martwe ciało; blokada, odrzucenia, `null`; karta zwierzęcia i auta; ten sam hash z blokadą i bez, zapis / odczyt; schemat.

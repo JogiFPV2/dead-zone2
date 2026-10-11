@@ -1,4 +1,6 @@
 import { worldMapPatch } from '../map/player-map.js';
+import { targetView } from '../combat/target.js';
+import type { TileGrid } from '../world/grid.js';
 import { vehicleStateViews } from '../vehicles/views.js';
 import { pumpViews } from '../vehicles/pumps.js';
 import { lureViews } from '../lures/lures.js';
@@ -178,10 +180,11 @@ export class ViewTracker {
   private vehicleKey = '';
   private vehiclesKey = '';
   private pumpsKey = '';
+  private targetKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
-  diff(w: SimWorld): SimViewPatch | undefined {
+  diff(w: SimWorld, grid?: TileGrid): SimViewPatch | undefined {
     const patch: SimViewPatch = {};
     const minute = gameMinuteAt(w.clock, Math.max(0, w.tick - 1));
     const eid = w.players.get(this.playerId);
@@ -303,6 +306,15 @@ export class ViewTracker {
       if (key !== this.pumpsKey) {
         if (this.pumpsKey !== '' || pumps.length > 0) patch.pumps = pumps;
         this.pumpsKey = key;
+      }
+    }
+    if (eid !== undefined && w.ai && grid) {
+      const target = targetView(w, grid, eid);
+      const key = target ? JSON.stringify(target) : '';
+      if (key !== this.targetKey) {
+        // A fresh tracker sends nothing until there is a target.
+        if (this.targetKey !== '' || target) patch.target = target;
+        this.targetKey = key;
       }
     }
     if (w.openings.version !== this.openingsVersion) {

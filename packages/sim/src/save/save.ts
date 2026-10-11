@@ -59,7 +59,7 @@ const SKIP_AI = [
   'spatial',
   'combat',
 ];
-const SKIP_COMBAT = ['cfg'];
+const SKIP_COMBAT = ['cfg', 'targets'];
 const SKIP_PHYSICS = ['cfg', 'rng', 'order', 'orderSize', 'presses', 'stairs', 'multiLevel'];
 
 interface SaveFile {

@@ -6,6 +6,7 @@ import { detach, type SimWorld } from '../core/world.js';
 import { createItem, groundPile, stackLimit } from '../items/store.js';
 import type { TileGrid } from '../world/grid.js';
 import { AnimalState } from './state.js';
+import { noteHit } from '../combat/state.js';
 import { startFlee } from './system.js';
 
 /**
@@ -27,6 +28,7 @@ export function damageAnimal(
   const hp = Math.fround((Animal.hp[aid] ?? 0) - dmg);
   Animal.hp[aid] = hp > 0 ? hp : 0;
   const killed = hp <= 0;
+  noteHit(w, attacker, StableId.value[aid] ?? 0);
   w.events.push({
     type: 'hit',
     tick: w.tick,

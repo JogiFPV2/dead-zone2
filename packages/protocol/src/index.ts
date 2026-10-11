@@ -1,5 +1,5 @@
 /** Bump on every breaking change to commands, snapshots or worker messages. */
-export const PROTOCOL_VERSION = 19;
+export const PROTOCOL_VERSION = 20;
 
 export * from './api.js';
 export * from './commands.js';

@@ -2,6 +2,7 @@ import { GAITS, type Command, type CommandRejectReason } from '@deadzone/protoco
 import { applyAiCommand, isAiCommand } from '../ai/commands.js';
 import { applyAnimalCommand, isAnimalCommand } from '../animals/commands.js';
 import { queueAttack } from '../combat/commands.js';
+import { applySetTarget } from '../combat/target.js';
 import { applyFirearmCommand } from '../combat/firearms.js';
 import { takeRejectNote } from '../core/reject-note.js';
 import type { SimWorld } from '../core/world.js';
@@ -73,6 +74,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       if (reason) reject(w, cmd, reason);
     } else if (isAiCommand(cmd)) {
       const reason = applyAiCommand(w, eid, cmd);
+      if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'setTarget') {
+      const reason = applySetTarget(w, grid, eid, cmd.id);
       if (reason) reject(w, cmd, reason);
     } else if (cmd.type === 'aim') {
       AimIntent.x[eid] = Math.fround(cmd.x);

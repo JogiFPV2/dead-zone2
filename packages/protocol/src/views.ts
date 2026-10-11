@@ -416,6 +416,69 @@ export interface SimViewPatch {
   vehicles?: VehicleStateView[];
   /** Fuel pumps within `PUMP_VIEW_TILES` on the player's floor (stock, source), full on change. */
   pumps?: PumpView[];
+  /**
+   * HUD target card (PROTOCOL_VERSION 20): what the player locked (`setTarget`), else what is
+   * under the aim point, else what they hit in the last `TARGET_LAST_HIT_SEC`. Sent on change;
+   * `null` = no target any more (a fresh tracker sends nothing until there is one).
+   */
+  target?: TargetView | null;
+}
+
+/** Kinds of a target card. No NPCs exist in the sim yet (`npc` is reserved). */
+export const TARGET_KINDS = ['zombie', 'animal', 'npc', 'vehicle', 'player'] as const;
+export type TargetKind = (typeof TARGET_KINDS)[number];
+
+/**
+ * Behaviour shown on the card: zombies `idle` (also `investigate` / `search`), `wander`,
+ * `chasing`, `attacking` (in reach and swinging); animals `idle` (grazing), `wander`, `fleeing`;
+ * `dead` for a body (zombie / animal / player hp 0). Vehicles and players have none.
+ */
+export const TARGET_STATES = [
+  'idle',
+  'wander',
+  'chasing',
+  'attacking',
+  'fleeing',
+  'downed',
+  'dead',
+] as const;
+export type TargetState = (typeof TARGET_STATES)[number];
+
+/** Why this target is shown: lock (`setTarget`), under the aim point, or the last one hit. */
+export type TargetSource = 'lock' | 'aim' | 'hit';
+
+/** Range of the target card (lock and hover) in tiles (= m). */
+export const TARGET_MAX_TILES = 40;
+/** How long the last entity hit stays on the card without a lock or hover (s). */
+export const TARGET_LAST_HIT_SEC = 4;
+/** Hover pick: the aim point within the entity radius + this many tiles. */
+export const TARGET_PICK_TILES = 0.6;
+
+export interface TargetView {
+  /** StableId (zombie, animal, player) or vehicle id; with `kind` it is unique. */
+  id: number;
+  kind: TargetKind;
+  /** Content type id (`base:walker`, `base:deer`, `base:sedan`); players: `''`. */
+  typeId: string;
+  /** Polish display name (content `ENTITY_NAMES_PL`, players: first + last name). */
+  name: string;
+  /** Health 0..100 (integer); vehicles: average hp of the body zones. */
+  hpPct: number;
+  /** From the player's centre to the target's centre, 0.1 m. */
+  distanceM: number;
+  state?: TargetState;
+  /**
+   * Chance in % that the next attack with the held weapon hits it (integer). Firearm: the shot
+   * formula `accuracy × (1 − falloff × distance / range) × aim` (0 beyond range, spread not
+   * counted); melee / bare hands: 100 in reach, 0 out of reach. Not set for vehicles.
+   */
+  hitChancePct?: number;
+  /**
+   * Weapon in `hand_primary` (bare hands: none): content id (Polish name in the client from the
+   * pack's `i18n/pl.json`, like other items) and condition 0..100 (integer).
+   */
+  weapon?: { id: string; conditionPct: number };
+  source: TargetSource;
 }
 
 /** A marker on the player's map (`addMarker`). */

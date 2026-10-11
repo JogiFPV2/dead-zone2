@@ -807,7 +807,7 @@ export function createSim(input: SimOptions): Sim {
     },
     vehicleSnapshot: (buf) => writeVehicleSnapshot(w, buf),
     vehicleSnapshotByteLength: () => vehicleSnapshotBytes(w),
-    drainView: () => views.diff(w),
+    drainView: () => views.diff(w, ctx.grid),
     save: () => saveWorld(w),
     lodStats() {
       const lod = w.lod;

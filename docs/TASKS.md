@@ -58,6 +58,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Wabik biegający: opóźnienie 3–30 s i kierunek od gracza, bieg ~15 m, hałas 20 s na 30 m, jednorazowy (Symulacja)
 - [ ] Ugryzienia i szansa infekcji (Symulacja)
 - [ ] Poziom zagrożenia w HUD (Designer + Silnik); sim wystawia `view.threat` 0–100
+- [~] Karta celu w HUD (Symulacja + Silnik) — sim gotowy: `SimViewPatch.target` (lock → kursor → ostatnio trafiony 4 s), komenda `setTarget`, protokół 20 ([sim-architecture.md 9.40](sim-architecture.md)); UI karty: Silnik
 - [ ] Test obciążenia: 200 zombie przy 60 fps (Silnik); sim: 200 zombie ≈ 2,5 ms/tick w Node (`test/ai-perf.test.ts`)
 
 ## Etap 5 — Postać i umiejętności
