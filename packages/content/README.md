@@ -52,6 +52,29 @@ const place = nearestPlace(places, x, y); // string | null
 Surowy JSON jest też pod `@deadzone/content/places/stalowa-wola.json`. Nowa mapa z nazwami: plik w `places/`
 i wpis w `src/places/places-files.ts`; test sprawdza, że każdy plik z rejestru przechodzi schemat.
 
+## Punkty zaczepienia przewodów
+
+Obok każdego modelu słupa leży `<modelId>.attach.json` (np. `apps/game/public/models/<zestaw>/pole-hv110.glb` +
+`pole-hv110.attach.json`). Silnik rysuje przewód ze zwisem między punktami o tym samym `id` na kolejnych słupach.
+
+```json
+{ "modelId": "pole-hv110", "kind": "hv110", "attach": [{ "id": "L1", "x": -3.5, "y": 18, "z": 0 }] }
+```
+
+- `x`, `y`, `z` w metrach względem podstawy słupa; y w górę (> 0), słup stoi wzdłuż osi x (w poprzek linii).
+- `kind` → dozwolone `id` (`WIRE_RULES`): `hv110`/`hv400`: `L1`, `L2`, `L3` + opcjonalny `GW` (odgromowy);
+  `lv`: `N` + opcjonalnie komplet `L1`–`L3`; `catenary`: `CW` (jezdny) i `MW` (lina nośna). Id bez powtórzeń.
+- Test `wire-attach-files.test.ts` waliduje każdy `*.attach.json` w `apps/game/public/models`, `packages`
+  i `tools/assets`: schemat, `modelId` = nazwa pliku i model `.glb`/`.gltf` obok.
+
+```ts
+// lekkie wejście (tylko zod, bez DOM i Three.js)
+import { attachFileSchema, attachPoint, type AttachFile } from '@deadzone/content/wires';
+
+const file = attachFileSchema.parse(json);
+const l1 = attachPoint(file, 'L1'); // AttachPoint | undefined
+```
+
 ## Improwizowana broń
 
 Każdy przedmiot w ręku jest bronią (jak w Project Zomboid). Przedmiot, który nie jest bronią białą, może mieć

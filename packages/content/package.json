@@ -17,6 +17,10 @@
       "types": "./dist/places/index.d.ts",
       "default": "./dist/places/index.js"
     },
+    "./wires": {
+      "types": "./dist/wires/index.d.ts",
+      "default": "./dist/wires/index.js"
+    },
     "./data/*": "./data/*",
     "./places/*": "./places/*"
   },

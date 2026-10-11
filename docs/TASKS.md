@@ -93,6 +93,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Loot tables zależne od pomieszczeń (Modules) — `rooms` w loot tables (`base:room-*`), sim wybiera tabelę wg `chunk.rooms` (`items/loot.ts`)
 - [x] Drzwi i okna: zamykanie, rozbijanie, wchodzenie przez okno, barykady z desek, wyważanie zamkniętych drzwi, brama w ogrodzeniu (Symulacja) — klucze do budynków: TODO
 - [ ] Minimapa i licznik dni (Designer + Silnik)
+- [x] Schemat punktów zaczepienia przewodów na słupach (Modules) — `@deadzone/content/wires`: `attachFileSchema` dla `<modelId>.attach.json` obok modelu (`{modelId, kind: hv110|hv400|lv|catenary, attach: [{id, x, y, z}]}`, metry od podstawy, y w górę), `WIRE_RULES` (dozwolone id per kind), `attachPoint(file, id)`; test waliduje każdy `*.attach.json` w repo. Modele słupów (Designer), przewody ze zwisem (Silnik 2)
 - [ ] Cele i zadania (Symulacja + Designer)
 - [ ] Lokalny zapis i wczytanie gry (IndexedDB) (Symulacja)
 - [x] LOD symulacji dużej mapy (8×8 km): zombie daleko jako liczniki w komórkach (dryf, reakcja na głośny hałas), rozwijanie i zwijanie deterministyczne z histerezą, leniwy łup per chunk z catch-upem psucia, `worldSettings.simLod` (Symulacja) — [sim-architecture.md 9.24](sim-architecture.md)
