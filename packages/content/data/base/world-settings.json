@@ -12,11 +12,8 @@
     "defaultAppearance": {
       "skin": "light",
       "parts": {
-        "face": {
-          "part": "base:face-a"
-        },
-        "hair": {
-          "part": "base:hair-short",
+        "head": {
+          "part": "base:head-short",
           "colors": {
             "primary": "brown"
           }

@@ -880,13 +880,13 @@ Zaimplementowane: `ai/*`, `nav/*`, `world/los.ts`, `core/spatial.ts` (opis w 2.5
   - cechy: wybieralne, bez duplikatów i konfliktów (także z `freeTraits` zawodu);
   - umiejętności: nie pasywne, najwyżej `maxSkillLevelAtStart`.
   - Budżet: `startPoints + profession.points − Σ trait.cost − Σ koszt poziomów ≥ 0` (koszt poziomu N to `skillPointCost[N-1]`, ostatnia wartość się powtarza). Wady (koszt < 0) dodają punkty.
-  - Odrzucenie: `invalid-character`; `commandRejected.detail` to pierwszy błąd, np. `over-budget:-2`, `trait-conflict:a/b`, `missing-slot:shoes`, `color:hair.primary`.
+  - Odrzucenie: `invalid-character`; `commandRejected.detail` to pierwszy błąd, np. `over-budget:-2`, `trait-conflict:a/b`, `missing-slot:shoes`, `color:head.primary`.
 - **Efekt:**
   - Poziomy = `startingLevel` + bonusy zawodu i cech + kupione (0–10).
   - Mnożniki XP z cech, `knownRecipes` zawodu i cech, `startingItems` do ekwipunku.
   - Modyfikatory statystyk (tylko MOD_STATS) liczone po moodlach. Warunki `skill` i `trait` są już obsługiwane w `conditionHolds`.
 - **Stan i widok:** `ItemStore.characters` (w zapisie; hasz tylko gdy postać istnieje). Zdarzenie `characterCreated {character}`, widok `characterProfile` (wygląd z rozwiązanymi kolorami, zawód, cechy, kupione umiejętności, `pointsLeft`).
-- **PR #38 (głowa jako jeden slot):** sloty i wymagane sloty biorą się z danych, więc `head` zadziała bez zmian w sim.
+- **PR #38 (głowa jako jeden slot):** sloty i wymagane sloty biorą się z danych, więc `head` zadziała bez zmian w sim. Migracja starych postaci (`character/character.ts` `migrateLegacyHead`): `face` + `hair` (+ `beard`) → `head` przy wczytaniu zapisu (`loadWorld` → `migrateCharacters`) i w `checkCharacter`, gdy treść nie ma już slotów `face` / `hair` (np. wygląd zapisany w chmurze przed #38). Para kreatora `face-c` + `hair-buzz` → `head-short-beard`, broda → `head-short-beard`, `hair-X` → `head-X` (nieznane → `head-short`), kolor włosów zostaje jako `primary` głowy (łysa bez kanałów). `SAVE_VERSION` zostaje 3, `saveSummary` i walidator Serwera nie czytają wyglądu.
 - **Odłożone:** modyfikatory spoza MOD_STATS (np. `melee-damage`, `aim-accuracy`, `crafting-speed`) jeszcze nie działają. Cechy zdobywane w grze (`gainedWhen`/`lostWhen`) też jeszcze nie działają.
 
 ### 9.16 Stan po PR „sen, odpoczynek, czytanie / TV / VHS” — kontrakt dla klienta

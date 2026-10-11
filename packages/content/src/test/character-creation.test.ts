@@ -18,7 +18,7 @@ const part = (slot: string, palette?: string) => ({
   tints: palette ? [{ channel: 'primary', palette }] : [],
 });
 const parts = REQUIRED_APPEARANCE_SLOTS.map((s) =>
-  part(s, s === 'face' ? undefined : s === 'hair' ? 'base:hair' : 'base:cloth'),
+  part(s, s === 'head' ? 'base:hair' : 'base:cloth'),
 );
 const choice = (slot: string, color?: string) => ({
   part: `base:${slot}-1`,
@@ -27,8 +27,7 @@ const choice = (slot: string, color?: string) => ({
 const appearance = {
   skin: 'a',
   parts: {
-    face: choice('face'),
-    hair: choice('hair', 'a'),
+    head: choice('head', 'a'),
     top: choice('top', 'a'),
     bottom: choice('bottom', 'b'),
     shoes: choice('shoes', 'a'),
@@ -56,7 +55,7 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
   it('brak palety, zły rodzaj palety, powtórzony kolor, pusty slot', () => {
     const bad = [
       ...parts.filter((p) => p.slot !== 'shoes'),
-      part('beard', 'base:cloth'),
+      { ...part('head', 'base:cloth'), id: 'base:head-2' },
       { ...part('top', 'base:nope'), id: 'base:top-2' },
     ];
     const pals = [
@@ -67,9 +66,9 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
     const errs = run({ 'appearance-parts/p.json': bad, 'palettes/p.json': pals });
     expect(errs).toEqual(
       expect.arrayContaining([
-        ['missing_ref', '$[5].tints[0].palette'],
+        ['missing_ref', '$[4].tints[0].palette'],
         ['palette_duplicate_color', '$[0].colors[1].id'],
-        ['appearance_palette_kind', '$[4].tints[0].palette'],
+        ['appearance_palette_kind', '$[3].tints[0].palette'],
         ['appearance_slot_empty', '$.characterCreation'],
       ]),
     );
@@ -79,7 +78,7 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
     const wrong = {
       ...appearance,
       skin: 'zzz',
-      parts: { ...appearance.parts, hair: choice('top', 'a'), top: choice('top', 'zzz') },
+      parts: { ...appearance.parts, head: choice('top', 'a'), top: choice('top', 'zzz') },
     };
     expect(
       run(
@@ -91,7 +90,7 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
       ['creation_cost_invalid', '$.characterCreation.skillPointCost'],
       ['creation_cost_invalid', '$.characterCreation.name.minLen'],
       ['creation_default_invalid', '$.characterCreation.defaultAppearance.skin'],
-      ['creation_default_invalid', '$.characterCreation.defaultAppearance.parts.hair.part'],
+      ['creation_default_invalid', '$.characterCreation.defaultAppearance.parts.head.part'],
       ['creation_default_invalid', '$.characterCreation.defaultAppearance.parts.top.colors'],
     ]);
   });
@@ -100,10 +99,8 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
     const b = await baseBundle();
     const count = (slot: string) =>
       Object.values(b.appearanceParts).filter((p) => p.slot === slot).length;
-    expect([count('face'), count('hair'), count('top'), count('bottom'), count('shoes')]).toEqual([
-      6, 8, 6, 6, 4,
-    ]);
-    expect(count('beard')).toBeGreaterThan(0);
+    expect([count('head'), count('top'), count('bottom'), count('shoes')]).toEqual([10, 6, 6, 4]);
+    expect(count('face') + count('hair') + count('beard')).toBe(0);
     const colors = (id: string) => b.palettes[id]?.colors.length;
     expect([colors('base:skin'), colors('base:hair'), colors('base:cloth')]).toEqual([8, 10, 16]);
     const cc = b.worldSettings.characterCreation;
@@ -113,7 +110,7 @@ describe('tworzenie postaci: wygląd, palety, pula punktów', () => {
       skillPointCost: [1, 2, 3],
     });
     expect(cc.name).toEqual({ minLen: 2, maxLen: 24 });
-    expect(cc.defaultAppearance?.parts.hair.part).toBe('base:hair-short');
+    expect(cc.defaultAppearance?.parts.head.part).toBe('base:head-short');
     for (const p of Object.values(b.appearanceParts)) expect(p.modelRef).toMatch(/^char\//);
   });
 });

@@ -91,7 +91,7 @@ AI zombie: wzrok, słuch (hałas z kroków, strzałów, rozbijanych okien), węd
 
 ### Etap 5 — Postać, umiejętności i cechy
 Tworzenie postaci: zawód, cechy pozytywne i negatywne z bilansem punktów. Umiejętności z poziomami 0–10 i XP za akcje (walka, gotowanie, stolarka, pierwsza pomoc, skradanie, bieganie, szukanie). Czytanie książek jako mnożnik XP. Toasty „+3 …” w HUD.
-Kreator postaci jako dane: części wyglądu w slotach (twarz, fryzura, broda, góra, dół, buty) z kluczem modelu i kanałami barwienia, palety skóry, włosów i ubrań w stonowanych kolorach, pula 8 punktów (zawód dodaje lub zabiera, cechy kosztują albo dają punkty, umiejętności do poziomu 3 kosztują 1/2/3), imię 2–24 znaki i wygląd startowy.
+Kreator postaci jako dane: części wyglądu w slotach (głowa jako gotowy wariant twarzy z fryzurą, góra, dół, buty; osobne twarz, włosy i broda mogą wrócić później) z kluczem modelu i kanałami barwienia, palety skóry, włosów i ubrań w stonowanych kolorach, pula 8 punktów (zawód dodaje lub zabiera, cechy kosztują albo dają punkty, umiejętności do poziomu 3 kosztują 1/2/3), imię 2–24 znaki i wygląd startowy.
 **Gotowe, gdy:** wybór zawodu i cech zmienia rozgrywkę, a umiejętności rosną od używania.
 
 Kasety VHS: 15 kaset (fitness, siła, gotowanie, stolarka, pierwsza pomoc, mechanika, elektryka, szycie, ogród, wędkarstwo, przetrwanie, samoobrona). Oglądanie trwa 30 s rzeczywistych na telewizorze z tagiem `base:station-tv`, który ma prąd z generatora na paliwo (kanister). Każda kaseta daje XP w 1–3 umiejętnościach, raz na postać. Są w lootcie salonu, sypialni i księgarni (niezbyt częste), a najwięcej w wypożyczalni wideo (`base:room-video-store`).

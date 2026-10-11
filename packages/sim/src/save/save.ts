@@ -4,6 +4,7 @@ import { decodeLod, encodeLod, type LodSave } from './delta.js';
 import { addComponent, addEntity, hasComponent } from 'bitecs';
 import { RNG_STREAMS, Rng } from '../core/rng.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
+import { migrateCharacters } from '../character/character.js';
 import { ensureVehicleParts } from '../vehicles/damage.js';
 import { ensureVehicleGameplay } from '../vehicles/keys.js';
 import { createVehicleContainers } from '../vehicles/containers.js';
@@ -276,7 +277,11 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
     if (savedSurvival.sleepRealQ === undefined)
       for (let e = 0; e < sv.sleepTicks.length; e++) sv.sleepRealQ[e] = (sv.sleepTicks[e] ?? 0) * 4;
   }
-  if (w.items && f.items) restoreInto(w.items, decode(f.items));
+  if (w.items && f.items) {
+    restoreInto(w.items, decode(f.items));
+    // Saves before one `head` appearance slot (content #38): face / hair → head.
+    migrateCharacters(w.items);
+  }
   if (w.ai && f.ai) {
     restoreInto(w.ai, decode(f.ai));
     if (f.combat) restoreInto(w.ai.combat, decode(f.combat));

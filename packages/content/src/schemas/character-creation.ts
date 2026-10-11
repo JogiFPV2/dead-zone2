@@ -13,9 +13,7 @@ export const AppearanceChoiceSchema = z.strictObject({
 export const AppearanceSchema = z.strictObject({
   skin: ColorId,
   parts: z.strictObject({
-    face: AppearanceChoiceSchema,
-    hair: AppearanceChoiceSchema,
-    beard: AppearanceChoiceSchema.optional(),
+    head: AppearanceChoiceSchema,
     top: AppearanceChoiceSchema,
     bottom: AppearanceChoiceSchema,
     shoes: AppearanceChoiceSchema,

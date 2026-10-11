@@ -135,15 +135,17 @@ tankLiters, litersPerHour, noise }` (paliwo: `base:gas-can` z tagiem `base:fuel`
 
 - Palety (`palettes/`): `{ id, name, kind: skin | hair | cloth, colors: [{ id, hex }] }` (base: `base:skin` 8, `base:hair` 10,
   `base:cloth` 16).
-- Części wyglądu (`appearance-parts/`): `{ id, name, slot: face | hair | beard | top | bottom | shoes, modelRef, tints:
-[{ channel: primary | secondary, palette }], bodyTypes }`. `modelRef` to klucz assetu Silnika (`char/hair-short`);
-  broda jest opcjonalna, pozostałe sloty muszą mieć co najmniej 1 opcję. Twarz barwi kolor skóry.
+- Części wyglądu (`appearance-parts/`): `{ id, name, slot: head | top | bottom | shoes, modelRef, tints:
+[{ channel: primary | secondary, palette }], bodyTypes }`. `modelRef` to klucz assetu Silnika (`char/head-short`);
+  każdy slot musi mieć co najmniej 1 opcję. `head` to gotowy wariant (twarz i fryzura w jednym modelu Quaternius), jego
+  kanał `primary` to kolor włosów, a skórę barwi `skin`. Lista slotów jest rozszerzalna (później osobne `face`, `hair`,
+  `beard`).
 - `worldSettings.characterCreation`: `startPoints` (8), `maxSkillLevelAtStart` (3), `skillPointCost` ([1, 2, 3], koszt
   poziomu N), `name { minLen, maxLen }`, `skinPalette`, `defaultAppearance`. Wygląd w stanie postaci:
   `{ skin: colorId, parts: { <slot>: { part, colors: { primary?, secondary? } } } }` (`AppearanceSchema`).
 - Pula punktów = `startPoints` + `profession.points` − Σ `trait.cost` − koszt umiejętności. Zawód z ujemnymi punktami
   zabiera je z puli, cecha z dodatnim kosztem kosztuje, z ujemnym daje punkty; pula nie może zejść poniżej 0.
-- Błędy: `palette_duplicate_color`, `appearance_palette_kind` (włosy/broda → hair, ubrania → cloth),
+- Błędy: `palette_duplicate_color`, `appearance_palette_kind` (głowa → hair, ubrania → cloth),
   `appearance_slot_empty`, `creation_cost_invalid`, `creation_default_invalid` (plus `missing_ref` dla palet).
 
 ## Paczka moda

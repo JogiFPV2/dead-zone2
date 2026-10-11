@@ -56,13 +56,39 @@ export function isFemale(c: Pick<CloudCharacter, 'name' | 'appearance'>): boolea
 const HEX = /^#[0-9a-f]{3,8}$/i;
 const FALLBACK: Portrait = { skin: '#b9876a', hair: '#2a2420', shirt: '#4a5a48' };
 
+type PartColors = { primary?: string | undefined };
+type PartChoice = { colors?: PartColors | undefined };
+type PartsBag = Record<string, PartChoice | undefined>;
+
+const hexColor = (v: unknown): string | undefined =>
+  typeof v === 'string' && HEX.test(v) ? v : undefined;
+
+/** `appearance.parts` or `appearance.spec.appearance.parts` (CharacterSpec on the cloud). */
+function appearanceParts(appearance: Record<string, unknown>): PartsBag | undefined {
+  const direct = appearance.parts;
+  if (direct && typeof direct === 'object') return direct as PartsBag;
+  const spec = appearance.spec;
+  if (!spec || typeof spec !== 'object') return undefined;
+  const inner = (spec as { appearance?: { parts?: unknown } }).appearance?.parts;
+  return inner && typeof inner === 'object' ? (inner as PartsBag) : undefined;
+}
+
+/**
+ * Card portrait colours. Prefers the stored `portrait` hexes; hair falls back to the content
+ * slot colour — `parts.head.colors.primary` after #38, else legacy `parts.hair.colors.primary`.
+ */
 export function portraitOfCloud(c: Pick<CloudCharacter, 'appearance'>): Portrait {
-  const p = c.appearance.portrait as Partial<Record<keyof Portrait, unknown>> | undefined;
-  const pick = (k: keyof Portrait): string => {
-    const v = p?.[k];
-    return typeof v === 'string' && HEX.test(v) ? v : FALLBACK[k];
+  const a = c.appearance;
+  const p = a.portrait as Partial<Record<keyof Portrait, unknown>> | undefined;
+  const pick = (k: keyof Portrait): string => hexColor(p?.[k]) ?? FALLBACK[k];
+  const parts = appearanceParts(a);
+  const hairFromParts =
+    hexColor(parts?.head?.colors?.primary) ?? hexColor(parts?.hair?.colors?.primary);
+  return {
+    skin: pick('skin'),
+    hair: hexColor(p?.hair) ?? hairFromParts ?? FALLBACK.hair,
+    shirt: pick('shirt'),
   };
-  return { skin: pick('skin'), hair: pick('hair'), shirt: pick('shirt') };
 }
 
 const km = (m: number): string => (m / 1000).toFixed(1).replace('.', ',');

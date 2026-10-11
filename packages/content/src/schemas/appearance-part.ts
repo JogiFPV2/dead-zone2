@@ -7,9 +7,13 @@ import {
   TagListSchema,
 } from './common/index.js';
 
-/** Sloty wyglądu. `beard` jest opcjonalny (postać może nie mieć brody), reszta wymagana. */
-export const APPEARANCE_SLOTS = ['face', 'hair', 'beard', 'top', 'bottom', 'shoes'] as const;
-export const REQUIRED_APPEARANCE_SLOTS = ['face', 'hair', 'top', 'bottom', 'shoes'] as const;
+/**
+ * Sloty wyglądu. Na start `head` to gotowy wariant głowy (twarz i fryzura w jednym modelu
+ * Quaternius). Lista jest rozszerzalna: osobne `face`, `hair` czy `beard` można dodać później
+ * (enum, `REQUIRED_APPEARANCE_SLOTS`, `AppearanceSchema.parts` i `SLOT_PALETTE` w walidatorze).
+ */
+export const APPEARANCE_SLOTS = ['head', 'top', 'bottom', 'shoes'] as const;
+export const REQUIRED_APPEARANCE_SLOTS = ['head', 'top', 'bottom', 'shoes'] as const;
 export const AppearanceSlotSchema = z.enum(APPEARANCE_SLOTS);
 export const TintChannelSchema = z.enum(['primary', 'secondary']);
 
@@ -17,7 +21,8 @@ export const TintChannelSchema = z.enum(['primary', 'secondary']);
 export const TintSchema = z.strictObject({ channel: TintChannelSchema, palette: PaletteRefSchema });
 
 /**
- * Część wyglądu postaci (twarz, fryzura, broda, góra, dół, buty). `modelRef` to klucz assetu
+ * Część wyglądu postaci (głowa, góra, dół, buty). Kanał `primary` głowy to kolor włosów (paleta hair),
+ * skórę barwi `Appearance.skin`. `modelRef` to klucz assetu
  * (modele modularne CC0 dostarcza Silnik), np. `char/hair-short`. `bodyTypes` to opcjonalne tagi
  * sylwetki; puste = pasuje do każdej.
  */

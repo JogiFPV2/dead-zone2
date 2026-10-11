@@ -7,7 +7,7 @@ import { baseContent, send } from '../test/content-fixtures.js';
 import { buildMap } from '../test/fixtures.js';
 import { findItem } from '../test/item-fixtures.js';
 import { compileContent } from '../content/adapter.js';
-import { checkCharacter, skillCost } from './character.js';
+import { checkCharacter, migrateLegacyHead, skillCost } from './character.js';
 
 const content = await baseContent();
 const index = compileContent(content);
@@ -27,8 +27,7 @@ function sim(opts: { load?: Uint8Array; character?: CharacterSpec } = {}): Sim {
 const look = (): CharacterSpec['appearance'] => ({
   skin: 'olive',
   parts: {
-    face: { part: 'base:face-b' },
-    hair: { part: 'base:hair-long', colors: { primary: 'ginger' } },
+    head: { part: 'base:head-long', colors: { primary: 'ginger' } },
     top: { part: 'base:top-hoodie', colors: { primary: 'navy' } },
     bottom: { part: 'base:bottom-jeans' },
     shoes: { part: 'base:shoes-boots', colors: { primary: 'charcoal' } },
@@ -63,7 +62,15 @@ describe('character creator: validation', () => {
       colors: { primary: 'navy', secondary: 'charcoal' },
     });
     expect(r.state.appearance.parts.bottom!.colors).toEqual({ primary: 'denim' });
-    expect(r.state.appearance.parts.face!.colors).toEqual({});
+    expect(r.state.appearance.parts.head).toEqual({
+      part: 'base:head-long',
+      colors: { primary: 'ginger' },
+    });
+    // A bald head has no tint channels.
+    const bald = look();
+    bald.parts.head = { part: 'base:head-bald' };
+    const rb = checkCharacter(index, carpenter({ appearance: bald }));
+    expect(rb.ok && rb.state.appearance.parts.head!.colors).toEqual({});
   });
 
   it('flaws give points; over budget is rejected', () => {
@@ -93,11 +100,15 @@ describe('character creator: validation', () => {
     b.parts.top = { part: 'base:bottom-jeans' };
     expect(errorsOf(carpenter({ appearance: b }))).toEqual(['part-slot:top']);
     const c = look();
-    c.parts.hair = { part: 'base:hair-long', colors: { primary: 'navy' } };
-    expect(errorsOf(carpenter({ appearance: c }))).toEqual(['color:hair.primary']);
+    c.parts.head = { part: 'base:head-long', colors: { primary: 'navy' } };
+    expect(errorsOf(carpenter({ appearance: c }))).toEqual(['color:head.primary']);
     const d = look();
-    d.parts.face = { part: 'base:face-a', colors: { primary: 'brown' } };
-    expect(errorsOf(carpenter({ appearance: d }))).toEqual(['color:face.primary']);
+    d.parts.head = { part: 'base:head-bald', colors: { primary: 'brown' } };
+    expect(errorsOf(carpenter({ appearance: d }))).toEqual(['color:head.primary']);
+    // Old slots are gone from content.
+    const e = look();
+    (e.parts as Record<string, unknown>).hair = { part: 'base:head-short' };
+    expect(errorsOf(carpenter({ appearance: e }))).toEqual(['slot-unknown:hair']);
     expect(errorsOf(carpenter({ appearance: { ...look(), skin: 'blue' } }))).toEqual(['skin:blue']);
     expect(errorsOf(carpenter({ profession: 'base:astronaut' }))[0]).toBe(
       'profession:base:astronaut',
@@ -174,5 +185,75 @@ describe('character creator: in the sim', () => {
     b.step();
     expect(b.hash()).toBe(s.hash());
     expect(b.drainView()?.characterProfile).toMatchObject({ firstName: 'Anna', pointsLeft: 1 });
+  });
+
+  it('old local save with face / hair slots loads with one head slot (content #38)', () => {
+    const s = sim({ character: carpenter() });
+    s.step();
+    const st = s.world.items!;
+    const sid = s.world.c.StableId.value[s.world.players.get(0)!]!;
+    const ch = st.characters.get(sid)!;
+    // What a save from before #38 holds (the creator's moustache preset + old color).
+    ch.appearance.parts = {
+      face: { part: 'base:face-c', colors: {} },
+      hair: { part: 'base:hair-buzz', colors: { primary: 'ginger' } },
+      top: ch.appearance.parts.top!,
+      bottom: ch.appearance.parts.bottom!,
+      shoes: ch.appearance.parts.shoes!,
+    };
+    const b = sim({ load: s.save() });
+    const parts = b.drainView()!.characterProfile!.appearance.parts;
+    expect(Object.keys(parts).sort()).toEqual(['bottom', 'head', 'shoes', 'top']);
+    expect(parts.head).toEqual({ part: 'base:head-short-beard', colors: { primary: 'ginger' } });
+    // Migrated once: saving again keeps `head` and the run stays deterministic.
+    const c = sim({ load: b.save() });
+    b.step();
+    c.step();
+    expect(c.hash()).toBe(b.hash());
+  });
+});
+
+describe('character creator: old face / hair slots', () => {
+  const old = (face: string, hair: string, color?: string, beard?: string) => {
+    const parts: Parameters<typeof migrateLegacyHead>[0] = {
+      face: { part: face },
+      hair: { part: hair, ...(color ? { colors: { primary: color } } : {}) },
+      ...(beard ? { beard: { part: beard } } : {}),
+    };
+    migrateLegacyHead(parts, (id) => index.appearanceParts.has(id));
+    return parts;
+  };
+
+  it('maps hair-X → head-X, beard → short-beard, bald without color, unknown → short', () => {
+    expect(old('base:face-a', 'base:hair-long', 'ginger')).toEqual({
+      head: { part: 'base:head-long', colors: { primary: 'ginger' } },
+    });
+    expect(old('base:face-b', 'base:hair-buzz')).toEqual({
+      head: { part: 'base:head-buzz', colors: {} },
+    });
+    expect(old('base:face-a', 'base:hair-short', 'brown', 'base:beard-full').head!.part).toBe(
+      'base:head-short-beard',
+    );
+    expect(old('base:face-a', 'base:hair-bald', 'brown')).toEqual({
+      head: { part: 'base:head-bald', colors: {} },
+    });
+    expect(old('base:face-a', 'base:hair-mohawk', 'brown').head!.part).toBe('base:head-short');
+    const keep = { head: { part: 'base:head-bun' }, hair: { part: 'base:hair-long' } };
+    expect(migrateLegacyHead(keep)).toBe(false);
+  });
+
+  it('checkCharacter accepts an old spec and resolves it to head', () => {
+    const a = look();
+    delete (a.parts as Record<string, unknown>).head;
+    a.parts.face = { part: 'base:face-b' };
+    a.parts.hair = { part: 'base:hair-ponytail', colors: { primary: 'ginger' } };
+    const r = checkCharacter(index, carpenter({ appearance: a }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.state.appearance.parts.head).toEqual({
+      part: 'base:head-ponytail',
+      colors: { primary: 'ginger' },
+    });
+    expect(r.state.appearance.parts.hair).toBeUndefined();
   });
 });

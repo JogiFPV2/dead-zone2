@@ -6,9 +6,7 @@ import { formatJsonPath } from '../json-path.js';
 import type { SourceRef } from '../source.js';
 
 const SLOT_PALETTE: Record<AppearanceSlot, PaletteKind> = {
-  face: 'skin',
-  hair: 'hair',
-  beard: 'hair',
+  head: 'hair',
   top: 'cloth',
   bottom: 'cloth',
   shoes: 'cloth',
@@ -16,7 +14,7 @@ const SLOT_PALETTE: Record<AppearanceSlot, PaletteKind> = {
 
 /**
  * Wygląd: kolory palety mają unikalne id, kanał części używa palety właściwego rodzaju
- * (włosy/broda → hair, ubrania → cloth, twarz → skin), każdy wymagany slot ma co najmniej 1 opcję.
+ * (głowa → hair, ubrania → cloth), każdy wymagany slot ma co najmniej 1 opcję.
  * Sprawdza sloty tylko, gdy zawartość ma jakiekolwiek części. `where` wskazuje plik ustawień świata dla błędów bez własnej definicji.
  */
 export function checkAppearance(index: ContentIndex, where: SourceRef, sink: ErrorSink): void {

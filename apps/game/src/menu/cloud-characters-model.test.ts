@@ -7,6 +7,7 @@ import {
   mbLabel,
   newCharacterState,
   placesLabel,
+  portraitOfCloud,
   sortCloud,
   usageColor,
   usageLabel,
@@ -88,5 +89,63 @@ describe('online Postacie texts', () => {
   it('avatar initials from the e-mail', () => {
     expect(initials('pawel.rosol@gmail.com')).toBe('PR');
     expect(initials('jan@x.pl')).toBe('JA');
+  });
+});
+
+describe('portraitOfCloud hair colour (#38 head slot)', () => {
+  it('keeps portrait.hair when present', () => {
+    expect(
+      portraitOfCloud({
+        appearance: { portrait: { skin: '#aaa', hair: '#123456', shirt: '#bbb' } },
+      }),
+    ).toEqual({ skin: '#aaa', hair: '#123456', shirt: '#bbb' });
+  });
+
+  it('reads hair from parts.head.colors.primary when portrait.hair is missing', () => {
+    expect(
+      portraitOfCloud({
+        appearance: {
+          portrait: { skin: '#aaa', shirt: '#bbb' },
+          parts: { head: { colors: { primary: '#654321' } }, top: { colors: { primary: '#111' } } },
+        },
+      }),
+    ).toEqual({ skin: '#aaa', hair: '#654321', shirt: '#bbb' });
+  });
+
+  it('falls back to legacy parts.hair.colors.primary when head is absent', () => {
+    expect(
+      portraitOfCloud({
+        appearance: {
+          parts: { hair: { colors: { primary: '#abcdef' } } },
+        },
+      }).hair,
+    ).toBe('#abcdef');
+  });
+
+  it('reads head.primary from spec.appearance.parts (cloud CharacterSpec)', () => {
+    expect(
+      portraitOfCloud({
+        appearance: {
+          spec: {
+            appearance: {
+              parts: { head: { part: 'base:head-short', colors: { primary: '#0f0f0f' } } },
+            },
+          },
+        },
+      }).hair,
+    ).toBe('#0f0f0f');
+  });
+
+  it('prefers head.primary over legacy hair when both exist', () => {
+    expect(
+      portraitOfCloud({
+        appearance: {
+          parts: {
+            head: { colors: { primary: '#111111' } },
+            hair: { colors: { primary: '#222222' } },
+          },
+        },
+      }).hair,
+    ).toBe('#111111');
   });
 });

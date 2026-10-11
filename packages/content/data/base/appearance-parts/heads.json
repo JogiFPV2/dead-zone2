@@ -1,0 +1,72 @@
+[
+  {
+    "id": "base:head-buzz",
+    "name": "appearance.base.head-buzz.name",
+    "slot": "head",
+    "modelRef": "char/head-buzz",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-short",
+    "name": "appearance.base.head-short.name",
+    "slot": "head",
+    "modelRef": "char/head-short",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-side-part",
+    "name": "appearance.base.head-side-part.name",
+    "slot": "head",
+    "modelRef": "char/head-side-part",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-messy",
+    "name": "appearance.base.head-messy.name",
+    "slot": "head",
+    "modelRef": "char/head-messy",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-long",
+    "name": "appearance.base.head-long.name",
+    "slot": "head",
+    "modelRef": "char/head-long",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-ponytail",
+    "name": "appearance.base.head-ponytail.name",
+    "slot": "head",
+    "modelRef": "char/head-ponytail",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-bun",
+    "name": "appearance.base.head-bun.name",
+    "slot": "head",
+    "modelRef": "char/head-bun",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-curly",
+    "name": "appearance.base.head-curly.name",
+    "slot": "head",
+    "modelRef": "char/head-curly",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-short-beard",
+    "name": "appearance.base.head-short-beard.name",
+    "slot": "head",
+    "modelRef": "char/head-short-beard",
+    "tints": [{ "channel": "primary", "palette": "base:hair" }]
+  },
+  {
+    "id": "base:head-bald",
+    "name": "appearance.base.head-bald.name",
+    "slot": "head",
+    "modelRef": "char/head-bald",
+    "tints": []
+  }
+]

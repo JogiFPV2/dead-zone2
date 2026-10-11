@@ -55,6 +55,12 @@ export function checkCharacter(c: ContentIndex, spec: CharacterSpec): CharacterC
   };
   if (!inPalette(cc.skinPalette, spec.appearance.skin)) errors.push(`skin:${spec.appearance.skin}`);
   const slots = new Set([...c.appearanceParts.values()].map((p) => p.slot as string));
+  // Specs from before one `head` slot (content #38), e.g. a stored cloud appearance.
+  if (slots.has('head') && !slots.has('hair') && !spec.appearance.parts.head) {
+    const parts = { ...spec.appearance.parts };
+    if (migrateLegacyHead(parts, (id) => c.appearanceParts.has(id)))
+      spec = { ...spec, appearance: { ...spec.appearance, parts } };
+  }
   const defaults = c.characterCreation?.defaultAppearance?.parts as
     | Readonly<Record<string, { part: string; colors?: Readonly<Record<string, string>> }>>
     | undefined;
@@ -225,4 +231,48 @@ export function hashCharacters(st: ItemStore, h: HashWriter): void {
   const sids = [...st.characters.keys()].sort((a, b) => a - b);
   h.u32(sids.length);
   for (const sid of sids) h.u32(sid).u32(hashString32(JSON.stringify(st.characters.get(sid))));
+}
+
+/**
+ * Old appearance slots (before content #38: separate `face` + `hair` + optional `beard`) → one
+ * `head` slot. Pairs the creator used map exactly (`face-c` + `hair-buzz` = moustache head),
+ * otherwise a beard gives `head-short-beard` and `hair-X` gives `head-X` (`head-short` when
+ * unknown). The hair color stays as the head's `primary` (bald heads have no channels).
+ */
+const LEGACY_HEAD_PAIRS: Readonly<Record<string, string>> = {
+  'base:face-c|base:hair-buzz': 'base:head-short-beard',
+};
+const LEGACY_HAIR = /^base:hair-([a-z0-9-]+)$/;
+const HEAD_FALLBACK = 'base:head-short';
+
+type LegacyParts = Record<
+  string,
+  {
+    part: string;
+    colors?: { primary?: string | undefined; secondary?: string | undefined } | undefined;
+  }
+>;
+
+/** Replaces `face` / `hair` / `beard` in `parts` (in place) by `head`; true when it changed. */
+export function migrateLegacyHead(parts: LegacyParts, known?: (id: string) => boolean): boolean {
+  if (parts.head || !(parts.face || parts.hair || parts.beard)) return false;
+  const face = parts.face?.part ?? '';
+  const hair = parts.hair?.part ?? '';
+  const m = LEGACY_HAIR.exec(hair);
+  let head =
+    LEGACY_HEAD_PAIRS[`${face}|${hair}`] ??
+    (parts.beard ? 'base:head-short-beard' : m ? `base:head-${m[1]}` : HEAD_FALLBACK);
+  if (known && !known(head)) head = HEAD_FALLBACK;
+  const primary = head === 'base:head-bald' ? undefined : parts.hair?.colors?.primary;
+  delete parts.face;
+  delete parts.hair;
+  delete parts.beard;
+  parts.head = { part: head, colors: primary ? { primary } : {} };
+  return true;
+}
+
+/** Save load: migrates every stored character with the old face / hair slots (see above). */
+export function migrateCharacters(st: ItemStore): void {
+  const known = (id: string): boolean => st.content.appearanceParts.has(id);
+  for (const ch of st.characters.values()) migrateLegacyHead(ch.appearance.parts, known);
 }
