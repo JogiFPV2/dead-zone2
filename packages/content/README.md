@@ -214,9 +214,50 @@ batteryLifeMin }` (`base:flashlight`, `base:camping-lantern`).
 ## Loot
 
 Wpis tabeli ma całkowitą `weight` i `rarity` (`common` | `uncommon` | `rare` | `very_rare`);
-`worldSettings.loot.rarityWeightPct` skaluje wagi według rzadkości. Tabela pasuje do schowka, gdy jego
-pomieszczenie jest w `rooms`, a typ w `containers` (pusta lista = każdy schowek). Pudełka amunicji to rodzaj
+`worldSettings.loot.rarityWeightPct` skaluje wagi według rzadkości. Pudełka amunicji to rodzaj
 `ammo_box` (`ammoBox: { ammo, count }`).
+
+Loot schowka: pojemnik jest ważniejszy niż pomieszczenie (`lootTableForContainer` w `src/loot/`):
+
+1. tabela pomieszczenia, która wprost wymienia typ schowka w `containers` (pomieszczenie podmienia loot, np.
+   lodówka w sklepie → `base:shop-fridge`),
+2. własna tabela schowka `defaultLootTable` (każdy schowek paczki bazowej poza stawianymi przez gracza ją ma),
+3. ogólna tabela pomieszczenia (`containers` puste) — tylko dla schowków bez własnej tabeli; służy też za
+   loot leżący na podłodze.
+
+Kategorie: `lootCategoryOf(item)` daje `LootCategory` (`food-fresh`, `food-canned`, `drink`, `cookware`,
+`household`, `fabric`, `clothing`, `bag`, `medical`, `literature`, `vhs`, `electronics`, `tool`, `material`,
+`sport`, `weapon`, `firearm`, `ammo`, `vehicle`, `furniture`, `junk`, `misc`) z rodzaju i tagów; przedmiot może
+ją ustawić jawnie polem `lootCategory`. Schowek deklaruje `lootAccepts` (lodówka: `food-fresh`, `drink`).
+Test `container-loot.test.ts` nie przepuści tabeli, która wkłada do schowka coś spoza `lootAccepts`; wyjątki
+tylko w `src/test/container-loot-allowlist.ts` z powodem (np. nóż kuchenny w szufladzie kuchennej).
+Druga oś to pomieszczenie: `worldSettings.loot.roomAccepts` (`world-settings/loot-rooms.json`, kuchnia →
+jedzenie i przybory kuchenne, garaż → narzędzia, łazienka → leki i bandaże), a `placeIn` schowka mówi, w jakich
+pomieszczeniach zwykle stoi. Test sprawdza każdą parę schowek × pomieszczenie i loot na podłodze; wyjątki
+(`at`: schowek albo `base:room-*`) z powodem.
+`lootAccepts` dotyczy tylko lootu — gracz może włożyć do schowka cokolwiek.
+Mebel z kilkoma schowkami: `compartments` (lodówka z zamrażarką `base:fridge-freezer` = część lodówkowa +
+`["base:freezer"]`); mapa stawia jeden obiekt, każda przegroda ma własną tabelę, `lootAccepts` i psucie.
+Piekarnik elektryczny `base:oven` ma `requiresPower`, kuchenka gazowa `base:gas-stove` nie.
+Klucze do budynku: `buildingKey` (szansa) w tabeli — sim dokłada przedmiot z tagiem `base:building-key`
+przypisany do budynku schowka (w tabeli zwłok: do budynku zombie). Przedmiotu klucza jeszcze nie ma. Lodówka i zamrażarka mają
+`requiresPower` i `spoilageMultiplier` (0.3 i 0.05): chłodzą tylko z prądem, bez prądu jedzenie psuje się ×1.
+
+| Schowek                           | Tabela                                                    | Zawartość                                        |
+| --------------------------------- | --------------------------------------------------------- | ------------------------------------------------ |
+| `base:fridge`                     | `base:kitchen-fridge` (sklep, stacja: `base:shop-fridge`) | świeże jedzenie, resztki dań, napoje             |
+| `base:freezer`                    | `base:freezer` (sklep: `base:shop-freezer`)               | mięso, ryby, wódka                               |
+| `base:kitchen-cabinet`            | `base:kitchen`                                            | konserwy, słoiki, ziemniaki, woda                |
+| `base:kitchen-counter`            | `base:kitchen-drawer`                                     | noże, wałek, zapałki, szmaty, reklamówki, garnek |
+| `base:oven`                       | `base:oven`                                               | garnek, patelnia albo pusto                      |
+| `base:wardrobe`                   | `base:wardrobe`                                           | ubrania, prześcieradła, torby i plecaki          |
+| `base:dresser`                    | `base:bedroom`                                            | ubrania, igła i nici, baterie, książki, kasety   |
+| `base:bookshelf`                  | `base:bookshelf`                                          | książki, czasopisma, kasety VHS                  |
+| `base:desk`                       | `base:desk`                                               | czasopisma, książki, baterie, zapałki            |
+| `base:tv-stand`                   | `base:living-room`                                        | kasety VHS, baterie, radio, latarka              |
+| `base:bathroom-cabinet`           | `base:bathroom`                                           | bandaże, szmaty                                  |
+| `base:tool-chest`                 | `base:toolbox`                                            | narzędzia, gwoździe, taśma, drut                 |
+| `base:trash-bin`, `base:dumpster` | `base:trash`                                              | butelki, worki, złom                             |
 
 ## Tryby gry i wabiki
 

@@ -34,6 +34,12 @@ export const LootTableSchema = z.strictObject({
   containers: z.array(ContentIdSchema).default([]),
   /** Szansa, że schowek w ogóle coś ma. */
   chance: FractionSchema.default(1),
+  /**
+   * Szansa, że oprócz losowania sim dołoży klucz do budynku (przedmiot z tagiem
+   * `base:building-key`) przypisany do budynku schowka, a w tabeli zwłok — do budynku, z którego
+   * przyszedł zombie. Brak = nigdy. Powiązanie z budynkiem jest w stanie gry, nie w contencie.
+   */
+  buildingKey: FractionSchema.optional(),
   rolls: IntRangeSchema,
   entries: z.array(LootEntrySchema).min(1),
   /**

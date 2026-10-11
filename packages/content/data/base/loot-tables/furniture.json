@@ -1,0 +1,120 @@
+[
+  {
+    "id": "base:bookshelf",
+    "containers": ["base:bookshelf"],
+    "chance": 0.6,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "table": "base:skill-books",
+        "weight": 4
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 3
+      },
+      {
+        "table": "base:vhs-tapes",
+        "weight": 2
+      },
+      {
+        "item": "base:carpentry-for-beginners",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:desk",
+    "containers": ["base:desk"],
+    "chance": 0.6,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "table": "base:recipe-magazines",
+        "weight": 3
+      },
+      {
+        "table": "base:skill-books",
+        "weight": 2
+      },
+      {
+        "item": "base:battery",
+        "weight": 3
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 1
+      },
+      {
+        "item": "base:matches",
+        "weight": 1
+      },
+      {
+        "item": "base:lighter",
+        "weight": 1
+      },
+      {
+        "table": "base:vhs-tapes",
+        "weight": 1
+      }
+    ],
+    "buildingKey": 0.1
+  },
+  {
+    "id": "base:chest",
+    "containers": ["base:wooden-chest"],
+    "chance": 0.6,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "item": "base:sheet",
+        "weight": 4
+      },
+      {
+        "item": "base:rag",
+        "weight": 3
+      },
+      {
+        "item": "base:hoodie",
+        "weight": 2
+      },
+      {
+        "item": "base:jeans",
+        "weight": 2
+      },
+      {
+        "item": "base:sewing-needle",
+        "weight": 2
+      },
+      {
+        "item": "base:thread",
+        "weight": 2
+      },
+      {
+        "item": "base:nails",
+        "weight": 2
+      },
+      {
+        "item": "base:hammer",
+        "weight": 1
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 1
+      },
+      {
+        "table": "base:skill-books",
+        "weight": 1
+      }
+    ]
+  }
+]

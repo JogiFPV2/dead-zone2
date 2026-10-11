@@ -4,10 +4,15 @@
     "rooms": ["base:room-video-store"],
     "containers": ["base:bookshelf", "base:metal-shelf"],
     "chance": 0.9,
-    "rolls": { "min": 2, "max": 4 },
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
     "entries": [
-      { "table": "base:vhs-tapes", "weight": 10 },
-      { "item": "base:battery", "weight": 1 }
+      {
+        "table": "base:vhs-tapes",
+        "weight": 10
+      }
     ]
   },
   {
@@ -15,23 +20,78 @@
     "rooms": [],
     "containers": [],
     "chance": 1,
-    "rolls": { "min": 1, "max": 1 },
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
     "entries": [
-      { "item": "base:vhs-fitness-workout", "weight": 6 },
-      { "item": "base:vhs-strength-training", "weight": 4 },
-      { "item": "base:vhs-cooking-basics", "weight": 6 },
-      { "item": "base:vhs-cooking-master", "weight": 2, "rarity": "rare" },
-      { "item": "base:vhs-carpentry-basics", "weight": 5 },
-      { "item": "base:vhs-carpentry-furniture", "weight": 2, "rarity": "rare" },
-      { "item": "base:vhs-first-aid-basics", "weight": 5 },
-      { "item": "base:vhs-first-aid-emergency", "weight": 2, "rarity": "rare" },
-      { "item": "base:vhs-car-mechanics", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:vhs-electrical-repair", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:vhs-sewing-basics", "weight": 4 },
-      { "item": "base:vhs-home-garden", "weight": 4 },
-      { "item": "base:vhs-fishing-tips", "weight": 4 },
-      { "item": "base:vhs-wilderness-survival", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:vhs-self-defense", "weight": 2, "rarity": "uncommon" }
+      {
+        "item": "base:vhs-fitness-workout",
+        "weight": 6
+      },
+      {
+        "item": "base:vhs-strength-training",
+        "weight": 4
+      },
+      {
+        "item": "base:vhs-cooking-basics",
+        "weight": 6
+      },
+      {
+        "item": "base:vhs-cooking-master",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:vhs-carpentry-basics",
+        "weight": 5
+      },
+      {
+        "item": "base:vhs-carpentry-furniture",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:vhs-first-aid-basics",
+        "weight": 5
+      },
+      {
+        "item": "base:vhs-first-aid-emergency",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:vhs-car-mechanics",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vhs-electrical-repair",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vhs-sewing-basics",
+        "weight": 4
+      },
+      {
+        "item": "base:vhs-home-garden",
+        "weight": 4
+      },
+      {
+        "item": "base:vhs-fishing-tips",
+        "weight": 4
+      },
+      {
+        "item": "base:vhs-wilderness-survival",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vhs-self-defense",
+        "weight": 2,
+        "rarity": "uncommon"
+      }
     ]
   }
 ]

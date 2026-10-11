@@ -2,55 +2,172 @@
   {
     "id": "base:hospital",
     "rooms": ["base:room-hospital"],
-    "containers": ["base:locker", "base:metal-shelf", "base:dresser"],
+    "containers": ["base:locker", "base:metal-shelf"],
     "chance": 0.7,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:bandage", "weight": 8, "count": { "min": 1, "max": 3 } },
-      { "item": "base:sterilized-bandage", "weight": 5 },
-      { "item": "base:sterilized-rag", "weight": 3 },
-      { "item": "base:splint", "weight": 3 },
-      { "item": "base:rag", "weight": 3 },
-      { "item": "base:first-aid-vol-1", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:first-aid-vol-2", "weight": 1, "rarity": "rare" },
-      { "item": "base:mag-field-medicine", "weight": 1, "rarity": "rare" },
-      { "item": "base:water-bottle", "weight": 2 },
-      { "item": "base:flashlight", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:bandage",
+        "weight": 8,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:sterilized-bandage",
+        "weight": 5
+      },
+      {
+        "item": "base:sterilized-rag",
+        "weight": 3
+      },
+      {
+        "item": "base:splint",
+        "weight": 3
+      },
+      {
+        "item": "base:rag",
+        "weight": 3
+      },
+      {
+        "item": "base:first-aid-vol-1",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:first-aid-vol-2",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:mag-field-medicine",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
   },
   {
     "id": "base:pharmacy",
     "rooms": ["base:room-pharmacy"],
-    "containers": ["base:metal-shelf", "base:bookshelf", "base:locker"],
+    "containers": ["base:metal-shelf", "base:locker", "base:shop-counter", "base:kitchen-counter"],
     "chance": 0.8,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:bandage", "weight": 8, "count": { "min": 1, "max": 4 } },
-      { "item": "base:sterilized-bandage", "weight": 6 },
-      { "item": "base:splint", "weight": 2 },
-      { "item": "base:first-aid-vol-1", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:vhs-first-aid-basics", "weight": 1, "rarity": "rare" },
-      { "item": "base:plastic-bag", "weight": 3 }
+      {
+        "item": "base:bandage",
+        "weight": 8,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:sterilized-bandage",
+        "weight": 6
+      },
+      {
+        "item": "base:splint",
+        "weight": 2
+      },
+      {
+        "item": "base:first-aid-vol-1",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vhs-first-aid-basics",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 3
+      }
     ]
   },
   {
     "id": "base:grocery",
     "rooms": ["base:room-shop"],
-    "containers": ["base:metal-shelf", "base:fridge", "base:freezer", "base:kitchen-counter"],
+    "containers": ["base:metal-shelf", "base:shop-counter", "base:kitchen-counter"],
     "chance": 0.85,
-    "rolls": { "min": 2, "max": 4 },
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
     "entries": [
-      { "item": "base:canned-beans", "weight": 8 },
-      { "item": "base:jarred-vegetables", "weight": 5 },
-      { "item": "base:water-bottle", "weight": 6 },
-      { "item": "base:potato", "weight": 4, "count": { "min": 1, "max": 3 } },
-      { "item": "base:carrot", "weight": 4, "count": { "min": 1, "max": 3 } },
-      { "item": "base:cabbage", "weight": 3 },
-      { "item": "base:vodka", "weight": 2 },
-      { "item": "base:plastic-bag", "weight": 5, "count": { "min": 1, "max": 3 } },
-      { "item": "base:matches", "weight": 2 },
-      { "item": "base:lighter", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:battery", "weight": 2 }
+      {
+        "item": "base:canned-beans",
+        "weight": 8
+      },
+      {
+        "item": "base:jarred-vegetables",
+        "weight": 5
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 6
+      },
+      {
+        "item": "base:potato",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:carrot",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:cabbage",
+        "weight": 3
+      },
+      {
+        "item": "base:vodka",
+        "weight": 2
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:matches",
+        "weight": 2
+      },
+      {
+        "item": "base:lighter",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:battery",
+        "weight": 2
+      }
     ]
   },
   {
@@ -58,57 +175,149 @@
     "rooms": ["base:room-gym"],
     "containers": ["base:locker", "base:crate", "base:wooden-crate"],
     "chance": 0.6,
-    "rolls": { "min": 1, "max": 2 },
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
     "entries": [
-      { "item": "base:baseball-bat", "weight": 5 },
-      { "item": "base:golf-club", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:duffel-bag", "weight": 3 },
-      { "item": "base:water-bottle", "weight": 4 },
-      { "item": "base:t-shirt", "weight": 4 },
-      { "item": "base:vhs-fitness-workout", "weight": 1, "rarity": "rare" },
-      { "item": "base:vhs-strength-training", "weight": 1, "rarity": "rare" }
+      {
+        "item": "base:baseball-bat",
+        "weight": 5
+      },
+      {
+        "item": "base:golf-club",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 3
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 4
+      },
+      {
+        "item": "base:t-shirt",
+        "weight": 4
+      },
+      {
+        "item": "base:vhs-fitness-workout",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:vhs-strength-training",
+        "weight": 1,
+        "rarity": "rare"
+      }
     ]
   },
   {
     "id": "base:bathroom",
     "rooms": ["base:room-bathroom"],
-    "containers": ["base:kitchen-cabinet", "base:dresser", "base:locker"],
+    "containers": ["base:bathroom-cabinet", "base:kitchen-cabinet"],
     "chance": 0.6,
-    "rolls": { "min": 1, "max": 2 },
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
     "entries": [
-      { "item": "base:bandage", "weight": 6 },
-      { "item": "base:rag", "weight": 4 },
-      { "item": "base:sheet", "weight": 2 },
-      { "item": "base:sterilized-bandage", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:bandage",
+        "weight": 6
+      },
+      {
+        "item": "base:rag",
+        "weight": 4
+      },
+      {
+        "item": "base:sheet",
+        "weight": 2
+      },
+      {
+        "item": "base:sterilized-bandage",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
   },
   {
     "id": "base:office",
     "rooms": ["base:room-office"],
-    "containers": ["base:bookshelf", "base:dresser", "base:locker", "base:metal-shelf"],
+    "containers": ["base:desk", "base:dresser", "base:locker", "base:metal-shelf"],
     "chance": 0.55,
-    "rolls": { "min": 1, "max": 2 },
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
     "entries": [
-      { "item": "base:battery", "weight": 4 },
-      { "item": "base:flashlight", "weight": 2 },
-      { "item": "base:radio", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:duct-tape", "weight": 2 },
-      { "item": "base:scrap-metal", "weight": 1 },
-      { "table": "base:skill-books", "weight": 3 }
+      {
+        "item": "base:battery",
+        "weight": 4
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 2
+      },
+      {
+        "item": "base:radio",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "table": "base:skill-books",
+        "weight": 3
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 1
+      }
     ]
   },
   {
     "id": "base:ruin",
     "rooms": ["base:room-ruin"],
-    "containers": [],
+    "containers": ["base:crate"],
     "chance": 0.35,
-    "rolls": { "min": 1, "max": 2 },
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
     "entries": [
-      { "item": "base:scrap-metal", "weight": 6, "count": { "min": 1, "max": 3 } },
-      { "item": "base:brick", "weight": 5, "count": { "min": 1, "max": 3 } },
-      { "item": "base:plank", "weight": 3 },
-      { "item": "base:nails", "weight": 2, "count": { "min": 3, "max": 10 } },
-      { "item": "base:metal-pipe", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:scrap-metal",
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:brick",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:plank",
+        "weight": 3
+      },
+      {
+        "item": "base:nails",
+        "weight": 2,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:metal-pipe",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
   },
   {
@@ -116,13 +325,32 @@
     "rooms": ["base:room-hall"],
     "containers": [],
     "chance": 0.2,
-    "rolls": { "min": 1, "max": 1 },
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
     "entries": [
-      { "item": "base:bottle", "weight": 5 },
-      { "item": "base:plastic-bag", "weight": 4 },
-      { "item": "base:rag", "weight": 3 },
-      { "item": "base:wooden-stick", "weight": 2 },
-      { "item": "base:battery", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:bottle",
+        "weight": 5
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 4
+      },
+      {
+        "item": "base:rag",
+        "weight": 3
+      },
+      {
+        "item": "base:wooden-stick",
+        "weight": 2
+      },
+      {
+        "item": "base:battery",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
   }
 ]

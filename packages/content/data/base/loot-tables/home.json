@@ -2,99 +2,292 @@
   {
     "id": "base:bedroom",
     "rooms": ["base:room-bedroom"],
-    "containers": ["base:wardrobe", "base:dresser"],
+    "containers": ["base:dresser"],
     "chance": 0.7,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:sheet", "weight": 4 },
-      { "item": "base:school-backpack", "weight": 4 },
-      { "item": "base:tote-bag", "weight": 4 },
-      { "item": "base:fanny-pack", "weight": 3 },
-      { "item": "base:duffel-bag", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:hiking-bag", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:big-hiking-bag", "weight": 1, "rarity": "rare" },
-      { "item": "base:baseball-bat", "weight": 3 },
-      { "item": "base:golf-club", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:hunting-knife", "weight": 1, "rarity": "rare" },
-      { "item": "base:bandage", "weight": 2 },
-      { "table": "base:handguns", "weight": 1, "rarity": "rare" },
-      { "table": "base:ammo-boxes", "weight": 1, "rarity": "rare" },
-      { "item": "base:t-shirt", "weight": 5 },
-      { "item": "base:hoodie", "weight": 3 },
-      { "item": "base:jeans", "weight": 3 },
-      { "item": "base:sewing-needle", "weight": 2 },
-      { "item": "base:thread", "weight": 2, "count": { "min": 1, "max": 4 } },
-      { "table": "base:skill-books", "weight": 1, "rarity": "uncommon" },
-      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
-    ]
+      {
+        "item": "base:t-shirt",
+        "weight": 5
+      },
+      {
+        "item": "base:jeans",
+        "weight": 3
+      },
+      {
+        "item": "base:hoodie",
+        "weight": 3
+      },
+      {
+        "item": "base:sheet",
+        "weight": 4
+      },
+      {
+        "item": "base:sewing-needle",
+        "weight": 2
+      },
+      {
+        "item": "base:thread",
+        "weight": 2
+      },
+      {
+        "item": "base:fanny-pack",
+        "weight": 2
+      },
+      {
+        "item": "base:battery",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 1
+      },
+      {
+        "table": "base:skill-books",
+        "weight": 1
+      },
+      {
+        "table": "base:vhs-tapes",
+        "weight": 1
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 1
+      }
+    ],
+    "buildingKey": 0.1
   },
   {
     "id": "base:garage",
     "rooms": ["base:room-garage"],
-    "containers": ["base:tool-chest", "base:metal-shelf", "base:crate"],
+    "containers": ["base:metal-shelf", "base:crate"],
     "chance": 0.8,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:hammer", "weight": 6 },
-      { "item": "base:screwdriver", "weight": 6 },
-      { "item": "base:pipe-wrench", "weight": 4 },
-      { "item": "base:tire-iron", "weight": 4 },
-      { "item": "base:metal-pipe", "weight": 4 },
-      { "item": "base:crowbar", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:shovel", "weight": 3 },
-      { "item": "base:hatchet", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:axe", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:sledgehammer", "weight": 1, "rarity": "rare" },
-      { "item": "base:golf-club", "weight": 2 },
-      { "item": "base:baseball-bat", "weight": 2 },
-      { "item": "base:nails", "weight": 6, "count": { "min": 5, "max": 20 } },
-      { "item": "base:plank", "weight": 4, "count": { "min": 1, "max": 3 } },
-      { "item": "base:brick", "weight": 3 },
-      { "item": "base:stone", "weight": 2, "count": { "min": 1, "max": 3 } },
-      { "item": "base:garbage-bag", "weight": 4, "count": { "min": 1, "max": 3 } },
-      { "item": "base:duffel-bag", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:saw", "weight": 3 },
-      { "item": "base:duct-tape", "weight": 4 },
-      { "item": "base:wire", "weight": 3, "count": { "min": 1, "max": 3 } },
-      { "item": "base:scrap-metal", "weight": 3, "count": { "min": 1, "max": 3 } },
-      { "item": "base:welding-torch", "weight": 1, "rarity": "rare" },
-      { "table": "base:recipe-magazines", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:mechanical-part", "weight": 3, "count": { "min": 1, "max": 2 } },
-      { "item": "base:lure-electronic", "weight": 1, "rarity": "rare" },
-      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:wooden-stick", "weight": 3 },
-      { "item": "base:gas-can", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:engine-parts", "weight": 2 },
-      { "item": "base:rubber-hose", "weight": 2 },
-      { "item": "base:car-tire", "weight": 1 },
-      { "item": "base:car-window", "weight": 1 }
+      {
+        "item": "base:hammer",
+        "weight": 6
+      },
+      {
+        "item": "base:screwdriver",
+        "weight": 6
+      },
+      {
+        "item": "base:pipe-wrench",
+        "weight": 4
+      },
+      {
+        "item": "base:tire-iron",
+        "weight": 4
+      },
+      {
+        "item": "base:metal-pipe",
+        "weight": 4
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:shovel",
+        "weight": 3
+      },
+      {
+        "item": "base:hatchet",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:axe",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:sledgehammer",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:golf-club",
+        "weight": 2
+      },
+      {
+        "item": "base:baseball-bat",
+        "weight": 2
+      },
+      {
+        "item": "base:nails",
+        "weight": 6,
+        "count": {
+          "min": 5,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:plank",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:brick",
+        "weight": 3
+      },
+      {
+        "item": "base:stone",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:garbage-bag",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:saw",
+        "weight": 3
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 4
+      },
+      {
+        "item": "base:wire",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:scrap-metal",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:welding-torch",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:mechanical-part",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:lure-electronic",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:lure-remote",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:wooden-stick",
+        "weight": 3
+      },
+      {
+        "item": "base:gas-can",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:engine-parts",
+        "weight": 2
+      },
+      {
+        "item": "base:rubber-hose",
+        "weight": 2
+      },
+      {
+        "item": "base:car-tire",
+        "weight": 1
+      },
+      {
+        "item": "base:car-window",
+        "weight": 1
+      }
     ]
   },
   {
     "id": "base:living-room",
     "rooms": ["base:room-living-room"],
-    "containers": [],
-    "chance": 0.5,
-    "rolls": { "min": 1, "max": 2 },
+    "containers": ["base:tv-stand"],
+    "chance": 0.6,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
     "entries": [
-      { "item": "base:bottle", "weight": 5 },
-      { "item": "base:plastic-bag", "weight": 4 },
-      { "item": "base:tote-bag", "weight": 3 },
-      { "item": "base:sheet", "weight": 3 },
-      { "item": "base:rag", "weight": 3 },
-      { "item": "base:canned-beans", "weight": 2 },
-      { "item": "base:water-bottle", "weight": 2 },
-      { "item": "base:golf-club", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "rare" },
-      { "table": "base:handguns", "weight": 1, "rarity": "very_rare" },
-      { "item": "base:radio", "weight": 2 },
-      { "item": "base:battery", "weight": 3, "count": { "min": 1, "max": 4 } },
-      { "item": "base:flashlight", "weight": 2 },
-      { "item": "base:camping-lantern", "weight": 1, "rarity": "uncommon" },
-      { "table": "base:skill-books", "weight": 2 },
-      { "table": "base:recipe-magazines", "weight": 2 },
-      { "item": "base:lure-remote", "weight": 1, "rarity": "uncommon" },
-      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
+      {
+        "table": "base:vhs-tapes",
+        "weight": 6
+      },
+      {
+        "item": "base:battery",
+        "weight": 4
+      },
+      {
+        "item": "base:radio",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 2
+      },
+      {
+        "item": "base:camping-lantern",
+        "weight": 1
+      },
+      {
+        "table": "base:skill-books",
+        "weight": 1
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 2
+      },
+      {
+        "item": "base:carpentry-for-beginners",
+        "weight": 1
+      },
+      {
+        "item": "base:lure-remote",
+        "weight": 1
+      }
     ]
   }
 ]

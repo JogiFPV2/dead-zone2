@@ -1,0 +1,73 @@
+[
+  {
+    "id": "base:shop-fridge",
+    "rooms": ["base:room-shop", "base:room-gas-station"],
+    "containers": ["base:fridge"],
+    "chance": 0.85,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:water-bottle",
+        "weight": 8
+      },
+      {
+        "item": "base:vodka",
+        "weight": 2
+      },
+      {
+        "item": "base:carrot",
+        "weight": 2
+      },
+      {
+        "item": "base:cabbage",
+        "weight": 2
+      },
+      {
+        "item": "base:small-game-meat",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:raw-fish",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:fish-fillet",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
+    ]
+  },
+  {
+    "id": "base:shop-freezer",
+    "rooms": ["base:room-shop"],
+    "containers": ["base:freezer"],
+    "chance": 0.8,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:fish-fillet",
+        "weight": 4
+      },
+      {
+        "item": "base:raw-fish",
+        "weight": 3
+      },
+      {
+        "item": "base:small-game-meat",
+        "weight": 3
+      },
+      {
+        "item": "base:venison-steak",
+        "weight": 2
+      }
+    ]
+  }
+]

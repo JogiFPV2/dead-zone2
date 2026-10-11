@@ -4,7 +4,18 @@
     "name": "container.base.wooden-chest.name",
     "category": "chest",
     "capacityKg": 60,
-    "searchMin": 2
+    "searchMin": 2,
+    "defaultLootTable": "base:chest",
+    "lootAccepts": [
+      "clothing",
+      "fabric",
+      "household",
+      "tool",
+      "material",
+      "literature",
+      "bag",
+      "sport"
+    ]
   },
   {
     "id": "base:crate",
@@ -13,7 +24,24 @@
     "capacityKg": 70,
     "searchMin": 2,
     "defaultLootTable": "base:warehouse",
-    "tags": ["base:outdoor-ok"]
+    "tags": ["base:outdoor-ok"],
+    "lootAccepts": [
+      "material",
+      "tool",
+      "household",
+      "fabric",
+      "clothing",
+      "bag",
+      "sport",
+      "weapon",
+      "vehicle",
+      "furniture",
+      "electronics",
+      "drink",
+      "vhs",
+      "literature"
+    ],
+    "placeIn": ["base:room-warehouse", "base:room-garage", "base:room-gym", "base:room-ruin"]
   },
   {
     "id": "base:metal-shelf",
@@ -21,7 +49,40 @@
     "category": "shelf",
     "capacityKg": 40,
     "searchMin": 0.5,
-    "defaultLootTable": "base:garage"
+    "defaultLootTable": "base:garage",
+    "lootAccepts": [
+      "food-fresh",
+      "food-canned",
+      "drink",
+      "cookware",
+      "household",
+      "fabric",
+      "clothing",
+      "bag",
+      "medical",
+      "literature",
+      "vhs",
+      "electronics",
+      "tool",
+      "material",
+      "sport",
+      "weapon",
+      "firearm",
+      "ammo",
+      "vehicle",
+      "furniture"
+    ],
+    "placeIn": [
+      "base:room-garage",
+      "base:room-warehouse",
+      "base:room-shop",
+      "base:room-pharmacy",
+      "base:room-gas-station",
+      "base:room-hospital",
+      "base:room-gun-store",
+      "base:room-video-store",
+      "base:room-office"
+    ]
   },
   {
     "id": "base:tool-chest",
@@ -29,14 +90,40 @@
     "category": "chest",
     "capacityKg": 35,
     "searchMin": 1.5,
-    "defaultLootTable": "base:garage"
+    "defaultLootTable": "base:toolbox",
+    "lootAccepts": ["tool", "material", "household"],
+    "placeIn": ["base:room-garage", "base:room-warehouse"]
   },
   {
     "id": "base:locker",
     "name": "container.base.locker.name",
     "category": "cabinet",
     "capacityKg": 15,
-    "defaultLootTable": "base:school"
+    "defaultLootTable": "base:school",
+    "lootAccepts": [
+      "clothing",
+      "bag",
+      "sport",
+      "weapon",
+      "firearm",
+      "ammo",
+      "medical",
+      "literature",
+      "vhs",
+      "drink",
+      "household",
+      "tool",
+      "electronics",
+      "fabric"
+    ],
+    "placeIn": [
+      "base:room-school",
+      "base:room-gym",
+      "base:room-police",
+      "base:room-hospital",
+      "base:room-pharmacy",
+      "base:room-office"
+    ]
   },
   {
     "id": "base:gun-locker",
@@ -44,6 +131,8 @@
     "category": "cabinet",
     "capacityKg": 40,
     "searchMin": 2,
-    "defaultLootTable": "base:gun-store"
+    "defaultLootTable": "base:gun-store",
+    "lootAccepts": ["firearm", "ammo", "weapon", "bag", "tool", "medical"],
+    "placeIn": ["base:room-police", "base:room-gun-store"]
   }
 ]

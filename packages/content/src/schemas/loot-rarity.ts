@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { RealSecondsSchema, TilesSchema } from './common/index.js';
+import { RealSecondsSchema, RoomTypeSchema, TilesSchema } from './common/index.js';
+import { LootCategorySchema } from './loot-category.js';
 
 /** Rzadkość wpisu lootu. Waga losowania zostaje w `weight`; rzadkość skaluje ją ustawieniem świata. */
 export const LOOT_RARITIES = ['common', 'uncommon', 'rare', 'very_rare'] as const;
@@ -32,6 +33,11 @@ export const LootSettingsSchema = z
         spotRadiusTiles: TilesSchema.default(1.5),
       })
       .prefault({}),
+    /**
+     * Co realnie leży w danym typie pomieszczenia (kuchnia → jedzenie i przybory kuchenne).
+     * Druga oś obok `lootAccepts` schowka; brak typu = bez ograniczeń. Sprawdza test paczki.
+     */
+    roomAccepts: z.record(RoomTypeSchema, z.array(LootCategorySchema)).default({}),
   })
   .prefault({});
 

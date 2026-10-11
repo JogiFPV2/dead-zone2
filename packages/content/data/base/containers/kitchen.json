@@ -1,0 +1,75 @@
+[
+  {
+    "id": "base:kitchen-cabinet",
+    "name": "container.base.kitchen-cabinet.name",
+    "category": "cabinet",
+    "capacityKg": 25,
+    "defaultLootTable": "base:kitchen",
+    "lootAccepts": ["food-canned", "drink"],
+    "placeIn": ["base:room-kitchen"]
+  },
+  {
+    "id": "base:kitchen-counter",
+    "name": "container.base.kitchen-counter.name",
+    "category": "counter",
+    "capacityKg": 30,
+    "defaultLootTable": "base:kitchen-drawer",
+    "lootAccepts": ["cookware", "household", "fabric"],
+    "placeIn": ["base:room-kitchen"]
+  },
+  {
+    "id": "base:fridge",
+    "name": "container.base.fridge.name",
+    "category": "fridge",
+    "capacityKg": 35,
+    "spoilageMultiplier": 0.3,
+    "requiresPower": true,
+    "defaultLootTable": "base:kitchen-fridge",
+    "lootAccepts": ["food-fresh", "drink"],
+    "placeIn": ["base:room-kitchen", "base:room-shop", "base:room-gas-station"]
+  },
+  {
+    "id": "base:freezer",
+    "name": "container.base.freezer.name",
+    "category": "freezer",
+    "capacityKg": 30,
+    "spoilageMultiplier": 0.05,
+    "requiresPower": true,
+    "defaultLootTable": "base:freezer",
+    "lootAccepts": ["food-fresh", "drink"],
+    "placeIn": ["base:room-kitchen", "base:room-shop"]
+  },
+  {
+    "id": "base:fridge-freezer",
+    "name": "container.base.fridge-freezer.name",
+    "category": "fridge",
+    "capacityKg": 30,
+    "spoilageMultiplier": 0.3,
+    "requiresPower": true,
+    "defaultLootTable": "base:kitchen-fridge",
+    "lootAccepts": ["food-fresh", "drink"],
+    "placeIn": ["base:room-kitchen"],
+    "compartments": ["base:freezer"]
+  },
+  {
+    "id": "base:oven",
+    "name": "container.base.oven.name",
+    "category": "other",
+    "capacityKg": 15,
+    "searchMin": 0.5,
+    "defaultLootTable": "base:oven",
+    "lootAccepts": ["cookware"],
+    "placeIn": ["base:room-kitchen"],
+    "requiresPower": true
+  },
+  {
+    "id": "base:gas-stove",
+    "name": "container.base.gas-stove.name",
+    "category": "other",
+    "capacityKg": 15,
+    "searchMin": 0.5,
+    "defaultLootTable": "base:gas-stove",
+    "lootAccepts": ["cookware"],
+    "placeIn": ["base:room-kitchen"]
+  }
+]

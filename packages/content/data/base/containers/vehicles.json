@@ -5,7 +5,20 @@
     "category": "trunk",
     "capacityKg": 60,
     "searchMin": 1.5,
-    "defaultLootTable": "base:car-trunk"
+    "defaultLootTable": "base:car-trunk",
+    "lootAccepts": [
+      "tool",
+      "bag",
+      "household",
+      "drink",
+      "sport",
+      "weapon",
+      "firearm",
+      "ammo",
+      "vehicle",
+      "material",
+      "medical"
+    ]
   },
   {
     "id": "base:car-glovebox",
@@ -13,6 +26,7 @@
     "category": "other",
     "capacityKg": 3,
     "searchMin": 0.5,
-    "defaultLootTable": "base:car-glovebox"
+    "defaultLootTable": "base:car-glovebox",
+    "lootAccepts": ["medical", "household", "drink", "electronics", "tool", "firearm"]
   }
 ]

@@ -3,6 +3,7 @@
     "id": "base:baseball-bat",
     "name": "item.base.baseball-bat.name",
     "kind": "weapon_melee",
+    "lootCategory": "sport",
     "weightKg": 1.1,
     "melee": {
       "category": "blunt",
@@ -41,6 +42,7 @@
     "id": "base:golf-club",
     "name": "item.base.golf-club.name",
     "kind": "weapon_melee",
+    "lootCategory": "sport",
     "weightKg": 0.5,
     "melee": {
       "category": "blunt",

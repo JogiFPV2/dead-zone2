@@ -1,0 +1,94 @@
+{
+  "loot": {
+    "roomAccepts": {
+      "base:room-kitchen": [
+        "food-fresh",
+        "food-canned",
+        "drink",
+        "cookware",
+        "household",
+        "fabric"
+      ],
+      "base:room-bedroom": [
+        "clothing",
+        "fabric",
+        "bag",
+        "household",
+        "literature",
+        "vhs",
+        "electronics"
+      ],
+      "base:room-living-room": [
+        "vhs",
+        "electronics",
+        "literature",
+        "household",
+        "fabric",
+        "clothing",
+        "bag"
+      ],
+      "base:room-bathroom": ["medical", "fabric", "household"],
+      "base:room-garage": [
+        "tool",
+        "material",
+        "vehicle",
+        "household",
+        "sport",
+        "bag",
+        "electronics",
+        "literature"
+      ],
+      "base:room-hall": [
+        "junk",
+        "household",
+        "fabric",
+        "material",
+        "electronics",
+        "clothing",
+        "bag"
+      ],
+      "base:room-office": ["literature", "vhs", "electronics", "household"],
+      "base:room-shop": [
+        "food-fresh",
+        "food-canned",
+        "drink",
+        "household",
+        "electronics",
+        "fabric"
+      ],
+      "base:room-gas-station": [
+        "food-fresh",
+        "food-canned",
+        "drink",
+        "household",
+        "bag",
+        "tool",
+        "medical",
+        "literature",
+        "material",
+        "firearm",
+        "vehicle",
+        "electronics"
+      ],
+      "base:room-pharmacy": ["medical", "literature", "vhs", "household", "fabric"],
+      "base:room-hospital": ["medical", "literature", "drink", "electronics", "fabric", "clothing"],
+      "base:room-gym": ["sport", "bag", "clothing", "drink", "vhs", "medical"],
+      "base:room-school": ["bag", "household", "tool", "sport", "literature", "vhs"],
+      "base:room-warehouse": [
+        "material",
+        "tool",
+        "household",
+        "bag",
+        "weapon",
+        "furniture",
+        "electronics",
+        "vehicle"
+      ],
+      "base:room-police": ["firearm", "ammo", "weapon", "tool", "bag", "medical"],
+      "base:room-gun-store": ["firearm", "ammo", "weapon", "bag"],
+      "base:room-bookstore": ["literature", "vhs"],
+      "base:room-video-store": ["vhs"],
+      "base:room-ruin": ["material", "junk"]
+    }
+  }
+}

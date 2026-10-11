@@ -5,7 +5,9 @@
     "category": "other",
     "tags": ["base:outdoor-ok"],
     "capacityKg": 25,
-    "searchMin": 1
+    "searchMin": 1,
+    "defaultLootTable": "base:trash",
+    "lootAccepts": ["junk", "household", "fabric", "material", "food-canned"]
   },
   {
     "id": "base:dumpster",
@@ -13,7 +15,9 @@
     "category": "other",
     "tags": ["base:outdoor-ok"],
     "capacityKg": 120,
-    "searchMin": 2
+    "searchMin": 2,
+    "defaultLootTable": "base:trash",
+    "lootAccepts": ["junk", "household", "fabric", "material", "food-canned"]
   },
   {
     "id": "base:firewood-pile",
@@ -21,6 +25,8 @@
     "category": "other",
     "tags": ["base:outdoor-ok"],
     "capacityKg": 80,
-    "searchMin": 1
+    "searchMin": 1,
+    "defaultLootTable": "base:firewood",
+    "lootAccepts": ["material"]
   }
 ]

@@ -6,6 +6,7 @@ import {
   TagListSchema,
   WeightKgSchema,
 } from '../common/index.js';
+import { LootCategorySchema } from '../loot-category.js';
 import { ImprovisedWeaponSchema } from './improvised-weapon.js';
 import { ThrowableSchema } from './throwable.js';
 
@@ -28,5 +29,7 @@ export const itemBaseShape = {
   throwable: ThrowableSchema.optional(),
   /** Każdy przedmiot w ręku jest bronią; blok nadpisuje słabe wartości domyślne (`meleeStatsFor`). */
   improvisedWeapon: ImprovisedWeaponSchema.optional(),
+  /** Kategoria dla lootu schowków; brak = wyliczona z `kind` i tagów (`lootCategoryOf`). */
+  lootCategory: LootCategorySchema.optional(),
   ext: ExtSchema,
 } as const;

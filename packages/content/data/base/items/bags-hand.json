@@ -3,6 +3,7 @@
     "id": "base:plastic-bag",
     "name": "item.base.plastic-bag.name",
     "kind": "container",
+    "lootCategory": "household",
     "weightKg": 0.02,
     "tags": ["base:bag", "base:bag-hand"],
     "bag": {
@@ -16,6 +17,7 @@
     "id": "base:garbage-bag",
     "name": "item.base.garbage-bag.name",
     "kind": "container",
+    "lootCategory": "household",
     "weightKg": 0.05,
     "tags": ["base:bag", "base:bag-hand"],
     "bag": {

@@ -4,40 +4,134 @@
     "rooms": ["base:room-police"],
     "containers": ["base:locker", "base:gun-locker"],
     "chance": 0.8,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:pistol", "weight": 4, "rarity": "uncommon" },
-      { "item": "base:pistol-magazine", "weight": 4 },
-      { "item": "base:ammo-box-9mm", "weight": 5 },
-      { "item": "base:pump-shotgun", "weight": 2, "rarity": "rare" },
-      { "item": "base:ammo-box-shells", "weight": 3 },
-      { "item": "base:assault-rifle", "weight": 1, "rarity": "very_rare" },
-      { "item": "base:rifle-magazine", "weight": 1, "rarity": "rare" },
-      { "item": "base:ammo-box-556", "weight": 1, "rarity": "rare" },
-      { "item": "base:crowbar", "weight": 2 },
-      { "item": "base:hunting-knife", "weight": 2 },
-      { "item": "base:duffel-bag", "weight": 2 },
-      { "item": "base:military-backpack", "weight": 1, "rarity": "rare" },
-      { "item": "base:bandage", "weight": 3 }
+      {
+        "item": "base:pistol",
+        "weight": 4,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:pistol-magazine",
+        "weight": 4
+      },
+      {
+        "item": "base:ammo-box-9mm",
+        "weight": 5
+      },
+      {
+        "item": "base:pump-shotgun",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:ammo-box-shells",
+        "weight": 3
+      },
+      {
+        "item": "base:assault-rifle",
+        "weight": 1,
+        "rarity": "very_rare"
+      },
+      {
+        "item": "base:rifle-magazine",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:ammo-box-556",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 2
+      },
+      {
+        "item": "base:hunting-knife",
+        "weight": 2
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:military-backpack",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:bandage",
+        "weight": 3
+      }
     ]
   },
   {
     "id": "base:gun-store",
     "rooms": ["base:room-gun-store"],
-    "containers": ["base:gun-locker", "base:metal-shelf", "base:kitchen-counter"],
+    "containers": [
+      "base:gun-locker",
+      "base:metal-shelf",
+      "base:shop-counter",
+      "base:kitchen-counter"
+    ],
     "chance": 0.9,
-    "rolls": { "min": 2, "max": 4 },
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
     "entries": [
-      { "table": "base:handguns", "weight": 5 },
-      { "table": "base:long-guns", "weight": 4, "rarity": "uncommon" },
-      { "table": "base:ammo-boxes", "weight": 8, "count": { "min": 1, "max": 2 } },
-      { "table": "base:magazines", "weight": 4 },
-      { "item": "base:hunting-knife", "weight": 4 },
-      { "item": "base:machete", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:hiking-bag", "weight": 2 },
-      { "item": "base:fanny-pack", "weight": 2 },
-      { "item": "base:big-hiking-bag", "weight": 1, "rarity": "rare" },
-      { "item": "base:military-backpack", "weight": 1, "rarity": "rare" }
+      {
+        "table": "base:handguns",
+        "weight": 5
+      },
+      {
+        "table": "base:long-guns",
+        "weight": 4,
+        "rarity": "uncommon"
+      },
+      {
+        "table": "base:ammo-boxes",
+        "weight": 8,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "table": "base:magazines",
+        "weight": 4
+      },
+      {
+        "item": "base:hunting-knife",
+        "weight": 4
+      },
+      {
+        "item": "base:machete",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:fanny-pack",
+        "weight": 2
+      },
+      {
+        "item": "base:big-hiking-bag",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:military-backpack",
+        "weight": 1,
+        "rarity": "rare"
+      }
     ]
   }
 ]

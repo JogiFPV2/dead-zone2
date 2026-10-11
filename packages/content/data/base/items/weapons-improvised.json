@@ -45,6 +45,7 @@
     "id": "base:stone",
     "name": "item.base.stone.name",
     "kind": "weapon_melee",
+    "lootCategory": "material",
     "weightKg": 0.4,
     "throwable": {
       "rangeTiles": 12,

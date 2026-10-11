@@ -6,7 +6,19 @@
     "capacityKg": 50,
     "pickupItem": "base:wooden-crate",
     "tags": ["base:outdoor-ok", "base:player-built"],
-    "searchMin": 0.5
+    "searchMin": 0.5,
+    "lootAccepts": [
+      "material",
+      "tool",
+      "household",
+      "fabric",
+      "clothing",
+      "bag",
+      "sport",
+      "drink",
+      "vhs",
+      "electronics"
+    ]
   },
   {
     "id": "base:large-wooden-crate",
@@ -15,6 +27,18 @@
     "capacityKg": 110,
     "pickupItem": "base:large-wooden-crate",
     "tags": ["base:outdoor-ok", "base:player-built"],
-    "searchMin": 0.8
+    "searchMin": 0.8,
+    "lootAccepts": [
+      "material",
+      "tool",
+      "household",
+      "fabric",
+      "clothing",
+      "bag",
+      "sport",
+      "drink",
+      "vhs",
+      "electronics"
+    ]
   }
 ]

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "base:wardrobe",
+    "containers": ["base:wardrobe"],
+    "chance": 0.75,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:t-shirt",
+        "weight": 5
+      },
+      {
+        "item": "base:hoodie",
+        "weight": 4
+      },
+      {
+        "item": "base:jeans",
+        "weight": 4
+      },
+      {
+        "item": "base:sheet",
+        "weight": 3
+      },
+      {
+        "item": "base:school-backpack",
+        "weight": 3
+      },
+      {
+        "item": "base:tote-bag",
+        "weight": 3
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:fanny-pack",
+        "weight": 2
+      },
+      {
+        "item": "base:big-hiking-bag",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
+    ]
+  },
+  {
+    "id": "base:toolbox",
+    "containers": ["base:tool-chest"],
+    "chance": 0.85,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:hammer",
+        "weight": 6
+      },
+      {
+        "item": "base:screwdriver",
+        "weight": 6
+      },
+      {
+        "item": "base:nails",
+        "weight": 6
+      },
+      {
+        "item": "base:pipe-wrench",
+        "weight": 4
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 4
+      },
+      {
+        "item": "base:saw",
+        "weight": 3
+      },
+      {
+        "item": "base:wire",
+        "weight": 3
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 2
+      },
+      {
+        "item": "base:tire-iron",
+        "weight": 2
+      },
+      {
+        "item": "base:mechanical-part",
+        "weight": 2
+      },
+      {
+        "item": "base:welding-torch",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
+    ]
+  }
+]

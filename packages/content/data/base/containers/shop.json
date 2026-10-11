@@ -1,0 +1,32 @@
+[
+  {
+    "id": "base:shop-counter",
+    "name": "container.base.shop-counter.name",
+    "category": "counter",
+    "capacityKg": 30,
+    "defaultLootTable": "base:grocery",
+    "lootAccepts": [
+      "food-fresh",
+      "food-canned",
+      "drink",
+      "household",
+      "electronics",
+      "medical",
+      "literature",
+      "vhs",
+      "bag",
+      "tool",
+      "material",
+      "vehicle",
+      "weapon",
+      "firearm",
+      "ammo"
+    ],
+    "placeIn": [
+      "base:room-shop",
+      "base:room-gas-station",
+      "base:room-pharmacy",
+      "base:room-gun-store"
+    ]
+  }
+]

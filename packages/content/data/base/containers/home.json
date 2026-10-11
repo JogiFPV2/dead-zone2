@@ -1,0 +1,65 @@
+[
+  {
+    "id": "base:wardrobe",
+    "name": "container.base.wardrobe.name",
+    "category": "cabinet",
+    "capacityKg": 45,
+    "searchMin": 1.5,
+    "defaultLootTable": "base:wardrobe",
+    "lootAccepts": ["clothing", "fabric", "bag"],
+    "placeIn": ["base:room-bedroom"]
+  },
+  {
+    "id": "base:dresser",
+    "name": "container.base.dresser.name",
+    "category": "cabinet",
+    "capacityKg": 30,
+    "defaultLootTable": "base:bedroom",
+    "lootAccepts": ["clothing", "fabric", "bag", "household", "literature", "vhs", "electronics"],
+    "placeIn": ["base:room-bedroom", "base:room-living-room", "base:room-office"]
+  },
+  {
+    "id": "base:bookshelf",
+    "name": "container.base.bookshelf.name",
+    "category": "shelf",
+    "capacityKg": 40,
+    "searchMin": 1.5,
+    "defaultLootTable": "base:bookshelf",
+    "lootAccepts": ["literature", "vhs"],
+    "placeIn": [
+      "base:room-living-room",
+      "base:room-bedroom",
+      "base:room-office",
+      "base:room-school",
+      "base:room-bookstore",
+      "base:room-video-store"
+    ]
+  },
+  {
+    "id": "base:desk",
+    "name": "container.base.desk.name",
+    "category": "cabinet",
+    "capacityKg": 20,
+    "defaultLootTable": "base:desk",
+    "lootAccepts": ["literature", "vhs", "electronics", "household"],
+    "placeIn": ["base:room-bedroom", "base:room-office"]
+  },
+  {
+    "id": "base:tv-stand",
+    "name": "container.base.tv-stand.name",
+    "category": "cabinet",
+    "capacityKg": 20,
+    "defaultLootTable": "base:living-room",
+    "lootAccepts": ["vhs", "electronics", "literature"],
+    "placeIn": ["base:room-living-room"]
+  },
+  {
+    "id": "base:bathroom-cabinet",
+    "name": "container.base.bathroom-cabinet.name",
+    "category": "cabinet",
+    "capacityKg": 8,
+    "defaultLootTable": "base:bathroom",
+    "lootAccepts": ["medical", "fabric", "household"],
+    "placeIn": ["base:room-bathroom"]
+  }
+]

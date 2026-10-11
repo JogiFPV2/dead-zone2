@@ -2,44 +2,228 @@
   {
     "id": "base:kitchen",
     "rooms": ["base:room-kitchen"],
-    "containers": ["base:kitchen-cabinet", "base:kitchen-counter"],
+    "containers": ["base:kitchen-cabinet"],
     "chance": 0.75,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:canned-beans", "weight": 6, "count": { "min": 1, "max": 2 } },
-      { "item": "base:water-bottle", "weight": 4 },
-      { "item": "base:kitchen-knife", "weight": 4 },
-      { "item": "base:meat-cleaver", "weight": 2, "rarity": "uncommon" },
-      { "item": "base:rolling-pin", "weight": 3 },
-      { "item": "base:frying-pan", "weight": 3 },
-      { "item": "base:plastic-bag", "weight": 5, "count": { "min": 1, "max": 3 } },
-      { "item": "base:garbage-bag", "weight": 3, "count": { "min": 1, "max": 2 } },
-      { "item": "base:rag", "weight": 3, "count": { "min": 1, "max": 2 } },
-      { "item": "base:bottle", "weight": 3 },
-      { "item": "base:screwdriver", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:hammer", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:potato", "weight": 3, "count": { "min": 1, "max": 3 } },
-      { "item": "base:cooking-pot", "weight": 3 },
-      { "item": "base:matches", "weight": 3 },
-      { "item": "base:lighter", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:vodka", "weight": 1, "rarity": "uncommon" },
-      { "table": "base:recipe-magazines", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:canned-beans",
+        "weight": 8
+      },
+      {
+        "item": "base:jarred-vegetables",
+        "weight": 5
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 4
+      },
+      {
+        "item": "base:potato",
+        "weight": 3
+      },
+      {
+        "item": "base:vodka",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
+  },
+  {
+    "id": "base:kitchen-drawer",
+    "containers": ["base:kitchen-counter"],
+    "chance": 0.8,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:kitchen-knife",
+        "weight": 5
+      },
+      {
+        "item": "base:meat-cleaver",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:rolling-pin",
+        "weight": 3
+      },
+      {
+        "item": "base:matches",
+        "weight": 4
+      },
+      {
+        "item": "base:lighter",
+        "weight": 2
+      },
+      {
+        "item": "base:rag",
+        "weight": 3
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 4
+      },
+      {
+        "item": "base:garbage-bag",
+        "weight": 3
+      },
+      {
+        "item": "base:cooking-pot",
+        "weight": 2
+      },
+      {
+        "item": "base:frying-pan",
+        "weight": 2
+      }
+    ],
+    "buildingKey": 0.15
   },
   {
     "id": "base:kitchen-fridge",
     "rooms": ["base:room-kitchen"],
-    "containers": ["base:fridge", "base:freezer"],
-    "chance": 0.6,
-    "rolls": { "min": 1, "max": 2 },
+    "containers": ["base:fridge", "base:fridge-freezer"],
+    "chance": 0.7,
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:water-bottle", "weight": 5, "count": { "min": 1, "max": 2 } },
-      { "item": "base:canned-beans", "weight": 2 },
-      { "item": "base:bottle", "weight": 2 },
-      { "item": "base:carrot", "weight": 3, "count": { "min": 1, "max": 3 } },
-      { "item": "base:cabbage", "weight": 2 },
-      { "item": "base:raw-fish", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:rabbit-carcass", "weight": 1, "rarity": "rare" }
+      {
+        "item": "base:water-bottle",
+        "weight": 5
+      },
+      {
+        "item": "base:carrot",
+        "weight": 3
+      },
+      {
+        "item": "base:cabbage",
+        "weight": 2
+      },
+      {
+        "item": "base:potato",
+        "weight": 2
+      },
+      {
+        "item": "base:small-game-meat",
+        "weight": 2
+      },
+      {
+        "item": "base:venison-steak",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:raw-fish",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:fish-fillet",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vegetable-stew",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:cabbage-salad",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:baked-potato",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vodka",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
+    ]
+  },
+  {
+    "id": "base:freezer",
+    "containers": ["base:freezer"],
+    "chance": 0.6,
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "item": "base:small-game-meat",
+        "weight": 4
+      },
+      {
+        "item": "base:raw-fish",
+        "weight": 3
+      },
+      {
+        "item": "base:fish-fillet",
+        "weight": 3
+      },
+      {
+        "item": "base:venison",
+        "weight": 2
+      },
+      {
+        "item": "base:venison-steak",
+        "weight": 2
+      },
+      {
+        "item": "base:vodka",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
+    ]
+  },
+  {
+    "id": "base:oven",
+    "containers": ["base:oven"],
+    "chance": 0.5,
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
+    "entries": [
+      {
+        "item": "base:cooking-pot",
+        "weight": 4
+      },
+      {
+        "item": "base:frying-pan",
+        "weight": 3
+      }
+    ]
+  },
+  {
+    "id": "base:gas-stove",
+    "containers": ["base:gas-stove"],
+    "chance": 0.4,
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
+    "entries": [
+      {
+        "item": "base:frying-pan",
+        "weight": 4
+      },
+      {
+        "item": "base:cooking-pot",
+        "weight": 4
+      }
     ]
   }
 ]

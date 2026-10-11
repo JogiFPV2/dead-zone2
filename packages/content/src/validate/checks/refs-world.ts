@@ -24,6 +24,7 @@ export function collectAnimalTypeRefs(a: AnimalType, r: RefList): void {
 export function collectContainerTypeRefs(c: ContainerType, r: RefList): void {
   r.add('item', c.pickupItem, 'pickupItem');
   r.add('lootTable', c.defaultLootTable, 'defaultLootTable');
+  r.many('containerType', c.compartments, 'compartments');
 }
 
 export function collectStationRefs(s: Station, r: RefList): void {
