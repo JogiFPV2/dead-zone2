@@ -68,8 +68,10 @@ export interface SaveConflictOptions {
   /** WYJDŹ DO MENU → Postacie (local state is dropped). */
   onMenu(): void;
   /**
-   * NADPISZ SERWER (409 only): this device's refused save replaces the server's (forced write,
-   * `If-Match` = the server's version). Without it the button is not shown (previews of #166).
+   * NADPISZ SERWER (409 with the server's save, after a second step) and ZAPISZ NA SERWERZE
+   * (409 with `server: null`, right away): this device's refused save goes to the server (forced
+   * write, `If-Match` = the server's version, `"0"` when it has none). Without it neither button
+   * is shown.
    */
   onOverwrite?: (() => void) | undefined;
 }
@@ -131,7 +133,10 @@ export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
       ? showToast({
           host: o.host,
           title: 'Zapis odrzucony',
-          body: 'Serwer ma nowszy stan tej postaci z innego urządzenia.',
+          body:
+            o.server === null
+              ? 'Serwer nie ma zapisu tej postaci, którego oczekiwał ten komputer.'
+              : 'Serwer ma nowszy stan tej postaci z innego urządzenia.',
           meta: toastMeta(o.trigger, o.local),
           ...(o.toastMs === undefined ? {} : { ms: o.toastMs }),
         })
@@ -140,15 +145,18 @@ export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
   el.className = 'dza-conflict-layer';
   el.setAttribute('role', 'alertdialog');
   const gone = o.kind === 'gone';
-  // 409 with `server: null`: the server has no save of this character, nothing to load (#172):
-  // WYJDŹ DO MENU only.
+  // 409 with `server: null`: the server has no save of this character, nothing to load (#172).
   const canLoad = !gone && o.server !== null;
+  // …but this device's state can become the first save: ZAPISZ NA SERWERZE (primary, Enter, no
+  // second step since nothing on the server is lost; `If-Match: "0"` = no save yet).
+  const canSaveBare = !gone && o.server === null && !!o.onOverwrite;
   // NADPISZ SERWER needs the server's save (its version is the forced `If-Match`, its day the warning).
   const server = !gone && o.server ? o.server : undefined;
   const canOverwrite = !!server && !!o.onOverwrite;
   // Same in game and in the pause menu: WCZYTAJ NOWSZY STAN is the primary (right, Enter),
-  // WYJDŹ DO MENU on the left (Esc); without a save to load, WYJDŹ DO MENU is the only choice.
-  const menuFirst = !canLoad;
+  // WYJDŹ DO MENU on the left (Esc); with `server: null` ZAPISZ NA SERWERZE takes the primary
+  // place; WYJDŹ DO MENU is the only choice when neither is possible.
+  const menuFirst = !canLoad && !canSaveBare;
   const rows = gone ? undefined : compareRows(o.server, o.local, now);
   const title = gone ? 'TA POSTAĆ NIE ŻYJE' : 'TA POSTAĆ BYŁA GRANA<br>NA INNYM URZĄDZENIU';
   el.setAttribute('aria-label', title.replace('<br>', ' '));
@@ -156,11 +164,16 @@ export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
     ? `${esc(o.name)} ${o.female ? 'zginęła' : 'zginął'} na innym urządzeniu. Zostaje nagrobek.`
     : canLoad
       ? `${esc(o.name)} ma na serwerze nowszy stan. Wczytaj go, żeby grać dalej. Postęp z tego komputera od ostatniego zapisu przepadnie.`
-      : `Na serwerze nie ma zapisu postaci ${esc(o.name)}, więc nie ma czego wczytać.`;
+      : canSaveBare
+        ? `Na serwerze nie ma zapisu postaci ${esc(o.name)}. Zapisz na serwerze stan z tego komputera, żeby grać dalej.`
+        : `Na serwerze nie ma zapisu postaci ${esc(o.name)}, więc nie ma czego wczytać.`;
   const menuBtn = `<button type="button" class="dza-btn ${menuFirst ? 'dza-btn--pri dza-btn--focus' : 'dza-btn--sec'}" data-act="menu">${icon('exit', 15)}WYJDŹ DO MENU</button>`;
   const loadBtn = !canLoad
     ? ''
     : `<button type="button" class="dza-btn dza-btn--pri dza-btn--focus" data-act="load">${icon('download', 15)}WCZYTAJ NOWSZY STAN</button>`;
+  const saveBtn = canSaveBare
+    ? `<button type="button" class="dza-btn dza-btn--pri dza-btn--focus" data-act="save">${icon('save', 15)}ZAPISZ NA SERWERZE</button>`
+    : '';
   const overwriteBtn = canOverwrite
     ? `<button type="button" class="dza-btn dza-btn--danger dza-btn--overwrite" data-act="overwrite" title="Zapis z tego komputera zastąpi stan na serwerze">${icon('save', 15)}NADPISZ SERWER</button>`
     : '';
@@ -168,14 +181,14 @@ export function showSaveConflict(o: SaveConflictOptions): SaveConflictDialog {
     ? `<span>${keyBadge('Enter')}menu</span>`
     : menuFirst
       ? `<span>${keyBadge('Enter')}menu</span><span>${keyBadge('Esc')}menu</span>`
-      : `<span>${keyBadge('Enter')}wczytaj</span><span>${keyBadge('Esc')}menu</span>`;
+      : `<span>${keyBadge('Enter')}${canSaveBare ? 'zapisz' : 'wczytaj'}</span><span>${keyBadge('Esc')}menu</span>`;
   const mainView = `<div class="dza-conflict-ic">${icon(gone ? 'grave' : 'monitor', 24)}</div>
 <div class="dza-conflict-title">${title}</div>
 ${gone ? '' : '<div class="dza-conflict-sub">Twój zapis nie został przyjęty.</div>'}
 <div class="dza-conflict-body">${body}</div>
 ${rows ? `<div class="dza-cmp"><div><span>NA SERWERZE</span><span class="dza-cmp-new">${esc(rows.server)}</span></div><div><span>TUTAJ (ODRZUCONY)</span><span class="dza-cmp-old">${esc(rows.local)}</span></div></div>` : ''}
 <div class="dza-hsep"></div>
-<div class="dza-conflict-foot">${menuBtn}${loadBtn}${overwriteBtn}</div>
+<div class="dza-conflict-foot">${menuBtn}${loadBtn}${saveBtn}${overwriteBtn}</div>
 <div class="dza-conflict-hints">${hints}<span>· gra jest wstrzymana</span></div>`;
   el.innerHTML = `<div class="dza-scrim"></div><div class="dzo-panel dza-conflict${gone ? ' dza-conflict--dead' : ''}">${mainView}</div>`;
   const panel = el.querySelector<HTMLElement>('.dza-conflict')!;
@@ -224,6 +237,7 @@ ${rows ? `<div class="dza-cmp"><div><span>NA SERWERZE</span><span class="dza-cmp
     const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act;
     if (act === 'load' || act === 'menu') finish(act);
     else if (act === 'overwrite') showConfirm();
+    else if (act === 'save' && canSaveBare) finish('overwrite');
     else if (act === 'back') backToMain();
     else if (act === 'confirm-overwrite' && checked()) finish('overwrite');
   });
@@ -242,7 +256,7 @@ ${rows ? `<div class="dza-cmp"><div><span>NA SERWERZE</span><span class="dza-cmp
       if (e.code === 'Escape') finish('menu');
       else if (e.code === 'Enter' || e.code === 'NumpadEnter') {
         if (e.target instanceof HTMLButtonElement && el.contains(e.target)) return false;
-        finish(menuFirst ? 'menu' : 'load');
+        finish(menuFirst ? 'menu' : canSaveBare ? 'overwrite' : 'load');
       } else return e.code === 'Tab' ? false : true;
       return true;
     },

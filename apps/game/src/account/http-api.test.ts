@@ -294,6 +294,8 @@ describe('createHttpAccountApi', () => {
     });
     expect((fetch.mock.calls[0]?.[1].headers as Record<string, string>)['if-match']).toBe('W/"7"');
     expect(ifMatchHeader(7)).toBe('"7"');
+    // No save on the server (409 `server: null`): ZAPISZ NA SERWERZE sends If-Match "0".
+    expect(ifMatchHeader(0)).toBe('"0"');
     expect(ifMatchHeader('W/"7"')).toBe('W/"7"');
     expect(ifMatchHeader('"7"')).toBe('"7"');
     expect(versionOf('W/"15"')).toBe(15);

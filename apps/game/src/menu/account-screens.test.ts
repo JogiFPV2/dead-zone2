@@ -328,6 +328,60 @@ describe('Konflikt sesji', () => {
     expect(el.querySelector('.dza-conflict-layer')).toBeNull();
   });
 
+  it('409 with server: null: ZAPISZ NA SERWERZE primary (Enter, no second step), menu left', () => {
+    const el = host();
+    const on = { load: vi.fn(), menu: vi.fn(), overwrite: vi.fn() };
+    const d = showSaveConflict({
+      host: el,
+      kind: 'conflict',
+      name: 'Marta Nowak',
+      female: true,
+      trigger: 'exit',
+      local,
+      server: null,
+      now,
+      onLoadNewer: on.load,
+      onMenu: on.menu,
+      onOverwrite: on.overwrite,
+    });
+    const acts = [...el.querySelectorAll<HTMLElement>('.dza-conflict-foot .dza-btn')].map(
+      (b) => b.dataset.act,
+    );
+    expect(acts).toEqual(['menu', 'save']);
+    const save = el.querySelector<HTMLElement>('[data-act="save"]')!;
+    expect(save.textContent).toContain('ZAPISZ NA SERWERZE');
+    expect(save.classList.contains('dza-btn--pri')).toBe(true);
+    expect(el.querySelector('[data-act="menu"]')?.classList.contains('dza-btn--pri')).toBe(false);
+    expect(el.textContent).toContain('Zapisz na serwerze stan z tego komputera, żeby grać dalej.');
+    expect(el.textContent).not.toContain('nie ma czego wczytać');
+    expect(el.querySelector('.dza-toast')?.textContent).not.toContain('nowszy stan');
+    expect(el.querySelector('[data-act="overwrite"]')).toBeNull();
+    d.onKey(key('Enter'));
+    expect(on.overwrite).toHaveBeenCalledOnce();
+    expect(el.textContent).not.toContain('NADPISAĆ SERWER?');
+    expect(el.querySelector('.dza-conflict-layer')).toBeNull();
+    expect(on.menu).not.toHaveBeenCalled();
+
+    const el2 = host();
+    const on2 = { menu: vi.fn(), overwrite: vi.fn() };
+    const d2 = showSaveConflict({
+      host: el2,
+      kind: 'conflict',
+      name: 'Marta Nowak',
+      female: true,
+      trigger: 'autosave',
+      local,
+      server: null,
+      now,
+      onLoadNewer: vi.fn(),
+      onMenu: on2.menu,
+      onOverwrite: on2.overwrite,
+    });
+    d2.onKey(key('Escape'));
+    expect(on2.menu).toHaveBeenCalledOnce();
+    expect(on2.overwrite).not.toHaveBeenCalled();
+  });
+
   it('NADPISZ SERWER: day only without minuteOfDay; not offered for server: null, unknown or 410', () => {
     expect(overwriteLoss({ version: 2, gameDay: 9, minuteOfDay: null, updatedAt: 'T' })).toBe(
       'Stracisz postęp z dnia 9 na serwerze.',
