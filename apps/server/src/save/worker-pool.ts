@@ -2,7 +2,7 @@ import { availableParallelism } from 'node:os';
 import { Worker } from 'node:worker_threads';
 import type { ApiErrorCode } from '@deadzone/protocol';
 import { HttpError } from '../errors.js';
-import type { ValidateOptions, ValidatedEnvelope } from './validate.js';
+import type { SaveValidator, ValidateOptions, ValidatedEnvelope } from './validate.js';
 
 export interface WorkerRequest {
   id: number;
@@ -14,11 +14,7 @@ export type WorkerReply =
   | { id: number; ok: true; result: ValidatedEnvelope }
   | { id: number; ok: false; status: number; code: ApiErrorCode; message: string };
 
-/** Validates DZSV envelopes off the event loop. */
-export interface SaveValidator {
-  validate(bytes: Uint8Array, opts: ValidateOptions): Promise<ValidatedEnvelope>;
-  close(): Promise<void>;
-}
+export type { SaveValidator } from './validate.js';
 
 export interface WorkerPoolOptions {
   /** Worker threads; default `availableParallelism() - 1`, at least 1. */

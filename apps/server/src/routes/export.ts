@@ -1,6 +1,6 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { AccountExport, AccountExportCharacter } from '@deadzone/protocol';
 import type { AuthUser } from '../auth.js';
+import type { RouteContext, Router } from '../http/core.js';
 import type { Limits } from '../config.js';
 import type { BlobStore, GameStore } from '../data/types.js';
 import { accountGone } from '../errors.js';
@@ -15,7 +15,7 @@ import { storedLocation, toSummary } from './summary.js';
 export interface ExportRouteDeps {
   store: GameStore;
   blobs: BlobStore;
-  user: (req: FastifyRequest) => Promise<AuthUser>;
+  user: (ctx: RouteContext) => Promise<AuthUser>;
   rateLimits: RateLimitStore;
   limits: Pick<Limits, 'maxExportsPerHour' | 'maxAccountSaveBytes' | 'maxAliveCharacters'>;
   now: () => Date;
@@ -25,11 +25,11 @@ export interface ExportRouteDeps {
 export const EXPORT_URL_TTL_SECONDS = 600;
 const HOUR_MS = 60 * 60 * 1000;
 
-export function registerExportRoutes(app: FastifyInstance, deps: ExportRouteDeps): void {
+export function registerExportRoutes(app: Router, deps: ExportRouteDeps): void {
   const { store, blobs, user, rateLimits, limits, now } = deps;
 
-  app.get('/v1/me/export', async (req, reply): Promise<AccountExport> => {
-    const { userId } = await user(req);
+  app.get('/v1/me/export', async (ctx): Promise<AccountExport> => {
+    const { userId } = await user(ctx);
     await enforce(
       rateLimits,
       `export:${userId}`,
@@ -71,14 +71,14 @@ export function registerExportRoutes(app: FastifyInstance, deps: ExportRouteDeps
     }
 
     const at = now();
-    req.log.info({ characters: exported.length }, 'account export');
-    void reply
-      .header('content-type', 'application/json; charset=utf-8')
-      .header(
+    ctx.log.info('account export', { characters: exported.length });
+    ctx
+      .setHeader('content-type', 'application/json; charset=utf-8')
+      .setHeader(
         'content-disposition',
         `attachment; filename=deadzone-export-${at.toISOString().slice(0, 10)}.json`,
       )
-      .header('cache-control', 'no-store');
+      .setHeader('cache-control', 'no-store');
     return {
       format: 'deadzone-account-export',
       formatVersion: 1,

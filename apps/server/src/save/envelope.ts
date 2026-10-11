@@ -87,7 +87,7 @@ export function parseEnvelope(
     throw new HttpError(413, 'payload_too_large', 'state too large');
   }
 
-  let raw: Buffer;
+  let raw: Uint8Array;
   try {
     raw = gunzipSync(bytes.subarray(bodyStart), { maxOutputLength: opts.maxStateBytes });
   } catch (err) {

@@ -1,6 +1,3 @@
-import { randomBytes, randomInt } from 'node:crypto';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { createPlacesCache } from '@deadzone/content/node';
 import type { Place } from '@deadzone/content/places';
 import type {
   CharacterSummary,
@@ -10,6 +7,7 @@ import type {
 } from '@deadzone/protocol';
 import { createCharacterRequestSchema } from '@deadzone/protocol/schema';
 import { authenticate, type AuthUser, type TokenVerifier } from '../auth.js';
+import type { RouteContext, Router } from '../http/core.js';
 import type { ServerConfig } from '../config.js';
 import {
   DataRuleError,
@@ -30,7 +28,7 @@ import {
 } from '../errors.js';
 import { enforce, type RateLimitStore } from '../rate-limit.js';
 import type { ValidatedEnvelope } from '../save/validate.js';
-import type { SaveValidator } from '../save/worker-pool.js';
+import type { SaveValidator } from '../save/validate.js';
 import { registerSettingsRoutes } from './settings.js';
 import { registerExportRoutes } from './export.js';
 import { conflictServer, dayLengthMinutes, mapId, toSummary } from './summary.js';
@@ -47,11 +45,12 @@ export interface CharacterRouteDeps {
   accounts: AccountAdmin;
   /** Counters for the HTTP rate limits (§5.5); in-memory now, Redis later. */
   rateLimits: RateLimitStore;
-  /** DZSV validation in `worker_threads` (timeout + heap cap); closed with the app. */
+  /** DZSV validation (worker threads on Node, inline in the Edge Function); closed with the app. */
   validator: SaveValidator;
   /**
    * Named places per map id (`createPlacesCache` of `@deadzone/content/node`: one file read per
-   * map and process); null = the map has no places file. Default: the content package files.
+   * map and process; the Edge Function bundles the files); null = the map has no places file.
+   * Omitted: no places, `place` stays null.
    */
   places?: (mapId: string | null) => Promise<readonly Place[] | null>;
   /** Injectable for tests. */
@@ -94,43 +93,50 @@ function ruleToHttp(err: unknown): never {
   throw err;
 }
 
-function characterId(req: FastifyRequest): string {
-  const id = (req.params as { id?: unknown }).id;
+function characterId(ctx: RouteContext): string {
+  const id = ctx.params.id;
   if (typeof id !== 'string' || !UUID.test(id)) throw notFound();
   return id.toLowerCase();
 }
 
-function bodyBytes(req: FastifyRequest): Uint8Array {
-  if (!Buffer.isBuffer(req.body)) {
-    throw badRequest('body must be a DZSV envelope (application/octet-stream)');
-  }
-  return req.body;
-}
+/** Random seed in 0..2^32-1 (Web Crypto: Node and Deno). */
+const randomSeed = (): number => crypto.getRandomValues(new Uint32Array(1))[0]!;
+
+const randomHex = (bytes: number): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
+    b.toString(16).padStart(2, '0'),
+  ).join('');
 
 /** `If-Match: <version>` (optionally quoted); 0 = no cloud save yet. */
-function expectedVersion(req: FastifyRequest): number {
-  const raw = req.headers['if-match'];
+function expectedVersion(ctx: RouteContext): number {
+  const raw = ctx.header('if-match');
   const v = typeof raw === 'string' ? raw.trim().replace(/^"(.*)"$/, '$1') : '';
   if (!/^\d{1,9}$/.test(v)) throw badRequest('If-Match: <save version> is required');
   return Number(v);
 }
 
-export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRouteDeps): void {
+/** What the API core needs besides the routes: the per-IP limit and shutdown. */
+export interface CharacterRoutes {
+  /** Per-IP limit on the whole `/v1` API (before routing, auth and the body). */
+  ipLimit(ip: string): Promise<void>;
+  close(): Promise<void>;
+}
+
+export function registerCharacterRoutes(app: Router, deps: CharacterRouteDeps): CharacterRoutes {
   const { config, store, blobs, verifier, accounts } = deps;
   const limits = config.limits;
   const now = deps.now ?? (() => new Date());
-  const newSeed = deps.newSeed ?? (() => randomInt(0, 0x1_0000_0000));
+  const newSeed = deps.newSeed ?? randomSeed;
 
   const { rateLimits, validator } = deps;
-  const placesFor = deps.places ?? createPlacesCache();
-  app.addHook('onClose', () => validator.close());
+  const placesFor = deps.places ?? (() => Promise.resolve(null));
   // One JWT verification per request even when a route hook already authenticated.
-  const authed = new WeakMap<FastifyRequest, Promise<AuthUser>>();
-  const user = (req: FastifyRequest): Promise<AuthUser> => {
-    let u = authed.get(req);
+  const authed = new WeakMap<RouteContext, Promise<AuthUser>>();
+  const user = (ctx: RouteContext): Promise<AuthUser> => {
+    let u = authed.get(ctx);
     if (!u) {
-      u = authenticate(req, verifier).then(requireAccount);
-      authed.set(req, u);
+      u = authenticate(ctx.header('authorization'), verifier).then(requireAccount);
+      authed.set(ctx, u);
     }
     return u;
   };
@@ -144,22 +150,19 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
     return u;
   }
 
-  // Per-IP limit on the whole API, before auth and before reading any body.
-  app.addHook('onRequest', async (req) => {
-    if (!req.url.startsWith('/v1/') && req.url !== '/v1') return;
-    await enforce(
+  const ipLimit = (ip: string): Promise<void> =>
+    enforce(
       rateLimits,
-      `ip:${req.ip}`,
+      `ip:${ip}`,
       1,
       limits.maxIpRequestsPer5Min,
       IP_WINDOW_MS,
       'too many requests from this address',
     );
-  });
 
   /** Save/death uploads per account per hour; runs before the body is read. */
-  const saveRateLimit = async (req: FastifyRequest): Promise<void> => {
-    const { userId } = await user(req);
+  const saveRateLimit = async (ctx: RouteContext): Promise<void> => {
+    const { userId } = await user(ctx);
     await enforce(
       rateLimits,
       `saves:${userId}`,
@@ -193,28 +196,31 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
 
   /** Envelope + state checks shared by save and death; values must match the character row. */
   /** Places of the character's map; a broken places file is logged and only costs the name. */
-  async function mapPlaces(req: FastifyRequest, c: CharacterRow): Promise<readonly Place[] | null> {
+  async function mapPlaces(ctx: RouteContext, c: CharacterRow): Promise<readonly Place[] | null> {
     const map = mapId(c);
     try {
       return await placesFor(map);
     } catch {
-      req.log.warn({ map }, 'places file unreadable, place not set');
+      ctx.log.warn('places file unreadable, place not set', { map });
       return null;
     }
   }
 
-  async function checkEnvelope(req: FastifyRequest, c: CharacterRow): Promise<ValidatedEnvelope> {
-    const bytes = bodyBytes(req);
-    const claimed = req.headers['x-dzsv-sha256'];
+  async function checkEnvelope(
+    ctx: RouteContext,
+    bytes: Uint8Array,
+    c: CharacterRow,
+  ): Promise<ValidatedEnvelope> {
+    const claimed = ctx.header('x-dzsv-sha256');
     if (typeof claimed !== 'string' || !SHA256.test(claimed.toLowerCase())) {
       throw badRequest('X-DZSV-SHA256: <hex sha256 of the envelope> is required');
     }
-    // gunzip, JSON and state schema run in a worker thread with a timeout and heap cap.
+    // gunzip, JSON and state schema (a worker thread with a timeout and heap cap on Node).
     const env = await validator.validate(bytes, {
       saveFormatVersion: config.saveFormatVersion,
       maxStateBytes: limits.maxStateBytes,
       dayLengthMinutes: dayLengthMinutes(c),
-      places: await mapPlaces(req, c),
+      places: await mapPlaces(ctx, c),
     });
     if (env.sha256 !== claimed.toLowerCase()) {
       throw new HttpError(400, 'checksum_mismatch', 'SHA-256 does not match the envelope');
@@ -229,8 +235,8 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
     return env;
   }
 
-  app.get('/v1/characters', async (req): Promise<ListCharactersResponse> => {
-    const { userId } = await user(req);
+  app.get('/v1/characters', async (ctx): Promise<ListCharactersResponse> => {
+    const { userId } = await user(ctx);
     const [characters, saves, usedBytes] = await Promise.all([
       store.listCharacters(userId),
       store.listSaves(userId),
@@ -256,9 +262,9 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
     };
   });
 
-  app.post('/v1/characters', async (req, reply): Promise<CharacterSummary> => {
-    const { userId } = await user(req);
-    const parsed = createCharacterRequestSchema.safeParse(req.body);
+  app.post('/v1/characters', async (ctx): Promise<CharacterSummary> => {
+    const { userId } = await user(ctx);
+    const parsed = createCharacterRequestSchema.safeParse(await ctx.json());
     if (!parsed.success) throw badRequest('name (1–40), appearance and world_settings objects');
     if ((await store.countAliveCharacters(userId)) >= limits.maxAliveCharacters) {
       throw new HttpError(409, 'alive_character_limit', 'alive character limit reached');
@@ -277,13 +283,13 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
         world_settings: parsed.data.world_settings ?? {},
       })
       .catch(ruleToHttp);
-    void reply.code(201);
+    ctx.status = 201;
     return toSummary(row, undefined);
   });
 
-  app.post('/v1/characters/:id/open', async (req): Promise<OpenSaveResponse> => {
-    const { userId } = await user(req);
-    const c = await ownedCharacter(userId, characterId(req));
+  app.post('/v1/characters/:id/open', async (ctx): Promise<OpenSaveResponse> => {
+    const { userId } = await user(ctx);
+    const c = await ownedCharacter(userId, characterId(ctx));
     if (c.status === 'dead') throw characterDead();
     const save = await store.getSave(c.id);
     const ttl = config.signedUrlTtlSeconds;
@@ -307,123 +313,119 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
     };
   });
 
-  app.put(
-    '/v1/characters/:id/save',
-    { bodyLimit: limits.maxEnvelopeBytes, onRequest: saveRateLimit },
-    async (req): Promise<PutSaveResponse> => {
-      const { userId } = await user(req);
-      const id = characterId(req);
-      await uploadRateLimit(userId, bodyBytes(req).length);
-      const expected = expectedVersion(req);
-      const c = await ownedCharacter(userId, id);
-      if (c.status === 'dead') throw characterDead();
-      const env = await checkEnvelope(req, c);
-      if (env.header.reason === 'death') {
-        throw invalidState('a death snapshot goes to POST /v1/characters/:id/death');
-      }
+  app.put('/v1/characters/:id/save', async (ctx): Promise<PutSaveResponse> => {
+    // Auth and the hourly save limit run before the body is read.
+    await saveRateLimit(ctx);
+    const { userId } = await user(ctx);
+    const id = characterId(ctx);
+    const body = await ctx.bytes(limits.maxEnvelopeBytes);
+    await uploadRateLimit(userId, body.length);
+    const expected = expectedVersion(ctx);
+    const c = await ownedCharacter(userId, id);
+    if (c.status === 'dead') throw characterDead();
+    const env = await checkEnvelope(ctx, body, c);
+    if (env.header.reason === 'death') {
+      throw invalidState('a death snapshot goes to POST /v1/characters/:id/death');
+    }
 
-      if (env.summaryFailure) {
-        // A valid save without a usable summary: stored without a new location.
-        req.log.warn({ summary: env.summaryFailure }, 'save summary failed, location not updated');
-      }
+    if (env.summaryFailure) {
+      // A valid save without a usable summary: stored without a new location.
+      ctx.log.warn('save summary failed, location not updated', { summary: env.summaryFailure });
+    }
 
-      // Cheap pre-checks; commit_save repeats both atomically.
-      const current = await store.getSave(id);
-      if ((current?.version ?? 0) !== expected) throw saveConflict(current);
-      const used = await store.accountSaveBytes(userId);
-      if (used - (current?.size_bytes ?? 0) + env.sizeBytes > limits.maxAccountSaveBytes) {
-        throw new HttpError(413, 'save_quota_exceeded', 'account save quota exceeded');
-      }
+    // Cheap pre-checks; commit_save repeats both atomically.
+    const current = await store.getSave(id);
+    if ((current?.version ?? 0) !== expected) throw saveConflict(current);
+    const used = await store.accountSaveBytes(userId);
+    if (used - (current?.size_bytes ?? 0) + env.sizeBytes > limits.maxAccountSaveBytes) {
+      throw new HttpError(413, 'save_quota_exceeded', 'account save quota exceeded');
+    }
 
-      // New object first, metadata second, old object last (docs/backend.md §3.4).
-      const path = `${userId}/${id}/v${expected + 1}-${randomBytes(6).toString('hex')}.dzsv`;
-      await blobs.put(path, bodyBytes(req));
-      let committed: { version: number; previousPath: string | null };
-      try {
-        committed = await store.commitSave({
-          userId,
-          characterId: id,
-          expectedVersion: expected,
-          storagePath: path,
-          sizeBytes: env.sizeBytes,
-          checksum: env.sha256,
-          gameDay: env.header.gameDay,
-          // From the validated state in the worker (sim `saveSummary`), never from the client.
-          location: env.location,
-          minuteOfDay: env.minuteOfDay,
-        });
-      } catch (err) {
-        await blobs
-          .remove(path)
-          .catch(() => req.log.warn('orphan save blob left after failed commit'));
-        if (err instanceof DataRuleError && err.code === 'save_version_conflict') {
-          // Lost the race to another session: name the save that won.
-          throw saveConflict(await store.getSave(id).catch(() => undefined));
-        }
-        ruleToHttp(err);
-      }
-      if (committed.previousPath && committed.previousPath !== path) {
-        await blobs
-          .remove(committed.previousPath)
-          .catch(() => req.log.warn('previous save blob not removed'));
-      }
-      return {
+    // New object first, metadata second, old object last (docs/backend.md §3.4).
+    const path = `${userId}/${id}/v${expected + 1}-${randomHex(6)}.dzsv`;
+    await blobs.put(path, body);
+    let committed: { version: number; previousPath: string | null };
+    try {
+      committed = await store.commitSave({
+        userId,
         characterId: id,
-        version: committed.version,
+        expectedVersion: expected,
+        storagePath: path,
         sizeBytes: env.sizeBytes,
         checksum: env.sha256,
         gameDay: env.header.gameDay,
-      };
-    },
-  );
+        // From the validated state in the worker (sim `saveSummary`), never from the client.
+        location: env.location,
+        minuteOfDay: env.minuteOfDay,
+      });
+    } catch (err) {
+      await blobs
+        .remove(path)
+        .catch(() => ctx.log.warn('orphan save blob left after failed commit'));
+      if (err instanceof DataRuleError && err.code === 'save_version_conflict') {
+        // Lost the race to another session: name the save that won.
+        throw saveConflict(await store.getSave(id).catch(() => undefined));
+      }
+      ruleToHttp(err);
+    }
+    if (committed.previousPath && committed.previousPath !== path) {
+      await blobs
+        .remove(committed.previousPath)
+        .catch(() => ctx.log.warn('previous save blob not removed'));
+    }
+    return {
+      characterId: id,
+      version: committed.version,
+      sizeBytes: env.sizeBytes,
+      checksum: env.sha256,
+      gameDay: env.header.gameDay,
+    };
+  });
 
-  app.post(
-    '/v1/characters/:id/death',
-    { bodyLimit: limits.maxEnvelopeBytes, onRequest: saveRateLimit },
-    async (req): Promise<CharacterSummary> => {
-      const { userId } = await user(req);
-      const c = await ownedCharacter(userId, characterId(req));
-      if (c.status === 'dead') {
-        // Retried request after a confirmed death: idempotent, the tombstone is the answer.
-        return toSummary(c, undefined);
-      }
-      await uploadRateLimit(userId, bodyBytes(req).length);
-      const env = await checkEnvelope(req, c);
-      if (env.header.reason !== 'death')
-        throw invalidState('death needs a snapshot with reason "death"');
-      const dead = await store.markDead(userId, c.id, env.header.gameDay).catch(ruleToHttp);
-      if (dead.storagePath) {
-        await blobs
-          .remove(dead.storagePath)
-          .catch(() => req.log.warn('dead save blob not removed'));
-      }
-      return toSummary(
-        {
-          ...c,
-          status: 'dead',
-          died_at: dead.diedAt,
-          days_survived: Math.max(c.days_survived, env.header.gameDay),
-        },
-        undefined,
-      );
-    },
-  );
+  app.post('/v1/characters/:id/death', async (ctx): Promise<CharacterSummary> => {
+    await saveRateLimit(ctx);
+    const { userId } = await user(ctx);
+    const c = await ownedCharacter(userId, characterId(ctx));
+    if (c.status === 'dead') {
+      // Retried request after a confirmed death: idempotent, the tombstone is the answer.
+      return toSummary(c, undefined);
+    }
+    const body = await ctx.bytes(limits.maxEnvelopeBytes);
+    await uploadRateLimit(userId, body.length);
+    const env = await checkEnvelope(ctx, body, c);
+    if (env.header.reason !== 'death')
+      throw invalidState('death needs a snapshot with reason "death"');
+    const dead = await store.markDead(userId, c.id, env.header.gameDay).catch(ruleToHttp);
+    if (dead.storagePath) {
+      await blobs.remove(dead.storagePath).catch(() => ctx.log.warn('dead save blob not removed'));
+    }
+    return toSummary(
+      {
+        ...c,
+        status: 'dead',
+        died_at: dead.diedAt,
+        days_survived: Math.max(c.days_survived, env.header.gameDay),
+      },
+      undefined,
+    );
+  });
 
   /**
    * Permanent deletion of one character (alive or tombstone) on the owner's request
    * (docs/backend.md §5.1): save blobs first, then the rows. A failure before the rows are gone
    * leaves the character in place, so the client can retry.
    */
-  app.delete('/v1/characters/:id', async (req, reply) => {
-    const { userId } = await user(req);
-    const c = await ownedCharacter(userId, characterId(req));
+  app.delete('/v1/characters/:id', async (ctx) => {
+    const { userId } = await user(ctx);
+    const c = await ownedCharacter(userId, characterId(ctx));
     await blobs.removePrefix(`${userId}/${c.id}`);
     const { storagePath } = await store.deleteCharacter(userId, c.id).catch(ruleToHttp);
     // A save that committed between the blob sweep and the row delete.
     if (storagePath) {
-      await blobs.remove(storagePath).catch(() => req.log.warn('deleted character blob left'));
+      await blobs.remove(storagePath).catch(() => ctx.log.warn('deleted character blob left'));
     }
-    return reply.code(204).send();
+    ctx.status = 204;
+    return undefined;
   });
 
   /**
@@ -431,20 +433,23 @@ export function registerCharacterRoutes(app: FastifyInstance, deps: CharacterRou
    * user via the admin API. Every step is idempotent, so a failed request can be retried with the
    * same token until it expires.
    */
-  app.delete('/v1/me', async (req, reply) => {
+  app.delete('/v1/me', async (ctx) => {
     // Not `user()`: a retry after a failed Auth admin call finds the profile already gone, but
     // the auth user still exists and must be deletable. A fully deleted user gets 401.
-    const { userId } = await authenticate(req, verifier);
+    const { userId } = await authenticate(ctx.header('authorization'), verifier);
     if (!(await store.accountExists(userId)) && !(await accounts.userExists(userId))) {
       throw accountGone();
     }
     await blobs.removePrefix(userId);
     const { storagePaths } = await store.deleteAccountData(userId);
     for (const path of storagePaths) {
-      await blobs.remove(path).catch(() => req.log.warn('deleted account blob left'));
+      await blobs.remove(path).catch(() => ctx.log.warn('deleted account blob left'));
     }
     await accounts.deleteUser(userId);
-    req.log.info('account deleted');
-    return reply.code(204).send();
+    ctx.log.info('account deleted');
+    ctx.status = 204;
+    return undefined;
   });
+
+  return { ipLimit, close: () => validator.close() };
 }

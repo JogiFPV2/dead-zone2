@@ -1,4 +1,3 @@
-import type { FastifyRequest } from 'fastify';
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import { HttpError } from './errors.js';
 
@@ -59,10 +58,9 @@ export function createJwksVerifier(
 
 /** Reads `Authorization: Bearer <jwt>` and verifies it. */
 export async function authenticate(
-  req: FastifyRequest,
+  header: string | undefined,
   verifier: TokenVerifier,
 ): Promise<AuthUser> {
-  const header = req.headers.authorization;
   const m = typeof header === 'string' ? /^Bearer ([A-Za-z0-9._-]+)$/.exec(header) : null;
   if (!m?.[1]) throw new HttpError(401, 'unauthorized', 'missing bearer token');
   return verifier.verify(m[1]);

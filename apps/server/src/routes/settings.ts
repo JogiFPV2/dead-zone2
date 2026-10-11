@@ -1,7 +1,7 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { PlayerSettingsResponse } from '@deadzone/protocol';
 import { PLAYER_SETTINGS_MAX_BYTES, validatePlayerSettings } from '@deadzone/ui/settings';
 import type { AuthUser } from '../auth.js';
+import type { RouteContext, Router } from '../http/core.js';
 import { DataRuleError, type GameStore, type SettingsRow } from '../data/types.js';
 import { HttpError, accountGone, badRequest } from '../errors.js';
 
@@ -13,7 +13,7 @@ import { HttpError, accountGone, badRequest } from '../errors.js';
 export interface SettingsRouteDeps {
   store: GameStore;
   /** Authenticated user with an existing account (shared JWT check of the character routes). */
-  user: (req: FastifyRequest) => Promise<AuthUser>;
+  user: (ctx: RouteContext) => Promise<AuthUser>;
 }
 
 /** Max body; `validatePlayerSettings` checks the same limit on the parsed JSON. */
@@ -23,8 +23,8 @@ const MAX_ISSUES = 20;
 const etag = (version: number): string => `"${version}"`;
 
 /** `If-Match: "<version>"` (quotes optional, weak `W/` accepted); 0 = never stored. */
-function ifMatch(req: FastifyRequest): number {
-  const raw = req.headers['if-match'];
+function ifMatch(ctx: RouteContext): number {
+  const raw = ctx.header('if-match');
   if (raw === undefined) {
     throw new HttpError(428, 'precondition_required', 'If-Match: <settings ETag> is required');
   }
@@ -33,8 +33,8 @@ function ifMatch(req: FastifyRequest): number {
   return Number(v);
 }
 
-function reply(res: FastifyReply, row: SettingsRow): PlayerSettingsResponse {
-  void res.header('etag', etag(row.settings_version)).header('cache-control', 'no-store');
+function reply(ctx: RouteContext, row: SettingsRow): PlayerSettingsResponse {
+  ctx.setHeader('etag', etag(row.settings_version)).setHeader('cache-control', 'no-store');
   return {
     settings: row.settings,
     version: row.settings_version,
@@ -42,59 +42,52 @@ function reply(res: FastifyReply, row: SettingsRow): PlayerSettingsResponse {
   };
 }
 
-export function registerSettingsRoutes(app: FastifyInstance, deps: SettingsRouteDeps): void {
+export function registerSettingsRoutes(app: Router, deps: SettingsRouteDeps): void {
   const { store, user } = deps;
 
-  app.get('/v1/me/settings', async (req, res): Promise<PlayerSettingsResponse> => {
-    const { userId } = await user(req);
+  app.get('/v1/me/settings', async (ctx): Promise<PlayerSettingsResponse> => {
+    const { userId } = await user(ctx);
     const row = await store.getSettings(userId);
     if (!row) throw accountGone();
-    return reply(res, row);
+    return reply(ctx, row);
   });
 
-  app.put(
-    '/v1/me/settings',
-    { bodyLimit: SETTINGS_BODY_LIMIT },
-    async (req, res): Promise<PlayerSettingsResponse> => {
-      const { userId } = await user(req);
-      const expected = ifMatch(req);
-      if (req.body === null || typeof req.body !== 'object' || Array.isArray(req.body)) {
-        throw badRequest('body must be a JSON settings object');
+  app.put('/v1/me/settings', async (ctx): Promise<PlayerSettingsResponse> => {
+    const { userId } = await user(ctx);
+    const expected = ifMatch(ctx);
+    const body = await ctx.json(SETTINGS_BODY_LIMIT);
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      throw badRequest('body must be a JSON settings object');
+    }
+    const v = validatePlayerSettings(body);
+    if (!v.ok) {
+      if (v.reason === 'too-large') {
+        throw new HttpError(413, 'payload_too_large', `settings over ${SETTINGS_BODY_LIMIT} bytes`);
       }
-      const v = validatePlayerSettings(req.body);
-      if (!v.ok) {
-        if (v.reason === 'too-large') {
+      throw new HttpError(422, 'invalid_settings', 'settings failed validation', {
+        issues: v.issues.slice(0, MAX_ISSUES).map((i) => ({
+          path: i.path.map((p) => (typeof p === 'number' ? p : String(p))),
+          code: i.code,
+          message: i.message,
+        })),
+      });
+    }
+    try {
+      // Only the validated output (unknown keys stripped, defaults filled) is stored.
+      const row = await store.putSettings(userId, expected, v.data);
+      return reply(ctx, row);
+    } catch (err) {
+      if (err instanceof DataRuleError) {
+        if (err.code === 'settings_version_conflict') {
           throw new HttpError(
-            413,
-            'payload_too_large',
-            `settings over ${SETTINGS_BODY_LIMIT} bytes`,
+            412,
+            'settings_version_conflict',
+            'settings changed elsewhere, reload with GET',
           );
         }
-        throw new HttpError(422, 'invalid_settings', 'settings failed validation', {
-          issues: v.issues.slice(0, MAX_ISSUES).map((i) => ({
-            path: i.path.map((p) => (typeof p === 'number' ? p : String(p))),
-            code: i.code,
-            message: i.message,
-          })),
-        });
+        if (err.code === 'account_not_found') throw accountGone();
       }
-      try {
-        // Only the validated output (unknown keys stripped, defaults filled) is stored.
-        const row = await store.putSettings(userId, expected, v.data);
-        return reply(res, row);
-      } catch (err) {
-        if (err instanceof DataRuleError) {
-          if (err.code === 'settings_version_conflict') {
-            throw new HttpError(
-              412,
-              'settings_version_conflict',
-              'settings changed elsewhere, reload with GET',
-            );
-          }
-          if (err.code === 'account_not_found') throw accountGone();
-        }
-        throw err;
-      }
-    },
-  );
+      throw err;
+    }
+  });
 }

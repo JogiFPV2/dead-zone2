@@ -4,6 +4,7 @@ import type { SaveEnvelopeHeader } from '@deadzone/protocol';
 import { SAVE_VERSION } from '@deadzone/sim';
 import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from 'jose';
 import { buildApp } from '../app.js';
+import { createPlacesCache } from '@deadzone/content/node';
 import { createJwtVerifier } from '../auth.js';
 import type { CharacterRouteDeps } from '../routes/characters.js';
 import { DEFAULT_LIMITS, type Limits } from '../config.js';
@@ -62,28 +63,29 @@ export function setup(
     opts.validator ?? createWorkerPool({ size: 1, timeoutMs: 10_000, maxHeapMb: 256 });
   const rateLimits = new MemoryRateLimitStore(() => store.clock);
   let seed = 1000;
+  const characters: CharacterRouteDeps = {
+    config: {
+      limits: l,
+      worldgenVersion: 1,
+      saveFormatVersion: SAVE_VERSION,
+      signedUrlTtlSeconds: 60,
+    },
+    verifier: createJwtVerifier({ issuer: ISSUER, audience: 'authenticated', keys: jwks }),
+    store,
+    blobs,
+    accounts,
+    validator,
+    rateLimits,
+    now: () => new Date(store.clock),
+    newSeed: () => seed++,
+    places: opts.places ?? createPlacesCache(),
+  };
   const app = buildApp({
     trustProxyHops: opts.trustProxyHops ?? 0,
     ...(opts.corsOrigins ? { corsOrigins: opts.corsOrigins } : {}),
-    characters: {
-      config: {
-        limits: l,
-        worldgenVersion: 1,
-        saveFormatVersion: SAVE_VERSION,
-        signedUrlTtlSeconds: 60,
-      },
-      verifier: createJwtVerifier({ issuer: ISSUER, audience: 'authenticated', keys: jwks }),
-      store,
-      blobs,
-      accounts,
-      validator,
-      rateLimits,
-      now: () => new Date(store.clock),
-      newSeed: () => seed++,
-      ...(opts.places ? { places: opts.places } : {}),
-    },
+    characters,
   });
-  return { app, store, blobs, accounts, rateLimits };
+  return { app, store, blobs, accounts, rateLimits, characters };
 }
 
 export interface EnvelopeOpts {

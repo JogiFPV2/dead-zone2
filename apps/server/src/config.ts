@@ -102,7 +102,9 @@ function checked(c: ServerConfig): ServerConfig {
 
 export function loadConfig(env: Env): ServerConfig {
   const supabaseUrl = required(env, 'SUPABASE_URL').replace(/\/+$/, '');
-  const jwtIssuer = env.SUPABASE_JWT_ISSUER?.trim() || `${supabaseUrl}/auth/v1`;
+  // `JWT_ISSUER` / `JWKS_URL`: Edge Function secrets cannot start with `SUPABASE_`.
+  const jwtIssuer =
+    env.SUPABASE_JWT_ISSUER?.trim() || env.JWT_ISSUER?.trim() || `${supabaseUrl}/auth/v1`;
   const d = DEFAULT_LIMITS;
   return checked({
     port: int(env, 'PORT', 3001, 1, 65535),
@@ -110,7 +112,8 @@ export function loadConfig(env: Env): ServerConfig {
     supabaseUrl,
     supabaseServiceRoleKey: required(env, 'SUPABASE_SERVICE_ROLE_KEY'),
     jwtIssuer,
-    jwksUrl: env.SUPABASE_JWKS_URL?.trim() || `${jwtIssuer}/.well-known/jwks.json`,
+    jwksUrl:
+      env.SUPABASE_JWKS_URL?.trim() || env.JWKS_URL?.trim() || `${jwtIssuer}/.well-known/jwks.json`,
     jwtAudience: env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated',
     storageBucket: env.SAVES_BUCKET?.trim() || 'saves',
     signedUrlTtlSeconds: int(env, 'SIGNED_URL_TTL_SECONDS', 60, 10, 3600),

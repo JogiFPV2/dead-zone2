@@ -1,3 +1,4 @@
+import { createPlacesCache } from '@deadzone/content/node';
 import { buildApp } from './app.js';
 import { createJwksVerifier } from './auth.js';
 import { MemoryRateLimitStore } from './rate-limit.js';
@@ -24,6 +25,8 @@ const app = buildApp({
     accounts: createSupabaseAccountAdmin(db),
     // Single process for now; swap for a Redis store when the server scales out.
     rateLimits: new MemoryRateLimitStore(),
+    // Named places per map for `lastLocation.place` (one file read per map).
+    places: createPlacesCache(),
     validator: createWorkerPool({
       ...(config.validation.workers > 0 ? { size: config.validation.workers } : {}),
       timeoutMs: config.validation.timeoutMs,

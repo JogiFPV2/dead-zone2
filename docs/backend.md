@@ -372,6 +372,29 @@ Legenda: **[ZGODA]** oznacza krok wymagający wyraźnej zgody Pawła (zmiany w S
 12. **[ZGODA]** Przejście organizacji `deadzone` na Pro przed publicznym demo.
 13. Później: `apps/server/realtime` i autorytatywny co-op, z Escape otwierającym menu bez pauzy.
 
+### 10.1. API jako Supabase Edge Function (`supabase/functions/api`)
+
+Zgodnie z planem „serwer jako Edge Functions, koszt 0” to samo API działa jako funkcja `api` w projekcie `deadzone-prod` (`https://<ref>.supabase.co/functions/v1/api/...`, np. `/functions/v1/api/v1/characters`). Kod jest wspólny z serwerem Node:
+
+- `apps/server/src/http/core.ts` i `http/api.ts`: rdzeń bez frameworka (router, CORS z `cors.ts`, limit na IP, mapowanie błędów). Trasy (`routes/*.ts`) dostają `RouteContext` zamiast obiektów Fastify.
+- `app.ts`: Fastify jest tylko transportem dla serwera Node i testów (`app.inject`).
+- `http/fetch.ts`: adapter `Request` → rdzeń → `Response` dla Deno. Zdejmuje prefiks `/functions/v1/api` lub `/api`, a IP klienta bierze z `X-Forwarded-For` z `TRUST_PROXY_HOPS` (domyślnie 1 na Edge).
+- `edge.ts`: wejście funkcji. Walidacja DZSV działa inline w tym samym izolacie (`createInlineValidator`), bo Edge nie ma `worker_threads`. Zamiast timeoutu i limitu sterty workera działają limity platformy (CPU na żądanie, pamięć izolatu), a domyślny `LIMIT_STATE_BYTES` na Edge to 32 MiB (env może go zmienić). Pliki miejsc (`lastLocation.place`) są wbudowane w bundel (`edge-places.ts`), bo funkcja nie ma dysku. Każdy nowy plik w `PLACES_FILES` trzeba dopisać do `BUNDLED_PLACES_FILES`, czego pilnuje test.
+- Limity w pamięci (`MemoryRateLimitStore`) działają na Edge osobno w każdym izolacie, więc są tylko pierwszą linią obrony. Limit żywych postaci, quota 50 MiB, permadeath i wersje zapisów pilnuje baza (triggery i RPC).
+
+Wdrożenie:
+
+1. Zbuduj bundel: `pnpm install`, `pnpm exec turbo run build --filter @deadzone/server`, a potem `pnpm --filter @deadzone/server build:edge`. Powstaje `supabase/functions/api/server.js` (ignorowany przez git, około 1 MB), który zawiera pakiety workspace, zależności npm i pliki miejsc. Na zewnątrz zostają tylko `node:crypto` i `node:zlib` z Edge Runtime.
+2. Wdróż funkcję z wyłączoną weryfikacją JWT w bramce, bo API samo sprawdza tokeny przez JWKS, a preflight CORS nie ma nagłówka `Authorization`: `supabase functions deploy api --no-verify-jwt --project-ref <ref>`. Z MCP: `deploy_edge_function` z plikami `index.ts` i `server.js` oraz `verify_jwt: false`.
+3. Sekrety funkcji (`supabase secrets set ...` albo panel › Edge Functions › Secrets):
+   - `SUPABASE_URL` i `SUPABASE_SERVICE_ROLE_KEY` Supabase wstrzykuje sam. Nie ustawiaj ich ręcznie, bo nazwy z prefiksem `SUPABASE_` są zarezerwowane.
+   - `CORS_ORIGINS`: opcjonalny. Domyślnie `https://jogifpv2.github.io,http://localhost:5173`.
+   - `JWT_ISSUER` i `JWKS_URL`: tylko gdy `SUPABASE_URL` w funkcji nie jest publicznym URL-em projektu (np. lokalne `supabase functions serve`). Domyślnie `${SUPABASE_URL}/auth/v1`.
+   - Limity `LIMIT_*` jak w `apps/server/.env.example`. Mogą tylko obniżać wartości produktu.
+4. Smoke test: `GET /functions/v1/api/health`, preflight `OPTIONS` z `Origin: https://jogifpv2.github.io`, potem konto testowe i pełna ścieżka z §5.1.
+
+Lokalnie: `deno run -A supabase/functions/api/index.ts` z `SUPABASE_URL` i `SUPABASE_SERVICE_ROLE_KEY` w env. Serwer Node (`pnpm --filter @deadzone/server dev`) działa dalej i używa puli workerów.
+
 ## 11. Źródła
 
 - Supabase pricing: https://supabase.com/pricing

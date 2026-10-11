@@ -58,3 +58,26 @@ export function validateEnvelope(
     ...(failure ? { summaryFailure: failure } : {}),
   };
 }
+
+/** Validates DZSV envelopes: worker threads on Node (`worker-pool.ts`), inline on the Edge. */
+export interface SaveValidator {
+  validate(bytes: Uint8Array, opts: ValidateOptions): Promise<ValidatedEnvelope>;
+  close(): Promise<void>;
+}
+
+/**
+ * Validation in the calling isolate (Supabase Edge Function: no worker threads). The platform's
+ * per-request CPU and memory limits take the place of the worker timeout and heap cap.
+ */
+export function createInlineValidator(): SaveValidator {
+  return {
+    validate: (bytes, opts) => {
+      try {
+        return Promise.resolve(validateEnvelope(bytes, opts));
+      } catch (err) {
+        return Promise.reject(err instanceof Error ? err : new Error(String(err)));
+      }
+    },
+    close: () => Promise.resolve(),
+  };
+}
