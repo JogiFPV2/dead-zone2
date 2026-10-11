@@ -16,7 +16,7 @@
     "kind": "placeable",
     "weightKg": 60,
     "tags": ["base:furniture"],
-    "placeable": {}
+    "placeable": { "footprint": { "w": 2, "h": 1 } }
   },
   {
     "id": "base:shower",

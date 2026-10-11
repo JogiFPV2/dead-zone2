@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ContainerTypeRefSchema, StationRefSchema } from '../common/index.js';
+import { ContainerTypeRefSchema, FootprintSchema, StationRefSchema } from '../common/index.js';
 import { StationLevelSchema } from '../station.js';
 import { itemBaseShape } from './base.js';
 import { LightSchema } from './light.js';
@@ -24,6 +24,8 @@ export const PlaceableItemSchema = z.strictObject({
     powerSource: PowerSourceSchema.optional(),
     /** Miejsce do spania (łóżko, kanapa); bez tego śpi się na podłodze. */
     sleepSurface: z.enum(['bed', 'sofa']).optional(),
+    /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
+    footprint: FootprintSchema.optional(),
   }),
 });
 

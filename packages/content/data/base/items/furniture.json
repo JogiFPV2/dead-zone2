@@ -29,7 +29,8 @@
     "weightKg": 40,
     "tags": ["base:furniture"],
     "placeable": {
-      "sleepSurface": "bed"
+      "sleepSurface": "bed",
+      "footprint": { "w": 1, "h": 2 }
     }
   },
   {
@@ -39,7 +40,8 @@
     "weightKg": 30,
     "tags": ["base:furniture"],
     "placeable": {
-      "sleepSurface": "sofa"
+      "sleepSurface": "sofa",
+      "footprint": { "w": 2, "h": 1 }
     }
   },
   {

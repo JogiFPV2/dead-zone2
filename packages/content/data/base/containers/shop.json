@@ -3,6 +3,7 @@
     "id": "base:shop-counter",
     "name": "container.base.shop-counter.name",
     "category": "counter",
+    "footprint": { "w": 2, "h": 1 },
     "capacityKg": 30,
     "defaultLootTable": "base:grocery",
     "lootAccepts": [

@@ -11,3 +11,4 @@ export * from './stat.js';
 export * from './condition.js';
 export * from './stat-modifier.js';
 export * from './ext.js';
+export * from './footprint.js';

@@ -14,6 +14,7 @@ src/
   validate/   walidator (czysty TS, bez API Node), referencje (checks/) i mapy (maps/)
   bundle/     ContentBundle i buildContentBundle(packs)
   places/     schemat miejsc, `nearestPlace`, rejestr plików per mapa (`@deadzone/content/places`)
+  footprint/  rozmiar mebli w kaflach i zajmowane kafle (`@deadzone/content/footprint`)
   node/       wczytywanie paczek z dysku, `loadPlaces` i CLI (`@deadzone/content/node`)
   test/       testy Vitest
 data/base/    paczka bazowa
@@ -306,9 +307,44 @@ narzędziem `tools/map` (`pnpm --filter @deadzone/map map build tools/map/bluepr
   podłodze, biegi w chunku nie zachodzą na siebie. Kształt jest ten sam co `SimChunk.stairs` w `@deadzone/protocol`. Mapy bez schodów są
   poprawne bez zmian (`formatVersion` zostaje 1, bo pole jest opcjonalne).
 - `objects`: `{ contentId, x, y, rot: 0–3 (co 90°), offset? }`, `contentId` to typ schowka albo przedmiot
-  `placeable`. Światłem jest obiekt z blokiem `placeable.light`.
+  `placeable`. Światłem jest obiekt z blokiem `placeable.light`. Mebel większy niż 1×1 zajmuje kafle wg
+  „Footprint mebli” (niżej); `x`, `y` to wtedy jego północno-zachodni kafel.
 - `zones` (opcjonalne, w manifeście): `{ id, role, z, rects: [{ x, y, w, h }], tags? }`. `id` i `role` w kebab-case,
   `id` unikalne w mapie, rola może się powtarzać. Prostokąty w globalnych kaflach (`x = cx * 32 + lx`), sumowane;
   punkt = 1×1. Granice piętra `z` to prostokąt obejmujący chunki manifestu na tym piętrze. Błędy: `zone_duplicate_id`,
   `zone_empty`, `zone_out_of_bounds`.
 - Stanu dynamicznego (otwarte, rozbite, zabite deskami, zawartość schowków) nie ma w plikach chunków.
+
+## Footprint mebli
+
+Mebel (typ schowka w `containers/` albo przedmiot `placeable`) może mieć `footprint: { w, h }` w kaflach
+(1 kafel = 1 m, liczby całkowite 1–4, `FOOTPRINT_MAX_TILES`). Brak pola = 1×1, więc stare mapy, zapisy i mody
+działają bez zmian; zapis gry niczego nie przechowuje. Schowek i przedmiot o tym samym id muszą mieć ten sam rozmiar (test).
+
+- `w` biegnie wzdłuż lokalnej osi +x modelu (szerokość, wzdłuż ściany), `h` wzdłuż lokalnej +z (głębokość, w stronę
+  pokoju). Plecy modelu (krany, wezgłowie) są od strony −z.
+- `rot` jak w obiektach mapy: indeks 0–3, obrót co 90° zgodnie z ruchem wskazówek zegara patrząc z góry
+  (x na wschód, y na południe); klient obraca model o −rot·90° wokół osi pionowej. Plecy do ściany: 0 = północnej
+  (−y), 1 = wschodniej (+x), 2 = południowej (+y), 3 = zachodniej (−x).
+- Przy `rot` 1 i 3 boki się zamieniają: `rotatedFootprint(rot, fp)` → 2×1 staje się 1×2.
+- **Kotwica:** `x`, `y` obiektu to zawsze kafel o najmniejszym x i y (północno-zachodni róg) zajętego prostokąta,
+  przy każdym obrocie. Mebel rozciąga się w +x na `W` kafli i w +y na `H` kafli (`W×H` po obrocie). Dla 1×1 to dokładnie
+  dotychczasowy kafel. Środek modelu to `footprintCenter` = `(x + W/2, y + H/2)` (dla 1×1 `x + 0.5, y + 0.5`, jak dotąd).
+
+```ts
+// lekkie wejście (tylko zod, bez DOM i Three.js); to samo jest w głównym wejściu
+import {
+  footprintForId,
+  footprintOf,
+  occupiedTiles,
+  footprintCenter,
+} from '@deadzone/content/footprint';
+
+const fp = footprintForId(bundle, o.contentId); // albo footprintOf(bundle.containers[id] ?? bundle.items[id])
+occupiedTiles(o.x, o.y, o.rot, fp); // wanna 2×1, rot 1, (5, 7) → [{x:5,y:7}, {x:5,y:8}]
+```
+
+Rozmiary paczki bazowej (test `footprint-base.test.ts`): 2×1 — wanna `base:bathtub`, lada `base:shop-counter`,
+biurko `base:desk`, kanapa `base:sofa`, szeroki regał `base:metal-shelf`; 1×2 — łóżko `base:bed` (pojedyncze, 90×200 cm,
+wezgłowie przy ścianie). Reszta 1×1, m.in. wąski regał `base:bookshelf`, lodówki, kuchenki, piekarnik, zlewy,
+szafka RTV i prysznic. Łóżka podwójnego (2×2) w paczce jeszcze nie ma.

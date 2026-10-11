@@ -21,6 +21,10 @@
       "types": "./dist/wires/index.d.ts",
       "default": "./dist/wires/index.js"
     },
+    "./footprint": {
+      "types": "./dist/footprint/index.d.ts",
+      "default": "./dist/footprint/index.js"
+    },
     "./data/*": "./data/*",
     "./places/*": "./places/*"
   },

@@ -39,6 +39,7 @@
     "id": "base:desk",
     "name": "container.base.desk.name",
     "category": "cabinet",
+    "footprint": { "w": 2, "h": 1 },
     "capacityKg": 20,
     "defaultLootTable": "base:desk",
     "lootAccepts": ["literature", "vhs", "electronics", "household"],

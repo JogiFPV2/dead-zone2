@@ -5,6 +5,7 @@ import {
   ContentIdSchema,
   GameMinutesSchema,
   ExtSchema,
+  FootprintSchema,
   I18nKeySchema,
   ItemRefSchema,
   LootTableRefSchema,
@@ -68,6 +69,8 @@ export const ContainerTypeSchema = z.strictObject({
    * własnych przegród.
    */
   compartments: z.array(ContainerTypeRefSchema).optional(),
+  /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
+  footprint: FootprintSchema.optional(),
   model: z.string().optional(),
   ext: ExtSchema,
 });

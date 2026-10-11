@@ -110,6 +110,13 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Wiedza o piętrach dla mapy gracza (docs/floors-ui.md): `WorldMapView.rooms` / `roomsAdd` (`seen` / `searched`), `z` znaczników, `sensedZombies`, `zombieSightings`, zapis `rooms` / 8. element znacznika (Symulacja) — [sim-architecture.md 9.42](sim-architecture.md)
 - [ ] `SimFloorIntel` za `FloorIntel` na polach z 9.42 (Silnik, #195)
 - [x] Audyt mebli i czynności; prąd i woda z wyłączeniem wg `worldSettings.utilities`, lodówka/zamrażarka zależna od prądu, `SimViewPatch.utilities`, `utilityChanged` (Symulacja) — [sim-architecture.md 9.46](sim-architecture.md)
+- [x] Footprint mebli (Modules) — opcjonalne `footprint: { w, h }` (1–4 kafli, brak = 1×1) w typach schowków i `placeable`; `@deadzone/content/footprint`: `footprintOf`, `footprintForId`, `rotatedFootprint`, `occupiedTiles`, `footprintCenter`; kotwica = kafel NW, przy `rot` 1/3 boki się zamieniają (README, „Footprint mebli”). 2×1: wanna, lada, biurko, kanapa, `base:metal-shelf`; 1×2: `base:bed`
+- [ ] Footprint w kolizjach i szukaniu mebla (Symulacja) — blokada ruchu i wzroku na wszystkich `occupiedTiles`, „najbliższy mebel” (spanie, przeszukiwanie, stacje, telewizor, zlew) liczony od najbliższego zajętego kafla, a nie od kotwicy
+- [ ] Footprint w renderze (Silnik) — `fitTile` w `map-objects.ts` skaluje model do `footprintForId` (W×H po obrocie, minus szczelina) zamiast 0,96 kafla, model w `footprintCenter`; to samo dla szarych pudełek i x-raya
+- [ ] Footprint w `furnish.ts` (Silnik 2) — rozstawianie sprawdza wszystkie `occupiedTiles` (wolne, w tym samym pokoju, bez ściany/drzwi między kaflami, plecy do pełnej ściany na całej szerokości); przebudować mapy — po nowych rozmiarach na obecnych mapach nakłada się 246 kafli w `osm-okulickiego` i 69 w `town-catalog` (kanapy, łóżka, `base:metal-shelf`)
+- [ ] Footprint przy przesuwaniu mebli (Fizyka) — cel przesunięcia i obrotu musi mieć wolne wszystkie `occupiedTiles`; obrót 2×1 wokół kotwicy NW zmienia zajęte kafle
+- [ ] Test map: obiekty nie nachodzą na siebie wg `occupiedTiles` (Modules) — po przebudowie map przez Silnika 2
+- [ ] Łóżko podwójne `base:double-bed` 2×2 (Modules + Designer) — przedmiot, model, ikona; `furnish.ts` stawia je w sypialniach z miejscem
 - [ ] Generator świata 8×8 km wg `WorldSource` (`chunkKind`, `generatorVersion`) (Silnik 2)
 - [x] Tryby gry jako dane: „Przetrwaj” i „Ratunek” (Modules)
 - [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)

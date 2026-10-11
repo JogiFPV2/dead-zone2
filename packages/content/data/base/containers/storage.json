@@ -47,6 +47,7 @@
     "id": "base:metal-shelf",
     "name": "container.base.metal-shelf.name",
     "category": "shelf",
+    "footprint": { "w": 2, "h": 1 },
     "capacityKg": 40,
     "searchMin": 0.5,
     "defaultLootTable": "base:garage",

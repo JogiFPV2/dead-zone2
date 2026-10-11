@@ -12,7 +12,7 @@ function files(dir: string): string[] {
 }
 
 describe('główne wejście jest wolne od API Node (dla przeglądarki i packages/sim)', () => {
-  const pure = ['schemas', 'validate', 'bundle', 'places', 'wires'].flatMap((d) =>
+  const pure = ['schemas', 'validate', 'bundle', 'places', 'wires', 'footprint'].flatMap((d) =>
     files(join(SRC, d)),
   );
   it.each(pure.map((f) => [f.slice(SRC.length)]))('%s', (rel) => {
