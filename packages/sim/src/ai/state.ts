@@ -122,6 +122,11 @@ export interface AiWorld {
   /** Player eid → visibility factor for zombie sight this tick (derived). */
   readonly visibility: Map<number, number>;
   /**
+   * Player eid → light level 0..1 at the player (state, saved; refreshed every
+   * `LIGHT.everyTicks` by the pipeline step `light`, −1 = not computed yet). ai/light.ts.
+   */
+  readonly lightLevel: Float32Array;
+  /**
    * `playerNoise` throttle (not state, not hashed or saved): `eid * 64 + kind index` → tick of
    * the last event of a continuous kind (ai/noise.ts).
    */
@@ -210,6 +215,7 @@ export function createAiWorld(
     flows: new Map(),
     threat: new Map(),
     visibility: new Map(),
+    lightLevel: new Float32Array(capacity).fill(-1),
     playerNoiseTick: new Map(),
     windowGoals: new Map(),
     direct: new Uint8Array(capacity),

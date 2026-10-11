@@ -1,12 +1,11 @@
 import { Pen, penaltyMul } from '../survival/penalties.js';
-import { EQUIP_SLOTS, GAITS } from '@deadzone/protocol';
-import { gameMinuteAt, minuteOfDay } from '../core/clock.js';
+import { EQUIP_SLOTS } from '@deadzone/protocol';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { defOf } from '../items/store.js';
 import type { VisionConfig } from './config.js';
 import type { AiWorld } from './state.js';
 import { floorZ } from '../world/levels.js';
-import { sneakVisibilityMul } from './sneak.js';
+import { skySightFactor } from './sky.js';
 
 /**
  * Sight model shared by players and zombies: range = base range × light at the target. Daylight
@@ -24,8 +23,12 @@ export function daylight(cfg: VisionConfig, mod: number): number {
   return 1 - ((1 - night) * (mod - cfg.duskStartMin)) / (cfg.duskEndMin - cfg.duskStartMin);
 }
 
-export const currentDaylight = (w: SimWorld, cfg: VisionConfig): number =>
-  Math.fround(daylight(cfg, minuteOfDay(gameMinuteAt(w.clock, w.tick))));
+/**
+ * Sight factor of the open sky now: from the sun (`sunAt`, ai/sky.ts) — `nightFactor` under the
+ * moon, 1 by day, twilight while the sun is within ±6° of the horizon. (`daylight` above is the
+ * old clock blend, kept for the data fields `dawnStartMin`…)
+ */
+export const currentDaylight = (w: SimWorld, cfg: VisionConfig): number => skySightFactor(w, cfg);
 
 export function inDarkZone(ai: AiWorld, x: number, y: number, z: number): boolean {
   for (const zn of ai.darkZones) {
@@ -92,26 +95,6 @@ export function lightAt(w: SimWorld, ai: AiWorld, x: number, y: number, z: numbe
     if (dx * dx + dy * dy <= h.radius * h.radius) best = h.intensity;
   }
   return best;
-}
-
-/**
- * How visible a player is right now (0 = invisible, 1 = full daylight range): max(daylight
- * unless in a dark zone, light at the player) × `sneakVisibilityMul` when sneaking.
- */
-export function playerVisibility(w: SimWorld, ai: AiWorld, eid: number, day: number): number {
-  if (w.survival?.dead[eid]) return 0;
-  const { Position, MoveIntent } = w.c;
-  const x = Position.x[eid] ?? 0;
-  const y = Position.y[eid] ?? 0;
-  const z = floorZ(w, eid);
-  const vc = ai.cfg.vision;
-  if (!vc.enabled) return 1;
-  const dark = inDarkZone(ai, Math.floor(x), Math.floor(y), z);
-  const light = lightAt(w, ai, x, y, z);
-  if (dark && light <= 0) return 0;
-  let v = lit(vc, dark ? vc.nightFactor : day, light);
-  if (GAITS[MoveIntent.gait[eid] ?? 1] === 'sneak') v *= sneakVisibilityMul(w, eid);
-  return Math.fround(v);
 }
 
 /**

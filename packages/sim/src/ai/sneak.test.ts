@@ -5,7 +5,7 @@ import { baseContent, send } from '../test/content-fixtures.js';
 import { buildMap } from '../test/fixtures.js';
 import { DEFAULT_STAGE4_CONFIG } from './config.js';
 import { SNEAK, sneakVisibilityMul } from './sneak.js';
-import { playerVisibility } from './vision.js';
+import { playerVisibility } from './light.js';
 
 const F = DEFAULT_STAGE4_CONFIG.noise.footsteps;
 
@@ -113,7 +113,7 @@ describe('sneaking (setSneak)', () => {
       DEFAULT_STAGE4_CONFIG.vision.sneakVisibilityMul * (1 - 10 * SNEAK.visibilityPerLevel),
       5,
     );
-    expect(playerVisibility(w, w.ai!, eid, 1)).toBeLessThan(0.4);
+    expect(playerVisibility(w, w.ai!, eid)).toBeLessThan(0.4);
     send(sim, { type: 'debugSkill', skill: SNEAK.lightfootSkill, level: 10 });
     expect(steps(sim, 40).at(-1)!.radius).toBeCloseTo(r0 * (1 - 10 * SNEAK.lightfootPerLevel), 3);
   });

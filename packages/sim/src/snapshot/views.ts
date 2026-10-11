@@ -1,4 +1,6 @@
 import { footstepRadius, isSneaking } from '../ai/sneak.js';
+import { floorZ } from '../world/levels.js';
+import { lightLevelAt, playerVisibility, stealthOf } from '../ai/light.js';
 import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
 import type { TileGrid } from '../world/grid.js';
@@ -209,6 +211,7 @@ export class ViewTracker {
   private vehiclesKey = '';
   private pumpsKey = '';
   private targetKey = '';
+  private stealthKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
 
@@ -345,6 +348,31 @@ export class ViewTracker {
         // A fresh tracker sends nothing until there is a target.
         if (this.targetKey !== '' || target) patch.target = target;
         this.targetKey = key;
+      }
+    }
+    if (eid !== undefined && w.ai) {
+      // Before the first `light` step (fresh sim / old save) the level is computed here (not
+      // stored: views never write state).
+      let level = w.ai.lightLevel[eid] ?? -1;
+      if (level < 0 && grid) {
+        const { Position } = w.c;
+        level = lightLevelAt(
+          w,
+          w.ai,
+          grid,
+          Position.x[eid] ?? 0,
+          Position.y[eid] ?? 0,
+          floorZ(w, eid),
+        );
+      }
+      const vis = Math.round(playerVisibility(w, w.ai, eid, level) * 20) / 20;
+      const light = Math.round(Math.max(0, level) * 20) / 20;
+      const key = `${vis}|${light}`;
+      if (key !== this.stealthKey) {
+        this.stealthKey = key;
+        patch.visibility = vis;
+        patch.stealth = stealthOf(vis);
+        patch.lightLevel = light;
       }
     }
     if (w.openings.version !== this.openingsVersion) {

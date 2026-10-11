@@ -6,7 +6,7 @@ import type { TileGrid } from '../world/grid.js';
 import { floorOf, onGoalFloor } from './floors.js';
 import { heard } from './noise.js';
 import { ZombieState, type AiWorld, type Noise } from './state.js';
-import { currentDaylight, playerVisibility } from './vision.js';
+import { playerVisibility } from './light.js';
 import { secToTicks } from './zombies.js';
 import { assignVehicleWindows } from './vehicle-window.js';
 import { floorZ } from '../world/levels.js';
@@ -58,9 +58,8 @@ export function aiThinkSystem(w: SimWorld, grid: TileGrid): void {
   // Players as sight targets, with their visibility this tick.
   targets.length = 0;
   ai.visibility.clear();
-  const day = currentDaylight(w, ai.cfg.vision);
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
-    const vis = playerVisibility(w, ai, eid, day);
+    const vis = playerVisibility(w, ai, eid);
     ai.visibility.set(eid, vis);
     if (w.survival?.dead[eid]) continue;
     targets.push({

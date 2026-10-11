@@ -2,7 +2,7 @@ import type { AnimalFleeReason } from '@deadzone/protocol';
 import { floorOf } from '../ai/floors.js';
 import { emitNoise, heard } from '../ai/noise.js';
 import { noiseSourceIndex, type AiWorld, type CompiledAnimalType } from '../ai/state.js';
-import { currentDaylight, playerVisibility } from '../ai/vision.js';
+import { playerVisibility } from '../ai/light.js';
 import { secToTicks } from '../ai/zombies.js';
 import { detach, sortedQuery, type SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
@@ -53,7 +53,6 @@ export function animalSystem(w: SimWorld, grid: TileGrid): void {
   if (!ai || ai.animalCount === 0) return;
   const { Position, StableId, Animal } = w.c;
   players.length = 0;
-  const day = currentDaylight(w, ai.cfg.vision);
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
     if (w.survival?.dead[eid]) continue;
     players.push({
@@ -61,7 +60,7 @@ export function animalSystem(w: SimWorld, grid: TileGrid): void {
       x: Position.x[eid] ?? 0,
       y: Position.y[eid] ?? 0,
       z: floorOf(Position.z[eid] ?? 0),
-      vis: playerVisibility(w, ai, eid, day),
+      vis: playerVisibility(w, ai, eid),
     });
   }
   const far2 = CFG.farTiles * CFG.farTiles;

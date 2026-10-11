@@ -362,6 +362,16 @@ export interface ActionView {
   };
 }
 
+/**
+ * How well zombies can see the player (protocol 24, docs 9.45): `visibility` 0..1 (× zombie
+ * sight range) → `stealth` with these thresholds (≤ hidden max = `hidden`, ≤ dim max = `dim`,
+ * else `lit`). Standing still in the dark is `hidden`.
+ */
+export const STEALTH_LEVELS = ['lit', 'dim', 'hidden'] as const;
+export type StealthLevel = (typeof STEALTH_LEVELS)[number];
+export const STEALTH_HIDDEN_MAX = 0.1;
+export const STEALTH_DIM_MAX = 0.55;
+
 export interface SimViewPatch {
   clock?: ClockView;
   /** Local player (id 0). */
@@ -389,6 +399,14 @@ export interface SimViewPatch {
    * Threat level 0–100 for the HUD: zombies chasing the local player and zombies within the
    * threat radius (`worldSettings.survival.sleep.wakeOnZombieTiles`). 0 = safe.
    */
+  /**
+   * Player visibility to zombies 0..1 (protocol 24): light at the player (sun, shadow, indoors,
+   * lamps) × motion × sneaking, rounded to 0.05; sent on change. HUD eye icon: `stealth`.
+   */
+  visibility?: number;
+  stealth?: StealthLevel;
+  /** Light level 0..1 at the player (rounded to 0.05; debug / HUD), sent with `visibility`. */
+  lightLevel?: number;
   threat?: number;
   /** Combat state of the local player (changes on kills, cooldown and weapon switch). */
   combat?: CombatView;

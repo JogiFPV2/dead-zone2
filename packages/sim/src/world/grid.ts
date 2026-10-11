@@ -1,4 +1,4 @@
-import { buildingIdAt, CHUNK_SIZE, type SimChunk, type SimMap } from '@deadzone/protocol';
+import { buildingIdAt, CHUNK_SIZE, roomIdAt, type SimChunk, type SimMap } from '@deadzone/protocol';
 import {
   createOpeningsWorld,
   DEFAULT_OPENINGS_CONFIG,
@@ -107,6 +107,16 @@ export class TileGrid {
     const cx = Math.floor(tx / CHUNK_SIZE);
     const cy = Math.floor(ty / CHUNK_SIZE);
     return buildingIdAt(
+      this.chunkAt(cx, cy, z),
+      (ty - cy * CHUNK_SIZE) * CHUNK_SIZE + (tx - cx * CHUNK_SIZE),
+    );
+  }
+
+  /** Chunk-local room id at a tile (0 = outside), `SimChunk.room`. */
+  roomAt(tx: number, ty: number, z: number): number {
+    const cx = Math.floor(tx / CHUNK_SIZE);
+    const cy = Math.floor(ty / CHUNK_SIZE);
+    return roomIdAt(
       this.chunkAt(cx, cy, z),
       (ty - cy * CHUNK_SIZE) * CHUNK_SIZE + (tx - cx * CHUNK_SIZE),
     );
