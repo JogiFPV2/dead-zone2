@@ -304,6 +304,61 @@ if (genWorld) {
     chunkStats: genWorld.source.stats,
     streamStats: () => streaming.streamer.stats(),
     townBuildMs: () => streamedTown?.buildMs ?? [],
+    /** Last frame's draw calls + visible meshes per top-level group (shadow passes included). */
+    draws: () => {
+      const groups: Record<string, number> = {};
+      worldRoot.traverseVisible((o) => {
+        if (!(o as { isMesh?: boolean }).isMesh) return;
+        let top = o;
+        while (top.parent && top.parent !== worldRoot) top = top.parent;
+        const k = `${top.name || top.type}/${o.name.replace(/[\d:,@.-]+/g, '')}${(o as { isInstancedMesh?: boolean }).isInstancedMesh ? '[i]' : ''}${o.castShadow ? '+s' : ''}`;
+        groups[k] = (groups[k] ?? 0) + 1;
+      });
+      return { calls: renderer.info.render.calls, groups };
+    },
+    /**
+     * Draw calls of the next frame per group (main pass and shadow passes), read later from
+     * `__dzWorldGen.lastFrameDraws` (dev perf).
+     */
+    captureFrameDraws: () => {
+      const main: Record<string, number> = {};
+      const shadow: Record<string, number> = {};
+      type Hooked = {
+        onBeforeRender: (...a: unknown[]) => void;
+        onBeforeShadow: (...a: unknown[]) => void;
+      };
+      const restore: (() => void)[] = [];
+      worldRoot.traverse((o) => {
+        if (!(o as { isMesh?: boolean }).isMesh) return;
+        let top = o;
+        while (top.parent && top.parent !== worldRoot) top = top.parent;
+        const geo = (o as { geometry?: { type?: string } }).geometry?.type ?? '';
+        const k = `${top.name || top.type}/${o.name.replace(/[\d:,@.-]+/g, '') || `~${geo}`}`;
+        const h = o as unknown as Hooked;
+        const r0 = h.onBeforeRender;
+        const s0 = h.onBeforeShadow;
+        h.onBeforeRender = function (this: unknown, ...a: unknown[]) {
+          main[k] = (main[k] ?? 0) + 1;
+          r0.apply(this, a);
+        };
+        h.onBeforeShadow = function (this: unknown, ...a: unknown[]) {
+          shadow[k] = (shadow[k] ?? 0) + 1;
+          s0.apply(this, a);
+        };
+        restore.push(() => {
+          h.onBeforeRender = r0;
+          h.onBeforeShadow = s0;
+        });
+      });
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          for (const r of restore) r();
+          const g = globalThis as { __dzWorldGen?: Record<string, unknown> };
+          if (g.__dzWorldGen)
+            g.__dzWorldGen.lastFrameDraws = { calls: renderer.info.render.calls, main, shadow };
+        }),
+      );
+    },
   };
 }
 settings.subscribe((next, prev) => {

@@ -33,7 +33,7 @@ export const AREA_TREES: Partial<Record<AreaKind, number>> = {
   orchard: 2,
 };
 
-const ROAD_GROUND = (k: string): number =>
+export const ROAD_GROUND = (k: string): number =>
   k === 'path' || k === 'track'
     ? G_DIRT
     : k === 'footway' || k === 'cycleway' || k === 'steps'
@@ -55,6 +55,11 @@ export interface Raster {
   deck: Uint8Array;
   /** Area kind rank under the tile (+1; 0 = none) — chunk kinds. */
   area: Uint8Array;
+  /**
+   * Ground class before the roads were painted, +1 (0 = no road on the tile): the renderer draws
+   * it under the smooth vector roads instead of the stair-stepped road tiles.
+   */
+  under: Uint8Array;
 }
 
 export function inRaster(r: Raster, x: number, y: number): boolean {
@@ -152,6 +157,7 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
   const rail = new Uint8Array(n);
   const deck = new Uint8Array(n);
   const area = new Uint8Array(n);
+  const under = new Uint8Array(n);
   const q = { x0, y0, x1: x0 + w, y1: y0 + h };
   const cover = idx.plan.landCover;
   if (cover) {
@@ -192,12 +198,16 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
       tree[j] = 0;
     });
   }
+  const keep = (j: number) => {
+    if (!under[j]) under[j] = g[j]! + 1;
+  };
   const paint = (bridge: boolean) => {
     for (const i of roads) {
       const r = idx.roads.items[i]!;
       if (r.bridge !== bridge) continue;
       if (r.rs > 0) {
         stroke(r.pts, r.rs, x0, y0, w, h, (j) => {
+          keep(j);
           if (g[j] !== G_ASPHALT && g[j] !== G_RAIL) g[j] = G_SIDEWALK;
           tree[j] = 0;
           if (bridge) deck[j] = 1;
@@ -207,6 +217,7 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
       stroke(r.pts, r.r, x0, y0, w, h, (j) => {
         // Footpaths do not cut the carriageway (crossings stay asphalt).
         if (t !== G_ASPHALT && g[j] === G_ASPHALT) return;
+        keep(j);
         g[j] = t;
         tree[j] = 0;
         if (bridge) deck[j] = 1;
@@ -224,5 +235,5 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
       tree[j] = 0;
     });
   }
-  return { x0, y0, w, h, g, tree, rail, deck, area };
+  return { x0, y0, w, h, g, tree, rail, deck, area, under };
 }

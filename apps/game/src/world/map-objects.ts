@@ -6,6 +6,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   type Material,
+  Matrix4,
   type Object3D,
 } from 'three';
 import type { NearbyContainerView } from '@deadzone/protocol';
@@ -13,10 +14,11 @@ import { simToWorld } from '../sim/coords.js';
 import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from './chunk.js';
 import { NO_CUTAWAY, type Cutaway } from './cutaway.js';
-import { MARKER_GEOMETRY, MARKER_MATERIAL, animateMarker } from './ground-piles.js';
+import { MarkerBatch, animateMarker } from './ground-piles.js';
 import {
   buildInstances,
   disposeInstances,
+  mergeParts,
   modelParts,
   setSlotsVisible,
   type InstanceSlots,
@@ -57,6 +59,8 @@ interface Obj {
   markerY: number;
   /** This object's instances in its chunk's furniture `InstancedMesh`es (model loaded). */
   slots?: InstanceSlots;
+  /** Instancing key while drawn as an instanced grey box (no model). */
+  boxKey?: string;
   /** Individual clone shown instead of the instances while x-rayed. */
   xray?: Object3D;
   /** Building of the object's tile (NO_BUILDING outside). */
@@ -66,6 +70,15 @@ interface Obj {
 }
 
 type ModelFn = (contentId: string, height: number) => Object3D | undefined;
+
+const BOX_COLOR = 0x8c9196;
+const BOX_SEARCHED_COLOR = 0x5d6266;
+/** Grey boxes are instanced too (one batch per size and shade), sharing these two materials. */
+const BOX_MATERIAL = new MeshStandardMaterial({ color: BOX_COLOR, roughness: 0.8 });
+const BOX_SEARCHED_MATERIAL = new MeshStandardMaterial({
+  color: BOX_SEARCHED_COLOR,
+  roughness: 0.8,
+});
 
 /** Opacity of furniture while its contents are shown (shelf fill x-ray, loot panel open). */
 const XRAY_OPACITY = 0.3;
@@ -90,6 +103,8 @@ export class MapObjects {
   private origin = { x: 0, z: 0 };
   private instancesDirty = false;
   private cutaway: Cutaway = NO_CUTAWAY;
+  /** Every visible marker in one draw call. */
+  private readonly markerBatch = new MarkerBatch(this.root, 'map-object-markers');
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -108,7 +123,7 @@ export class MapObjects {
     this.unloadChunk(cx, cy, z);
     for (const o of chunk.objects ?? []) {
       const [w, h, d] = SIZES[o.contentId] ?? DEFAULT_SIZE;
-      const material = new MeshStandardMaterial({ color: 0x8c9196, roughness: 0.8 });
+      const material = new MeshStandardMaterial({ color: BOX_COLOR, roughness: 0.8 });
       const mesh = new Mesh(this.box(w, h, d), material);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
@@ -117,7 +132,8 @@ export class MapObjects {
       const p = simToWorld(tx + 0.5, ty + 0.5, z);
       mesh.position.set(p.x, p.y + h / 2, p.z);
       mesh.rotation.y = (-o.rot * Math.PI) / 2;
-      const marker = new Mesh(MARKER_GEOMETRY, MARKER_MATERIAL);
+      // Pose holder only: the visible markers are drawn as one InstancedMesh (`markerBatch`).
+      const marker = MarkerBatch.holder();
       const markerY = p.y + h + 0.45;
       marker.position.set(p.x, markerY, p.z);
       marker.visible = false;
@@ -165,12 +181,38 @@ export class MapObjects {
     return g;
   }
 
+  /** Instancing key of an object drawn as a grey box: size and searched shade. */
+  private boxKey(o: Obj): string {
+    const [w, h, d] = SIZES[o.contentId] ?? DEFAULT_SIZE;
+    return `box|${w}|${h}|${d}|${this.searched.has(`${o.tx},${o.ty},${o.z}`) ? 1 : 0}`;
+  }
+
+  private boxParts(key: string): ModelPart[] {
+    let parts = this.parts.get(key);
+    if (!parts) {
+      const [, w, h, d, searched] = key.split('|').map(Number);
+      const geometry = this.box(w!, h!, d!);
+      parts = [
+        {
+          geometry,
+          material: searched ? BOX_SEARCHED_MATERIAL : BOX_MATERIAL,
+          // Box centred at half height: the placement is the base.
+          local: new Matrix4().makeTranslation(0, h! / 2, 0),
+          castShadow: true,
+          receiveShadow: true,
+        },
+      ];
+      this.parts.set(key, parts);
+    }
+    return parts;
+  }
+
   private partsOf(contentId: string, height: number): ModelPart[] | undefined {
     const key = `${contentId}|${height}`;
     if (!this.parts.has(key)) {
       const raw = this.model?.(contentId, height);
       const m = raw && fitTile(raw);
-      this.parts.set(key, m ? modelParts(m) : undefined);
+      this.parts.set(key, m ? mergeParts(modelParts(m)) : undefined);
     }
     return this.parts.get(key);
   }
@@ -186,16 +228,21 @@ export class MapObjects {
     this.instancesDirty = false;
     disposeInstances(this.instances, this.root);
     this.instances = [];
-    if (!this.model) return;
+    const keys = this.objects.map((o) =>
+      this.model && this.partsOf(o.contentId, o.height)
+        ? `${o.contentId}|${o.height}`
+        : this.boxKey(o),
+    );
     const { meshes, slots } = buildInstances(
-      this.objects.map((o) => ({
-        model: `${o.contentId}|${o.height}`,
+      this.objects.map((o, i) => ({
+        model: keys[i]!,
         x: o.mesh.position.x,
         y: o.mesh.position.y - o.height / 2,
         z: o.mesh.position.z,
         rotY: o.mesh.rotation.y,
       })),
       (k) => {
+        if (k.startsWith('box|')) return this.boxParts(k);
         const i = k.lastIndexOf('|');
         return this.partsOf(k.slice(0, i), Number(k.slice(i + 1)));
       },
@@ -204,6 +251,9 @@ export class MapObjects {
     );
     this.objects.forEach((o, i) => {
       const sl = slots[i];
+      const key = keys[i]!;
+      if (key.startsWith('box|')) o.boxKey = key;
+      else delete o.boxKey;
       if (sl) {
         o.slots = sl;
         o.mesh.visible = false;
@@ -267,7 +317,8 @@ export class MapObjects {
     // Instanced furniture: an individual clone stands in while see-through.
     if (o.slots && on && !o.xray) {
       const raw = this.model?.(o.contentId, o.height);
-      const clone = raw && fitTile(raw);
+      // A grey box stands in with its own mesh (own material) while see-through.
+      const clone = raw ? fitTile(raw) : boxClone(o.mesh);
       if (clone) {
         clone.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
         clone.rotation.y = o.mesh.rotation.y;
@@ -323,13 +374,32 @@ export class MapObjects {
       for (const o of this.objects) {
         const key = `${o.tx},${o.ty},${o.z}`;
         o.marker.visible = !o.hidden && unsearched.has(key);
-        o.material.color.setHex(this.searched.has(key) ? 0x5d6266 : 0x8c9196);
+        o.material.color.setHex(this.searched.has(key) ? BOX_SEARCHED_COLOR : BOX_COLOR);
+      }
+      // Instanced grey boxes take the shade from their batch: rebuild when it changed.
+      if (this.objects.some((o) => o.boxKey !== undefined && o.boxKey !== this.boxKey(o))) {
+        this.rebuildInstances();
       }
     }
+    const shown: Mesh[] = [];
     for (const o of this.objects) {
-      if (o.marker.visible) animateMarker(o.marker, o.markerY, true, nowMs);
+      if (!o.marker.visible) continue;
+      animateMarker(o.marker, o.markerY, true, nowMs);
+      shown.push(o.marker);
     }
+    this.markerBatch.draw(shown);
   }
+}
+
+/** Own grey box (own material, for the x-ray) at an instanced box's place. */
+function boxClone(mesh: Mesh): Object3D {
+  const m = new Mesh(mesh.geometry, mesh.material);
+  // setXray positions the clone at the base; the box is centred at half height.
+  const h = (mesh.geometry as BoxGeometry).parameters.height;
+  m.position.y = h / 2;
+  const g = new Group();
+  g.add(m);
+  return g;
 }
 
 function buildingAt(chunk: ChunkData, x: number, y: number): BuildingId {

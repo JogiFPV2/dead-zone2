@@ -22,6 +22,7 @@ import {
   type LodWorld,
 } from './state.js';
 import { floorZ } from '../world/levels.js';
+import { safeStartActive, unsafeSpot } from './safe-start.js';
 
 /** Zombies are checked for folding every this many ticks. */
 const COLLAPSE_EVERY = 5;
@@ -182,7 +183,6 @@ function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
 
 /** Folds zombies standing in inactive cells into their cell's counter (keeps damaged hp). */
 function collapseFar(w: SimWorld, lod: LodWorld): void {
-  const ai = w.ai!;
   const { Position, Zombie } = w.c;
   const fold: number[] = [];
   for (const eid of sortedQuery(w, 'zombies', [Zombie])) {
@@ -193,31 +193,39 @@ function collapseFar(w: SimWorld, lod: LodWorld): void {
     );
     if (!lod.active[cell]) fold.push(eid);
   }
-  for (const eid of fold) {
-    const cell = cellOfChunk(
-      lod,
-      Math.floor((Position.x[eid] ?? 0) / CHUNK_SIZE),
-      Math.floor((Position.y[eid] ?? 0) / CHUNK_SIZE),
-    );
-    const type = Math.min(lod.types - 1, Zombie.type[eid] ?? 0);
-    // Off the ground: the zombie's level counter (split the cell first, so its start
-    // population does not land on top of it later).
-    const z = lod.levels > 1 ? floorZ(w, eid) : 0;
-    if (z !== 0) resolveCell(lod, w.map, cell);
-    const [arr, off] = levelCounts(lod, cell, z, true) ?? [lod.counts, cell * lod.types];
-    const i = off + type;
-    if ((arr[i] ?? 0) < 0xffff) {
-      arr[i] = (arr[i] ?? 0) + 1;
-      const hp = Zombie.hp[eid] ?? 0;
-      const max = ai.types[type]?.def.health ?? hp;
-      if (hp > 0 && hp < max && lod.cfg.keepDamagedPerCell > 0) {
-        let list = lod.damaged.get(cell);
-        if (!list) lod.damaged.set(cell, (list = []));
-        if (list.length / 2 < lod.cfg.keepDamagedPerCell) list.push(type, Math.fround(hp));
-      }
+  for (const eid of fold) foldZombie(w, lod, eid);
+}
+
+/**
+ * Folds one living zombie into its cell's counter (level counter off the ground; keeps damaged
+ * hp) and removes the entity. The cell's pending count spawns it again later (if active).
+ */
+export function foldZombie(w: SimWorld, lod: LodWorld, eid: number): void {
+  const ai = w.ai!;
+  const { Position, Zombie } = w.c;
+  const cell = cellOfChunk(
+    lod,
+    Math.floor((Position.x[eid] ?? 0) / CHUNK_SIZE),
+    Math.floor((Position.y[eid] ?? 0) / CHUNK_SIZE),
+  );
+  const type = Math.min(lod.types - 1, Zombie.type[eid] ?? 0);
+  // Off the ground: the zombie's level counter (split the cell first, so its start
+  // population does not land on top of it later).
+  const z = lod.levels > 1 ? floorZ(w, eid) : 0;
+  if (z !== 0) resolveCell(lod, w.map, cell);
+  const [arr, off] = levelCounts(lod, cell, z, true) ?? [lod.counts, cell * lod.types];
+  const i = off + type;
+  if ((arr[i] ?? 0) < 0xffff) {
+    arr[i] = (arr[i] ?? 0) + 1;
+    const hp = Zombie.hp[eid] ?? 0;
+    const max = ai.types[type]?.def.health ?? hp;
+    if (hp > 0 && hp < max && lod.cfg.keepDamagedPerCell > 0) {
+      let list = lod.damaged.get(cell);
+      if (!list) lod.damaged.set(cell, (list = []));
+      if (list.length / 2 < lod.cfg.keepDamagedPerCell) list.push(type, Math.fround(hp));
     }
-    despawnZombie(w, eid);
   }
+  despawnZombie(w, eid);
 }
 
 /**
@@ -250,6 +258,7 @@ function spawnPending(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
   const players = [...w.players.values()];
   const { Position } = w.c;
   const minD2 = lod.cfg.minSpawnDistTiles * lod.cfg.minSpawnDistTiles;
+  const safe = safeStartActive(w);
   const radius = ai.cfg.ai.zombieRadius;
   const s = lod.cfg.cellSizeChunks;
   const { cx0, cy0, cx1, cy1 } = lod.bounds;
@@ -277,6 +286,7 @@ function spawnPending(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
         // Off the ground also not over a flight coming up from below.
         if (z !== 0 && grid.stairAt(tx, ty, z - 1)) continue;
         if (circleOverlaps(grid, z, x, y, radius)) continue;
+        if (safe && unsafeSpot(w, grid, safe, x, y, z)) continue;
         let near = false;
         for (const p of players) {
           if (z !== 0 && floorZ(w, p) !== z) continue; // other levels: out of sight

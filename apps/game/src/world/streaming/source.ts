@@ -54,6 +54,26 @@ export interface WorldChunk {
   readonly levels: ReadonlyMap<number, ChunkData>;
   readonly decor?: readonly DecorInstance[];
   readonly buildings?: readonly BuildingMeta[];
+  /** Vector roads over the chunk (generated maps): drawn as smooth ribbons, render only. */
+  readonly roads?: readonly VectorRoad[];
+  /**
+   * Level-0 ground under the road tiles (TileId, 0 = none): drawn under `roads` instead of the
+   * stair-stepped road tiles.
+   */
+  readonly under?: Uint16Array;
+}
+
+/** One run of a road polyline touching a chunk (chunk-local tiles, flat x, y pairs). */
+export interface VectorRoad {
+  /** Carriageway surface: content id of its tile (`base:asphalt`, `base:sidewalk`, `base:dirt`). */
+  readonly surface: ContentId;
+  /** Carriageway half width / sidewalk outer radius (0 = none), tiles. */
+  readonly r: number;
+  readonly rs: number;
+  readonly bridge: boolean;
+  readonly pts: readonly number[];
+  /** Distance along the road at the first point (dash phase). */
+  readonly d0: number;
 }
 
 /**

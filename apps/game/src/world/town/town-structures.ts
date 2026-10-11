@@ -41,6 +41,29 @@ export interface TownStructuresOptions {
    */
   footprintOf?:
     ((b: BuildingId) => { x0: number; z0: number; x1: number; z1: number } | undefined) | undefined;
+  /**
+   * Shared batch per chunk key (`cx,cy`): streamed worlds put every level of a chunk column into
+   * one BatchedMesh (one draw call + one shadow per column instead of per level). The owner adds
+   * the mesh to the scene and disposes it; levels add / remove their own instances.
+   */
+  sharedBatch?: ((chunk: string) => SharedTownBatch) | undefined;
+}
+
+/** A BatchedMesh shared by several `TownStructures` (grown on demand). */
+export interface SharedTownBatch {
+  mesh: BatchedMesh;
+  ids: Map<string | BufferGeometry, number>;
+  maxVerts: number;
+  maxIndex: number;
+}
+
+/** New shared batch on the kit material (empty; grows with the levels). */
+export function sharedTownBatch(kit: TownKit, name: string): SharedTownBatch {
+  const mesh = new BatchedMesh(64, 4096, 8192, kit.material);
+  mesh.name = name;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return { mesh, ids: new Map(), maxVerts: 4096, maxIndex: 8192 };
 }
 
 /** A static prop of the town kit (trees, poles, signs...). */
@@ -66,6 +89,8 @@ interface EdgeItem {
 interface Batch {
   mesh: BatchedMesh;
   ids: Map<string | BufferGeometry, number>;
+  /** Shared column batch: this level's instances / own geometries (removed on dispose). */
+  shared?: { instances: number[]; geometries: (string | BufferGeometry)[] };
 }
 
 const Y_AXIS = new Vector3(0, 1, 0);
@@ -240,23 +265,56 @@ export class TownStructures {
         want(it.geo);
         for (const name of it.variants ?? []) want(name);
       }
-      let verts = 0;
-      let index = 0;
-      for (const g of geos.values()) {
-        verts += g.getAttribute('position').count;
-        index += g.index?.count ?? 0;
+      let batch: Batch;
+      let mesh: BatchedMesh;
+      const shared = this.opts.sharedBatch?.(k);
+      if (shared) {
+        mesh = shared.mesh;
+        let verts = 0;
+        let index = 0;
+        for (const [key, g] of geos) {
+          if (shared.ids.has(key)) continue;
+          verts += g.getAttribute('position').count;
+          index += g.index?.count ?? 0;
+        }
+        const needInstances = mesh.instanceCount + items.length;
+        if (needInstances > mesh.maxInstanceCount) {
+          mesh.setInstanceCount(Math.max(needInstances, mesh.maxInstanceCount * 2));
+        }
+        if (verts > mesh.unusedVertexCount || index > mesh.unusedIndexCount) {
+          shared.maxVerts = Math.max(shared.maxVerts * 2, shared.maxVerts + verts);
+          shared.maxIndex = Math.max(shared.maxIndex * 2, shared.maxIndex + index);
+          mesh.setGeometrySize(shared.maxVerts, shared.maxIndex);
+        }
+        const own: (string | BufferGeometry)[] = [];
+        for (const [key, g] of geos) {
+          if (shared.ids.has(key)) continue;
+          shared.ids.set(key, mesh.addGeometry(g));
+          // Level-only geometry (roofs, slabs, stairs) goes with the level.
+          if (typeof key !== 'string') own.push(key);
+        }
+        batch = { mesh, ids: shared.ids, shared: { instances: [], geometries: own } };
+      } else {
+        let verts = 0;
+        let index = 0;
+        for (const g of geos.values()) {
+          verts += g.getAttribute('position').count;
+          index += g.index?.count ?? 0;
+        }
+        mesh = new BatchedMesh(items.length, verts, index, this.kit.material);
+        mesh.name = `town:${k},${range.z}`;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        batch = { mesh, ids: new Map() };
+        for (const [key, g] of geos) batch.ids.set(key, mesh.addGeometry(g));
       }
-      const mesh = new BatchedMesh(items.length, verts, index, this.kit.material);
-      mesh.name = `town:${k},${range.z}`;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      const batch: Batch = { mesh, ids: new Map() };
-      for (const [key, g] of geos) batch.ids.set(key, mesh.addGeometry(g));
       for (const it of items) {
         const gid = batch.ids.get(it.geo);
         if (gid === undefined) continue;
         const instance = mesh.addInstance(gid);
         mesh.setMatrixAt(instance, it.m);
+        batch.shared?.instances.push(instance);
+        if (batch.shared) mesh.setColorAt(instance, WHITE);
         if (it.edge) {
           const e = it.edge;
           const item: EdgeItem = {
@@ -288,11 +346,11 @@ export class TownStructures {
         }
       }
       // Per-instance colours from the start (one shader variant, no hitch on the first dim).
-      if (mesh.instanceCount > 0) mesh.setColorAt(0, WHITE);
+      if (mesh.instanceCount > 0 && !batch.shared) mesh.setColorAt(0, WHITE);
       mesh.computeBoundingBox();
       mesh.computeBoundingSphere();
       this.batches.set(k, batch);
-      this.root.add(mesh);
+      if (!batch.shared) this.root.add(mesh);
     }
     this.key = '-';
     this.cut = NO_CUTAWAY;
@@ -370,12 +428,25 @@ export class TownStructures {
   /** Instances (tests / dev overlay). */
   stats(): { batches: number; instances: number } {
     let instances = 0;
-    for (const b of this.batches.values()) instances += b.mesh.instanceCount;
+    for (const b of this.batches.values())
+      instances += b.shared ? b.shared.instances.length : b.mesh.instanceCount;
     return { batches: this.batches.size, instances };
   }
 
   dispose(): void {
-    for (const b of this.batches.values()) b.mesh.dispose();
+    for (const b of this.batches.values()) {
+      if (!b.shared) {
+        b.mesh.dispose();
+        continue;
+      }
+      // Shared column batch: only this level's instances and geometries leave.
+      for (const i of b.shared.instances) b.mesh.deleteInstance(i);
+      for (const g of b.shared.geometries) {
+        const id = b.ids.get(g);
+        if (id !== undefined) b.mesh.deleteGeometry(id);
+        b.ids.delete(g);
+      }
+    }
     this.batches.clear();
     this.root.clear();
   }

@@ -548,24 +548,31 @@ export class OpeningsView {
   private updateExtras(): void {
     const lowered = (e: OpeningEdge) =>
       isEdgeLowered(this.cutaway, e.building, e.side === 'n' ? 'N' : 'W', e.tx, e.ty);
+    // Meshes with nothing to show are hidden: no draw call (and no shadow pass) for empty batches.
     if (this.plankMesh) {
+      let any = false;
       this.plankEdges.forEach((e, j) => {
         const n = this.planks.get(openingKey(e.tx, e.ty, e.z, e.side)) ?? 0;
+        if (n > 0) any = true;
         const low = n > 0 && lowered(e);
         for (let i = 0; i < 4; i++)
           this.plankMesh!.setMatrixAt(j * 4 + i, plankMatrix(this.m, e, i, n, low));
       });
       this.plankMesh.instanceMatrix.needsUpdate = true;
+      this.plankMesh.visible = any;
     }
     if (this.shardMesh) {
+      let any = false;
       this.shardEdges.forEach((e, j) => {
         const key = openingKey(e.tx, e.ty, e.z, e.side);
         const show = this.states.get(key) === 'broken' && !this.noGlass.has(key);
+        if (show) any = true;
         const low = show && lowered(e);
         for (let i = 0; i < 2; i++)
           this.shardMesh!.setMatrixAt(j * 2 + i, shardMatrix(this.m, e, i, show, low));
       });
       this.shardMesh.instanceMatrix.needsUpdate = true;
+      this.shardMesh.visible = any;
     }
   }
 

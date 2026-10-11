@@ -20,23 +20,61 @@ import {
   type WorldPlan,
 } from '../world/plan.js';
 import { GENERATOR_REV, type LandCover, type WorldPlanInput } from './plan.js';
+import {
+  OSM_ROTATION_DEG,
+  rotatePt,
+  rotation,
+  straightenOsmMap,
+  unrotatePt,
+} from './straighten.js';
 
 /** Full OSM square: 16 384 m = 512 × 512 chunks. */
 export const OSM_WORLD_CHUNKS = 512;
 
-/** Named windows of the Stalowa Wola square (chunk bounds + start hint, tiles). */
+/**
+ * Window of the square around a point of the raw OSM frame, in the rotated world frame
+ * (`OSM_ROTATION_DEG`): same size in chunks, centred on the rotated point; start rotated too.
+ */
+function rotatedRegion(
+  centre: { x: number; y: number },
+  halfChunks: number,
+  start: { x: number; y: number },
+): {
+  bounds: { cx0: number; cy0: number; cx1: number; cy1: number };
+  start: { x: number; y: number };
+} {
+  const r = rotation(OSM_ROTATION_DEG);
+  const c = rotatePt(r, centre.x, centre.y);
+  const s = rotatePt(r, start.x, start.y);
+  const ccx = Math.round(c.x / CHUNK_SIZE);
+  const ccy = Math.round(c.y / CHUNK_SIZE);
+  return {
+    bounds: {
+      cx0: ccx - halfChunks,
+      cy0: ccy - halfChunks,
+      cx1: ccx + halfChunks - 1,
+      cy1: ccy + halfChunks - 1,
+    },
+    start: { x: Math.round(s.x), y: Math.round(s.y) },
+  };
+}
+
+/**
+ * Named windows of the Stalowa Wola square (chunk bounds + start hint, tiles), in the rotated
+ * world frame: the generator rotates the OSM data by `OSM_ROTATION_DEG` (streets on the axes).
+ */
 export const OSM_REGIONS = {
-  /** 1.5 × 1.5 km around the KEN viaduct by ul. Okulickiego (PR #1 playable piece). */
-  okulickiego: {
-    bounds: { cx0: 172, cy0: 242, cx1: 219, cy1: 289 },
-    start: { x: 6290, y: 8520 },
-  },
-  /** The whole 16 × 16 km square. */
+  /** 1.5 × 1.5 km around the KEN viaduct by ul. Okulickiego (raw frame centre 6272, 8512). */
+  okulickiego: rotatedRegion({ x: 6272, y: 8512 }, 24, { x: 6290, y: 8520 }),
+  /** The whole 16 × 16 km square (corners beyond the rotated square are empty). */
   all: {
     bounds: { cx0: 0, cy0: 0, cx1: OSM_WORLD_CHUNKS - 1, cy1: OSM_WORLD_CHUNKS - 1 },
-    start: { x: 6290, y: 8520 },
+    start: (() => {
+      const s = rotatePt(rotation(OSM_ROTATION_DEG), 6290, 8520);
+      return { x: Math.round(s.x), y: Math.round(s.y) };
+    })(),
   },
-} as const;
+};
 
 /**
  * World plan from the OSM file (`deadzone-osm-1`). `dataHash` = hash of the file contents (any
@@ -51,15 +89,20 @@ export function osmPlan(
     /** Region name (part of the version: other bounds = other buildings at the edge). */
     region: string;
     id?: string;
+    /** Global rotation (degrees); default `OSM_ROTATION_DEG`. */
+    rotationDeg?: number;
   },
 ): WorldPlanInput {
+  const deg = opts.rotationDeg ?? OSM_ROTATION_DEG;
+  const rot = deg === OSM_ROTATION_DEG ? '' : `-r${deg}`;
   return {
     id: opts.id ?? 'osm-stw',
-    version: `osm-stw-${opts.dataHash.slice(0, 12)}-${opts.region}-g${GENERATOR_REV}`,
+    version: `osm-stw-${opts.dataHash.slice(0, 12)}-${opts.region}${rot}-g${GENERATOR_REV}`,
     seed: 0x05f3a1,
     size: map.size,
     bounds: opts.bounds,
-    features: map,
+    // Streets on the tile axes, outlines squared (no zigzag edges): `straighten.ts`.
+    features: straightenOsmMap(map, deg),
     start: opts.start,
     attribution: map.attribution,
   };
@@ -253,18 +296,28 @@ export function plan4Plan(seed: number, size = 16384): WorldPlanInput {
 
 /**
  * Window of an OSM map for a region (static data file of a smaller playable piece): whole
- * features whose bounding box touches the region's chunk bounds + `marginTiles` (no clipping, so
+ * raw-frame features whose bounding box touches the (un-rotated) region's chunk bounds +
+ * `marginTiles` (no clipping, so
  * buildings and roads at the edge stay intact); all named places stay.
  */
 export function cropOsmMap(
   map: OsmMap,
   bounds: { cx0: number; cy0: number; cx1: number; cy1: number },
   marginTiles = 128,
+  /** Rotation of the world frame the bounds are in: the crop covers their raw-frame preimage. */
+  rotationDeg = OSM_ROTATION_DEG,
 ): OsmMap {
-  const x0 = (bounds.cx0 * CHUNK_SIZE - marginTiles) * 10;
-  const y0 = (bounds.cy0 * CHUNK_SIZE - marginTiles) * 10;
-  const x1 = ((bounds.cx1 + 1) * CHUNK_SIZE + marginTiles) * 10;
-  const y1 = ((bounds.cy1 + 1) * CHUNK_SIZE + marginTiles) * 10;
+  const r = rotation(rotationDeg);
+  const corners = [
+    [bounds.cx0 * CHUNK_SIZE - marginTiles, bounds.cy0 * CHUNK_SIZE - marginTiles],
+    [(bounds.cx1 + 1) * CHUNK_SIZE + marginTiles, bounds.cy0 * CHUNK_SIZE - marginTiles],
+    [bounds.cx0 * CHUNK_SIZE - marginTiles, (bounds.cy1 + 1) * CHUNK_SIZE + marginTiles],
+    [(bounds.cx1 + 1) * CHUNK_SIZE + marginTiles, (bounds.cy1 + 1) * CHUNK_SIZE + marginTiles],
+  ].map(([x, y]) => unrotatePt(r, x!, y!));
+  const x0 = Math.min(...corners.map((c) => c.x)) * 10;
+  const y0 = Math.min(...corners.map((c) => c.y)) * 10;
+  const x1 = Math.max(...corners.map((c) => c.x)) * 10;
+  const y1 = Math.max(...corners.map((c) => c.y)) * 10;
   const hits = (f: readonly number[]) => {
     let ax = Infinity;
     let ay = Infinity;

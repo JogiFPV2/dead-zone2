@@ -77,7 +77,8 @@ describe('rejestr i loader plików miejsc', () => {
     const places = await loadPlaces('osm-stw');
     expect(places?.length).toBeGreaterThan(50);
     expect(Object.isFrozen(places)).toBe(true);
-    expect(nearestPlace(places, 12831, 14497)).toBe('Centrum');
+    // Współrzędne w układzie mapy obróconym o 27° (OSM_ROTATION_DEG, generator rev 2).
+    expect(nearestPlace(places, 9470, 15910)).toBe('Centrum');
   });
   it('mapa bez wpisu albo brak pliku → null; zły plik → błąd', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'places-'));

@@ -9,6 +9,7 @@ import {
   type Material,
   type Object3D,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** One mesh of a furniture model: shared geometry / material and its transform in the model. */
 export interface ModelPart {
@@ -41,6 +42,49 @@ export function modelParts(model: Object3D): ModelPart[] {
   };
   walk(model);
   return parts;
+}
+
+/**
+ * Parts sharing one material (and shadow flags) merged into one geometry in the model's frame:
+ * fewer instanced meshes (= draw calls) per model. Parts whose attributes do not match stay apart.
+ * The merged geometries are new (owned by the caller's cache).
+ */
+export function mergeParts(parts: readonly ModelPart[]): ModelPart[] {
+  const groups = new Map<string, ModelPart[]>();
+  const out: ModelPart[] = [];
+  for (const p of parts) {
+    if (Array.isArray(p.material)) {
+      out.push(p);
+      continue;
+    }
+    const attrs = Object.keys(p.geometry.attributes).sort().join(',');
+    const k = `${p.material.uuid}|${p.castShadow}|${p.receiveShadow}|${attrs}|${p.geometry.index ? 1 : 0}`;
+    const g = groups.get(k);
+    if (g) g.push(p);
+    else groups.set(k, [p]);
+  }
+  for (const g of groups.values()) {
+    if (g.length === 1) {
+      out.push(g[0]!);
+      continue;
+    }
+    const geos = g.map((p) => p.geometry.clone().applyMatrix4(p.local));
+    const merged = mergeGeometries(geos);
+    for (const x of geos) x.dispose();
+    if (!merged) {
+      out.push(...g);
+      continue;
+    }
+    const first = g[0]!;
+    out.push({
+      geometry: merged,
+      material: first.material,
+      local: new Matrix4(),
+      castShadow: first.castShadow,
+      receiveShadow: first.receiveShadow,
+    });
+  }
+  return out;
 }
 
 /** A placed furniture object: model id, base position (world) and yaw. */

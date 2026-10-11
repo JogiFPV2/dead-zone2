@@ -8,7 +8,15 @@ planu (`plan4Plan(seed, size)`, generator zamiast pliku), OSM to `osmPlan(plik, 
 - Indeks planu (`PlanIndex`, siatka 64 m) powstaje raz; chunki generują się leniwie i
   deterministycznie na żądanie (te same seed + wersja = te same bajty, dowolna kolejność).
 - Geometria chunka jest lokalna (kafle 0..31, auta i drzewa we współrzędnych chunka).
-- Skala 1:1 (1 kafel = 1 m), bez obrotu: północ w górę.
+- Skala 1:1 (1 kafel = 1 m). OSM jest obrócone o `OSM_ROTATION_DEG` = 27° wokół środka
+  kwadratu (8192, 8192), tak żeby siatka ulic przy Okulickiego / KEN leżała wzdłuż osi kafli
+  (`straighten.ts`, kierunek dominujący z `dominantRoadAngle` ≈ 63°). Regiony (`OSM_REGIONS`),
+  start i nazwy miejsc są w obróconym układzie; plik danych zostaje w surowym układzie OSM.
+- Obrysy budynków i działek (obszary landuse) w tolerancji `SQUARE_TOLERANCE_DEG` = 12° od osi
+  są prostowane do kątów prostych na osiach (jak w PZ); obrysy krzywe albo skośne zostają.
+- Drogi: oprócz kafli dla symulacji kolumna niesie drogi wektorowe (`GenColumn.roads`) i podłoże
+  sprzed malowania dróg (`GenColumn.under`): renderer rysuje gładkie wstęgi (asfalt, krawężnik,
+  chodnik, przerywana oś) zamiast schodków z kafli.
 - Budynki: typy z #113 (tag OSM → landuse → domyślny), piętra z tagu albo z typu, klatki
   schodowe na każdej kondygnacji pod najwyższą, meble przez `furnishView` (reguła #131: meble
   tylko na kaflach pokojów, na zewnątrz tylko kosze, drewno, ławki, kontenery).
@@ -33,5 +41,6 @@ planu (`plan4Plan(seed, size)`, generator zamiast pliku), OSM to `osmPlan(plik, 
 ## Dane OSM
 
 Plik danych jest osobny (ODbL), np. `apps/game/public/osm/stw-okulickiego.deadzone-osm-1.json`
-(`pnpm --filter @deadzone/map osm:crop <stw-map.json> okulickiego <plik>`). Gra pokazuje podpis
+(`pnpm --filter @deadzone/map osm:crop <stw-map.json> okulickiego <plik>`; wycinek obejmuje
+przeciwobraz obróconego okna + 128 m). Gra pokazuje podpis
 „© współtwórcy OpenStreetMap”. `?osmUrl=<url>` wskazuje inny plik (np. cały kwadrat 16 km).

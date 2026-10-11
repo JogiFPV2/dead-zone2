@@ -1,6 +1,7 @@
 import type { PlayerId, SimEvent, SimMap, WorldSource } from '@deadzone/protocol';
 import { createChunkWatch, type ChunkWatch } from '../world/chunk-events.js';
 import type { LodWorld } from '../lod/state.js';
+import type { SafeStart } from '../lod/safe-start.js';
 import type { PlayerMapWorld } from '../map/player-map.js';
 import { addComponent, addEntity, createWorld, query, removeComponent, type World } from 'bitecs';
 import { CommandQueue } from '../commands/queue.js';
@@ -36,6 +37,11 @@ export interface SimWorld {
   readonly source: WorldSource;
   /** Big-map LOD (docs 9.24); undefined on maps that fit the active area (demo maps). */
   lod: LodWorld | undefined;
+  /**
+   * Safe start of a new game (lod/safe-start.ts; `createSim({ safeStart })`): no zombie near or in
+   * sight of a player until `untilTick`. Config, not state (not saved: a load runs without it).
+   */
+  safeStart: SafeStart | undefined;
   /** Characters' world maps: fog of war, trail, markers (map/player-map.ts; not hashed). */
   playerMap: PlayerMapWorld | undefined;
   /**
@@ -100,6 +106,7 @@ export function createSimWorld(opts: {
     map: opts.map,
     source: opts.source,
     lod: undefined,
+    safeStart: undefined,
     playerMap: undefined,
     freeEids: [],
     interest: new Map(),

@@ -52,6 +52,7 @@ import { PENALTY_SLOTS } from './survival/penalties.js';
 import { hashCombat } from './combat/hash.js';
 import { createAiWorld, ZOMBIE_STATE_NAMES, type ZombieStateName } from './ai/state.js';
 import { spawnZombies } from './ai/zombies.js';
+import { safeStartOf, unsafeSpot, type SafeStartOptions } from './lod/safe-start.js';
 import { populateAnimals, spawnAnimals } from './animals/spawn.js';
 import { spawnVehicles } from './vehicles/spawn.js';
 import { partHp, setVehiclePartHp } from './vehicles/damage.js';
@@ -132,6 +133,11 @@ export interface SimOptions {
    * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
    */
   spawnZombies?: readonly SimZombieSpawn[] | undefined;
+  /**
+   * New game only (ignored with `load`): no zombie within ~40 tiles of a player and none in a
+   * player's line of sight for the first ~60 s (lod/safe-start.ts). Generated maps turn it on.
+   */
+  safeStart?: SafeStartOptions | undefined;
   /**
    * Animals at start at given points (needs content with `animalTypes`); `type` omitted =
    * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
@@ -518,7 +524,15 @@ export function createSim(input: SimOptions): Sim {
   } else {
     const spawn = opts.spawn ?? findSpawn(ctx.grid);
     spawnPlayer(0, spawn.x, spawn.y, opts.spawn?.z ?? 0);
-    if (opts.spawnZombies) spawnZombies(w, opts.spawnZombies);
+    if (opts.safeStart) w.safeStart = safeStartOf(opts.safeStart, w.tick, TICKS_PER_SECOND);
+    const safe = w.safeStart;
+    if (opts.spawnZombies)
+      spawnZombies(
+        w,
+        safe
+          ? opts.spawnZombies.filter((z) => !unsafeSpot(w, ctx.grid, safe, z.x, z.y, z.z ?? 0))
+          : opts.spawnZombies,
+      );
     if (opts.spawnAnimals) spawnAnimals(w, opts.spawnAnimals);
     if (opts.spawnVehicles) spawnVehicles(w, opts.spawnVehicles);
     // Parked cars from chunk data (whole map; with LOD they come with each chunk's loot).

@@ -15,7 +15,7 @@ import {
 } from './palette.js';
 import { AREA_ORDER, PlanIndex, type IBuilding } from './plan-index.js';
 import { generatorVersionNumber, type WorldPlanInput } from './plan.js';
-import { AREA_TREES, fillRings, rasterGround, type Raster } from './raster.js';
+import { AREA_TREES, ROAD_GROUND, fillRings, rasterGround, type Raster } from './raster.js';
 
 const C = CHUNK_SIZE;
 const CT = C * C;
@@ -50,10 +50,34 @@ export interface GenBuildingMeta {
   kind: string;
 }
 
+/**
+ * A vector road over a chunk (renderer: smooth ribbons with round joins; the sim keeps the road
+ * tiles). One continuous run of the road's polyline whose segments touch the chunk.
+ */
+export interface GenRoad {
+  /** Surface: ground class of the carriageway (`GROUND_TILES` index: asphalt, sidewalk, dirt). */
+  ground: number;
+  /** Carriageway half width and sidewalk outer radius (0 = none), tiles. */
+  r: number;
+  rs: number;
+  bridge: boolean;
+  /** Polyline in chunk-local tiles (x, y pairs, 1/100 tile). */
+  pts: number[];
+  /** Distance along the whole road at the first point (centre-line dashes stay continuous). */
+  d0: number;
+}
+
 export interface GenColumn {
   cx: number;
   cy: number;
   levels: GenLevel[];
+  /** Vector roads touching the chunk (render only). */
+  roads?: GenRoad[];
+  /**
+   * Level-0 ground under the road tiles (floor tile id, 0 = no road or a building): the renderer
+   * draws it below the smooth roads instead of the stair-stepped road tiles.
+   */
+  under?: Uint16Array;
   /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
   trees: number[];
   buildings: GenBuildingMeta[];
@@ -308,9 +332,73 @@ export class PlanChunkGenerator {
         type: s.type,
         kind: s.kind,
       }));
+    const out: GenColumn = { cx, cy, levels, trees, buildings };
+    const roads = this.vectorRoads(X0, Y0);
+    if (roads.length) out.roads = roads;
+    const under = new Uint16Array(CT);
+    let anyUnder = false;
+    for (let i = 0; i < CT; i++) {
+      const u = r.under[ri(i % C, (i / C) | 0)]!;
+      if (!u || owner[i]) continue;
+      under[i] = GROUND_TILE_IDS[u - 1]!;
+      anyUnder = true;
+    }
+    if (anyUnder) out.under = under;
     this.timings.columns++;
     this.timings.columnMs += performance.now() - t0;
-    return { cx, cy, levels, trees, buildings };
+    return out;
+  }
+
+  /** Runs of road polylines whose segments touch the chunk (+ their width), chunk-local. */
+  private vectorRoads(X0: number, Y0: number): GenRoad[] {
+    const out: GenRoad[] = [];
+    const idx = this.index.roads;
+    for (const i of idx.query({ x0: X0 - 16, y0: Y0 - 16, x1: X0 + C + 16, y1: Y0 + C + 16 })) {
+      const road = idx.items[i]!;
+      const p = road.pts;
+      const pad = Math.max(road.r, road.rs) + 0.5;
+      let run: number[] | undefined;
+      let d = 0;
+      let d0 = 0;
+      const flush = () => {
+        if (run && run.length >= 4) {
+          out.push({
+            ground: ROAD_GROUND(road.kind),
+            r: road.r,
+            rs: road.rs,
+            bridge: road.bridge,
+            pts: run,
+            d0: Math.round(d0 * 100) / 100,
+          });
+        }
+        run = undefined;
+      };
+      const loc = (k: number) => [
+        Math.round((p[k]! - X0) * 100) / 100,
+        Math.round((p[k + 1]! - Y0) * 100) / 100,
+      ];
+      for (let k = 0; k + 3 < p.length; k += 2) {
+        const ax = p[k]!;
+        const ay = p[k + 1]!;
+        const bx = p[k + 2]!;
+        const by = p[k + 3]!;
+        const touches =
+          Math.max(ax, bx) + pad >= X0 &&
+          Math.min(ax, bx) - pad <= X0 + C &&
+          Math.max(ay, by) + pad >= Y0 &&
+          Math.min(ay, by) - pad <= Y0 + C;
+        if (touches) {
+          if (!run) {
+            run = loc(k);
+            d0 = d;
+          }
+          run.push(...loc(k + 2));
+        } else flush();
+        d += Math.hypot(bx - ax, by - ay);
+      }
+      flush();
+    }
+    return out;
   }
 
   /** Railings on bridge-deck edges over the railway (deck at level 0, as in the OSM scene). */
@@ -645,9 +733,12 @@ export class PlanChunkGenerator {
     return out;
   }
 
-  /** Zombies framed around the start: open ground 11–24 tiles from the player (deterministic). */
+  /**
+   * Zombies around the start: open ground 44–60 tiles from the player (deterministic), outside
+   * the sim's safe-start radius (40; the sim also drops any in the player's line of sight).
+   */
   startZombies(p: { x: number; y: number }, n = 8): { x: number; y: number; heading: number }[] {
-    const R = 26;
+    const R = 62;
     const x0 = Math.floor(p.x) - R;
     const y0 = Math.floor(p.y) - R;
     const r = rasterGround(this.index, x0, y0, 2 * R, 2 * R);
@@ -655,7 +746,7 @@ export class PlanChunkGenerator {
     const out: { x: number; y: number; heading: number }[] = [];
     for (let k = 0; k < 4000 && out.length < n; k++) {
       const a = hash01(k, 1, 61) * Math.PI * 2;
-      const d = 11 + hash01(k, 2, 61) * 13;
+      const d = 44 + hash01(k, 2, 61) * 16;
       const x = Math.floor(p.x + Math.cos(a) * d);
       const y = Math.floor(p.y + Math.sin(a) * d);
       const j = (y - y0) * r.w + (x - x0);

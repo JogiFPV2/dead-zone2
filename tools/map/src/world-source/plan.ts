@@ -53,8 +53,11 @@ export interface WorldPlanInput {
   attribution?: string | undefined;
 }
 
-/** Bump on every change of generated chunks for the same plan (part of the version string). */
-export const GENERATOR_REV = 1;
+/**
+ * Bump on every change of generated chunks for the same plan (part of the version string).
+ * 2: OSM rotated onto the street grid, squared outlines, vector roads + ground under them.
+ */
+export const GENERATOR_REV = 2;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

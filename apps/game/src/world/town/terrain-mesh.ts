@@ -4,6 +4,8 @@ import { CHUNK_SIZE, type ContentId } from '../chunk.js';
 import type { TownCells } from './kit.js';
 import { hash01 } from './modules.js';
 import type { MapTiles } from './tiles.js';
+import type { VectorRoad } from '../streaming/source.js';
+import { zebraSpots } from './zebras.js';
 
 /** Detail channels of the terrain texture: R asphalt, G grass, B paving, A dirt. */
 type Mask = readonly [number, number, number, number];
@@ -73,12 +75,32 @@ const CURB = { width: 0.15, height: 0.12 };
  * strength), curbs on every sidewalk|asphalt border, road paint (centre dashes, crosswalks next to
  * crossings, parking bays) and oil stains — all in the same buffers (1 draw call).
  */
+/**
+ * Smooth vector roads of a generated chunk: road tiles show the ground under them (`underAt`) and
+ * the roads are drawn as ribbons with round joins (no stair-stepped edges on diagonals).
+ */
+export interface TerrainVectorRoads {
+  roads: readonly VectorRoad[];
+  /** Ground content under a road tile (world tile), undefined = not a road tile. */
+  underAt: (x: number, z: number) => ContentId | undefined;
+}
+
+/** Ribbon heights: dirt < sidewalk < curb < asphalt < paint, all under indoor floors (2 cm). */
+const RIBBON_Y = { dirt: 0.004, sidewalk: 0.008, curb: 0.011, asphalt: 0.014, paint: 0.017 };
+/** Bridges (decks over rails / water) above every ordinary road layer. */
+const BRIDGE_DY = 0.012;
+const CURB_BAND = 0.15;
+const JOIN_SEGMENTS = 14;
+const DASH = { on: 1.6, period: 3.2, width: 0.14 };
+const ZEBRA = { stripe: 0.5, gap: 0.5 };
+
 export function buildTerrainGeometry(
   tiles: MapTiles,
   cx: number,
   cy: number,
   cells: TownCells,
   baseY = 0,
+  vector?: TerrainVectorRoads,
 ): BufferGeometry | undefined {
   const P: number[] = [];
   const C: number[] = [];
@@ -124,12 +146,13 @@ export function buildTerrainGeometry(
   let any = false;
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
-      const floor = floorAt(x, z);
+      const floor = vector?.underAt(x, z) ?? floorAt(x, z);
       if (!floor) continue;
       any = true;
       const room = tiles.roomType(x, z);
       const look = floorLook(floor, room);
-      const y = look.y ?? 0;
+      // Smooth roads run under indoor floors: lift every indoor floor to 2 cm.
+      const y = vector && room ? Math.max(look.y ?? 0, 0.02) : (look.y ?? 0);
       let c = col(look.cell)
         .clone()
         .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));
@@ -284,6 +307,8 @@ export function buildTerrainGeometry(
 
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
+      // Vector roads draw their own curbs and paint.
+      if (vector?.underAt(x, z)) continue;
       const f = floorAt(x, z);
       if (f === 'base:sidewalk') {
         if (isRoad(x + 1, z)) box(x + 1 - w, z, x + 1, z + 1, CURB.height);
@@ -332,6 +357,159 @@ export function buildTerrainGeometry(
         } else if (((z % 3) + 3) % 3 === 0 && ![-2, -1, 1, 2, 3].some((d) => crossing(x, z + d))) {
           flat(centre - 0.07, z, centre + 0.07, z + 1.6, paint);
         }
+      }
+    }
+  }
+  if (vector?.roads.length) {
+    const tri = (a: V, b: V, c: V, cc: Color, mask: Mask) => {
+      // Up-facing winding: (b − a) × (c − a) must point to +y.
+      const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+      for (const p of ny >= 0 ? [a, b, c] : [a, c, b]) {
+        P.push(p[0], p[1] + baseY, p[2]);
+        C.push(cc.r, cc.g, cc.b);
+        M.push(...mask);
+      }
+    };
+    const inChunk = (x: number, z: number) =>
+      x >= x0 && x < x0 + CHUNK_SIZE && z >= z0 && z < z0 + CHUNK_SIZE;
+    /** Segment a→b clipped to the chunk square (Liang–Barsky), as [t0, t1] or undefined. */
+    const clip = (ax: number, az: number, bx: number, bz: number): [number, number] | undefined => {
+      let t0 = 0;
+      let t1 = 1;
+      const dx = bx - ax;
+      const dz = bz - az;
+      for (const [p, q] of [
+        [-dx, ax - x0],
+        [dx, x0 + CHUNK_SIZE - ax],
+        [-dz, az - z0],
+        [dz, z0 + CHUNK_SIZE - az],
+      ] as const) {
+        if (p === 0) {
+          if (q < 0) return undefined;
+          continue;
+        }
+        const t = q / p;
+        if (p < 0) t0 = Math.max(t0, t);
+        else t1 = Math.min(t1, t);
+      }
+      return t1 > t0 ? [t0, t1] : undefined;
+    };
+    const band = (pts: readonly number[], R: number, y: number, c: Color, mask: Mask) => {
+      const n = pts.length >> 1;
+      for (let i = 0; i < n; i++) {
+        const ax = x0 + pts[2 * i]!;
+        const az = z0 + pts[2 * i + 1]!;
+        // Round join / cap at every vertex owned by this chunk.
+        if (inChunk(ax, az)) {
+          for (let k = 0; k < JOIN_SEGMENTS; k++) {
+            const a0 = (k / JOIN_SEGMENTS) * Math.PI * 2;
+            const a1 = ((k + 1) / JOIN_SEGMENTS) * Math.PI * 2;
+            tri(
+              [ax, y, az],
+              [ax + Math.cos(a0) * R, y, az + Math.sin(a0) * R],
+              [ax + Math.cos(a1) * R, y, az + Math.sin(a1) * R],
+              c,
+              mask,
+            );
+          }
+        }
+        if (i + 1 >= n) break;
+        const bx = x0 + pts[2 * i + 2]!;
+        const bz = z0 + pts[2 * i + 3]!;
+        const t = clip(ax, az, bx, bz);
+        if (!t) continue;
+        const len = Math.hypot(bx - ax, bz - az);
+        if (len === 0) continue;
+        const nx = (-(bz - az) / len) * R;
+        const nz = ((bx - ax) / len) * R;
+        const px = ax + (bx - ax) * t[0];
+        const pz = az + (bz - az) * t[0];
+        const qx = ax + (bx - ax) * t[1];
+        const qz = az + (bz - az) * t[1];
+        const a: V = [px + nx, y, pz + nz];
+        const b: V = [qx + nx, y, qz + nz];
+        const cc: V = [qx - nx, y, qz - nz];
+        const d: V = [px - nx, y, pz - nz];
+        tri(a, b, cc, c, mask);
+        tri(a, cc, d, c, mask);
+      }
+    };
+    const dashes = (pts: readonly number[], d0: number, y: number, c: Color) => {
+      let d = d0;
+      const n = pts.length >> 1;
+      for (let i = 0; i + 1 < n; i++) {
+        const ax = x0 + pts[2 * i]!;
+        const az = z0 + pts[2 * i + 1]!;
+        const bx = x0 + pts[2 * i + 2]!;
+        const bz = z0 + pts[2 * i + 3]!;
+        const len = Math.hypot(bx - ax, bz - az);
+        if (len === 0) continue;
+        const ux = (bx - ax) / len;
+        const uz = (bz - az) / len;
+        const w = DASH.width / 2;
+        for (
+          let s0 = Math.ceil(d / DASH.period) * DASH.period - DASH.period;
+          s0 < d + len;
+          s0 += DASH.period
+        ) {
+          const from = Math.max(s0, d) - d;
+          const to = Math.min(s0 + DASH.on, d + len) - d;
+          if (to <= from) continue;
+          const mx = ax + ux * ((from + to) / 2);
+          const mz = az + uz * ((from + to) / 2);
+          if (!inChunk(mx, mz)) continue;
+          const sx = ax + ux * from;
+          const sz = az + uz * from;
+          const ex = ax + ux * to;
+          const ez = az + uz * to;
+          const a: V = [sx - uz * w, y, sz + ux * w];
+          const b: V = [ex - uz * w, y, ez + ux * w];
+          const cc: V = [ex + uz * w, y, ez - ux * w];
+          const dd: V = [sx + uz * w, y, sz - ux * w];
+          tri(a, b, cc, c, [0.5, 0, 0, 0]);
+          tri(a, cc, dd, c, [0.5, 0, 0, 0]);
+        }
+        d += len;
+      }
+    };
+    const asphalt = col('asphalt');
+    const sidewalk = col('sidewalk');
+    const dirt = col('dirt');
+    for (const r of vector.roads) {
+      const dy = r.bridge ? BRIDGE_DY : 0;
+      if (r.rs > 0) {
+        band(r.pts, r.rs, RIBBON_Y.sidewalk + dy, sidewalk, [0, 0, 0.7, 0]);
+        band(r.pts, r.r + CURB_BAND, RIBBON_Y.curb + dy, curbTop, NONE);
+      }
+      if (r.surface === 'base:asphalt') {
+        band(r.pts, r.r, RIBBON_Y.asphalt + dy, asphalt, [0.8, 0, 0, 0]);
+        if (r.r >= 2.5) dashes(r.pts, r.d0, RIBBON_Y.paint + dy, paint);
+      } else if (r.surface === 'base:sidewalk') {
+        band(r.pts, r.r, RIBBON_Y.sidewalk + dy, sidewalk, [0, 0, 0.7, 0]);
+      } else {
+        band(r.pts, r.r, RIBBON_Y.dirt + dy, dirt, [0, 0, 0, 1]);
+      }
+    }
+    // Zebra crossings at junctions: stripes along the road, 0.5 m wide with 0.5 m gaps.
+    for (const zb of zebraSpots(vector.roads, (x, z) => inChunk(x0 + x, z0 + z))) {
+      const y = RIBBON_Y.paint + (zb.bridge ? BRIDGE_DY : 0);
+      const cx = x0 + zb.x;
+      const cz = z0 + zb.z;
+      const { ux, uz } = zb;
+      const vx = -uz;
+      const vz = ux;
+      const n = Math.max(
+        1,
+        Math.floor((2 * zb.halfWidth + ZEBRA.gap) / (ZEBRA.stripe + ZEBRA.gap)),
+      );
+      const span = n * ZEBRA.stripe + (n - 1) * ZEBRA.gap;
+      for (let k = 0; k < n; k++) {
+        const o0 = -span / 2 + k * (ZEBRA.stripe + ZEBRA.gap);
+        const o1 = o0 + ZEBRA.stripe;
+        const L = zb.halfLength;
+        const p = (o: number, l: number): V => [cx + vx * o + ux * l, y, cz + vz * o + uz * l];
+        tri(p(o0, -L), p(o0, L), p(o1, L), paint, [0.5, 0, 0, 0]);
+        tri(p(o0, -L), p(o1, L), p(o1, -L), paint, [0.5, 0, 0, 0]);
       }
     }
   }

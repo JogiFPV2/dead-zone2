@@ -144,6 +144,8 @@ export function startSimWorkerHost(
             : { map: simMapFromData(msg.map) }),
           ...(msg.spawn ? { spawn: msg.spawn } : {}),
           ...(msg.zombies ? { spawnZombies: msg.zombies } : {}),
+          // Generated maps: a new game starts with no zombie near or in sight (~40 m, ~60 s).
+          ...(opts.world ? { safeStart: {} } : {}),
           ...(msg.animals ? { spawnAnimals: msg.animals } : {}),
           ...(msg.vehicles ? { spawnVehicles: msg.vehicles } : {}),
           ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),

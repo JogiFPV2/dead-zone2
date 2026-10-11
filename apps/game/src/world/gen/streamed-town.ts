@@ -10,7 +10,7 @@ import { townDecor } from '../town/decor.js';
 import type { TownKit } from '../town/kit.js';
 import { doorLeaf, type Skin } from '../town/modules.js';
 import { buildTerrainGeometry } from '../town/terrain-mesh.js';
-import { TownStructures } from '../town/town-structures.js';
+import { TownStructures, sharedTownBatch, type SharedTownBatch } from '../town/town-structures.js';
 import { terrainMaterial } from '../town/town-terrain.js';
 import { MapTiles } from '../town/tiles.js';
 import type { GenBuildingInfo } from './convert.js';
@@ -20,7 +20,7 @@ const key = (cx: number, cy: number, z: number) => `${cx},${cy},${z}`;
 /**
  * The town kit over streamed chunks (generated maps): per near chunk and level one
  * `TownStructures` batch (walls, windows, roofs, slabs, stairs, kit trees / tufts / poles) and on
- * the ground one merged terrain mesh. Reads neighbours from the loaded chunks; buildings crossing
+ * the ground one merged terrain mesh. The levels of a chunk share one BatchedMesh (column). Reads neighbours from the loaded chunks; buildings crossing
  * chunk borders get their pitched roof once, from the building metadata.
  */
 export class StreamedTown {
@@ -30,6 +30,8 @@ export class StreamedTown {
   private readonly terrainMat: MeshStandardMaterial;
   private readonly levels = new Map<string, TownStructures>();
   private readonly terrain = new Map<string, Mesh>();
+  /** One town BatchedMesh per chunk column (all its levels): fewer draw calls / shadow draws. */
+  private readonly columns = new Map<string, { batch: SharedTownBatch; levels: number }>();
   private cut: Cutaway | undefined;
   private minute = -1;
   private readonly broken = new Set<string>();
@@ -62,7 +64,30 @@ export class StreamedTown {
     let bytes = 0;
     let triangles = 0;
     if (z === 0) {
-      const g = buildTerrainGeometry(new MapTiles(this.loaded, 0), cx, cy, this.kit.cells, 0);
+      const under = col.under;
+      const pal = this.loaded.tilePalette;
+      const X0 = cx * CHUNK_SIZE;
+      const Y0 = cy * CHUNK_SIZE;
+      const vector =
+        col.roads || under
+          ? {
+              roads: col.roads ?? [],
+              underAt: (x: number, y: number) => {
+                if (!under || x < X0 || y < Y0 || x >= X0 + CHUNK_SIZE || y >= Y0 + CHUNK_SIZE)
+                  return undefined;
+                const id = under[(y - Y0) * CHUNK_SIZE + (x - X0)]!;
+                return id ? (pal[id] ?? undefined) : undefined;
+              },
+            }
+          : undefined;
+      const g = buildTerrainGeometry(
+        new MapTiles(this.loaded, 0),
+        cx,
+        cy,
+        this.kit.cells,
+        0,
+        vector,
+      );
       if (g) {
         const mesh = new Mesh(g, this.terrainMat);
         mesh.name = `terrain:${cx},${cy}`;
@@ -74,8 +99,19 @@ export class StreamedTown {
         triangles += (g.index?.count ?? n) / 3;
       }
     }
+    const colKey = `${cx},${cy}`;
+    let column = this.columns.get(colKey);
+    if (!column) {
+      column = { batch: sharedTownBatch(this.kit, `town:${colKey}`), levels: 0 };
+      this.columns.set(colKey, column);
+      this.root.add(column.batch.mesh);
+    }
+    column.levels++;
+    const shared = column.batch;
     const level = new TownStructures(this.loaded, this.kit, {
       lookup: this.lookup,
+      // Every piece of this level (also one poking over the chunk edge) goes into this column.
+      sharedBatch: () => shared,
       footprintOf: (b) => {
         const m = metas.get(b);
         return m?.rect ? { x0: m.x0, z0: m.y0, x1: m.x1, z1: m.y1 } : undefined;
@@ -111,6 +147,13 @@ export class StreamedTown {
       this.root.remove(level.root);
       level.dispose();
       this.levels.delete(k);
+      const colKey = `${cx},${cy}`;
+      const column = this.columns.get(colKey);
+      if (column && --column.levels <= 0) {
+        this.root.remove(column.batch.mesh);
+        column.batch.mesh.dispose();
+        this.columns.delete(colKey);
+      }
     }
     const t = this.terrain.get(k);
     if (t) {

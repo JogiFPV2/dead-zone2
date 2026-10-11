@@ -1,12 +1,15 @@
 import {
   BoxGeometry,
   Group,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   MeshStandardMaterial,
   OctahedronGeometry,
   PlaneGeometry,
   SRGBColorSpace,
   TextureLoader,
+  Vector3,
   type Object3D,
   type Texture,
 } from 'three';
@@ -51,6 +54,69 @@ export function animateMarker(m: Object3D, baseY: number, near: boolean, nowMs: 
   m.scale.setScalar(near ? 1.5 : 1);
 }
 
+/**
+ * Loot markers drawn as ONE InstancedMesh (one draw call for every visible marker): callers keep
+ * per-marker `Mesh`es as pose holders (`holder`, never rendered) and hand the visible ones in
+ * each frame. Instances are relative to the first marker (small float32 offsets).
+ */
+export class MarkerBatch {
+  private mesh: InstancedMesh | undefined;
+  private readonly m = new Matrix4();
+
+  constructor(
+    private readonly root: Object3D,
+    private readonly name: string,
+  ) {}
+
+  /** A marker pose holder (excluded from rendering by its layers). */
+  static holder(): Mesh {
+    const marker = new Mesh(MARKER_GEOMETRY, MARKER_MATERIAL);
+    marker.layers.disableAll();
+    return marker;
+  }
+
+  /** Draws `shown` (world matrices updated here). */
+  draw(shown: readonly Object3D[]): void {
+    let mesh = this.mesh;
+    if (!shown.length) {
+      // Nothing to show: no mesh in the scene at all.
+      if (mesh) {
+        this.root.remove(mesh);
+        mesh.dispose();
+        this.mesh = undefined;
+      }
+      return;
+    }
+    if (!mesh || mesh.instanceMatrix.count < shown.length) {
+      if (mesh) {
+        this.root.remove(mesh);
+        mesh.dispose();
+      }
+      mesh = new InstancedMesh(MARKER_GEOMETRY, MARKER_MATERIAL, Math.max(16, shown.length * 2));
+      mesh.name = this.name;
+      mesh.frustumCulled = false;
+      this.mesh = mesh;
+      this.root.add(mesh);
+    }
+    this.root.updateMatrixWorld();
+    const inv = new Matrix4().copy(this.root.matrixWorld).invert();
+    shown[0]!.updateWorldMatrix(true, false);
+    const base = new Vector3().setFromMatrixPosition(shown[0]!.matrixWorld).applyMatrix4(inv);
+    mesh.position.copy(base);
+    shown.forEach((o, i) => {
+      o.updateWorldMatrix(true, false);
+      this.m.multiplyMatrices(inv, o.matrixWorld);
+      this.m.elements[12] -= base.x;
+      this.m.elements[13] -= base.y;
+      this.m.elements[14] -= base.z;
+      mesh.setMatrixAt(i, this.m);
+    });
+    mesh.count = shown.length;
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.visible = true;
+  }
+}
+
 interface Pile {
   root: Group;
   marker: Mesh;
@@ -77,6 +143,7 @@ export class GroundPiles {
   private readonly textures = new Map<string, Texture>();
   private readonly materials = new Map<string, MeshStandardMaterial>();
   private readonly boxMaterial = new MeshStandardMaterial({ color: 0x8b8f93, roughness: 0.8 });
+  private readonly markers = new MarkerBatch(this.root, 'ground-pile-markers');
 
   update(
     piles: readonly GroundPileView[],
@@ -92,7 +159,7 @@ export class GroundPiles {
         if (!p) {
           const root = new Group();
           const body = new Group();
-          const marker = new Mesh(MARKER_GEOMETRY, MARKER_MATERIAL);
+          const marker = MarkerBatch.holder();
           root.add(body, marker);
           p = { root, marker, baseY: MARKER_Y, key: '\u0000', body };
           this.piles.set(c.id, p);
@@ -117,6 +184,7 @@ export class GroundPiles {
     }
     this.near = new Set(nearby.filter((n) => n.kind === 'ground').map((n) => n.id));
     for (const [id, p] of this.piles) animateMarker(p.marker, p.baseY, this.near.has(id), nowMs);
+    this.markers.draw([...this.piles.values()].map((p) => p.marker));
   }
 
   /** Meshes lying on the ground per pile (tests). */

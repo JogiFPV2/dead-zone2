@@ -13,6 +13,7 @@ import { lureSystem } from '../lures/lures.js';
 import { inventorySystem } from '../systems/inventory.js';
 import { lifecycleSystem } from '../systems/lifecycle.js';
 import { lodSystem } from '../lod/system.js';
+import { safeStartSystem } from '../lod/safe-start.js';
 import { playerMapSystem } from '../map/player-map.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { penaltiesSystem } from '../survival/penalties.js';
@@ -53,6 +54,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'movement.facing', run: (w) => facingSystem(w) },
     { name: 'vehicles', run: (w, ctx) => vehicleSystem(w, ctx.grid) },
     { name: 'physics', run: (w, ctx) => physicsSystem(w, ctx.grid) },
+    { name: 'safeStart', run: (w, ctx) => safeStartSystem(w, ctx.grid) },
     { name: 'noise.footsteps', run: (w) => footstepSystem(w) },
     { name: 'ai.threat', run: (w, ctx) => threatSystem(w, ctx.grid) },
     { name: 'inventory', run: (w) => inventorySystem(w) },

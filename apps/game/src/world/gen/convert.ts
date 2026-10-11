@@ -1,7 +1,8 @@
 import type { SimChunk } from '@deadzone/protocol';
 import type { GenColumn, GenLevel } from '@deadzone/map/world-source';
 import type { ChunkData, ContentId, RoomInfo, TileId } from '../chunk.js';
-import type { BuildingMeta, DecorInstance, WorldChunk } from '../streaming/source.js';
+import type { BuildingMeta, DecorInstance, VectorRoad, WorldChunk } from '../streaming/source.js';
+import { GROUND_TILES } from '@deadzone/map/world-source';
 
 /** Decor kind of plan trees (the town kit draws its tree props for it). */
 export const TREE_DECOR: ContentId = 'base:tree';
@@ -50,7 +51,23 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     floors: b.floors,
     rect: b.rect,
   }));
-  return { cx: col.cx, cy: col.cy, levels, decor, buildings };
+  const roads: VectorRoad[] | undefined = col.roads?.map((r) => ({
+    surface: GROUND_TILES[r.ground] ?? 'base:asphalt',
+    r: r.r,
+    rs: r.rs,
+    bridge: r.bridge,
+    pts: r.pts,
+    d0: r.d0,
+  }));
+  return {
+    cx: col.cx,
+    cy: col.cy,
+    levels,
+    decor,
+    buildings,
+    ...(roads?.length ? { roads } : {}),
+    ...(col.under ? { under: col.under } : {}),
+  };
 }
 
 /** Array buffers of a column (transferred from the worker, zero copy). */
@@ -59,6 +76,7 @@ export function columnBuffers(col: GenColumn): ArrayBuffer[] {
   for (const l of col.levels)
     for (const a of [l.floor, l.edgeN, l.edgeW, l.roof, l.room])
       if (a) out.add(a.buffer as ArrayBuffer);
+  if (col.under) out.add(col.under.buffer as ArrayBuffer);
   return [...out];
 }
 

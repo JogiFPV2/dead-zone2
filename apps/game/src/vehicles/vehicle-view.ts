@@ -3,16 +3,22 @@ import {
   BufferGeometry,
   CylinderGeometry,
   Float32BufferAttribute,
+  Color,
   Group,
+  InstancedMesh,
   LineDashedMaterial,
+  Matrix4,
   LineLoop,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
+  Quaternion,
   RingGeometry,
   SpotLight,
+  Vector3,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { SnapshotVehicle } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { HudVehicleType } from '../hud/content-index.js';
@@ -21,6 +27,11 @@ import type { HudVehicleType } from '../hud/content-index.js';
  * PLACEHOLDER cars (no car models yet; Designer sends them later): a low body box, a cabin, four
  * wheels, head- and tail-lights, one spot light per car with `headlights` on. Plus the dashed
  * accent ellipse on the ground under the car the F key targets (spec §2 „Cel”).
+ *
+ * Draw calls: a car is 11 meshes (+ shadow passes). Parked cars (still, lights off, brake off,
+ * tyres whole) are drawn instead as instances of their type's merged geometry: two
+ * `InstancedMesh`es per type (paint with a per-instance colour, the rest vertex-coloured), so a
+ * street of parked cars costs a few draw calls. A car that moves or lights up gets its own group.
  */
 
 const ACCENT = 0xf0c06a;
@@ -29,6 +40,8 @@ const WHEEL_R = 0.32;
 
 interface CarMesh {
   root: Group;
+  /** Drawn as an instance of its type (parked); the group is hidden. */
+  parked: boolean;
   body: Group;
   head: MeshStandardMaterial;
   tail: MeshStandardMaterial;
@@ -108,7 +121,67 @@ function buildCar(t: HudVehicleType, id: number): CarMesh {
   light.target = aim;
   root.add(light, aim);
   const zero = {} as SnapshotVehicle;
-  return { root, body, head, tail, light, wheels, cur: zero, prev: zero, at: 0 };
+  return { root, body, head, tail, light, wheels, parked: false, cur: zero, prev: zero, at: 0 };
+}
+
+/** Frees a car's own geometry and materials (wheel / glass geometry and materials are shared). */
+function disposeCar(m: CarMesh): void {
+  m.root.traverse((o) => {
+    if (!(o instanceof Mesh)) return;
+    const mesh = o as Mesh<BufferGeometry, MeshStandardMaterial>;
+    if (mesh.geometry !== wheelGeo) mesh.geometry.dispose();
+    const mat = mesh.material;
+    if (mat !== wheelMat && mat !== glassMat) mat.dispose();
+  });
+  m.light.dispose();
+}
+
+const paintInstanceMat = new MeshStandardMaterial({ roughness: 0.55, metalness: 0.15 });
+const restInstanceMat = new MeshStandardMaterial({ roughness: 0.6, vertexColors: true });
+
+/**
+ * Merged geometry of a car type (built once from a car group): paint parts, and the rest with its
+ * colour baked into vertex colours (glass, wheels, lights off).
+ */
+function mergedCar(t: HudVehicleType): { paint: BufferGeometry; rest: BufferGeometry } {
+  const car = buildCar(t, 0);
+  car.root.updateMatrixWorld(true);
+  const paint: BufferGeometry[] = [];
+  const rest: BufferGeometry[] = [];
+  const paintMat = (car.body.children[0] as Mesh).material;
+  car.root.traverse((o) => {
+    if (!(o instanceof Mesh)) return;
+    const g = (o.geometry as BufferGeometry).clone().applyMatrix4(o.matrixWorld);
+    g.deleteAttribute('uv');
+    if (o.material === paintMat) {
+      paint.push(g);
+      return;
+    }
+    const c = (o.material as MeshStandardMaterial).color;
+    const n = g.getAttribute('position').count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+    g.setAttribute('color', new Float32BufferAttribute(col, 3));
+    rest.push(g);
+  });
+  disposeCar(car);
+  const merged = {
+    paint: mergeGeometries(paint) ?? new BufferGeometry(),
+    rest: mergeGeometries(rest) ?? new BufferGeometry(),
+  };
+  for (const g of [...paint, ...rest]) g.dispose();
+  return merged;
+}
+
+/** No driver, still, unlit, no brake light, tyres whole: drawn as an instance. */
+function isParked(v: SnapshotVehicle): boolean {
+  return (
+    Math.abs(v.speed) < 1e-3 &&
+    !v.driverId &&
+    !v.headlights &&
+    !v.brakeLight &&
+    !(v.tires ?? []).some((t) => t <= 0)
+  );
 }
 
 /** Dashed ellipse (car outline + margin) in the car's local frame, on the ground. */
@@ -156,6 +229,11 @@ export class VehicleView {
   private readonly cars = new Map<number, CarMesh>();
   private readonly target = buildTarget();
   private targetId: number | undefined;
+  /** Merged geometry per vehicle variant (parked instances). */
+  private readonly merged = new Map<number, { paint: BufferGeometry; rest: BufferGeometry }>();
+  private parkedMeshes: InstancedMesh[] = [];
+  /** Signature of the parked set (ids + poses) the instances were built for. */
+  private parkedKey = '';
 
   constructor(
     private readonly typeOf: (variant: number) => HudVehicleType | undefined,
@@ -185,7 +263,81 @@ export class VehicleView {
     for (const [id, m] of this.cars) {
       if (seen.has(id)) continue;
       this.root.remove(m.root);
+      disposeCar(m);
       this.cars.delete(id);
+    }
+  }
+
+  /** Draw calls of the cars (tests / perf): instanced batches + meshes of the cars with own groups. */
+  get drawnMeshes(): number {
+    let n = this.parkedMeshes.length;
+    for (const m of this.cars.values()) {
+      if (!m.parked) m.root.traverse((o) => void (o instanceof Mesh && n++));
+    }
+    return n;
+  }
+
+  /** (Re)builds the parked instances when the parked set or a parked pose changed. */
+  private syncParked(): void {
+    const parked: CarMesh[] = [];
+    let key = '';
+    for (const m of this.cars.values()) {
+      const p = m.cur;
+      m.parked = isParked(p) && isParked(m.prev) && this.typeOf(p.variant) !== undefined;
+      m.root.visible = !m.parked;
+      if (!m.parked) continue;
+      parked.push(m);
+      key += `${p.stableId}:${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z},${p.facingRad.toFixed(3)};`;
+    }
+    if (key === this.parkedKey) return;
+    this.parkedKey = key;
+    for (const im of this.parkedMeshes) {
+      this.root.remove(im);
+      im.dispose();
+    }
+    this.parkedMeshes = [];
+    const byVariant = new Map<number, CarMesh[]>();
+    for (const m of parked) {
+      const list = byVariant.get(m.cur.variant) ?? [];
+      list.push(m);
+      byVariant.set(m.cur.variant, list);
+    }
+    const w = { x: 0, y: 0, z: 0 };
+    const mat = new Matrix4();
+    const q = new Quaternion();
+    const up = new Vector3(0, 1, 0);
+    const one = new Vector3(1, 1, 1);
+    const pos = new Vector3();
+    const color = new Color();
+    for (const [variant, cars] of byVariant) {
+      let g = this.merged.get(variant);
+      if (!g) this.merged.set(variant, (g = mergedCar(this.typeOf(variant)!)));
+      // Instances relative to the first car: small float32 offsets far from (0, 0).
+      simToWorld(cars[0]!.cur.x, cars[0]!.cur.y, cars[0]!.cur.z, w);
+      const origin = { ...w };
+      const paint = new InstancedMesh(g.paint, paintInstanceMat, cars.length);
+      const rest = new InstancedMesh(g.rest, restInstanceMat, cars.length);
+      cars.forEach((m, i) => {
+        const p = m.cur;
+        simToWorld(p.x, p.y, p.z, w);
+        mat.compose(
+          pos.set(w.x - origin.x, w.y - origin.y, w.z - origin.z),
+          q.setFromAxisAngle(up, -p.facingRad),
+          one,
+        );
+        paint.setMatrixAt(i, mat);
+        rest.setMatrixAt(i, mat);
+        paint.setColorAt(i, color.setHex(PAINT[p.stableId % PAINT.length] ?? 0x7a3b2e));
+      });
+      for (const im of [paint, rest]) {
+        im.name = `parked-cars-${variant}`;
+        im.position.set(origin.x, origin.y, origin.z);
+        im.castShadow = true;
+        im.receiveShadow = true;
+        im.computeBoundingSphere();
+        this.root.add(im);
+        this.parkedMeshes.push(im);
+      }
     }
   }
 
@@ -213,6 +365,7 @@ export class VehicleView {
   }
 
   update(now: number, dtMs: number): void {
+    this.syncParked();
     const w = { x: 0, y: 0, z: 0 };
     for (const m of this.cars.values()) {
       const p = this.pose(m, now);

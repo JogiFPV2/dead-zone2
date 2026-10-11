@@ -10,7 +10,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { fitted } from '../models/model-kit.js';
 import type { ChunkData } from './chunk.js';
-import { buildInstances, modelParts, setSlotsVisible } from './furniture-instances.js';
+import { buildInstances, mergeParts, modelParts, setSlotsVisible } from './furniture-instances.js';
 import { MapObjects } from './map-objects.js';
 
 const geoA = new BoxGeometry(1, 2, 1);
@@ -38,6 +38,21 @@ describe('furniture instancing', () => {
     const m = fitted(model(), 1.8);
     const parts = modelParts(m);
     expect(parts.map((p) => p.geometry)).toEqual([geoA, geoB]);
+  });
+
+  it('mergeParts: parts of one material become one geometry in the model frame', () => {
+    const parts = modelParts(fitted(model(), 1.8));
+    const merged = mergeParts(parts);
+    expect(merged).toHaveLength(1);
+    const n = geoA.getAttribute('position').count + geoB.getAttribute('position').count;
+    expect(merged[0]!.geometry.getAttribute('position').count).toBe(n);
+    // Knob vertices sit where the knob part's matrix put them.
+    merged[0]!.geometry.computeBoundingBox();
+    const bb = merged[0]!.geometry.boundingBox!;
+    const knob = new Vector3().setFromMatrixPosition(parts[1]!.local);
+    expect(bb.max.z).toBeGreaterThanOrEqual(knob.z);
+    const other = new MeshStandardMaterial();
+    expect(mergeParts([parts[0]!, { ...parts[1]!, material: other }])).toHaveLength(2);
   });
 
   it('one InstancedMesh per part; instance matrices match a placed clone', () => {
@@ -95,14 +110,20 @@ describe('furniture instancing', () => {
     const objs = new MapObjects();
     objs.loadChunk(chunk);
     objs.applyModels((id) => (id === 'base:fridge' ? fitted(model(), 1.8) : undefined));
+    // Fridge (two parts, one material: merged) + the crate's grey box (no model: instanced too).
     expect(objs.instancedMeshCount).toBe(2);
     const meshes = () => objs.root.children.filter((c) => c instanceof InstancedMesh);
     expect(meshes()).toHaveLength(2);
-    // Crate has no model: its grey box stays visible.
     const visibleBoxes = objs.root.children.filter(
       (c) => c instanceof Mesh && !(c instanceof InstancedMesh) && c.visible && c.geometry !== geoA,
     );
-    expect(visibleBoxes.length).toBe(1);
+    expect(visibleBoxes.length).toBe(0);
+    // X-ray on the crate: its own see-through box stands in.
+    const n = objs.root.children.length;
+    objs.setXray(5, 2, 0, true);
+    expect(objs.root.children.length).toBe(n + 1);
+    objs.setXray(5, 2, 0, false);
+    expect(objs.root.children.length).toBe(n);
     const before = objs.root.children.length;
     objs.setXray(1, 1, 0, true);
     expect(objs.root.children.length).toBe(before + 1);

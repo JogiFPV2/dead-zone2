@@ -137,7 +137,8 @@ describe('OSM scene osm-okulickiego (content map in the base pack)', () => {
     (f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) as MapChunkJson,
   );
 
-  it('from every storey of every building you can walk out', () => {
+  // Flood fill over every storey of the whole scene: ~5 s on a loaded box, so a generous timeout.
+  it('from every storey of every building you can walk out', { timeout: 60_000 }, () => {
     expect(unreachableRoomTiles(chunks)).toEqual([]);
   });
 
