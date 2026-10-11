@@ -6,19 +6,8 @@ import { partIconItem } from './part-icon.js';
 const TAGS_DIR = new URL('../../../../packages/content/data/base/tags/', import.meta.url);
 const ICONS = new URL('../../public/icons/index.json', import.meta.url);
 
-/**
- * `iconItem` bez wypieczonej ikony w `public/icons` (partia 5 od Designera czeka na import). Do tego czasu UI pokazuje kostkę. Jawnie.
- */
-const PENDING_ICONS = new Set([
-  'base:t-shirt',
-  'base:cooking-pot',
-  'base:matches',
-  'base:sewing-needle',
-  'base:saw',
-  'base:screwdriver',
-  'base:welding-torch',
-  'base:pipe-wrench',
-]);
+/** `iconItem` bez wypieczonej ikony w `public/icons` (UI pokazuje wtedy kostkę). Jawnie; teraz pusta. */
+const PENDING_ICONS = new Set<string>([]);
 
 const tagDefs = readdirSync(TAGS_DIR)
   .filter((f) => f.endsWith('.json'))

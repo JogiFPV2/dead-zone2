@@ -62,6 +62,26 @@ Zastępują wcześniejsze venison, venison-steak, small-game-meat i deer-hide (p
 | wooden-crate, large-wooden-crate                                                                                                                                                                                                                          | Crate, poly.pizza/m/3OEFd1AWfa                     | Quaternius | CC0-1.0  |
 | rabbit-carcass, deer-hide, glass-shards, electronics-scrap, wire, thread, rag, sheet, garbage-bag, sheet-rope, sterilized-rag, splint, lure-remote, brick-stove; znaczki w rogu (noise-maker, lure-electronic, barricade-metal, door-plate, lure-running) | modele i glify własne Deadzone (Designer, Blender) | Deadzone   | CC0-1.0  |
 
+### Ikony, partie 3 (jedzenie) i 5 (gotowe PNG od Designera, 01.10 i 04.10.2026)
+
+15 ikon z tego samego rigu (256 px, w repo zmniejszone do 128 px), lista w
+`tools/assets/icons/prerendered.json`. Pliki partii 3 miały polskie nazwy (`ziemniak` → `potato.png`,
+`pieczony-ziemniak` → `baked-potato.png`, `gulasz-warzywny` → `vegetable-stew.png`, `surowka-z-kapusty` →
+`cabbage-salad.png`, `kapusta` → `cabbage.png`, `surowa-ryba` → `raw-fish.png`, `filet-rybny` → `fish-fillet.png`).
+Modele i skrypty Blendera (`build_food.py`, `build_batch5.py`, `generate-batch5.html`) są poza repo, w
+`/workspace/assets-src/custom/` i `/workspace/deadzone-icons/render/`; pełna tabela: `/workspace/deadzone-assets.md`,
+sekcje „batch 3” i „partia 5”.
+
+| Ikony                                                                        | Źródło                                                      | Autor                 | Licencja |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------- | -------- |
+| cabbage, raw-fish, vegetable-stew (`bowl-soup`), cabbage-salad (`salad`)     | Food Kit (kenney.nl/assets/food-kit)                        | Kenney                | CC0-1.0  |
+| potato (przyciemniony), baked-potato (przerobiony + własne nacięcie i masło) | Potato, poly.pizza/m/acwBoZQNdm                             | Kay Lousberg (KayKit) | CC0-1.0  |
+| fish-fillet (przemalowany)                                                   | Fish Fillet, poly.pizza/m/nQVHa5aYfP                        | Quaternius            | CC0-1.0  |
+| matches (zapałki; pudełko własne)                                            | Match, poly.pizza/m/P79Otw95no                              | Quaternius            | CC0-1.0  |
+| pipe-wrench (przemalowany)                                                   | Wrench, poly.pizza/m/yB1WmvFQNr                             | Pichuliru             | CC0-1.0  |
+| saw (płaskie kolory, zwężone ostrze)                                         | Tool Pack 1 › handsaw (opengameart.org/content/tool-pack-1) | lonesomeducky         | CC0-1.0  |
+| t-shirt, cooking-pot, sewing-needle, screwdriver, welding-torch              | modele własne Deadzone (Designer, Blender / three.js)       | Deadzone              | CC0-1.0  |
+
 ### Ikony pojazdów (gotowe PNG od Designera, 04.10.2026)
 
 6 ikon z tego samego rigu co partie 4 i 4b (256 px, w repo zmniejszone do 128 px), lista w
