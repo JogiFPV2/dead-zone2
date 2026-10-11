@@ -16,6 +16,7 @@ import { NO_BUILDING } from './world/chunk.js';
 import { QUICK_ACCESS, QUICK_ACCESS_READY, type QuickAccessId } from './hud/v2/quick-access.js';
 import { InputMap } from './input/input-map.js';
 import { PlayerInput } from './input/player-input.js';
+import { SneakToggle } from './input/sneak-toggle.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { createSettingsStore } from './settings/store.js';
@@ -639,6 +640,8 @@ const simStreamSync = simWorker
   : undefined;
 simWorker?.onEvents((events) => simStreamSync?.onEvents(events));
 const playerInput = new PlayerInput(renderer.domElement, input, sim, stamper);
+// Sneak toggle `C` (sim #205): the sim's `CharacterView.sneaking` is the state shown.
+const sneak = new SneakToggle((on) => sim.send(stamper.stamp({ type: 'setSneak', on })));
 const snapshots = new SnapshotBuffer();
 // Physics / animation state per entity: the snapshot physics body + `physics` events (sim #62),
 // derived on the client only for records without it (see anim/phys-adapter.ts). View only.
@@ -851,6 +854,11 @@ const toggleWorkshop = () => {
   workshop.toggle();
 };
 input.on('inventory', toggleInventory);
+// `C` combines the hovered item while the inventory is open; no sneak toggle then or in a car.
+input.on('crouch', () => {
+  if (inventory.open || vehicles.seated) return;
+  sneak.toggle(performance.now());
+});
 input.on('crafting', toggleWorkshop);
 /** Screens that do not exist yet: a short „wkrótce” toast (HUD v2 §3). */
 const comingSoon = (id: QuickAccessId) => {
@@ -1435,6 +1443,7 @@ gameState.subscribe((_next, _prev, action) => {
   if (action.type === 'view' && action.view.characters) {
     characters.clear();
     for (const c of action.view.characters) characters.set(c.stableId, c);
+    sneak.setView(characters.get(phys.localId)?.sneaking === true);
   }
   if (action.type === 'events') {
     sleep.events(action.events);
@@ -1676,6 +1685,7 @@ renderer.setAnimationLoop((time) => {
       interactHeld: input.isDown('interact'),
       aiming: isGunAiming(),
       cameraZoom: rig.zoomTarget,
+      sneaking: sneak.sneaking(performance.now()),
     });
     const basePrompt = interaction.frame(performance.now(), simTick);
     const veh = vehicles.frame(performance.now(), simTick);
@@ -1688,6 +1698,12 @@ renderer.setAnimationLoop((time) => {
       veh.prompt ?? (vehicles.seated || veh.hud.repair ? { mode: 'hidden' } : basePrompt),
     );
     bigMap.frame(performance.now(), { x: state.x, y: state.y, heading: state.facing });
+    // 2 s after `C` switches sneaking on: the own step ring whatever „Pokazuj hałas” says.
+    const nowMs = performance.now();
+    if (sneak.revealing(nowMs) && sneak.sneaking(nowMs)) {
+      const steps = characters.get(phys.localId)?.stepNoiseTiles ?? 0;
+      noise.pushStep(steps, { x: state.x, y: state.y, z: state.z }, nowMs);
+    }
     noiseRing.setPixelScale(noisePixelScale());
     noiseRing.update(
       noise.sample(performance.now(), reducedMotion.matches, {

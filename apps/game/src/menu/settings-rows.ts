@@ -133,7 +133,8 @@ const VOLUMES: readonly { id: VolumeId; label: string; note: string }[] = [
 
 const CONTROLS: readonly [string, readonly Action[], string?][] = [
   ['Ruch', ['moveUp', 'moveLeft', 'moveDown', 'moveRight']],
-  ['Bieg / skradanie', ['sprint', 'crouch']],
+  ['Bieg', ['sprint']],
+  ['Skradanie', ['crouch']],
   ['Przeskok (płot, okno)', ['vault']],
   ['Obrót kamery', ['rotateCameraLeft', 'rotateCameraRight']],
   ['Atak / odepchnięcie', ['primaryAction', 'secondaryAction']],

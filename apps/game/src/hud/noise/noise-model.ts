@@ -9,6 +9,9 @@ export type { NoiseDisplay };
 /** „Tylko głośne”: radius from this many metres (run, pry / kick, boarding, glass, shots…). */
 export const NOISE_LOUD_MIN_M = 10;
 
+/** Loudness of a sneak footstep (`noise.footsteps.sneak.volume`): tier „cicho”. */
+export const SNEAK_STEP_LOUDNESS = 0.1;
+
 export type NoiseTier = 'quiet' | 'mid' | 'loud';
 export const noiseTier = (loudness: number): NoiseTier =>
   loudness < 0.3 ? 'quiet' : loudness < 0.8 ? 'mid' : 'loud';
@@ -114,6 +117,21 @@ export class NoiseRingModel {
       bornMs: now,
       refreshedMs: now,
     };
+  }
+
+  /**
+   * Own footstep ring from `CharacterView.stepNoiseTiles` (1 tile = 1 m), shown whatever the
+   * setting: for SNEAK_REVEAL_MS after `C` switches sneaking on, so the player sees the smaller
+   * radius even with „Tylko głośne”. Same faint „cicho” look as a sneak `playerNoise`; standing
+   * still (radius 0) draws nothing.
+   */
+  pushStep(radiusM: number, at: { x: number; y: number; z: number }, now: number): void {
+    if (!(radiusM > 0)) return;
+    this.push(
+      { ...at, radius: radiusM, loudness: SNEAK_STEP_LOUDNESS, kind: 'sneak' },
+      now,
+      'always',
+    );
   }
 
   /** The setting changed: drop a ring the new setting would not show. */

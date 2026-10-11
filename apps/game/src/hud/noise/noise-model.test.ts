@@ -131,3 +131,23 @@ describe('noise circle model', () => {
     expect(m.sample(100)).toBeUndefined();
   });
 });
+
+describe('sneak step ring (C reveal)', () => {
+  const at = { x: 3, y: 4, z: 0 };
+  it('shows the step radius as a faint „cicho” ring even with „Tylko głośne”', () => {
+    const m = new NoiseRingModel();
+    m.pushStep(1.5, at, 0);
+    const s = m.sample(500);
+    expect(s?.radiusM).toBeCloseTo(1.5, 1);
+    expect(s?.tier).toBe('quiet');
+    // Real `loud` filtering still drops a quiet footstep.
+    const n = new NoiseRingModel();
+    n.push({ ...at, radius: 1.5, loudness: 0.1, kind: 'sneak' }, 0, 'loud');
+    expect(n.sample(10)).toBeUndefined();
+  });
+  it('draws nothing when standing still (radius 0)', () => {
+    const m = new NoiseRingModel();
+    m.pushStep(0, at, 0);
+    expect(m.sample(10)).toBeUndefined();
+  });
+});

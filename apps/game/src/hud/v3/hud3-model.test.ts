@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createShowTimer, hpLevel, problemMoodles } from './hud3-model.js';
+import {
+  SNEAK_CHIP,
+  createShowTimer,
+  hpLevel,
+  problemMoodles,
+  withSneakChip,
+} from './hud3-model.js';
 
 describe('problemMoodles', () => {
   const m = (id: string, polarity: 'pos' | 'neg', level: number, since = 0) =>
@@ -27,5 +33,13 @@ describe('createShowTimer', () => {
     expect(t('b', 2500)).toBe(true);
     expect(t('b', 2700)).toBe(false);
     expect(t('b', 2700, true)).toBe(true);
+  });
+});
+
+describe('sneak chip', () => {
+  it('adds „Skradanie” only while sneaking', () => {
+    expect(withSneakChip([], false)).toEqual([]);
+    expect(withSneakChip([], true)).toEqual([SNEAK_CHIP]);
+    expect(SNEAK_CHIP.label).toBe('Skradanie');
   });
 });

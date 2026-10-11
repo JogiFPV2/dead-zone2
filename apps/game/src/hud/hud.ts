@@ -68,6 +68,7 @@ import {
   MAX_STATUS_CHIPS,
   createShowTimer,
   problemMoodles,
+  withSneakChip,
 } from './v3/hud3-model.js';
 import { scaledUi } from '../ui/ui-scale.js';
 
@@ -125,6 +126,8 @@ export interface HudFrame {
   aiming: boolean;
   /** Camera zoom target (HUD v2 chip). */
   cameraZoom: number;
+  /** Sneak toggle on (`CharacterView.sneaking`): „Skradanie” status chip. */
+  sneaking?: boolean;
 }
 
 export interface Hud {
@@ -302,6 +305,7 @@ export function createHud(opts: HudOptions): Hud {
   let lastMinimapKey = '';
   let openContainer: number | undefined;
   let lastState: GameState | undefined;
+  let lastSneaking = false;
   /** Newest frame state (hotbar commands). */
   let current: GameState | undefined;
 
@@ -409,13 +413,20 @@ export function createHud(opts: HudOptions): Hud {
       if (f.now - lastUpdate < HUD_UPDATE_MS) return;
       lastUpdate = f.now;
       v2.frame({ now: f.now, state: s, clock: f.clock, cameraZoom: f.cameraZoom });
-      if (s !== lastState) {
+      const sneaking = f.sneaking === true;
+      if (s !== lastState || sneaking !== lastSneaking) {
         lastState = s;
+        lastSneaking = sneaking;
         // The highlight follows the item in hand (inventory PPM / hotbar alike).
         selected = hotbarHeldIndex(s) ?? selected;
         hp.update(statsVM(s).health);
         setThreat({ level: threatLevel(s.threat) });
-        setMoodles(problemMoodles(moodleVMs(s.player.moodles, content, since, f.now), f.now));
+        setMoodles(
+          withSneakChip(
+            problemMoodles(moodleVMs(s.player.moodles, content, since, f.now), f.now),
+            sneaking,
+          ),
+        );
         const items = hotbarItems(s, content);
         for (const slot of slots) {
           const p: InventorySlotProps = {

@@ -20,6 +20,14 @@ export const moveKeys = (input: InputMap): MoveKeys => ({
 });
 
 /**
+ * Gait of `move`: hold sprint = sprint (sim #126: endurance checks may drop it to run), else walk.
+ * Sneaking is the `setSneak` toggle (`C`, input/sneak-toggle.ts): the sim turns walk into sneak
+ * while it is on and switches it off on run / sprint (sim #205).
+ */
+export const moveGait = (input: Pick<InputMap, 'isDown'>): Gait =>
+  input.isDown('sprint') ? 'sprint' : 'walk';
+
+/**
  * Turns move actions + mouse into sim commands. Call update() every frame: move is sent only when
  * the direction changes (including after a camera rotation), aim at most every AIM_INTERVAL_MS.
  */
@@ -44,13 +52,7 @@ export class PlayerInput {
 
   update(nowMs: number, cameraYaw: number, camera: Camera): void {
     const move = moveDirection(moveKeys(this.input), cameraYaw);
-    // Hold sprint = sprint (sim #126: endurance checks may drop it to run), hold crouch =
-    // sneak (sim gaits: speed, noise, needs).
-    const gait: Gait = this.input.isDown('sprint')
-      ? 'sprint'
-      : this.input.isDown('crouch')
-        ? 'sneak'
-        : 'walk';
+    const gait = moveGait(this.input);
     if (!sameMove(move, this.lastMove) || gait !== this.lastGait) {
       this.lastMove = move;
       this.lastGait = gait;

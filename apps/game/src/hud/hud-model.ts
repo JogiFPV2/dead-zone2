@@ -239,6 +239,7 @@ export function hintItems(b: Bindings, firearm = false): KeyHint[] {
   return [
     { key: moveKeysLabel(b), label: 'ruch' },
     { key: actionKey(b, 'sprint'), label: 'sprint' },
+    { key: actionKey(b, 'crouch'), label: 'skradanie' },
     { key: actionKey(b, 'inventory'), label: 'ekwipunek' },
     { key: actionKey(b, 'map'), label: 'mapa' },
   ];

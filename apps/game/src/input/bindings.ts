@@ -11,6 +11,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   moveLeft: ['KeyA'],
   moveRight: ['KeyD'],
   sprint: ['ShiftLeft'],
+  // Sneak toggle (`setSneak`, input/sneak-toggle.ts); also combine in the inventory.
   crouch: ['KeyC'],
   vault: ['Space'],
   rotateCameraLeft: ['KeyQ'],
@@ -32,7 +33,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   sleep: ['KeyN'],
   watchTv: ['KeyT'],
   map: ['KeyM'],
-  // HUD v2 top bar. `C` stays crouch (and combine in the inventory): „Postać i zdrowie” is H.
+  // HUD v2 top bar. `C` stays sneak (and combine in the inventory): „Postać i zdrowie” is H.
   character: ['KeyH'],
   skills: ['KeyK'],
   journal: ['KeyJ'],

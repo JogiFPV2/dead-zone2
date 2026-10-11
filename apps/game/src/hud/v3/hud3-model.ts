@@ -43,3 +43,21 @@ export function createShowTimer(
     return force || now - changedAt < holdMs;
   };
 }
+
+/** Status chip while the sneak toggle (`C`) is on: neutral-positive, no level number. */
+export const SNEAK_CHIP: MoodleVM = {
+  id: 'sneak',
+  label: 'Skradanie',
+  polarity: 'pos',
+  level: 1,
+  since: 0,
+};
+
+/**
+ * Adds the „Skradanie” chip to the status row while sneaking (HUD v2 spec „Skradanie”: a simple
+ * state chip; the eye visibility tile is a separate, not yet approved mockup). Unlike other
+ * positives it stays for as long as the toggle is on.
+ */
+export function withSneakChip(list: readonly MoodleVM[], sneaking: boolean): MoodleVM[] {
+  return sneaking ? [...list, SNEAK_CHIP] : [...list];
+}
