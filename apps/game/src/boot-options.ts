@@ -57,6 +57,8 @@ export interface BootOptions {
   cars: SimVehicleSpawn[];
   /** Dev `?pump=x,y` (`;` between pumps): `base:fuel-pump` map objects on these tiles. */
   pumps: { x: number; y: number }[];
+  /** Dev `?tv=x,y` (`;` between): `base:tv` map objects (no content map has a TV yet). */
+  tvs?: { x: number; y: number }[];
   /** Dev `?cam=x,z,viewH`: camera pinned at a world point with that view height (screenshots). */
   cam?: { x: number; z: number; viewHeight: number };
 }
@@ -167,6 +169,7 @@ export function parseBootOptions(search: string): BootOptions {
     give: parseGiveParam(q.get('give')),
     cars: parseCarParam(q.get('car')),
     pumps: parseTileListParam(q.get('pump')),
+    ...(q.get('tv') !== null ? { tvs: parseTileListParam(q.get('tv')) } : {}),
     stats: parseStatParam(q.get('stat')),
     zombies: q.get('zombies') !== '0',
     ...(q.get('animals') !== null

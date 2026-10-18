@@ -11,6 +11,18 @@ export interface HudSleepSettings {
   wakeOnZombieTiles: number;
   timeScaleHint: 1 | 2 | 4;
   tvRadiusTiles: number;
+  /** `leisure.tv` / `leisure.vhs` effects (watch panel): rest, boredom and stress per session. */
+  leisure: {
+    tv: LeisureEffect & { sessionMin: number };
+    vhs: LeisureEffect;
+  };
+}
+
+/** One leisure activity: fatigue rested, boredom and stress removed (points). */
+export interface LeisureEffect {
+  rest: number;
+  boredom: number;
+  stress: number;
 }
 
 /** `leisure.tvTag` default (base pack). */
@@ -30,6 +42,10 @@ export const DEFAULT_SLEEP_SETTINGS: HudSleepSettings = {
   wakeOnZombieTiles: 6,
   timeScaleHint: 4,
   tvRadiusTiles: 1.5,
+  leisure: {
+    tv: { rest: 6, boredom: 25, stress: 12, sessionMin: 30 },
+    vhs: { rest: 8, boredom: 30, stress: 15 },
+  },
 };
 
 type Obj = Record<string, unknown>;
@@ -52,6 +68,15 @@ export function readSleepSettings(json: unknown): HudSleepSettings | undefined {
     };
   };
   const leisure = survival && isObj(survival.leisure) ? survival.leisure : {};
+  const effect = (v: unknown, e: LeisureEffect): LeisureEffect => {
+    const x = isObj(v) ? v : {};
+    return {
+      rest: num(x.fatigueRest, e.rest),
+      boredom: num(x.boredomReduction, e.boredom),
+      stress: num(x.stressReduction, e.stress),
+    };
+  };
+  const tv = isObj(leisure.tv) ? leisure.tv : {};
   return {
     minFatigueToSleep: num(sl.minFatigueToSleep, d.minFatigueToSleep),
     wakeAtFatigue: num(sl.wakeAtFatigue, d.wakeAtFatigue),
@@ -61,5 +86,12 @@ export function readSleepSettings(json: unknown): HudSleepSettings | undefined {
     wakeOnZombieTiles: num(sl.wakeOnZombieTiles, d.wakeOnZombieTiles),
     timeScaleHint: speed(sl.timeScaleHint, d.timeScaleHint),
     tvRadiusTiles: num(leisure.tvRadiusTiles, d.tvRadiusTiles),
+    leisure: {
+      tv: {
+        ...effect(tv, d.leisure.tv),
+        sessionMin: num(tv.sessionMin, d.leisure.tv.sessionMin),
+      },
+      vhs: effect(leisure.vhs, d.leisure.vhs),
+    },
   };
 }

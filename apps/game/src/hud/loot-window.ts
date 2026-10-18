@@ -1,5 +1,5 @@
 import './loot-window.css';
-import type { ContainerId, ItemView } from '@deadzone/protocol';
+import type { ContainerId, ContainerView, ItemView } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex } from './content-index.js';
@@ -31,6 +31,8 @@ export interface LootWindowOptions {
   onClose: () => void;
   /** Tab click / Q / E: open another container in reach. */
   onSwitch: (id: ContainerId) => void;
+  /** Containers another window shows instead (fridges: the furniture UI). */
+  defer?: (c: ContainerView) => boolean;
 }
 
 export interface LootWindow {
@@ -644,7 +646,9 @@ export function createLootWindow(opts: LootWindowOptions): LootWindow {
       const s = opts.state();
       const id = s.container?.id;
       // Auto-open once a container's content arrives (after the search), close when it's gone.
-      if (id !== undefined && id !== lastContainer) api.show();
+      const deferred = !!s.container && !!opts.defer?.(s.container);
+      if (deferred && isOpen) api.hide();
+      if (id !== undefined && id !== lastContainer && !deferred) api.show();
       if (id === undefined && s.action?.kind !== 'search') api.hide();
       lastContainer = id;
       if (isOpen && (changed(s, last) || opts.content() !== lastContent)) render();

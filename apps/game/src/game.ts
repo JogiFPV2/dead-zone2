@@ -118,7 +118,18 @@ import type { SnapshotVehicle } from '@deadzone/protocol';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
 import { createSleepController } from './hud/sleep-controller.js';
-import { leisureSpots, mapObjectsOf, type LeisureSpot } from './hud/leisure-spots.js';
+import {
+  SPOT_RADIUS_TILES,
+  leisureSpots,
+  mapObjectsOf,
+  sleepSurfaceAt,
+  type LeisureSpot,
+} from './hud/leisure-spots.js';
+import { FurnitureUi } from './hud/furniture/furniture-ui.js';
+import { SimFurnitureSource } from './hud/furniture/sim-source.js';
+import { sleepEntries } from './hud/furniture/sleep-entries.js';
+import type { SleepSurface } from './hud/sleep-settings.js';
+import { LEVEL_HEIGHT } from './world/instances.js';
 import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
@@ -223,10 +234,15 @@ const sceneWorld: LoadedMap = osm
   ? { ...loadedWorld, source: withSceneVehicles(loadedWorld.source, osm) }
   : loadedWorld;
 // Dev `?pump=x,y`: fuel pumps on the map (vehicle UI testing; no map has one yet).
-const world: LoadedMap =
+const pumpedWorld: LoadedMap =
   import.meta.env.DEV && boot.pumps.length
     ? { ...sceneWorld, source: withPumps(sceneWorld.source, boot.pumps) }
     : sceneWorld;
+// Dev `?tv=x,y`: TVs on the map (furniture UI testing; no content map has one yet).
+const world: LoadedMap =
+  import.meta.env.DEV && boot.tvs?.length
+    ? { ...pumpedWorld, source: withPumps(pumpedWorld.source, boot.tvs, 'base:tv') }
+    : pumpedWorld;
 // OSM maps: ODbL attribution always on screen (over the world, the minimap and the big map).
 if (osm || genWorld?.source.info.attribution) {
   const attribution = document.createElement('div');
@@ -839,7 +855,77 @@ const loot = createLootWindow({
     sim.send(stamper.stamp({ type: 'closeContainer' }));
   },
   onSwitch: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
+  defer: (c) => furniture.handlesContainer(c),
 });
+// Furniture UI (spec „Meble i czynności (UI)”): RMB menu over furniture / doors / windows
+// (`view.furnitureActions`, run with `useFurniture`), fridge window, watching panel, sleep choice.
+// Beds are not in the sim's list yet: `sleepEntries` adds them on the client (`sleep` command).
+// Multi-tile picking (`footprint` option) is left to the footprint render PR.
+const furniturePlayer = () => {
+  const p = snapshots.sample(performance.now(), TICK_MS);
+  return p ? { x: p.x, y: p.y, z: p.z ?? 0 } : undefined;
+};
+const furniture = new FurnitureUi({
+  root: container,
+  source: new SimFurnitureSource({
+    list: () => gameState.get().furniture,
+    useFurniture: (furnitureId, actionId) => {
+      sendBody({ type: 'useFurniture', furnitureId, actionId });
+    },
+    local: sleepEntries({
+      state: () => gameState.get(),
+      content: () => hudContent,
+      objects: () => mapObjectList,
+      player: furniturePlayer,
+      send: (cmd) => {
+        sleep.track(sendBody(cmd));
+      },
+    }),
+  }),
+  state: () => gameState.get(),
+  content: () => hudContent,
+  player: furniturePlayer,
+  send: (cmd) => {
+    sleep.track(sendBody(cmd));
+  },
+  keys: () => {
+    const b = settings.get().input.bindings;
+    return { run: actionKey(b, 'interact'), close: actionKey(b, 'pause') };
+  },
+  isRunKey: (code) => settings.get().input.bindings.interact.includes(code),
+  surfaces: () => {
+    const p = furniturePlayer();
+    const nearby = new Set<SleepSurface>();
+    if (!p) return { here: 'floor', nearby };
+    for (const s of spots) {
+      if (s.kind !== 'tv' && Math.hypot(s.tx + 0.5 - p.x, s.ty + 0.5 - p.y) <= SPOT_RADIUS_TILES)
+        nearby.add(s.kind);
+    }
+    return { here: sleepSurfaceAt(spots, p.x, p.y), nearby };
+  },
+  tickMs: TICK_MS,
+});
+window.addEventListener(
+  'keydown',
+  (e) => {
+    if (pause.simPaused || !furniture.open || !furniture.key(e)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  },
+  true,
+);
+/** RMB click: the furniture menu for the object under the cursor; false = nothing there. */
+function openFurnitureAtCursor(): boolean {
+  if (!cursorPx) return false;
+  const p = furniturePlayer();
+  if (!p) return false;
+  const w = gameRoot.clientWidth;
+  const h = gameRoot.clientHeight;
+  const ndc = clientToNdc(cursorPx.x, cursorPx.y, { left: 0, top: 0, width: w, height: h });
+  // Furniture stands up to ~1 m: pick at knee height so the top of a bed / fridge counts.
+  const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, p.z * LEVEL_HEIGHT + 0.5);
+  return !!hit && furniture.openAt(hit.x, hit.z, p.z, cursorPx.x, cursorPx.y);
+}
 const workshop = createWorkshopWindow({
   root: container,
   send: (cmd) => sim.send(stamper.stamp(cmd)),
@@ -928,6 +1014,8 @@ function quickAccess(id: QuickAccessId): void {
 }
 // Escape: an open window closes first; with none open, the pause menu (deadzone-menu-spec §6).
 const escapeWindows: readonly Closable[] = [
+  // Furniture menu / submenu / sleep choice / fridge window: the topmost closes first.
+  furniture,
   {
     get open() {
       return bigMap.open;
@@ -957,6 +1045,13 @@ const escapeWindows: readonly Closable[] = [
       loot.hide();
       sim.send(stamper.stamp({ type: 'closeContainer' }));
     },
+  },
+  // Watching TV / a tape (panel „Przerwij Esc”): stops; XP of an unfinished tape is lost.
+  {
+    get open() {
+      return furniture.watching;
+    },
+    close: () => furniture.stopWatching(),
   },
 ];
 const pause = new PauseController({
@@ -1222,7 +1317,8 @@ const interaction = new InteractController({
     (['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const).some((a) => input.isDown(a)) ||
     input.isDown('primaryAction') ||
     input.isDown('secondaryAction'),
-  windowOpen: () => inventory.open || loot.open || workshop.open || !!gameState.get().death,
+  windowOpen: () =>
+    inventory.open || loot.open || workshop.open || furniture.open || !!gameState.get().death,
   legacy: interact,
   open: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
   search: (t) => sim.send(stamper.stamp({ type: 'search', ...t })),
@@ -1308,6 +1404,8 @@ hud.onPromptMenu((i, kind) => {
 // Melee: LMB attacks towards the aim point (weapon in hand_primary or fists), RMB shoves.
 input.on('primaryAction', () => {
   if (inventory.open || gameState.get().death || vehicles.seated) return;
+  // A click that only closed the furniture menu.
+  if (furniture.swallowsClick()) return;
   rmb.attack();
   lastSwingMs = performance.now();
   const gun = hud.firearm();
@@ -1333,6 +1431,8 @@ const onSecondaryRelease = (): void => {
   if (!rmb.release(performance.now())) return;
   if (inventory.open || gameState.get().death || vehicles.seated) return;
   if (vehicles.pressSecondary()) return;
+  // Furniture / fixture under the cursor: its context menu instead of a shove.
+  if (!furniture.open && openFurnitureAtCursor()) return;
   // Firearm in hand: RMB only aims with the reticle, no shove.
   if (hud.firearm()) return;
   lastSwingMs = performance.now();
@@ -1471,6 +1571,7 @@ gameState.subscribe((_next, _prev, action) => {
   }
   if (action.type === 'events') {
     sleep.events(action.events);
+    furniture.events(action.events);
     vehicles.events(action.events);
     hud.events(action.events);
     const p = snapshots.sample(performance.now(), TICK_MS);
@@ -1689,6 +1790,7 @@ renderer.setAnimationLoop((time) => {
   if (!inventory.open) loot.update();
   workshop.update();
   sleep.frame(performance.now(), simTick);
+  furniture.frame(performance.now(), simTick);
   shelfFill.update(gs.storages, gs.container?.id);
   openings.update(time / 1000);
   inventory.update();

@@ -76,6 +76,14 @@ it('parses ?stat= debug stats', () => {
   expect(parseBootOptions('').stats).toEqual([]);
 });
 
+it('parses dev TVs (`?tv=`)', () => {
+  expect(parseBootOptions('?map=demo-house&tv=7,8;9,10').tvs).toEqual([
+    { x: 7, y: 8 },
+    { x: 9, y: 10 },
+  ]);
+  expect(parseBootOptions('?map=demo-house').tvs).toBeUndefined();
+});
+
 it('parses dev cars (`?car=`) and pumps (`?pump=`)', () => {
   expect(parseCarParam('12.5,20,90,18,locked+nokey;30,4')).toEqual([
     { x: 12.5, y: 20, heading: Math.PI / 2, fuel: 18, locked: true, key: 'none' },

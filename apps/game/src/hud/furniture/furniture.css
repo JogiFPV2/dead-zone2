@@ -1,0 +1,710 @@
+/* Furniture UI (deadzone-hud-v2-spec „Meble i czynności (UI)”, mockups furn-*.png). Same look as
+   the vehicle F menu (HUD v3 colours); 1280×720 layout scaled with the HUD (--hud2-s). */
+.dz-fm-layer {
+  --k: var(--hud2-s, 1);
+  --acc: #e0a23a;
+  --acc-hi: #f0c06a;
+  --line: #2c3337;
+  --bd: #414a4f;
+  --muted: #9aa3a7;
+  --dim: #5b6469;
+  --bad: #e8766c;
+  --ok: #a9c07a;
+  --warn: #e0c060;
+  --ice: #8cc4e0;
+  --panel: rgba(17, 20, 23, 0.97);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-menu, 600);
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary, #e4e6e3);
+}
+.dz-fm-layer [hidden] {
+  display: none !important;
+}
+.dz-fm__grow {
+  flex: 1;
+}
+.dz-fm__muted {
+  color: var(--muted);
+  font: 400 11px var(--font-family-mono);
+}
+.dz-fm__ic {
+  flex: none;
+}
+.dz-fm__img {
+  flex: none;
+  object-fit: contain;
+  margin: -3px 0;
+}
+.dz-fm__key {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 5px;
+  margin: 0 3px;
+  border: 1px solid var(--dim);
+  border-radius: 3px;
+  background: rgba(14, 17, 19, 0.9);
+  font: 700 10px var(--font-family-mono);
+  color: var(--color-text-primary, #e4e6e3);
+}
+.dz-fm__empty {
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ── Context menu (300 px) ─────────────────────────────────────────────── */
+.dz-fm {
+  position: absolute;
+  width: 330px;
+  transform: scale(var(--k));
+  transform-origin: top left;
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  font-size: 12px;
+  user-select: none;
+}
+.dz-fm__mh {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px;
+  font-family: var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-fm__mh b {
+  color: #e4e6e3;
+  letter-spacing: 0.06em;
+}
+.dz-fm__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.dz-fm__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-left-width: 2px;
+  border-radius: 3px;
+  font: 700 10px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-fm__pill[data-t='acc'] {
+  color: var(--acc-hi);
+  border-left-color: var(--acc);
+}
+.dz-fm__pill[data-t='bad'] {
+  color: var(--bad);
+  border-left-color: var(--bad);
+}
+.dz-fm__rows {
+  padding: 4px 0;
+}
+.dz-fm__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 32px;
+  padding: 0 10px;
+  margin: 0 4px;
+  border-radius: 3px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.dz-fm__row[data-sel='true'],
+.dz-fm__row[data-open='true'] {
+  background: rgba(224, 162, 58, 0.14);
+  border-left-color: var(--acc);
+}
+.dz-fm__row[data-off='true'] {
+  color: var(--dim);
+  cursor: default;
+}
+.dz-fm__lbl {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+.dz-fm__row[data-x='true'] {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.dz-fm__xs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  line-height: 14px;
+}
+.dz-fm__xs .dz-fm__x {
+  font-size: 10px;
+}
+.dz-fm__hint {
+  font: 400 11px var(--font-family-mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dz-fm__type {
+  font: 400 9px var(--font-family-mono);
+  color: var(--dim);
+}
+.dz-fm__x {
+  font: 400 11px var(--font-family-mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dz-fm__x[data-t='warn'] {
+  color: var(--warn);
+}
+.dz-fm__x + .dz-fm__x::before {
+  content: '· ';
+  color: var(--dim);
+}
+.dz-fm__why {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 400 11px var(--font-family-mono);
+  color: var(--bad);
+  white-space: nowrap;
+}
+/* Long reasons („Brak klucza do tego budynku”) wrap instead of squeezing the label. */
+.dz-fm__row > .dz-fm__why {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: normal;
+  text-align: right;
+  line-height: 13px;
+}
+.dz-fm__row > .dz-fm__why svg {
+  flex: none;
+}
+.dz-fm__mf {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--muted);
+}
+.dz-fm__mf--note {
+  font-size: 10px;
+}
+/* VHS submenu. */
+.dz-fm--sub {
+  width: 300px;
+}
+.dz-fm__tape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 10px;
+  margin: 0 4px;
+  border-radius: 3px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.dz-fm__tape[data-sel='true'] {
+  background: rgba(224, 162, 58, 0.14);
+  border-left-color: var(--acc);
+}
+.dz-fm__tt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dz-fm__tt b {
+  font-weight: 600;
+}
+.dz-fm__tt span {
+  font: 400 11px var(--font-family-mono);
+  color: var(--ok);
+}
+.dz-fm__tape[data-off='true'] {
+  color: var(--dim);
+  cursor: default;
+}
+.dz-fm__tt .dz-fm__why {
+  color: var(--bad);
+}
+.dz-fm__tape[data-watched='true'] .dz-fm__tt span {
+  color: var(--muted);
+}
+
+/* ── Fridge window (right, 560 px) ─────────────────────────────────────── */
+.dz-ff {
+  position: absolute;
+  top: calc(44px * var(--k));
+  right: calc(18px * var(--k));
+  width: 560px;
+  max-height: calc((100% - 150px * var(--k)) / var(--k));
+  display: flex;
+  flex-direction: column;
+  transform: scale(var(--k));
+  transform-origin: top right;
+  background: rgba(21, 25, 28, 0.94);
+  border: 1px solid var(--bd);
+  border-radius: 5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  font-size: 12px;
+}
+.dz-ff__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-ff__head b {
+  color: #e4e6e3;
+  letter-spacing: 0.06em;
+}
+.dz-ff__x {
+  all: unset;
+  cursor: pointer;
+}
+.dz-ff__pills {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 0;
+}
+.dz-ff__cap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.dz-ff__cap b {
+  font: 700 11px var(--font-family-mono);
+  color: #e4e6e3;
+}
+.dz-ff__capbar,
+.dz-ff__bar,
+.dz-ftv__bar,
+.dz-ftv__sbar,
+.dz-fs__qb {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.dz-ff__capbar i,
+.dz-ff__bar i,
+.dz-ftv__bar i,
+.dz-ftv__sbar i,
+.dz-fs__qb i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #4c9fd6;
+  border-radius: 2px;
+}
+.dz-ff__cols,
+.dz-ff__row {
+  display: grid;
+  grid-template-columns: 22px 1fr 40px 54px 70px 74px;
+  align-items: center;
+  column-gap: 8px;
+}
+.dz-ff__cols {
+  height: auto;
+  padding: 6px 12px 6px 22px;
+  border-bottom: 1px solid var(--line);
+  font: 700 9px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.dz-ff__cols span:nth-child(3),
+.dz-ff__cols span:nth-child(4) {
+  text-align: right;
+}
+.dz-ff__cols span:last-child {
+  grid-column: span 2;
+}
+.dz-ff__sec {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px 5px;
+  font-family: var(--font-family-mono);
+  color: var(--acc-hi);
+}
+.dz-ff__sec b {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.dz-ff__rows {
+  overflow: auto;
+  padding-bottom: 6px;
+}
+.dz-ff__row {
+  height: 30px;
+  padding: 0 12px 0 20px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.dz-ff__row:hover {
+  background: rgba(224, 162, 58, 0.12);
+  border-left-color: var(--acc);
+}
+.dz-ff__name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dz-ff__n,
+.dz-ff__w {
+  font: 400 11px var(--font-family-mono);
+  color: var(--muted);
+  text-align: right;
+}
+.dz-ff__bar {
+  flex: none;
+  width: 70px;
+}
+.dz-ff__bar[data-t='ok'] i {
+  background: var(--ok);
+}
+.dz-ff__bar[data-t='warn'] i {
+  background: var(--warn);
+}
+.dz-ff__bar[data-t='bad'] i {
+  background: var(--bad);
+}
+.dz-ff__bar[data-t='ice'] i {
+  background: var(--ice);
+}
+.dz-ff__bar--none {
+  opacity: 0.4;
+}
+.dz-ff__fl {
+  font: 600 11px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-ff__fl[data-t='ok'] {
+  color: var(--ok);
+}
+.dz-ff__fl[data-t='warn'] {
+  color: var(--warn);
+}
+.dz-ff__fl[data-t='bad'] {
+  color: var(--bad);
+}
+.dz-ff__fl[data-t='ice'] {
+  color: var(--ice);
+}
+.dz-ff__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+.dz-ff__btn,
+.dz-ftv__stop,
+.dz-fs__go,
+.dz-fs__cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.7);
+  font: 700 11px var(--font-family-mono);
+  letter-spacing: 0.04em;
+  color: #e4e6e3;
+  cursor: pointer;
+}
+.dz-ff__btn:disabled,
+.dz-fs__go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── Watching panel (bottom right, 410 px) ─────────────────────────────── */
+.dz-ftv {
+  position: absolute;
+  right: calc(18px * var(--k));
+  bottom: calc(92px * var(--k));
+  width: 410px;
+  padding: 12px 14px;
+  transform: scale(var(--k));
+  transform-origin: bottom right;
+  background: rgba(21, 25, 28, 0.94);
+  border: 1px solid var(--bd);
+  border-radius: 5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  font-size: 12px;
+}
+.dz-ftv__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--acc-hi);
+}
+.dz-ftv__tt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dz-ftv__kick {
+  font: 700 9px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--acc);
+}
+.dz-ftv__tt b {
+  font-size: 14px;
+  color: #e4e6e3;
+}
+.dz-ftv__prog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 10px;
+  font: 400 11px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-ftv__bar {
+  height: 5px;
+}
+.dz-ftv__bar i {
+  background: var(--acc);
+}
+.dz-ftv__skill {
+  display: flex;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+}
+.dz-ftv__sm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dz-ftv__st {
+  display: flex;
+  align-items: center;
+  color: #e4e6e3;
+}
+.dz-ftv__xp {
+  font-family: var(--font-family-mono);
+  color: var(--ok);
+}
+.dz-ftv__sbar {
+  flex: none;
+  height: 4px;
+}
+.dz-ftv__sbar i {
+  background: var(--ok);
+}
+.dz-ftv__skill small,
+.dz-ftv__note {
+  font: 400 10px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-ftv__fxs {
+  margin-top: 8px;
+}
+.dz-ftv__fx {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+.dz-ftv__fx span {
+  color: #e4e6e3;
+}
+.dz-ftv__fx b {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: 700 11px var(--font-family-mono);
+  color: var(--ok);
+}
+.dz-ftv__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.dz-ftv__stop {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+/* ── Sleep choice (centred, 600 px) ────────────────────────────────────── */
+.dz-fs {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 600px;
+  padding: 16px 18px;
+  transform: translate(-50%, -55%) scale(var(--k));
+  background: rgba(21, 25, 28, 0.96);
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  font-size: 12px;
+}
+.dz-fs__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--acc-hi);
+}
+.dz-fs__head > b {
+  font: 700 16px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: #e4e6e3;
+}
+.dz-fs__head b b,
+.dz-fs__head .dz-fm__muted b {
+  color: #e4e6e3;
+}
+.dz-fs__label {
+  margin: 14px 0 6px;
+  font: 700 9px var(--font-family-mono);
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.dz-fs__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.dz-fs__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+}
+.dz-fs__card[data-cur='true'] {
+  border-color: var(--acc);
+  background: rgba(224, 162, 58, 0.08);
+  color: var(--acc-hi);
+}
+.dz-fs__card[data-av='false'] {
+  opacity: 0.5;
+}
+.dz-fs__cn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dz-fs__cn b {
+  font-size: 13px;
+  color: #e4e6e3;
+}
+.dz-fs__cn span {
+  font: 400 10px var(--font-family-mono);
+}
+.dz-fs__q {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.dz-fs__q b {
+  font: 700 11px var(--font-family-mono);
+  color: #e4e6e3;
+}
+.dz-fs__qb i {
+  background: var(--muted);
+}
+.dz-fs__card[data-cur='true'] .dz-fs__qb i {
+  background: var(--acc);
+}
+.dz-fs__rows {
+  margin-top: 10px;
+}
+.dz-fs__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+.dz-fs__row span {
+  color: #e4e6e3;
+}
+.dz-fs__row b {
+  font: 700 11px var(--font-family-mono);
+}
+.dz-fs__row b[data-t='acc'] {
+  color: var(--acc-hi);
+}
+.dz-fs__blocked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--bad);
+  border-radius: 4px;
+  background: rgba(200, 69, 60, 0.1);
+  color: var(--bad);
+}
+.dz-fs__blocked div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dz-fs__blocked span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.dz-fs__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.dz-fs__go {
+  border-color: var(--acc);
+  background: var(--acc);
+  color: #1a1408;
+}
+.dz-fs__go .dz-fm__key {
+  color: #1a1408;
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(0, 0, 0, 0.3);
+}

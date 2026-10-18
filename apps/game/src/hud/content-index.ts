@@ -34,6 +34,10 @@ export interface HudItemDef {
   sleepSurface?: 'bed' | 'sofa';
   /** A TV (`placeable.power` + the leisure TV tag): `watchTv` nearby. */
   tv?: boolean;
+  /** VHS tapes: skills with XP, real seconds at ×1, XP only once per character. */
+  vhs?: { skills: readonly { skill: string; xp: number }[]; watchSec: number; once: boolean };
+  /** World storage type of a placeable (`placeable.containerType`, e.g. `base:fridge`). */
+  containerType?: string;
   /** Content tags (`base:tool-wrench`, `base:tool-hose` …): vehicle tools and parts. */
   tags?: readonly string[];
 }
@@ -290,6 +294,10 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(magazine ? { magazine } : {}),
           ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),
           ...(tv ? { tv: true } : {}),
+          ...(isObj(i.vhs) ? { vhs: readVhs(i.vhs) } : {}),
+          ...(typeof placeable?.containerType === 'string'
+            ? { containerType: placeable.containerType }
+            : {}),
           ...(tags.length ? { tags: tags.filter((t): t is string => typeof t === 'string') } : {}),
           ...(isObj(i.drink) && typeof i.drink.uses === 'number' ? { fillMax: i.drink.uses } : {}),
           ...(isObj(i.bag) && typeof i.bag.weightReductionPct === 'number'
@@ -308,6 +316,16 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
     vehicleTypes,
     ...(sleep ? { sleep } : {}),
     ...(vehicles ? { vehicles } : {}),
+  };
+}
+
+function readVhs(v: Obj): NonNullable<HudItemDef['vhs']> {
+  return {
+    skills: list(v.skills)
+      .filter((s) => typeof s.skill === 'string')
+      .map((s) => ({ skill: s.skill as string, xp: num(s.xp) })),
+    watchSec: num(v.watchSec, 30),
+    once: v.oncePerCharacter !== false,
   };
 }
 

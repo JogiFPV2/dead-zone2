@@ -12,6 +12,7 @@ import type {
   ContainerView,
   DeathCause,
   EquipSlot,
+  FurnitureView,
   InventoryView,
   ItemId,
   NearbyContainerView,
@@ -20,6 +21,7 @@ import type {
   SleepView,
   ViewStat,
   VehicleStateView,
+  UtilitiesView,
   WoundView,
 } from '@deadzone/protocol';
 
@@ -87,6 +89,13 @@ export interface GameState {
   };
   /** Threat 0–100 (view.threat; 0 = safe). */
   threat: number;
+  /**
+   * Furniture / edges in reach with their context-menu actions (view.furnitureActions, full
+   * list; nearest to the aim point first).
+   */
+  furniture: readonly FurnitureView[];
+  /** Mains power / water (view.utilities); absent until the sim sends it. */
+  utilities?: UtilitiesView;
   /** Combat state of the local player (kills, weapon, cooldown). */
   combat?: CombatView;
   /** HUD target card (view.target, protocol 20); absent = no target. */
@@ -110,6 +119,7 @@ export const INITIAL_GAME_STATE: GameState = {
   storages: [],
   skills: [],
   threat: 0,
+  furniture: [],
   timeScaleHint: 1,
   recentEvents: [],
 };
@@ -188,6 +198,8 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
+    ...(view.furnitureActions ? { furniture: view.furnitureActions } : {}),
+    ...(view.utilities ? { utilities: view.utilities } : {}),
     ...(view.combat ? { combat: view.combat } : {}),
     ...(view.crafting ? { crafting: view.crafting } : {}),
     ...(view.skills ? { skills: view.skills } : {}),
