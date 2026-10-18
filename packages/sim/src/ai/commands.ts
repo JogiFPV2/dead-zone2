@@ -13,7 +13,7 @@ const grids = new WeakMap<object, TileGrid>();
 export const gridOf = (w: SimWorld): TileGrid => {
   let g = grids.get(w.openings);
   if (!g) {
-    g = new TileGrid(w.map, w.openings);
+    g = new TileGrid(w.map, w.openings, w.furniture);
     grids.set(w.openings, g);
   }
   return g;

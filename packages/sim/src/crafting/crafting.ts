@@ -27,6 +27,8 @@ import {
 import { addXp, learnRecipe, progressOf } from '../progress/skills.js';
 import { applyLeisure } from '../leisure/leisure.js';
 import { floorZ } from '../world/levels.js';
+import { anchorRect, objectRect } from '../furniture/footprint.js';
+import { rectDist2 } from '../world/furniture.js';
 
 /** A station within the crafting radius: a station item on a ground pile, or a map object. */
 export interface StationAt {
@@ -69,11 +71,23 @@ export function craftSources(w: SimWorld, eid: number): Sources {
     for (let x = x0; x <= Math.floor(px + r); x++) {
       if (!near(x, y)) continue;
       const key = tileKey(x, y, z);
-      for (const id of st.worldByTile.get(key) ?? []) {
-        if (st.containers.get(id)?.searchedBy.includes(sid)) containers.push(id);
-      }
+      if (!w.furniture)
+        for (const id of st.worldByTile.get(key) ?? []) {
+          if (st.containers.get(id)?.searchedBy.includes(sid)) containers.push(id);
+        }
       const pile = st.ground.get(key);
       if (pile !== undefined) containers.push(pile);
+    }
+  }
+  // Furniture footprint: storage counts from any tile next to the piece (docs 9.49).
+  if (w.furniture) {
+    for (let y = y0 - 3; y <= Math.floor(py + r); y++) {
+      for (let x = x0 - 3; x <= Math.floor(px + r); x++) {
+        const ids = st.worldByTile.get(tileKey(x, y, z));
+        if (!ids || rectDist2(anchorRect(w, x, y, z), px, py) > r * r) continue;
+        for (const id of ids)
+          if (st.containers.get(id)?.searchedBy.includes(sid)) containers.push(id);
+      }
     }
   }
   containers.sort((a, b) => a - b);
@@ -87,8 +101,9 @@ export function craftSources(w: SimWorld, eid: number): Sources {
     }
   }
   // Stations placed on the map (fixed objects: usable, not upgradable).
-  const cx0 = Math.floor((px - r) / CHUNK_SIZE);
-  const cy0 = Math.floor((py - r) / CHUNK_SIZE);
+  const back = w.furniture ? 3 : 0;
+  const cx0 = Math.floor((px - r - back) / CHUNK_SIZE);
+  const cy0 = Math.floor((py - r - back) / CHUNK_SIZE);
   for (let cy = cy0; cy <= Math.floor((py + r) / CHUNK_SIZE); cy++) {
     for (let cx = cx0; cx <= Math.floor((px + r) / CHUNK_SIZE); cx++) {
       for (const obj of w.map.getChunk(cx, cy, z)?.objects ?? []) {
@@ -96,7 +111,10 @@ export function craftSources(w: SimWorld, eid: number): Sources {
         const s = idx === undefined ? undefined : st.content.stationOfItem.get(idx);
         const x = cx * CHUNK_SIZE + obj.x;
         const y = cy * CHUNK_SIZE + obj.y;
-        if (s && near(x, y)) stations.push({ ...s, x, y, z, item: undefined });
+        const ok = w.furniture
+          ? rectDist2(objectRect(w, x, y, obj.contentId, obj.rot), px, py) <= r * r
+          : near(x, y);
+        if (s && ok) stations.push({ ...s, x, y, z, item: undefined });
       }
     }
   }

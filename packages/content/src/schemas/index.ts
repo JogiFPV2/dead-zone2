@@ -24,6 +24,7 @@ export * from './movement-settings.js';
 export * from './sim-lod-settings.js';
 export * from './map-markers-settings.js';
 export * from './ai-settings.js';
+export * from './furniture-settings.js';
 export * from './openings-settings.js';
 export * from './building-kind.js';
 export * from './locks-settings.js';

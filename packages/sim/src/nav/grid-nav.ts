@@ -10,7 +10,7 @@ const navFree = (f: number): boolean => (f & EF.blocksMove) === 0 || (f & EF.ope
  * Doors and windows always count as passable, so the cached masks do not depend on their state.
  */
 function orth(grid: TileGrid, z: number, tx: number, ty: number, dx: number, dy: number): boolean {
-  if (grid.isVoid(tx + dx, ty + dy, z)) return false;
+  if (grid.isBlocked(tx + dx, ty + dy, z)) return false;
   if (grid.stairs.length > 0 && !stairStepAllowed(grid, z, tx, ty, dx, dy)) return false;
   if (dx > 0) return navFree(grid.flagsW(tx + 1, ty, z));
   if (dx < 0) return navFree(grid.flagsW(tx, ty, z));
@@ -82,6 +82,29 @@ export function canStep(
   dy: number,
 ): boolean {
   return (maskOf(grid, z, tx, ty) & (1 << dirBit(dx, dy))) !== 0;
+}
+
+/**
+ * Forgets the cached step masks of tiles x0..x1, y0..y1 (plus a 1-tile border) on level z, e.g.
+ * after furniture moved (`FurnitureIndex.invalidate`); they are rebuilt on the next query.
+ */
+export function invalidateNavArea(
+  grid: TileGrid,
+  z: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): void {
+  const byChunk = masks.get(grid);
+  if (!byChunk) return;
+  for (let ty = y0 - 1; ty <= y1 + 1; ty++) {
+    for (let tx = x0 - 1; tx <= x1 + 1; tx++) {
+      const key = ((tx >> 5) + 0x800) * 0x1000000 + ((ty >> 5) + 0x800) * 0x1000 + (z + 0x800);
+      const m = byChunk.get(key);
+      if (m) m[((ty & 31) << 5) | (tx & 31)] = 0;
+    }
+  }
 }
 
 /** Step mask of a tile (bit d = DIRS[d] passable). */

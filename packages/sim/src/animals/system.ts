@@ -237,7 +237,7 @@ function fleeGoal(w: SimWorld, g: TileGrid, eid: number, x: number, y: number, z
       const ry = dx * s + dy * c;
       const px = x + rx * look;
       const py = y + ry * look;
-      if (g.isVoid(Math.floor(px), Math.floor(py), z)) continue;
+      if (g.isBlocked(Math.floor(px), Math.floor(py), z)) continue;
       if (!walkableLine(g, z, x, y, px, py)) continue;
       gx = px;
       gy = py;
@@ -277,7 +277,7 @@ function timers(
       for (let i = 0; i < 3 && !ok; i++) {
         const gx = hx + rng.int(-r, r) + 0.5;
         const gy = hy + rng.int(-r, r) + 0.5;
-        if (grid.isVoid(Math.floor(gx), Math.floor(gy), z)) continue;
+        if (grid.isBlocked(Math.floor(gx), Math.floor(gy), z)) continue;
         if (!walkableLine(grid, z, x, y, gx, gy)) continue;
         const dx = gx - x;
         const dy = gy - y;

@@ -261,7 +261,7 @@ function pickGoal(
     const tx = Math.floor(cx) + w.rng.ai.int(-r, r);
     const ty = Math.floor(cy) + w.rng.ai.int(-r, r);
     // Not on a flight of stairs (wandering does not change floors).
-    if (grid.isVoid(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
+    if (grid.isBlocked(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
     w.c.Zombie.tx[eid] = Math.fround(tx + 0.5);
     w.c.Zombie.ty[eid] = Math.fround(ty + 0.5);
     w.c.Zombie.tz[eid] = floorOf(z);

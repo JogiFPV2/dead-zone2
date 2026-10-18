@@ -1,4 +1,5 @@
 import type { PlayerId, SimEvent, SimMap, WorldSource } from '@deadzone/protocol';
+import { createFurnitureIndex, type FurnitureIndex } from '../world/furniture.js';
 import { createChunkWatch, type ChunkWatch } from '../world/chunk-events.js';
 import type { LodWorld } from '../lod/state.js';
 import type { SafeStart } from '../lod/safe-start.js';
@@ -73,6 +74,11 @@ export interface SimWorld {
   readonly ai: AiWorld | undefined;
   /** Door / window state (always present; config from `worldSettings.openings`). */
   readonly openings: OpeningsWorld;
+  /**
+   * Furniture footprint (`worldSettings.furnitureFootprint`; undefined = off): tiles occupied by
+   * furniture. Derived from map + content, not state.
+   */
+  readonly furniture: FurnitureIndex | undefined;
   /** Physics bodies of players and zombies (`physics/*`, stream `rng.physics`). */
   readonly physics: PhysicsWorld;
   /** Debug commands allowed (dev builds, tests). Not part of the state. */
@@ -126,6 +132,7 @@ export function createSimWorld(opts: {
       survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG,
       opts.seed,
     ),
+    furniture: createFurnitureIndex(opts.map, survival?.content),
     physics: createPhysicsWorld(rng.physics, opts.physicsConfig),
     dev: opts.dev ?? false,
     events: [],

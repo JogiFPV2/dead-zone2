@@ -1432,3 +1432,15 @@ Paweł zgłosił, że zombie goni za długo. Były dwie przyczyny. Po pierwsze, 
   - Wody utlenionej nie ma jeszcze w `base` (#213 Modules: `medical`, `effects: ['disinfect']`, np. `potency` 0,8, `uses` 3); testy używają fikstur.
   - Igła i nić już są. Jałowe opatrunki (`base:sterilized-*`) zaczynają teraz naprawdę odkażać.
 - **Testy:** `survival/wound-care.test.ts`.
+
+### 9.49 Footprint mebli (protokół 28) — kontrakt dla Silnika, Silnika 2 i Fizyki
+
+Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `world-settings/furniture.json`; obok `furnitureTall` i `furnitureLongSideAccess`), bo obecne mapy mają nachodzące meble. Wyłączona = zachowanie bit w bit jak dotąd (`w.furniture` undefined, złote hashe bez zmian).
+
+- **Protokół 28:** `SimMapObject.rot?: 0–3` (jak `objects[].rot` w contencie; brak = 0). **Silnik:** `apps/game/src/world/sim-map.ts` musi przekazać `rot` do simu (dziś zostawia tylko `contentId, x, y`), inaczej obrócone meble zajmą kafle jak przy rot 0.
+- **Co jest meblem:** typ schowka (`containers/`) albo `placeable` z `containerType`, `sleepSurface`, `station` lub `footprint`. Lampy, radia, magnetowidy itp. (sam `light` / `power`) nie blokują niczego. Rozmiar: `footprintOf` z `@deadzone/content/footprint`, kotwica = kafel NW, `rotatedFootprint` przy rot 1/3.
+- **Blokowanie (`world/furniture.ts`, `FurnitureIndex`, maska per chunk liczona leniwie z obiektów chunku i sąsiadów W/N/NW, nic nie trafia do zapisu ani hasha):** zajęte kafle blokują kolizję (`slideCircle`/`moveCircle`/`circleOverlaps`: kafel jak pustka, także gdy `voidBlocks = false`), ścieżki (`canStep`, A*, flow field), `walkableLine`, losowanie celów wędrówki i spawnów. `TileGrid.isBlocked` = brak podłogi albo mebel; `isVoid` dalej znaczy tylko „brak podłogi” (spadanie, piętra).
+- **Wzrok:** meble z `worldSettings.furnitureTall` (domyślnie szafa, regały, lodówki, zamrażarka, szafki metalowe) zasłaniają LOS (`lineOfSight`); niskie (kanapa, łóżko, lada, wanna) nie. Dźwięk bez zmian.
+- **Lada (`furnitureLongSideAccess`, domyślnie `base:shop-counter`):** tylko z boku wzdłuż dłuższej krawędzi — klient po +z, sprzedawca od ściany (−z); po obrocie rot 1/3 są to boki W/E. Z końców i narożników nie.
+- **Zasięg:** schowek (jeden na mebel, przegródki jak dotąd), menu mebli (`furnitureActions`), łóżko/kanapa do snu i stanowiska craftingu — z każdego kafla obok mebla, także po skosie: odległość do najbliższego środka zajętego kafla ≤ 1,5. `FurnitureView.x/y/z` mebla = środek footprintu (`footprintCenter`, to też origin modelu), `furnitureId` bez zmian (kafel kotwicy + indeks).
+- **Fizyka:** przesuwanie mebli zmienia kafle — po zmianie pozycji obiektu wołać `w.furniture.invalidate(cx, cy, z)` (chunk kotwicy) i `invalidateNavArea(grid, z, x0, y0, x1, y1)` (`nav/grid-nav.ts`, stary i nowy prostokąt); flow fieldy odświeżą się przy następnym przeliczeniu. Schowki postawione przez gracza (`placeStorage`) nie blokują.

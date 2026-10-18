@@ -627,7 +627,14 @@ export const simMapDataSchema = z.object({
         )
         .optional(),
       objects: z
-        .array(z.object({ contentId, x: localTile, y: localTile }))
+        .array(
+          z.object({
+            contentId,
+            x: localTile,
+            y: localTile,
+            rot: z.number().int().min(0).max(3).optional(),
+          }),
+        )
         .max(CHUNK_TILES * 4)
         .optional(),
       stairs: z

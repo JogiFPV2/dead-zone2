@@ -14,6 +14,11 @@ import { MapMarkersSettingsSchema, PlayerMapSettingsSchema } from './map-markers
 import { SurvivalSettingsSchema } from './survival/index.js';
 import { VehiclesSettingsSchema } from './vehicles-settings.js';
 import { UtilitiesSettingsSchema } from './utilities-settings.js';
+import {
+  FurnitureFootprintSchema,
+  FurnitureLongSideAccessSchema,
+  FurnitureTallSchema,
+} from './furniture-settings.js';
 
 /**
  * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
@@ -67,6 +72,12 @@ export const WorldSettingsSchema = z.strictObject({
   vehicles: VehiclesSettingsSchema,
   /** Prąd i woda z sieci: wyłączenie po losowej liczbie dni (Symulacja). */
   utilities: UtilitiesSettingsSchema,
+  /** Meble zajmują kafle swojego footprintu (Symulacja; domyślnie wyłączone). */
+  furnitureFootprint: FurnitureFootprintSchema,
+  /** Meble zasłaniające wzrok przy `furnitureFootprint`. */
+  furnitureTall: FurnitureTallSchema,
+  /** Meble obsługiwane tylko wzdłuż dłuższej krawędzi przy `furnitureFootprint` (lada). */
+  furnitureLongSideAccess: FurnitureLongSideAccessSchema,
   ext: ExtSchema,
 });
 

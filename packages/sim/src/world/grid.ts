@@ -9,6 +9,7 @@ import {
   type OpeningsWorld,
 } from '../openings/state.js';
 import { STAIR_STEP, type Stair } from './levels.js';
+import { FF, type FurnitureIndex } from './furniture.js';
 
 const WALL = EF.present | EF.blocksMove | EF.blocksSight | EF.muffles;
 
@@ -41,6 +42,8 @@ export class TileGrid {
   constructor(
     private readonly map: SimMap,
     openings?: OpeningsWorld,
+    /** Furniture footprint (`w.furniture`); undefined = furniture blocks nothing (flag off). */
+    readonly furniture?: FurnitureIndex,
   ) {
     this.openings = openings ?? createOpeningsWorld(map, DEFAULT_OPENINGS_CONFIG);
     this.stairs = this.stairList;
@@ -125,6 +128,24 @@ export class TileGrid {
   /** No floor (id 0) or outside the map. */
   isVoid(tx: number, ty: number, z: number): boolean {
     return this.layer(tx, ty, z, 'floor') <= 0;
+  }
+
+  /**
+   * A body cannot stand here: no floor, or a tile occupied by furniture (footprint flag on).
+   * Use for movement, paths and free spots; `isVoid` stays "no floor" (falling, levels).
+   */
+  isBlocked(tx: number, ty: number, z: number): boolean {
+    return this.isVoid(tx, ty, z) || this.furnitureBlocks(tx, ty, z);
+  }
+
+  /** Furniture occupies the tile (footprint flag on; always false when off). */
+  furnitureBlocks(tx: number, ty: number, z: number): boolean {
+    return this.furniture !== undefined && (this.furniture.flags(tx, ty, z) & FF.blocks) !== 0;
+  }
+
+  /** Tall furniture on the tile blocks sight (footprint flag on). */
+  blocksSightTile(tx: number, ty: number, z: number): boolean {
+    return this.furniture !== undefined && (this.furniture.flags(tx, ty, z) & FF.tall) !== 0;
   }
 
   /** Edge blocking movement on the north edge of the tile (segment y = ty, x ∈ [tx, tx+1]). */

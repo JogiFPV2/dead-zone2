@@ -13,7 +13,7 @@ import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
-import { canReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
+import { canReach, containerInReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
 import { generateLoot } from './loot.js';
 import { revealHidden, searchable, searchSecMin } from './search.js';
 import { freshness } from './spoilage.js';
@@ -181,7 +181,7 @@ export function registerItemActions(): void {
       const c = st.containers.get(a.container);
       if (!c || !searchable(c)) return 'no-item';
       if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c);
-      return tileInReach(w, eid, c.x, c.y, c.z) ? undefined : 'out-of-range';
+      return containerInReach(w, eid, c) ? undefined : 'out-of-range';
     },
     durationMin(w, eid, a) {
       const st = w.items!;

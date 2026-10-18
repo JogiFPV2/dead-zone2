@@ -282,7 +282,7 @@ function spawnPending(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
         const y = (by + rng.int(0, bh - 1)) * CHUNK_SIZE + rng.int(0, CHUNK_SIZE - 1) + 0.5;
         const tx = Math.floor(x);
         const ty = Math.floor(y);
-        if (grid.isVoid(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
+        if (grid.isBlocked(tx, ty, z) || grid.stairAt(tx, ty, z)) continue;
         // Off the ground also not over a flight coming up from below.
         if (z !== 0 && grid.stairAt(tx, ty, z - 1)) continue;
         if (circleOverlaps(grid, z, x, y, radius)) continue;

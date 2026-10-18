@@ -6,6 +6,8 @@ import {
   type FurnitureView,
   type UseFurnitureCommand,
 } from '@deadzone/protocol';
+import { objectRect } from './footprint.js';
+import { rectDist2 } from '../world/furniture.js';
 import { furnitureActionPl, furnitureReasonPl } from '@deadzone/content';
 import { newAction, previewAction, startAction } from '../actions/queue.js';
 import { ticksPerGameMinute } from '../core/clock.js';
@@ -254,6 +256,7 @@ interface MapObj {
   y: number;
   z: number;
   n: number;
+  rot?: number | undefined;
 }
 
 function objectActions(
@@ -323,7 +326,7 @@ function objectsOnTile(w: SimWorld, x: number, y: number, z: number): MapObj[] {
   const out: MapObj[] = [];
   for (const o of w.map.getChunk(cx, cy, z)?.objects ?? []) {
     if (cx * CHUNK_SIZE + o.x !== x || cy * CHUNK_SIZE + o.y !== y) continue;
-    out.push({ contentId: o.contentId, x, y, z, n: out.length });
+    out.push({ contentId: o.contentId, x, y, z, n: out.length, rot: o.rot });
   }
   return out;
 }
@@ -344,8 +347,10 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
   const z = floorZ(w, eid);
   const r = w.openings.cfg.reachTiles;
   const out: Candidate[] = [];
-  for (let ty = Math.floor(py - r) - 1; ty <= Math.floor(py + r) + 1; ty++) {
-    for (let tx = Math.floor(px - r) - 1; tx <= Math.floor(px + r) + 1; tx++) {
+  // Furniture footprint: pieces anchored up to 3 tiles further NW can still be in reach.
+  const back = w.furniture ? 3 : 0;
+  for (let ty = Math.floor(py - r) - 1 - back; ty <= Math.floor(py + r) + 1; ty++) {
+    for (let tx = Math.floor(px - r) - 1 - back; tx <= Math.floor(px + r) + 1; tx++) {
       for (const side of [0, 1]) {
         const key = openingKey(side, tx, ty, z);
         const kind = edgeKindOf(w.openings, key);
@@ -368,13 +373,22 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
       }
       const dx = tx + 0.5 - px;
       const dy = ty + 0.5 - py;
-      if (dx * dx + dy * dy > r * r) continue;
+      if (!w.furniture && dx * dx + dy * dy > r * r) continue;
       for (const obj of objectsOnTile(w, tx, ty, z)) {
         const id = objectFurnitureId(tx, ty, z, obj.n);
+        // Footprint: reach from any tile next to the piece, entry at the footprint centre.
+        let ox = tx + 0.5;
+        let oy = ty + 0.5;
+        if (w.furniture) {
+          const rect = objectRect(w, tx, ty, obj.contentId, obj.rot);
+          if (rectDist2(rect, px, py) > r * r) continue;
+          ox = tx + rect.w / 2;
+          oy = ty + rect.h / 2;
+        }
         out.push({
           id,
-          x: tx + 0.5,
-          y: ty + 0.5,
+          x: ox,
+          y: oy,
           z,
           build: (cmd) => {
             const m = objectActions(w, eid, obj, cmd);
@@ -383,8 +397,8 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
               furnitureId: id,
               typeId: m.typeId,
               contentId: obj.contentId,
-              x: tx + 0.5,
-              y: ty + 0.5,
+              x: ox,
+              y: oy,
               z,
               actions: m.actions,
               acts: m.actions,

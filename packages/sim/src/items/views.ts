@@ -20,6 +20,7 @@ import {
   canReach,
   carriedLoad,
   carryCapacity,
+  containerInReach,
   hardLimit,
   playerItems,
   stableIdOf,
@@ -226,9 +227,12 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
   const z = floorZ(w, eid);
   const sid = stableIdOf(w, eid);
   const out: NearbyContainerView[] = [];
-  for (let y = py - 2; y <= py + 2; y++) {
-    for (let x = px - 2; x <= px + 2; x++) {
-      if (!tileInReach(w, eid, x, y, z)) continue;
+  // Furniture footprint: storage anchored up to 3 tiles NW of the reach (docs 9.49).
+  const back = w.furniture ? 3 : 0;
+  for (let y = py - 2 - back; y <= py + 2; y++) {
+    for (let x = px - 2 - back; x <= px + 2; x++) {
+      const tileOk = tileInReach(w, eid, x, y, z);
+      if (!tileOk && !w.furniture) continue;
       const key = tileKey(x, y, z);
       const ids = [...(st.worldByTile.get(key) ?? [])];
       const pile = st.ground.get(key);
@@ -236,6 +240,7 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
       for (const id of ids) {
         const c = st.containers.get(id);
         if (!c) continue;
+        if (!(c.kind === 'world' ? containerInReach(w, eid, c) : tileOk)) continue;
         const v: NearbyContainerView = {
           id,
           kind: viewKind(c),

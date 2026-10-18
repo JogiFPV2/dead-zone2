@@ -130,6 +130,11 @@ export interface ContentIndex {
   vehicles: ContentBundle['worldSettings']['vehicles'] | undefined;
   /** `worldSettings.utilities` (mains power / water shutoff; optional for older bundles). */
   utilities: ContentBundle['worldSettings']['utilities'] | undefined;
+  /**
+   * `worldSettings.furnitureFootprint` / `furnitureTall` / `furnitureLongSideAccess` (optional
+   * for older bundles: footprint off).
+   */
+  furniture: { footprint: boolean; tall: readonly string[]; longSide: readonly string[] };
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -165,6 +170,14 @@ export interface CraftingConfig {
 }
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+function furnitureSettings(ws: Partial<ContentBundle['worldSettings']>): ContentIndex['furniture'] {
+  return {
+    footprint: ws.furnitureFootprint ?? false,
+    tall: ws.furnitureTall ?? [],
+    longSide: ws.furnitureLongSideAccess ?? [],
+  };
+}
 
 export function compileContent(content: SimContent): ContentIndex {
   const ids = Object.keys(content.moodles).sort(byId);
@@ -265,6 +278,7 @@ export function compileContent(content: SimContent): ContentIndex {
     utilities: (
       content.worldSettings as { utilities?: ContentBundle['worldSettings']['utilities'] }
     ).utilities,
+    furniture: furnitureSettings(content.worldSettings),
     search: {
       searchSec: content.worldSettings.loot.search?.searchSec ?? 3.5,
       spotRadiusTiles: content.worldSettings.loot.search?.spotRadiusTiles ?? 1.5,

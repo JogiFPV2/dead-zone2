@@ -483,7 +483,7 @@ export function createSim(input: SimOptions): Sim {
   }
   const minutes: MinuteTicks = { first: 0, count: 0 };
   const ctx: SystemContext = {
-    grid: new TileGrid(opts.map, w.openings),
+    grid: new TileGrid(opts.map, w.openings, w.furniture),
     minutes,
     ambientC: opts.ambientTemperatureC ?? DEFAULT_AMBIENT_C,
   };

@@ -1,0 +1,14 @@
+{
+  "furnitureFootprint": false,
+  "furnitureTall": [
+    "base:wardrobe",
+    "base:bookshelf",
+    "base:metal-shelf",
+    "base:fridge",
+    "base:freezer",
+    "base:fridge-freezer",
+    "base:locker",
+    "base:gun-locker"
+  ],
+  "furnitureLongSideAccess": ["base:shop-counter"]
+}

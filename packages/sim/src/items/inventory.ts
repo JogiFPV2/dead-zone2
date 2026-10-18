@@ -22,6 +22,7 @@ import {
 } from './store.js';
 import { floorZ } from '../world/levels.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
+import { anchorRect, rectInReach } from '../furniture/footprint.js';
 
 /** Reach for containers and items (docs 2.4: ≤ 1.5 tiles, same floor). */
 export const INTERACT_RANGE_TILES = 1.5;
@@ -67,6 +68,9 @@ export function canReach(w: SimWorld, eid: number, id: number): boolean {
  */
 export function containerInReach(w: SimWorld, eid: number, c: ItemContainer): boolean {
   if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c) === undefined;
+  // Furniture footprint: world storage from any tile next to the piece (docs 9.49).
+  if (c.kind === 'world' && w.furniture)
+    return rectInReach(w, eid, anchorRect(w, c.x, c.y, c.z), c.z);
   return tileInReach(w, eid, c.x, c.y, c.z);
 }
 

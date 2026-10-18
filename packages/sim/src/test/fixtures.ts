@@ -17,7 +17,7 @@ export interface MapSpec {
   wallN?: (x: number, y: number) => boolean;
   wallW?: (x: number, y: number) => boolean;
   /** Map objects in world tiles (storage, placeables). */
-  objects?: readonly { contentId: string; x: number; y: number }[];
+  objects?: readonly { contentId: string; x: number; y: number; rot?: number }[];
   /** Room id per world tile (0 = outside) and room id → room type (same for every chunk). */
   room?: (x: number, y: number) => number;
   rooms?: Record<string, string>;
@@ -69,6 +69,7 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           contentId: o.contentId,
           x: o.x - cx * CHUNK_SIZE,
           y: o.y - cy * CHUNK_SIZE,
+          ...(o.rot !== undefined ? { rot: o.rot } : {}),
         }));
       for (let z = 0; z < (spec.levels ?? 1); z++) {
         chunks.push({

@@ -9,10 +9,11 @@ import { stairStepAllowed } from './levels.js';
  * orders (x then y, y then x) are checked.
  *
  * - `sight`: walls, closed doors and barricades block; windows and open doors do not; void tiles
- *   do not (holes, outside).
+ *   do not (holes, outside). With the furniture footprint flag, entering a tile of tall furniture
+ *   (`worldSettings.furnitureTall`) blocks too.
  * - `sound`: returns the number of muffling edges crossed (walls, closed doors / windows),
  *   capped at `cap`; open doors and broken windows do not count.
- * - `walk`: an edge blocking movement, a void tile or stepping onto / off a flight of stairs
+ * - `walk`: an edge blocking movement, a void tile, a furniture tile (footprint flag) or stepping onto / off a flight of stairs
  *   other than along it through the entrance blocks (straight-line walkability for AI).
  */
 
@@ -56,8 +57,8 @@ function step(
     return false;
   }
   if (edgeBlocks(f, mode)) return true;
-  if (mode !== Mode.Walk) return false;
-  if (grid.isVoid(tx + sx, ty + sy, z)) return true;
+  if (mode !== Mode.Walk) return grid.blocksSightTile(tx + sx, ty + sy, z);
+  if (grid.isBlocked(tx + sx, ty + sy, z)) return true;
   // Flights of stairs: only along them through the entrance (physics blocks the sides).
   return grid.stairs.length > 0 && !stairStepAllowed(grid, z, tx, ty, sx, sy);
 }

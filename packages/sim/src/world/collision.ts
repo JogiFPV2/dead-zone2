@@ -55,7 +55,8 @@ function sweep(
     for (let a = a0; a <= a1; a++) {
       const tx = axis === 0 ? a : c;
       const ty = axis === 0 ? c : a;
-      if (voidBlocks && grid.isVoid(tx, ty, z)) test(a, a + 1, c, c + 1);
+      if ((voidBlocks && grid.isVoid(tx, ty, z)) || grid.furnitureBlocks(tx, ty, z))
+        test(a, a + 1, c, c + 1);
       // North edge: y = ty, x ∈ [tx, tx+1]. West edge: x = tx, y ∈ [ty, ty+1].
       if (grid.hasWallN(tx, ty, z)) {
         if (axis === 0) test(a, a + 1, c, c);
@@ -95,7 +96,7 @@ export function moveCircle(
   return out;
 }
 
-/** True if the circle overlaps any void tile or wall edge. */
+/** True if the circle overlaps any void tile, furniture tile (footprint flag) or wall edge. */
 export function circleOverlaps(
   grid: TileGrid,
   z: number,
@@ -111,7 +112,7 @@ export function circleOverlaps(
   };
   for (let ty = Math.floor(y - r) - 1; ty <= Math.floor(y + r) + 1; ty++) {
     for (let tx = Math.floor(x - r) - 1; tx <= Math.floor(x + r) + 1; tx++) {
-      if (grid.isVoid(tx, ty, z) && hit(tx, tx + 1, ty, ty + 1)) return true;
+      if (grid.isBlocked(tx, ty, z) && hit(tx, tx + 1, ty, ty + 1)) return true;
       if (grid.hasWallN(tx, ty, z) && hit(tx, tx + 1, ty, ty)) return true;
       if (grid.hasWallW(tx, ty, z) && hit(tx, tx, ty, ty + 1)) return true;
     }
@@ -153,7 +154,8 @@ function forObstacles(
   for (let ty = ty0; ty <= ty1; ty++) {
     for (let tx = tx0; tx <= tx1; tx++) {
       const k = (tx * 65536 + ty) * 4;
-      if (voidBlocks && grid.isVoid(tx, ty, z)) fn(k, tx, tx + 1, ty, ty + 1);
+      if ((voidBlocks && grid.isVoid(tx, ty, z)) || grid.furnitureBlocks(tx, ty, z))
+        fn(k, tx, tx + 1, ty, ty + 1);
       if (grid.hasWallN(tx, ty, z)) fn(k + 1, tx, tx + 1, ty, ty);
       if (grid.hasWallW(tx, ty, z)) fn(k + 2, tx, tx, ty, ty + 1);
     }

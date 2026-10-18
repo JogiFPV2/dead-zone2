@@ -94,8 +94,15 @@ export interface SimStairs {
 /** A map object at local tile (x, y) of its chunk. */
 export interface SimMapObject {
   readonly contentId: string;
+  /** Chunk-local tile; with a footprint the north-west tile of the occupied rectangle. */
   readonly x: number;
   readonly y: number;
+  /**
+   * Rotation 0–3 (90° clockwise seen from above, back to wall 0 = N, 1 = E, 2 = S, 3 = W), as in
+   * content `objects[].rot`. Swaps the footprint sides at 1 / 3 (`@deadzone/content/footprint`).
+   * Missing = 0. Only used by the sim with `worldSettings.furnitureFootprint`.
+   */
+  readonly rot?: number | undefined;
 }
 
 export interface SimChunkAddress {

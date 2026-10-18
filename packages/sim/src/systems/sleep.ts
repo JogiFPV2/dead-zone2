@@ -11,6 +11,8 @@ import {
   type SurvivalWorld,
 } from '../survival/state.js';
 import { floorZ } from '../world/levels.js';
+import { objectRect } from '../furniture/footprint.js';
+import { rectDist2 } from '../world/furniture.js';
 
 /**
  * A zombie chases the player or is within `sleep.wakeOnZombieTiles` (computed by `ai.threat`
@@ -140,9 +142,11 @@ export function sleepSurfaceAt(w: SimWorld, eid: number): SleepSurface {
   const py = w.c.Position.y[eid] ?? 0;
   const z = floorZ(w, eid);
   let best: SleepSurface = 'floor';
-  const cx0 = Math.floor((px - 2) / CHUNK_SIZE);
+  // Furniture footprint: a bed anchored up to 3 tiles further NW still reaches (docs 9.49).
+  const back = w.furniture ? 3 : 0;
+  const cx0 = Math.floor((px - 2 - back) / CHUNK_SIZE);
   const cx1 = Math.floor((px + 2) / CHUNK_SIZE);
-  const cy0 = Math.floor((py - 2) / CHUNK_SIZE);
+  const cy0 = Math.floor((py - 2 - back) / CHUNK_SIZE);
   const cy1 = Math.floor((py + 2) / CHUNK_SIZE);
   for (let cy = cy0; cy <= cy1; cy++) {
     for (let cx = cx0; cx <= cx1; cx++) {
@@ -150,9 +154,12 @@ export function sleepSurfaceAt(w: SimWorld, eid: number): SleepSurface {
         const def = content.items[content.itemIndex.get(obj.contentId) ?? -1];
         const surf = def?.kind === 'placeable' ? def.placeable.sleepSurface : undefined;
         if (!surf) continue;
-        const dx = cx * CHUNK_SIZE + obj.x + 0.5 - px;
-        const dy = cy * CHUNK_SIZE + obj.y + 0.5 - py;
-        if (dx * dx + dy * dy > 1.5 * 1.5) continue;
+        const ox = cx * CHUNK_SIZE + obj.x;
+        const oy = cy * CHUNK_SIZE + obj.y;
+        const d2 = w.furniture
+          ? rectDist2(objectRect(w, ox, oy, obj.contentId, obj.rot), px, py)
+          : (ox + 0.5 - px) * (ox + 0.5 - px) + (oy + 0.5 - py) * (oy + 0.5 - py);
+        if (d2 > 1.5 * 1.5) continue;
         if (SLEEP_SURFACES.indexOf(surf) > SLEEP_SURFACES.indexOf(best)) best = surf;
       }
     }
