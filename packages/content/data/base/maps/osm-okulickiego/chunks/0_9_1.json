@@ -157,10 +157,34 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
       "x": 30,
-      "y": 6,
+      "y": 2,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 30,
+      "y": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 30,
+      "y": 5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 5,
+      "rot": 1
     }
   ],
   "rooms": {
@@ -172,5 +196,8 @@
       "roomType": "base:room-office",
       "buildingId": 23
     }
+  },
+  "buildingKinds": {
+    "23": "school"
   }
 }

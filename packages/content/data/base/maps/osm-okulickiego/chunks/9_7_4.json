@@ -159,6 +159,42 @@
       "x": 0,
       "y": 31,
       "rot": 1
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 7,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 8,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 9,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": 11,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 12,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 13,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {
@@ -178,5 +214,8 @@
       "roomType": "base:room-living-room",
       "buildingId": 10
     }
+  },
+  "buildingKinds": {
+    "10": "house"
   }
 }

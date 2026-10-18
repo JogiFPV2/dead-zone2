@@ -27,6 +27,13 @@ export const MapChunkSchema = z
     edges: z.array(EdgeSchema).default([]),
     objects: z.array(MapObjectSchema).default([]),
     rooms: RoomsSchema.default({}),
+    /**
+     * `buildingId` → rodzaj budynku (klucze `openings.locks.exteriorLockedChanceByBuilding`:
+     * `house`, `shop`, `hospital`…), jeden na budynek z pokojów tego chunka. Opcjonalne.
+     */
+    buildingKinds: z
+      .record(z.string().regex(/^[1-9]\d{0,15}$/), z.string().regex(/^[a-z]+(-[a-z]+)*$/))
+      .optional(),
     stairs: z
       .array(StairsSchema)
       .max(CHUNK_SIZE * CHUNK_SIZE)
@@ -54,6 +61,11 @@ export const MapChunkSchema = z
       : -1;
     if (room && badRoom !== -1) {
       issue(`${where(badRoom)}: roomId ${room[badRoom]} nie ma wpisu w rooms`, 'layers', 'room');
+    }
+    const ids = new Set(Object.values(c.rooms).map((r) => String(r.buildingId)));
+    for (const b of Object.keys(c.buildingKinds ?? {})) {
+      if (!ids.has(b))
+        issue(`buildingKinds: budynek ${b} nie ma pokoju w chunku`, 'buildingKinds', b);
     }
     if (!room && Object.keys(c.rooms).length > 0) {
       issue('rooms wymaga warstwy layers.room', 'layers', 'room');

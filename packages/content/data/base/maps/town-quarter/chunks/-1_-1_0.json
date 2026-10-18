@@ -362,5 +362,8 @@
       "roomType": "base:room-garage",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "4": "garage"
   }
 }

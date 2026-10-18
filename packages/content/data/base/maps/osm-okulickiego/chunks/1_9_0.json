@@ -890,14 +890,20 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 11,
+      "x": 12,
       "y": 1,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 12,
-      "y": 1,
+      "contentId": "base:desk",
+      "x": 0,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 0,
+      "y": 3,
       "rot": 2
     },
     {
@@ -1038,6 +1044,11 @@
       "roomType": "base:room-school",
       "buildingId": 25
     }
+  },
+  "buildingKinds": {
+    "21": "school",
+    "23": "school",
+    "25": "school"
   },
   "stairs": [
     {

@@ -1296,6 +1296,12 @@
     {
       "contentId": "base:locker",
       "x": 6,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 6,
       "y": 1,
       "rot": 3
     },
@@ -1306,27 +1312,33 @@
       "rot": 3
     },
     {
+      "contentId": "base:chair",
+      "x": 2,
+      "y": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 3,
+      "y": 3,
+      "rot": 1
+    },
+    {
       "contentId": "base:locker",
       "x": 6,
       "y": 3,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 3,
-      "y": 4,
-      "rot": 1
+      "contentId": "base:chair",
+      "x": 2,
+      "y": 5,
+      "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 3,
       "y": 5,
-      "rot": 1
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 3,
-      "y": 6,
       "rot": 1
     },
     {
@@ -1340,6 +1352,18 @@
       "x": 9,
       "y": 8,
       "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": 10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": 10,
+      "rot": 2
     },
     {
       "contentId": "base:locker",
@@ -1408,8 +1432,20 @@
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 6,
+      "y": 26,
+      "rot": 0
+    },
+    {
+      "contentId": "base:shower",
+      "x": 7,
+      "y": 26,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 8,
       "y": 26,
       "rot": 0
     }
@@ -1463,6 +1499,9 @@
       "roomType": "base:room-bathroom",
       "buildingId": 22
     }
+  },
+  "buildingKinds": {
+    "22": "school"
   },
   "stairs": [
     {

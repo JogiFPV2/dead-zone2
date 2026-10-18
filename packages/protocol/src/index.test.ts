@@ -421,6 +421,7 @@ describe('setInterest and chunk-local rooms (docs 9.24)', () => {
           room,
           rooms: { '1': 'base:room-kitchen', '2': 'base:room-hall' },
           roomBuildings: { '1': 70_001 },
+          buildingKinds: { '70001': 'shop' },
         },
       ],
     });
@@ -430,6 +431,8 @@ describe('setInterest and chunk-local rooms (docs 9.24)', () => {
     expect(buildingIdAt(c, 0)).toBe(0);
     const data = simMapToData(map, { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
     expect(data.chunks[0]!.roomBuildings).toEqual({ '1': 70_001 });
+    expect(c?.buildingKinds).toEqual({ '70001': 'shop' });
+    expect(data.chunks[0]!.buildingKinds).toEqual({ '70001': 'shop' });
   });
 });
 

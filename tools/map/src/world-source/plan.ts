@@ -56,8 +56,10 @@ export interface WorldPlanInput {
 /**
  * Bump on every change of generated chunks for the same plan (part of the version string).
  * 2: OSM rotated onto the street grid, squared outlines, vector roads + ground under them.
+ * 3: furniture placed by footprint (2×1 / 1×2: bed, sofa, desk, counter, metal shelf, bathtub),
+ *    building kinds, #211 room kits (range, sinks, bathtub / shower, TV + VCR, radio).
  */
-export const GENERATOR_REV = 2;
+export const GENERATOR_REV = 3;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

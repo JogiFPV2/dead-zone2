@@ -1,4 +1,6 @@
 import { CHUNK_SIZE } from '@deadzone/content';
+import { occupiedTiles } from '@deadzone/content/footprint';
+import { baseFootprint } from '../furnish.js';
 import { solveBuilding, type SolvedBuilding } from './building.js';
 import {
   EDGE_PALETTE,
@@ -30,6 +32,8 @@ export interface GenLevel {
   room?: Uint16Array;
   /** Chunk-local room id → [room type, global building id]. */
   rooms: [number, string, number][];
+  /** Global building id → building kind (`SimChunk.buildingKinds`), buildings of `rooms` only. */
+  buildingKinds?: [number, string][];
   objects: { contentId: string; x: number; y: number; rot: number }[];
   stairs: { tx: number; ty: number; dir: 'N' | 'E' | 'S' | 'W'; len: number }[];
   /** Parked cars (level 0): centre in local tiles. */
@@ -241,6 +245,7 @@ export class PlanChunkGenerator {
         for (let i = 0; i < CT; i++) floor[i] = GROUND_TILE_IDS[r.g[ri(i % C, (i / C) | 0)]!]!;
       const localRoom = new Map<string, number>();
       const rooms: [number, string, number][] = [];
+      const kinds = new Map<number, string>();
       const stairs: GenLevel['stairs'] = [];
       let any = z === 0;
       for (const s of list) {
@@ -265,6 +270,7 @@ export class PlanChunkGenerator {
                 id = rooms.length + 1;
                 localRoom.set(key, id);
                 rooms.push([id, s.rooms.get(rm) ?? 'base:room-hall', s.gid]);
+                if (s.lockKind && !kinds.has(s.gid)) kinds.set(s.gid, s.lockKind);
               }
               room[i] = id;
               if (z === 0) owner[i] = s.gid;
@@ -285,6 +291,28 @@ export class PlanChunkGenerator {
         }
       }
       if (!any) continue;
+      /** Tile (x, y) of level 0 is a door tile or in front of a door of any nearby building. */
+      const doorAt = (x: number, y: number): boolean => {
+        for (const b of list) {
+          const L = b.levels.get(0);
+          if (!L) continue;
+          const W = b.w + 1;
+          const at = (ex: number, ey: number, a: Uint16Array) => {
+            const gx = ex - b.x0;
+            const gy = ey - b.y0;
+            if (gx < 0 || gy < 0 || gx >= W || gy > b.h) return false;
+            return EDGE_PALETTE[a[gy * W + gx]!]?.kind === 'door';
+          };
+          if (
+            at(x, y, L.edgeN) ||
+            at(x, y + 1, L.edgeN) ||
+            at(x, y, L.edgeW) ||
+            at(x + 1, y, L.edgeW)
+          )
+            return true;
+        }
+        return false;
+      };
       // Objects of this level: furniture inside, props outside (first building wins a tile).
       const objects: GenLevel['objects'] = [];
       const taken = new Set<number>();
@@ -292,16 +320,24 @@ export class PlanChunkGenerator {
         for (const o of s.objects) {
           if (o.z !== z || o.x < X0 || o.y < Y0 || o.x >= X0 + C || o.y >= Y0 + C) continue;
           const i = (o.y - Y0) * C + (o.x - X0);
-          if (taken.has(i)) continue;
+          // Every tile of the footprint inside this chunk (furniture may cross the chunk edge).
+          const cells: number[] = [];
+          for (const t of occupiedTiles(o.x, o.y, o.rot, baseFootprint(o.contentId)))
+            if (t.x >= X0 && t.y >= Y0 && t.x < X0 + C && t.y < Y0 + C)
+              cells.push((t.y - Y0) * C + (t.x - X0));
+          if (cells.some((j) => taken.has(j))) continue;
+          // Never in a doorway of any building (both sides of every door stay free).
+          if (z === 0 && doorAt(o.x, o.y)) continue;
           // An outdoor prop never stands in another building.
           if (z === 0 && !room[i] && occ[ri(o.x - X0, o.y - Y0)]) continue;
-          if (z === 0 && room[i] && owner[i] !== s.gid) continue;
-          taken.add(i);
+          if (z === 0 && cells.some((j) => room[j] && owner[j] !== s.gid)) continue;
+          for (const j of cells) taken.add(j);
           objects.push({ contentId: o.contentId, x: o.x - X0, y: o.y - Y0, rot: o.rot });
         }
       }
       const level: GenLevel = { z, floor, edgeN, edgeW, rooms, objects, stairs };
       if (rooms.length) level.room = room;
+      if (kinds.size) level.buildingKinds = [...kinds];
       if (roof.some((v) => v !== 0)) level.roof = roof;
       if (z === 0) {
         this.railings(r, M, owner, edgeN, edgeW);

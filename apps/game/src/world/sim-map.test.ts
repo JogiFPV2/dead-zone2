@@ -64,6 +64,10 @@ describe('ChunkSource → SimMap adapter', () => {
               floor: new Uint16Array(CHUNK_TILES).fill(1),
               room,
               rooms: new Map([[7, { type: 'base:room-kitchen', buildingId: 1 }]]),
+              buildingKinds: new Map([
+                [1, 'house'],
+                [9, 'shop'],
+              ]),
               objects: [{ contentId: 'base:fridge', x: 3, y: 4, rot: 2 }],
               stairs: [{ tx: 5, ty: 6, dir: 'E', len: 4 }],
             }
@@ -75,6 +79,8 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(c.rooms).toEqual({ '7': 'base:room-kitchen' });
     // Chunk-local room id → global building id (sim contract, docs 9.24).
     expect(c.roomBuildings).toEqual({ '7': 1 });
+    // One kind per building of this chunk's rooms (lock chance keys, #224).
+    expect(c.buildingKinds).toEqual({ '1': 'house' });
     expect(c.objects).toEqual([{ contentId: 'base:fridge', x: 3, y: 4, rot: 2 }]);
     expect(c.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);
     expect(map.listChunks?.()).toEqual([{ cx: 1, cy: 0, z: 0 }]);
@@ -83,6 +89,7 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(data.chunks[0]).toMatchObject({
       rooms: { '7': 'base:room-kitchen' },
       roomBuildings: { '7': 1 },
+      buildingKinds: { '1': 'house' },
     });
     expect(data.chunks[0]?.objects).toHaveLength(1);
     expect(data.chunks[0]?.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);

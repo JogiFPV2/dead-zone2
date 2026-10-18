@@ -1199,5 +1199,8 @@
       "roomType": "base:room-hall",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   }
 }

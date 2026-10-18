@@ -168,8 +168,26 @@
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 1,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 11,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 13,
       "y": 31,
       "rot": 0
     }
@@ -191,5 +209,8 @@
       "roomType": "base:room-living-room",
       "buildingId": 10
     }
+  },
+  "buildingKinds": {
+    "10": "house"
   }
 }

@@ -527,34 +527,58 @@
   ],
   "objects": [
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:bathtub",
+      "x": 1,
       "y": 25,
       "rot": 3
     },
     {
       "contentId": "base:bookshelf",
-      "x": 8,
+      "x": 6,
       "y": 25,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
+      "x": 7,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 9,
       "y": 25,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 0,
-      "y": 26,
+      "contentId": "base:bookshelf",
+      "x": 13,
+      "y": 25,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": 11,
+      "contentId": "base:chair",
+      "x": 7,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 9,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 12,
       "y": 26,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 13,
+      "y": 26,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -563,22 +587,64 @@
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 1,
       "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 5,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 28,
       "rot": 3
     },
     {
       "contentId": "base:bookshelf",
-      "x": 11,
-      "y": 27,
-      "rot": 3
+      "x": 10,
+      "y": 28,
+      "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 1,
+      "x": 11,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 4,
       "y": 31,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 5,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 6,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 13,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {
@@ -618,5 +684,8 @@
       "roomType": "base:room-office",
       "buildingId": 26
     }
+  },
+  "buildingKinds": {
+    "26": "office"
   }
 }

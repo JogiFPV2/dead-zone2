@@ -1006,34 +1006,64 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
+      "x": 17,
+      "y": 8,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 18,
       "y": 8,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 8,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 21,
       "y": 8,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": 21,
-      "y": 9,
+      "contentId": "base:bookshelf",
+      "x": 18,
+      "y": 10,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 23,
-      "y": 11,
-      "rot": 0
+      "x": 21,
+      "y": 10,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
-      "x": 24,
+      "x": 19,
       "y": 11,
-      "rot": 0
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 22,
+      "y": 11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 23,
+      "y": 11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 26,
+      "y": 11,
+      "rot": 1
     },
     {
       "contentId": "base:dresser",
@@ -1043,8 +1073,8 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 23,
-      "y": 16,
+      "x": 26,
+      "y": 12,
       "rot": 1
     },
     {
@@ -1054,7 +1084,7 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
       "x": 23,
       "y": 17,
       "rot": 1
@@ -1067,15 +1097,33 @@
     },
     {
       "contentId": "base:bookshelf",
+      "x": 23,
+      "y": 18,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
       "x": 21,
       "y": 19,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 22,
+      "contentId": "base:bookshelf",
+      "x": 23,
       "y": 19,
       "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 20,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 24,
+      "y": 21,
+      "rot": 1
     }
   ],
   "rooms": {
@@ -1115,5 +1163,9 @@
       "roomType": "base:room-hall",
       "buildingId": 79
     }
+  },
+  "buildingKinds": {
+    "78": "office",
+    "79": "office"
   }
 }

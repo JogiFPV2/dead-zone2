@@ -264,25 +264,67 @@
   ],
   "objects": [
     {
-      "contentId": "base:dresser",
-      "x": 14,
+      "contentId": "base:kitchen-cabinet",
+      "x": 10,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:kitchen-counter",
+      "x": 11,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 12,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:range",
+      "x": 13,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 14,
+      "y": 30,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 18,
+      "y": 30,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 18,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 23,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:fridge-freezer",
       "x": 29,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:gas-stove",
       "x": 30,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": 31,
       "y": 31,
       "rot": 0
@@ -309,5 +351,8 @@
       "roomType": "base:room-kitchen",
       "buildingId": 10
     }
+  },
+  "buildingKinds": {
+    "10": "house"
   }
 }

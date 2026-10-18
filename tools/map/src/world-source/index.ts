@@ -36,3 +36,4 @@ export {
   straightenOsmMap,
   unrotatePt,
 } from './straighten.js';
+export { columnFootprintIssues, type ColumnFootprintIssue } from './footprint-check.js';

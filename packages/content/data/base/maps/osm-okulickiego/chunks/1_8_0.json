@@ -1545,7 +1545,13 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathtub",
+      "x": 1,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 3,
       "y": 1,
       "rot": 2
@@ -1593,10 +1599,34 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 7,
       "y": 10,
       "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 7,
+      "y": 11,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 9,
+      "y": 12,
+      "rot": 1
     },
     {
       "contentId": "base:locker",
@@ -1611,6 +1641,12 @@
       "rot": 2
     },
     {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 13,
+      "rot": 3
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 2,
       "y": 14,
@@ -1623,16 +1659,10 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 7,
-      "y": 14,
-      "rot": 2
-    },
-    {
       "contentId": "base:bookshelf",
-      "x": 8,
+      "x": 9,
       "y": 14,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -1726,6 +1756,18 @@
     },
     {
       "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 12,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 5,
       "y": 31,
       "rot": 1
@@ -1735,6 +1777,12 @@
       "x": 6,
       "y": 31,
       "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 12,
+      "y": 31,
+      "rot": 2
     }
   ],
   "rooms": {
@@ -1806,5 +1854,12 @@
       "roomType": "base:room-hall",
       "buildingId": 25
     }
+  },
+  "buildingKinds": {
+    "20": "school",
+    "21": "school",
+    "22": "school",
+    "23": "school",
+    "25": "school"
   }
 }

@@ -578,37 +578,97 @@
       "contentId": "base:dresser",
       "x": 20,
       "y": 23,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 22,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 23,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 25,
       "y": 23,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 27,
       "y": 23,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 28,
+      "contentId": "base:dresser",
+      "x": 29,
       "y": 23,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 20,
+      "contentId": "base:desk",
+      "x": 30,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 23,
       "y": 24,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 25,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 27,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 30,
+      "y": 24,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": 20,
+      "x": 30,
       "y": 25,
       "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 30,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 27,
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -618,18 +678,48 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 28,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 29,
-      "y": 31,
-      "rot": 0
+      "x": 25,
+      "y": 28,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
+      "x": 26,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 30,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 23,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 25,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 30,
       "y": 31,
       "rot": 0
@@ -664,5 +754,8 @@
       "roomType": "base:room-office",
       "buildingId": 26
     }
+  },
+  "buildingKinds": {
+    "26": "office"
   }
 }

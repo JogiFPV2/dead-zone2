@@ -74,6 +74,13 @@ export function mapDataToChunkSource(map: MapData): LoadedMap {
       rooms,
       ...(roof ? { roof } : {}),
       ...(room ? { room } : {}),
+      ...(c.buildingKinds && Object.keys(c.buildingKinds).length > 0
+        ? {
+            buildingKinds: new Map(
+              Object.entries(c.buildingKinds).map(([b, k]) => [Number(b), k] as const),
+            ),
+          }
+        : {}),
       ...(objects.length > 0 ? { objects } : {}),
       ...(c.stairs?.length ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
     });

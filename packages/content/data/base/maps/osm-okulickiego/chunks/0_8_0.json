@@ -295,6 +295,12 @@
   ],
   "objects": [
     {
+      "contentId": "base:bathroom-cabinet",
+      "x": 31,
+      "y": 1,
+      "rot": 2
+    },
+    {
       "contentId": "base:locker",
       "x": 30,
       "y": 8,
@@ -348,5 +354,9 @@
       "roomType": "base:room-school",
       "buildingId": 23
     }
+  },
+  "buildingKinds": {
+    "22": "school",
+    "23": "school"
   }
 }

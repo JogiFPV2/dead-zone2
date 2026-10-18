@@ -55,7 +55,10 @@
   "buildings": [
     {
       "id": 1,
-      "origin": [-60, -16],
+      "origin": [
+        -60,
+        -16
+      ],
       "plan": [
         "EEEEEEEPPPPRRRRRRR",
         "EEEEEEEPPPPRRRRRRR",
@@ -114,224 +117,356 @@
       "roof": "base:roof-felt",
       "openings": [
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [8, 0],
+          "at": [
+            8,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [10, 0],
+          "at": [
+            10,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [11, 0],
+          "at": [
+            11,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [13, 0],
+          "at": [
+            13,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [14, 0],
+          "at": [
+            14,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [16, 0],
+          "at": [
+            16,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [17, 0],
+          "at": [
+            17,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [0, 12],
+          "at": [
+            0,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [1, 12],
+          "at": [
+            1,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [3, 12],
+          "at": [
+            3,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [4, 12],
+          "at": [
+            4,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [6, 12],
+          "at": [
+            6,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 12],
+          "at": [
+            7,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [8, 12],
+          "at": [
+            8,
+            12
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [9, 12],
+          "at": [
+            9,
+            12
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [10, 12],
+          "at": [
+            10,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [12, 12],
+          "at": [
+            12,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [13, 12],
+          "at": [
+            13,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [15, 12],
+          "at": [
+            15,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [16, 12],
+          "at": [
+            16,
+            12
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 5],
+          "at": [
+            0,
+            5
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 9],
+          "at": [
+            0,
+            9
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 11],
+          "at": [
+            0,
+            11
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [17, 0],
+          "at": [
+            17,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [17, 2],
+          "at": [
+            17,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [17, 4],
+          "at": [
+            17,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [17, 6],
+          "at": [
+            17,
+            6
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [17, 8],
+          "at": [
+            17,
+            8
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [17, 10],
+          "at": [
+            17,
+            10
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [17, 12],
+          "at": [
+            17,
+            12
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [13, 10],
+          "at": [
+            13,
+            10
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [8, 6],
+          "at": [
+            8,
+            6
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [2, 10],
+          "at": [
+            2,
+            10
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [3, 4],
+          "at": [
+            3,
+            4
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [9, 4],
+          "at": [
+            9,
+            4
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [14, 4],
+          "at": [
+            14,
+            4
+          ],
           "side": "s",
           "type": "door"
         }
@@ -404,227 +539,362 @@
           },
           "openings": [
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [2, 0],
+              "at": [
+                2,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [8, 0],
+              "at": [
+                8,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [10, 0],
+              "at": [
+                10,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [11, 0],
+              "at": [
+                11,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [13, 0],
+              "at": [
+                13,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [14, 0],
+              "at": [
+                14,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [16, 0],
+              "at": [
+                16,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 12],
+              "at": [
+                0,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 12],
+              "at": [
+                1,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 12],
+              "at": [
+                3,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 12],
+              "at": [
+                4,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 12],
+              "at": [
+                6,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 12],
+              "at": [
+                7,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 12],
+              "at": [
+                9,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [10, 12],
+              "at": [
+                10,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [12, 12],
+              "at": [
+                12,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [13, 12],
+              "at": [
+                13,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [15, 12],
+              "at": [
+                15,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [16, 12],
+              "at": [
+                16,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 1],
+              "at": [
+                0,
+                1
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 3],
+              "at": [
+                0,
+                3
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 5],
+              "at": [
+                0,
+                5
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 11],
+              "at": [
+                0,
+                11
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 2],
+              "at": [
+                17,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 4],
+              "at": [
+                17,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 6],
+              "at": [
+                17,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 8],
+              "at": [
+                17,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 10],
+              "at": [
+                17,
+                10
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 12],
+              "at": [
+                17,
+                12
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [1, 6],
+              "at": [
+                1,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [2, 10],
+              "at": [
+                2,
+                10
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [2, 4],
+              "at": [
+                2,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [7, 4],
+              "at": [
+                7,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [12, 4],
+              "at": [
+                12,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 6],
+              "at": [
+                10,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [16, 4],
+              "at": [
+                16,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [15, 6],
+              "at": [
+                15,
+                6
+              ],
               "side": "s",
               "type": "door"
             }
@@ -697,227 +967,362 @@
           },
           "openings": [
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [2, 0],
+              "at": [
+                2,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [8, 0],
+              "at": [
+                8,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [10, 0],
+              "at": [
+                10,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [11, 0],
+              "at": [
+                11,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [13, 0],
+              "at": [
+                13,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [14, 0],
+              "at": [
+                14,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [16, 0],
+              "at": [
+                16,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 12],
+              "at": [
+                0,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 12],
+              "at": [
+                1,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 12],
+              "at": [
+                3,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 12],
+              "at": [
+                4,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 12],
+              "at": [
+                6,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 12],
+              "at": [
+                7,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 12],
+              "at": [
+                9,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [10, 12],
+              "at": [
+                10,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [12, 12],
+              "at": [
+                12,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [13, 12],
+              "at": [
+                13,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [15, 12],
+              "at": [
+                15,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [16, 12],
+              "at": [
+                16,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 1],
+              "at": [
+                0,
+                1
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 3],
+              "at": [
+                0,
+                3
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 5],
+              "at": [
+                0,
+                5
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 11],
+              "at": [
+                0,
+                11
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 2],
+              "at": [
+                17,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 4],
+              "at": [
+                17,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 6],
+              "at": [
+                17,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 8],
+              "at": [
+                17,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 10],
+              "at": [
+                17,
+                10
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 12],
+              "at": [
+                17,
+                12
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [1, 6],
+              "at": [
+                1,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [2, 10],
+              "at": [
+                2,
+                10
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [2, 4],
+              "at": [
+                2,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [7, 4],
+              "at": [
+                7,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [12, 4],
+              "at": [
+                12,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 6],
+              "at": [
+                10,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [16, 4],
+              "at": [
+                16,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [15, 6],
+              "at": [
+                15,
+                6
+              ],
               "side": "s",
               "type": "door"
             }
@@ -990,227 +1395,362 @@
           },
           "openings": [
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [2, 0],
+              "at": [
+                2,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [8, 0],
+              "at": [
+                8,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [10, 0],
+              "at": [
+                10,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [11, 0],
+              "at": [
+                11,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [13, 0],
+              "at": [
+                13,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [14, 0],
+              "at": [
+                14,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [16, 0],
+              "at": [
+                16,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 12],
+              "at": [
+                0,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 12],
+              "at": [
+                1,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 12],
+              "at": [
+                3,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 12],
+              "at": [
+                4,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 12],
+              "at": [
+                6,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 12],
+              "at": [
+                7,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 12],
+              "at": [
+                9,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [10, 12],
+              "at": [
+                10,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [12, 12],
+              "at": [
+                12,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [13, 12],
+              "at": [
+                13,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [15, 12],
+              "at": [
+                15,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [16, 12],
+              "at": [
+                16,
+                12
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 1],
+              "at": [
+                0,
+                1
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 3],
+              "at": [
+                0,
+                3
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 5],
+              "at": [
+                0,
+                5
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 11],
+              "at": [
+                0,
+                11
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [17, 0],
+              "at": [
+                17,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 2],
+              "at": [
+                17,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 4],
+              "at": [
+                17,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 6],
+              "at": [
+                17,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 8],
+              "at": [
+                17,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 10],
+              "at": [
+                17,
+                10
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [17, 12],
+              "at": [
+                17,
+                12
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [1, 6],
+              "at": [
+                1,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [2, 10],
+              "at": [
+                2,
+                10
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [2, 4],
+              "at": [
+                2,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [7, 4],
+              "at": [
+                7,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [12, 4],
+              "at": [
+                12,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 6],
+              "at": [
+                10,
+                6
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [16, 4],
+              "at": [
+                16,
+                4
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [15, 6],
+              "at": [
+                15,
+                6
+              ],
               "side": "s",
               "type": "door"
             }
@@ -1221,7 +1761,10 @@
     },
     {
       "id": 2,
-      "origin": [-38, -13],
+      "origin": [
+        -38,
+        -13
+      ],
       "plan": [
         "KKKKKJJJJJJJJTTTTSSSSS",
         "KKKKKJJJJJJJJTTTTSSSSS",
@@ -1282,242 +1825,386 @@
       "roof": "base:roof-tile",
       "openings": [
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [6, 0],
+          "at": [
+            6,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [9, 0],
+          "at": [
+            9,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [10, 0],
+          "at": [
+            10,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [12, 0],
+          "at": [
+            12,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [13, 0],
+          "at": [
+            13,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [15, 0],
+          "at": [
+            15,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [16, 0],
+          "at": [
+            16,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [18, 0],
+          "at": [
+            18,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [19, 0],
+          "at": [
+            19,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [21, 0],
+          "at": [
+            21,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [0, 9],
+          "at": [
+            0,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [1, 9],
+          "at": [
+            1,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [3, 9],
+          "at": [
+            3,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [4, 9],
+          "at": [
+            4,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [6, 9],
+          "at": [
+            6,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 9],
+          "at": [
+            7,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [9, 9],
+          "at": [
+            9,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [10, 9],
+          "at": [
+            10,
+            9
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [11, 9],
+          "at": [
+            11,
+            9
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [12, 9],
+          "at": [
+            12,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [13, 9],
+          "at": [
+            13,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [15, 9],
+          "at": [
+            15,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [16, 9],
+          "at": [
+            16,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [18, 9],
+          "at": [
+            18,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [19, 9],
+          "at": [
+            19,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [21, 9],
+          "at": [
+            21,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 6],
+          "at": [
+            0,
+            6
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 8],
+          "at": [
+            0,
+            8
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [21, 0],
+          "at": [
+            21,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [21, 2],
+          "at": [
+            21,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [21, 4],
+          "at": [
+            21,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [21, 6],
+          "at": [
+            21,
+            6
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [21, 8],
+          "at": [
+            21,
+            8
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [14, 5],
+          "at": [
+            14,
+            5
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [8, 8],
+          "at": [
+            8,
+            8
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [18, 9],
+          "at": [
+            18,
+            9
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [9, 3],
+          "at": [
+            9,
+            3
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [2, 3],
+          "at": [
+            2,
+            3
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [18, 3],
+          "at": [
+            18,
+            3
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [15, 3],
+          "at": [
+            15,
+            3
+          ],
           "side": "s",
           "type": "door"
         }
@@ -1587,242 +2274,386 @@
           },
           "openings": [
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [3, 0],
+              "at": [
+                3,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [6, 0],
+              "at": [
+                6,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [9, 0],
+              "at": [
+                9,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [10, 0],
+              "at": [
+                10,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [12, 0],
+              "at": [
+                12,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [13, 0],
+              "at": [
+                13,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [15, 0],
+              "at": [
+                15,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [16, 0],
+              "at": [
+                16,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [18, 0],
+              "at": [
+                18,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [19, 0],
+              "at": [
+                19,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [21, 0],
+              "at": [
+                21,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 9],
+              "at": [
+                1,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 9],
+              "at": [
+                3,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 9],
+              "at": [
+                4,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 9],
+              "at": [
+                6,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 9],
+              "at": [
+                7,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 9],
+              "at": [
+                9,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [10, 9],
+              "at": [
+                10,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [12, 9],
+              "at": [
+                12,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [13, 9],
+              "at": [
+                13,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [15, 9],
+              "at": [
+                15,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [16, 9],
+              "at": [
+                16,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [18, 9],
+              "at": [
+                18,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [19, 9],
+              "at": [
+                19,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [21, 9],
+              "at": [
+                21,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 2],
+              "at": [
+                0,
+                2
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 4],
+              "at": [
+                0,
+                4
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 6],
+              "at": [
+                0,
+                6
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 8],
+              "at": [
+                0,
+                8
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [21, 0],
+              "at": [
+                21,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 2],
+              "at": [
+                21,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 4],
+              "at": [
+                21,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 6],
+              "at": [
+                21,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 8],
+              "at": [
+                21,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [18, 4],
+              "at": [
+                18,
+                4
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [18, 9],
+              "at": [
+                18,
+                9
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [20, 3],
+              "at": [
+                20,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [3, 3],
+              "at": [
+                3,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 3],
+              "at": [
+                10,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [3, 5],
+              "at": [
+                3,
+                5
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 5],
+              "at": [
+                10,
+                5
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [16, 3],
+              "at": [
+                16,
+                3
+              ],
               "side": "s",
               "type": "door"
             }
@@ -1892,242 +2723,386 @@
           },
           "openings": [
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [3, 0],
+              "at": [
+                3,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [6, 0],
+              "at": [
+                6,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [9, 0],
+              "at": [
+                9,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [10, 0],
+              "at": [
+                10,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [12, 0],
+              "at": [
+                12,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [13, 0],
+              "at": [
+                13,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [15, 0],
+              "at": [
+                15,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [16, 0],
+              "at": [
+                16,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [18, 0],
+              "at": [
+                18,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [19, 0],
+              "at": [
+                19,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [21, 0],
+              "at": [
+                21,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 9],
+              "at": [
+                1,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 9],
+              "at": [
+                3,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 9],
+              "at": [
+                4,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 9],
+              "at": [
+                6,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 9],
+              "at": [
+                7,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 9],
+              "at": [
+                9,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [10, 9],
+              "at": [
+                10,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [12, 9],
+              "at": [
+                12,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [13, 9],
+              "at": [
+                13,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [15, 9],
+              "at": [
+                15,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [16, 9],
+              "at": [
+                16,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [18, 9],
+              "at": [
+                18,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [19, 9],
+              "at": [
+                19,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [21, 9],
+              "at": [
+                21,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 2],
+              "at": [
+                0,
+                2
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 4],
+              "at": [
+                0,
+                4
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 6],
+              "at": [
+                0,
+                6
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 8],
+              "at": [
+                0,
+                8
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [21, 0],
+              "at": [
+                21,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 2],
+              "at": [
+                21,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 4],
+              "at": [
+                21,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 6],
+              "at": [
+                21,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [21, 8],
+              "at": [
+                21,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [18, 5],
+              "at": [
+                18,
+                5
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [18, 8],
+              "at": [
+                18,
+                8
+              ],
               "side": "e",
               "type": "door"
             },
             {
-              "at": [20, 3],
+              "at": [
+                20,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [3, 3],
+              "at": [
+                3,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 3],
+              "at": [
+                10,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [3, 5],
+              "at": [
+                3,
+                5
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [10, 5],
+              "at": [
+                10,
+                5
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [16, 3],
+              "at": [
+                16,
+                3
+              ],
               "side": "s",
               "type": "door"
             }
@@ -2138,7 +3113,10 @@
     },
     {
       "id": 3,
-      "origin": [-14, -12],
+      "origin": [
+        -14,
+        -12
+      ],
       "plan": [
         "HHHHHHHHH",
         "HHHHHHHHH",
@@ -2173,102 +3151,162 @@
       "roof": "base:roof-felt",
       "openings": [
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [6, 0],
+          "at": [
+            6,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [8, 0],
+          "at": [
+            8,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [2, 8],
+          "at": [
+            2,
+            8
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [5, 8],
+          "at": [
+            5,
+            8
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [8, 8],
+          "at": [
+            8,
+            8
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 6],
+          "at": [
+            0,
+            6
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 8],
+          "at": [
+            0,
+            8
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [8, 1],
+          "at": [
+            8,
+            1
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [8, 2],
+          "at": [
+            8,
+            2
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [8, 3],
+          "at": [
+            8,
+            3
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [8, 5],
+          "at": [
+            8,
+            5
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [8, 7],
+          "at": [
+            8,
+            7
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [6, 5],
+          "at": [
+            6,
+            5
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [2, 5],
+          "at": [
+            2,
+            5
+          ],
           "side": "s",
           "type": "door"
         }
@@ -2278,7 +3316,10 @@
     },
     {
       "id": 4,
-      "origin": [-2, -13],
+      "origin": [
+        -2,
+        -13
+      ],
       "plan": [
         "QQQQXXXYYY",
         "QQQQXXXYYY",
@@ -2329,133 +3370,211 @@
       "roof": "base:roof-felt",
       "openings": [
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [9, 0],
+          "at": [
+            9,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [1, 9],
+          "at": [
+            1,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [3, 9],
+          "at": [
+            3,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [5, 9],
+          "at": [
+            5,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 9],
+          "at": [
+            7,
+            9
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [9, 9],
+          "at": [
+            9,
+            9
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 5],
+          "at": [
+            0,
+            5
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 9],
+          "at": [
+            0,
+            9
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [9, 0],
+          "at": [
+            9,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [9, 2],
+          "at": [
+            9,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [9, 4],
+          "at": [
+            9,
+            4
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [9, 5],
+          "at": [
+            9,
+            5
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [9, 6],
+          "at": [
+            9,
+            6
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [9, 8],
+          "at": [
+            9,
+            8
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 5],
+          "at": [
+            7,
+            5
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [4, 8],
+          "at": [
+            4,
+            8
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [2, 2],
+          "at": [
+            2,
+            2
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [5, 2],
+          "at": [
+            5,
+            2
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [8, 2],
+          "at": [
+            8,
+            2
+          ],
           "side": "s",
           "type": "door"
         }
@@ -2505,172 +3624,274 @@
           },
           "openings": [
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [3, 0],
+              "at": [
+                3,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [9, 0],
+              "at": [
+                9,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [1, 9],
+              "at": [
+                1,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [2, 9],
+              "at": [
+                2,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [3, 9],
+              "at": [
+                3,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 9],
+              "at": [
+                4,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [5, 9],
+              "at": [
+                5,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [6, 9],
+              "at": [
+                6,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 9],
+              "at": [
+                7,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [8, 9],
+              "at": [
+                8,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [9, 9],
+              "at": [
+                9,
+                9
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 1],
+              "at": [
+                0,
+                1
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 3],
+              "at": [
+                0,
+                3
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 5],
+              "at": [
+                0,
+                5
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 9],
+              "at": [
+                0,
+                9
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [9, 0],
+              "at": [
+                9,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 1],
+              "at": [
+                9,
+                1
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 2],
+              "at": [
+                9,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 3],
+              "at": [
+                9,
+                3
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 4],
+              "at": [
+                9,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 5],
+              "at": [
+                9,
+                5
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 6],
+              "at": [
+                9,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 7],
+              "at": [
+                9,
+                7
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 8],
+              "at": [
+                9,
+                8
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [9, 9],
+              "at": [
+                9,
+                9
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [2, 2],
+              "at": [
+                2,
+                2
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [7, 2],
+              "at": [
+                7,
+                2
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [2, 5],
+              "at": [
+                2,
+                5
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [7, 5],
+              "at": [
+                7,
+                5
+              ],
               "side": "s",
               "type": "door"
             }
@@ -2681,7 +3902,10 @@
     },
     {
       "id": 5,
-      "origin": [12, -15],
+      "origin": [
+        12,
+        -15
+      ],
       "plan": [
         "MMMSSSSSSSSS",
         "MMMSSSSSSSSS",
@@ -2719,70 +3943,106 @@
       "roof": "base:roof-felt",
       "openings": [
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 9],
+          "at": [
+            0,
+            9
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [10, 11],
+          "at": [
+            10,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [9, 11],
+          "at": [
+            9,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [8, 11],
+          "at": [
+            8,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [7, 11],
+          "at": [
+            7,
+            11
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [6, 11],
+          "at": [
+            6,
+            11
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [5, 11],
+          "at": [
+            5,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [4, 11],
+          "at": [
+            4,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [3, 11],
+          "at": [
+            3,
+            11
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [1, 7],
+          "at": [
+            1,
+            7
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [3, 10],
+          "at": [
+            3,
+            10
+          ],
           "side": "w",
           "type": "door"
         }
@@ -2792,8 +4052,17 @@
     },
     {
       "id": 6,
-      "origin": [34, -14],
-      "plan": ["SSSSSZZ", "SSSSSZZ", "SSSSSZZ", "SSSSSWW", "SSSSSWW"],
+      "origin": [
+        34,
+        -14
+      ],
+      "plan": [
+        "SSSSSZZ",
+        "SSSSSZZ",
+        "SSSSSZZ",
+        "SSSSSWW",
+        "SSSSSWW"
+      ],
       "rooms": {
         "S": {
           "id": 78,
@@ -2817,59 +4086,89 @@
       "roof": "base:roof-felt",
       "openings": [
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [1, 4],
+          "at": [
+            1,
+            4
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [2, 4],
+          "at": [
+            2,
+            4
+          ],
           "side": "s",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [3, 4],
+          "at": [
+            3,
+            4
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [4, 4],
+          "at": [
+            4,
+            4
+          ],
           "side": "s",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [6, 2],
+          "at": [
+            6,
+            2
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [4, 4],
+          "at": [
+            4,
+            4
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [4, 1],
+          "at": [
+            4,
+            1
+          ],
           "side": "e",
           "type": "door"
         }
@@ -2879,7 +4178,10 @@
     },
     {
       "id": 7,
-      "origin": [28, -9],
+      "origin": [
+        28,
+        -9
+      ],
       "plan": [
         "AAAAAAAAAAAAA",
         "AAAAAAAAAAAAA",
@@ -2906,7 +4208,10 @@
     },
     {
       "id": 8,
-      "origin": [-58, 9],
+      "origin": [
+        -58,
+        9
+      ],
       "plan": [
         "HHAAAAAA",
         "HHAAAAAA",
@@ -2940,113 +4245,176 @@
       "roof": "base:roof-tile",
       "openings": [
         {
-          "at": [6, 7],
+          "at": [
+            6,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [4, 7],
+          "at": [
+            4,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [2, 7],
+          "at": [
+            2,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [6, 0],
+          "at": [
+            6,
+            0
+          ],
           "side": "n",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "door",
           "contentId": "base:door-glass"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "window",
           "contentId": "base:window-shop"
         },
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [7, 6],
+          "at": [
+            7,
+            6
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 4],
+          "at": [
+            7,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 2],
+          "at": [
+            7,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [2, 2],
+          "at": [
+            2,
+            2
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [4, 6],
+          "at": [
+            4,
+            6
+          ],
           "side": "n",
           "type": "door"
         }
@@ -3089,97 +4457,154 @@
           },
           "openings": [
             {
-              "at": [6, 7],
+              "at": [
+                6,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 7],
+              "at": [
+                4,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [2, 7],
+              "at": [
+                2,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [3, 0],
+              "at": [
+                3,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 6],
+              "at": [
+                7,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 4],
+              "at": [
+                7,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 2],
+              "at": [
+                7,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 5],
+              "at": [
+                0,
+                5
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 3],
+              "at": [
+                0,
+                3
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 1],
+              "at": [
+                0,
+                1
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [2, 1],
+              "at": [
+                2,
+                1
+              ],
               "side": "w",
               "type": "door"
             },
             {
-              "at": [2, 5],
+              "at": [
+                2,
+                5
+              ],
               "side": "w",
               "type": "door"
             },
             {
-              "at": [4, 1],
+              "at": [
+                4,
+                1
+              ],
               "side": "w",
               "type": "door"
             }
@@ -3190,7 +4615,10 @@
     },
     {
       "id": 9,
-      "origin": [-46, 9],
+      "origin": [
+        -46,
+        9
+      ],
       "plan": [
         "WWHHBBBBB",
         "WWHHBBBBB",
@@ -3234,107 +4662,170 @@
       "roof": "base:roof-gable",
       "openings": [
         {
-          "at": [7, 7],
+          "at": [
+            7,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [5, 7],
+          "at": [
+            5,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [3, 7],
+          "at": [
+            3,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [1, 7],
+          "at": [
+            1,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [2, 0],
-          "side": "n",
-          "type": "door"
-        },
-        {
-          "at": [1, 0],
-          "side": "n",
-          "type": "window"
-        },
-        {
-          "at": [8, 6],
-          "side": "e",
-          "type": "window"
-        },
-        {
-          "at": [8, 4],
-          "side": "e",
-          "type": "window"
-        },
-        {
-          "at": [8, 2],
-          "side": "e",
-          "type": "window"
-        },
-        {
-          "at": [8, 0],
-          "side": "e",
-          "type": "window"
-        },
-        {
-          "at": [0, 6],
-          "side": "w",
-          "type": "window"
-        },
-        {
-          "at": [0, 4],
-          "side": "w",
-          "type": "window"
-        },
-        {
-          "at": [0, 2],
-          "side": "w",
-          "type": "window"
-        },
-        {
-          "at": [0, 0],
-          "side": "w",
-          "type": "window"
-        },
-        {
-          "at": [4, 1],
-          "side": "w",
-          "type": "door"
-        },
-        {
-          "at": [2, 4],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [2, 1],
+          "at": [
+            1,
+            0
+          ],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [
+            8,
+            6
+          ],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [
+            8,
+            4
+          ],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [
+            8,
+            2
+          ],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [
+            8,
+            0
+          ],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [
+            0,
+            6
+          ],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [
+            0,
+            4
+          ],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [
+            0,
+            2
+          ],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [
+            0,
+            0
+          ],
+          "side": "w",
+          "type": "window"
+        },
+        {
+          "at": [
+            4,
+            1
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [6, 4],
+          "at": [
+            2,
+            4
+          ],
+          "side": "n",
+          "type": "door"
+        },
+        {
+          "at": [
+            2,
+            1
+          ],
+          "side": "w",
+          "type": "door"
+        },
+        {
+          "at": [
+            6,
+            4
+          ],
           "side": "n",
           "type": "door"
         }
@@ -3344,7 +4835,10 @@
     },
     {
       "id": 10,
-      "origin": [-33, 9],
+      "origin": [
+        -33,
+        9
+      ],
       "plan": [
         "HHHHHHHH",
         "HHHHHHHH",
@@ -3378,92 +4872,146 @@
       "roof": "base:roof-tile",
       "openings": [
         {
-          "at": [6, 7],
+          "at": [
+            6,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [4, 7],
+          "at": [
+            4,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [2, 7],
+          "at": [
+            2,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [7, 6],
+          "at": [
+            7,
+            6
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 4],
+          "at": [
+            7,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 2],
+          "at": [
+            7,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 0],
+          "at": [
+            7,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [0, 6],
+          "at": [
+            0,
+            6
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [5, 5],
+          "at": [
+            5,
+            5
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [1, 5],
+          "at": [
+            1,
+            5
+          ],
           "side": "n",
           "type": "door"
         }
@@ -3506,92 +5054,146 @@
           },
           "openings": [
             {
-              "at": [6, 7],
+              "at": [
+                6,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [4, 7],
+              "at": [
+                4,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [2, 7],
+              "at": [
+                2,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [5, 0],
+              "at": [
+                5,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [3, 0],
+              "at": [
+                3,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [1, 0],
+              "at": [
+                1,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [7, 6],
+              "at": [
+                7,
+                6
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 4],
+              "at": [
+                7,
+                4
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 2],
+              "at": [
+                7,
+                2
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 0],
+              "at": [
+                7,
+                0
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [0, 6],
+              "at": [
+                0,
+                6
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 2],
+              "at": [
+                0,
+                2
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [1, 5],
+              "at": [
+                1,
+                5
+              ],
               "side": "n",
               "type": "door"
             },
             {
-              "at": [4, 2],
+              "at": [
+                4,
+                2
+              ],
               "side": "w",
               "type": "door"
             },
             {
-              "at": [4, 6],
+              "at": [
+                4,
+                6
+              ],
               "side": "w",
               "type": "door"
             }
@@ -3602,7 +5204,10 @@
     },
     {
       "id": 11,
-      "origin": [-16, 9],
+      "origin": [
+        -16,
+        9
+      ],
       "plan": [
         "HHWWBBB",
         "HHWWBBB",
@@ -3646,92 +5251,146 @@
       "roof": "base:roof-gable",
       "openings": [
         {
-          "at": [5, 7],
+          "at": [
+            5,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [3, 7],
+          "at": [
+            3,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [1, 7],
+          "at": [
+            1,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [6, 6],
+          "at": [
+            6,
+            6
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [6, 4],
+          "at": [
+            6,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [6, 2],
+          "at": [
+            6,
+            2
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [6, 0],
+          "at": [
+            6,
+            0
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 5],
+          "at": [
+            0,
+            5
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [2, 1],
+          "at": [
+            2,
+            1
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [3, 5],
+          "at": [
+            3,
+            5
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [4, 1],
+          "at": [
+            4,
+            1
+          ],
           "side": "w",
           "type": "door"
         }
@@ -3741,8 +5400,16 @@
     },
     {
       "id": 12,
-      "origin": [-21, 13],
-      "plan": ["AAAAA", "AAAAA", "AAAAA", "AAAAA"],
+      "origin": [
+        -21,
+        13
+      ],
+      "plan": [
+        "AAAAA",
+        "AAAAA",
+        "AAAAA",
+        "AAAAA"
+      ],
       "rooms": {
         "A": {
           "id": 106,
@@ -3756,27 +5423,42 @@
       "roof": "base:roof-shingles",
       "openings": [
         {
-          "at": [3, 0],
+          "at": [
+            3,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [4, 1],
+          "at": [
+            4,
+            1
+          ],
           "side": "e",
           "type": "door"
         }
@@ -3786,8 +5468,17 @@
     },
     {
       "id": 13,
-      "origin": [-5, 10],
-      "plan": ["AAAA", "AAAA", "AAAA", "AAAA", "AAAA"],
+      "origin": [
+        -5,
+        10
+      ],
+      "plan": [
+        "AAAA",
+        "AAAA",
+        "AAAA",
+        "AAAA",
+        "AAAA"
+      ],
       "rooms": {
         "A": {
           "id": 107,
@@ -3801,37 +5492,58 @@
       "roof": "base:roof-corrugated",
       "openings": [
         {
-          "at": [3, 1],
+          "at": [
+            3,
+            1
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [3, 4],
+          "at": [
+            3,
+            4
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [2, 4],
+          "at": [
+            2,
+            4
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [1, 4],
+          "at": [
+            1,
+            4
+          ],
           "side": "s",
           "type": "window"
         }
@@ -3841,8 +5553,19 @@
     },
     {
       "id": 14,
-      "origin": [4, 9],
-      "plan": ["AAAAAAAA", "AAAAAAAA", "AAAAAAAA", "AAAAAAAA", "AAAABBBB", "AAAABBBB", "AAAABBBB"],
+      "origin": [
+        4,
+        9
+      ],
+      "plan": [
+        "AAAAAAAA",
+        "AAAAAAAA",
+        "AAAAAAAA",
+        "AAAAAAAA",
+        "AAAABBBB",
+        "AAAABBBB",
+        "AAAABBBB"
+      ],
       "rooms": {
         "A": {
           "id": 108,
@@ -3860,65 +5583,107 @@
       "door": "base:door-plain",
       "openings": [
         {
-          "at": [6, 6],
+          "at": [
+            6,
+            6
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 5],
+          "at": [
+            0,
+            5
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [7, 3],
+          "at": [
+            7,
+            3
+          ],
           "side": "s",
           "type": "door"
         },
         {
-          "at": [5, 4],
+          "at": [
+            5,
+            4
+          ],
           "side": "n",
           "type": "door"
         }
       ],
       "gaps": [
         {
-          "at": [1, 0],
+          "at": [
+            1,
+            0
+          ],
           "side": "n"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n"
         },
         {
-          "at": [5, 0],
+          "at": [
+            5,
+            0
+          ],
           "side": "n"
         },
         {
-          "at": [2, 6],
+          "at": [
+            2,
+            6
+          ],
           "side": "s"
         },
         {
-          "at": [3, 6],
+          "at": [
+            3,
+            6
+          ],
           "side": "s"
         },
         {
-          "at": [4, 6],
+          "at": [
+            4,
+            6
+          ],
           "side": "s"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w"
         },
         {
-          "at": [7, 1],
+          "at": [
+            7,
+            1
+          ],
           "side": "e"
         },
         {
-          "at": [7, 4],
+          "at": [
+            7,
+            4
+          ],
           "side": "e"
         },
         {
-          "at": [7, 5],
+          "at": [
+            7,
+            5
+          ],
           "side": "e"
         }
       ],
@@ -3926,7 +5691,10 @@
     },
     {
       "id": 15,
-      "origin": [16, 9],
+      "origin": [
+        16,
+        9
+      ],
       "plan": [
         "HHHHHKKK",
         "HHHHHKKK",
@@ -3960,92 +5728,146 @@
       "roof": "base:roof-tile",
       "openings": [
         {
-          "at": [7, 1],
+          "at": [
+            7,
+            1
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 3],
+          "at": [
+            7,
+            3
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 5],
+          "at": [
+            7,
+            5
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 7],
+          "at": [
+            7,
+            7
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 2],
+          "at": [
+            0,
+            2
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 4],
+          "at": [
+            0,
+            4
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 6],
+          "at": [
+            0,
+            6
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [6, 0],
+          "at": [
+            6,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [4, 0],
+          "at": [
+            4,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [2, 0],
+          "at": [
+            2,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [0, 0],
+          "at": [
+            0,
+            0
+          ],
           "side": "n",
           "type": "window"
         },
         {
-          "at": [6, 7],
+          "at": [
+            6,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [2, 7],
+          "at": [
+            2,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "s",
           "type": "window"
         },
         {
-          "at": [5, 2],
+          "at": [
+            5,
+            2
+          ],
           "side": "w",
           "type": "door"
         },
         {
-          "at": [5, 6],
+          "at": [
+            5,
+            6
+          ],
           "side": "w",
           "type": "door"
         }
@@ -4088,92 +5910,146 @@
           },
           "openings": [
             {
-              "at": [7, 1],
+              "at": [
+                7,
+                1
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 3],
+              "at": [
+                7,
+                3
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 5],
+              "at": [
+                7,
+                5
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [7, 7],
+              "at": [
+                7,
+                7
+              ],
               "side": "e",
               "type": "window"
             },
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 2],
+              "at": [
+                0,
+                2
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 4],
+              "at": [
+                0,
+                4
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [0, 6],
+              "at": [
+                0,
+                6
+              ],
               "side": "w",
               "type": "window"
             },
             {
-              "at": [6, 0],
+              "at": [
+                6,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [4, 0],
+              "at": [
+                4,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [2, 0],
+              "at": [
+                2,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [0, 0],
+              "at": [
+                0,
+                0
+              ],
               "side": "n",
               "type": "window"
             },
             {
-              "at": [6, 7],
+              "at": [
+                6,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [2, 7],
+              "at": [
+                2,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [0, 7],
+              "at": [
+                0,
+                7
+              ],
               "side": "s",
               "type": "window"
             },
             {
-              "at": [5, 6],
+              "at": [
+                5,
+                6
+              ],
               "side": "w",
               "type": "door"
             },
             {
-              "at": [2, 3],
+              "at": [
+                2,
+                3
+              ],
               "side": "s",
               "type": "door"
             },
             {
-              "at": [6, 3],
+              "at": [
+                6,
+                3
+              ],
               "side": "s",
               "type": "door"
             }
@@ -4184,7 +6060,10 @@
     },
     {
       "id": 16,
-      "origin": [29, 9],
+      "origin": [
+        29,
+        9
+      ],
       "plan": [
         "KKKKWWWW",
         "KKKKWWWW",
@@ -4229,107 +6108,170 @@
       "roof": "base:roof-gable",
       "openings": [
         {
-          "at": [0, 7],
+          "at": [
+            0,
+            7
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 5],
+          "at": [
+            0,
+            5
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 3],
+          "at": [
+            0,
+            3
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [0, 1],
+          "at": [
+            0,
+            1
+          ],
           "side": "w",
           "type": "window"
         },
         {
-          "at": [7, 7],
+          "at": [
+            7,
+            7
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 5],
+          "at": [
+            7,
+            5
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 3],
+          "at": [
+            7,
+            3
+          ],
           "side": "e",
           "type": "window"
         },
         {
-          "at": [7, 2],
-          "side": "e",
-          "type": "door"
-        },
-        {
-          "at": [7, 1],
-          "side": "e",
-          "type": "window"
-        },
-        {
-          "at": [1, 8],
-          "side": "s",
-          "type": "window"
-        },
-        {
-          "at": [3, 8],
-          "side": "s",
-          "type": "window"
-        },
-        {
-          "at": [5, 8],
-          "side": "s",
-          "type": "window"
-        },
-        {
-          "at": [7, 8],
-          "side": "s",
-          "type": "window"
-        },
-        {
-          "at": [1, 0],
-          "side": "n",
-          "type": "window"
-        },
-        {
-          "at": [3, 0],
-          "side": "n",
-          "type": "window"
-        },
-        {
-          "at": [5, 0],
-          "side": "n",
-          "type": "window"
-        },
-        {
-          "at": [7, 0],
-          "side": "n",
-          "type": "window"
-        },
-        {
-          "at": [6, 4],
-          "side": "n",
-          "type": "door"
-        },
-        {
-          "at": [3, 2],
+          "at": [
+            7,
+            2
+          ],
           "side": "e",
           "type": "door"
         },
         {
-          "at": [6, 2],
+          "at": [
+            7,
+            1
+          ],
+          "side": "e",
+          "type": "window"
+        },
+        {
+          "at": [
+            1,
+            8
+          ],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [
+            3,
+            8
+          ],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [
+            5,
+            8
+          ],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [
+            7,
+            8
+          ],
+          "side": "s",
+          "type": "window"
+        },
+        {
+          "at": [
+            1,
+            0
+          ],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [
+            3,
+            0
+          ],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [
+            5,
+            0
+          ],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [
+            7,
+            0
+          ],
+          "side": "n",
+          "type": "window"
+        },
+        {
+          "at": [
+            6,
+            4
+          ],
           "side": "n",
           "type": "door"
         },
         {
-          "at": [3, 6],
+          "at": [
+            3,
+            2
+          ],
+          "side": "e",
+          "type": "door"
+        },
+        {
+          "at": [
+            6,
+            2
+          ],
+          "side": "n",
+          "type": "door"
+        },
+        {
+          "at": [
+            3,
+            6
+          ],
           "side": "e",
           "type": "door"
         }
@@ -4340,55 +6282,82 @@
   ],
   "stairs": [
     {
-      "at": [-60, -5],
+      "at": [
+        -60,
+        -5
+      ],
       "dir": "N",
       "len": 4,
       "zFrom": 0
     },
     {
-      "at": [-59, -8],
+      "at": [
+        -59,
+        -8
+      ],
       "dir": "S",
       "len": 4,
       "zFrom": 1
     },
     {
-      "at": [-60, -5],
+      "at": [
+        -60,
+        -5
+      ],
       "dir": "N",
       "len": 4,
       "zFrom": 2
     },
     {
-      "at": [-19, -5],
+      "at": [
+        -19,
+        -5
+      ],
       "dir": "N",
       "len": 4,
       "zFrom": 0
     },
     {
-      "at": [-18, -8],
+      "at": [
+        -18,
+        -8
+      ],
       "dir": "S",
       "len": 4,
       "zFrom": 1
     },
     {
-      "at": [6, -9],
+      "at": [
+        6,
+        -9
+      ],
       "dir": "W",
       "len": 4,
       "zFrom": 0
     },
     {
-      "at": [-58, 10],
+      "at": [
+        -58,
+        10
+      ],
       "dir": "S",
       "len": 3,
       "zFrom": 0
     },
     {
-      "at": [-33, 10],
+      "at": [
+        -33,
+        10
+      ],
       "dir": "S",
       "len": 3,
       "zFrom": 0
     },
     {
-      "at": [17, 16],
+      "at": [
+        17,
+        16
+      ],
       "dir": "E",
       "len": 3,
       "zFrom": 0
@@ -4410,33 +6379,33 @@
   ],
   "objects": [
     {
-      "contentId": "base:bed",
+      "contentId": "base:locker",
       "x": -54,
-      "y": -16,
-      "rot": 1
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": -52,
       "y": -16,
       "rot": 0
     },
     {
       "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
       "x": -50,
       "y": -16,
       "rot": 1
     },
     {
-      "contentId": "base:bed",
-      "x": -54,
-      "y": -15,
-      "rot": 1
+      "contentId": "base:desk",
+      "x": -49,
+      "y": -16,
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -50,
-      "y": -15,
+      "contentId": "base:chair",
+      "x": -48,
+      "y": -16,
       "rot": 1
     },
     {
@@ -4447,67 +6416,31 @@
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 13,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 14,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 15,
       "y": -15,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 16,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 17,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:fridge",
+      "contentId": "base:shop-counter",
       "x": 18,
       "y": -15,
       "rot": 0
     },
     {
       "contentId": "base:fridge",
-      "x": 19,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 20,
       "y": -15,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 21,
       "y": -15,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:freezer",
       "x": 22,
-      "y": -15,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 23,
       "y": -15,
       "rot": 0
     },
@@ -4518,20 +6451,38 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bed",
       "x": -60,
       "y": -14,
       "rot": 3
     },
     {
       "contentId": "base:locker",
-      "x": -54,
+      "x": -53,
       "y": -14,
-      "rot": 1
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
       "x": -50,
+      "y": -14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": -49,
+      "y": -14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": -48,
+      "y": -14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -43,
       "y": -14,
       "rot": 1
     },
@@ -4554,19 +6505,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 36,
-      "y": -14,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 37,
-      "y": -14,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": 40,
       "y": -14,
       "rot": 1
@@ -4578,25 +6517,13 @@
       "rot": 3
     },
     {
-      "contentId": "base:locker",
-      "x": -54,
+      "contentId": "base:kitchen-cabinet",
+      "x": -38,
       "y": -13,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": -53,
-      "y": -13,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -50,
-      "y": -13,
-      "rot": 1
-    },
-    {
-      "contentId": "base:freezer",
+      "contentId": "base:kitchen-counter",
       "x": -37,
       "y": -13,
       "rot": 0
@@ -4609,31 +6536,31 @@
     },
     {
       "contentId": "base:kitchen-counter",
-      "x": -35,
-      "y": -13,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
       "x": -34,
       "y": -13,
-      "rot": 0
+      "rot": 1
     },
     {
-      "contentId": "base:locker",
-      "x": -33,
+      "contentId": "base:dresser",
+      "x": -25,
       "y": -13,
       "rot": 0
     },
     {
       "contentId": "base:bookshelf",
+      "x": -24,
+      "y": -13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": -21,
       "y": -13,
       "rot": 0
     },
     {
       "contentId": "base:dresser",
-      "x": -20,
+      "x": -19,
       "y": -13,
       "rot": 0
     },
@@ -4644,58 +6571,64 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": -1,
-      "y": -13,
-      "rot": 0
-    },
-    {
-      "contentId": "base:gun-locker",
-      "x": 0,
-      "y": -13,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
       "x": 2,
       "y": -13,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 7,
+      "contentId": "base:crate",
+      "x": 12,
       "y": -13,
-      "rot": 1
+      "rot": 3
     },
     {
-      "contentId": "base:crate",
+      "contentId": "base:metal-shelf",
       "x": 14,
       "y": -13,
       "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
+      "x": 15,
+      "y": -13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": -13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
       "x": -60,
       "y": -12,
       "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -54,
+      "x": -56,
       "y": -12,
-      "rot": 1
+      "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": -49,
+      "contentId": "base:locker",
+      "x": -54,
+      "y": -12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -53,
       "y": -12,
       "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": -48,
+      "x": -49,
       "y": -12,
-      "rot": 2
+      "rot": 3
     },
     {
       "contentId": "base:bookshelf",
@@ -4708,6 +6641,24 @@
       "x": -42,
       "y": -12,
       "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-sink",
+      "x": -34,
+      "y": -12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": -21,
+      "y": -12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -17,
+      "y": -12,
+      "rot": 1
     },
     {
       "contentId": "base:bench",
@@ -4728,28 +6679,28 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 2,
-      "y": -12,
-      "rot": 3
-    },
-    {
       "contentId": "base:locker",
       "x": 7,
       "y": -12,
       "rot": 1
     },
     {
-      "contentId": "base:crate",
-      "x": 14,
+      "contentId": "base:metal-shelf",
+      "x": 12,
+      "y": -12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 23,
       "y": -12,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 34,
+      "contentId": "base:metal-shelf",
+      "x": 38,
       "y": -12,
-      "rot": 3
+      "rot": 1
     },
     {
       "contentId": "base:bed",
@@ -4758,40 +6709,22 @@
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -56,
-      "y": -11,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
       "x": -55,
       "y": -11,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:metal-shelf",
       "x": -54,
       "y": -11,
       "rot": 0
     },
     {
       "contentId": "base:bed",
-      "x": -53,
+      "x": -44,
       "y": -11,
-      "rot": 0
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -48,
-      "y": -11,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -47,
-      "y": -11,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -4800,20 +6733,44 @@
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-cabinet",
       "x": -38,
       "y": -11,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:range",
       "x": -34,
       "y": -11,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": -22,
+      "contentId": "base:desk",
+      "x": -25,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": -24,
+      "y": -11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -21,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": -18,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": -17,
       "y": -11,
       "rot": 1
     },
@@ -4830,49 +6787,67 @@
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 16,
+      "contentId": "base:gun-locker",
+      "x": -2,
       "y": -11,
       "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 17,
+      "contentId": "base:crate",
+      "x": 14,
       "y": -11,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 18,
+      "x": 15,
       "y": -11,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:freezer",
+      "contentId": "base:metal-shelf",
       "x": 23,
       "y": -11,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:shop-counter",
+      "x": 34,
+      "y": -11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 40,
       "y": -11,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bed",
       "x": -60,
       "y": -10,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:locker",
+      "x": -49,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -48,
+      "y": -10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
       "x": -38,
       "y": -10,
       "rot": 3
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": -34,
       "y": -10,
       "rot": 1
@@ -4890,14 +6865,8 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -25,
-      "y": -10,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": -19,
+      "contentId": "base:locker",
+      "x": -31,
       "y": -10,
       "rot": 2
     },
@@ -4914,37 +6883,25 @@
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 21,
-      "y": -10,
-      "rot": 3
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 23,
-      "y": -10,
-      "rot": 1
-    },
-    {
       "contentId": "base:bed",
       "x": -60,
       "y": -9,
       "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": -58,
+      "contentId": "base:locker",
+      "x": -56,
       "y": -9,
-      "rot": 1
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -55,
+      "y": -9,
+      "rot": 0
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -57,
-      "y": -9,
-      "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
       "x": -54,
       "y": -9,
       "rot": 0
@@ -4968,20 +6925,20 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:metal-shelf",
       "x": -48,
       "y": -9,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": -47,
+      "contentId": "base:bathroom-sink",
+      "x": -46,
       "y": -9,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": -46,
+      "contentId": "base:shower",
+      "x": -45,
       "y": -9,
       "rot": 0
     },
@@ -4992,22 +6949,28 @@
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 23,
+      "contentId": "base:metal-shelf",
+      "x": 15,
       "y": -9,
-      "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": -58,
-      "y": -8,
-      "rot": 1
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -57,
-      "y": -8,
-      "rot": 3
+      "x": 17,
+      "y": -9,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 19,
+      "y": -9,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 21,
+      "y": -9,
+      "rot": 2
     },
     {
       "contentId": "base:locker",
@@ -5041,12 +7004,6 @@
     },
     {
       "contentId": "base:gun-locker",
-      "x": -2,
-      "y": -8,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
       "x": -1,
       "y": -8,
       "rot": 2
@@ -5068,12 +7025,6 @@
       "x": 2,
       "y": -8,
       "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -58,
-      "y": -7,
-      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -5136,12 +7087,6 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": -2,
-      "y": -7,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
       "x": -1,
       "y": -7,
@@ -5154,15 +7099,51 @@
       "rot": 0
     },
     {
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": -7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 6,
+      "y": -7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 7,
+      "y": -7,
+      "rot": 1
+    },
+    {
       "contentId": "base:bench",
       "x": 8,
       "y": -7,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
       "x": 14,
       "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 15,
+      "y": -7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 19,
+      "y": -7,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": -14,
+      "y": -6,
       "rot": 0
     },
     {
@@ -5178,8 +7159,20 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": -58,
+      "contentId": "base:bed",
+      "x": -59,
+      "y": -5,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -43,
+      "y": -5,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -11,
       "y": -5,
       "rot": 1
     },
@@ -5190,7 +7183,13 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 6,
+      "y": -5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 7,
       "y": -5,
       "rot": 1
@@ -5202,13 +7201,25 @@
       "rot": 1
     },
     {
+      "contentId": "base:chair",
+      "x": 12,
+      "y": -5,
+      "rot": 0
+    },
+    {
       "contentId": "base:dumpster",
       "x": -61,
       "y": -4,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:locker",
+      "x": -58,
+      "y": -4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": -11,
       "y": -4,
       "rot": 1
@@ -5220,16 +7231,16 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 7,
-      "y": -4,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 12,
+      "contentId": "base:dresser",
+      "x": 3,
       "y": -4,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 12,
+      "y": -4,
+      "rot": 2
     },
     {
       "contentId": "base:bench",
@@ -5274,52 +7285,70 @@
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:armchair",
+      "x": -57,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
       "x": -56,
       "y": 9,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": -45,
       "y": 9,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": -41,
+      "contentId": "base:desk",
+      "x": -39,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
-      "x": -40,
+      "contentId": "base:radio-set",
+      "x": -32,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:vcr",
       "x": -31,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": -30,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv",
       "x": -29,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:armchair",
+      "x": -26,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
       "x": -16,
       "y": 9,
       "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -13,
+      "y": 9,
+      "rot": 1
     },
     {
       "contentId": "base:bed",
@@ -5334,76 +7363,106 @@
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
-      "x": 20,
+      "contentId": "base:dresser",
+      "x": 16,
       "y": 9,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bookshelf",
+      "x": 17,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 18,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 19,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge-freezer",
       "x": 21,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:range",
       "x": 22,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": 23,
       "y": 9,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-cabinet",
       "x": 29,
       "y": 9,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": 30,
-      "y": 9,
-      "rot": 0
-    },
-    {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": 32,
       "y": 9,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-cabinet",
+      "x": 33,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 36,
       "y": 9,
       "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -56,
-      "y": 10,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -2,
+      "contentId": "base:shop-counter",
+      "x": -51,
       "y": 10,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 20,
+      "contentId": "base:chair",
+      "x": -38,
+      "y": 10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -26,
       "y": 10,
       "rot": 1
     },
     {
       "contentId": "base:kitchen-counter",
+      "x": 29,
+      "y": 10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:range",
       "x": 32,
       "y": 10,
       "rot": 1
+    },
+    {
+      "contentId": "base:shower",
+      "x": 33,
+      "y": 10,
+      "rot": 3
     },
     {
       "contentId": "base:trash-bin",
@@ -5412,10 +7471,28 @@
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
-      "x": -43,
+      "contentId": "base:radio-set",
+      "x": -44,
       "y": 11,
-      "rot": 1
+      "rot": 3
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": -42,
+      "y": 11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -39,
+      "y": 11,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -38,
+      "y": 11,
+      "rot": 2
     },
     {
       "contentId": "base:firewood-pile",
@@ -5424,28 +7501,40 @@
       "rot": 1
     },
     {
-      "contentId": "base:crate",
-      "x": -2,
+      "contentId": "base:kitchen-counter",
+      "x": 23,
       "y": 11,
       "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -56,
+      "contentId": "base:radio-set",
+      "x": 34,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -46,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:shower",
+      "x": -45,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -42,
       "y": 12,
       "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": -42,
+      "contentId": "base:sofa",
+      "x": -26,
       "y": 12,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -41,
-      "y": 12,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -5454,14 +7543,20 @@
       "rot": 2
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": -15,
       "y": 12,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": -14,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:shower",
+      "x": -13,
       "y": 12,
       "rot": 2
     },
@@ -5469,7 +7564,13 @@
       "contentId": "base:dresser",
       "x": -12,
       "y": 12,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -2,
+      "y": 12,
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -5478,22 +7579,28 @@
       "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 16,
       "y": 12,
       "rot": 3
     },
     {
-      "contentId": "base:fridge",
-      "x": 22,
+      "contentId": "base:bookshelf",
+      "x": 20,
       "y": 12,
-      "rot": 2
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 21,
+      "y": 12,
+      "rot": 3
     },
     {
       "contentId": "base:kitchen-counter",
       "x": 23,
       "y": 12,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:kitchen-counter",
@@ -5502,32 +7609,20 @@
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 30,
       "y": 12,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": 31,
+      "contentId": "base:kitchen-sink",
+      "x": 32,
       "y": 12,
-      "rot": 2
-    },
-    {
-      "contentId": "base:sofa",
-      "x": 34,
-      "y": 12,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -57,
-      "y": 13,
       "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -56,
+      "contentId": "base:radio-set",
+      "x": -58,
       "y": 13,
       "rot": 3
     },
@@ -5544,10 +7639,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv-stand",
       "x": -42,
       "y": 13,
       "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": -38,
+      "y": 13,
+      "rot": 1
     },
     {
       "contentId": "base:dresser",
@@ -5562,14 +7663,62 @@
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": -14,
+      "contentId": "base:bookshelf",
+      "x": -29,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -15,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": -12,
+      "y": 13,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": -10,
       "y": 13,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:crate",
+      "x": -5,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv",
       "x": 16,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 20,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 21,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 23,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 29,
       "y": 13,
       "rot": 3
     },
@@ -5581,42 +7730,30 @@
     },
     {
       "contentId": "base:bed",
-      "x": 33,
-      "y": 13,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bed",
       "x": 34,
       "y": 13,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -57,
+      "contentId": "base:tv-stand",
+      "x": -58,
       "y": 14,
-      "rot": 1
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
       "x": -56,
       "y": 14,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:metal-shelf",
       "x": -53,
       "y": 14,
       "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -52,
-      "y": 14,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:locker",
       "x": -51,
       "y": 14,
       "rot": 2
@@ -5628,37 +7765,43 @@
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": -43,
       "y": 14,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": -30,
+      "contentId": "base:tv",
+      "x": -42,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -33,
       "y": 14,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:tv-stand",
+      "x": -30,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
       "x": -29,
       "y": 14,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": -27,
-      "y": 14,
-      "rot": 0
-    },
-    {
-      "contentId": "base:freezer",
+      "contentId": "base:kitchen-sink",
       "x": -26,
       "y": 14,
-      "rot": 0
+      "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": -10,
       "y": 14,
       "rot": 1
@@ -5676,28 +7819,28 @@
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 20,
+      "contentId": "base:tv-stand",
+      "x": 16,
       "y": 14,
-      "rot": 1
+      "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:tv",
       "x": 23,
       "y": 14,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:tv",
       "x": 29,
       "y": 14,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 32,
-      "y": 14,
-      "rot": 1
+      "contentId": "base:tv",
+      "x": -58,
+      "y": 15,
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
@@ -5706,16 +7849,40 @@
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
-      "x": -33,
+      "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": 15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:crate",
+      "x": -51,
+      "y": 15,
+      "rot": 0
+    },
+    {
+      "contentId": "base:vcr",
+      "x": -42,
       "y": 15,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": -13,
+      "contentId": "base:armchair",
+      "x": -38,
       "y": 15,
-      "rot": 3
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv",
+      "x": -30,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": -10,
+      "y": 15,
+      "rot": 1
     },
     {
       "contentId": "base:trash-bin",
@@ -5730,98 +7897,128 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:vcr",
+      "x": 16,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:vcr",
       "x": 23,
       "y": 15,
       "rot": 1
     },
     {
-      "contentId": "base:sofa",
-      "x": -58,
-      "y": 16,
-      "rot": 2
+      "contentId": "base:tv-stand",
+      "x": 29,
+      "y": 15,
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -56,
+      "contentId": "base:dresser",
+      "x": 36,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": -58,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:crate",
-      "x": -51,
-      "y": 16,
-      "rot": 2
-    },
-    {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": -46,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:gas-stove",
       "x": -45,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": -44,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": -43,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": -42,
       "y": 16,
-      "rot": 2
+      "rot": 3
     },
     {
       "contentId": "base:dresser",
-      "x": -41,
+      "x": -40,
       "y": 16,
       "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": -33,
+      "x": -38,
       "y": 16,
-      "rot": 3
+      "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": -29,
+      "contentId": "base:armchair",
+      "x": -33,
       "y": 16,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": -32,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:vcr",
+      "x": -30,
+      "y": 16,
+      "rot": 1
     },
     {
       "contentId": "base:kitchen-counter",
+      "x": -29,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": -28,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:gas-stove",
       "x": -27,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": -26,
       "y": 16,
       "rot": 2
     },
     {
       "contentId": "base:crate",
-      "x": -19,
+      "x": -20,
       "y": 16,
       "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -18,
+      "x": -19,
       "y": 16,
       "rot": 2
     },
@@ -5832,32 +8029,56 @@
       "rot": 2
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": -16,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:range",
       "x": -15,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": -14,
       "y": 16,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:sofa",
       "x": -13,
+      "y": 16,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": -10,
+      "y": 16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 21,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 23,
+      "y": 16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 29,
+      "y": 16,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 32,
       "y": 16,
       "rot": 1
     },
@@ -5866,6 +8087,12 @@
       "x": 33,
       "y": 16,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 36,
+      "y": 16,
+      "rot": 1
     },
     {
       "contentId": "base:dumpster",
@@ -5892,24 +8119,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:armchair",
+      "x": 29,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 32,
+      "y": 17,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
       "x": 33,
       "y": 17,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -60,
-      "y": -16,
-      "z": 1,
+      "contentId": "base:chair",
+      "x": 35,
+      "y": 17,
       "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -58,
-      "y": -16,
-      "z": 1,
-      "rot": 0
     },
     {
       "contentId": "base:bed",
@@ -5940,74 +8171,53 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": -53,
+      "contentId": "base:locker",
+      "x": -50,
       "y": -16,
       "z": 1,
-      "rot": 0
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -16,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:shop-counter",
+      "x": -43,
+      "y": -16,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -46,
+      "y": -15,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -14,
+      "z": 1,
+      "rot": 3
     },
     {
       "contentId": "base:bed",
       "x": -50,
-      "y": -16,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -16,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -50,
-      "y": -15,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -15,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": -60,
-      "y": -14,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": -50,
-      "y": -14,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": -45,
-      "y": -14,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -50,
       "y": -13,
       "z": 1,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -45,
+      "contentId": "base:bed",
+      "x": -49,
       "y": -13,
       "z": 1,
-      "rot": 3
+      "rot": 2
     },
     {
       "contentId": "base:locker",
@@ -6017,18 +8227,32 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": -21,
+      "y": -13,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": -20,
+      "y": -13,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": -2,
       "y": -13,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 2,
+      "contentId": "base:chair",
+      "x": -1,
       "y": -13,
       "z": 1,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -6039,49 +8263,63 @@
     },
     {
       "contentId": "base:metal-shelf",
+      "x": -60,
+      "y": -12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": -57,
+      "y": -12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -55,
+      "y": -12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
       "x": -52,
       "y": -12,
       "z": 1,
       "rot": 2
     },
     {
-      "contentId": "base:locker",
-      "x": -51,
-      "y": -12,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -50,
+      "contentId": "base:chair",
+      "x": -22,
       "y": -12,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": -24,
+      "contentId": "base:desk",
+      "x": -21,
       "y": -12,
       "z": 1,
-      "rot": 3
+      "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
       "x": 3,
       "y": -12,
       "z": 1,
-      "rot": 3
+      "rot": 0
     },
     {
       "contentId": "base:locker",
-      "x": -57,
+      "x": -60,
       "y": -11,
       "z": 1,
       "rot": 0
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -56,
+      "x": -57,
       "y": -11,
       "z": 1,
       "rot": 0
@@ -6094,22 +8332,8 @@
       "rot": 0
     },
     {
-      "contentId": "base:bed",
-      "x": -49,
-      "y": -11,
-      "z": 1,
-      "rot": 0
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -47,
-      "y": -11,
-      "z": 1,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
-      "x": -46,
+      "x": -51,
       "y": -11,
       "z": 1,
       "rot": 0
@@ -6122,25 +8346,46 @@
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": -20,
       "y": -11,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": -60,
-      "y": -10,
+      "contentId": "base:bathroom-cabinet",
+      "x": -17,
+      "y": -11,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -2,
+      "y": -11,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 2,
+      "y": -11,
       "z": 1,
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -43,
-      "y": -10,
+      "contentId": "base:desk",
+      "x": 3,
+      "y": -11,
       "z": 1,
-      "rot": 1
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": -11,
+      "z": 1,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -6199,13 +8444,6 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 1,
-      "y": -10,
-      "z": 1,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
       "x": 7,
       "y": -10,
@@ -6248,7 +8486,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:locker",
       "x": -53,
       "y": -9,
       "z": 1,
@@ -6269,15 +8507,8 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:metal-shelf",
       "x": -48,
-      "y": -9,
-      "z": 1,
-      "rot": 1
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -43,
       "y": -9,
       "z": 1,
       "rot": 1
@@ -6304,11 +8535,11 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": -48,
+      "contentId": "base:bookshelf",
+      "x": -47,
       "y": -8,
       "z": 1,
-      "rot": 1
+      "rot": 3
     },
     {
       "contentId": "base:locker",
@@ -6333,10 +8564,17 @@
     },
     {
       "contentId": "base:metal-shelf",
-      "x": -48,
+      "x": -53,
       "y": -7,
       "z": 1,
       "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -47,
+      "y": -7,
+      "z": 1,
+      "rot": 3
     },
     {
       "contentId": "base:bookshelf",
@@ -6362,13 +8600,6 @@
     {
       "contentId": "base:locker",
       "x": -31,
-      "y": -7,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:gun-locker",
-      "x": -2,
       "y": -7,
       "z": 1,
       "rot": 3
@@ -6403,17 +8634,10 @@
     },
     {
       "contentId": "base:gun-locker",
-      "x": 7,
+      "x": 6,
       "y": -7,
       "z": 1,
       "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -48,
-      "y": -6,
-      "z": 1,
-      "rot": 1
     },
     {
       "contentId": "base:locker",
@@ -6430,18 +8654,39 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:metal-shelf",
       "x": -53,
       "y": -5,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -47,
+      "contentId": "base:locker",
+      "x": -52,
       "y": -5,
       "z": 1,
       "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -5,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": -47,
+      "y": -5,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": -45,
+      "y": -5,
+      "z": 1,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -6458,53 +8703,46 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
-      "x": -60,
-      "y": -4,
+      "contentId": "base:gun-locker",
+      "x": -2,
+      "y": -5,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:locker",
       "x": -58,
       "y": -4,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": -57,
-      "y": -4,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -53,
-      "y": -4,
-      "z": 1,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bed",
+      "contentId": "base:locker",
       "x": -52,
       "y": -4,
       "z": 1,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": -48,
-      "y": -4,
-      "z": 1,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": -47,
       "y": -4,
       "z": 1,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": -45,
+      "y": -4,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -4,
+      "z": 1,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -6514,22 +8752,15 @@
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": 2,
-      "y": -4,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 3,
-      "y": -4,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:sofa",
+      "contentId": "base:bookshelf",
       "x": -58,
+      "y": 9,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -56,
       "y": 9,
       "z": 1,
       "rot": 3
@@ -6549,102 +8780,158 @@
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:dresser",
+      "x": -33,
+      "y": 9,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:armchair",
+      "x": -31,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": -30,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
+      "x": -29,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:shower",
       "x": -28,
       "y": 9,
       "z": 1,
       "rot": 0
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:bathroom-cabinet",
+      "x": -27,
+      "y": 9,
+      "z": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 20,
+      "y": 9,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
       "x": 23,
       "y": 9,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": -51,
-      "y": 10,
-      "z": 1,
-      "rot": 1
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -30,
       "y": 10,
       "z": 1,
       "rot": 1
     },
     {
       "contentId": "base:bed",
-      "x": 23,
+      "x": 22,
       "y": 10,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": -55,
       "y": 11,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": -54,
-      "y": 11,
-      "z": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:gas-stove",
       "x": -51,
       "y": 11,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bathroom-cabinet",
+      "x": 16,
+      "y": 11,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:wardrobe",
       "x": 23,
       "y": 11,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:shower",
+      "x": -55,
+      "y": 12,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
       "x": -54,
       "y": 12,
       "z": 1,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:kitchen-counter",
+      "x": -53,
+      "y": 12,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:fridge-freezer",
       "x": -51,
       "y": 12,
       "z": 1,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 16,
       "y": 12,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -52,
+      "contentId": "base:sofa",
+      "x": -55,
       "y": 13,
       "z": 1,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
-      "x": -51,
+      "contentId": "base:bookshelf",
+      "x": -53,
       "y": 13,
       "z": 1,
       "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": -51,
+      "y": 13,
+      "z": 1,
+      "rot": 1
     },
     {
       "contentId": "base:sofa",
@@ -6654,36 +8941,36 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -30,
-      "y": 13,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 16,
       "y": 13,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 20,
+      "contentId": "base:sofa",
+      "x": 19,
       "y": 13,
       "z": 1,
       "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": -51,
+      "y": 14,
+      "z": 1,
+      "rot": 1
     },
     {
       "contentId": "base:bed",
-      "x": 21,
-      "y": 13,
+      "x": -33,
+      "y": 14,
       "z": 1,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": -28,
+      "contentId": "base:wardrobe",
+      "x": -31,
       "y": 14,
       "z": 1,
       "rot": 0
@@ -6703,85 +8990,120 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:armchair",
       "x": 16,
       "y": 14,
       "z": 1,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bed",
+      "x": 22,
+      "y": 14,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
       "x": -58,
+      "y": 15,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:vcr",
+      "x": -51,
+      "y": 15,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 23,
+      "y": 15,
+      "z": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": -58,
+      "y": 16,
+      "z": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": -56,
       "y": 16,
       "z": 1,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -57,
+      "contentId": "base:armchair",
+      "x": -55,
       "y": 16,
       "z": 1,
       "rot": 2
     },
     {
       "contentId": "base:sofa",
-      "x": -56,
-      "y": 16,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": -55,
-      "y": 16,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
       "x": -54,
       "y": 16,
       "z": 1,
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -33,
-      "y": 16,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -32,
-      "y": 16,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:wardrobe",
-      "x": -30,
+      "contentId": "base:radio-set",
+      "x": -51,
       "y": 16,
       "z": 1,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 22,
+      "x": -31,
       "y": 16,
       "z": 1,
       "rot": 2
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:dresser",
+      "x": -28,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 16,
+      "z": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
       "x": 23,
       "y": 16,
       "z": 1,
-      "rot": 2
+      "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": -51,
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -16,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -16,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -46,
       "y": -16,
       "z": 2,
       "rot": 1
@@ -6794,169 +9116,141 @@
       "rot": 3
     },
     {
-      "contentId": "base:locker",
-      "x": -51,
-      "y": -15,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -15,
-      "z": 2,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
+      "contentId": "base:shop-counter",
       "x": -43,
-      "y": -15,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -56,
-      "y": -14,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -46,
-      "y": -14,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": -45,
-      "y": -14,
-      "z": 2,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bed",
-      "x": -56,
-      "y": -13,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -55,
-      "y": -13,
-      "z": 2,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": -46,
-      "y": -13,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
-      "x": -17,
-      "y": -13,
-      "z": 2,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bed",
-      "x": -60,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:locker",
-      "x": -59,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -56,
-      "y": -12,
+      "y": -16,
       "z": 2,
       "rot": 1
     },
     {
       "contentId": "base:bed",
       "x": -52,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -51,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -50,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -49,
-      "y": -12,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -46,
-      "y": -12,
+      "y": -15,
       "z": 2,
       "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -12,
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -15,
       "z": 2,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -31,
-      "y": -12,
+      "contentId": "base:metal-shelf",
+      "x": -56,
+      "y": -14,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -51,
+      "y": -14,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -50,
+      "y": -14,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -14,
       "z": 2,
       "rot": 3
     },
     {
       "contentId": "base:bed",
       "x": -60,
-      "y": -11,
+      "y": -13,
       "z": 2,
-      "rot": 0
+      "rot": 2
     },
     {
-      "contentId": "base:locker",
-      "x": -49,
-      "y": -11,
+      "contentId": "base:bed",
+      "x": -59,
+      "y": -13,
       "z": 2,
-      "rot": 0
+      "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": -46,
-      "y": -11,
+      "contentId": "base:metal-shelf",
+      "x": -51,
+      "y": -13,
       "z": 2,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:locker",
       "x": -43,
+      "y": -13,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -21,
+      "y": -13,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": -18,
+      "y": -13,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
+      "x": -17,
+      "y": -13,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": -56,
+      "y": -12,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -31,
+      "y": -12,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": -22,
+      "y": -12,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": -21,
+      "y": -12,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -60,
+      "y": -11,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -47,
       "y": -11,
       "z": 2,
       "rot": 0
@@ -6969,18 +9263,11 @@
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -24,
+      "contentId": "base:bathtub",
+      "x": -20,
       "y": -11,
       "z": 2,
       "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -57,
-      "y": -10,
-      "z": 2,
-      "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
@@ -6990,15 +9277,8 @@
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -55,
-      "y": -10,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -54,
+      "contentId": "base:locker",
+      "x": -51,
       "y": -10,
       "z": 2,
       "rot": 2
@@ -7033,10 +9313,10 @@
     },
     {
       "contentId": "base:dresser",
-      "x": -24,
+      "x": -23,
       "y": -10,
       "z": 2,
-      "rot": 3
+      "rot": 2
     },
     {
       "contentId": "base:bed",
@@ -7053,28 +9333,35 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bed",
       "x": -56,
       "y": -9,
       "z": 2,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bed",
       "x": -55,
       "y": -9,
       "z": 2,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -48,
+      "contentId": "base:locker",
+      "x": -54,
       "y": -9,
       "z": 2,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:locker",
+      "x": -49,
+      "y": -9,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": -44,
       "y": -9,
       "z": 2,
@@ -7123,14 +9410,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:locker",
       "x": -52,
       "y": -8,
       "z": 2,
       "rot": 3
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:dresser",
+      "x": -47,
+      "y": -8,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -7,
+      "z": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
       "x": -52,
       "y": -7,
       "z": 2,
@@ -7165,13 +9466,6 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
-      "x": -52,
-      "y": -6,
-      "z": 2,
-      "rot": 3
-    },
-    {
       "contentId": "base:bookshelf",
       "x": -20,
       "y": -6,
@@ -7179,11 +9473,60 @@
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:metal-shelf",
+      "x": -57,
+      "y": -5,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
       "x": -53,
       "y": -5,
       "z": 2,
       "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -52,
+      "y": -5,
+      "z": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -50,
+      "y": -5,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -49,
+      "y": -5,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": -48,
+      "y": -5,
+      "z": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": -47,
+      "y": -5,
+      "z": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": -45,
+      "y": -5,
+      "z": 2,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -7193,64 +9536,15 @@
       "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": -57,
+      "contentId": "base:desk",
+      "x": -47,
       "y": -4,
       "z": 2,
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -56,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -55,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -53,
-      "y": -4,
-      "z": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -51,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -50,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -49,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
-      "x": -48,
-      "y": -4,
-      "z": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": -43,
+      "contentId": "base:desk",
+      "x": -45,
       "y": -4,
       "z": 2,
       "rot": 2
@@ -7270,113 +9564,99 @@
       "rot": 1
     },
     {
-      "contentId": "base:bed",
-      "x": -60,
-      "y": -16,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": -45,
-      "y": -16,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bed",
-      "x": -60,
-      "y": -15,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bed",
-      "x": -51,
-      "y": -15,
-      "z": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bed",
-      "x": -46,
-      "y": -15,
-      "z": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -15,
-      "z": 3,
-      "rot": 3
-    },
-    {
       "contentId": "base:locker",
+      "x": -60,
+      "y": -16,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -16,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -47,
+      "y": -16,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:shop-counter",
       "x": -43,
-      "y": -15,
+      "y": -16,
       "z": 3,
       "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": -60,
-      "y": -14,
-      "z": 3,
-      "rot": 3
     },
     {
       "contentId": "base:bed",
-      "x": -46,
-      "y": -14,
-      "z": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -14,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": -46,
-      "y": -13,
-      "z": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -45,
-      "y": -13,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
       "x": -60,
-      "y": -12,
+      "y": -15,
       "z": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -59,
-      "y": -12,
-      "z": 3,
-      "rot": 2
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
       "x": -55,
-      "y": -12,
+      "y": -15,
       "z": 3,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": -54,
+      "contentId": "base:bed",
+      "x": -52,
+      "y": -15,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
+      "x": -47,
+      "y": -15,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -45,
+      "y": -15,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bed",
+      "x": -60,
+      "y": -14,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -50,
+      "y": -13,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": -46,
+      "y": -13,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": -45,
+      "y": -13,
+      "z": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": -60,
       "y": -12,
       "z": 3,
       "rot": 2
@@ -7389,63 +9669,14 @@
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -51,
-      "y": -12,
-      "z": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -50,
-      "y": -12,
-      "z": 3,
-      "rot": 2
-    },
-    {
       "contentId": "base:metal-shelf",
-      "x": -46,
-      "y": -12,
-      "z": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -47,
-      "y": -11,
-      "z": 3,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": -46,
-      "y": -11,
-      "z": 3,
-      "rot": 0
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -60,
-      "y": -10,
-      "z": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:locker",
       "x": -57,
       "y": -10,
       "z": 3,
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -56,
-      "y": -10,
-      "z": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
+      "contentId": "base:locker",
       "x": -55,
       "y": -10,
       "z": 3,
@@ -7459,25 +9690,11 @@
       "rot": 2
     },
     {
-      "contentId": "base:bed",
-      "x": -49,
+      "contentId": "base:metal-shelf",
+      "x": -47,
       "y": -10,
       "z": 3,
       "rot": 2
-    },
-    {
-      "contentId": "base:locker",
-      "x": -58,
-      "y": -9,
-      "z": 3,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bed",
-      "x": -57,
-      "y": -9,
-      "z": 3,
-      "rot": 0
     },
     {
       "contentId": "base:locker",
@@ -7487,7 +9704,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bed",
       "x": -55,
       "y": -9,
       "z": 3,
@@ -7508,71 +9725,71 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bed",
       "x": -52,
       "y": -9,
       "z": 3,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bed",
       "x": -51,
       "y": -9,
       "z": 3,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:locker",
+      "x": -49,
+      "y": -9,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
       "x": -48,
       "y": -9,
       "z": 3,
-      "rot": 1
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": -47,
+      "y": -9,
+      "z": 3,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
-      "x": -47,
+      "x": -43,
       "y": -9,
-      "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bed",
-      "x": -48,
-      "y": -8,
       "z": 3,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
       "x": -47,
       "y": -8,
       "z": 3,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:locker",
       "x": -58,
       "y": -7,
       "z": 3,
       "rot": 1
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:metal-shelf",
       "x": -48,
       "y": -7,
       "z": 3,
       "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -52,
-      "y": -6,
-      "z": 3,
-      "rot": 3
-    },
-    {
       "contentId": "base:locker",
-      "x": -48,
+      "x": -53,
       "y": -6,
       "z": 3,
       "rot": 1
@@ -7586,13 +9803,34 @@
     },
     {
       "contentId": "base:metal-shelf",
+      "x": -53,
+      "y": -5,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
       "x": -52,
       "y": -5,
       "z": 3,
-      "rot": 3
+      "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
+      "x": -48,
+      "y": -5,
+      "z": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": -45,
+      "y": -5,
+      "z": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
       "x": -60,
       "y": -4,
       "z": 3,
@@ -7600,24 +9838,17 @@
     },
     {
       "contentId": "base:dresser",
-      "x": -58,
+      "x": -46,
       "y": -4,
       "z": 3,
-      "rot": 1
+      "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": -57,
+      "contentId": "base:desk",
+      "x": -45,
       "y": -4,
       "z": 3,
-      "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -53,
-      "y": -4,
-      "z": 3,
-      "rot": 1
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",

@@ -1,6 +1,7 @@
 import { CHUNK_SIZE } from '@deadzone/content';
 import { parseBlueprint, type Blueprint, type BlueprintInput } from '../blueprint.js';
 import { furnish } from '../furnish.js';
+import { LOCK_KIND_OF } from '../building-kind.js';
 import { baseFurnishOptions } from '../furnish-base.js';
 import { idHash } from './classify.js';
 import { unflat } from './convert.js';
@@ -378,7 +379,8 @@ export function buildScene(osm: OsmMap, cut: SceneCut): { blueprint: Blueprint; 
     });
     if (res.nextRoomId > 0xffff) return;
     nextRoomId = res.nextRoomId;
-    buildings.push(res.building);
+    const lockKind = LOCK_KIND_OF[b.kind];
+    buildings.push(lockKind ? { ...res.building, kind: lockKind } : res.building);
     stairs.push(...res.stairs);
     st.buildings++;
     inc(st.byType, b.type);

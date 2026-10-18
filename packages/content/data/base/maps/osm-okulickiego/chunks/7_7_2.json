@@ -213,22 +213,88 @@
   ],
   "objects": [
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 23,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 24,
       "y": 0,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
       "x": 25,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 26,
+      "y": 0,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
       "y": 1,
       "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 29,
+      "y": 1,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 30,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 1,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
       "x": 24,
       "y": 2,
       "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 25,
+      "y": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 29,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 24,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 30,
+      "y": 3,
+      "rot": 3
     }
   ],
   "rooms": {
@@ -244,5 +310,8 @@
       "roomType": "base:room-office",
       "buildingId": 26
     }
+  },
+  "buildingKinds": {
+    "26": "office"
   }
 }

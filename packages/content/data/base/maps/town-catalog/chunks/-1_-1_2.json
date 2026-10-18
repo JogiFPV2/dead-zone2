@@ -803,7 +803,19 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 14,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 15,
       "y": 19,
       "rot": 0
@@ -815,14 +827,26 @@
       "rot": 3
     },
     {
+      "contentId": "base:chair",
+      "x": 10,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 11,
+      "y": 20,
+      "rot": 1
+    },
+    {
       "contentId": "base:locker",
       "x": 1,
       "y": 21,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 8,
+      "contentId": "base:bathtub",
+      "x": 12,
       "y": 21,
       "rot": 3
     },
@@ -834,9 +858,9 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 8,
+      "x": 9,
       "y": 22,
-      "rot": 3
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -948,5 +972,8 @@
       "roomType": "base:room-school",
       "buildingId": 2
     }
+  },
+  "buildingKinds": {
+    "2": "school"
   }
 }

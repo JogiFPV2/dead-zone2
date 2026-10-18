@@ -1,4 +1,5 @@
 import { STAIR_STEP } from '@deadzone/content';
+import { lockKindOf } from '../building-kind.js';
 import { furnishView, type FurnishView, type PlacedObject } from '../furnish.js';
 import { buildInterior, type Footprint } from '../osm/interior.js';
 import { idHash } from '../osm/classify.js';
@@ -61,6 +62,8 @@ export interface SolvedBuilding {
   levels: Map<number, BuildingLevel>;
   /** Building-local room id → room type. */
   rooms: Map<number, string>;
+  /** Building kind for the sim (`SimChunk.buildingKinds`, `building-kind.ts`); none for a church. */
+  lockKind: string | undefined;
   stairs: { x: number; y: number; z: number; dir: 'N' | 'E' | 'S' | 'W'; len: number }[];
   /** Furniture (indoors) and outdoor props (level 0, up to 2 tiles outside), world tiles. */
   objects: PlacedObject[];
@@ -410,6 +413,7 @@ export function solveBuilding(
     rect: tiles === (bx1 - bx0 + 1) * (by1 - by0 + 1),
     levels,
     rooms,
+    lockKind: lockKindOf(ib.b.kind, rooms.values()),
     stairs,
     objects,
     wall: b.wall,

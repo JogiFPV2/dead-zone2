@@ -404,5 +404,8 @@
       "roomType": "base:room-living-room",
       "buildingId": 1
     }
+  },
+  "buildingKinds": {
+    "1": "house"
   }
 }

@@ -73,6 +73,14 @@ export const BuildingSchema = z.strictObject({
   walls: z.boolean().default(true),
   /** Upper floors (z = 1, 2, ...); empty = single-storey. */
   floors: z.array(FloorSchema).default([]),
+  /**
+   * Building kind for the sim (`buildingKinds` of its chunks, `building-kind.ts`); omitted = from
+   * the room types (`kindFromRooms`).
+   */
+  kind: z
+    .string()
+    .regex(/^[a-z]+(-[a-z]+)*$/)
+    .optional(),
 });
 
 /** Named map zone (manifest `zones`): explicit world-tile rects plus tiles from `zonePlans`. */

@@ -3,11 +3,13 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { BASE_PACK_DIR, buildContentBundleFromDirs } from '@deadzone/content/node';
+import { footprintForId } from '@deadzone/content/footprint';
 import {
   EDGE_PALETTE,
   OSM_REGIONS,
   PlanChunkGenerator,
   TILE_PALETTE,
+  columnFootprintIssues,
   osmPlan,
   type GenColumn,
   type OsmMap,
@@ -16,7 +18,7 @@ import { CHUNK_SIZE, simMapFromWorldSource } from '@deadzone/protocol';
 import { createSim } from '@deadzone/sim';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LoadedChunks } from '../streaming/source.js';
-import { columnToWorldChunk } from './convert.js';
+import { columnToWorldChunk, levelToSimChunk } from './convert.js';
 import { GENERATED_MAPS, genStartRange, generatedMap, nearestPlace, resolveSpec } from './maps.js';
 import { generatorWorldSource } from './sim-world.js';
 
@@ -169,6 +171,37 @@ describe('OSM world source (Okulickiego)', () => {
       for (let z = 0; z < Math.min(n - 1, 2); z++) expect(set.has(z)).toBe(true);
     }
     expect(checked).toBeGreaterThan(0);
+  });
+
+  it('places furniture by footprint: in its room, no overlaps, doors free (#218)', async () => {
+    const content = await buildContentBundleFromDirs([BASE_PACK_DIR]);
+    const issues = columnFootprintIssues(cols, (id) => footprintForId(content, id));
+    expect(issues.map((i) => `${i.kind}: ${i.at}`).slice(0, 20)).toEqual([]);
+    const big = cols.flatMap((c) =>
+      c.levels.flatMap((l) =>
+        l.objects.filter((o) => {
+          const f = footprintForId(content, o.contentId);
+          return f.w * f.h > 1;
+        }),
+      ),
+    );
+    expect(big.length).toBeGreaterThan(10);
+  });
+
+  it('gives the sim a building per room and a kind per building (roomBuildings, buildingKinds)', () => {
+    let kinds = 0;
+    for (const c of cols)
+      for (const l of c.levels) {
+        const sc = levelToSimChunk(l, 0);
+        for (const [id, , gid] of l.rooms) {
+          expect(sc.roomBuildings?.[String(id)]).toBe(gid);
+          const kind = c.buildings.find((b) => b.id === gid)?.kind;
+          if (kind === 'church') continue;
+          expect(sc.buildingKinds?.[String(gid)], `building ${gid} (${kind})`).toMatch(/^[a-z]+$/);
+          kinds++;
+        }
+      }
+    expect(kinds).toBeGreaterThan(0);
   });
 
   it('parks at most 64 cars per chunk on free asphalt / parking, apart from each other', () => {

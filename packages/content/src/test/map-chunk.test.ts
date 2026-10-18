@@ -20,6 +20,17 @@ describe('MapChunkSchema', () => {
     expect(c.objects[0]).toEqual({ contentId: 'base:cabinet', x: 0, y: 0, rot: 1 });
   });
 
+  it('buildingKinds: rodzaj tylko dla budynku z pokojem w chunku', () => {
+    expect(
+      MapChunkSchema.parse(chunk(undefined, { buildingKinds: { '1': 'house' } })).buildingKinds,
+    ).toEqual({ '1': 'house' });
+    const r = MapChunkSchema.safeParse(chunk(undefined, { buildingKinds: { '2': 'shop' } }));
+    expect(paths(r)).toEqual(['buildingKinds.2']);
+    expect(
+      MapChunkSchema.safeParse(chunk(undefined, { buildingKinds: { '1': 'Dom' } })).success,
+    ).toBe(false);
+  });
+
   it('warstwa o złej długości to błąd ze ścieżką', () => {
     const r = MapChunkSchema.safeParse(
       chunk(undefined, { layers: { floor: { rle: [[1, 1000]] } } }),

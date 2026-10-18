@@ -230,5 +230,8 @@
       "roomType": "base:room-school",
       "buildingId": 22
     }
+  },
+  "buildingKinds": {
+    "22": "school"
   }
 }

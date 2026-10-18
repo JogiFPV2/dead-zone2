@@ -610,12 +610,30 @@
     },
     {
       "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
       "x": 2,
       "y": 2,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-cabinet",
+      "x": 17,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:shower",
+      "x": 18,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 19,
       "y": 2,
       "rot": 0
@@ -646,5 +664,8 @@
       "roomType": "base:room-bathroom",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   }
 }

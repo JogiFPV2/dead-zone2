@@ -134,14 +134,26 @@
   ],
   "objects": [
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
       "x": 27,
-      "y": 1,
-      "rot": 3
+      "y": 0,
+      "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 30,
+      "contentId": "base:chair",
+      "x": 29,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 27,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 29,
       "y": 1,
       "rot": 2
     },
@@ -157,5 +169,8 @@
       "roomType": "base:room-office",
       "buildingId": 34
     }
+  },
+  "buildingKinds": {
+    "34": "office"
   }
 }

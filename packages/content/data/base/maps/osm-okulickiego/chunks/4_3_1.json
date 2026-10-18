@@ -242,25 +242,25 @@
   ],
   "objects": [
     {
-      "contentId": "base:bed",
-      "x": 0,
-      "y": 23,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bed",
+      "contentId": "base:bathroom-cabinet",
       "x": 1,
-      "y": 23,
-      "rot": 2
+      "y": 24,
+      "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:shower",
+      "x": 3,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 3,
       "y": 27,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 2,
       "y": 28,
       "rot": 1
@@ -279,5 +279,8 @@
       "roomType": "base:room-bathroom",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "4": "house"
   }
 }

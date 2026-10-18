@@ -40,6 +40,14 @@ export interface SimChunk {
    */
   readonly roomBuildings?: Readonly<Record<string, number>> | undefined;
   /**
+   * Building id (key of `roomBuildings` values, as a string) → building kind, one per building
+   * of this chunk's rooms: the keys of `openings.locks.exteriorLockedChanceByBuilding` (Modules
+   * #224: `house`, `shop`, `pharmacy`, `fuel`, `gym`, `hospital`, `school`, `police`, `office`,
+   * `industrial`, `garage`, `ruin`). Optional; a building without a known kind is left out (the
+   * sim falls back to `exteriorLockedChance`).
+   */
+  readonly buildingKinds?: Readonly<Record<string, string>> | undefined;
+  /**
    * Map objects (chunk `objects` in content): storage types (`containers/`) and placeables with
    * `containerType` become world storage; the rest is ignored by the sim for now.
    */
@@ -222,6 +230,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       room: c.room,
       rooms: c.rooms,
       ...(c.roomBuildings ? { roomBuildings: c.roomBuildings } : {}),
+      ...(c.buildingKinds ? { buildingKinds: c.buildingKinds } : {}),
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
       ...(c.vehicles ? { vehicles: c.vehicles } : {}),
@@ -263,6 +272,7 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         ...(c.room ? { room: c.room.slice() } : {}),
         ...(c.rooms ? { rooms: { ...c.rooms } } : {}),
         ...(c.roomBuildings ? { roomBuildings: { ...c.roomBuildings } } : {}),
+        ...(c.buildingKinds ? { buildingKinds: { ...c.buildingKinds } } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
         ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
         ...(c.vehicles ? { vehicles: c.vehicles.map((v) => ({ ...v })) } : {}),

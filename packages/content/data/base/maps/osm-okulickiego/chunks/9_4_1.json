@@ -2134,38 +2134,110 @@
     {
       "contentId": "base:bookshelf",
       "x": 10,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 11,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 13,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 18,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 19,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 13,
+      "y": 10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 15,
       "y": 10,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 25,
+      "contentId": "base:chair",
+      "x": 16,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 20,
       "y": 10,
       "rot": 0
     },
     {
       "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 22,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 24,
+      "y": 10,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
       "x": 26,
       "y": 10,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
       "x": 9,
       "y": 11,
       "rot": 3
     },
     {
+      "contentId": "base:chair",
+      "x": 10,
+      "y": 11,
+      "rot": 1
+    },
+    {
       "contentId": "base:bookshelf",
-      "x": 14,
+      "x": 19,
+      "y": 11,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 22,
       "y": 11,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 23,
+      "contentId": "base:chair",
+      "x": 24,
       "y": 11,
-      "rot": 1
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -2175,9 +2247,27 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 23,
+      "x": 13,
       "y": 12,
-      "rot": 1
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 14,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 26,
+      "y": 12,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -2186,43 +2276,67 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 15,
-      "y": 13,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 16,
-      "y": 13,
-      "rot": 2
-    },
-    {
       "contentId": "base:bookshelf",
       "x": 18,
       "y": 13,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
       "x": 19,
       "y": 13,
       "rot": 2
     },
     {
       "contentId": "base:dresser",
+      "x": 21,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 25,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 26,
+      "y": 13,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 14,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 19,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 9,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
       "x": 10,
       "y": 16,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": 14,
+      "contentId": "base:desk",
+      "x": 15,
       "y": 16,
-      "rot": 3
+      "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 20,
       "y": 16,
       "rot": 1
@@ -2234,16 +2348,16 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
       "x": 14,
       "y": 17,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 20,
+      "contentId": "base:chair",
+      "x": 19,
       "y": 17,
-      "rot": 1
+      "rot": 3
     },
     {
       "contentId": "base:bookshelf",
@@ -2258,38 +2372,80 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
+      "x": 5,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 6,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
       "x": 1,
       "y": 20,
       "rot": 3
     },
     {
       "contentId": "base:bookshelf",
-      "x": 6,
-      "y": 20,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 7,
-      "y": 20,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
       "x": 1,
       "y": 21,
       "rot": 3
     },
     {
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 23,
+      "rot": 0
+    },
+    {
       "contentId": "base:dresser",
+      "x": 1,
+      "y": 23,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 2,
       "y": 24,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:chair",
+      "x": 3,
+      "y": 24,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 4,
+      "y": 24,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 5,
+      "y": 24,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 14,
+      "y": 24,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 16,
       "y": 24,
       "rot": 0
     },
@@ -2300,43 +2456,79 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 14,
+      "contentId": "base:desk",
+      "x": 5,
       "y": 25,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
+      "x": 6,
+      "y": 25,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
       "x": 14,
+      "y": 25,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 16,
+      "y": 25,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 3,
       "y": 26,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 3,
-      "y": 27,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 4,
-      "y": 27,
-      "rot": 2
+      "y": 26,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
-      "x": 5,
+      "x": 18,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 7,
       "y": 27,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:dresser",
+      "x": 18,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 13,
+      "y": 29,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
+      "x": 0,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:shower",
       "x": 1,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 14,
       "y": 31,
       "rot": 1
@@ -2447,5 +2639,14 @@
       "roomType": "base:room-hall",
       "buildingId": 68
     }
+  },
+  "buildingKinds": {
+    "27": "office",
+    "28": "office",
+    "29": "office",
+    "30": "office",
+    "32": "office",
+    "34": "office",
+    "68": "office"
   }
 }

@@ -521,6 +521,9 @@
       "buildingId": 1
     }
   },
+  "buildingKinds": {
+    "1": "house"
+  },
   "stairs": [
     {
       "tx": 16,

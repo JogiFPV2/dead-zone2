@@ -353,31 +353,25 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 4,
-      "y": 18,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 5,
-      "y": 18,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:crate",
       "x": 8,
       "y": 18,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 2,
+      "contentId": "base:metal-shelf",
+      "x": 6,
       "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:shop-counter",
+      "x": 2,
+      "y": 21,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 8,
       "y": 21,
       "rot": 0
@@ -400,5 +394,9 @@
       "roomType": "base:room-gas-station",
       "buildingId": 7
     }
+  },
+  "buildingKinds": {
+    "6": "fuel",
+    "7": "fuel"
   }
 }

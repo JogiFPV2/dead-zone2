@@ -593,5 +593,8 @@
       "roomType": "base:room-video-store",
       "buildingId": 3
     }
+  },
+  "buildingKinds": {
+    "3": "shop"
   }
 }

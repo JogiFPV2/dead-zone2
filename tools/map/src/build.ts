@@ -10,6 +10,7 @@ import {
   type Stairs,
 } from '@deadzone/content';
 import type { Blueprint, BlueprintStairs, Building } from './blueprint.js';
+import { kindFromRooms } from './building-kind.js';
 import { buildZones } from './zones.js';
 
 type Rooms = Building['rooms'];
@@ -258,6 +259,13 @@ export function buildMap(bp: Blueprint): BuiltMap {
     w.index(o.x, o.y, `obiekt ${o.contentId}`);
   }
 
+  // Building kind per building (`buildingKinds` in its chunks): explicit or from its rooms.
+  const kinds = new Map<number, string>();
+  for (const b of bp.buildings) {
+    const types = [...rooms.values()].filter((r) => r.buildingId === b.id).map((r) => r.roomType);
+    const k = b.kind ?? kindFromRooms(types);
+    if (k) kinds.set(b.id, k);
+  }
   const { cx0, cy0, cx1, cy1 } = bp.chunks;
   const chunks: BuiltMap['chunks'] = [];
   const addresses: MapManifest['chunks'] = [];
@@ -272,7 +280,10 @@ export function buildMap(bp: Blueprint): BuiltMap {
         if (z > 0 && !w.used(cx, cy)) continue;
         const address = { cx, cy, z };
         addresses.push(address);
-        chunks.push({ file: chunkFileName(address), json: chunkJson(w, bp, rooms, cx, cy) });
+        chunks.push({
+          file: chunkFileName(address),
+          json: chunkJson(w, bp, rooms, cx, cy, kinds),
+        });
       }
     }
   }
@@ -295,6 +306,7 @@ function chunkJson(
   rooms: ReadonlyMap<number, { roomType: string; buildingId: number }>,
   cx: number,
   cy: number,
+  kinds: ReadonlyMap<number, string>,
 ): MapChunkJson {
   const ox = cx * CHUNK_SIZE;
   const oy = cy * CHUNK_SIZE;
@@ -345,6 +357,12 @@ function chunkJson(
     )
     .map((s) => ({ tx: s.at[0] - ox, ty: s.at[1] - oy, dir: s.dir, len: s.len }));
 
+  const chunkKinds = [...new Set(ids.map((id) => rooms.get(id)!.buildingId))]
+    .sort((a, b) => a - b)
+    .flatMap((b) => {
+      const k = kinds.get(b);
+      return k ? [[String(b), k] as const] : [];
+    });
   return {
     address: { cx, cy, z: world.z },
     palette: global.map((g) => world.tiles[g - 1] ?? ''),
@@ -356,6 +374,7 @@ function chunkJson(
     edges,
     objects,
     rooms: Object.fromEntries(ids.map((id) => [String(id), rooms.get(id)!])),
+    ...(chunkKinds.length > 0 ? { buildingKinds: Object.fromEntries(chunkKinds) } : {}),
     // Only when present, so maps without stairs keep byte-identical chunk files.
     ...(stairs.length > 0 ? { stairs } : {}),
   };

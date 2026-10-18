@@ -249,5 +249,8 @@
       "roomType": "base:room-bedroom",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "4": "house"
   }
 }

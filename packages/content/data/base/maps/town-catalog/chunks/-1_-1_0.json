@@ -1255,14 +1255,26 @@
       "rot": 2
     },
     {
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 19,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
+      "x": 8,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 11,
       "y": 19,
       "rot": 0
     },
     {
       "contentId": "base:dresser",
-      "x": 12,
+      "x": 13,
       "y": 19,
       "rot": 0
     },
@@ -1273,10 +1285,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 31,
-      "y": 19,
-      "rot": 0
+      "contentId": "base:chair",
+      "x": 11,
+      "y": 20,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 15,
+      "y": 20,
+      "rot": 1
     },
     {
       "contentId": "base:bench",
@@ -1297,8 +1315,32 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 10,
+      "contentId": "base:desk",
+      "x": 7,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 21,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 14,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 15,
       "y": 21,
       "rot": 1
     },
@@ -1315,20 +1357,20 @@
       "rot": 3
     },
     {
+      "contentId": "base:gun-locker",
+      "x": 30,
+      "y": 21,
+      "rot": 2
+    },
+    {
       "contentId": "base:locker",
       "x": 0,
       "y": 22,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 7,
-      "y": 22,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 13,
+      "contentId": "base:locker",
+      "x": 1,
       "y": 22,
       "rot": 2
     },
@@ -1376,12 +1418,6 @@
     },
     {
       "contentId": "base:gun-locker",
-      "x": 30,
-      "y": 24,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
       "x": 31,
       "y": 24,
       "rot": 2
@@ -1423,15 +1459,15 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 30,
+      "contentId": "base:locker",
+      "x": 31,
       "y": 25,
       "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": 31,
-      "y": 25,
+      "contentId": "base:bathtub",
+      "x": 18,
+      "y": 26,
       "rot": 0
     },
     {
@@ -1441,13 +1477,19 @@
       "rot": 0
     },
     {
+      "contentId": "base:bathroom-cabinet",
+      "x": 21,
+      "y": 27,
+      "rot": 1
+    },
+    {
       "contentId": "base:locker",
       "x": 30,
       "y": 27,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 21,
       "y": 28,
       "rot": 1
@@ -1524,6 +1566,11 @@
       "roomType": "base:room-police",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "2": "school",
+    "3": "gym",
+    "4": "police"
   },
   "stairs": [
     {

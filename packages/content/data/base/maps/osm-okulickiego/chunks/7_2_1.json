@@ -2370,74 +2370,122 @@
   ],
   "objects": [
     {
-      "contentId": "base:sofa",
-      "x": 0,
-      "y": 0,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 4,
-      "y": 0,
-      "rot": 1
-    },
-    {
-      "contentId": "base:sofa",
+      "contentId": "base:tv",
       "x": 14,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": 15,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:vcr",
       "x": 16,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 18,
+      "contentId": "base:radio-set",
+      "x": 17,
       "y": 0,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
+      "x": 18,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 23,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 1,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
       "x": 2,
       "y": 1,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 25,
+      "contentId": "base:sofa",
+      "x": 24,
       "y": 1,
       "rot": 0
     },
     {
       "contentId": "base:sofa",
-      "x": 27,
+      "x": 26,
       "y": 1,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:radio-set",
       "x": 28,
       "y": 1,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
-      "x": 27,
-      "y": 2,
-      "rot": 1
+      "contentId": "base:vcr",
+      "x": 29,
+      "y": 1,
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:tv",
+      "x": 30,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 31,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 15,
+      "y": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 16,
+      "y": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:tv-stand",
       "x": 24,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:tv",
+      "x": 25,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 26,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 29,
       "y": 3,
       "rot": 2
     },
@@ -2449,12 +2497,24 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 4,
+      "x": 18,
+      "y": 4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 0,
       "y": 6,
       "rot": 2
     },
     {
       "contentId": "base:bookshelf",
+      "x": 4,
+      "y": 6,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
       "x": 27,
       "y": 6,
       "rot": 2
@@ -2466,21 +2526,27 @@
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
-      "x": 27,
-      "y": 8,
-      "rot": 3
+      "contentId": "base:armchair",
+      "x": 23,
+      "y": 9,
+      "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:armchair",
       "x": 27,
       "y": 9,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
       "x": 0,
-      "y": 24,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 1,
+      "y": 25,
       "rot": 1
     },
     {
@@ -2490,22 +2556,76 @@
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 11,
+      "contentId": "base:chair",
+      "x": 5,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 6,
       "y": 25,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 8,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 10,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 2,
       "y": 26,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 3,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 10,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 14,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 15,
       "y": 26,
       "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 26,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -2514,37 +2634,79 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 18,
+      "contentId": "base:bookshelf",
+      "x": 20,
       "y": 26,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 2,
-      "y": 27,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 15,
-      "y": 27,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
+      "x": 21,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 24,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 23,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 24,
       "y": 27,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 30,
+      "x": 25,
       "y": 27,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
+      "x": 26,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 28,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 30,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 8,
       "y": 28,
       "rot": 2
@@ -2557,48 +2719,78 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 24,
-      "y": 28,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 30,
+      "x": 11,
       "y": 28,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 22,
-      "y": 29,
+      "contentId": "base:chair",
+      "x": 17,
+      "y": 28,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 26,
+      "y": 28,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 26,
-      "y": 29,
+      "contentId": "base:chair",
+      "x": 28,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 30,
+      "y": 28,
       "rot": 2
     },
     {
       "contentId": "base:dresser",
-      "x": 27,
+      "x": 11,
+      "y": 29,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 17,
       "y": 29,
       "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": 16,
+      "x": 6,
       "y": 30,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 7,
-      "y": 31,
-      "rot": 0
+      "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 30,
+      "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
+      "x": 6,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 7,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 11,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 12,
       "y": 31,
       "rot": 1
@@ -2735,5 +2927,20 @@
       "roomType": "base:room-hall",
       "buildingId": 54
     }
+  },
+  "buildingKinds": {
+    "39": "shop",
+    "40": "shop",
+    "42": "shop",
+    "44": "office",
+    "45": "shop",
+    "47": "office",
+    "48": "office",
+    "49": "office",
+    "50": "office",
+    "51": "office",
+    "52": "office",
+    "53": "office",
+    "54": "office"
   }
 }

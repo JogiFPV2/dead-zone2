@@ -362,22 +362,34 @@
   ],
   "objects": [
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": 0,
       "y": 9,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-cabinet",
+      "x": 1,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 4,
       "y": 9,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:range",
       "x": 0,
       "y": 10,
       "rot": 1
+    },
+    {
+      "contentId": "base:shower",
+      "x": 1,
+      "y": 10,
+      "rot": 3
     },
     {
       "contentId": "base:trash-bin",
@@ -386,10 +398,16 @@
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 2,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-sink",
+      "x": 0,
       "y": 12,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:sofa",
@@ -399,20 +417,20 @@
     },
     {
       "contentId": "base:bed",
-      "x": 1,
-      "y": 13,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bed",
       "x": 2,
       "y": 13,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": 4,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
       "x": 0,
-      "y": 14,
+      "y": 16,
       "rot": 1
     },
     {
@@ -422,8 +440,26 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
+      "x": 4,
+      "y": 16,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 17,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bed",
       "x": 1,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 3,
       "y": 17,
       "rot": 3
     }
@@ -449,5 +485,8 @@
       "roomType": "base:room-bedroom",
       "buildingId": 16
     }
+  },
+  "buildingKinds": {
+    "16": "house"
   }
 }

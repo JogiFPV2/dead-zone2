@@ -614,16 +614,40 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": 19,
-      "y": 5,
+      "contentId": "base:bookshelf",
+      "x": 3,
+      "y": 2,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:bathroom-cabinet",
+      "x": 19,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
       "x": 2,
-      "y": 7,
-      "rot": 2
+      "y": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 3,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 19,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-sink",
+      "x": 19,
+      "y": 5,
+      "rot": 1
     }
   ],
   "rooms": {
@@ -651,6 +675,9 @@
       "roomType": "base:room-bathroom",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   },
   "stairs": [
     {

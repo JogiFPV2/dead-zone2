@@ -490,25 +490,25 @@
   ],
   "objects": [
     {
-      "contentId": "base:sofa",
-      "x": 20,
+      "contentId": "base:dresser",
+      "x": 22,
       "y": 3,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 21,
+      "contentId": "base:vcr",
+      "x": 24,
       "y": 3,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv",
       "x": 25,
       "y": 3,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": 26,
       "y": 3,
       "rot": 0
@@ -532,9 +532,39 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
+      "x": 20,
+      "y": 4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 21,
+      "y": 5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 24,
+      "y": 6,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
       "x": 25,
       "y": 6,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 26,
+      "y": 6,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 22,
+      "y": 7,
       "rot": 2
     }
   ],
@@ -559,6 +589,9 @@
       "roomType": "base:room-bedroom",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "4": "house"
   },
   "stairs": [
     {

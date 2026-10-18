@@ -1072,20 +1072,44 @@
   "objects": [
     {
       "contentId": "base:bed",
-      "x": 0,
+      "x": 13,
       "y": 0,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:vcr",
+      "x": 19,
+      "y": 0,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
       "y": 0,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 20,
-      "y": 0,
+      "x": 0,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 4,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:shower",
+      "x": 7,
+      "y": 1,
       "rot": 3
     },
     {
@@ -1095,32 +1119,38 @@
       "rot": 3
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:wardrobe",
       "x": 3,
       "y": 2,
       "rot": 1
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:wardrobe",
       "x": 10,
       "y": 2,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 13,
       "y": 2,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:shower",
+      "x": 16,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:wardrobe",
       "x": 20,
       "y": 2,
       "rot": 3
     },
     {
-      "contentId": "base:wardrobe",
-      "x": 3,
+      "contentId": "base:bathroom-cabinet",
+      "x": 16,
       "y": 3,
       "rot": 1
     },
@@ -1131,27 +1161,45 @@
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
-      "x": 25,
+      "contentId": "base:radio-set",
+      "x": 24,
       "y": 4,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:desk",
       "x": 0,
       "y": 5,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:chair",
+      "x": 1,
+      "y": 5,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 7,
       "y": 5,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathtub",
+      "x": 4,
+      "y": 6,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 18,
       "y": 6,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 6,
+      "y": 7,
       "rot": 1
     }
   ],
@@ -1224,5 +1272,9 @@
       "roomType": "base:room-bedroom",
       "buildingId": 13
     }
+  },
+  "buildingKinds": {
+    "12": "house",
+    "13": "house"
   }
 }

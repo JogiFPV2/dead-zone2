@@ -1203,7 +1203,19 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:dresser",
+      "x": 7,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 15,
       "y": 0,
       "rot": 1
@@ -1211,20 +1223,56 @@
     {
       "contentId": "base:bookshelf",
       "x": 6,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 6,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 6,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 8,
       "y": 3,
       "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": 7,
+      "x": 10,
       "y": 3,
       "rot": 2
     },
     {
       "contentId": "base:dresser",
-      "x": 8,
-      "y": 3,
+      "x": 2,
+      "y": 4,
       "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 4,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 4,
+      "rot": 0
     },
     {
       "contentId": "base:trash-bin",
@@ -1233,14 +1281,8 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 8,
-      "y": 5,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 9,
+      "contentId": "base:shower",
+      "x": 14,
       "y": 5,
       "rot": 2
     },
@@ -1251,10 +1293,22 @@
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-cabinet",
+      "x": 0,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
       "x": 2,
       "y": 11,
       "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 3,
+      "y": 11,
+      "rot": 3
     },
     {
       "contentId": "base:trash-bin",
@@ -1263,32 +1317,50 @@
       "rot": 2
     },
     {
-      "contentId": "base:sofa",
-      "x": 7,
-      "y": 13,
-      "rot": 1
-    },
-    {
       "contentId": "base:bookshelf",
-      "x": 7,
-      "y": 14,
-      "rot": 1
+      "x": 5,
+      "y": 12,
+      "rot": 0
     },
     {
       "contentId": "base:sofa",
+      "x": 7,
+      "y": 12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv-stand",
       "x": 3,
       "y": 15,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:tv",
       "x": 4,
       "y": 15,
       "rot": 2
     },
     {
+      "contentId": "base:vcr",
+      "x": 5,
+      "y": 15,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 6,
+      "y": 15,
+      "rot": 2
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 7,
+      "y": 15,
+      "rot": 2
+    },
+    {
       "contentId": "base:metal-shelf",
-      "x": 14,
+      "x": 13,
       "y": 15,
       "rot": 2
     },
@@ -1306,24 +1378,36 @@
     },
     {
       "contentId": "base:crate",
-      "x": 17,
+      "x": 18,
       "y": 15,
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:sofa",
+      "x": 1,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-counter",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-counter",
       "x": 3,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:freezer",
+      "contentId": "base:kitchen-cabinet",
       "x": 4,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 6,
       "y": 31,
       "rot": 1
@@ -1378,6 +1462,14 @@
       "roomType": "base:room-garage",
       "buildingId": 67
     }
+  },
+  "buildingKinds": {
+    "54": "office",
+    "55": "office",
+    "56": "office",
+    "62": "house",
+    "66": "house",
+    "67": "garage"
   },
   "stairs": [
     {

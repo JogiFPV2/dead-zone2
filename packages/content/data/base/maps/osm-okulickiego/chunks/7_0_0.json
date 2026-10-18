@@ -1664,124 +1664,142 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:fridge",
       "x": 14,
       "y": 6,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 15,
+      "contentId": "base:bookshelf",
+      "x": 16,
       "y": 6,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:freezer",
+      "x": 14,
+      "y": 7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 7,
+      "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
       "x": 11,
       "y": 8,
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
-      "x": 15,
+      "contentId": "base:shop-counter",
+      "x": 12,
       "y": 8,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 16,
       "y": 8,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 17,
+      "y": 8,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
       "x": 19,
       "y": 8,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 5,
-      "y": 9,
-      "rot": 3
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 15,
-      "y": 9,
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 8,
       "rot": 1
     },
     {
       "contentId": "base:dresser",
-      "x": 16,
+      "x": 21,
+      "y": 8,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 1,
       "y": 9,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 4,
+      "y": 9,
+      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
       "x": 5,
-      "y": 10,
+      "y": 9,
       "rot": 3
+    },
+    {
+      "contentId": "base:fridge",
+      "x": 7,
+      "y": 9,
+      "rot": 1
     },
     {
       "contentId": "base:fridge",
       "x": 8,
       "y": 10,
       "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 13,
-      "y": 10,
-      "rot": 2
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 15,
-      "y": 10,
-      "rot": 1
     },
     {
       "contentId": "base:dresser",
       "x": 25,
       "y": 10,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 26,
-      "y": 10,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": 27,
-      "y": 10,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 28,
-      "y": 10,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:freezer",
       "x": 5,
       "y": 11,
       "rot": 3
     },
     {
       "contentId": "base:bookshelf",
-      "x": 19,
+      "x": 21,
       "y": 11,
       "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 22,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 24,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 27,
+      "y": 11,
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
       "x": 31,
       "y": 11,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
@@ -1790,235 +1808,199 @@
       "rot": 3
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:metal-shelf",
+      "x": 4,
+      "y": 12,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
       "x": 5,
       "y": 12,
       "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 15,
+      "x": 8,
       "y": 12,
       "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 0,
-      "y": 13,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 8,
-      "y": 13,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 10,
-      "y": 13,
-      "rot": 3
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": 0,
-      "y": 14,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 8,
-      "y": 14,
-      "rot": 1
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 10,
-      "y": 14,
-      "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 17,
-      "y": 14,
-      "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": 27,
-      "y": 14,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 0,
-      "y": 15,
-      "rot": 3
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 5,
-      "y": 15,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 9,
-      "y": 15,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 10,
-      "y": 15,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 12,
-      "y": 15,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 13,
-      "y": 15,
-      "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
       "x": 14,
-      "y": 15,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 22,
+      "y": 12,
       "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 15,
-      "y": 15,
-      "rot": 2
+      "x": 11,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:shop-counter",
+      "x": 27,
+      "y": 13,
+      "rot": 3
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 5,
+      "y": 14,
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
+      "x": 8,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 14,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 16,
+      "y": 14,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 22,
+      "y": 14,
+      "rot": 0
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 31,
+      "y": 14,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 0,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 4,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 5,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 11,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
+      "y": 15,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
       "x": 27,
       "y": 15,
       "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 0,
+      "x": 8,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 6,
+      "contentId": "base:fridge",
+      "x": 14,
       "y": 16,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 7,
-      "y": 16,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:freezer",
-      "x": 9,
-      "y": 16,
+      "x": 14,
+      "y": 17,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 17,
+      "rot": 2
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 27,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:metal-shelf",
+      "x": 31,
+      "y": 17,
       "rot": 1
     },
     {
       "contentId": "base:locker",
-      "x": 4,
-      "y": 17,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 9,
-      "y": 17,
+      "x": 3,
+      "y": 18,
       "rot": 1
     },
     {
-      "contentId": "base:fridge",
-      "x": 11,
-      "y": 17,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 21,
-      "y": 17,
-      "rot": 2
+      "contentId": "base:metal-shelf",
+      "x": 8,
+      "y": 18,
+      "rot": 3
     },
     {
       "contentId": "base:dresser",
-      "x": 23,
-      "y": 17,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 31,
-      "y": 17,
-      "rot": 1
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 9,
-      "y": 18,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 17,
-      "y": 18,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
       "x": 21,
       "y": 18,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 31,
-      "y": 18,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:shop-counter",
       "x": 1,
       "y": 19,
       "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 2,
-      "y": 19,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 6,
       "y": 19,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 9,
-      "y": 19,
-      "rot": 1
-    },
-    {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
       "x": 21,
       "y": 19,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
+      "x": 22,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
       "x": 23,
       "y": 19,
       "rot": 0
@@ -2026,8 +2008,14 @@
     {
       "contentId": "base:metal-shelf",
       "x": 30,
-      "y": 21,
+      "y": 20,
       "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 21,
+      "rot": 3
     }
   ],
   "rooms": {
@@ -2083,6 +2071,14 @@
       "roomType": "base:room-pharmacy",
       "buildingId": 82
     }
+  },
+  "buildingKinds": {
+    "77": "pharmacy",
+    "78": "office",
+    "79": "office",
+    "80": "shop",
+    "81": "shop",
+    "82": "pharmacy"
   },
   "stairs": [
     {

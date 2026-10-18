@@ -144,10 +144,46 @@
   ],
   "objects": [
     {
-      "contentId": "base:sofa",
+      "contentId": "base:bookshelf",
       "x": 0,
       "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 1,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": 3,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 4,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 5,
+      "y": 31,
       "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 6,
+      "y": 31,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -157,7 +193,7 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 8,
+      "x": 9,
       "y": 31,
       "rot": 0
     }
@@ -175,5 +211,10 @@
       "roomType": "base:room-office",
       "buildingId": 46
     }
+  },
+  "buildingKinds": {
+    "44": "office",
+    "45": "shop",
+    "46": "office"
   }
 }

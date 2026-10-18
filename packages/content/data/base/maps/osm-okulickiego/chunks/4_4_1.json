@@ -100,7 +100,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 0,
       "y": 3,
       "rot": 1
@@ -115,5 +115,8 @@
       "roomType": "base:room-living-room",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "4": "house"
   }
 }

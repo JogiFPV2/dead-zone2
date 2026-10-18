@@ -646,6 +646,9 @@ export const simMapDataSchema = z.object({
           z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
         )
         .optional(),
+      buildingKinds: z
+        .record(z.string().regex(/^[1-9]\d{0,15}$/), z.string().regex(/^[a-z]+(-[a-z]+)*$/))
+        .optional(),
       objects: z
         .array(
           z.object({

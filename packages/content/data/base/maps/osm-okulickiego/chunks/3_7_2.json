@@ -1289,26 +1289,50 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:bookshelf",
+      "x": 10,
       "y": 9,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 9,
+      "contentId": "base:desk",
+      "x": 11,
       "y": 9,
       "rot": 0
     },
     {
       "contentId": "base:bookshelf",
-      "x": 6,
+      "x": 13,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 11,
       "y": 10,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 7,
+      "y": 11,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 21,
+      "y": 11,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
       "x": 2,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 7,
       "y": 12,
       "rot": 2
     },
@@ -1366,5 +1390,8 @@
       "roomType": "base:room-bathroom",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   }
 }

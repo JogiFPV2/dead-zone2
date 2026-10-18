@@ -1342,20 +1342,26 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 3,
+      "contentId": "base:chair",
+      "x": 1,
       "y": 9,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
       "x": 0,
       "y": 10,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 1,
+      "y": 10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 3,
       "y": 10,
       "rot": 2
     },
@@ -1426,9 +1432,21 @@
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 9,
       "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:shower",
+      "x": 9,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 9,
+      "y": 28,
       "rot": 1
     }
   ],
@@ -1481,5 +1499,8 @@
       "roomType": "base:room-bathroom",
       "buildingId": 22
     }
+  },
+  "buildingKinds": {
+    "22": "school"
   }
 }

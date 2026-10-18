@@ -323,13 +323,31 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 25,
+      "x": 30,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 6,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 22,
+      "y": 6,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
       "y": 7,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 26,
+      "contentId": "base:desk",
+      "x": 22,
       "y": 7,
       "rot": 2
     }
@@ -343,5 +361,8 @@
       "roomType": "base:room-office",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   }
 }

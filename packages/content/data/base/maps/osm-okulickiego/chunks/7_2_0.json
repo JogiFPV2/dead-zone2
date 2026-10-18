@@ -2403,68 +2403,62 @@
   ],
   "objects": [
     {
-      "contentId": "base:metal-shelf",
-      "x": 4,
+      "contentId": "base:chair",
+      "x": 8,
       "y": 0,
-      "rot": 1
+      "rot": 2
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:shop-counter",
       "x": 12,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:freezer",
-      "x": 13,
-      "y": 0,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:shop-counter",
       "x": 14,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 15,
+      "contentId": "base:fridge",
+      "x": 17,
       "y": 0,
       "rot": 0
     },
     {
       "contentId": "base:freezer",
-      "x": 16,
+      "x": 18,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 22,
+      "contentId": "base:shop-counter",
+      "x": 20,
       "y": 0,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
+      "x": 22,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 23,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge",
       "x": 1,
       "y": 1,
       "rot": 2
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:metal-shelf",
       "x": 2,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 6,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 7,
       "y": 1,
       "rot": 2
     },
@@ -2475,44 +2469,8 @@
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 18,
-      "y": 1,
-      "rot": 1
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 19,
-      "y": 1,
-      "rot": 3
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 24,
-      "y": 1,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:shop-counter",
       "x": 25,
-      "y": 1,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 26,
-      "y": 1,
-      "rot": 0
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 27,
-      "y": 1,
-      "rot": 0
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 28,
       "y": 1,
       "rot": 0
     },
@@ -2523,26 +2481,20 @@
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 9,
-      "y": 2,
-      "rot": 3
+      "contentId": "base:freezer",
+      "x": 30,
+      "y": 1,
+      "rot": 0
     },
     {
       "contentId": "base:metal-shelf",
       "x": 12,
       "y": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 15,
-      "y": 2,
-      "rot": 2
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 16,
+      "x": 15,
       "y": 2,
       "rot": 2
     },
@@ -2554,30 +2506,12 @@
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 22,
-      "y": 2,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 9,
       "y": 3,
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 13,
-      "y": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:kitchen-counter",
-      "x": 22,
-      "y": 3,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 24,
       "y": 3,
       "rot": 2
@@ -2590,19 +2524,7 @@
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 26,
-      "y": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 29,
-      "y": 3,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 30,
       "y": 3,
       "rot": 2
     },
@@ -2614,21 +2536,15 @@
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 9,
-      "y": 4,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 12,
       "y": 4,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 22,
+      "x": 20,
       "y": 4,
-      "rot": 1
+      "rot": 2
     },
     {
       "contentId": "base:metal-shelf",
@@ -2637,16 +2553,10 @@
       "rot": 3
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 11,
+      "contentId": "base:freezer",
+      "x": 18,
       "y": 6,
-      "rot": 0
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 19,
-      "y": 6,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
@@ -2655,57 +2565,57 @@
       "rot": 0
     },
     {
-      "contentId": "base:fridge",
-      "x": 22,
-      "y": 6,
-      "rot": 1
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 9,
+      "contentId": "base:freezer",
+      "x": 11,
       "y": 7,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 12,
       "y": 7,
       "rot": 2
     },
     {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 18,
       "y": 7,
       "rot": 3
     },
     {
       "contentId": "base:metal-shelf",
-      "x": 20,
-      "y": 8,
-      "rot": 2
-    },
-    {
-      "contentId": "base:freezer",
-      "x": 21,
-      "y": 8,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 22,
-      "y": 8,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
       "x": 28,
       "y": 8,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 28,
-      "y": 9,
+      "contentId": "base:bookshelf",
+      "x": 0,
+      "y": 24,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 2,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 3,
+      "y": 25,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 5,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 6,
+      "y": 25,
       "rot": 1
     },
     {
@@ -2715,67 +2625,175 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 8,
       "y": 25,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 11,
+      "contentId": "base:desk",
+      "x": 10,
       "y": 25,
-      "rot": 1
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 10,
+      "y": 26,
+      "rot": 2
     },
     {
       "contentId": "base:dresser",
+      "x": 12,
+      "y": 26,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 13,
+      "y": 26,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 14,
+      "y": 26,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 16,
       "y": 26,
       "rot": 0
     },
     {
       "contentId": "base:bookshelf",
-      "x": 12,
-      "y": 27,
+      "x": 20,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 21,
+      "y": 26,
       "rot": 3
     },
     {
       "contentId": "base:dresser",
+      "x": 24,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 2,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 14,
+      "y": 27,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 16,
+      "y": 27,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 20,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk",
+      "x": 21,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 22,
+      "y": 27,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 25,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 26,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
       "x": 28,
       "y": 27,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 29,
+      "contentId": "base:desk",
+      "x": 30,
       "y": 27,
       "rot": 0
     },
     {
+      "contentId": "base:bookshelf",
+      "x": 8,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 26,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 28,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 30,
+      "y": 28,
+      "rot": 2
+    },
+    {
       "contentId": "base:dresser",
-      "x": 3,
-      "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 4,
-      "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 5,
-      "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 24,
-      "y": 28,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
       "x": 17,
       "y": 29,
       "rot": 2
@@ -2788,45 +2806,33 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 26,
+      "x": 23,
       "y": 29,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 12,
-      "y": 30,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 21,
       "y": 30,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 30,
-      "y": 30,
-      "rot": 2
-    },
-    {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
       "x": 6,
       "y": 31,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 7,
       "y": 31,
-      "rot": 0
+      "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 12,
+      "contentId": "base:desk",
+      "x": 11,
       "y": 31,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -2835,10 +2841,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 21,
+      "contentId": "base:chair",
+      "x": 20,
       "y": 31,
-      "rot": 1
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 29,
+      "y": 31,
+      "rot": 2
     }
   ],
   "rooms": {
@@ -2974,6 +2986,23 @@
       "roomType": "base:room-hall",
       "buildingId": 54
     }
+  },
+  "buildingKinds": {
+    "39": "shop",
+    "40": "shop",
+    "41": "shop",
+    "42": "shop",
+    "43": "shop",
+    "44": "office",
+    "45": "shop",
+    "47": "office",
+    "48": "office",
+    "49": "office",
+    "50": "office",
+    "51": "office",
+    "52": "office",
+    "53": "office",
+    "54": "office"
   },
   "stairs": [
     {

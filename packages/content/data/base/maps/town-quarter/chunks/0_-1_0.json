@@ -806,5 +806,8 @@
       "roomType": "base:room-bedroom",
       "buildingId": 5
     }
+  },
+  "buildingKinds": {
+    "5": "house"
   }
 }

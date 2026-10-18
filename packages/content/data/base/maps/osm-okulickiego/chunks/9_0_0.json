@@ -839,15 +839,27 @@
     },
     {
       "contentId": "base:crate",
-      "x": 0,
-      "y": 23,
-      "rot": 2
+      "x": 4,
+      "y": 18,
+      "rot": 1
     },
     {
       "contentId": "base:crate",
+      "x": 4,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:crate",
+      "x": 4,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:metal-shelf",
       "x": 1,
-      "y": 24,
-      "rot": 3
+      "y": 21,
+      "rot": 2
     }
   ],
   "rooms": {
@@ -879,6 +891,11 @@
       "roomType": "base:room-warehouse",
       "buildingId": 72
     }
+  },
+  "buildingKinds": {
+    "70": "office",
+    "71": "shop",
+    "72": "shop"
   },
   "stairs": [
     {

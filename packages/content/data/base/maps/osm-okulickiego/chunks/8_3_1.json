@@ -650,10 +650,34 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:desk",
+      "x": 7,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 0,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 15,
       "y": 0,
       "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 1,
+      "rot": 2
     },
     {
       "contentId": "base:dresser",
@@ -662,15 +686,27 @@
       "rot": 3
     },
     {
+      "contentId": "base:chair",
+      "x": 9,
+      "y": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 10,
+      "y": 2,
+      "rot": 1
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 6,
       "y": 3,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 10,
-      "y": 3,
+      "contentId": "base:dresser",
+      "x": 2,
+      "y": 4,
       "rot": 2
     },
     {
@@ -681,9 +717,45 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 9,
+      "x": 8,
+      "y": 5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:shower",
+      "x": 14,
       "y": 5,
       "rot": 2
+    },
+    {
+      "contentId": "base:bed",
+      "x": 0,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 1,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 3,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 5,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {
@@ -723,5 +795,11 @@
       "roomType": "base:room-bathroom",
       "buildingId": 62
     }
+  },
+  "buildingKinds": {
+    "54": "office",
+    "55": "office",
+    "56": "office",
+    "62": "house"
   }
 }

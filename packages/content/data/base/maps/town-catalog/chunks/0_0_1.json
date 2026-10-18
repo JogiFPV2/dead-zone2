@@ -424,64 +424,82 @@
   ],
   "objects": [
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:bathtub",
+      "x": 20,
+      "y": 9,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
       "x": 23,
       "y": 9,
       "rot": 1
     },
     {
       "contentId": "base:bed",
-      "x": 23,
+      "x": 22,
       "y": 10,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bathroom-cabinet",
+      "x": 16,
+      "y": 11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:wardrobe",
       "x": 23,
       "y": 11,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 16,
       "y": 12,
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
       "x": 16,
       "y": 13,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 20,
+      "contentId": "base:sofa",
+      "x": 19,
       "y": 13,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
-      "x": 21,
-      "y": 13,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bookshelf",
+      "contentId": "base:armchair",
       "x": 16,
       "y": 14,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bed",
       "x": 22,
-      "y": 16,
-      "rot": 2
+      "y": 14,
+      "rot": 1
     },
     {
       "contentId": "base:wardrobe",
       "x": 23,
+      "y": 15,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 16,
       "y": 16,
       "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 23,
+      "y": 16,
+      "rot": 1
     }
   ],
   "rooms": {
@@ -501,5 +519,8 @@
       "roomType": "base:room-bedroom",
       "buildingId": 15
     }
+  },
+  "buildingKinds": {
+    "15": "house"
   }
 }

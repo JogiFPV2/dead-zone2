@@ -1011,8 +1011,20 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:shower",
+      "x": 12,
+      "y": 0,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 17,
+      "y": 0,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 18,
       "y": 0,
       "rot": 2
     },
@@ -1122,5 +1134,8 @@
       "roomType": "base:room-hall",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   }
 }

@@ -86,6 +86,12 @@
         "x": 0.5,
         "y": 0.5
       }
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 14,
+      "y": 15,
+      "rot": 2
     }
   ],
   "zones": [

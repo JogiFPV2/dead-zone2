@@ -762,31 +762,37 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bed",
       "x": 16,
       "y": 21,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-sink",
       "x": 12,
       "y": 22,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 15,
       "y": 22,
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:wardrobe",
+      "x": 17,
+      "y": 22,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 9,
       "y": 23,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:gas-stove",
       "x": 12,
       "y": 23,
       "rot": 3
@@ -798,16 +804,46 @@
       "rot": 1
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": 12,
       "y": 24,
       "rot": 3
     },
     {
+      "contentId": "base:shower",
+      "x": 9,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 15,
+      "y": 25,
+      "rot": 1
+    },
+    {
       "contentId": "base:dresser",
-      "x": 20,
+      "x": 18,
       "y": 25,
       "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 20,
+      "y": 25,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 9,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:freezer",
+      "x": 12,
+      "y": 26,
+      "rot": 3
     },
     {
       "contentId": "base:kitchen-cabinet",
@@ -816,88 +852,118 @@
       "rot": 1
     },
     {
-      "contentId": "base:freezer",
+      "contentId": "base:desk",
+      "x": 16,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
       "x": 12,
       "y": 27,
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 15,
       "y": 27,
       "rot": 1
     },
     {
-      "contentId": "base:bed",
-      "x": 16,
-      "y": 27,
-      "rot": 2
-    },
-    {
-      "contentId": "base:wardrobe",
+      "contentId": "base:chair",
       "x": 17,
       "y": 27,
-      "rot": 2
+      "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": 20,
       "y": 27,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv",
       "x": 21,
       "y": 27,
       "rot": 2
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:vcr",
+      "x": 22,
+      "y": 27,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
       "x": 10,
       "y": 28,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:wardrobe",
       "x": 11,
       "y": 28,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": 12,
       "y": 28,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv",
       "x": 13,
       "y": 28,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
-      "x": 15,
+      "contentId": "base:vcr",
+      "x": 14,
       "y": 28,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:radio-set",
+      "x": 15,
+      "y": 28,
+      "rot": 0
+    },
+    {
+      "contentId": "base:fridge-freezer",
       "x": 16,
       "y": 28,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv",
       "x": 20,
       "y": 28,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 21,
+      "y": 28,
+      "rot": 0
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 22,
+      "y": 28,
+      "rot": 0
     },
     {
       "contentId": "base:sofa",
-      "x": 20,
+      "x": 23,
       "y": 29,
-      "rot": 3
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 15,
+      "y": 30,
+      "rot": 1
     },
     {
       "contentId": "base:firewood-pile",
@@ -906,8 +972,20 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:sofa",
+      "x": 12,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:armchair",
       "x": 21,
+      "y": 31,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 22,
       "y": 31,
       "rot": 2
     }
@@ -949,6 +1027,9 @@
       "roomType": "base:room-living-room",
       "buildingId": 18
     }
+  },
+  "buildingKinds": {
+    "18": "house"
   },
   "stairs": [
     {

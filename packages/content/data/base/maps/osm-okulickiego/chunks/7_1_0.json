@@ -213,22 +213,34 @@
       "rot": 0
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 1,
-      "y": 31,
-      "rot": 0
-    },
-    {
       "contentId": "base:freezer",
       "x": 2,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 4,
+      "contentId": "base:shop-counter",
+      "x": 3,
       "y": 31,
-      "rot": 1
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 7,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 8,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {
@@ -248,5 +260,11 @@
       "roomType": "base:room-office",
       "buildingId": 46
     }
+  },
+  "buildingKinds": {
+    "43": "shop",
+    "44": "office",
+    "45": "shop",
+    "46": "office"
   }
 }

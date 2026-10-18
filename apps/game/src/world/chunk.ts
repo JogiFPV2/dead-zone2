@@ -38,6 +38,8 @@ export interface ChunkData {
   readonly room?: Uint16Array;
   /** Rooms referenced by `room`. Room ids are unique within the chunk (the sim contract, docs/sim-architecture.md 9.24); content maps keep them map-wide. */
   readonly rooms?: ReadonlyMap<RoomId, RoomInfo>;
+  /** Building id → building kind (`SimChunk.buildingKinds`, lock chance keys), optional. */
+  readonly buildingKinds?: ReadonlyMap<BuildingId, string>;
   /** Static map objects (furniture, storage, lights) at local tiles. Dynamic state is never here. */
   readonly objects?: readonly MapObjectRef[];
   /** Flights of stairs from this level to z + 1 (content `stairs`, sim `SimChunk.stairs`). */

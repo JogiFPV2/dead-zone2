@@ -87,16 +87,22 @@
   ],
   "objects": [
     {
-      "contentId": "base:bookshelf",
-      "x": 31,
+      "contentId": "base:desk",
+      "x": 27,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 28,
       "y": 0,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 31,
+      "contentId": "base:dresser",
+      "x": 30,
       "y": 1,
-      "rot": 1
+      "rot": 2
     }
   ],
   "rooms": {
@@ -104,5 +110,8 @@
       "roomType": "base:room-office",
       "buildingId": 34
     }
+  },
+  "buildingKinds": {
+    "34": "office"
   }
 }

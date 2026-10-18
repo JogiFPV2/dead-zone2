@@ -1626,22 +1626,40 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
       "x": 6,
       "y": 10,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
       "x": 8,
       "y": 10,
-      "rot": 0
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 9,
+      "y": 10,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 11,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 9,
-      "y": 10,
-      "rot": 0
+      "y": 12,
+      "rot": 1
     },
     {
       "contentId": "base:locker",
@@ -1660,6 +1678,12 @@
       "x": 28,
       "y": 12,
       "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 9,
+      "y": 14,
+      "rot": 1
     },
     {
       "contentId": "base:locker",
@@ -1738,6 +1762,18 @@
       "x": 9,
       "y": 30,
       "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 10,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 11,
+      "y": 30,
+      "rot": 0
     },
     {
       "contentId": "base:locker",
@@ -1821,5 +1857,12 @@
       "roomType": "base:room-hall",
       "buildingId": 25
     }
+  },
+  "buildingKinds": {
+    "20": "school",
+    "21": "school",
+    "22": "school",
+    "23": "school",
+    "25": "school"
   }
 }

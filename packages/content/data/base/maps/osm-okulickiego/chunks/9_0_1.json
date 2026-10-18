@@ -482,13 +482,13 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:gas-stove",
       "x": 1,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:fridge",
+      "contentId": "base:fridge-freezer",
       "x": 5,
       "y": 16,
       "rot": 1
@@ -519,5 +519,9 @@
       "roomType": "base:room-kitchen",
       "buildingId": 71
     }
+  },
+  "buildingKinds": {
+    "70": "office",
+    "71": "shop"
   }
 }

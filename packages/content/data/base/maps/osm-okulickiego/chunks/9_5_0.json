@@ -496,46 +496,28 @@
   ],
   "objects": [
     {
-      "contentId": "base:fridge",
+      "contentId": "base:metal-shelf",
       "x": 12,
       "y": 0,
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
-      "x": 13,
-      "y": 0,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
+      "contentId": "base:chair",
       "x": 14,
       "y": 0,
-      "rot": 2
+      "rot": 1
     },
     {
-      "contentId": "base:metal-shelf",
-      "x": 18,
-      "y": 0,
-      "rot": 3
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 20,
-      "y": 0,
-      "rot": 3
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:shower",
       "x": 0,
       "y": 1,
       "rot": 2
     },
     {
-      "contentId": "base:fridge",
-      "x": 8,
+      "contentId": "base:metal-shelf",
+      "x": 9,
       "y": 1,
-      "rot": 3
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -544,14 +526,8 @@
       "rot": 1
     },
     {
-      "contentId": "base:freezer",
-      "x": 18,
-      "y": 1,
-      "rot": 3
-    },
-    {
       "contentId": "base:metal-shelf",
-      "x": 20,
+      "x": 22,
       "y": 1,
       "rot": 3
     },
@@ -568,28 +544,16 @@
       "rot": 3
     },
     {
-      "contentId": "base:freezer",
-      "x": 10,
-      "y": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
-      "x": 11,
-      "y": 2,
-      "rot": 2
-    },
-    {
-      "contentId": "base:metal-shelf",
+      "contentId": "base:fridge",
       "x": 18,
       "y": 2,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:fridge",
-      "x": 23,
+      "contentId": "base:shop-counter",
+      "x": 19,
       "y": 2,
-      "rot": 1
+      "rot": 2
     },
     {
       "contentId": "base:trash-bin",
@@ -602,12 +566,6 @@
       "x": 14,
       "y": 3,
       "rot": 0
-    },
-    {
-      "contentId": "base:fridge",
-      "x": 22,
-      "y": 3,
-      "rot": 2
     }
   ],
   "rooms": {
@@ -643,6 +601,12 @@
       "roomType": "base:room-office",
       "buildingId": 34
     }
+  },
+  "buildingKinds": {
+    "31": "shop",
+    "32": "office",
+    "33": "shop",
+    "34": "office"
   },
   "stairs": [
     {

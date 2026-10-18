@@ -1135,6 +1135,9 @@
       "buildingId": 11
     }
   },
+  "buildingKinds": {
+    "11": "school"
+  },
   "stairs": [
     {
       "tx": 7,

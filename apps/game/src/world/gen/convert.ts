@@ -24,6 +24,7 @@ function levelData(cx: number, cy: number, l: GenLevel): ChunkData {
     edgeW: l.edgeW,
     ...(l.roof ? { roof: l.roof } : {}),
     ...(l.room ? { room: l.room, rooms } : {}),
+    ...(l.buildingKinds?.length ? { buildingKinds: new Map(l.buildingKinds) } : {}),
     ...(l.objects.length
       ? { objects: l.objects.map((o) => ({ ...o, contentId: o.contentId as ContentId })) }
       : {}),
@@ -100,6 +101,9 @@ export function levelToSimChunk(l: GenLevel, waterTile: TileId): SimChunk {
     edgeN: l.edgeN,
     edgeW: l.edgeW,
     ...(l.room ? { room: l.room, rooms, roomBuildings } : {}),
+    ...(l.room && l.buildingKinds?.length
+      ? { buildingKinds: Object.fromEntries(l.buildingKinds.map(([b, k]) => [String(b), k])) }
+      : {}),
     ...(l.objects.length
       ? { objects: l.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
       : {}),

@@ -262,25 +262,43 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:gas-stove",
+      "x": 13,
+      "y": 30,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 14,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 15,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:vcr",
       "x": 16,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv",
       "x": 17,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
       "x": 18,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-counter",
+      "contentId": "base:kitchen-cabinet",
       "x": 19,
       "y": 30,
       "rot": 0
@@ -294,6 +312,24 @@
     {
       "contentId": "base:kitchen-counter",
       "x": 10,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:kitchen-sink",
+      "x": 13,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:wardrobe",
+      "x": 28,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 29,
       "y": 31,
       "rot": 3
     }
@@ -319,5 +355,8 @@
       "roomType": "base:room-kitchen",
       "buildingId": 10
     }
+  },
+  "buildingKinds": {
+    "10": "house"
   }
 }

@@ -297,5 +297,8 @@
       "roomType": "base:room-bathroom",
       "buildingId": 3
     }
+  },
+  "buildingKinds": {
+    "3": "house"
   }
 }

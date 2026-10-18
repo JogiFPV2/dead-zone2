@@ -942,16 +942,40 @@
   ],
   "objects": [
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": 11,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 12,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk",
       "x": 30,
       "y": 19,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
-      "x": 8,
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 19,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 10,
       "y": 20,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk",
+      "x": 11,
+      "y": 20,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -960,8 +984,20 @@
       "rot": 3
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 12,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 15,
+      "y": 21,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 30,
       "y": 21,
       "rot": 3
     },
@@ -1026,34 +1062,34 @@
       "rot": 3
     },
     {
+      "contentId": "base:locker",
+      "x": 1,
+      "y": 26,
+      "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 12,
+      "y": 26,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 27,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 12,
+      "y": 27,
+      "rot": 1
+    },
+    {
       "contentId": "base:gun-locker",
       "x": 30,
-      "y": 25,
-      "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": 1,
-      "y": 26,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 12,
-      "y": 26,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 1,
       "y": 27,
       "rot": 3
-    },
-    {
-      "contentId": "base:locker",
-      "x": 12,
-      "y": 27,
-      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -1111,6 +1147,10 @@
       "roomType": "base:room-police",
       "buildingId": 4
     }
+  },
+  "buildingKinds": {
+    "2": "school",
+    "4": "police"
   },
   "stairs": [
     {

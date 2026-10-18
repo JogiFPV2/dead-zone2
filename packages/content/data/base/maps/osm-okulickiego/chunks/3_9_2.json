@@ -587,26 +587,20 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 1,
-      "y": 2,
-      "rot": 0
+      "contentId": "base:bathroom-cabinet",
+      "x": 13,
+      "y": 8,
+      "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 2,
-      "y": 2,
-      "rot": 0
-    },
-    {
-      "contentId": "base:dresser",
-      "x": 3,
-      "y": 2,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:bathroom-sink",
       "x": 14,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 15,
       "y": 8,
       "rot": 2
     }
@@ -636,6 +630,9 @@
       "roomType": "base:room-bathroom",
       "buildingId": 11
     }
+  },
+  "buildingKinds": {
+    "11": "school"
   },
   "stairs": [
     {

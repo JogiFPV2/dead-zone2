@@ -43,6 +43,19 @@ function roomBuildings(data: ChunkData): Record<string, number> | undefined {
   return out;
 }
 
+/** `SimChunk.buildingKinds` for the buildings of this chunk's rooms (omitted when none). */
+function buildingKindsOf(
+  buildings: Record<string, number>,
+  kinds: ReadonlyMap<number, string>,
+): { buildingKinds?: Record<string, string> } {
+  let out: Record<string, string> | undefined;
+  for (const b of new Set(Object.values(buildings))) {
+    const k = kinds.get(b);
+    if (k) (out ??= {})[String(b)] = k;
+  }
+  return out ? { buildingKinds: out } : {};
+}
+
 /**
  * Adapter from the renderer's ChunkSource to the sim's SimMap: floor ids unchanged
  * (0 = no floor), missing edge layers become empty, `edgeKinds` from the edge palette (doors,
@@ -68,6 +81,9 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
         edgeW: data.edgeW ?? NO_EDGES,
         ...(data.room ? { room: data.room, rooms: rooms ?? {} } : {}),
         ...(data.room && buildings ? { roomBuildings: buildings } : {}),
+        ...(data.room && buildings && data.buildingKinds
+          ? buildingKindsOf(buildings, data.buildingKinds)
+          : {}),
         ...(data.objects?.length
           ? {
               objects: data.objects.map(({ contentId, x, y, rot }) => ({
