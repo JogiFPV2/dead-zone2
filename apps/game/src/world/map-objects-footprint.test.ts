@@ -7,6 +7,7 @@ import {
   footprintFlag,
   footprintsOn,
   furnitureFootprintsFromFiles,
+  isRealScale,
   objectAtTile,
 } from './furniture-footprint.js';
 import { MapObjects, fitFootprint, fitTileRealScale } from './map-objects.js';
@@ -226,6 +227,29 @@ describe('fitFootprint', () => {
     expect(((b.min.z + b.max.z) / 2).toFixed(3)).toBe('-0.048');
     // A 2 m bed: one tile long, 0.96 wide kept as is.
     expect(size(fitTileRealScale(box(0.96, 0.75, 1.99)))).toEqual([0.96, 0.75, 0.96]);
+  });
+
+  it('keeps the authored height of wall-mounted real-scale models (bathroom cabinet 1.15–1.85 m)', () => {
+    // Designer's base:bathroom-cabinet: origin on the floor, mesh 0.6 × 0.7 × 0.21 at 1.15–1.85 m.
+    const cabinet = (): Object3D => {
+      const m = box(0.6, 0.7, 0.21);
+      m.position.set(0, 1.5, 0.03);
+      return m;
+    };
+    const bounds = (o: Object3D): Box3 => {
+      o.updateMatrixWorld(true);
+      return new Box3().setFromObject(o);
+    };
+    expect(isRealScale('base:bathroom-cabinet')).toBe(true);
+    for (const fit of [
+      fitTileRealScale(cabinet()),
+      fitFootprint(cabinet(), { w: 1, h: 1 }, true),
+      fitFootprint(cabinet(), { w: 2, h: 1 }, true),
+    ]) {
+      const b = bounds(fit);
+      expect(b.min.y).toBeCloseTo(1.15, 6);
+      expect(b.max.y).toBeCloseTo(1.85, 6);
+    }
   });
 
   it('gives legacy models the one-tile fit stretched over w×h', () => {
