@@ -28,9 +28,9 @@ export const BarricadeSettingsSchema = z
     /** Tag łomu (zdejmowanie desek, wyważanie drzwi). */
     pryTag: TagSchema.default('base:tool-pry'),
     /** Czas przybicia jednej deski (s). */
-    addSec: SecSchema.default(4),
+    addSec: SecSchema.default(8),
     /** Czas zdjęcia jednej deski (s). */
-    removeSec: SecSchema.default(3),
+    removeSec: SecSchema.default(5),
     /** Krótszy czas za każdy poziom Carpentry: × (1 − poziom × to), nie mniej niż × `minTimeMul`. */
     carpentryTimePerLevel: FractionSchema.default(0.06),
     minTimeMul: FractionSchema.default(0.4),
@@ -51,11 +51,11 @@ export const BarricadeSettingsSchema = z
 export const WindowActionsSettingsSchema = z
   .strictObject({
     /** Czas rozbicia szyby (`smashWindow`). */
-    smashSec: SecSchema.default(1),
+    smashSec: SecSchema.default(1.5),
     /** Gołą ręką (nic w `hand_primary`): szansa skaleczenia dłoni (`laceration`). */
     handCutChance: FractionSchema.default(0.5),
     /** Czas usunięcia odłamków z ramy (`removeGlass`). */
-    removeGlassSec: SecSchema.default(3),
+    removeGlassSec: SecSchema.default(6),
     /** Co zostaje po `removeGlass` (do ekwipunku, za ciężkie → na ziemię); brak w danych = nic. */
     glassItem: ItemRefSchema.default('base:glass-shards'),
     glassPieces: z.number().int().min(0).max(20).default(1),
@@ -77,11 +77,11 @@ export const WindowActionsSettingsSchema = z
 export const ForceSettingsSchema = z
   .strictObject({
     /** Łomem (tag `barricade.pryTag`): czas, szansa, hałas. */
-    prySec: SecSchema.default(3),
+    prySec: SecSchema.default(6),
     pryChance: FractionSchema.default(0.4),
     pryNoise: NoiseSchema.default({ radiusTiles: 10, volume: 0.5 }),
     /** Kopniakiem (bez łomu). */
-    kickSec: SecSchema.default(1.2),
+    kickSec: SecSchema.default(4),
     kickChance: FractionSchema.default(0.15),
     kickNoise: NoiseSchema.default({ radiusTiles: 16, volume: 0.8 }),
     /** + szansy za każdy poziom Strength. */

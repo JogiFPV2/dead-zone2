@@ -447,8 +447,16 @@ export interface FurnitureActionView {
   reason?: FurnitureReason;
   /** Polish reason (may be more specific than the code, e.g. "Brak młotka"). */
   reasonPl?: string;
-  /** Duration in game minutes (timed actions; absent = instant). */
+  /**
+   * Duration in game minutes (timed actions; absent = instant). The game clock runs fast
+   * (`dayLengthMinutes` 60: 1 game minute = 2.5 real s), so a 1 s smash is 0.4 game minute.
+   */
   durationMin?: number;
+  /**
+   * The same duration in real seconds at ×1 speed (0.1 s; before the wound slowdown). Show this
+   * for short actions ("1,5 s"), not `durationMin` × 60, which is game seconds (24× more).
+   */
+  durationSec?: number;
   /** Success chance (lockpick, forcing a door). */
   chancePct?: number;
   /** Chance the tool breaks (lockpick). */

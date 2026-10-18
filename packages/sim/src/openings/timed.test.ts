@@ -32,7 +32,8 @@ const inside = (x: number, y: number) => x > 20 && x < 30 && y > 20 && y < 30;
 
 /** Fixture pack + carpentry items / skills; `openings` overrides `worldSettings.openings`. */
 function content(openings: Record<string, unknown> = {}): ContentBundle {
-  const o = openings as { barricade?: object; force?: object };
+  const o = openings as { barricade?: object; force?: object; window?: object };
+  // Short timings pinned here (tick counts below); the defaults are checked in their own test.
   const pack = fixturePack({
     openings: {
       ...openings,
@@ -40,9 +41,12 @@ function content(openings: Record<string, unknown> = {}): ContentBundle {
         plankItem: 'fixture:plank',
         nailsItem: 'fixture:nails',
         skill: 'fixture:carpentry',
+        addSec: 4,
+        removeSec: 3,
         ...o.barricade,
       },
-      force: { strengthSkill: 'fixture:strength', ...o.force },
+      window: { smashSec: 1, removeGlassSec: 3, ...o.window },
+      force: { strengthSkill: 'fixture:strength', prySec: 3, kickSec: 1.2, ...o.force },
     },
   });
   const xp = [50, 110, 190, 300, 440, 610, 820, 1070, 1360, 1700];

@@ -108,7 +108,7 @@ describe('openings: player commands', () => {
     const sim = aiSim({ map: roomSpec, spawn: { x: 21, y: 22.5 } });
     send(sim, { type: 'breakWindow', ...WINDOW });
     const ev = [];
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < DEFAULT_OPENINGS_CONFIG.window.smashSec * 20 + 2; i++) {
       sim.step();
       ev.push(...sim.drainEvents());
     }

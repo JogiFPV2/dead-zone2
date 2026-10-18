@@ -193,7 +193,12 @@ describe('furniture menu (useFurniture): doors', () => {
     expect(acts[1]).toMatchObject({ enabled: false, reason: 'no-key' });
     expect(acts[2]).toMatchObject({ enabled: false, reason: 'missing-item', chancePct: 25 });
     expect(acts[3]).toMatchObject({ reason: 'missing-tool', reasonPl: 'Brak łomu', chancePct: 40 });
-    expect(acts[4]).toMatchObject({ enabled: true, chancePct: 15, noiseTiles: 16 });
+    expect(acts[4]).toMatchObject({
+      enabled: true,
+      chancePct: 15,
+      noiseTiles: 16,
+      durationSec: 4,
+    });
     d.use(DOOR, 'open');
     expect(eventsOf(d.take(), 'commandRejected').map((e) => e.reason)).toEqual(['locked']);
   });
@@ -244,7 +249,7 @@ describe('furniture menu (useFurniture): doors', () => {
     s.world.c.Position.y[s.world.players.get(0)!] = OUTSIDE.y;
     expect(d.act(DOOR, 'unlock-key')).toMatchObject({ enabled: true });
     d.use(DOOR, 'unlock-key');
-    d.step(40);
+    d.step(80);
     expect(s.world.openings.states.get(DOOR)?.state).toBe(OS.closed);
     expect(d.act(DOOR, 'lock-key')).toMatchObject({ enabled: true });
   });
@@ -289,11 +294,41 @@ describe('furniture menu: windows', () => {
     expect(acts[2]!.injuryChancePct).toBe(50);
     d.take();
     d.use(WINDOW, 'clear-glass');
-    d.step(120);
+    d.step(200);
     expect(eventsOf(d.take(), 'wounded').some((e) => e.part === 'hand_r')).toBe(true);
     expect(s.world.openings.states.get(WINDOW)?.cleared).toBe(1);
     const climb = d.act(WINDOW, 'climb-through')!;
     expect(climb.injuryChancePct).toBeUndefined();
+  });
+
+  it('durations: real seconds at ×1 (smash 1,5 s, clear glass 6 s), durationMin in game minutes', () => {
+    const s = sim({ x: 19.4, y: 22.5 });
+    const d = driver(s);
+    const smash = d.act(WINDOW, 'smash')!;
+    expect(smash.durationSec).toBe(1.5);
+    // 60-minute day: 1 game minute = 2,5 real s, so 1,5 s = 0,6 game minute (36 game seconds).
+    expect(smash.durationMin).toBeCloseTo(0.6, 3);
+    d.cmd({ type: 'debugOpening', tx: 20, ty: 22, side: 'w', state: 'broken' });
+    expect(d.act(WINDOW, 'clear-glass')!.durationSec).toBe(6);
+    expect(d.act(WINDOW, 'climb-through')!.durationSec).toBe(1.5);
+  });
+
+  it('climb-through: greyed out on a closed window, enabled when open or smashed', () => {
+    const s = sim({ x: 19.4, y: 22.5 });
+    const d = driver(s);
+    expect(d.act(WINDOW, 'climb-through')).toMatchObject({
+      enabled: false,
+      reason: 'invalid-state',
+      reasonPl: 'Okno zamknięte',
+    });
+    d.cmd({ type: 'debugOpening', tx: 20, ty: 22, side: 'w', state: 'open' });
+    const open = d.act(WINDOW, 'climb-through')!;
+    expect(open.enabled).toBe(true);
+    expect(open.injuryChancePct).toBeUndefined();
+    d.cmd({ type: 'debugOpening', tx: 20, ty: 22, side: 'w', state: 'broken' });
+    const broken = d.act(WINDOW, 'climb-through')!;
+    expect(broken.enabled).toBe(true);
+    expect(broken.injuryChancePct).toBeGreaterThan(0);
   });
 
   it('gloves: no cut chance when clearing glass', () => {

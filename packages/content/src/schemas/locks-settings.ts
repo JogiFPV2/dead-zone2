@@ -16,7 +16,7 @@ export const LocksSettingsSchema = z
     /** Tag klucza do budynku (przedmiot z `buildingId` w stanie gry). */
     keyTag: TagSchema.default('base:building-key'),
     /** Czas otwarcia / zamknięcia kluczem (s). */
-    keySec: SecSchema.default(1),
+    keySec: SecSchema.default(2),
     /**
      * Klucz w łupach zwłok zombie (`buildingKey` tabeli): budynek najbliższy miejscu śmierci,
      * najdalej tyle kafli.

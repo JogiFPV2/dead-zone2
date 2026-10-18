@@ -9,6 +9,7 @@ import {
 import { furnitureActionPl, furnitureReasonPl } from '@deadzone/content';
 import { newAction, previewAction, startAction } from '../actions/queue.js';
 import { ticksPerGameMinute } from '../core/clock.js';
+import { TICKS_PER_SECOND } from '../core/constants.js';
 import type { SimWorld } from '../core/world.js';
 import { carriedItems } from '../items/actions.js';
 import { applyItemCommand } from '../items/commands.js';
@@ -210,6 +211,8 @@ function edgeActions(
             : {}),
         }),
       );
+    // Climbing through: open or smashed (with glass left: injury chance); closed = greyed out.
+    const boarded = planks > 0 || state === OS.barricaded;
     if (state === OS.open || state === OS.broken) {
       const climb = timed(w, eid, 'climb-through', edgeAct('climbThrough'), {
         durationMin:
@@ -218,7 +221,14 @@ function edgeActions(
           ? { injuryChancePct: pct(w.physics.cfg.vault.glassChance) }
           : {}),
       });
+      if (climb.reason === 'invalid-state' && boarded) climb.reasonPl = 'Okno zabite deskami';
       out.push(climb);
+    } else {
+      out.push(
+        entry('climb-through', 'invalid-state', {
+          reasonPl: boarded ? 'Okno zabite deskami' : 'Okno zamknięte',
+        }),
+      );
     }
   }
   // Barricade (doors closed / locked, windows, gates) and pulling planks.
@@ -392,11 +402,16 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
   return out.sort((a, b) => d(a) - d(b) || a.id - b.id);
 }
 
-const strip = (acts: Act[]): FurnitureActionView[] =>
+/** Real seconds at ×1 of `durationMin` game minutes (0.1 s). */
+const realSec = (w: SimWorld, min: number): number =>
+  Math.round(((min * ticksPerGameMinute(w.clock)) / TICKS_PER_SECOND) * 10) / 10;
+
+const strip = (w: SimWorld, acts: Act[]): FurnitureActionView[] =>
   acts.map((a) => {
     const { run, ...view } = a;
     void run;
     if (view.reasonPl === undefined) delete view.reasonPl;
+    if (view.durationMin !== undefined) view.durationSec = realSec(w, view.durationMin);
     return view;
   });
 
@@ -408,7 +423,7 @@ export function furnitureActionsView(w: SimWorld, grid: TileGrid, eid: number): 
     const v = c.build();
     if (!v || v.acts.length === 0) continue;
     const { acts, ...rest } = v;
-    out.push({ ...rest, actions: strip(acts) });
+    out.push({ ...rest, actions: strip(w, acts) });
     if (out.length >= MAX_FURNITURE_ENTRIES) break;
   }
   return out;

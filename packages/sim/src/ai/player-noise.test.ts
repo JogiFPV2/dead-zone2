@@ -131,7 +131,7 @@ describe('playerNoise: openings', () => {
   it('smashWindow → kind window (breakNoise)', () => {
     const sim = aiSim({ map: roomSpec, spawn: { x: 21, y: 22.5 } });
     send(sim, { type: 'smashWindow', ...WINDOW });
-    const pn = eventsOf(collect(sim, 30), 'playerNoise');
+    const pn = eventsOf(collect(sim, 40), 'playerNoise');
     expect(pn).toMatchObject([
       { kind: 'window', radius: DEFAULT_OPENINGS_CONFIG.breakNoise.radiusTiles, loudness: 1 },
     ]);
