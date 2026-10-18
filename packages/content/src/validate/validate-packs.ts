@@ -14,6 +14,7 @@ import { checkAppearance } from './checks/check-appearance.js';
 import { checkCharacterCreation } from './checks/check-character-creation.js';
 import { checkRefs } from './checks/check-refs.js';
 import { checkTraitConflicts } from './checks/check-trait-conflicts.js';
+import { checkWater } from './checks/check-water.js';
 import { ContentIndex } from './content-index.js';
 import { ErrorSink, type ContentError } from './errors.js';
 import { resolveLoadOrder } from './load-order.js';
@@ -82,6 +83,9 @@ export function validatePacks(sources: readonly PackSource[]): ValidationResult 
   };
   checkAppearance(index, where, sink);
   checkCharacterCreation(index, worldSettings, where, sink);
+  const waterDoc = [...worldDocs].reverse().find((d) => (d.raw as { water?: unknown })?.water);
+  const waterWhere = waterDoc?.source ?? { ...where, file: 'world-settings/water.json' };
+  checkWater(index, worldSettings, waterWhere, waterDoc !== undefined, sink);
   const maps = validateMaps(ordered, index, sink);
   checkModeMaps(index, maps, sink);
 

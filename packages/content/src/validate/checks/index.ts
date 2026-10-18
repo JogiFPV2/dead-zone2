@@ -11,4 +11,5 @@ export * from './check-tag-icons.js';
 export * from './check-vhs.js';
 export * from './check-appearance.js';
 export * from './check-character-creation.js';
+export * from './check-water.js';
 export * from './refs-condition.js';

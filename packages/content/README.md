@@ -169,7 +169,8 @@ Butelka to przedmiot z `waterContainer: { capacityL }` (dowolny `kind`, `schemas
 ustawia `worldSettings.water` (`world-settings/water.json`, `schemas/water-settings.ts`, typ `WaterSettings`):
 `tankDrinkL` (0,25 l na łyk `drink-tank`; pragnienie jak `hygiene.drinkTap.thirst`), `fillMin` (0,5 min gry na
 `fill-water`), `bottles { empty, clean, tainted }` (pusta butelka i to, czym staje się po napełnieniu czystą / brudną
-wodą). Porcja napełniania = `capacityL / drink.uses` przedmiotu wynikowego.
+wodą). Porcja napełniania = `capacityL / drink.uses` przedmiotu wynikowego. Walidator: butelki muszą istnieć (`missing_ref`), a
+`clean` i `tainted` mieć `waterContainer` (`water_bottle_no_container`).
 
 ## Tworzenie postaci
 

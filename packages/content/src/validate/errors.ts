@@ -35,7 +35,8 @@ export type ContentErrorCode =
   | 'mode_map_missing'
   | 'mode_zone_role_missing'
   | 'mode_zone_id_missing'
-  | 'tag_icon_item_mismatch';
+  | 'tag_icon_item_mismatch'
+  | 'water_bottle_no_container';
 
 export interface ContentError {
   code: ContentErrorCode;
