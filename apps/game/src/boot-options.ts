@@ -61,6 +61,11 @@ export interface BootOptions {
   tvs?: { x: number; y: number }[];
   /** Dev `?cam=x,z,viewH`: camera pinned at a world point with that view height (screenshots). */
   cam?: { x: number; z: number; viewHeight: number };
+  /**
+   * Dev `?footprint=1`: furniture footprints drawn on regardless of
+   * `worldSettings.furniture.footprint` (render only; the sim follows its own settings).
+   */
+  footprint?: true;
 }
 
 /**
@@ -184,5 +189,6 @@ export function parseBootOptions(search: string): BootOptions {
     stressChunks: q.get('stress') === '16' ? 512 : 250,
     stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
     perf: q.get('perf') === '1',
+    ...(q.get('footprint') === '1' ? { footprint: true as const } : {}),
   };
 }

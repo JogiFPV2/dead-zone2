@@ -24,6 +24,14 @@ import {
   type InstanceSlots,
   type ModelPart,
 } from './furniture-instances.js';
+import { footprintCenter, type Footprint, type TileXY } from '@deadzone/content/footprint';
+import {
+  FOOTPRINTS_OFF,
+  isRealScale,
+  objectAtTile,
+  objectTiles,
+  type FurnitureFootprints,
+} from './furniture-footprint.js';
 
 /** Box size [w, h, d] per content id (PLACEHOLDER shapes until models). */
 const SIZES: Record<string, [number, number, number]> = {
@@ -50,6 +58,8 @@ interface Obj {
   chunk: string;
   contentId: string;
   height: number;
+  /** Rotation 0–3 (content `objects[].rot`). */
+  rot: number;
   tx: number;
   ty: number;
   z: number;
@@ -105,6 +115,8 @@ export class MapObjects {
   private cutaway: Cutaway = NO_CUTAWAY;
   /** Every visible marker in one draw call. */
   private readonly markerBatch = new MarkerBatch(this.root, 'map-object-markers');
+  /** Furniture footprints (`worldSettings.furniture.footprint`); off = one tile each, as before. */
+  private footprints: FurnitureFootprints = FOOTPRINTS_OFF;
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -122,36 +134,31 @@ export class MapObjects {
     const { cx, cy, z } = chunk.coord;
     this.unloadChunk(cx, cy, z);
     for (const o of chunk.objects ?? []) {
-      const [w, h, d] = SIZES[o.contentId] ?? DEFAULT_SIZE;
+      const h = (SIZES[o.contentId] ?? DEFAULT_SIZE)[1];
       const material = new MeshStandardMaterial({ color: BOX_COLOR, roughness: 0.8 });
-      const mesh = new Mesh(this.box(w, h, d), material);
+      const mesh = new Mesh(undefined, material);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      const tx = cx * CHUNK_SIZE + o.x;
-      const ty = cy * CHUNK_SIZE + o.y;
-      const p = simToWorld(tx + 0.5, ty + 0.5, z);
-      mesh.position.set(p.x, p.y + h / 2, p.z);
-      mesh.rotation.y = (-o.rot * Math.PI) / 2;
       // Pose holder only: the visible markers are drawn as one InstancedMesh (`markerBatch`).
       const marker = MarkerBatch.holder();
-      const markerY = p.y + h + 0.45;
-      marker.position.set(p.x, markerY, p.z);
       marker.visible = false;
-      this.root.add(mesh, marker);
       const obj: Obj = {
         chunk: `${cx},${cy},${z}`,
         contentId: o.contentId,
         height: h,
-        tx,
-        ty,
+        rot: o.rot,
+        tx: cx * CHUNK_SIZE + o.x,
+        ty: cy * CHUNK_SIZE + o.y,
         z,
         mesh,
         material,
         marker,
-        markerY,
+        markerY: 0,
         building: buildingAt(chunk, o.x, o.y),
         hidden: false,
       };
+      this.layout(obj);
+      this.root.add(mesh, marker);
       this.objects.push(obj);
       this.applyCutaway(obj);
     }
@@ -174,6 +181,69 @@ export class MapObjects {
     this.instancesDirty = true;
   }
 
+  /**
+   * Places an object's grey box and marker: on its tile centre (footprints off, as always), or
+   * on the centre of its footprint with the box stretched over w×h (footprints on).
+   */
+  private layout(o: Obj): void {
+    const [w, h, d] = this.boxSize(o);
+    const fp = this.fpOf(o);
+    const c = fp ? footprintCenter(o.tx, o.ty, o.rot, fp) : { x: o.tx + 0.5, y: o.ty + 0.5 };
+    const p = simToWorld(c.x, c.y, o.z);
+    o.mesh.geometry = this.box(w, h, d);
+    o.mesh.position.set(p.x, p.y + h / 2, p.z);
+    o.mesh.rotation.y = (-o.rot * Math.PI) / 2;
+    o.markerY = p.y + h + 0.45;
+    o.marker.position.set(p.x, o.markerY, p.z);
+  }
+
+  /** Footprint of an object while footprints are on (undefined = off: one tile, today's fit). */
+  private fpOf(o: { contentId: string }): Footprint | undefined {
+    return this.footprints.enabled ? this.footprints.of(o.contentId) : undefined;
+  }
+
+  /** Grey box size: `SIZES` (one tile), stretched over the footprint's w×h when on. */
+  private boxSize(o: { contentId: string }): [number, number, number] {
+    const [w, h, d] = SIZES[o.contentId] ?? DEFAULT_SIZE;
+    const fp = this.fpOf(o);
+    return fp ? [w * fp.w, h, d * fp.h] : [w, h, d];
+  }
+
+  /**
+   * Switches furniture footprints (same flag as the sim, `worldSettings.furniture.footprint`):
+   * re-lays every loaded object and refits the models. Off restores the one-tile layout.
+   */
+  setFootprints(f: FurnitureFootprints): void {
+    if (f === this.footprints) return;
+    this.footprints = f;
+    for (const o of this.objects) this.layout(o);
+    this.parts.clear();
+    this.instancesDirty = true;
+  }
+
+  /** Whether footprints are on (render side of `worldSettings.furniture.footprint`). */
+  get footprintsEnabled(): boolean {
+    return this.footprints.enabled;
+  }
+
+  /**
+   * Map object covering world tile (tx, ty) on level z, for hover highlight and RMB picking:
+   * with footprints on every occupied tile finds the object, off only its own tile.
+   */
+  objectAt(
+    tx: number,
+    ty: number,
+    z: number,
+  ): { contentId: string; tx: number; ty: number; z: number; rot: number } | undefined {
+    const o = objectAtTile(this.objects, this.footprints, tx, ty, z);
+    return o && { contentId: o.contentId, tx: o.tx, ty: o.ty, z: o.z, rot: o.rot };
+  }
+
+  /** Tiles an object covers (highlight): all occupied tiles with footprints on, else its own. */
+  tilesOf(o: { contentId: string; tx: number; ty: number; rot?: number }): TileXY[] {
+    return objectTiles(this.footprints, o);
+  }
+
   private box(w: number, h: number, d: number): BoxGeometry {
     const key = `${w}|${h}|${d}`;
     let g = this.boxes.get(key);
@@ -183,7 +253,7 @@ export class MapObjects {
 
   /** Instancing key of an object drawn as a grey box: size and searched shade. */
   private boxKey(o: Obj): string {
-    const [w, h, d] = SIZES[o.contentId] ?? DEFAULT_SIZE;
+    const [w, h, d] = this.boxSize(o);
     return `box|${w}|${h}|${d}|${this.searched.has(`${o.tx},${o.ty},${o.z}`) ? 1 : 0}`;
   }
 
@@ -207,11 +277,24 @@ export class MapObjects {
     return parts;
   }
 
-  private partsOf(contentId: string, height: number): ModelPart[] | undefined {
-    const key = `${contentId}|${height}`;
+  /** Model instancing key: `contentId|height`, plus the footprint while footprints are on. */
+  private modelKey(o: Obj): string {
+    const fp = this.fpOf(o);
+    return fp ? `${o.contentId}|${o.height}|${fp.w}|${fp.h}` : `${o.contentId}|${o.height}`;
+  }
+
+  /** Fitted model of an object (`fitTile` off, `fitFootprint` on); undefined = no model. */
+  private fittedModel(contentId: string, height: number, fp?: Footprint): Object3D | undefined {
+    const raw = this.model?.(contentId, height);
+    if (!raw) return undefined;
+    return fp ? fitFootprint(raw, fp, isRealScale(contentId)) : fitTile(raw);
+  }
+
+  private partsOf(key: string): ModelPart[] | undefined {
     if (!this.parts.has(key)) {
-      const raw = this.model?.(contentId, height);
-      const m = raw && fitTile(raw);
+      const [contentId, height, w, h] = key.split('|');
+      const fp = w !== undefined && h !== undefined ? { w: Number(w), h: Number(h) } : undefined;
+      const m = this.fittedModel(contentId!, Number(height), fp);
       this.parts.set(key, m ? mergeParts(modelParts(m)) : undefined);
     }
     return this.parts.get(key);
@@ -228,11 +311,10 @@ export class MapObjects {
     this.instancesDirty = false;
     disposeInstances(this.instances, this.root);
     this.instances = [];
-    const keys = this.objects.map((o) =>
-      this.model && this.partsOf(o.contentId, o.height)
-        ? `${o.contentId}|${o.height}`
-        : this.boxKey(o),
-    );
+    const keys = this.objects.map((o) => {
+      const key = this.modelKey(o);
+      return this.model && this.partsOf(key) ? key : this.boxKey(o);
+    });
     const { meshes, slots } = buildInstances(
       this.objects.map((o, i) => ({
         model: keys[i]!,
@@ -243,8 +325,7 @@ export class MapObjects {
       })),
       (k) => {
         if (k.startsWith('box|')) return this.boxParts(k);
-        const i = k.lastIndexOf('|');
-        return this.partsOf(k.slice(0, i), Number(k.slice(i + 1)));
+        return this.partsOf(k);
       },
       this.root,
       this.origin,
@@ -316,9 +397,8 @@ export class MapObjects {
     if (!o) return;
     // Instanced furniture: an individual clone stands in while see-through.
     if (o.slots && on && !o.xray) {
-      const raw = this.model?.(o.contentId, o.height);
       // A grey box stands in with its own mesh (own material) while see-through.
-      const clone = raw ? fitTile(raw) : boxClone(o.mesh);
+      const clone = this.fittedModel(o.contentId, o.height, this.fpOf(o)) ?? boxClone(o.mesh);
       if (clone) {
         clone.position.set(o.mesh.position.x, o.mesh.position.y - o.height / 2, o.mesh.position.z);
         clone.rotation.y = o.mesh.rotation.y;
@@ -427,5 +507,34 @@ function fitTile(m: Object3D): Object3D {
     m.scale.x *= k;
     m.scale.z *= k;
   }
+  return wrap;
+}
+
+/**
+ * Fit with footprints on, in the footprint's own frame (model +x = `w` along the wall, +z = `h`
+ * into the room; the instance rotation turns it). Real-scale models (`REAL_SCALE_FURNITURE`, 1 m
+ * = 1 tile) keep their size and their authored origin (= footprint centre, back-to-wall offset
+ * baked in, never re-centred) and only shrink (uniformly, about that origin) when larger than
+ * w×h. Legacy
+ * models get today's one-tile fit stretched over the rectangle (x · w, z · h).
+ */
+export function fitFootprint(m: Object3D, fp: Footprint, realScale: boolean): Object3D {
+  if (!realScale) {
+    const wrap = fitTile(m);
+    m.scale.x *= fp.w;
+    m.scale.z *= fp.h;
+    return wrap;
+  }
+  // wrap (root, ignored by instancing) > shrink (about the authored origin) > model.
+  const wrap = new Group();
+  const shrink = new Group();
+  shrink.add(m);
+  wrap.add(shrink);
+  wrap.updateMatrixWorld(true);
+  const box = new Box3().setFromObject(m);
+  const w = box.max.x - box.min.x;
+  const d = box.max.z - box.min.z;
+  const k = Math.min(1, fp.w / Math.max(w, 1e-6), fp.h / Math.max(d, 1e-6));
+  if (k < 1) shrink.scale.setScalar(k);
   return wrap;
 }

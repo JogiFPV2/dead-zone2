@@ -88,11 +88,18 @@ export class ModelKit {
 
   /**
    * Clone of a static model scaled so its height is `height` (world units), centred on x/z with
-   * its base at y = 0.
+   * its base at y = 0. Without `height`: a real-scale model (Designer, 1 m = 1 world unit) as
+   * authored, neither scaled nor re-centred: its origin is the footprint centre with the
+   * back-to-wall offset baked in (`fitted` would erase that offset).
    */
-  staticModel(id: string, height: number): Object3D | undefined {
+  staticModel(id: string, height?: number): Object3D | undefined {
     const src = this.statics.get(id);
     if (!src) return undefined;
+    if (height === undefined) {
+      const wrap = new Group();
+      wrap.add(src.clone());
+      return wrap;
+    }
     return fitted(src.clone(), height);
   }
 

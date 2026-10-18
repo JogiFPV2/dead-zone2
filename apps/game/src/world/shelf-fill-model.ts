@@ -3,6 +3,8 @@
  * is. Pure layout / counting; the meshes live in `shelf-fill.ts`.
  */
 
+import { footprintCenter, type Footprint } from '@deadzone/content/footprint';
+
 export type PropKind = 'can' | 'box' | 'bottle' | 'jar' | 'carton' | 'books';
 export const PROP_KINDS: readonly PropKind[] = ['can', 'box', 'bottle', 'jar', 'carton', 'books'];
 
@@ -108,6 +110,21 @@ export const SHELF_PROFILES: Readonly<Record<string, ShelfProfile>> = {
     open: false,
   },
 };
+
+/**
+ * Tile-space point the shelf slots are laid out around (props rotate with the furniture about it).
+ * Footprints off (`fp` undefined): the anchor tile centre, as always. On: the footprint centre
+ * (`footprintCenter`, Modules), the same point `MapObjects` puts the model on, so a 2×1 shelf's
+ * props sit on its model instead of on the anchor tile.
+ */
+export function shelfOrigin(
+  tx: number,
+  ty: number,
+  rot: number,
+  fp?: Footprint,
+): { x: number; y: number } {
+  return fp ? footprintCenter(tx, ty, rot, fp) : { x: tx + 0.5, y: ty + 0.5 };
+}
 
 export function slotCount(p: ShelfProfile): number {
   return p.shelves.length * p.cols * p.rows;

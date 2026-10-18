@@ -34,6 +34,8 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     zones: true,
   });
   expect(parseBootOptions('?crowd=200').sim).toBe('mock');
+  expect(parseBootOptions('?footprint=1').footprint).toBe(true);
+  expect(parseBootOptions('?footprint=0').footprint).toBeUndefined();
   expect(parseBootOptions('?stress=16')).toMatchObject({ stress: true, stressChunks: 512 });
   expect(parseBootOptions('?stress=1&latency=15&perf=1')).toMatchObject({
     stress: true,

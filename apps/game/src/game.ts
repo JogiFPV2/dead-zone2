@@ -55,6 +55,7 @@ import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
 import { tileOf } from './world/building-lookup.js';
 import { cameraSide } from './world/cutaway.js';
+import { furnitureFootprintsFromFiles, isRealScale } from './world/furniture-footprint.js';
 import {
   createWorldStreaming,
   fitSmallWorld,
@@ -812,6 +813,14 @@ let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
   void import('./content/base-pack.js').then((m) => {
     hudContent = buildHudContentIndex(m.baseFiles);
+    // Furniture footprints (same flag as the sim: `worldSettings.furniture.footprint`, default
+    // off = nothing changes, one tile each). Dev `?footprint=1` forces the render on.
+    const fps = furnitureFootprintsFromFiles(m.baseFiles, import.meta.env.DEV && !!boot.footprint);
+    if (fps.enabled) {
+      streaming.mapObjects.setFootprints(fps);
+      // Shelf props follow the model onto the footprint centre (Modules, `footprintCenter`).
+      shelfFill.setFootprints(fps);
+    }
     spots = leisureSpots(mapObjectList, hudContent);
     weaponIndex = buildWeaponIndex(m.baseFiles);
     hud.setContent(hudContent);
@@ -1140,7 +1149,8 @@ void ModelKit.create(renderer).then(async (kit) => {
   if (!kit) return;
   mapObjects.applyModels((id, h) => {
     const model = CONTAINER_MODELS[id];
-    return model ? kit.staticModel(model, h) : undefined;
+    // Real-scale models (Designer, 1 m = 1 tile) keep their size; legacy ones are fit by height.
+    return model ? kit.staticModel(model, isRealScale(id) ? undefined : h) : undefined;
   });
   groundPiles.pileModel = () => kit.staticModel(PILE_MODEL, 0.45) ?? new Group();
   try {

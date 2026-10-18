@@ -20,12 +20,14 @@ import {
   displayFill,
   hashId,
   propSlots,
+  shelfOrigin,
   slotCount,
   visibleProps,
   type PropKind,
   type PropSlot,
   type ShelfProfile,
 } from './shelf-fill-model.js';
+import { FOOTPRINTS_OFF, type FurnitureFootprints } from './furniture-footprint.js';
 
 /** Generic prop meshes (geometry base at y = 0) and their colour sets. */
 const PROP_GEOMETRY: Record<PropKind, () => BufferGeometry> = {
@@ -50,7 +52,11 @@ interface Furniture {
   readonly tx: number;
   readonly ty: number;
   readonly z: number;
+  /** Rotation 0–3 (content `objects[].rot`). */
+  readonly rot: number;
+  readonly contentId: string;
   readonly profile: ShelfProfile;
+  /** Slot layout centre: anchor tile centre, or the footprint centre with footprints on. */
   readonly origin: Vector3;
   readonly yaw: number;
   /** Seeded slots (by container id once the sim reports it). */
@@ -72,6 +78,8 @@ export class ShelfFill {
   private lastStorages: readonly StorageMarkerView[] | undefined;
   private lastActive: ContainerId | undefined;
   private xray: Furniture | undefined;
+  /** Furniture footprints (`worldSettings.furniture.footprint`); off = one tile each, as before. */
+  private footprints: FurnitureFootprints = FOOTPRINTS_OFF;
   /** Props shown last update (debug / tests). */
   shown = 0;
 
@@ -89,16 +97,18 @@ export class ShelfFill {
           if (!profile) continue;
           const tx = cx * CHUNK_SIZE + o.x;
           const ty = cy * CHUNK_SIZE + o.y;
-          const p = simToWorld(tx + 0.5, ty + 0.5, z);
           const f: Furniture = {
             key: `${tx},${ty},${z}`,
             tx,
             ty,
             z,
+            rot: o.rot,
+            contentId: o.contentId,
             profile,
-            origin: new Vector3(p.x, p.y, p.z),
+            origin: new Vector3(),
             yaw: (-o.rot * Math.PI) / 2,
           };
+          this.placeOrigin(f);
           this.furniture.push(f);
           this.byTile.set(f.key, f);
           // Any kind of the mix may take every slot.
@@ -123,6 +133,26 @@ export class ShelfFill {
       this.meshes.set(kind, mesh);
       this.root.add(mesh);
     }
+  }
+
+  /** Slot layout centre of `f` for the current footprints (`shelfOrigin`). */
+  private placeOrigin(f: Furniture): void {
+    const fp = this.footprints.enabled ? this.footprints.of(f.contentId) : undefined;
+    const c = shelfOrigin(f.tx, f.ty, f.rot, fp);
+    const p = simToWorld(c.x, c.y, f.z);
+    f.origin.set(p.x, p.y, p.z);
+  }
+
+  /**
+   * Switches furniture footprints (same flag as `MapObjects.setFootprints`): with them on the
+   * props are laid out around the footprint centre, off around the anchor tile centre (as before).
+   * The next `update` re-lays every prop.
+   */
+  setFootprints(f: FurnitureFootprints): void {
+    if (f === this.footprints) return;
+    this.footprints = f;
+    for (const fu of this.furniture) this.placeOrigin(fu);
+    this.lastStorages = undefined;
   }
 
   /** Re-lays the props when the storage list or the open container changes. */
