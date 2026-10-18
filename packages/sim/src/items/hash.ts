@@ -134,6 +134,13 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       h.f32(st.pumps.get(k)!);
     }
   }
+  if (st.waterTanks && st.waterTanks.size > 0) {
+    h.u32(0x6e70_0005).u32(st.waterTanks.size);
+    for (const k of [...st.waterTanks.keys()].sort()) {
+      for (const n of k.split(',')) h.u32(Number(n) + 0x8000);
+      h.f32(st.waterTanks.get(k)!);
+    }
+  }
   hashLures(st, h);
   hashProgress(st, h);
   hashCharacters(st, h);

@@ -141,6 +141,17 @@ export const saveHygieneSchema = z.object({
 });
 
 /**
+ * Furniture water tanks in the saved items section (protocol 36, docs 9.59): `waterTanks` = Map
+ * `"x,y,z,n"` (map object tile and index on the tile) → litres left, only tanks that are not
+ * full; the field is absent while every tank is full. Older saves lack it (all tanks full).
+ */
+export const saveWaterTanksSchema = z.object({
+  waterTanks: z
+    .array(z.tuple([z.string().regex(/^-?\d+,-?\d+,-?\d+,\d+$/), z.number().min(0).finite()]))
+    .optional(),
+});
+
+/**
  * Lighting state in the saved openings section (protocol 32, docs 9.53): `curtains` = window edge
  * keys with drawn curtains (`openingKey`), `lightsOn` = packed tiles of switched-on light switches
  * (((z + 128) × 65536 + y + 32768) × 65536 + x + 32768). Both empty by default; older saves lack them.

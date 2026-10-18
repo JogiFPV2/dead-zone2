@@ -122,6 +122,8 @@ export interface ActionState {
   seat?: number | undefined;
   /** `fillFuelCan`: the pump tile (x, y; the player's floor). */
   pump?: [number, number] | undefined;
+  /** `drinkTank` / `fillWater`: the map object (tile x, y, z, index on the tile). */
+  fixture?: [number, number, number, number] | undefined;
 }
 
 export interface ItemStore {
@@ -154,6 +156,11 @@ export interface ItemStore {
   readonly vhsWatched: Map<number, string[]>;
   /** Fuel pumps: `tileKey` → litres left (`vehicles/fuel.ts`; rolled on first use). */
   readonly pumps: Map<string, number>;
+  /**
+   * Furniture water tanks (`placeable.waterTank`, `furniture/water.ts`): `x,y,z,n` → litres
+   * left, only tanks that are not full; undefined when none (older saves = all full).
+   */
+  waterTanks?: Map<string, number> | undefined;
   /** Mains power (fridges, TVs, stoves, pumps); goes off on `powerOffDay` (items/utilities.ts). */
   powered: boolean;
   /** Mains water (taps); goes off on `waterOffDay`. */

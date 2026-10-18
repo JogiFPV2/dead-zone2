@@ -506,7 +506,18 @@ export interface FurnitureView {
   x: number;
   y: number;
   z: number;
+  /**
+   * Water tank of the piece (`placeable.waterTank`, protocol 36), e.g. a toilet cistern:
+   * litres left now (mains water + `refillFromMains` = always full), capacity and quality.
+   */
+  waterTank?: WaterTankView;
   actions: FurnitureActionView[];
+}
+
+export interface WaterTankView {
+  litres: number;
+  capacityL: number;
+  quality: 'clean' | 'tainted';
 }
 
 export interface SimViewPatch {

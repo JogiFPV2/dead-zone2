@@ -159,6 +159,9 @@ export type ActionKind =
   | 'wash'
   | 'shower'
   | 'bath'
+  /** Furniture water (protocol 36): drink from a tank (`drink-tank`), fill a bottle (`fill-water`). */
+  | 'drinkTank'
+  | 'fillWater'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */

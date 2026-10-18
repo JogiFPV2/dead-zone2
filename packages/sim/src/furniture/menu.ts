@@ -20,6 +20,7 @@ import { craftSources, evalRecipe, stationHeats } from '../crafting/crafting.js'
 import { switchKeyOf } from '../ai/state.js';
 import { setCurtains, setLight } from './lighting.js';
 import { objectHasTag, waterAction } from '../survival/hygiene.js';
+import { tankOf, tankView, type Fixture } from './water.js';
 import { applyItemCommand } from '../items/commands.js';
 import { canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
@@ -405,11 +406,41 @@ function objectActions(
   }
   // Mains water (docs 9.54): sink / washbasin (drink, wash), shower, bath.
   const hy = w.survival?.content.survival.hygiene;
+  const fixture: Fixture = [obj.x, obj.y, obj.z, obj.n];
+  const tank = tankOf(w, obj.contentId);
+  const isTap = !!hy && objectHasTag(w, obj.contentId, hy.tapTag);
+  // Water tank (docs 9.59): drink from it, fill a bottle; a tap without a tank fills on mains.
+  const onFixture = (kind: 'drinkTank' | 'fillWater') => {
+    const a = newAction(kind);
+    a.fixture = fixture;
+    return a;
+  };
+  const tankEmpty = (a: Act): Act => {
+    if (tank && a.reason === 'no-water') a.reasonPl = 'Pusty zbiornik';
+    return a;
+  };
+  if (tank) {
+    typeId ??= objectHasTag(w, obj.contentId, 'base:toilet') ? 'toilet' : 'other';
+    if (w.survival)
+      out.push(
+        tankEmpty(
+          timed(w, eid, 'drink-tank', onFixture('drinkTank'), {
+            labelPl: isTap ? 'Napij się z kranu' : 'Napij się ze zbiornika',
+          }),
+        ),
+      );
+  }
+  if (tank || isTap)
+    out.push(
+      tankEmpty(
+        timed(w, eid, 'fill-water', onFixture('fillWater'), { labelPl: 'Napełnij butelkę' }),
+      ),
+    );
   if (hy) {
     const water = (id: string, use: WaterUse) => out.push(timed(w, eid, id, waterAction(use)));
-    if (objectHasTag(w, obj.contentId, hy.tapTag)) {
+    if (isTap) {
       typeId = 'sink';
-      water('drink-tap', 'drink');
+      if (!tank) water('drink-tap', 'drink');
       water('wash', 'wash');
     }
     if (objectHasTag(w, obj.contentId, hy.showerTag)) {
@@ -551,6 +582,7 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
           build: (cmd) => {
             const m = objectActions(w, eid, obj, cmd);
             if (!m) return undefined;
+            const tank = tankOf(w, obj.contentId);
             return {
               furnitureId: id,
               typeId: m.typeId,
@@ -558,6 +590,7 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
               x: ox,
               y: oy,
               z,
+              ...(tank ? { waterTank: tankView(w, [tx, ty, z, obj.n], tank) } : {}),
               actions: m.actions,
               acts: m.actions,
             };

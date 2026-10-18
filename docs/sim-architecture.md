@@ -1572,3 +1572,13 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - **`SimChunk.blockers?: {x0,y0,x1,y1}[]`** — statyczne prostokąty kolizji w kaflach lokalnych chunka (metry, 0..32, `x0<x1`, `y0<y1`), na poziomie chunka. Zatrzymują graczy, zombie, zwierzęta i ciała fizyki tak jak ściana (`moveCircle`, `slideCircle`, `circleOverlaps`, `circleContacts`). Widzenie, dźwięk i ścieżki je ignorują, bo stopy są cienkie i okrąg się po nich ześlizguje. Blokerem jest obrys stopy po obrocie (AABB).
 - Silnik 2 emituje blokery dla stóp słupów wysokiego napięcia (`hv110-*`, `hv220`, `hv400-portal`) i masztów trakcji. **Rogatek nie emituje**, bo zostają bez kolizji.
 - `SAVE_VERSION` bez zmian (3).
+
+### 9.59 Zbiorniki wody w meblach (`placeable.waterTank`, #259, protokół 36) — kontrakt dla Silnika, Modules i Serwera
+
+- Mebel z `placeable.waterTank { capacityL, quality, refillFromMains }` (np. spłuczka `base:toilet`, 10 l, `tainted`) ma w menu `drink-tank` („Napij się ze zbiornika”, akcja `drinkTank`) i `fill-water` („Napełnij butelkę”, akcja `fillWater`). `fill-water` jest też przy kranie bez zbiornika (`hygiene.tapTag`), wtedy działa na wodzie z sieci. `drink-tap` zostaje przy kranie bez zbiornika.
+- Picie bierze `TANK_DRINK_L` = 0,25 l i daje `hygiene.drinkTap.thirst` (proporcjonalnie mniej, gdy zostało mniej). Napełnianie: `base:bottle` → `base:water-bottle` (`clean`) albo `base:dirty-water-bottle` (`tainted`), albo dopełnienie niepełnej butelki z wodą (czysta tylko z czystej wody, brudna z każdej). Butelka = `BOTTLE_L` = 0,5 l, czyli 0,1 l na łyk. Czas `FILL_MIN` = 0,5 min gry.
+- Woda z sieci + `refillFromMains`: zbiornik dopełnia się od razu (zawsze pełny). Po odcięciu wody (`utilities`) albo bez `refillFromMains` tylko ubywa.
+- Pusty zbiornik: akcje wyszarzone z `reason: 'no-water'` i `reasonPl: 'Pusty zbiornik'`. Kran bez wody w sieci: `no-water` / „Brak wody w sieci”. Bez butelki: `missing-item`.
+- `tainted`: sim nie ma jeszcze ryzyka choroby od brudnej wody (`drink.sicknessChance` nie jest liczony). Picie prosto ze zbiornika `tainted` gasi tylko pragnienie, a napełniona butelka to `base:dirty-water-bottle`, która dostanie ryzyko razem z `sicknessChance`.
+- API: `FurnitureView.waterTank?: { litres, capacityL, quality }` (litry teraz, zaokrąglone do 0,01). `ActionKind` + `drinkTank`, `fillWater`.
+- Zapis (`SAVE_VERSION` bez zmian, 3): sekcja items, opcjonalne pole `waterTanks` = Map `"x,y,z,n"` (kafel obiektu mapy i jego indeks na kaflu) → litry. Wpisane są tylko zbiorniki niepełne, a pole znika, gdy wszystkie są pełne. Stare zapisy = pełne zbiorniki. Schemat dla Serwera: `saveWaterTanksSchema`. Akcja w toku zapisuje `fixture: [x, y, z, n]`.
