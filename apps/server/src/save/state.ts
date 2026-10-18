@@ -8,6 +8,7 @@ import {
 import {
   MAX_INTEREST_RADIUS_CHUNKS,
   saveItemBuildingSchema,
+  saveItemBurntSchema,
   saveItemThawSchema,
   saveMapRoomsSchema,
   saveMarkersSchema,
@@ -175,12 +176,16 @@ const savedItemSchema = z.looseObject({
   // Protocol 25: thawing frozen food; protocol 26: building keys (`@deadzone/protocol/schema`).
   ...saveItemThawSchema.shape,
   ...saveItemBuildingSchema.shape,
+  // Protocol 31: burnt cooked food (written only when true).
+  ...saveItemBurntSchema.shape,
 });
 
 /**
  * Item store section (`items` of the save): loose, with the item map and the mains utilities
  * (protocol 25, `saveUtilitiesSchema`) checked when present. Wound care (protocol 27,
- * `saveWoundCareSchema`) lives in the opaque `survival` section and is not checked here.
+ * `saveWoundCareSchema`), sleep alarms and dirt (protocols 29/33) live in the opaque `survival`
+ * section and lighting (protocol 32, `saveLightingSchema`) in the opaque `openings` section; none
+ * of them is checked here.
  */
 const itemsSectionSchema = z.looseObject({
   ...saveUtilitiesSchema.shape,

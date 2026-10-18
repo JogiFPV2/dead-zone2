@@ -255,3 +255,29 @@ describe('protocol 25–27 additions (utilities, item thaw, building keys)', () 
     expect(() => check(s)).not.toThrow();
   });
 });
+
+describe('protocol 29–33 additions (burnt food; sleep, dirt and lighting stay opaque)', () => {
+  type Items = { items: { $m: [number, Json][] } } & Json;
+  const withItem = (s: Json, item: Json): Json => {
+    (s.items as Items).items.$m.push([1, { id: 1, def: 0, loc: 1, count: 1, ...item }]);
+    return s;
+  };
+
+  it('accepts burnt: true and items without it (old saves)', () => {
+    expect(() => check(withItem(save(), { burnt: true }))).not.toThrow();
+    expect(() => check(withItem(save(), {}))).not.toThrow();
+  });
+
+  it('refuses a burnt value other than true', () => {
+    rejects(withItem(save(), { burnt: false }), /items/);
+    rejects(withItem(save(), { burnt: 1 }), /items/);
+    rejects(withItem(save(), { burnt: 'yes' }), /items/);
+  });
+
+  it('sleepUntil, dirt (survival) and curtains/lightsOn (openings) stay opaque', () => {
+    const s = save();
+    Object.assign(s.survival as Json, { sleepUntil: 'not checked', dirt: [{ x: 1 }] });
+    s.openings = { ...(s.openings as Json), curtains: 'not checked', lightsOn: [-1] };
+    expect(() => check(s)).not.toThrow();
+  });
+});
