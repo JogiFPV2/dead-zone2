@@ -28,15 +28,23 @@ import { floorZ } from '../world/levels.js';
 
 type ItemDef = ItemStore['content']['items'][number];
 
-const isTv = (def: ItemDef | undefined, tag: string): boolean =>
-  def?.kind === 'placeable' && def.placeable.power !== undefined && def.tags.includes(tag);
+/** A station placeable with `tag`; TVs (`needsPowerField`) must declare `power`. */
+const isStation = (def: ItemDef | undefined, tag: string, needsPowerField: boolean): boolean =>
+  def?.kind === 'placeable' &&
+  def.tags.includes(tag) &&
+  (!needsPowerField || def.placeable.power !== undefined);
 
 /**
- * TV with `tag` within `leisure.tvRadiusTiles` on the player's floor: a map object or a TV item
- * lying on a ground pile. `no-station` without a TV, `no-power` without mains (`items.powered`;
- * generators are not simulated yet).
+ * Station with `tag` within `leisure.tvRadiusTiles` on the player's floor: a map object or a
+ * placeable lying on a ground pile. `no-station` without one; a station with `power` needs mains
+ * (`items.powered`; generators later) → `no-power`, one without `power` always works.
  */
-export function tvCheck(w: SimWorld, eid: number, tag: string): CommandRejectReason | undefined {
+export function stationCheck(
+  w: SimWorld,
+  eid: number,
+  tag: string,
+  needsPowerField = false,
+): CommandRejectReason | undefined {
   const st = w.items;
   const s = w.survival;
   if (!st || !s) return 'invalid-state';
@@ -51,6 +59,12 @@ export function tvCheck(w: SimWorld, eid: number, tag: string): CommandRejectRea
     return dx * dx + dy * dy <= r * r;
   };
   let found = false;
+  let unpowered = false;
+  const see = (def: ItemDef | undefined) => {
+    if (!isStation(def, tag, needsPowerField)) return;
+    found = true;
+    if (def?.kind === 'placeable' && def.placeable.power === undefined) unpowered = true;
+  };
   for (let cy = Math.floor((py - r) / CHUNK_SIZE); cy <= Math.floor((py + r) / CHUNK_SIZE); cy++) {
     for (
       let cx = Math.floor((px - r) / CHUNK_SIZE);
@@ -58,23 +72,26 @@ export function tvCheck(w: SimWorld, eid: number, tag: string): CommandRejectRea
       cx++
     ) {
       for (const obj of w.map.getChunk(cx, cy, z)?.objects ?? []) {
-        const def = st.content.items[st.content.itemIndex.get(obj.contentId) ?? -1];
-        if (isTv(def, tag) && near(cx * CHUNK_SIZE + obj.x, cy * CHUNK_SIZE + obj.y)) found = true;
+        if (!near(cx * CHUNK_SIZE + obj.x, cy * CHUNK_SIZE + obj.y)) continue;
+        see(st.content.items[st.content.itemIndex.get(obj.contentId) ?? -1]);
       }
     }
   }
-  for (let y = Math.floor(py - r); !found && y <= Math.floor(py + r); y++) {
-    for (let x = Math.floor(px - r); !found && x <= Math.floor(px + r); x++) {
+  for (let y = Math.floor(py - r); y <= Math.floor(py + r); y++) {
+    for (let x = Math.floor(px - r); x <= Math.floor(px + r); x++) {
       if (!near(x, y)) continue;
       const pile = st.ground.get(tileKey(x, y, z));
       if (pile === undefined) continue;
-      for (const item of carriedItems(st, pile))
-        if (item.loc === pile && isTv(defOf(st, item), tag)) found = true;
+      for (const item of carriedItems(st, pile)) if (item.loc === pile) see(defOf(st, item));
     }
   }
   if (!found) return 'no-station';
-  return st.powered ? undefined : 'no-power';
+  return unpowered || st.powered ? undefined : 'no-power';
 }
+
+/** TV with `tag` (must need power) in reach; see `stationCheck`. */
+export const tvCheck = (w: SimWorld, eid: number, tag: string): CommandRejectReason | undefined =>
+  stationCheck(w, eid, tag, true);
 
 /** Applies one session: fatigue, boredom and stress down; emits `leisureCompleted`. */
 export function applyLeisure(
@@ -106,10 +123,10 @@ export function applyLeisure(
   });
 }
 
-type LeisureCommand = Extract<Command, { type: 'watchTv' | 'rest' }>;
+type LeisureCommand = Extract<Command, { type: 'watchTv' | 'rest' | 'listenRadio' }>;
 
 export const isLeisureCommand = (cmd: Command): cmd is LeisureCommand =>
-  cmd.type === 'watchTv' || cmd.type === 'rest';
+  cmd.type === 'watchTv' || cmd.type === 'rest' || cmd.type === 'listenRadio';
 
 /** `watchTv {vhs?}` → timed `watch` action (also `useItem` on a VHS tape); `rest` → `rest`. */
 export function applyLeisureCommand(
@@ -119,6 +136,7 @@ export function applyLeisureCommand(
 ): CommandRejectReason | undefined {
   if (!w.items || !playerItems(w, eid)) return 'invalid-state';
   if (cmd.type === 'rest') return startAction(w, eid, newAction('rest'));
+  if (cmd.type === 'listenRadio') return startAction(w, eid, newAction('listen'));
   return startAction(w, eid, newAction('watch', { item: cmd.vhs ?? 0 }));
 }
 
@@ -148,7 +166,9 @@ function watchCheck(w: SimWorld, eid: number, a: ActionState, start: boolean) {
   if (!canReach(w, eid, item.loc)) return 'out-of-range';
   // A tape that teaches (XP) needs a rested player at the start.
   if (start && def.vhs.skills.length > 0 && tooTiredToLearn(w, eid)) return 'tired';
-  return tvCheck(w, eid, def.vhs.tvTag);
+  const tv = tvCheck(w, eid, def.vhs.tvTag);
+  const leisure = w.survival!.content.survival.leisure;
+  return tv ?? (leisure.requireVcr ? stationCheck(w, eid, leisure.vcrTag) : undefined);
 }
 
 export function registerLeisureActions(): void {
@@ -160,6 +180,13 @@ export function registerLeisureActions(): void {
       const cfg = w.survival!.content.survival.leisure.rest;
       applyLeisure(w, eid, 'rest', { fatigueMul: seatNear(w, eid) ? 1 : cfg.floorMul });
     },
+  });
+
+  registerAction('listen', {
+    validate: (w, eid) =>
+      stationCheck(w, eid, w.survival?.content.survival.leisure.radioTag ?? 'base:station-radio'),
+    durationMin: (w) => w.survival?.content.survival.leisure.radio.sessionMin ?? 30,
+    complete: (w, eid) => applyLeisure(w, eid, 'radio'),
   });
 
   registerAction('watch', {

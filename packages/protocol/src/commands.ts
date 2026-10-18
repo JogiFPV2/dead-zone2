@@ -122,6 +122,15 @@ export interface RestCommand extends CommandHeader {
   type: 'rest';
 }
 
+/**
+ * Listen to a radio set in reach (protocol 30): a placeable tagged `leisure.radioTag`
+ * (`base:station-radio`); with `power` it needs mains (`no-power`), none near → `no-station`.
+ * Timed `listen` (`leisure.radio.sessionMin`), `leisureCompleted {activity: 'radio'}`.
+ */
+export interface ListenRadioCommand extends CommandHeader {
+  type: 'listenRadio';
+}
+
 /** Wakes up now (`wokeUp {reason: 'command'}`, partial rest kept). */
 export interface WakeCommand extends CommandHeader {
   type: 'wake';
@@ -887,6 +896,7 @@ export type Command =
   | AimCommand
   | SleepCommand
   | RestCommand
+  | ListenRadioCommand
   | WakeCommand
   | SetTimeScaleCommand
   | WatchTvCommand

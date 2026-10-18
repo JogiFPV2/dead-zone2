@@ -57,6 +57,7 @@ const LEISURE_TEXT = {
   tv: 'Telewizja',
   vhs: 'Kaseta VHS',
   rest: 'Odpoczynek',
+  radio: 'Radio',
 } as const;
 
 const TV_REJECT: Partial<Record<string, string>> = {

@@ -27,6 +27,9 @@ export const FURNITURE_ACTIONS_PL = {
   'sleep-until:morning': 'Śpij do rana',
   'sleep-until': 'Śpij',
   rest: 'Odpocznij',
+  read: 'Czytaj',
+  'listen-radio': 'Słuchaj radia',
+  'watch-vhs': 'Odtwórz kasetę',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -64,6 +67,8 @@ export const FURNITURE_TYPES_PL = {
   bed: 'Łóżko',
   sofa: 'Kanapa',
   seat: 'Siedzisko',
+  radio: 'Radio',
+  vcr: 'Magnetowid',
   other: 'Mebel',
 } as const satisfies Record<string, string>;
 

@@ -1460,3 +1460,20 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - **Menu (`furnitureActions`):** łóżko i kanapa (`typeId` `bed` / `sofa`) mają `sleep`, `sleep-until:morning` i `rest`. Siedzisko (`seat`) ma `rest`. `useFurniture` przyjmuje też `sleep-until:<1..24>`, z etykietą „Śpij N godz.” (`furnitureActionPl`).
 - **Zapis (`SAVE_VERSION` 3):** tablica `sleepUntil` w sekcji przetrwania (minuta gry, 0 = bez budzika). Stary zapis nie ma budzika. Hasz dopisuje ją tylko wtedy, gdy jest ustawiona. Serwer: bez zmian w schemacie (sekcja przetrwania jest generyczna).
 - **Testy:** `systems/sleep-until.test.ts`.
+
+### 9.51 Radio, VHS przez magnetowid, czytanie na meblu (protokół 30) — kontrakt dla Silnika, Designera i Modules
+
+- **Radio:** komenda `listenRadio {}` (`client.listenRadio`, `listenRadioCommandSchema`, nowy `ActionKind` `listen`). Wymaga stacji z tagiem `leisure.radioTag` (`base:station-radio`, np. `base:radio-set`) w promieniu `tvRadiusTiles`.
+  - Stacja z `power` potrzebuje prądu (`no-power`). Bez stacji w pobliżu: `no-station`.
+  - Sesja trwa `leisure.radio.sessionMin` (30 min): zmęczenie −3, nuda −15, stres −10, zdarzenie `leisureCompleted {activity: 'radio'}`.
+  - Radio nie uczy.
+- **VHS przez magnetowid:** gdy `leisure.requireVcr` (domyślnie `true`), kaseta wymaga telewizora (`tvTag`) i magnetowidu (`vcrTag` `base:station-vcr`, z prądem) w zasięgu. Bez magnetowidu: `no-station`. Samo TV bez kasety działa jak dotąd.
+  - **Silnik 2 / Modules:** postawić `base:vcr` obok `base:tv` w salonach (`ROOM_KITS`). Do tego czasu kasety na mapach nie zadziałają. Można też ustawić `requireVcr: false` w `world-settings`.
+- **Menu:**
+  - radio (`typeId` `radio`): `listen-radio`;
+  - magnetowid (`vcr`): `watch-vhs:<itemId>` (to samo co `insert-tape:<itemId>` przy TV);
+  - łóżko, kanapa, siedzisko: `read:<itemId>`, jedna pozycja na każdy rodzaj noszonej książki. Nauka nadal tylko wypoczętym (9.50).
+
+  Etykiety są w `FURNITURE_ACTIONS_PL` / `FURNITURE_TYPES_PL`.
+- **Zapis:** bez nowych pól (`SAVE_VERSION` 3).
+- **Testy:** `leisure/radio-vcr.test.ts`.

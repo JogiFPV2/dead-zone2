@@ -72,6 +72,11 @@ export const sleepCommandSchema = z.strictObject({
 });
 /** `rest` (protocol 29). */
 export const restCommandSchema = z.strictObject({ ...header, type: z.literal('rest') });
+/** `listenRadio` (protocol 30). */
+export const listenRadioCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('listenRadio'),
+});
 export const wakeCommandSchema = z.strictObject({ ...header, type: z.literal('wake') });
 
 export const bandageCommandSchema = z.strictObject({
@@ -528,6 +533,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   aimCommandSchema,
   sleepCommandSchema,
   restCommandSchema,
+  listenRadioCommandSchema,
   wakeCommandSchema,
   setTimeScaleCommandSchema,
   watchTvCommandSchema,

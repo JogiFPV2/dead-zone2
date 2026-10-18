@@ -90,6 +90,8 @@ export interface SimWorkerClient {
   sleep(until?: 'morning' | number): void;
   /** Rest sitting (`rest`, protocol 29). */
   rest(): void;
+  /** Listen to a radio set in reach (`listenRadio`, protocol 30). */
+  listenRadio(): void;
   wake(): void;
   /** Watch the powered TV nearby (`watch` action); `vhs` = a carried VHS tape. */
   watchTv(vhs?: ItemId): void;
@@ -358,6 +360,7 @@ export function createSimWorkerClient(
         cmd: { ...nextHeader(), type: 'sleep', ...(until !== undefined ? { until } : {}) },
       }),
     rest: () => cmd({ type: 'rest' }),
+    listenRadio: () => cmd({ type: 'listenRadio' }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
     watchTv: (vhs) => cmd({ type: 'watchTv', ...(vhs !== undefined ? { vhs } : {}) }),
     search: (target) => cmd({ type: 'search', ...target }),

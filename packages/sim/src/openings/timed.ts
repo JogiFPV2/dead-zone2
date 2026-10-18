@@ -143,12 +143,11 @@ export function wearsGloves(w: SimWorld, eid: number): boolean {
   const st = w.items;
   const p = playerItems(w, eid);
   if (!st || !p) return false;
+  // Gloves are clothing worn on the hands (slot `hands`); holding them in a hand does not count.
   const tag = w.openings.cfg.window.gloveTag ?? 'base:gloves';
-  for (const id of p.slots.values()) {
-    const item = st.items.get(id);
-    if (item && defOf(st, item).tags.includes(tag)) return true;
-  }
-  return false;
+  const id = p.slots.get('hands');
+  const item = id === undefined ? undefined : st.items.get(id);
+  return !!item && defOf(st, item).tags.includes(tag);
 }
 
 let registered = false;

@@ -331,15 +331,20 @@ describe('furniture menu: windows', () => {
     expect(broken.injuryChancePct).toBeGreaterThan(0);
   });
 
-  it('gloves: no cut chance when clearing glass', () => {
+  it('gloves worn on the hands (slot hands): no cut chance when clearing glass', () => {
     const s = sim({ x: 19.4, y: 22.5 }, { window: { clearGlassCutChance: 1 } });
     const d = driver(s);
     d.give('fixture:gloves');
     const g = item(s, 'fixture:gloves')!;
-    s.world
-      .items!.players.get(s.world.c.StableId.value[s.world.players.get(0)!]!)!
-      .slots.set('hand_secondary', g.id);
+    const slots = s.world.items!.players.get(
+      s.world.c.StableId.value[s.world.players.get(0)!]!,
+    )!.slots;
     d.cmd({ type: 'debugOpening', tx: 20, ty: 22, side: 'w', state: 'broken' });
+    // Held in a hand: no protection.
+    slots.set('hand_secondary', g.id);
+    expect(d.act(WINDOW, 'clear-glass')!.injuryChancePct).toBe(100);
+    slots.delete('hand_secondary');
+    slots.set('hands', g.id);
     expect(d.act(WINDOW, 'clear-glass')!.injuryChancePct).toBeUndefined();
   });
 });

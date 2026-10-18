@@ -307,11 +307,8 @@ function objectActions(
   if (def?.kind === 'placeable' && def.placeable.power && def.tags.includes(tvTag)) {
     typeId ??= 'tv';
     out.push(timed(w, eid, 'watch', newAction('watch', { item: 0 })));
-    const p = playerItems(w, eid);
-    let tapes = 0;
-    for (const item of p ? carriedItems(st, p.inventory) : []) {
-      if (defOf(st, item).kind !== 'vhs') continue;
-      tapes++;
+    const carried = tapes(w, eid);
+    for (const item of carried) {
       out.push(
         timed(w, eid, `insert-tape:${item.id}`, newAction('watch', { item: item.id }), {
           item: { id: item.id, def: defOf(st, item).id },
@@ -319,7 +316,24 @@ function objectActions(
       );
     }
     // No tape carried: a grey entry says why.
-    if (tapes === 0) out.push(entry('insert-tape', 'missing-item'));
+    if (carried.length === 0) out.push(entry('insert-tape', 'missing-item'));
+  }
+  // Radio set: listen; VCR: play a carried tape (the TV next to it shows it).
+  const leisure = w.survival?.content.survival.leisure;
+  if (def?.kind === 'placeable' && leisure && def.tags.includes(leisure.radioTag)) {
+    typeId ??= 'radio';
+    out.push(timed(w, eid, 'listen-radio', newAction('listen')));
+  }
+  if (def?.kind === 'placeable' && leisure && def.tags.includes(leisure.vcrTag)) {
+    typeId ??= 'vcr';
+    const carried = tapes(w, eid);
+    if (carried.length === 0) out.push(entry('watch-vhs', 'missing-item'));
+    for (const item of carried)
+      out.push(
+        timed(w, eid, `watch-vhs:${item.id}`, newAction('watch', { item: item.id }), {
+          item: { id: item.id, def: defOf(st, item).id },
+        }),
+      );
   }
   // Bed / sofa: sleep (until rested, until morning, `sleep-until:<hours>`); seats: rest.
   if (def?.kind === 'placeable' && (def.placeable.sleepSurface || def.placeable.seat)) {
@@ -337,9 +351,33 @@ function objectActions(
         out.push(entry(cmd!.actionId, reason, {}, sleep(h)));
     }
     out.push(timed(w, eid, 'rest', newAction('rest')));
+    // Read a carried book / magazine sitting here.
+    const p = playerItems(w, eid);
+    const seen = new Set<number>();
+    for (const item of p ? carriedItems(st, p.inventory) : []) {
+      if (defOf(st, item).kind !== 'literature' || seen.has(item.def)) continue;
+      seen.add(item.def);
+      out.push(
+        timed(w, eid, `read:${item.id}`, newAction('read', { item: item.id }), {
+          item: { id: item.id, def: defOf(st, item).id },
+        }),
+      );
+    }
   }
   if (!typeId || out.length === 0) return undefined;
   return { typeId, actions: out };
+}
+
+/** Carried VHS tapes (one per kind). */
+function tapes(w: SimWorld, eid: number) {
+  const st = w.items!;
+  const p = playerItems(w, eid);
+  const seen = new Set<number>();
+  return (p ? carriedItems(st, p.inventory) : []).filter((i) => {
+    if (defOf(st, i).kind !== 'vhs' || seen.has(i.def)) return false;
+    seen.add(i.def);
+    return true;
+  });
 }
 
 function objectsOnTile(w: SimWorld, x: number, y: number, z: number): MapObj[] {

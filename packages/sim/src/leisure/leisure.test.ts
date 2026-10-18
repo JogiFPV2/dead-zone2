@@ -9,11 +9,12 @@ import { findItem, rejectedReasons } from '../test/item-fixtures.js';
 const content = await baseContent();
 const leisure = content.worldSettings.survival.leisure;
 const TV = { contentId: 'base:tv', x: 11, y: 10 };
+const VCR = { contentId: 'base:vcr', x: 11, y: 11 };
 
 function sim(opts: { tv?: boolean; load?: Uint8Array } = {}): Sim {
   return createSim({
     seed: 9,
-    map: buildMap({ width: 32, height: 32, objects: opts.tv === false ? [] : [TV] }),
+    map: buildMap({ width: 32, height: 32, objects: opts.tv === false ? [] : [TV, VCR] }),
     spawn: { x: 10.5, y: 10.5 },
     content,
     dev: true,
