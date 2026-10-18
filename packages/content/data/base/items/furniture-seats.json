@@ -1,0 +1,18 @@
+[
+  {
+    "id": "base:chair",
+    "name": "item.base.chair.name",
+    "kind": "placeable",
+    "weightKg": 5,
+    "tags": ["base:furniture"],
+    "placeable": { "seat": true, "footprint": { "w": 1, "h": 1 } }
+  },
+  {
+    "id": "base:armchair",
+    "name": "item.base.armchair.name",
+    "kind": "placeable",
+    "weightKg": 25,
+    "tags": ["base:furniture"],
+    "placeable": { "seat": true, "footprint": { "w": 1, "h": 1 } }
+  }
+]

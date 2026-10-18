@@ -12,6 +12,18 @@
     }
   },
   {
+    "id": "base:gas-stove",
+    "name": "item.base.gas-stove.name",
+    "kind": "placeable",
+    "weightKg": 40,
+    "tags": ["base:furniture"],
+    "placeable": {
+      "containerType": "base:gas-stove",
+      "station": { "id": "base:station-fire", "level": 3 },
+      "cooking": { "burners": "gas", "oven": "gas" }
+    }
+  },
+  {
     "id": "base:bathtub",
     "name": "item.base.bathtub.name",
     "kind": "placeable",

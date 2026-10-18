@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base:light-switch",
+    "name": "item.base.light-switch.name",
+    "kind": "placeable",
+    "weightKg": 0.1,
+    "tags": ["base:light-switch"],
+    "placeable": {}
+  }
+]
