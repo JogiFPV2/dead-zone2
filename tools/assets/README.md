@@ -38,18 +38,35 @@ Pilot stylu realistycznego (`render.style = 'real'` w kliencie). Wpis modelu w p
   "id": "blok-p4",
   "material": "pbr",
   "pbr": {
-    "atlas": "textures/blok-p4/atlas.ktx2",
-    "normal": "textures/blok-p4/normal.ktx2",
-    "roughness": "textures/blok-p4/roughness.ktx2"
+    "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+    "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+    "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+    "layers": "textures/pbr/layers.json",
+    "lowRes": {
+      "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+      "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+      "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+    }
   }
 }
 ```
 
 - `material: 'vc' | 'pbr'`, domyślnie `vc` (kolory wierzchołków / paleta packu, dzisiejszy wygląd).
   Stare dane bez pola zostają bez zmian, a `manifest.json` nie dostaje żadnego pola.
-- `pbr: { atlas, normal?, roughness? }`: ścieżki względne do `apps/game/public` (bez `/` na
-  początku, bez `..`), formaty `.ktx2`, `.png`, `.webp`, `.jpg`. Wymagane przy `material: 'pbr'`,
-  odrzucane przy `vc`.
+- `pbr: { albedo, normal, orm, layers, lowRes?: { albedo, normal, orm } }`: tablice tekstur
+  warstw (`orm` = occlusion, roughness, metalness) i opis warstw. Ścieżki względne do
+  `apps/game/public` (bez `/` na początku, bez `..`). Tekstury `.ktx2`, `.png` albo `.webp`,
+  `layers` to `.json`. `lowRes` jest opcjonalne, ale jeśli jest, to ma wszystkie trzy tekstury.
+  `pbr` jest wymagane przy `material: 'pbr'` i odrzucane przy `vc`.
+- Numer warstwy nie siedzi w danych, tylko w GLB (`TEXCOORD_1` każdego wierzchołka).
+- `layers.json` (`PbrLayersFileSchema`): `{ version: 1, material, layers: [{ index, id, name,
+source, url | null, tileMeters, tint: 'natural' | 'tint', meanLinear: [r, g, b],
+meanRoughness }] }`. `layers[i].index` musi być równe `i`, a `id` muszą być unikalne. Dodatkowe
+  pola są dozwolone.
+- `scale?: number` na wpisie modelu (z `material` albo bez niego): jednolita skala do metrów,
+  którą klient stosuje przy stawianiu modelu (GLB nie jest przeskalowywany). Musi być dodatnia i
+  skończona, domyślnie 1, np. sedan Kenneya `{ "id": "sedan", "scale": 1.69 }`. To samo pole co
+  `scale` w `models/deadzone-pbr/index.json` (#230). Do manifestu trafia tylko, gdy ≠ 1.
 - Model `pbr` trafia do manifestu z `material: "pbr"` i `pbr`; `assets check` sprawdza, czy
-  tekstury istnieją. Schemat `MaterialFieldsSchema` można dołożyć do innych wpisów (np. zestaw
+  wszystkie pliki istnieją i czy `layers.json` pasuje do schematu. Schemat `MaterialFieldsSchema` można dołożyć do innych wpisów (np. zestaw
   miasta `deadzone-town`).

@@ -22,6 +22,8 @@ export interface ManifestAsset {
   material?: 'pbr';
   /** PBR maps, paths relative to `apps/game/public`. */
   pbr?: PbrMaps;
+  /** Uniform scale to metres (pack `scale`); only when ≠ 1, absent = 1. */
+  scale?: number;
 }
 
 export interface ManifestPack {

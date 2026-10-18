@@ -15,7 +15,7 @@ import {
 } from './manifest.js';
 import { countTriangles, optimize, ready } from './optimize.js';
 import { materialOf } from './material.js';
-import { modelRef, parsePack, type Pack } from './pack.js';
+import { modelRef, parsePack, scaleOf, type Pack } from './pack.js';
 import { encodeTexture } from './texture.js';
 
 /** LOD level kept only if it has at most this fraction of the previous level's triangles. */
@@ -100,6 +100,7 @@ async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
       sourceBytes: (await stat(input)).size,
       lods,
       ...(mat.material === 'pbr' ? { material: 'pbr' as const, pbr: mat.pbr } : {}),
+      ...(scaleOf(r) !== 1 ? { scale: scaleOf(r) } : {}),
     });
   }
   return { entry: packEntry(pack, palette), assets };

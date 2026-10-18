@@ -7,6 +7,13 @@ export const ALLOWED_LICENCES = ['CC0-1.0'] as const;
 const Id = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'kebab-case');
 
 /** Source pack definition (`tools/assets/packs/<id>.json`). */
+/**
+ * Uniform scale of a model to metres, applied by the client when it places the model (the GLB
+ * is not rescaled), e.g. the Kenney sedan 1.69. Positive and finite, default 1. Same field as
+ * `scale` in `models/deadzone-pbr/index.json` (#230).
+ */
+export const ModelScale = z.number().positive().finite();
+
 export const PackSchema = z
   .strictObject({
     id: Id,
@@ -73,7 +80,8 @@ export const PackSchema = z
       .optional(),
     /**
      * Models to import from `root`: file name (without `.glb`) = id, or `{ id, file?, material?,
-     * pbr? }` (`file` defaults to `id`; `material` see `material.ts`, default `vc`).
+     * pbr?, scale? }` (`file` defaults to `id`; `material` see `material.ts`, default `vc`;
+     * `scale` see `ModelScale`, default 1).
      */
     models: z
       .array(
@@ -85,6 +93,7 @@ export const PackSchema = z
               file: z.string().min(1).optional(),
               material: z.enum(MATERIAL_KINDS).optional(),
               pbr: PbrMapsSchema.optional(),
+              scale: ModelScale.optional(),
             })
             .superRefine((m, ctx) => {
               const problem = materialProblem(m);
@@ -106,10 +115,13 @@ export const PackSchema = z
     'podaj download + sha256 albo files',
   );
 
-/** `{ id, file }` of a `models` entry. */
+/** Scale of a model entry (absent = 1). */
+export const scaleOf = (m: { scale?: number | undefined }): number => m.scale ?? 1;
+
+/** `{ id, file }` of a `models` entry (plus `material`, `pbr`, `scale` when given). */
 export const modelRef = (
   m: Pack['models'][number],
-): { id: string; file: string } & MaterialFields =>
+): { id: string; file: string; scale?: number | undefined } & MaterialFields =>
   typeof m === 'string' ? { id: m, file: m } : { ...m, file: m.file ?? m.id };
 
 export type Pack = z.output<typeof PackSchema>;

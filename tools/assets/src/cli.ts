@@ -5,6 +5,7 @@ import { format, resolveConfig } from 'prettier';
 import { buildAll, createIO, loadPacks } from './build.js';
 import { checkManifestLicences, updateAssetsMd, type AssetManifest } from './manifest.js';
 import { ALLOWED_LICENCES } from './pack.js';
+import { PbrLayersFileSchema, pbrFiles } from './material.js';
 import { renderIcons } from './icons.js';
 import { bundleTown } from './town.js';
 import { buildAnimalSources } from './animal-sources.js';
@@ -54,9 +55,19 @@ async function check(): Promise<void> {
   const pub = join(repo, 'apps/game/public');
   for (const a of m.assets) {
     if (!a.pbr) continue;
-    for (const f of [a.pbr.atlas, a.pbr.normal, a.pbr.roughness]) {
-      if (f) await stat(join(pub, f)).catch(() => problems.push(`${a.id}: brak tekstury ${f}`));
+    for (const f of pbrFiles(a.pbr))
+      await stat(join(pub, f)).catch(() => problems.push(`${a.id}: brak pliku ${f}`));
+    const layers = await readFile(join(pub, a.pbr.layers), 'utf8').catch(() => undefined);
+    if (layers === undefined) continue;
+    let json: unknown;
+    try {
+      json = JSON.parse(layers);
+    } catch {
+      problems.push(`${a.id}: ${a.pbr.layers} to nie JSON`);
+      continue;
     }
+    const parsed = PbrLayersFileSchema.safeParse(json);
+    if (!parsed.success) problems.push(`${a.id}: ${a.pbr.layers}: ${parsed.error.message}`);
   }
   if (problems.length) throw new Error(problems.join('\n'));
   console.log(
