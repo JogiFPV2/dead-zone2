@@ -4,7 +4,7 @@ Pilot z 2026-10-18 (Designer). Referencja: `deadzone-shots/style-real.png`, kont
 
 Pliki w repo, ścieżki względne do `apps/game/public`:
 - tekstury: `textures/pbr/deadzone-pbr-{albedo,normal,orm}-{1024,512}.ktx2` i `textures/pbr/layers.json`;
-- modele: `models/deadzone-pbr/*.pbr.glb`.
+- modele: `models/deadzone-pbr/<id>.glb` (wynik `assets build`, w `manifest.json`); źródła `*.pbr.glb` w `tools/assets/pbr/` (ścieżka względem repo).
 
 Źródła i narzędzia (poza repo, na boxie):
 - `/workspace/assets-src/pbr/`: `build_textures.py`, `build.sh`;

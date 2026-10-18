@@ -200,7 +200,7 @@ Gołąb ma w źródle tylko pozy lotu (także w `idle-animation`), więc skrypt 
 
 ## Styl realistyczny (PBR), pilot (`apps/game/public/textures/pbr/`, `apps/game/public/models/deadzone-pbr/`)
 
-Materiał `deadzone-pbr` to jedna tablica tekstur na cały świat: 13 warstw, KTX2 Basis ETC1S z mipmapami. Pliki to `deadzone-pbr-{albedo,normal,orm}-{1024,512}.ktx2`, opis warstw jest w `layers.json`. Do tego 8 modeli `*.pbr.glb`, w których indeks warstwy i brud są zapisane w `TEXCOORD_1`. Zasady i budżet: `docs/STYLE.md`.
+Materiał `deadzone-pbr` to jedna tablica tekstur na cały świat: 13 warstw, KTX2 Basis ETC1S z mipmapami. Pliki to `deadzone-pbr-{albedo,normal,orm}-{1024,512}.ktx2`, opis warstw jest w `layers.json`. Do tego 8 modeli: źródła `tools/assets/pbr/*.pbr.glb` (indeks warstwy i brud w `TEXCOORD_1`), z których pack `deadzone-pbr` (`assets build`) robi `apps/game/public/models/deadzone-pbr/<id>.glb` (meshopt) z wpisem w `manifest.json`. Zasady i budżet: `docs/STYLE.md`.
 Zestawy ambientCG pobrano w wersji 1K-JPG. Designer je obrobił (kadr, desaturacja, wyrównanie jasności, ORM = AO / Roughness / Metalness), a źródła i skrypty leżą w `/workspace/assets-src/pbr/` (`build_textures.py`, `build.sh`, KTX-Software 4.4.2). Warstwy `szklo` i `gladki` są proceduralne. Licencja ambientCG to CC0 1.0 (https://docs.ambientcg.com/license/), więc atrybucja nie jest wymagana. Podajemy ją z dobrej praktyki.
 
 | Warstwa                    | Źródło             | Autor               | URL                                              | Licencja |
@@ -218,7 +218,7 @@ Zestawy ambientCG pobrano w wersji 1K-JPG. Designer je obrobił (kadr, desaturac
 | 10 drewno                  | Planks021          | ambientCG           | https://ambientcg.com/view?id=Planks021          | CC0-1.0  |
 | 11 szklo, 12 gladki        | proceduralne       | Deadzone (Designer) | —                                                | CC0-1.0  |
 
-| Model                                                     | Trójkąty            | Geometria                                                                                                | Licencja |
+| Model (źródło w `tools/assets/pbr/`)                      | Trójkąty            | Geometria                                                                                                | Licencja |
 | --------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
 | `blok-p4.pbr.glb`, `blok-p10.pbr.glb`, `smietnik.pbr.glb` | 5 830 / 6 050 / 520 | własne, proceduralne (jak `buildings/*.glb` w `/workspace/assets-src/ASSETS.md`)                         | CC0-1.0  |
 | `dom-kostka-namiot.pbr.glb`, `dom-90.pbr.glb`             | 1 684 / 1 536       | własne (budynki część 2)                                                                                 | CC0-1.0  |
