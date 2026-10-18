@@ -36,5 +36,19 @@
       "protection": { "scratch": 0.15, "bite": 0.05 },
       "durability": { "max": 60, "repairable": true }
     }
+  },
+  {
+    "id": "base:gloves",
+    "name": "item.base.gloves.name",
+    "kind": "clothing",
+    "lootCategory": "tool",
+    "weightKg": 0.15,
+    "tags": ["base:gloves", "base:clothing"],
+    "clothing": {
+      "slot": "hands",
+      "insulation": 0.05,
+      "protection": { "scratch": 0.3, "bite": 0.05 },
+      "durability": { "max": 40, "repairable": true }
+    }
   }
 ]

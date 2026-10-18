@@ -104,6 +104,15 @@
         "item": "base:welding-torch",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:gloves",
+        "weight": 3
+      },
+      {
+        "item": "base:lockpick",
+        "weight": 1,
+        "rarity": "uncommon"
       }
     ]
   }

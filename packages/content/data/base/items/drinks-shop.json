@@ -1,0 +1,83 @@
+[
+  {
+    "id": "base:milk",
+    "name": "item.base.milk.name",
+    "kind": "drink",
+    "weightKg": 1.05,
+    "tags": ["base:dairy"],
+    "drink": {
+      "perUse": {
+        "calories": 160,
+        "proteinG": 8,
+        "fatG": 8,
+        "carbsG": 12,
+        "thirst": -15
+      },
+      "uses": 4,
+      "drinkMin": 0.5,
+      "spoilage": {
+        "freshMin": 10080,
+        "rottenMin": 20160
+      }
+    }
+  },
+  {
+    "id": "base:beer",
+    "name": "item.base.beer.name",
+    "kind": "drink",
+    "weightKg": 0.55,
+    "drink": {
+      "perUse": {
+        "calories": 110,
+        "carbsG": 9,
+        "thirst": -12,
+        "stress": -5,
+        "unhappiness": -6
+      },
+      "uses": 2,
+      "drinkMin": 0.4,
+      "alcohol": 0.06,
+      "emptyInto": "base:bottle"
+    }
+  },
+  {
+    "id": "base:juice",
+    "name": "item.base.juice.name",
+    "kind": "drink",
+    "weightKg": 1.05,
+    "drink": {
+      "perUse": {
+        "calories": 110,
+        "carbsG": 26,
+        "thirst": -15,
+        "unhappiness": -3
+      },
+      "uses": 4,
+      "drinkMin": 0.5,
+      "spoilage": {
+        "freshMin": 259200,
+        "rottenMin": 525600
+      }
+    }
+  },
+  {
+    "id": "base:soda",
+    "name": "item.base.soda.name",
+    "kind": "drink",
+    "weightKg": 0.55,
+    "drink": {
+      "perUse": {
+        "calories": 105,
+        "carbsG": 26,
+        "thirst": -12,
+        "unhappiness": -5
+      },
+      "uses": 2,
+      "drinkMin": 0.4,
+      "spoilage": {
+        "freshMin": 388800,
+        "rottenMin": 777600
+      }
+    }
+  }
+]

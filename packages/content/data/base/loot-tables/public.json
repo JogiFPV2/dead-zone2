@@ -65,6 +65,10 @@
     },
     "entries": [
       {
+        "item": "base:gloves",
+        "weight": 3
+      },
+      {
         "item": "base:plank",
         "weight": 5,
         "count": {

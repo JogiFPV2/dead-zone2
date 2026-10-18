@@ -34,6 +34,17 @@
     }
   },
   {
+    "id": "base:double-bed",
+    "name": "item.base.double-bed.name",
+    "kind": "placeable",
+    "weightKg": 60,
+    "tags": ["base:furniture"],
+    "placeable": {
+      "sleepSurface": "bed",
+      "footprint": { "w": 2, "h": 2 }
+    }
+  },
+  {
     "id": "base:sofa",
     "name": "item.base.sofa.name",
     "kind": "placeable",

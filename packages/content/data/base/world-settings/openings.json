@@ -64,6 +64,9 @@
       "chancePerStrength": 0.03,
       "strengthSkill": "base:strength",
       "failDamage": 8
+    },
+    "locks": {
+      "exteriorLockedChance": 0.4
     }
   }
 }

@@ -29,6 +29,38 @@
         "item": "base:vodka",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:pasta",
+        "weight": 4
+      },
+      {
+        "item": "base:rice",
+        "weight": 3
+      },
+      {
+        "item": "base:flour",
+        "weight": 3
+      },
+      {
+        "item": "base:sugar",
+        "weight": 3
+      },
+      {
+        "item": "base:salt",
+        "weight": 2
+      },
+      {
+        "item": "base:spices",
+        "weight": 2
+      },
+      {
+        "item": "base:juice",
+        "weight": 1
+      },
+      {
+        "item": "base:soda",
+        "weight": 1
       }
     ]
   },
@@ -80,6 +112,18 @@
       },
       {
         "item": "base:frying-pan",
+        "weight": 2
+      },
+      {
+        "item": "base:cutlery",
+        "weight": 5
+      },
+      {
+        "item": "base:can-opener",
+        "weight": 3
+      },
+      {
+        "item": "base:towel",
         "weight": 2
       }
     ],
@@ -149,6 +193,42 @@
         "item": "base:vodka",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:milk",
+        "weight": 4
+      },
+      {
+        "item": "base:cheese",
+        "weight": 3
+      },
+      {
+        "item": "base:eggs",
+        "weight": 3
+      },
+      {
+        "item": "base:butter",
+        "weight": 3
+      },
+      {
+        "item": "base:sausage",
+        "weight": 3
+      },
+      {
+        "item": "base:bread",
+        "weight": 2
+      },
+      {
+        "item": "base:juice",
+        "weight": 2
+      },
+      {
+        "item": "base:beer",
+        "weight": 2
+      },
+      {
+        "item": "base:soda",
+        "weight": 1
       }
     ]
   },
@@ -185,6 +265,10 @@
         "item": "base:vodka",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:frozen-food",
+        "weight": 5
       }
     ]
   },
@@ -204,6 +288,10 @@
       {
         "item": "base:frying-pan",
         "weight": 3
+      },
+      {
+        "item": "base:baking-tray",
+        "weight": 4
       }
     ]
   },
@@ -223,6 +311,10 @@
       {
         "item": "base:cooking-pot",
         "weight": 4
+      },
+      {
+        "item": "base:baking-tray",
+        "weight": 2
       }
     ]
   }

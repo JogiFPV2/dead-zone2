@@ -1,0 +1,34 @@
+[
+  {
+    "id": "base:soap",
+    "name": "item.base.soap.name",
+    "kind": "misc",
+    "lootCategory": "household",
+    "weightKg": 0.1,
+    "maxStack": 5,
+    "tags": ["base:soap"]
+  },
+  {
+    "id": "base:toothpaste",
+    "name": "item.base.toothpaste.name",
+    "kind": "misc",
+    "lootCategory": "household",
+    "weightKg": 0.1,
+    "maxStack": 5
+  },
+  {
+    "id": "base:towel",
+    "name": "item.base.towel.name",
+    "kind": "material",
+    "weightKg": 0.4,
+    "tags": ["base:fabric"]
+  },
+  {
+    "id": "base:cleaning-supplies",
+    "name": "item.base.cleaning-supplies.name",
+    "kind": "misc",
+    "lootCategory": "household",
+    "weightKg": 1.0,
+    "tags": ["base:soap"]
+  }
+]

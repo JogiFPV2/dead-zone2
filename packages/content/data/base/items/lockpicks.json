@@ -1,0 +1,18 @@
+[
+  {
+    "id": "base:lockpick",
+    "name": "item.base.lockpick.name",
+    "kind": "misc",
+    "lootCategory": "tool",
+    "weightKg": 0.05,
+    "tags": ["base:lockpick"]
+  },
+  {
+    "id": "base:lockpick-fork",
+    "name": "item.base.lockpick-fork.name",
+    "kind": "misc",
+    "lootCategory": "tool",
+    "weightKg": 0.04,
+    "tags": ["base:lockpick"]
+  }
+]

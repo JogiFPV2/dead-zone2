@@ -23,6 +23,14 @@
       {
         "item": "base:sheet",
         "weight": 1
+      },
+      {
+        "item": "base:cleaning-supplies",
+        "weight": 5
+      },
+      {
+        "item": "base:soap",
+        "weight": 2
       }
     ]
   }

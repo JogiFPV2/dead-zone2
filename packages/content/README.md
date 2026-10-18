@@ -248,7 +248,10 @@ wanna `base:bathtub`, prysznic `base:shower`, magnetowid `base:vcr` (tag `base:s
 `base:radio-set` (tag `base:station-radio`, prąd; przenośne `base:radio` zostaje zwykłym przedmiotem). Zlew kuchenny
 `base:kitchen-sink` i umywalka `base:bathroom-sink` to schowki (szafka pod spodem, tabela `base:under-sink`).
 Klucze do budynku: `buildingKey` (szansa) w tabeli — sim dokłada przedmiot z tagiem `base:building-key`
-przypisany do budynku schowka (w tabeli zwłok: do budynku zombie). Przedmiotu klucza jeszcze nie ma. Lodówka i zamrażarka mają
+przypisany do budynku schowka (w tabeli zwłok: do budynku zombie). Przedmiot klucza: `base:building-key` (bez `buildingId`
+w danych — sim nadaje go przy spawnie). Wytrychy: `base:lockpick` i `base:lockpick-fork` (tag `base:lockpick`), rękawice
+`base:gloves` (slot `hands`, tag `base:gloves`). Drzwi zewnętrzne są na starcie zamknięte z szansą
+`openings.locks.exteriorLockedChance` (0,4; jedno ustawienie dla wszystkich budynków). Lodówka i zamrażarka mają
 `requiresPower` i `spoilageMultiplier` (0.3 i 0.05): chłodzą tylko z prądem, bez prądu jedzenie psuje się ×1.
 
 | Schowek                           | Tabela                                                    | Zawartość                                        |

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "base:can-opener",
+    "name": "item.base.can-opener.name",
+    "kind": "tool",
+    "lootCategory": "cookware",
+    "weightKg": 0.15,
+    "tags": ["base:tool-can-opener"],
+    "tool": {
+      "durability": {
+        "max": 200
+      }
+    }
+  },
+  {
+    "id": "base:cutlery",
+    "name": "item.base.cutlery.name",
+    "kind": "misc",
+    "lootCategory": "cookware",
+    "weightKg": 0.3,
+    "tags": ["base:cutlery"]
+  },
+  {
+    "id": "base:baking-tray",
+    "name": "item.base.baking-tray.name",
+    "kind": "misc",
+    "weightKg": 0.8,
+    "tags": ["base:cookware"]
+  }
+]

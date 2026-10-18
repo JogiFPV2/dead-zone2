@@ -1,0 +1,138 @@
+[
+  {
+    "id": "base:cheese",
+    "name": "item.base.cheese.name",
+    "kind": "food",
+    "weightKg": 0.3,
+    "tags": ["base:dairy"],
+    "food": {
+      "nutrition": {
+        "calories": 1050,
+        "proteinG": 75,
+        "fatG": 85,
+        "carbsG": 4,
+        "hunger": -40,
+        "unhappiness": -4
+      },
+      "spoilage": {
+        "freshMin": 30240,
+        "rottenMin": 60480
+      },
+      "portions": 4,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:eggs",
+    "name": "item.base.eggs.name",
+    "kind": "food",
+    "weightKg": 0.6,
+    "tags": ["base:dairy"],
+    "food": {
+      "nutrition": {
+        "calories": 850,
+        "proteinG": 75,
+        "fatG": 60,
+        "carbsG": 6,
+        "hunger": -35,
+        "unhappiness": 6,
+        "sicknessChance": 0.1
+      },
+      "spoilage": {
+        "freshMin": 30240,
+        "rottenMin": 50400
+      },
+      "portions": 5,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:sausage",
+    "name": "item.base.sausage.name",
+    "kind": "food",
+    "weightKg": 0.4,
+    "tags": ["base:meat"],
+    "food": {
+      "nutrition": {
+        "calories": 1200,
+        "proteinG": 55,
+        "fatG": 105,
+        "carbsG": 6,
+        "hunger": -45,
+        "unhappiness": -6
+      },
+      "spoilage": {
+        "freshMin": 14400,
+        "rottenMin": 28800
+      },
+      "portions": 4,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:butter",
+    "name": "item.base.butter.name",
+    "kind": "food",
+    "weightKg": 0.2,
+    "tags": ["base:dairy"],
+    "food": {
+      "nutrition": {
+        "calories": 1440,
+        "proteinG": 2,
+        "fatG": 160,
+        "hunger": -15,
+        "unhappiness": 4
+      },
+      "spoilage": {
+        "freshMin": 43200,
+        "rottenMin": 86400
+      },
+      "portions": 4,
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:bread",
+    "name": "item.base.bread.name",
+    "kind": "food",
+    "weightKg": 0.5,
+    "food": {
+      "nutrition": {
+        "calories": 1250,
+        "proteinG": 45,
+        "fatG": 15,
+        "carbsG": 240,
+        "hunger": -55,
+        "unhappiness": -3
+      },
+      "spoilage": {
+        "freshMin": 5760,
+        "rottenMin": 14400
+      },
+      "portions": 6,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:frozen-food",
+    "name": "item.base.frozen-food.name",
+    "kind": "food",
+    "weightKg": 0.5,
+    "food": {
+      "nutrition": {
+        "calories": 650,
+        "proteinG": 30,
+        "fatG": 25,
+        "carbsG": 75,
+        "hunger": -35,
+        "unhappiness": 8
+      },
+      "spoilage": {
+        "freshMin": 4320,
+        "rottenMin": 8640
+      },
+      "portions": 2,
+      "eatMin": 2
+    }
+  }
+]

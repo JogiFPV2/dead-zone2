@@ -1,0 +1,18 @@
+[
+  {
+    "id": "base:building-key",
+    "name": "item.base.building-key.name",
+    "kind": "misc",
+    "lootCategory": "household",
+    "weightKg": 0.02,
+    "tags": ["base:building-key"]
+  },
+  {
+    "id": "base:pen",
+    "name": "item.base.pen.name",
+    "kind": "misc",
+    "lootCategory": "household",
+    "weightKg": 0.02,
+    "maxStack": 10
+  }
+]

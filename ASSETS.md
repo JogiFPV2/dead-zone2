@@ -110,6 +110,33 @@ modele własne z `generate-batch6.html` (three.js, eksport do `/workspace/assets
 | frying-pan, rolling-pin (`rollingPin`)                                                                                                                                       | Food Kit (kenney.nl/assets/food-kit)                                | Kenney   | CC0-1.0  |
 | pozostałe 84 (książki, czasopisma, VHS, torby, plecaki, hoodie, jeans, broń biała, magazynki, latarki, lampa sufitowa, generator, akumulator, bak, dystrybutor, zapalniczka) | modele własne Deadzone (Designer, `generate-batch6.html`, three.js) | Deadzone | CC0-1.0  |
 
+### Ikony, partia 8 (gotowe PNG od Designera, 11.10.2026)
+
+29 ikon 128 px z tego samego rigu (`render/icons.html`), lista w `tools/assets/icons/prerendered.json`: klucz do
+budynku, woda utleniona, jedzenie (mleko, ser, jajka, kiełbasa, masło, chleb, mrożonki, makaron, ryż, mąka, cukier, sól,
+przyprawy), napoje (piwo, sok, napój gazowany), kuchnia (otwieracz, sztućce, blacha), łazienka (mydło, pasta do zębów,
+ręcznik, środki czystości), leki (tabletki przeciwbólowe, antybiotyki, witaminy) i długopis. Lista renderu:
+`/workspace/deadzone-icons/render/items-batch8.json`, modele własne z `generate-batch8.html` (three.js, eksport do
+`/workspace/assets-src/custom/batch8/`), poza repo.
+
+| Ikony   | Źródło                                                              | Autor    | Licencja |
+| ------- | ------------------------------------------------------------------- | -------- | -------- |
+| 29 ikon | modele własne Deadzone (Designer, `generate-batch8.html`, three.js) | Deadzone | CC0-1.0  |
+
+### Ikony, partia 9 (gotowe PNG od Designera, 11.10.2026)
+
+5 ikon mebli stałych z #211 (128 px, ten sam rig `render/icons.html`), lista w `tools/assets/icons/prerendered.json`:
+kuchenka z piekarnikiem (`range`), wanna (`bathtub`), prysznic (`shower`), magnetowid (`vcr`), radioodbiornik
+(`radio-set`) oraz łóżko podwójne (`double-bed`, 160×200 cm, footprint 2×2) i regał metalowy (`metal-shelf`, ikona schowka). Lista renderu:
+`/workspace/deadzone-icons/render/items-batch9.json`, modele mebli z `/workspace/assets-src/furniture/`, poza repo.
+
+| Ikony  | Źródło                                                                | Autor    | Licencja |
+| ------ | --------------------------------------------------------------------- | -------- | -------- |
+| 7 ikon | modele własne Deadzone (Designer, `/workspace/assets-src/furniture/`) | Deadzone | CC0-1.0  |
+
+Partia 8, dorysowane: zestaw wytrychów (`lockpick`), wytrych z widelca (`lockpick-fork`), rękawice robocze
+(`gloves`) — modele `/workspace/assets-src/custom/batch8/`, ten sam rig.
+
 ## Dźwięki (`apps/game/public/audio/`)
 
 Każdy plik jest w dwóch formatach: `.ogg` (Vorbis) i `.mp3` (fallback dla Safari). Przekodowane ffmpeg

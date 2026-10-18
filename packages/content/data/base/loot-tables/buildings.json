@@ -56,6 +56,30 @@
         "item": "base:flashlight",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:hydrogen-peroxide",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:antibiotics",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
       }
     ]
   },
@@ -98,6 +122,54 @@
       {
         "item": "base:plastic-bag",
         "weight": 3
+      },
+      {
+        "item": "base:hydrogen-peroxide",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:antibiotics",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:vitamins",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:soap",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      {
+        "item": "base:toothpaste",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 1
+        }
       }
     ]
   },
@@ -166,6 +238,58 @@
       },
       {
         "item": "base:battery",
+        "weight": 2
+      },
+      {
+        "item": "base:bread",
+        "weight": 4
+      },
+      {
+        "item": "base:pasta",
+        "weight": 4
+      },
+      {
+        "item": "base:rice",
+        "weight": 3
+      },
+      {
+        "item": "base:flour",
+        "weight": 3
+      },
+      {
+        "item": "base:sugar",
+        "weight": 3
+      },
+      {
+        "item": "base:salt",
+        "weight": 2
+      },
+      {
+        "item": "base:spices",
+        "weight": 2
+      },
+      {
+        "item": "base:beer",
+        "weight": 4
+      },
+      {
+        "item": "base:juice",
+        "weight": 3
+      },
+      {
+        "item": "base:soda",
+        "weight": 4
+      },
+      {
+        "item": "base:soap",
+        "weight": 2
+      },
+      {
+        "item": "base:toothpaste",
+        "weight": 2
+      },
+      {
+        "item": "base:cleaning-supplies",
         "weight": 2
       }
     ]
@@ -239,6 +363,35 @@
         "item": "base:sterilized-bandage",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:hydrogen-peroxide",
+        "weight": 4
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 4
+      },
+      {
+        "item": "base:vitamins",
+        "weight": 2
+      },
+      {
+        "item": "base:antibiotics",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:soap",
+        "weight": 4
+      },
+      {
+        "item": "base:toothpaste",
+        "weight": 4
+      },
+      {
+        "item": "base:towel",
+        "weight": 3
       }
     ]
   },
@@ -272,6 +425,10 @@
       {
         "table": "base:recipe-magazines",
         "weight": 1
+      },
+      {
+        "item": "base:pen",
+        "weight": 3
       }
     ]
   },

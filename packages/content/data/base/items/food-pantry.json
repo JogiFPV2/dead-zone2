@@ -1,0 +1,93 @@
+[
+  {
+    "id": "base:pasta",
+    "name": "item.base.pasta.name",
+    "kind": "food",
+    "weightKg": 0.5,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 1780,
+        "proteinG": 62,
+        "fatG": 8,
+        "carbsG": 360,
+        "hunger": -40,
+        "unhappiness": 15
+      },
+      "portions": 5,
+      "eatMin": 2
+    }
+  },
+  {
+    "id": "base:rice",
+    "name": "item.base.rice.name",
+    "kind": "food",
+    "weightKg": 1.0,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 3600,
+        "proteinG": 70,
+        "fatG": 6,
+        "carbsG": 790,
+        "hunger": -60,
+        "unhappiness": 15
+      },
+      "portions": 10,
+      "eatMin": 2
+    }
+  },
+  {
+    "id": "base:flour",
+    "name": "item.base.flour.name",
+    "kind": "food",
+    "weightKg": 1.0,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 3400,
+        "proteinG": 100,
+        "fatG": 12,
+        "carbsG": 720,
+        "hunger": -30,
+        "unhappiness": 25
+      },
+      "portions": 10,
+      "eatMin": 2
+    }
+  },
+  {
+    "id": "base:sugar",
+    "name": "item.base.sugar.name",
+    "kind": "food",
+    "weightKg": 1.0,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 4000,
+        "carbsG": 1000,
+        "hunger": -15,
+        "unhappiness": -2
+      },
+      "portions": 20,
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:salt",
+    "name": "item.base.salt.name",
+    "kind": "misc",
+    "lootCategory": "food-canned",
+    "weightKg": 0.5,
+    "tags": ["base:seasoning"]
+  },
+  {
+    "id": "base:spices",
+    "name": "item.base.spices.name",
+    "kind": "misc",
+    "lootCategory": "food-canned",
+    "weightKg": 0.05,
+    "maxStack": 10,
+    "tags": ["base:seasoning"]
+  }
+]

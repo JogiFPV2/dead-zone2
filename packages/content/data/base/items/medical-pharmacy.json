@@ -1,0 +1,51 @@
+[
+  {
+    "id": "base:hydrogen-peroxide",
+    "name": "item.base.hydrogen-peroxide.name",
+    "kind": "medical",
+    "weightKg": 0.12,
+    "tags": ["base:disinfectant-liquid"],
+    "medical": {
+      "effects": ["disinfect"],
+      "potency": 0.8,
+      "durationMin": 1,
+      "uses": 10
+    }
+  },
+  {
+    "id": "base:painkillers",
+    "name": "item.base.painkillers.name",
+    "kind": "medical",
+    "weightKg": 0.05,
+    "medical": {
+      "effects": ["pain_relief"],
+      "potency": 0.6,
+      "durationMin": 1,
+      "uses": 10
+    }
+  },
+  {
+    "id": "base:antibiotics",
+    "name": "item.base.antibiotics.name",
+    "kind": "medical",
+    "weightKg": 0.05,
+    "medical": {
+      "effects": ["reduce_sickness"],
+      "potency": 0.7,
+      "durationMin": 1,
+      "uses": 10
+    }
+  },
+  {
+    "id": "base:vitamins",
+    "name": "item.base.vitamins.name",
+    "kind": "medical",
+    "weightKg": 0.1,
+    "medical": {
+      "effects": ["reduce_sickness"],
+      "potency": 0.1,
+      "durationMin": 1,
+      "uses": 30
+    }
+  }
+]

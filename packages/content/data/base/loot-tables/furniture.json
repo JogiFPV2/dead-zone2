@@ -62,6 +62,10 @@
       {
         "table": "base:vhs-tapes",
         "weight": 1
+      },
+      {
+        "item": "base:pen",
+        "weight": 3
       }
     ],
     "buildingKey": 0.1

@@ -39,6 +39,38 @@
         "item": "base:fish-fillet",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:milk",
+        "weight": 5
+      },
+      {
+        "item": "base:cheese",
+        "weight": 3
+      },
+      {
+        "item": "base:sausage",
+        "weight": 3
+      },
+      {
+        "item": "base:butter",
+        "weight": 2
+      },
+      {
+        "item": "base:eggs",
+        "weight": 2
+      },
+      {
+        "item": "base:beer",
+        "weight": 4
+      },
+      {
+        "item": "base:juice",
+        "weight": 3
+      },
+      {
+        "item": "base:soda",
+        "weight": 4
       }
     ]
   },
@@ -67,6 +99,10 @@
       {
         "item": "base:venison-steak",
         "weight": 2
+      },
+      {
+        "item": "base:frozen-food",
+        "weight": 6
       }
     ]
   }

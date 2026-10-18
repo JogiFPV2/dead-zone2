@@ -239,6 +239,15 @@
       {
         "item": "base:car-window",
         "weight": 1
+      },
+      {
+        "item": "base:gloves",
+        "weight": 3
+      },
+      {
+        "item": "base:lockpick",
+        "weight": 1,
+        "rarity": "rare"
       }
     ]
   },
