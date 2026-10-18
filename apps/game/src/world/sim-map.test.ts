@@ -75,7 +75,7 @@ describe('ChunkSource → SimMap adapter', () => {
     expect(c.rooms).toEqual({ '7': 'base:room-kitchen' });
     // Chunk-local room id → global building id (sim contract, docs 9.24).
     expect(c.roomBuildings).toEqual({ '7': 1 });
-    expect(c.objects).toEqual([{ contentId: 'base:fridge', x: 3, y: 4 }]);
+    expect(c.objects).toEqual([{ contentId: 'base:fridge', x: 3, y: 4, rot: 2 }]);
     expect(c.stairs).toEqual([{ tx: 5, ty: 6, dir: 'E', len: 4 }]);
     expect(map.listChunks?.()).toEqual([{ cx: 1, cy: 0, z: 0 }]);
     expect('listChunks' in chunkSourceToSimMap(src)).toBe(false);

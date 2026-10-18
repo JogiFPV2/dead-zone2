@@ -69,7 +69,14 @@ export function chunkSourceToSimMap(source: ChunkSource, range?: SimChunkRange):
         ...(data.room ? { room: data.room, rooms: rooms ?? {} } : {}),
         ...(data.room && buildings ? { roomBuildings: buildings } : {}),
         ...(data.objects?.length
-          ? { objects: data.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
+          ? {
+              objects: data.objects.map(({ contentId, x, y, rot }) => ({
+                contentId,
+                x,
+                y,
+                ...(rot & 3 ? { rot: rot & 3 } : {}),
+              })),
+            }
           : {}),
         ...(data.stairs?.length ? { stairs: data.stairs.map((st) => ({ ...st })) } : {}),
         ...(data.vehicles?.length ? { vehicles: data.vehicles.map((v) => ({ ...v })) } : {}),
