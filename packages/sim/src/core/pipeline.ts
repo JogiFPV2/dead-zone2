@@ -1,6 +1,7 @@
 import { actionsSystem } from '../actions/queue.js';
 import { aiThinkSystem } from '../ai/brain.js';
 import { lightSystem } from '../ai/light.js';
+import { lightLureSystem } from '../furniture/lighting.js';
 import { combatSystem } from '../combat/system.js';
 import { aiLocomotionSystem } from '../ai/locomotion.js';
 import { animalSystem } from '../animals/system.js';
@@ -50,6 +51,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'lures', run: (w, ctx) => lureSystem(w, ctx.grid) },
     { name: 'noise.collect', run: (w) => noiseCollectSystem(w) },
     { name: 'light', run: (w, ctx) => lightSystem(w, ctx.grid) },
+    { name: 'lightLure', run: (w) => lightLureSystem(w) },
     { name: 'ai.brain', run: (w, ctx) => aiThinkSystem(w, ctx.grid) },
     { name: 'nav', run: (w, ctx) => navSystem(w, ctx.grid) },
     { name: 'ai.locomotion', run: (w, ctx) => aiLocomotionSystem(w, ctx.grid) },

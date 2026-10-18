@@ -289,7 +289,13 @@ describe('furniture menu: windows', () => {
     d.use(WINDOW, 'smash');
     d.step(40);
     const acts = d.entry(WINDOW)!.actions;
-    expect(acts.map((a) => a.id)).toEqual(['open', 'clear-glass', 'climb-through', 'barricade']);
+    expect(acts.map((a) => a.id)).toEqual([
+      'open',
+      'clear-glass',
+      'climb-through',
+      'close-curtains',
+      'barricade',
+    ]);
     expect(acts[1]).toMatchObject({ enabled: true, injuryChancePct: 100 });
     expect(acts[2]!.injuryChancePct).toBe(50);
     d.take();

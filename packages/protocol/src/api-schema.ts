@@ -133,6 +133,16 @@ export const saveSleepSchema = z.object({
 });
 
 /**
+ * Lighting state in the saved openings section (protocol 32, docs 9.53): `curtains` = window edge
+ * keys with drawn curtains (`openingKey`), `lightsOn` = packed tiles of switched-on light switches
+ * (((z + 128) × 65536 + y + 32768) × 65536 + x + 32768). Both empty by default; older saves lack them.
+ */
+export const saveLightingSchema = z.object({
+  curtains: z.array(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)).optional(),
+  lightsOn: z.array(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)).optional(),
+});
+
+/**
  * Burnt food field in the saved item map (protocol 31): `burnt` = cooked food that came out
  * burnt (`crafting.burn`); written only when true.
  */

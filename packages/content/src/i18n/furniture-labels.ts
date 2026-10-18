@@ -31,6 +31,10 @@ export const FURNITURE_ACTIONS_PL = {
   'listen-radio': 'Słuchaj radia',
   'watch-vhs': 'Odtwórz kasetę',
   cook: 'Gotuj',
+  'light-on': 'Zapal światło',
+  'light-off': 'Zgaś światło',
+  'close-curtains': 'Zasłoń okno',
+  'open-curtains': 'Odsłoń okno',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -70,6 +74,7 @@ export const FURNITURE_TYPES_PL = {
   seat: 'Siedzisko',
   radio: 'Radio',
   stove: 'Kuchenka',
+  'light-switch': 'Włącznik światła',
   vcr: 'Magnetowid',
   other: 'Mebel',
 } as const satisfies Record<string, string>;

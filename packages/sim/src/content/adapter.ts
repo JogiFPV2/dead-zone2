@@ -1,4 +1,4 @@
-import type { ContentBundle, CraftingSettings } from '@deadzone/content';
+import type { ContentBundle, CraftingSettings, LightingSettings } from '@deadzone/content';
 
 /**
  * What the sim reads from a `ContentBundle` (a full bundle is assignable). Kept structural so
@@ -151,6 +151,8 @@ export interface ContentIndex {
   /** Item index → the station it is when placed (`placeable.station`). */
   stationOfItem: ReadonlyMap<number, { id: string; level: number }>;
   crafting: CraftingConfig;
+  /** `worldSettings.lighting` (switches, curtains, lit-window lure); bundles without it: no lure. */
+  lighting: LightingSettings;
   traits: ReadonlyMap<string, TraitDef>;
   professions: ReadonlyMap<string, ProfessionDef>;
   appearanceParts: ReadonlyMap<string, AppearancePartDef>;
@@ -173,6 +175,11 @@ export interface CraftingConfig {
 
 export type BurnConfig = Omit<CraftingSettings['burn'], 'stations'> & {
   stations: readonly string[];
+};
+
+const NO_LIGHTING: LightingSettings = {
+  switchTag: 'base:light-switch',
+  lure: { enabled: false, maxSky: 0, radiusTiles: 0, volume: 0, lingerSec: 0 },
 };
 
 const NO_BURN: BurnConfig = {
@@ -268,6 +275,7 @@ export function compileContent(content: SimContent): ContentIndex {
       minTimeMultiplier: cs.minTimeMultiplier ?? 0.5,
       burn: cs.burn ?? NO_BURN,
     },
+    lighting: (content.worldSettings as { lighting?: LightingSettings }).lighting ?? NO_LIGHTING,
     zombieTypes: zombieIds.map((id) => content.zombieTypes![id]!),
     zombieTypeIndex: new Map(zombieIds.map((id, i) => [id, i])),
     animalTypes: animalIds.map((id) => content.animalTypes![id]!),

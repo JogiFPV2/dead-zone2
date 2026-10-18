@@ -143,9 +143,11 @@ function think(
   // Noises of the last think interval (footsteps, shots, impacts…; not animal calls).
   if (!reason) {
     const own = noiseSourceIndex('animal');
+    const light = noiseSourceIndex('light');
     let vol = -1;
     for (const n of ai.noises) {
-      if (n.tick < w.tick - every || n.source === own || n.volume <= vol) continue;
+      if (n.tick < w.tick - every || n.source === own || n.source === light || n.volume <= vol)
+        continue;
       if (!heard(ai, grid, n, x, y, z, def.hearingRangeTiles)) continue;
       reason = 'noise';
       fx = n.x;

@@ -536,6 +536,12 @@ export interface SimViewPatch {
    * whenever any of them changes (also in the first view after a load).
    */
   openings?: OpeningView[];
+  /**
+   * Light switches turned on (protocol 32, docs 9.53), full list when it changes. Lamps
+   * (`placeable.light` with `requiresPower`) in a room with a switch (same `room`, building, floor)
+   * are lit only while it is on and there is power; lamps in rooms without a switch as before.
+   */
+  lightsOn?: { x: number; y: number; z: number }[];
   /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
   lures?: LureView[];
   /** The local player's character (after `newCharacter`; also the first view after a load). */
@@ -851,6 +857,8 @@ export interface OpeningView {
   barricade: number;
   /** Window: glass in the frame (a pane, or shards of a broken one until `removeGlass`). */
   glass: boolean;
+  /** Window with drawn curtains (protocol 32): hides the light inside from zombies. */
+  curtains?: boolean;
 }
 
 /** Edge kinds with a state (`openings`). */

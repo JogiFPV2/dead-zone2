@@ -65,6 +65,32 @@ export interface StaticLight {
   radius: number;
   intensity: number;
   requiresPower: boolean;
+  /**
+   * Light switch of its room (`lighting.switchTag`, same room / building / floor; packed tile
+   * `switchKey`), −1 = none (lit whenever it has power). docs 9.53.
+   */
+  switchKey: number;
+}
+
+/** Packed tile key of a light switch (x, y, z). */
+export const switchKeyOf = (x: number, y: number, z: number): number =>
+  ((z + 0x80) * 0x10000 + (y + 0x8000)) * 0x10000 + (x + 0x8000);
+
+export function unpackSwitchKey(key: number): { x: number; y: number; z: number } {
+  const x = (key % 0x10000) - 0x8000;
+  const k = (key - (x + 0x8000)) / 0x10000;
+  const y = (k % 0x10000) - 0x8000;
+  return { x, y, z: (k - (y + 0x8000)) / 0x10000 - 0x80 };
+}
+
+/** A light switch on the map (derived from map objects). */
+export interface LightSwitch {
+  x: number;
+  y: number;
+  z: number;
+  key: number;
+  /** Room signature (building + room id + floor). */
+  room: string;
 }
 
 /** Cached A* result: tile centres to walk through (x, y pairs). Derived, rebuilt on demand. */
@@ -240,8 +266,43 @@ export function createAiWorld(
 }
 
 /** Lights of map objects: placeables with `placeable.light` (chunk order z, cy, cx). */
+/** Room signature of a map tile (undefined outside): building + room + floor, else chunk + room. */
+export function roomSig(map: SimMap, x: number, y: number, z: number): string | undefined {
+  const cx = Math.floor(x / CHUNK_SIZE);
+  const cy = Math.floor(y / CHUNK_SIZE);
+  const chunk = map.getChunk(cx, cy, z);
+  const i = (y - cy * CHUNK_SIZE) * CHUNK_SIZE + (x - cx * CHUNK_SIZE);
+  const room = chunk?.room?.[i] ?? 0;
+  if (!room) return undefined;
+  const b = chunk?.roomBuildings?.[String(room)] ?? 0;
+  return b ? `b${b}:${room}:${z}` : `c${cx},${cy},${z}:${room}`;
+}
+
+/** Light switches (`lighting.switchTag` placeables) on the map, in chunk order. */
+export function collectSwitches(content: ContentIndex, map: SimMap): LightSwitch[] {
+  const out: LightSwitch[] = [];
+  const tag = content.lighting.switchTag;
+  const list = [...(map.listChunks?.() ?? [])].sort(
+    (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
+  );
+  for (const addr of list) {
+    for (const obj of map.getChunk(addr.cx, addr.cy, addr.z)?.objects ?? []) {
+      const i = content.itemIndex.get(obj.contentId);
+      if (i === undefined || !content.items[i]!.tags.includes(tag)) continue;
+      const x = addr.cx * CHUNK_SIZE + obj.x;
+      const y = addr.cy * CHUNK_SIZE + obj.y;
+      const room = roomSig(map, x, y, addr.z);
+      if (room) out.push({ x, y, z: addr.z, key: switchKeyOf(x, y, addr.z), room });
+    }
+  }
+  return out;
+}
+
 function collectLights(content: ContentIndex, map: SimMap): StaticLight[] {
   const out: StaticLight[] = [];
+  const switches = new Map<string, number>();
+  for (const sw of collectSwitches(content, map))
+    if (!switches.has(sw.room)) switches.set(sw.room, sw.key);
   const list = [...(map.listChunks?.() ?? [])].sort(
     (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
   );
@@ -251,13 +312,17 @@ function collectLights(content: ContentIndex, map: SimMap): StaticLight[] {
       const def = i === undefined ? undefined : content.items[i];
       if (def?.kind !== 'placeable' || !def.placeable.light) continue;
       const l = def.placeable.light;
+      const x = addr.cx * CHUNK_SIZE + obj.x;
+      const y = addr.cy * CHUNK_SIZE + obj.y;
+      const room = l.requiresPower && switches.size > 0 ? roomSig(map, x, y, addr.z) : undefined;
       out.push({
-        x: addr.cx * CHUNK_SIZE + obj.x + 0.5,
-        y: addr.cy * CHUNK_SIZE + obj.y + 0.5,
+        x: x + 0.5,
+        y: y + 0.5,
         z: addr.z,
         radius: l.radiusTiles,
         intensity: l.intensity,
         requiresPower: l.requiresPower,
+        switchKey: room ? (switches.get(room) ?? -1) : -1,
       });
     }
   }

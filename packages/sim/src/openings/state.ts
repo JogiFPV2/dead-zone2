@@ -158,6 +158,10 @@ export interface OpeningsWorld {
    * built once on the first lock roll (derived from the map, not saved).
    */
   buildingRooms: Map<number, Set<string>> | undefined;
+  /** Windows with drawn curtains (edge keys; saved, docs 9.53). */
+  readonly curtains: Set<number>;
+  /** Light switches turned on (`switchKeyOf`; saved, docs 9.53). */
+  readonly lightsOn: Set<number>;
 }
 
 export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0): OpeningsWorld {
@@ -185,6 +189,8 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0):
     seed,
     lockCache: new Map(),
     buildingRooms: undefined,
+    curtains: new Set(),
+    lightsOn: new Set(),
   };
 }
 
@@ -311,6 +317,7 @@ export function openingView(o: OpeningsWorld, key: number, kind: number): Openin
     maxHp: maxHp(o.cfg, kind, state) + planks * o.cfg.barricade.plankHp,
     barricade: planks,
     glass: kind === OpeningKind.window && !(state === OS.broken && e?.cleared),
+    ...(o.curtains.has(key) ? { curtains: true } : {}),
   };
 }
 

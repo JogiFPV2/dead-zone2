@@ -81,6 +81,8 @@ export function lightAt(w: SimWorld, ai: AiWorld, x: number, y: number, z: numbe
   const powered = w.items?.powered ?? true;
   for (const l of ai.lights) {
     if (l.z !== z || l.intensity <= best || (l.requiresPower && !powered)) continue;
+    // Lamps of a room with a switch: only while it is on (docs 9.53).
+    if (l.switchKey >= 0 && !w.openings.lightsOn.has(l.switchKey)) continue;
     const dx = x - l.x;
     const dy = y - l.y;
     if (dx * dx + dy * dy <= l.radius * l.radius) best = l.intensity;

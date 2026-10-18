@@ -16,6 +16,8 @@ import { TICKS_PER_SECOND } from '../core/constants.js';
 import type { SimWorld } from '../core/world.js';
 import { carriedItems } from '../items/actions.js';
 import { craftSources, evalRecipe, stationHeats } from '../crafting/crafting.js';
+import { switchKeyOf } from '../ai/state.js';
+import { setCurtains, setLight } from './lighting.js';
 import { applyItemCommand } from '../items/commands.js';
 import { canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
@@ -235,6 +237,21 @@ function edgeActions(
       );
     }
   }
+  // Curtains (every window, docs 9.53): hide the light inside from zombies.
+  if (kind === OpeningKind.window) {
+    const drawn = o.curtains.has(key);
+    out.push(
+      entry(
+        drawn ? 'open-curtains' : 'close-curtains',
+        edgeInReach(w, eid, key) ? undefined : 'out-of-range',
+        {},
+        () => {
+          setCurtains(w, key, !drawn);
+          return undefined;
+        },
+      ),
+    );
+  }
   // Barricade (doors closed / locked, windows, gates) and pulling planks.
   if (
     planks < cfg.barricade.maxPlanks &&
@@ -364,6 +381,18 @@ function objectActions(
         }),
       );
     }
+  }
+  // Light switch: turns the powered lamps of its room on / off (docs 9.53).
+  if (def && def.tags.includes(st.content.lighting.switchTag)) {
+    typeId ??= 'light-switch';
+    const key = switchKeyOf(obj.x, obj.y, obj.z);
+    const on = w.openings.lightsOn.has(key);
+    out.push(
+      entry(on ? 'light-off' : 'light-on', undefined, {}, () => {
+        setLight(w, key, !on);
+        return undefined;
+      }),
+    );
   }
   // Stove: one `cook:<recipeId>` per known recipe of its station (parts it has, level it allows).
   if (def?.kind === 'placeable' && def.placeable.cooking && def.placeable.station) {

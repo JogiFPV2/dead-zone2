@@ -19,6 +19,7 @@ import {
   FurnitureLongSideAccessSchema,
   FurnitureTallSchema,
 } from './furniture-settings.js';
+import { LightingSettingsSchema } from './lighting-settings.js';
 
 /**
  * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
@@ -78,6 +79,8 @@ export const WorldSettingsSchema = z.strictObject({
   furnitureTall: FurnitureTallSchema,
   /** Meble obsługiwane tylko wzdłuż dłuższej krawędzi przy `furnitureFootprint` (lada). */
   furnitureLongSideAccess: FurnitureLongSideAccessSchema,
+  /** Włączniki światła, zasłony, światło w oknie wabiące zombie (Symulacja). */
+  lighting: LightingSettingsSchema,
   ext: ExtSchema,
 });
 

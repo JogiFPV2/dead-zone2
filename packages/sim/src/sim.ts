@@ -645,6 +645,14 @@ export function createSim(input: SimOptions): Sim {
       }
       for (const k of [...o.bashAt.keys()].sort((a, b) => a - b)) h.u32(k).u32(o.bashAt.get(k)!);
     }
+    // Curtains / light switches (docs 9.53): only when set (older goldens).
+    if (o.curtains.size > 0 || o.lightsOn.size > 0) {
+      h.u32(0x11_9475).u32(o.curtains.size).u32(o.lightsOn.size);
+      for (const k of [...o.curtains].sort((a, b) => a - b))
+        h.u32(k % 0x1_0000_0000).u32(Math.floor(k / 0x1_0000_0000));
+      for (const k of [...o.lightsOn].sort((a, b) => a - b))
+        h.u32(k % 0x1_0000_0000).u32(Math.floor(k / 0x1_0000_0000));
+    }
     return h.digest();
   };
 

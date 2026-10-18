@@ -11,7 +11,8 @@ import { lureViews } from '../lures/lures.js';
 import { craftingView } from '../crafting/crafting.js';
 import { skillViews } from '../progress/skills.js';
 import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
-import { openingView } from '../openings/state.js';
+import { edgeKindOf, openingView } from '../openings/state.js';
+import { unpackSwitchKey } from '../ai/state.js';
 import {
   BODY_PARTS,
   GAITS,
@@ -208,6 +209,7 @@ export class ViewTracker {
   private combatKey = '';
   private deathSent = false;
   private openingsVersion = 0;
+  private lightsSig = '';
   private luresKey = '';
   private utilitiesKey = '';
   private penaltiesKey = '';
@@ -406,9 +408,17 @@ export class ViewTracker {
     }
     if (w.openings.version !== this.openingsVersion) {
       this.openingsVersion = w.openings.version;
-      patch.openings = [...w.openings.states.keys()]
+      const o = w.openings;
+      patch.openings = [...new Set([...o.states.keys(), ...o.curtains])]
         .sort((a, b) => a - b)
-        .map((k) => openingView(w.openings, k, 0));
+        .map((k) => openingView(o, k, o.states.has(k) ? 0 : edgeKindOf(o, k)));
+      // Light switches turned on (docs 9.53): when the set changed.
+      const on = [...o.lightsOn].sort((a, b) => a - b);
+      const sig = on.join(',');
+      if (sig !== this.lightsSig) {
+        this.lightsSig = sig;
+        patch.lightsOn = on.map(unpackSwitchKey);
+      }
     }
     return Object.keys(patch).length > 0 ? patch : undefined;
   }

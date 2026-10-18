@@ -1332,7 +1332,7 @@ Paweł zgłosił, że zombie goni za długo. Były dwie przyczyny. Po pierwsze, 
 - **Krok pipeline'u `light`** (przed `ai.brain`): poziom światła graczy co `LIGHT.everyTicks` = 5 ticków. Trafia do `AiWorld.lightLevel` (stan, w zapisie; −1 = jeszcze niepoliczony).
 - **Widoczność (`playerVisibility`)** = `sightFactor(światło)` × ruch × skradanie, najwyżej 1. Ruch: stojąc w ciemności × `stillDarkMul` 0,1, co rośnie do × 1 przy świetle 0,6 (`stillFullLight`); bieg × 1,15, sprint × 1,3; skradanie × `sneakVisibilityMul` z umiejętnością (9.43). Zasięg wzroku zombie to `sightRangeTiles` × widoczność. Przykład dla `base:walker`, 18 kafli: w dzień na otwartym 18; nocą w ruchu 7,2; nocą stojąc 0,7, więc praktycznie niewidoczny (zostaje słuch i bliskość 2,5 kafla w stożku); w dzień stojąc w cieniu ≈ 9,1; w budynku w dzień stojąc ≈ 6,9.
 - **Widok:** `SimViewPatch.visibility` (0..1, krok 0,05), `stealth: 'lit'|'dim'|'hidden'` oraz `lightLevel` (0..1, krok 0,05), wysyłane przy zmianie. Progi to stałe w protokole: `STEALTH_HIDDEN_MAX` 0,1 i `STEALTH_DIM_MAX` 0,55 (`STEALTH_LEVELS`).
-- **Do zrobienia później:** światło w oknach z prądem jako osobne źródła (dziś tylko obiekty z blokiem `light`), stożek latarki i bateria, zapalone światło w nocy wabiące zombie.
+- **Do zrobienia później:** światło w oknach z prądem jako osobne źródła (dziś tylko obiekty z blokiem `light`), stożek latarki i bateria. Zapalone światło w nocy wabiące zombie: 9.53.
 
 ### 9.46 Meble i czynności — audyt (origin/main 354ace2) i prąd/woda (protokół 25)
 
@@ -1503,3 +1503,23 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
   - `base:gas-stove` istnieje dziś tylko jako typ schowka. Żeby się na nim gotowało, potrzebny jest przedmiot `placeable` ze `station` fire i `cooking: {burners: 'gas', oven: 'gas'}`, z ikoną.
   - `base:kitchen-oven` można oznaczyć `cooking`, jeśli ma być elektryczny.
 - **Testy:** `crafting/cooking.test.ts`.
+
+### 9.53 Światło w pokojach, zasłony, zapalone okno wabi zombie (protokół 32) — kontrakt dla Silnika, Designera, Serwera, Silnika 2 i Modules
+
+- **Włącznik:** obiekt mapy z tagiem `worldSettings.lighting.switchTag` (`base:light-switch`) na kaflu pokoju. Steruje lampami `placeable.light` z `requiresPower`, które stoją w tym samym pokoju: ten sam `room`, budynek (`roomBuildings`) i piętro; bez budynku liczy się ten sam chunk. Pierwszy włącznik pokoju (kolejność chunków) jest właścicielem lamp.
+  - Domyślnie zgaszone.
+  - Lampa świeci, gdy włącznik jest włączony i jest prąd.
+  - Lampy w pokojach bez włącznika działają jak dotąd (świecą przy prądzie).
+  - Menu włącznika (`typeId` `light-switch`): `light-on` / `light-off`, natychmiast.
+- **Zasłony:** każde okno ma w menu `close-curtains` / `open-curtains`, natychmiast, w zasięgu krawędzi. Pokazuje to `OpeningView.curtains` (okna z zasłonami są też na liście `openings`).
+- **Widok:** `SimViewPatch.lightsOn: {x, y, z}[]`, czyli włączone włączniki, pełna lista przy zmianie. Renderer gasi lampy pokoju z włącznikiem, którego nie ma na liście (ta sama reguła pokoju).
+- **Wabienie (`lighting.lure`):** gdy niebo ≤ `maxSky` (0,3: noc i zmierzch), raz na cykl myślenia zombie (`ai.farThinkEveryTicks`) każde okno pokoju z zapaloną lampą z włącznika daje bodziec `emitNoise` ze źródłem `light` (nowe, ostatnie w `NOISE_SOURCES`). Okno musi mieć odsłonięte zasłony i mniej desek niż `barricade.maxPlanks`.
+  - Bodziec leży na kaflu na zewnątrz okna: promień `radiusTiles` 25, siła `volume` 0,3, zombie zostaje `lingerSec` 20 s.
+  - Zombie przychodzi zbadać (`investigate`) jak przy hałasie (ściany tłumią jak hałas).
+  - `light` nie budzi śpiących i nie płoszy zwierząt.
+  - Paczki bez `lighting` (fixtures) nie wabią.
+- **Zapis:** sekcja `openings` dostaje `curtains` i `lightsOn` (zbiory; `saveLightingSchema` w `@deadzone/protocol/schema`). `SAVE_VERSION` 3; starsze zapisy mają puste. Hash tylko gdy niepuste.
+- **Modules / Silnik 2:**
+  - Brak przedmiotu włącznika w `base`. Potrzebny placeable z tagiem `base:light-switch` (z ikoną), który Silnik 2 stawia po jednym w pokoju z lampą sufitową (`ROOM_KITS`).
+  - Do tego czasu lampy działają jak dotąd i nic nie wabi.
+- **Testy:** `furniture/lighting.test.ts`.

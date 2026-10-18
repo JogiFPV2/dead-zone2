@@ -213,6 +213,8 @@ export const NOISE_SOURCES = [
   'animal',
   /** A running engine (louder with throttle); after `animal`, indices are hashed. */
   'vehicle',
+  /** Lit window at night (docs 9.53): zombies come to look; never wakes sleepers. Last. */
+  'light',
 ] as const;
 export type NoiseSource = (typeof NOISE_SOURCES)[number];
 

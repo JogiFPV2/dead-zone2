@@ -2,8 +2,10 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { wake } from '../systems/sleep.js';
 import type { TileGrid } from '../world/grid.js';
 import { heard } from './noise.js';
-import { ZombieState } from './state.js';
+import { noiseSourceIndex, ZombieState } from './state.js';
 import { floorZ } from '../world/levels.js';
+
+const LIGHT_SRC = noiseSourceIndex('light');
 
 /**
  * Pipeline `ai.threat` (after movement): per player, zombies chasing them and zombies within the
@@ -42,7 +44,8 @@ export function threatSystem(w: SimWorld, grid: TileGrid): void {
       continue;
     }
     for (const n of ai.noises) {
-      if (n.tick !== w.tick || n.volume < sleep.wakeOnNoiseVolume) continue;
+      if (n.tick !== w.tick || n.volume < sleep.wakeOnNoiseVolume || n.source === LIGHT_SRC)
+        continue;
       if (heard(ai, grid, n, x, y, z, ai.cfg.noise.referenceHearingTiles)) {
         wake(w, s, eid, 'noise');
         break;
