@@ -19,8 +19,10 @@ export function applySurvivalCommand(
   if ((cmd.type === 'debugWound' || cmd.type === 'debugStat') && !w.dev) return 'dev-only';
   if (!s) return 'invalid-state';
   switch (cmd.type) {
-    case 'sleep':
-      return fallAsleep(w, eid) === 'ok' ? undefined : 'invalid-state';
+    case 'sleep': {
+      const r = fallAsleep(w, eid, cmd.until);
+      return r === 'ok' ? undefined : r;
+    }
     case 'wake':
       return wake(w, s, eid, 'command') ? undefined : 'invalid-state';
     case 'setTimeScale':

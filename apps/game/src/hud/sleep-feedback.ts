@@ -49,9 +49,15 @@ const WAKE_TITLE: Record<Exclude<WakeReason, 'died'>, string> = {
   rested: 'Wyspałeś się',
   'max-duration': 'Koniec snu',
   command: 'Wstajesz',
+  alarm: 'Budzik — pobudka',
 };
 
-const LEISURE_TEXT = { read: 'Lektura', tv: 'Telewizja', vhs: 'Kaseta VHS' } as const;
+const LEISURE_TEXT = {
+  read: 'Lektura',
+  tv: 'Telewizja',
+  vhs: 'Kaseta VHS',
+  rest: 'Odpoczynek',
+} as const;
 
 const TV_REJECT: Partial<Record<string, string>> = {
   'no-power': 'Telewizor nie ma prądu',

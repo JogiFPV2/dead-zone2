@@ -1,5 +1,5 @@
-import type { WakeReason } from '@deadzone/protocol';
-import { gameMinuteAt } from '../core/clock.js';
+import type { CommandRejectReason, WakeReason } from '@deadzone/protocol';
+import { gameMinuteAt, MINUTES_PER_DAY, minuteOfDay } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { CHUNK_SIZE } from '@deadzone/protocol';
 import { TICKS_PER_SECOND } from '../core/constants.js';
@@ -87,6 +87,12 @@ export function sleepSystem(w: SimWorld, first: number, count: number): void {
       const fatigue = clampStat(before - Math.min(left, surf.fatigueRecoveryPerMin * quality));
       s.vitals.fatigue[eid] = fatigue;
       s.sleepRecovered[eid] = Math.fround((s.sleepRecovered[eid] ?? 0) + (before - fatigue));
+      // Alarm (`sleep {until}`): only the alarm (or a threat / pain / fever) wakes.
+      const until = s.sleepUntil[eid] ?? 0;
+      if (until > 0) {
+        if (m >= until) wake(w, s, eid, 'alarm');
+        continue;
+      }
       // Rested, or this place gave all it can in one sleep (bed 50, sofa 35, floor 25).
       if (
         fatigue <= cfg.wakeAtFatigue ||
@@ -98,15 +104,41 @@ export function sleepSystem(w: SimWorld, first: number, count: number): void {
   }
 }
 
-export type SleepResult = 'ok' | 'invalid-state';
+export type SleepResult = 'ok' | CommandRejectReason;
 
-export function fallAsleep(w: SimWorld, eid: number): SleepResult {
+/** Why the player cannot fall asleep now (undefined = can): `threat`, `not-tired`. */
+export function sleepReason(w: SimWorld, eid: number): CommandRejectReason | undefined {
   const s = w.survival;
-  if (!s || s.asleep[eid] || threatNearby(w, eid)) return 'invalid-state';
+  if (!s || s.asleep[eid] || s.dead[eid]) return 'invalid-state';
+  if (threatNearby(w, eid)) return 'threat';
   const cfg = s.content.survival.sleep;
-  if ((s.vitals.fatigue[eid] ?? 0) < cfg.minFatigueToSleep) return 'invalid-state';
+  return (s.vitals.fatigue[eid] ?? 0) < cfg.minFatigueToSleep ? 'not-tired' : undefined;
+}
+
+/** Absolute alarm minute for `until` from minute `now` (0 = none). */
+export function alarmMinute(
+  cfg: SurvivalWorld['content']['survival']['sleep'],
+  now: number,
+  until: 'morning' | number | undefined,
+): number {
+  if (until === undefined) return 0;
+  if (until === 'morning') {
+    const at = cfg.morningHour * 60;
+    const today = now - minuteOfDay(now) + at;
+    return today > now ? today : today + MINUTES_PER_DAY;
+  }
+  return now + Math.max(1, Math.min(cfg.untilMaxHours, Math.floor(until))) * 60;
+}
+
+export function fallAsleep(w: SimWorld, eid: number, until?: 'morning' | number): SleepResult {
+  const reason = sleepReason(w, eid);
+  if (reason) return reason;
+  const s = w.survival!;
+  const cfg = s.content.survival.sleep;
+  const now = gameMinuteAt(w.clock, w.tick);
   s.asleep[eid] = 1;
-  s.sleepStart[eid] = gameMinuteAt(w.clock, w.tick);
+  s.sleepStart[eid] = now;
+  s.sleepUntil[eid] = alarmMinute(cfg, now, until);
   s.sleepSurface[eid] = SLEEP_SURFACES.indexOf(sleepSurfaceAt(w, eid));
   s.sleepRecovered[eid] = 0;
   s.sleepTicks[eid] = 0;
@@ -121,6 +153,7 @@ export function fallAsleep(w: SimWorld, eid: number): SleepResult {
 export function wake(w: SimWorld, s: SurvivalWorld, eid: number, reason: WakeReason): boolean {
   if (!s.asleep[eid]) return false;
   s.asleep[eid] = 0;
+  s.sleepUntil[eid] = 0;
   w.events.push({
     type: 'wokeUp',
     tick: w.tick,
@@ -136,8 +169,16 @@ export function wake(w: SimWorld, s: SurvivalWorld, eid: number, reason: WakeRea
 
 /** Best sleeping place within 1.5 tiles: map objects whose placeable has `sleepSurface`. */
 export function sleepSurfaceAt(w: SimWorld, eid: number): SleepSurface {
+  return placeAt(w, eid).sleep;
+}
+
+/** A seat, sofa or bed within 1.5 tiles (full `rest`). */
+export const seatNear = (w: SimWorld, eid: number): boolean => placeAt(w, eid).seat;
+
+function placeAt(w: SimWorld, eid: number): { sleep: SleepSurface; seat: boolean } {
   const content = w.survival?.content;
-  if (!content) return 'floor';
+  if (!content) return { sleep: 'floor', seat: false };
+  let seat = false;
   const px = w.c.Position.x[eid] ?? 0;
   const py = w.c.Position.y[eid] ?? 0;
   const z = floorZ(w, eid);
@@ -152,17 +193,19 @@ export function sleepSurfaceAt(w: SimWorld, eid: number): SleepSurface {
     for (let cx = cx0; cx <= cx1; cx++) {
       for (const obj of w.map.getChunk(cx, cy, z)?.objects ?? []) {
         const def = content.items[content.itemIndex.get(obj.contentId) ?? -1];
-        const surf = def?.kind === 'placeable' ? def.placeable.sleepSurface : undefined;
-        if (!surf) continue;
+        if (def?.kind !== 'placeable') continue;
+        const surf = def.placeable.sleepSurface;
+        if (!surf && !def.placeable.seat) continue;
         const ox = cx * CHUNK_SIZE + obj.x;
         const oy = cy * CHUNK_SIZE + obj.y;
         const d2 = w.furniture
           ? rectDist2(objectRect(w, ox, oy, obj.contentId, obj.rot), px, py)
           : (ox + 0.5 - px) * (ox + 0.5 - px) + (oy + 0.5 - py) * (oy + 0.5 - py);
         if (d2 > 1.5 * 1.5) continue;
-        if (SLEEP_SURFACES.indexOf(surf) > SLEEP_SURFACES.indexOf(best)) best = surf;
+        seat = true;
+        if (surf && SLEEP_SURFACES.indexOf(surf) > SLEEP_SURFACES.indexOf(best)) best = surf;
       }
     }
   }
-  return best;
+  return { sleep: best, seat };
 }

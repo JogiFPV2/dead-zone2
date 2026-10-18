@@ -1444,3 +1444,19 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - **Lada (`furnitureLongSideAccess`, domyślnie `base:shop-counter`):** tylko z boku wzdłuż dłuższej krawędzi — klient po +z, sprzedawca od ściany (−z); po obrocie rot 1/3 są to boki W/E. Z końców i narożników nie.
 - **Zasięg:** schowek (jeden na mebel, przegródki jak dotąd), menu mebli (`furnitureActions`), łóżko/kanapa do snu i stanowiska craftingu — z każdego kafla obok mebla, także po skosie: odległość do najbliższego środka zajętego kafla ≤ 1,5. `FurnitureView.x/y/z` mebla = środek footprintu (`footprintCenter`, to też origin modelu), `furnitureId` bez zmian (kafel kotwicy + indeks).
 - **Fizyka:** przesuwanie mebli zmienia kafle — po zmianie pozycji obiektu wołać `w.furniture.invalidate(cx, cy, z)` (chunk kotwicy) i `invalidateNavArea(grid, z, x0, y0, x1, y1)` (`nav/grid-nav.ts`, stary i nowy prostokąt); flow fieldy odświeżą się przy następnym przeliczeniu. Schowki postawione przez gracza (`placeStorage`) nie blokują.
+
+### 9.50 Sen z budzikiem, odpoczynek, nauka tylko wypoczętym (protokół 29) — kontrakt dla Silnika, Designera i Serwera
+
+- **`sleep {until?}`** (`sleepCommandSchema`). `until: 'morning'` oznacza najbliższą `sleep.morningHour` (7:00), a liczba 1–24 tyle godzin (najwyżej `sleep.untilMaxHours`, 16).
+  - Z budzikiem sim nie budzi po wyspaniu ani po `maxDurationMin`. Budzi o czasie zdarzeniem `wokeUp {reason: 'alarm'}`. Zmęczenie nie spada poniżej limitu posłania.
+  - Zagrożenie, ból, gorączka i hałas budzą jak dotąd.
+  - `SleepView.wakeAtTick?` to tick pobudki.
+  - Odrzucenia są teraz dokładne: `not-tired` (zmęczenie < `minFatigueToSleep`) i `threat` (zombie blisko). Wcześniej oba dawały `invalid-state`.
+- **Odpoczynek `rest {}`** (`restCommandSchema`, nowy `ActionKind` `rest`) to czynność z czasem `leisure.rest.sessionMin` (30 min gry). Wymaga zmęczenia ≥ `leisure.rest.minFatigue` (10), inaczej `not-tired`.
+  - Efekt: zmęczenie −`fatigueRest` (6), stres −4, zdarzenie `leisureCompleted {activity: 'rest'}`.
+  - Na siedzisku, kanapie albo łóżku w promieniu 1,5 kratki działa w pełni, na podłodze × `floorMul` (0,5).
+  - Nowe pole treści: `placeable.seat` (krzesło, fotel). Modules: dopisać je krzesłom i fotelom.
+- **Nauka tylko wypoczętym:** książka z `skillBook` albo `unlocksRecipes` i kaseta VHS z `skills` dają `tired`, gdy zmęczenie ≥ `leisure.learning.maxFatigue` (60). Sprawdzane jest to tylko na starcie. Zwykłe czytanie i TV działają zawsze. Radio dojdzie w etapie 5.
+- **Menu (`furnitureActions`):** łóżko i kanapa (`typeId` `bed` / `sofa`) mają `sleep`, `sleep-until:morning` i `rest`. Siedzisko (`seat`) ma `rest`. `useFurniture` przyjmuje też `sleep-until:<1..24>`, z etykietą „Śpij N godz.” (`furnitureActionPl`).
+- **Zapis (`SAVE_VERSION` 3):** tablica `sleepUntil` w sekcji przetrwania (minuta gry, 0 = bez budzika). Stary zapis nie ma budzika. Hasz dopisuje ją tylko wtedy, gdy jest ustawiona. Serwer: bez zmian w schemacie (sekcja przetrwania jest generyczna).
+- **Testy:** `systems/sleep-until.test.ts`.

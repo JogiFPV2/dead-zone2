@@ -86,7 +86,10 @@ export interface SimWorkerClient {
   setSneak(on: boolean): void;
   /** Aim at a world point (tiles) for the local player. */
   aim(x: number, y: number): void;
-  sleep(): void;
+  /** Sleep; `until` = alarm (`'morning'` or hours, protocol 29). */
+  sleep(until?: 'morning' | number): void;
+  /** Rest sitting (`rest`, protocol 29). */
+  rest(): void;
   wake(): void;
   /** Watch the powered TV nearby (`watch` action); `vhs` = a carried VHS tape. */
   watchTv(vhs?: ItemId): void;
@@ -349,7 +352,12 @@ export function createSimWorkerClient(
         },
       }),
     aim: (x, y) => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'aim', x, y } }),
-    sleep: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'sleep' } }),
+    sleep: (until) =>
+      post({
+        kind: 'cmd',
+        cmd: { ...nextHeader(), type: 'sleep', ...(until !== undefined ? { until } : {}) },
+      }),
+    rest: () => cmd({ type: 'rest' }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
     watchTv: (vhs) => cmd({ type: 'watchTv', ...(vhs !== undefined ? { vhs } : {}) }),
     search: (target) => cmd({ type: 'search', ...target }),

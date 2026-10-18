@@ -150,6 +150,8 @@ export type ActionKind =
   | 'disinfect'
   /** Stitch a wound with needle and thread (`treatWound`, protocol 27). */
   | 'stitch'
+  /** Rest sitting (`rest`, protocol 29). */
+  | 'rest'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -179,10 +181,19 @@ export type ActionInterruptReason =
   | 'target-lost';
 
 export type WakeReason =
-  'command' | 'rested' | 'max-duration' | 'died' | 'noise' | 'zombie' | 'pain' | 'fever';
+  | 'command'
+  | 'rested'
+  | 'max-duration'
+  | 'died'
+  | 'noise'
+  | 'zombie'
+  | 'pain'
+  | 'fever'
+  /** `sleep {until}` reached (protocol 29). */
+  | 'alarm';
 
 /** Leisure activity of `leisureCompleted`. */
-export type LeisureActivity = 'read' | 'tv' | 'vhs';
+export type LeisureActivity = 'read' | 'tv' | 'vhs' | 'rest';
 
 export type LurePhase = 'idle' | 'armed' | 'sounding' | 'running' | 'spent' | 'removed';
 

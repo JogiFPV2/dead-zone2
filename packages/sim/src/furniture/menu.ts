@@ -1,3 +1,4 @@
+import { fallAsleep, sleepReason } from '../systems/sleep.js';
 import {
   CHUNK_SIZE,
   type CommandRejectReason,
@@ -307,14 +308,35 @@ function objectActions(
     typeId ??= 'tv';
     out.push(timed(w, eid, 'watch', newAction('watch', { item: 0 })));
     const p = playerItems(w, eid);
+    let tapes = 0;
     for (const item of p ? carriedItems(st, p.inventory) : []) {
       if (defOf(st, item).kind !== 'vhs') continue;
+      tapes++;
       out.push(
         timed(w, eid, `insert-tape:${item.id}`, newAction('watch', { item: item.id }), {
           item: { id: item.id, def: defOf(st, item).id },
         }),
       );
     }
+    // No tape carried: a grey entry says why.
+    if (tapes === 0) out.push(entry('insert-tape', 'missing-item'));
+  }
+  // Bed / sofa: sleep (until rested, until morning, `sleep-until:<hours>`); seats: rest.
+  if (def?.kind === 'placeable' && (def.placeable.sleepSurface || def.placeable.seat)) {
+    typeId ??= def.placeable.sleepSurface ?? 'seat';
+    if (def.placeable.sleepSurface) {
+      const reason = sleepReason(w, eid);
+      const sleep = (until?: 'morning' | number) => () => {
+        const r = fallAsleep(w, eid, until);
+        return r === 'ok' ? undefined : r;
+      };
+      out.push(entry('sleep', reason, {}, sleep()));
+      out.push(entry('sleep-until:morning', reason, {}, sleep('morning')));
+      const h = cmd?.actionId.startsWith('sleep-until:') ? Number(cmd.actionId.slice(12)) : NaN;
+      if (Number.isInteger(h) && h >= 1 && h <= 24)
+        out.push(entry(cmd!.actionId, reason, {}, sleep(h)));
+    }
+    out.push(timed(w, eid, 'rest', newAction('rest')));
   }
   if (!typeId || out.length === 0) return undefined;
   return { typeId, actions: out };

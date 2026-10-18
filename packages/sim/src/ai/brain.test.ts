@@ -119,7 +119,7 @@ describe('ai: threat', () => {
     send(sim, { type: 'useItem', item: findItem(sim, 'fixture:apple')!.id });
     runTicks(sim, 2);
     const ev = sim.drainEvents();
-    expect(eventsOf(ev, 'commandRejected').map((e) => e.reason)).toEqual(['invalid-state']);
+    expect(eventsOf(ev, 'commandRejected').map((e) => e.reason)).toEqual(['threat']);
     expect(eventsOf(ev, 'actionInterrupted').map((e) => e.reason)).toEqual(['threat']);
   });
 

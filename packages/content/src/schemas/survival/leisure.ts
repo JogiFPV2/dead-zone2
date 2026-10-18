@@ -32,6 +32,22 @@ export const LeisureSettingsSchema = z
       })
       .prefault({}),
     vhs: session(8, 30, 15),
+    /**
+     * Odpoczynek (`rest`, siedząc): sesja `sessionMin`, tylko przy zmęczeniu ≥ `minFatigue`.
+     * Na podłodze `fatigueRest` × `floorMul`; na siedzisku / kanapie / łóżku w pełni.
+     */
+    rest: z
+      .strictObject({
+        fatigueRest: stat(6),
+        boredomReduction: stat(0),
+        stressReduction: stat(4),
+        sessionMin: minutes(30),
+        minFatigue: stat(10),
+        floorMul: z.number().min(0).max(1).default(0.5),
+      })
+      .prefault({}),
+    /** Nauka (książki umiejętności i przepisów, VHS z XP, radio): tylko gdy zmęczenie < `maxFatigue`. */
+    learning: z.strictObject({ maxFatigue: stat(60) }).prefault({}),
     tvTag: TagSchema.default('base:station-tv'),
     tvRadiusTiles: num(1.5, 10),
   })

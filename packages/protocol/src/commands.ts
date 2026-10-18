@@ -105,6 +105,21 @@ export type WoundKind = (typeof WOUND_KINDS)[number];
  */
 export interface SleepCommand extends CommandHeader {
   type: 'sleep';
+  /**
+   * Alarm (protocol 29, docs 9.50): `'morning'` = the next `sleep.morningHour` (7:00), a number =
+   * that many hours (1..`sleep.untilMaxHours`). The sim wakes the player then (`wokeUp {reason:
+   * 'alarm'}`), not when rested; threats, pain and fever still wake. Omitted = until rested.
+   */
+  until?: 'morning' | number | undefined;
+}
+
+/**
+ * Rest sitting (protocol 29): timed `rest` (`leisure.rest.sessionMin`), fatigue / stress down,
+ * only when fatigue ≥ `leisure.rest.minFatigue` (`not-tired`). Full effect on a seat / sofa /
+ * bed within 1.5 tiles, on the floor × `rest.floorMul`.
+ */
+export interface RestCommand extends CommandHeader {
+  type: 'rest';
 }
 
 /** Wakes up now (`wokeUp {reason: 'command'}`, partial rest kept). */
@@ -871,6 +886,7 @@ export type Command =
   | MoveCommand
   | AimCommand
   | SleepCommand
+  | RestCommand
   | WakeCommand
   | SetTimeScaleCommand
   | WatchTvCommand

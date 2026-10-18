@@ -1,3 +1,5 @@
+import type { ActionState } from '../items/store.js';
+import { seatNear } from '../systems/sleep.js';
 import {
   CHUNK_SIZE,
   type Command,
@@ -79,7 +81,7 @@ export function applyLeisure(
   w: SimWorld,
   eid: number,
   activity: LeisureActivity,
-  extra: { boredom?: number; stress?: number } = {},
+  extra: { boredom?: number; stress?: number; fatigueMul?: number } = {},
 ): void {
   const s = w.survival;
   if (!s) return;
@@ -90,7 +92,7 @@ export function applyLeisure(
     v[stat][eid] = clampStat(before - by);
     return Math.round((before - (v[stat][eid] ?? 0)) * 10) / 10;
   };
-  const fatigue = drop('fatigue', cfg.fatigueRest);
+  const fatigue = drop('fatigue', cfg.fatigueRest * (extra.fatigueMul ?? 1));
   const boredom = drop('boredom', cfg.boredomReduction + (extra.boredom ?? 0));
   const stress = drop('stress', cfg.stressReduction + (extra.stress ?? 0));
   w.events.push({
@@ -104,31 +106,65 @@ export function applyLeisure(
   });
 }
 
-export const isLeisureCommand = (cmd: Command): cmd is Extract<Command, { type: 'watchTv' }> =>
-  cmd.type === 'watchTv';
+type LeisureCommand = Extract<Command, { type: 'watchTv' | 'rest' }>;
 
-/** `watchTv {vhs?}` → timed `watch` action (also `useItem` on a VHS tape). */
+export const isLeisureCommand = (cmd: Command): cmd is LeisureCommand =>
+  cmd.type === 'watchTv' || cmd.type === 'rest';
+
+/** `watchTv {vhs?}` → timed `watch` action (also `useItem` on a VHS tape); `rest` → `rest`. */
 export function applyLeisureCommand(
   w: SimWorld,
   eid: number,
-  cmd: Extract<Command, { type: 'watchTv' }>,
+  cmd: LeisureCommand,
 ): CommandRejectReason | undefined {
   if (!w.items || !playerItems(w, eid)) return 'invalid-state';
+  if (cmd.type === 'rest') return startAction(w, eid, newAction('rest'));
   return startAction(w, eid, newAction('watch', { item: cmd.vhs ?? 0 }));
 }
 
+/** Learning (skill / recipe books, VHS with XP, radio) needs fatigue < `learning.maxFatigue`. */
+export function tooTiredToLearn(w: SimWorld, eid: number): boolean {
+  const s = w.survival;
+  if (!s) return false;
+  return (s.vitals.fatigue[eid] ?? 0) >= s.content.survival.leisure.learning.maxFatigue;
+}
+
+/** Why `rest` cannot start (undefined = it can): `not-tired`, `threat` comes from the queue. */
+export function restReason(w: SimWorld, eid: number): CommandRejectReason | undefined {
+  const s = w.survival;
+  if (!s || s.asleep[eid]) return 'invalid-state';
+  return (s.vitals.fatigue[eid] ?? 0) < s.content.survival.leisure.rest.minFatigue
+    ? 'not-tired'
+    : undefined;
+}
+
+function watchCheck(w: SimWorld, eid: number, a: ActionState, start: boolean) {
+  const st = w.items!;
+  if (!a.item) return tvCheck(w, eid, w.survival?.content.survival.leisure.tvTag ?? '');
+  const item = st.items.get(a.item);
+  if (!item) return 'no-item';
+  const def = defOf(st, item);
+  if (def.kind !== 'vhs') return 'no-item';
+  if (!canReach(w, eid, item.loc)) return 'out-of-range';
+  // A tape that teaches (XP) needs a rested player at the start.
+  if (start && def.vhs.skills.length > 0 && tooTiredToLearn(w, eid)) return 'tired';
+  return tvCheck(w, eid, def.vhs.tvTag);
+}
+
 export function registerLeisureActions(): void {
-  registerAction('watch', {
-    validate(w, eid, a) {
-      const st = w.items!;
-      if (!a.item) return tvCheck(w, eid, w.survival?.content.survival.leisure.tvTag ?? '');
-      const item = st.items.get(a.item);
-      if (!item) return 'no-item';
-      const def = defOf(st, item);
-      if (def.kind !== 'vhs') return 'no-item';
-      if (!canReach(w, eid, item.loc)) return 'out-of-range';
-      return tvCheck(w, eid, def.vhs.tvTag);
+  registerAction('rest', {
+    validate: (w, eid) => restReason(w, eid),
+    validateEnd: (w, eid) => (w.survival?.asleep[eid] ? 'invalid-state' : undefined),
+    durationMin: (w) => w.survival?.content.survival.leisure.rest.sessionMin ?? 30,
+    complete(w, eid) {
+      const cfg = w.survival!.content.survival.leisure.rest;
+      applyLeisure(w, eid, 'rest', { fatigueMul: seatNear(w, eid) ? 1 : cfg.floorMul });
     },
+  });
+
+  registerAction('watch', {
+    validate: (w, eid, a) => watchCheck(w, eid, a, true),
+    validateEnd: (w, eid, a) => watchCheck(w, eid, a, false),
     durationMin(w, _eid, a) {
       const st = w.items!;
       const item = a.item ? st.items.get(a.item) : undefined;

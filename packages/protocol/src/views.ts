@@ -71,6 +71,8 @@ export interface SleepView {
   realSec: number;
   /** `sleep.saveAfterRealSec`. */
   saveAfterRealSec: number;
+  /** Alarm (`sleep {until}`, protocol 29): the tick the sim wakes the player. */
+  wakeAtTick?: number;
   /** `sleepSaved` was emitted for this sleep (the save is due / done). */
   saveReady: boolean;
 }

@@ -592,6 +592,8 @@ export function createSim(input: SimOptions): Sim {
         h.f32(s.kcal[eid] ?? 0);
         h.u32(s.dead[eid] ?? 0).u32(s.cause[eid] ?? 0);
         h.u32(s.asleep[eid] ?? 0).u32(s.sleepStart[eid] ?? 0);
+        // Alarm (protocol 29): only when set (keeps older goldens).
+        if (s.sleepUntil[eid]) h.u32(0x51ee_a001).u32(s.sleepUntil[eid] ?? 0);
         h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
         h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
         // Real sleep time: only when it differs from ×1 (keeps older goldens).

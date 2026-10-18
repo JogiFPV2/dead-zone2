@@ -525,5 +525,6 @@ export function sleepView(w: SimWorld, eid: number): SleepView | null {
     realSec: Math.floor(sleepRealSec(s, eid)),
     saveAfterRealSec: s.content.survival.sleep.saveAfterRealSec,
     saveReady: s.sleepSaved[eid] === 1,
+    ...(s.sleepUntil[eid] ? { wakeAtTick: minuteStartTick(w.clock, s.sleepUntil[eid] ?? 0) } : {}),
   };
 }

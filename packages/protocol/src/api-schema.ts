@@ -124,6 +124,15 @@ export const saveItemBuildingSchema = z.object({
 });
 
 /**
+ * Sleep alarm in the saved survival section (protocol 29, docs 9.50): `sleepUntil` = per-entity
+ * absolute game minute of the alarm (Uint32Array like the other survival arrays), 0 = none.
+ * Older saves lack it (no alarm).
+ */
+export const saveSleepSchema = z.object({
+  sleepUntil: z.array(z.number().int().min(0).max(0xffff_ffff)).optional(),
+});
+
+/**
  * Wound care fields of a saved wound (protocol 27, survival section `wounds`): `stitched`, and
  * `cleanUntilAge` = wound age (minutes) until which it cannot get a dirt infection after
  * disinfecting. Written only when set; older saves have neither.

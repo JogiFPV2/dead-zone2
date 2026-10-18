@@ -65,7 +65,13 @@ const contentId = z
   .max(128)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*:[a-z0-9]+(-[a-z0-9]+)*$/);
 
-export const sleepCommandSchema = z.strictObject({ ...header, type: z.literal('sleep') });
+export const sleepCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('sleep'),
+  until: z.union([z.literal('morning'), z.number().int().min(1).max(24)]).optional(),
+});
+/** `rest` (protocol 29). */
+export const restCommandSchema = z.strictObject({ ...header, type: z.literal('rest') });
 export const wakeCommandSchema = z.strictObject({ ...header, type: z.literal('wake') });
 
 export const bandageCommandSchema = z.strictObject({
@@ -521,6 +527,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   moveCommandSchema,
   aimCommandSchema,
   sleepCommandSchema,
+  restCommandSchema,
   wakeCommandSchema,
   setTimeScaleCommandSchema,
   watchTvCommandSchema,

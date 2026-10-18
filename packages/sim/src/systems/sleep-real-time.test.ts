@@ -35,7 +35,7 @@ describe('sleep: commands and waking', () => {
     asleep(sim);
     runTicks(sim, 1);
     const ev = sim.drainEvents();
-    expect(eventsOf(ev, 'commandRejected').map((e) => e.reason)).toEqual(['invalid-state']);
+    expect(eventsOf(ev, 'commandRejected').map((e) => e.reason)).toEqual(['threat']);
     expect(eventsOf(ev, 'fellAsleep')).toEqual([]);
     expect(sim.getSurvival()!.sleeping).toBe(false);
   });

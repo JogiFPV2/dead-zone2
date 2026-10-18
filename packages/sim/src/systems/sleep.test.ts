@@ -19,7 +19,7 @@ describe('sleep', () => {
     const reasons = sim
       .drainEvents()
       .flatMap((e) => (e.type === 'commandRejected' ? [e.reason] : []));
-    expect(reasons).toEqual(['invalid-state', 'invalid-state']);
+    expect(reasons).toEqual(['not-tired', 'invalid-state']);
     expect(sim.getSurvival()!.sleeping).toBe(false);
   });
 

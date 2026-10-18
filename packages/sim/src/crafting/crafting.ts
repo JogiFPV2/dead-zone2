@@ -1,3 +1,4 @@
+import { tooTiredToLearn } from '../leisure/leisure.js';
 import {
   CHUNK_SIZE,
   type Command,
@@ -404,7 +405,15 @@ export function registerCraftActions(): void {
   });
 
   registerAction('read', {
-    validate(w, _eid, a) {
+    validate(w, eid, a) {
+      const item = w.items?.items.get(a.item);
+      const def = item ? defOf(w.items!, item) : undefined;
+      if (def?.kind !== 'literature') return 'no-item';
+      // Learning (skill book, recipes) only when rested; leisure reading any time.
+      const teaches = def.literature.skillBook || def.literature.unlocksRecipes.length > 0;
+      return teaches && tooTiredToLearn(w, eid) ? 'tired' : undefined;
+    },
+    validateEnd(w, _eid, a) {
       const item = w.items?.items.get(a.item);
       return item && defOf(w.items!, item).kind === 'literature' ? undefined : 'no-item';
     },

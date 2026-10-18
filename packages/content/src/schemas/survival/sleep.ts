@@ -41,6 +41,10 @@ export const SleepSettingsSchema = z
     wakeOnZombieTiles: num(6, 100),
     /** Podpowiedź dla hosta (`timeScaleHint`), jeśli nic nie grozi. */
     timeScaleHint: z.union([z.literal(1), z.literal(2), z.literal(4)]).default(4),
+    /** `sleep {until: 'morning'}`: pobudka o tej godzinie (najbliższej). */
+    morningHour: z.number().int().min(0).max(23).default(7),
+    /** `sleep {until}`: najdłużej tyle godzin (budzik zastępuje `wakeAtFatigue` i limit czasu). */
+    untilMaxHours: z.number().int().min(1).max(24).default(16),
   })
   .prefault({});
 

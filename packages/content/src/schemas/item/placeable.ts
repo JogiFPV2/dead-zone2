@@ -24,6 +24,8 @@ export const PlaceableItemSchema = z.strictObject({
     powerSource: PowerSourceSchema.optional(),
     /** Miejsce do spania (łóżko, kanapa); bez tego śpi się na podłodze. */
     sleepSurface: z.enum(['bed', 'sofa']).optional(),
+    /** Siedzisko (krzesło, fotel): odpoczynek `rest` w pełni (łóżko i kanapa też). */
+    seat: z.boolean().optional(),
     /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
     footprint: FootprintSchema.optional(),
   }),
