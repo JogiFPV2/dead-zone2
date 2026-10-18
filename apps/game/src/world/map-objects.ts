@@ -287,7 +287,9 @@ export class MapObjects {
   private fittedModel(contentId: string, height: number, fp?: Footprint): Object3D | undefined {
     const raw = this.model?.(contentId, height);
     if (!raw) return undefined;
-    return fp ? fitFootprint(raw, fp, isRealScale(contentId)) : fitTile(raw);
+    const real = isRealScale(contentId);
+    if (fp) return fitFootprint(raw, fp, real);
+    return real ? fitTileRealScale(raw) : fitTile(raw);
   }
 
   private partsOf(key: string): ModelPart[] | undefined {
@@ -536,5 +538,25 @@ export function fitFootprint(m: Object3D, fp: Footprint, realScale: boolean): Ob
   const d = box.max.z - box.min.z;
   const k = Math.min(1, fp.w / Math.max(w, 1e-6), fp.h / Math.max(d, 1e-6));
   if (k < 1) shrink.scale.setScalar(k);
+  return wrap;
+}
+
+/**
+ * One-tile fit of a real-scale model with footprints off (today's maps: every object one tile):
+ * each axis is squeezed on its own to `MAX_FOOTPRINT` about the authored origin (never
+ * re-centred, height kept), so a 2×1 sofa keeps its depth and its back stays at the wall, and a
+ * bed 2 m long ends up one tile long without poking through the next wall.
+ */
+export function fitTileRealScale(m: Object3D): Object3D {
+  const wrap = new Group();
+  const squeeze = new Group();
+  squeeze.add(m);
+  wrap.add(squeeze);
+  wrap.updateMatrixWorld(true);
+  const box = new Box3().setFromObject(m);
+  const reach = (lo: number, hi: number) => 2 * Math.max(-lo, hi, 1e-6);
+  // Measured from the origin both ways (the model stays anchored there), so the far side fits.
+  squeeze.scale.x = Math.min(1, MAX_FOOTPRINT / reach(box.min.x, box.max.x));
+  squeeze.scale.z = Math.min(1, MAX_FOOTPRINT / reach(box.min.z, box.max.z));
   return wrap;
 }

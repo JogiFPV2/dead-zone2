@@ -38,7 +38,14 @@ export const CONTAINER_MODELS: Record<string, string> = {
   'base:bookshelf': 'kenney-furniture/bookcase-open',
   'base:wooden-chest': 'kenney-survival/chest',
   'base:crate': 'kenney-survival/box-large',
-  'base:metal-shelf': 'kenney-furniture/bookcase-closed-wide',
+  // Designer's real-scale models (1 m = 1 tile, origin = footprint centre, back to the wall at
+  // -z): loaded as authored (`isRealScale`, `REAL_SCALE_FURNITURE`), never fit by height.
+  'base:metal-shelf': 'deadzone-furniture/metal-shelf',
+  'base:bed': 'deadzone-furniture/bed',
+  'base:double-bed': 'deadzone-furniture/double-bed',
+  'base:sofa': 'deadzone-furniture/sofa',
+  'base:desk': 'deadzone-furniture/desk',
+  'base:shop-counter': 'deadzone-furniture/shop-counter',
   'base:tool-chest': 'kenney-survival/box',
   'base:locker': 'kenney-furniture/bookcase-closed',
   'base:gun-locker': 'kenney-furniture/bookcase-closed',

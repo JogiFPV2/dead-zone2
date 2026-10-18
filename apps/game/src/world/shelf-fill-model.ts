@@ -23,6 +23,11 @@ export interface ShelfProfile {
   readonly open: boolean;
   /** Prop size multiplier (default 1): big open shelving needs bigger props to read as full. */
   readonly propScale?: number;
+  /**
+   * Local z of the shelf depth centre (default 0 = tile centre). Real-scale models stand with
+   * their back to the wall (-z), so their shelves are not centred on the tile.
+   */
+  readonly depthOffset?: number;
 }
 
 /** Shelf furniture by content id (crates and chests have no shelves). */
@@ -68,14 +73,19 @@ export const SHELF_PROFILES: Readonly<Record<string, ShelfProfile>> = {
     open: true,
   },
   'base:metal-shelf': {
-    // Wider than the map box: the Kenney wide bookcase's shelves span more than 78 % of it.
-    size: [1.2, 1.8, 0.45],
-    shelves: [0.05, 0.37, 0.69],
-    cols: 6,
+    // Designer's real-scale rack (deadzone-furniture/metal-shelf, 180×40×180 cm, 5 shelves,
+    // footprint 2×1): laid out for its real width around `shelfOrigin` (= `footprintCenter`
+    // with footprints on, where the model stands 1:1). Shelf tops at 0.044 / 0.28 / 0.51 /
+    // 0.74 / 0.98 of the height; depth centre −0.29 (back to the wall at −z). With footprints
+    // off the model is squeezed into one tile, so is the layout (`layoutProfile`).
+    size: [1.8, 1.8, 0.4],
+    shelves: [0.044, 0.28, 0.51, 0.74, 0.98],
+    cols: 10,
     rows: 1,
     mix: { box: 3, can: 2, bottle: 1 },
     open: true,
-    propScale: 1.7,
+    propScale: 1.3,
+    depthOffset: -0.29,
   },
   'base:wardrobe': {
     size: [0.95, 1.9, 0.6],
@@ -124,6 +134,25 @@ export function shelfOrigin(
   fp?: Footprint,
 ): { x: number; y: number } {
   return fp ? footprintCenter(tx, ty, rot, fp) : { x: tx + 0.5, y: ty + 0.5 };
+}
+
+/** Width a real-scale model is squeezed to with footprints off (`fitTileRealScale`). */
+export const TILE_FIT_WIDTH = 0.96;
+
+/**
+ * Profile the slots are laid out with. Footprints on: as given (real width, the model is 1:1 at
+ * `shelfOrigin`). Off: a profile wider than one tile is squeezed like its model
+ * (`fitTileRealScale`: width → 0.96, depth and heights kept), with fewer columns so the props
+ * keep their spacing. Never more slots than `slotCount(p)` (the instance capacity).
+ */
+export function layoutProfile(p: ShelfProfile, footprintsOn: boolean): ShelfProfile {
+  const [w, h, d] = p.size;
+  if (footprintsOn || w <= TILE_FIT_WIDTH) return p;
+  return {
+    ...p,
+    size: [TILE_FIT_WIDTH, h, d],
+    cols: Math.max(1, Math.round((p.cols * TILE_FIT_WIDTH) / w)),
+  };
 }
 
 export function slotCount(p: ShelfProfile): number {
@@ -203,7 +232,9 @@ export function propSlots(p: ShelfProfile, seed: number): PropSlot[] {
         base.push({
           x: -usableW / 2 + (usableW * (c + 0.5)) / p.cols,
           y: sy * h,
-          z: p.rows === 1 ? 0 : -usableD / 2 + (usableD * (row + 0.5)) / p.rows,
+          z:
+            (p.depthOffset ?? 0) +
+            (p.rows === 1 ? 0 : -usableD / 2 + (usableD * (row + 0.5)) / p.rows),
         });
       }
     }

@@ -19,6 +19,7 @@ import {
   SHELF_PROFILES,
   displayFill,
   hashId,
+  layoutProfile,
   propSlots,
   shelfOrigin,
   slotCount,
@@ -56,6 +57,8 @@ interface Furniture {
   readonly rot: number;
   readonly contentId: string;
   readonly profile: ShelfProfile;
+  /** `profile` as laid out for the current footprints (`layoutProfile`). */
+  layout: ShelfProfile;
   /** Slot layout centre: anchor tile centre, or the footprint centre with footprints on. */
   readonly origin: Vector3;
   readonly yaw: number;
@@ -105,6 +108,7 @@ export class ShelfFill {
             rot: o.rot,
             contentId: o.contentId,
             profile,
+            layout: profile,
             origin: new Vector3(),
             yaw: (-o.rot * Math.PI) / 2,
           };
@@ -139,6 +143,12 @@ export class ShelfFill {
   private placeOrigin(f: Furniture): void {
     const fp = this.footprints.enabled ? this.footprints.of(f.contentId) : undefined;
     const c = shelfOrigin(f.tx, f.ty, f.rot, fp);
+    const layout = layoutProfile(f.profile, fp !== undefined);
+    if (layout !== f.layout) {
+      f.layout = layout;
+      delete f.slots;
+      delete f.seededFor;
+    }
     const p = simToWorld(c.x, c.y, f.z);
     f.origin.set(p.x, p.y, p.z);
   }
@@ -171,7 +181,7 @@ export class ShelfFill {
       if (isActive && !f.profile.open) xray = f;
       if (!f.profile.open && !isActive) continue;
       if (!f.slots || f.seededFor !== s.id) {
-        f.slots = propSlots(f.profile, hashId(s.id));
+        f.slots = propSlots(f.layout, hashId(s.id));
         f.seededFor = s.id;
       }
       const n = visibleProps(displayFill(s.fillPct, s.searched, s.id), f.slots.length);

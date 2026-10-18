@@ -9,7 +9,7 @@ import {
   furnitureFootprintsFromFiles,
   objectAtTile,
 } from './furniture-footprint.js';
-import { MapObjects, fitFootprint } from './map-objects.js';
+import { MapObjects, fitFootprint, fitTileRealScale } from './map-objects.js';
 
 /** One chunk with legacy furniture (models), a sofa / bed / desk (grey boxes) in all rotations. */
 const chunk = (): ChunkData => ({
@@ -88,12 +88,14 @@ function build(setup?: (m: MapObjects) => void, models = true): MapObjects {
 }
 
 /**
- * sha256 of `snapshot` for the chunk above, recorded on main before footprints (0d7b809): the
- * flag off must keep the scene byte-identical.
+ * sha256 of `snapshot` for the chunk above with the flag off. `grey` was recorded on main before
+ * footprints (0d7b809) and must stay byte-identical. `models` was re-recorded when the real-scale
+ * models were wired (metal-shelf, bathtub: `fitTileRealScale` per axis instead of the uniform
+ * one-tile squeeze); legacy models (dresser, bookshelf) are unchanged.
  */
 const MAIN_SCENE_HASH = {
   grey: 'c3d642d93cc4e35e5bbc739ceeb2a53f2ccd45e7f8501ac9adc9c5bced017fd0',
-  models: '7113f3d46aad3a7d5ff9c4ecfc8691c9c709f8d1d8f4dc5371c1f8a83ebce4b5',
+  models: 'f917d60213df6253c9447f7b52e6aee33c3948a519d871a89a0a314f3dea456a',
 };
 
 describe('MapObjects: footprints off (default)', () => {
@@ -208,6 +210,22 @@ describe('fitFootprint', () => {
     fw.updateMatrixWorld(true);
     const c = new Box3().setFromObject(fw);
     expect(((c.min.z + c.max.z) / 2).toFixed(4)).toBe('-0.1000');
+  });
+
+  it('footprints off: real-scale models squeezed per axis about the origin, height kept', () => {
+    // Sofa 1.96 × 0.85 × 0.89, back 0.495 towards the wall (−z): only the width shrinks
+    // (to 0.96, from the origin both ways), depth ×0.97 so the back stays inside the tile.
+    const sofa = box(1.96, 0.85, 0.89);
+    sofa.position.z = -0.05;
+    const f = fitTileRealScale(sofa);
+    f.updateMatrixWorld(true);
+    const b = new Box3().setFromObject(f);
+    expect((b.max.x - b.min.x).toFixed(3)).toBe('0.960');
+    expect((b.max.y - b.min.y).toFixed(3)).toBe('0.850');
+    expect(b.min.z).toBeGreaterThanOrEqual(-0.48 - 1e-9);
+    expect(((b.min.z + b.max.z) / 2).toFixed(3)).toBe('-0.048');
+    // A 2 m bed: one tile long, 0.96 wide kept as is.
+    expect(size(fitTileRealScale(box(0.96, 0.75, 1.99)))).toEqual([0.96, 0.75, 0.96]);
   });
 
   it('gives legacy models the one-tile fit stretched over w×h', () => {

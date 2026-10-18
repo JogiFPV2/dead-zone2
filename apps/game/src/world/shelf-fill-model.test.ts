@@ -4,7 +4,9 @@ import {
   DRESSING_MIN,
   SHELF_PROFILES,
   displayFill,
+  TILE_FIT_WIDTH,
   hashId,
+  layoutProfile,
   propSlots,
   slotCount,
   visibleProps,
@@ -52,5 +54,31 @@ describe('shelf fill model', () => {
       expect(s.y).toBeLessThan(h);
       expect(['can', 'box', 'jar']).toContain(s.kind);
     }
+  });
+
+  it('metal rack 2×1 (real-scale): 5 shelves at the model heights, real width with footprints', () => {
+    const p = SHELF_PROFILES['base:metal-shelf']!;
+    const on = layoutProfile(p, true);
+    expect(on).toBe(p);
+    const slots = propSlots(on, 7);
+    expect(slots).toHaveLength(5 * 10);
+    const ys = [...new Set(slots.map((s) => Number((s.y / 1.8).toFixed(3))))].sort();
+    expect(ys).toEqual([0.044, 0.28, 0.51, 0.74, 0.98]);
+    for (const s of slots) expect(Math.abs(s.z - -0.29)).toBeLessThanOrEqual(0.03 + 1e-9);
+    // Across the 1.8 m rack around footprintCenter, not just the anchor tile.
+    expect(Math.max(...slots.map((s) => Math.abs(s.x)))).toBeGreaterThan(0.55);
+    for (const s of slots) expect(Math.abs(s.x)).toBeLessThan(0.9);
+  });
+
+  it('footprints off: the rack layout is squeezed into one tile like its model', () => {
+    const p = SHELF_PROFILES['base:metal-shelf']!;
+    const off = layoutProfile(p, false);
+    expect(off.size).toEqual([TILE_FIT_WIDTH, 1.8, 0.4]);
+    expect(off.cols).toBe(5);
+    expect(slotCount(off)).toBeLessThanOrEqual(slotCount(p));
+    for (const s of propSlots(off, 7)) expect(Math.abs(s.x)).toBeLessThan(0.48);
+    // One-tile profiles are untouched either way.
+    const book = SHELF_PROFILES['base:bookshelf']!;
+    expect(layoutProfile(book, false)).toBe(book);
   });
 });

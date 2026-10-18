@@ -105,16 +105,20 @@ describe('shelf fill with furniture footprints', () => {
     on.update(storages, undefined);
     on.setFootprints(footprintsOn(CATALOG));
     on.update(storages, undefined);
-    expect(on.shown).toBe(off.shown);
+    // The 2×1 rack is laid out for its real 1.8 m width with footprints on (10 columns, the
+    // model stands 1:1), squeezed into one tile like its model when off (5 columns).
+    expect(on.shown).toBe(off.shown + 4 * 5 * 5);
     for (const o of OBJECTS) {
       const t = tile(o);
       const wide = o.contentId === 'base:metal-shelf';
       const fc = footprintCenter(t.tx, t.ty, o.rot, wide ? { w: 2, h: 1 } : { w: 1, h: 1 });
-      // Same layout, shifted by (footprintCenter − tile centre): compare centroids.
+      // Same layout centre (incl. the back-to-wall depth offset), shifted by
+      // (footprintCenter − tile centre): compare centroids (slot jitter averages out).
       const cOff = centroid(off, { x: t.tx + 0.5, y: t.ty + 0.5 });
       const cOn = centroid(on, fc);
-      expect(cOn.x - cOff.x).toBeCloseTo(fc.x - (t.tx + 0.5), 5);
-      expect(cOn.z - cOff.z).toBeCloseTo(fc.y - (t.ty + 0.5), 5);
+      const digits = wide ? 1 : 5;
+      expect(cOn.x - cOff.x).toBeCloseTo(fc.x - (t.tx + 0.5), digits);
+      expect(cOn.z - cOff.z).toBeCloseTo(fc.y - (t.ty + 0.5), digits);
     }
     expect(props(on)).not.toEqual(before);
 

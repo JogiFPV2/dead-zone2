@@ -128,7 +128,9 @@ export function objectAtTile<
  * origin is the footprint centre with the back-to-wall offset baked in: loaded without `fitted`
  * (no height scale, no re-centring). With footprints on they keep their size at
  * `footprintCenter` and only shrink when larger than the footprint; every other (legacy) model
- * keeps today's one-tile fit stretched over w×h.
+ * keeps today's one-tile fit stretched over w×h. With footprints off (today's maps) they are
+ * squeezed into one tile per axis about that origin (`fitTileRealScale`), so a 2 m sofa stays
+ * a sofa (full depth, narrower) and never pokes through the walls.
  * `note`: Designer's placement notes for later (not applied yet: no per-type height table).
  */
 export const REAL_SCALE_FURNITURE: ReadonlyMap<string, { readonly note?: string }> = new Map([
@@ -146,13 +148,10 @@ export const REAL_SCALE_FURNITURE: ReadonlyMap<string, { readonly note?: string 
   ['base:shower', {}],
   ['base:vcr', { note: 'on a tv-stand at +0.55 m or a shelf at +0.32 m' }],
   ['base:radio-set', { note: 'on a desk at +0.75 m' }],
-  // 2×2 double bed: model in assets-src, content id not in the pack yet.
   ['base:double-bed', {}],
-  // Pending (real-scale models in assets-src, not approved yet): add each id here in the same PR
-  // that wires its model into CONTAINER_MODELS, since today they draw legacy / grey-box models
-  // (`base:metal-shelf` is a Kenney model fit by height):
-  // base:bed 96×199, base:sofa 196×88, base:metal-shelf 180×40×180; base:desk (160×70) and
-  // base:shop-counter (190×65) are listed above already (no model wired yet).
+  ['base:bed', {}],
+  ['base:sofa', {}],
+  ['base:metal-shelf', {}],
 ]);
 
 export const isRealScale = (contentId: string): boolean => REAL_SCALE_FURNITURE.has(contentId);

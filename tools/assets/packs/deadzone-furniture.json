@@ -1,0 +1,42 @@
+{
+  "id": "deadzone-furniture",
+  "name": "Meble Deadzone (modele własne, skala 1:1)",
+  "author": "Deadzone (Designer)",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://github.com/JogiFPV2/deadzone-web",
+  "files": [
+    {
+      "path": "furniture/bed.glb",
+      "sha256": "e909daa0e3311754d49b1a862e48915349effc1ed4ec0d10127c0728ea1ed89f",
+      "name": "bed.glb"
+    },
+    {
+      "path": "furniture/double-bed.glb",
+      "sha256": "2b299890380a6724b3075bc5bbd8e83dd59a4634994a4a90764450aafb7d3493",
+      "name": "double-bed.glb"
+    },
+    {
+      "path": "furniture/sofa.glb",
+      "sha256": "91373d10368f4769419f073987c56f7a14c9926e988687a377b8387c858708d8",
+      "name": "sofa.glb"
+    },
+    {
+      "path": "furniture/metal-shelf.glb",
+      "sha256": "591ba0181edbbde704d4df0ad6a06c2e2732c38d83bca66cce031274378c48b4",
+      "name": "metal-shelf.glb"
+    },
+    {
+      "path": "furniture/desk.glb",
+      "sha256": "65dcb4cf6e818a3517d396c6d908f162bccd64201ff19db628ad2be8977282d9",
+      "name": "desk.glb"
+    },
+    {
+      "path": "furniture/shop-counter.glb",
+      "sha256": "71991891edd36763fe0c5794c8ac12a47b198e035601cdf1939b180d32e25d7e",
+      "name": "shop-counter.glb"
+    }
+  ],
+  "root": "glb",
+  "models": ["bed", "double-bed", "sofa", "metal-shelf", "desk", "shop-counter"]
+}
