@@ -1,6 +1,7 @@
 import type {
   CharacterProfileView,
   CombatView,
+  TargetView,
   CraftingView,
   SkillView,
   GroundPileView,
@@ -88,6 +89,8 @@ export interface GameState {
   threat: number;
   /** Combat state of the local player (kills, weapon, cooldown). */
   combat?: CombatView;
+  /** HUD target card (view.target, protocol 20); absent = no target. */
+  target?: TargetView;
   /** Suggested game speed from the sim (sleep); the host decides whether to apply it. */
   timeScaleHint: 1 | 2 | 4;
   /** Most recent events, newest last (bounded; for HUD toasts / debug). */
@@ -136,7 +139,7 @@ function applyInventory(prev: InventoryState | undefined, v: InventoryView): Inv
 }
 
 /** `undefined` = not in the patch (keep), `null` = cleared, otherwise the new value. */
-function patchNullable<K extends 'container' | 'action'>(
+function patchNullable<K extends 'container' | 'action' | 'target'>(
   s: GameState,
   key: K,
   value: NonNullable<GameState[K]> | null | undefined,
@@ -201,6 +204,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
   }
   next = patchNullable(next, 'container', view.container);
   next = patchNullable(next, 'action', view.action);
+  next = patchNullable(next, 'target', view.target);
   return next;
 }
 

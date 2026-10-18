@@ -187,6 +187,25 @@ describe('reduceGameState: items (v4 view)', () => {
     expect(s.container).toBeUndefined();
   });
 
+  it('keeps, replaces and clears the target card (view.target, protocol 20)', () => {
+    const t = {
+      id: 7,
+      kind: 'zombie' as const,
+      typeId: 'base:walker',
+      name: 'Zombie',
+      hpPct: 80,
+      distanceM: 4.2,
+      state: 'chasing' as const,
+      source: 'lock' as const,
+    };
+    let s = run(view({ target: t }));
+    expect(s.target).toEqual(t);
+    s = reduceGameState(s, view({ clock }));
+    expect(s.target).toEqual(t);
+    s = reduceGameState(s, view({ target: null }));
+    expect('target' in s).toBe(false);
+  });
+
   it('formats a compact items line', () => {
     expect(devItemsLine(INITIAL_GAME_STATE)).toBe('inv – · near 0');
     const s = run(

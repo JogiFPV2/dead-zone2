@@ -43,7 +43,7 @@ import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
 import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
-import { SnapshotEntityKind } from '@deadzone/protocol';
+import { SnapshotEntityKind, TARGET_MAX_TILES } from '@deadzone/protocol';
 import { SAVE_VERSION, TICK_MS } from '@deadzone/sim';
 import type { CloudPlay } from './account/cloud-play.js';
 import { MockSimClient } from './sim/mock-sim-client.js';
@@ -95,6 +95,7 @@ import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
 import { createHud } from './hud/hud.js';
 import { PICK_PLANE_Y, ZombieHpLayer } from './hud/zombie-hp.js';
+import { nextTargetId } from './hud/target-card-model.js';
 import { RmbGesture } from './input/rmb-gesture.js';
 import { allowsNativeContextMenu } from './input/context-menu.js';
 import { createAimReticle } from './hud/aim-reticle.js';
@@ -784,7 +785,10 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   const ndc = clientToNdc(e.clientX, e.clientY, renderer.domElement.getBoundingClientRect());
   // Intersect at waist height: the cursor is on the body, not on the feet behind it.
   const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, PICK_PLANE_Y);
-  if (hit) zombieHp.pickAt(hit.x, hit.z);
+  if (!hit) return;
+  // The sim target card follows the pick: lock it, or drop the lock on empty ground.
+  const id = zombieHp.pickAt(hit.x, hit.z);
+  sendBody({ type: 'setTarget', id: id ?? null });
 });
 let hudContent: HudContentIndex = EMPTY_HUD_CONTENT;
 if (boot.sim === 'worker') {
@@ -1412,9 +1416,29 @@ QUICKSLOTS.forEach((action, i) =>
   }),
 );
 input.on('toggleHints', () => hud.toggleHints(performance.now()));
-// F1 & co. open browser help otherwise.
+// Tab: lock the next live zombie (nearest first, same floor, ≤ TARGET_MAX_TILES); the sim checks
+// line of sight and answers with `view.target` (card) — the bubble follows the lock.
+input.on('targetNext', () => {
+  if (inventory.open || loot.open || workshop.open || bigMap.open || gameState.get().death) return;
+  const p = snapshots.sample(performance.now(), TICK_MS);
+  if (!p) return;
+  const cur = gameState.get().target;
+  const locked = cur?.source === 'lock' && cur.kind === 'zombie' ? cur.id : zombieHp.target;
+  const id = nextTargetId(zombieHp.nearby(p.x, p.y, p.z, TARGET_MAX_TILES), locked);
+  zombieHp.setTarget(id);
+  sendBody({ type: 'setTarget', id: id ?? null });
+});
+// F1 & co. open browser help otherwise; Tab would move the focus out of the canvas.
 window.addEventListener('keydown', (e) => {
-  if (settings.get().input.bindings.toggleHints.includes(e.code)) e.preventDefault();
+  const b = settings.get().input.bindings;
+  if (b.toggleHints.includes(e.code)) e.preventDefault();
+  // Only in play (focus on the page / canvas): menus and forms keep Tab for their own focus.
+  else if (
+    b.targetNext.includes(e.code) &&
+    (e.target === document.body || e.target === renderer.domElement)
+  ) {
+    e.preventDefault();
+  }
 });
 // Noise circle (HUD v2 spec „Okrąg hałasu”): the own character's latest `playerNoise`, drawn on
 // the ground in world space; filtered by Ustawienia › Interfejs › Pokazuj hałas.

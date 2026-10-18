@@ -1,0 +1,116 @@
+/* Target card (status block under the HP bar, 205 wide): no panel, 3 px rule + text shadow. */
+.dz-tc {
+  box-sizing: border-box;
+  width: 205px;
+  padding: 1px 0 1px 8px;
+  border-left: 3px solid var(--_tc-rule, var(--color-text-muted));
+  color: var(--color-text-primary);
+  font: 400 11px/1 var(--font-family-mono);
+  text-shadow:
+    0 1px 4px #000,
+    0 0 4px #000;
+  pointer-events: none;
+}
+.dz-tc[hidden] {
+  display: none;
+}
+.dz-tc[data-source='lock'] {
+  --_tc-rule: var(--color-accent-base, #e0a23a);
+}
+.dz-tc[data-kind='zombie'] .dz-tc__name {
+  color: var(--color-danger-text, #e8766c);
+}
+.dz-tc__r1,
+.dz-tc__r3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.dz-tc__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dz-tc__dist,
+.dz-tc__hp {
+  color: var(--color-text-secondary, #9aa3a7);
+}
+.dz-tc__r2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 5px;
+}
+.dz-tc__hp {
+  min-width: 30px;
+  text-align: right;
+}
+.dz-tc__track {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--color-neutral-700, #2c3337);
+}
+.dz-tc__fill {
+  display: block;
+  height: 100%;
+  background: #7f9a4e;
+  transform-origin: left;
+  transition: transform 200ms var(--motion-ease-out, ease-out);
+}
+.dz-tc[data-band='warn'] .dz-tc__fill {
+  background: #d9b64a;
+}
+.dz-tc[data-band='low'] .dz-tc__fill {
+  background: #c8453c;
+}
+.dz-tc__src {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-muted, #5b6469);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.dz-tc[data-source='lock'] .dz-tc__src {
+  color: var(--color-accent-hi, #f0c06a);
+}
+.dz-tc__state {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary, #9aa3a7);
+}
+.dz-tc__state[data-tone='warn'] {
+  color: #d9b64a;
+}
+.dz-tc__state[data-tone='danger'] {
+  color: #e8766c;
+}
+.dz-tc__hit {
+  color: var(--color-accent-hi, #f0c06a);
+  font-weight: 700;
+}
+.dz-tc__hit[data-zero] {
+  color: var(--color-text-muted, #5b6469);
+}
+.dz-tc[data-dead] {
+  opacity: 0.7;
+}
+.dz-tc [hidden] {
+  display: none;
+}
+/* „NAMIERZONY · ŚCIGA · TRAF. 78%”: a muted dot between the parts. */
+.dz-tc__state::before,
+.dz-tc__hit::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--color-text-muted, #5b6469);
+  font-weight: 400;
+}

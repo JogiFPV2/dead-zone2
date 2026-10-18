@@ -143,6 +143,7 @@ const CONTROLS: readonly [string, readonly Action[], string?][] = [
   ['Sen / telewizor', ['sleep', 'watchTv']],
   ['Szybkie sloty', ['quickslot1', 'quickslot5'], '–'],
   ['Pauza / podpowiedzi', ['pause', 'toggleHints']],
+  ['Następny cel', ['targetNext']],
 ];
 
 export interface RowContext {

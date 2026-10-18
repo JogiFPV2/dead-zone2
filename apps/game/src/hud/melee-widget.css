@@ -1,0 +1,150 @@
+/* Weapon panel for a held item (Designer 11.10): right-anchored in the `weapon` group above the
+   quickbar, HUD v3 panel tokens. Always visible while an item is in hand. */
+.dz-mw {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 190px;
+  pointer-events: auto;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+}
+.dz-mw[hidden] {
+  display: none;
+}
+.dz-mw__panel {
+  box-sizing: border-box;
+  padding: 5px 8px 6px;
+  border: 1px solid var(--hud3-line, rgba(91, 100, 105, 0.48));
+  border-radius: 5px;
+  background: var(--hud3-panel, rgba(21, 25, 28, 0.66));
+  backdrop-filter: blur(5px);
+}
+.dz-mw__top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.dz-mw__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.55);
+  color: var(--color-text-secondary, #9aa3a7);
+}
+.dz-mw__icon img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.dz-mw__txt {
+  flex: 1;
+  min-width: 0;
+}
+.dz-mw__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 11px/1 var(--font-family-mono);
+}
+.dz-mw__tags {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 14px;
+  margin-top: 3px;
+}
+.dz-mw__tag {
+  color: var(--color-text-muted, #7b858a);
+  font: 600 10px/1 var(--font-family-mono);
+  letter-spacing: 0.06em;
+}
+.dz-mw__chip {
+  padding: 2px 4px;
+  border: 1px solid rgba(224, 162, 58, 0.55);
+  border-radius: 3px;
+  background: rgba(224, 162, 58, 0.12);
+  color: var(--color-accent-hi, #f0c06a);
+  font: 700 10px/1 var(--font-family-mono);
+  letter-spacing: 0.04em;
+}
+.dz-mw__dur {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.dz-mw__track {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-neutral-700, #2c3337);
+}
+.dz-mw__track i {
+  display: block;
+  height: 100%;
+  background: #7f9a4e;
+  transform-origin: left;
+  transition: transform 200ms var(--motion-ease-out, ease-out);
+}
+.dz-mw[data-level='mid'] .dz-mw__track i {
+  background: #d9b64a;
+}
+.dz-mw[data-level='low'] .dz-mw__track i {
+  background: #c8453c;
+}
+.dz-mw__pct {
+  min-width: 28px;
+  text-align: right;
+  font: 400 11px/1 var(--font-family-mono);
+}
+.dz-mw[data-level='low'] .dz-mw__pct {
+  color: #e8766c;
+}
+/* Broken: grey, shaking icon for 0.6 s, danger border. */
+.dz-mw[data-broke] .dz-mw__panel {
+  border-color: var(--color-danger-base, #c8453c);
+}
+.dz-mw[data-broke] .dz-mw__icon {
+  filter: grayscale(1) brightness(0.7);
+  animation: dz-mw-shake 600ms linear;
+}
+/* Hotbar slot of the broken item: its icon (ghost over the slot) grey and shaking. */
+.dz-hud .dz-slot[data-broke] .dz-slot__icon {
+  visibility: hidden;
+}
+.dz-hud .dz-slot__broke {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  object-fit: contain;
+  pointer-events: none;
+  filter: grayscale(1) brightness(0.7);
+  animation: dz-mw-shake 600ms linear;
+}
+@keyframes dz-mw-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  50%,
+  90% {
+    transform: translateX(-2px) rotate(-4deg);
+  }
+  30%,
+  70% {
+    transform: translateX(2px) rotate(4deg);
+  }
+}
+.dz-reduced-motion .dz-mw[data-broke] .dz-mw__icon,
+.dz-reduced-motion .dz-hud .dz-slot__broke {
+  animation: none;
+}

@@ -39,6 +39,8 @@ export const DEFAULT_BINDINGS: Bindings = {
   journal: ['KeyJ'],
   pause: ['Escape'],
   toggleHints: ['F1'],
+  // Target card: lock the next zombie nearest first (spec 9.40 `setTarget`).
+  targetNext: ['Tab'],
 };
 
 /** Reverse index: input code → actions bound to it. */

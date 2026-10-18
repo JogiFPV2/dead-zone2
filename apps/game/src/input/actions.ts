@@ -30,6 +30,7 @@ export const ACTIONS = [
   'journal',
   'pause',
   'toggleHints',
+  'targetNext',
 ] as const;
 
 export type Action = (typeof ACTIONS)[number];

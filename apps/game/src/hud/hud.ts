@@ -53,6 +53,11 @@ import { containerName, itemCountLabel, moodleName } from './labels.js';
 import type { MinimapGeometry } from './minimap-data.js';
 import { dockSide, firearmVM, noiseRingRadius, type FirearmVM } from './firearm-model.js';
 import { createFirearmWidget } from './firearm-widget.js';
+import { itemImage } from './item-icons.js';
+import { meleeVM, WEAPON_BROKE_MS } from './melee-model.js';
+import { createMeleeWidget } from './melee-widget.js';
+import { createTargetCard } from './target-card.js';
+import { targetCardVM } from './target-card-model.js';
 import { leisureActionVMs } from './leisure-actions.js';
 import type { LeisureSpot } from './leisure-spots.js';
 import type { Feedback } from './sleep-feedback.js';
@@ -271,7 +276,9 @@ export function createHud(opts: HudOptions): Hud {
   const hotbarGroup = group('hotbar', hotbar);
   const firearmWidget = createFirearmWidget();
   // Own group (HUD editor slot `weapon`, shared with the car panel): right 18, bottom 73.
-  const weaponGroup = group('weapon', firearmWidget.el);
+  // Held non-firearm item (improvised / default / catalogue melee): same slot, never calm-hidden.
+  const meleeWidget = createMeleeWidget();
+  const weaponGroup = group('weapon', firearmWidget.el, meleeWidget.el);
   let firearm: FirearmVM | undefined;
   const slotBar = document.createElement('div');
   slotBar.className = 'dz-fw-slotbar';
@@ -280,6 +287,9 @@ export function createHud(opts: HudOptions): Hud {
   // HUD v3: thin HP bar only; thirst / hunger / energy show as statuses when they are a problem.
   const hp = createHpBar();
   inStatus('hp', hp.el);
+  // Target card (sim `view.target`, protocol 20) under the HP bar, in the same status block.
+  const targetCard = createTargetCard();
+  inStatus('target', targetCard.el);
   const ammoShown = createShowTimer(AMMO_SHOW_MS);
   const actionsGroup = group('actions');
   const buttons = new Map<
@@ -381,6 +391,12 @@ export function createHud(opts: HudOptions): Hud {
         inventory: actionKey(b, 'inventory'),
       });
       firearmWidget.update(firearm, dockSide(selected));
+      meleeWidget.update(
+        firearm
+          ? undefined
+          : meleeVM(s.combat, craftItemName, (id) => content.items.get(id)?.meleeCategory),
+        f.now,
+      );
       // HUD v3: the ammo widget only after a change (draw, shot, reload) and while aiming.
       const ammoKey = firearm
         ? `${firearm.weapon}|${firearm.state}|${firearm.loaded}|${firearm.reserve}|${firearm.reserveMags}`
@@ -420,6 +436,7 @@ export function createHud(opts: HudOptions): Hud {
         // The highlight follows the item in hand (inventory PPM / hotbar alike).
         selected = hotbarHeldIndex(s) ?? selected;
         hp.update(statsVM(s).health);
+        targetCard.update(targetCardVM(s.target));
         setThreat({ level: threatLevel(s.threat) });
         setMoodles(
           withSneakChip(
@@ -479,7 +496,25 @@ export function createHud(opts: HudOptions): Hud {
         else if (e.type === 'actionInterrupted' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'warning', text: 'Przerwano akcję' });
         } else if (e.type === 'weaponBroke' && e.playerId === opts.playerId) {
-          toasts.push({ kind: 'warning', text: `Zepsuła się broń: ${craftItemName(e.itemId)}` });
+          toasts.push({ kind: 'damage', text: `Złamane: ${craftItemName(e.itemId)}` });
+          const now = performance.now();
+          meleeWidget.broke(e.itemId, now);
+          // The slot that held it: the item's icon greys out and shakes for 0.6 s, also when the
+          // last piece is gone and the slot is already empty.
+          const slotEl = slots[selected]?.slot.el;
+          const img = itemImage(e.itemId);
+          if (slotEl && img) {
+            const ghost = document.createElement('img');
+            ghost.className = 'dz-slot__broke';
+            ghost.src = img;
+            ghost.alt = '';
+            slotEl.dataset.broke = '';
+            slotEl.append(ghost);
+            setTimeout(() => {
+              ghost.remove();
+              delete slotEl.dataset.broke;
+            }, WEAPON_BROKE_MS);
+          }
         } else if (e.type === 'zombieKilled' && e.playerId === opts.playerId) {
           toasts.push({ kind: 'info', text: 'Zabity zombie' });
         } else {

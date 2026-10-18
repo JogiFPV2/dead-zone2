@@ -63,6 +63,28 @@ export class ZombieHpLayer {
     return this.targetId;
   }
 
+  /** Shows the bubble over this zombie (sim lock); undefined clears it. */
+  setTarget(id: number | undefined): void {
+    this.targetId = id;
+  }
+
+  /**
+   * Live zombies on `level` within `maxDist` tiles of (x, z), nearest first (stable ids; last
+   * sampled frame). Tab cycles through these.
+   */
+  nearby(x: number, z: number, level: number, maxDist: number): number[] {
+    const b = this.buffer;
+    const out: { id: number; d: number }[] = [];
+    for (let i = 0; i < this.sampledCount; i++) {
+      if (b.anim[i] === SnapshotAnim.dead || (b.hp[i] ?? 1) <= 0) continue;
+      const s = i * CROWD_SAMPLE_STRIDE;
+      if (Math.round(this.sampled[s + 2] ?? 0) !== Math.round(level)) continue;
+      const d = Math.hypot((this.sampled[s] ?? 0) - x, (this.sampled[s + 1] ?? 0) - z);
+      if (d <= maxDist) out.push({ id: b.slots.idAt(i), d });
+    }
+    return out.sort((a, b2) => a.d - b2.d || a.id - b2.id).map((o) => o.id);
+  }
+
   /** Targets the zombie nearest to the floor point (world x/z), or clears the target. */
   pickAt(x: number, z: number): number | undefined {
     const b = this.buffer;
