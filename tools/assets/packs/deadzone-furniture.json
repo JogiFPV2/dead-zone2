@@ -35,8 +35,87 @@
       "path": "furniture/shop-counter.glb",
       "sha256": "71991891edd36763fe0c5794c8ac12a47b198e035601cdf1939b180d32e25d7e",
       "name": "shop-counter.glb"
+    },
+    {
+      "path": "furniture/oven.glb",
+      "sha256": "1edb27d90929e5e0873869dd7cffb61c5506e842f6c3a6239f326083c8c21695",
+      "name": "oven.glb"
+    },
+    {
+      "path": "furniture/gas-stove.glb",
+      "sha256": "ef9d312960c26f3d4f5a33178aa94d6a2c2d691f19594d17e4cc31000fb6ad85",
+      "name": "gas-stove.glb"
+    },
+    {
+      "path": "furniture/fridge-freezer.glb",
+      "sha256": "4a0053c42c70a9653048d22cfee7f82d14281c104a4425c9e445490618f4dc30",
+      "name": "fridge-freezer.glb"
+    },
+    {
+      "path": "furniture/tv-stand.glb",
+      "sha256": "f50254da459729fde772bfd42fdcb80c7cdedaa8d732ff214f50871eb911f72f",
+      "name": "tv-stand.glb"
+    },
+    {
+      "path": "furniture/bathroom-cabinet.glb",
+      "sha256": "3fd3880bec24a488515e46f4d4c13c9231b579d0d4f247ac02d6be9da9379d31",
+      "name": "bathroom-cabinet.glb"
+    },
+    {
+      "path": "furniture/range.glb",
+      "sha256": "78b4a82439d86accadb66287ebab92867bdc3be744ec85e155f094c554766057",
+      "name": "range.glb"
+    },
+    {
+      "path": "furniture/kitchen-sink.glb",
+      "sha256": "54e73f0466feb2f5fd2a6dcd4145c1cdab7a7ebed9c54c073b15567e59b88ece",
+      "name": "kitchen-sink.glb"
+    },
+    {
+      "path": "furniture/bathroom-sink.glb",
+      "sha256": "7484ad551e1bf1c605e190b0e966ee6407f6a1adabf331ff7b4a7f545a9e3c84",
+      "name": "bathroom-sink.glb"
+    },
+    {
+      "path": "furniture/bathtub.glb",
+      "sha256": "b6ebd1a7fab957b5aa93f70b7c48146306b22bd09c7158f537bf14a394c214fb",
+      "name": "bathtub.glb"
+    },
+    {
+      "path": "furniture/shower.glb",
+      "sha256": "91dcb47e2b6d6935640ea691d7ac854f350f09ef1dbec1cbc534b61b5a081989",
+      "name": "shower.glb"
+    },
+    {
+      "path": "furniture/vcr.glb",
+      "sha256": "6a67d9cf37f418847241a1f67fca20ac5c9c614d7525a3177c89fa53324bee2d",
+      "name": "vcr.glb"
+    },
+    {
+      "path": "furniture/radio-set.glb",
+      "sha256": "b2dc30649ce23a18fe96739a93774fa056dd7eb28b72ef1d3bb11cc91252b54f",
+      "name": "radio-set.glb"
     }
   ],
   "root": "glb",
-  "models": ["bed", "double-bed", "sofa", "metal-shelf", "desk", "shop-counter"]
+  "models": [
+    "bed",
+    "double-bed",
+    "sofa",
+    "metal-shelf",
+    "desk",
+    "shop-counter",
+    "oven",
+    "gas-stove",
+    "fridge-freezer",
+    "tv-stand",
+    "bathroom-cabinet",
+    "range",
+    "kitchen-sink",
+    "bathroom-sink",
+    "bathtub",
+    "shower",
+    "vcr",
+    "radio-set"
+  ]
 }
