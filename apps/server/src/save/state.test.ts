@@ -8,7 +8,7 @@ import {
 import { SAVE_VERSION, decodeTrail, encodeTrail, encodeZeroRle } from '@deadzone/sim';
 import { describe, expect, it } from 'vitest';
 import { HttpError } from '../errors.js';
-import { realSave } from '../test/sim-save.js';
+import { realSave, realSaveWithTankJson } from '../test/sim-save.js';
 import { validateState } from './state.js';
 
 const SEED = 4242;
@@ -278,6 +278,57 @@ describe('protocol 29–33 additions (burnt food; sleep, dirt and lighting stay 
     const s = save();
     Object.assign(s.survival as Json, { sleepUntil: 'not checked', dirt: [{ x: 1 }] });
     s.openings = { ...(s.openings as Json), curtains: 'not checked', lightsOn: [-1] };
+    expect(() => check(s)).not.toThrow();
+  });
+});
+
+describe('protocol 36 additions (water tanks; action fixture stays opaque)', () => {
+  type Items = Json & { waterTanks?: unknown };
+  const tanks = (entries: unknown): Json => {
+    const s = save();
+    (s.items as Items).waterTanks = { $m: entries };
+    return s;
+  };
+
+  it('the real save lacks waterTanks while every tank is full and passes', () => {
+    const s = save();
+    expect(s.items as Items).not.toHaveProperty('waterTanks');
+    expect(() => check(s)).not.toThrow();
+  });
+
+  it('a real sim save with a non-full tank carries waterTanks as a Map and passes', () => {
+    const s: Json = { ...(JSON.parse(realSaveWithTankJson()) as Json), seed: SEED };
+    expect((s.items as Items).waterTanks).toEqual({ $m: [['11,10,0,0', 3.5]] });
+    expect(() => check(s)).not.toThrow();
+  });
+
+  it('accepts non-full tanks', () => {
+    expect(() =>
+      check(
+        tanks([
+          ['10,-4,0,0', 12.5],
+          ['-3,7,1,2', 0],
+        ]),
+      ),
+    ).not.toThrow();
+    expect(() => check(tanks([]))).not.toThrow();
+  });
+
+  it('refuses bad keys, negative or non-number litres and a raw (non-Map) list', () => {
+    rejects(tanks([['10,4,0', 1]]), /items/);
+    rejects(tanks([['a,b,c,d', 1]]), /items/);
+    rejects(tanks([['1,2,3,-1', 1]]), /items/);
+    rejects(tanks([['1,2,3,0', -1]]), /items/);
+    rejects(tanks([['1,2,3,0', '5']]), /items/);
+    rejects(tanks([['1,2,3,0', { $f: 'NaN' }]]), /items/);
+    const raw = save();
+    (raw.items as Items).waterTanks = [['1,2,3,0', 1]];
+    rejects(raw, /items/);
+  });
+
+  it('the action fixture stays in the opaque queue section', () => {
+    const s = save();
+    s.queue = { anything: [{ fixture: 'not checked' }] };
     expect(() => check(s)).not.toThrow();
   });
 });

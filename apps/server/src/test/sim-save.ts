@@ -37,6 +37,21 @@ let cached: string | undefined;
 /** UTF-8 JSON text of the real save (generated once, sim seed `BASE_SEED`). */
 export function realSaveJson(): string {
   if (cached) return cached;
+  cached = generate();
+  return cached;
+}
+
+/**
+ * Real save with one furniture water tank that is not full (protocol 36): the sim writes
+ * `items.waterTanks` only then, so the tank state is set before `sim.save()`.
+ */
+export function realSaveWithTankJson(): string {
+  return generate((sim) => {
+    sim.world.items!.waterTanks = new Map([['11,10,0,0', Math.fround(3.5)]]);
+  });
+}
+
+function generate(beforeSave?: (sim: ReturnType<typeof createSim>) => void): string {
   const seed = BASE_SEED;
   const src = world(seed);
   const sim = createSim({
@@ -66,8 +81,8 @@ export function realSaveJson(): string {
     if (t % 20 === 0) send({ type: 'move', dx: 1, dy: (t / 20) % 2 });
     sim.step();
   }
-  cached = new TextDecoder().decode(sim.save());
-  return cached;
+  beforeSave?.(sim);
+  return new TextDecoder().decode(sim.save());
 }
 
 /**
