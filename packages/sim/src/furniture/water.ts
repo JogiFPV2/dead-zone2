@@ -1,3 +1,4 @@
+import type { WaterSettings } from '@deadzone/content';
 import { CHUNK_SIZE, type CommandRejectReason, type WaterTankView } from '@deadzone/protocol';
 import { registerAction } from '../actions/queue.js';
 import { gameMinuteAt } from '../core/clock.js';
@@ -21,26 +22,41 @@ import { objectRect } from './footprint.js';
 /**
  * Furniture water (protocol 36, docs 9.59): a placeable with `placeable.waterTank`
  * (`{capacityL, quality, refillFromMains}`, e.g. the toilet cistern) holds a finite supply.
- * Menu `drink-tank` drinks `TANK_DRINK_L` (thirst − `hygiene.drinkTap.thirst`, scaled when less is
- * left); `fill-water` fills a carried bottle there or at a tap (mains). While mains water is on a
- * `refillFromMains` tank refills at once (stays full); after the cut it only drains. Litres left
- * of tanks that are not full: `ItemStore.waterTanks` (`x,y,z,n` → litres; saved only then).
- * Tainted water fills a dirty-water bottle (boil before drinking); drinking it straight has no
- * sickness yet, like `drink.sicknessChance` (not simulated).
+ * Menu `drink-tank` drinks `worldSettings.water.tankDrinkL` (thirst − `hygiene.drinkTap.thirst`,
+ * scaled when less is left); `fill-water` (`water.fillMin`) fills a carried bottle
+ * (`water.bottles`, size `waterContainer.capacityL`) there or at a tap (mains). While mains water
+ * is on a `refillFromMains` tank refills at once (stays full); after the cut it only drains.
+ * Litres left of tanks that are not full: `ItemStore.waterTanks` (`x,y,z,n` → litres; saved only
+ * then). Tainted water fills the tainted bottle (boil before drinking); drinking it straight has
+ * no sickness yet, like `drink.sicknessChance` (not simulated).
  */
 
-/** Litres one drink takes from a tank. */
+/**
+ * Fallbacks when the content has no `worldSettings.water` / `waterContainer` (older bundles):
+ * the values of #260. Litres one drink takes from a tank (`water.tankDrinkL`).
+ */
 export const TANK_DRINK_L = 0.25;
-/** Litres of a full bottle (`base:water-bottle`, 0.55 kg). */
+/** Litres of a full bottle without `waterContainer.capacityL` (`base:water-bottle`, 0.55 kg). */
 export const BOTTLE_L = 0.5;
-/** Game minutes to fill a bottle. */
+/** Game minutes to fill a bottle (`water.fillMin`). */
 export const FILL_MIN = 0.5;
-/** Items of `fill-water`: the empty bottle and what it becomes (clean / tainted water). */
-export const WATER_ITEMS = {
+/** Bottles of `fill-water` (`water.bottles`): the empty one and what it becomes. */
+export const WATER_ITEMS: WaterSettings['bottles'] = {
   empty: 'base:bottle',
   clean: 'base:water-bottle',
   tainted: 'base:dirty-water-bottle',
-} as const;
+};
+
+/** `worldSettings.water` of the content, with the fallbacks above. */
+export function waterSettings(w: SimWorld): WaterSettings {
+  const ws = w.items?.content.water;
+  return {
+    tankDrinkL: ws?.tankDrinkL ?? TANK_DRINK_L,
+    fillMin: ws?.fillMin ?? FILL_MIN,
+    bottles: { ...WATER_ITEMS, ...ws?.bottles },
+  };
+}
+
 const EPS = 1e-4;
 
 export type Fixture = [number, number, number, number];
@@ -155,9 +171,10 @@ export function fillTarget(
   const st = w.items!;
   const p = playerItems(w, eid);
   if (!p) return undefined;
-  const clean = idOf(w, WATER_ITEMS.clean);
-  const dirty = idOf(w, WATER_ITEMS.tainted);
-  const empty = idOf(w, WATER_ITEMS.empty);
+  const b = waterSettings(w).bottles;
+  const clean = idOf(w, b.clean);
+  const dirty = idOf(w, b.tainted);
+  const empty = idOf(w, b.empty);
   const items = carriedItems(st, p.inventory).sort((a, b) => a.id - b.id);
   const partial = items.find(
     (it) =>
@@ -184,11 +201,16 @@ function fillCheck(w: SimWorld, eid: number, a: ActionState) {
   const item = fillTarget(w, eid, s.quality);
   if (!item) return 'missing-item';
   const st = w.items!;
+  const b = waterSettings(w).bottles;
   const def =
-    item.def === idOf(w, WATER_ITEMS.empty)
-      ? idOf(w, s.quality === 'clean' ? WATER_ITEMS.clean : WATER_ITEMS.tainted)!
+    item.def === idOf(w, b.empty)
+      ? idOf(w, s.quality === 'clean' ? b.clean : b.tainted)!
       : item.def;
-  const perUse = BOTTLE_L / fullUses(st.content.items[def]!);
+  const d = st.content.items[def]!;
+  // Bottle size: `waterContainer.capacityL` of the filled item, else of the empty one, else 0.5 l.
+  const capacityL =
+    d.waterContainer?.capacityL ?? defOf(st, item).waterContainer?.capacityL ?? BOTTLE_L;
+  const perUse = capacityL / fullUses(d);
   // Less than one sip left in the tank: nothing to fill.
   return s.litres + EPS < perUse ? 'no-water' : { ...s, item, def, perUse };
 }
@@ -203,17 +225,18 @@ export function registerWaterActions(): void {
     complete(w, eid, a) {
       const s = drinkCheck(w, eid, a);
       if (typeof s === 'string') return;
-      const taken = Math.min(TANK_DRINK_L, s.litres);
+      const sip = waterSettings(w).tankDrinkL;
+      const taken = Math.min(sip, s.litres);
       if (s.tank) setTankLitres(w, a.fixture!, s.tank, s.litres - taken);
       const sv = w.survival!;
       const h = sv.content.survival.hygiene;
       const v = sv.vitals;
-      v.thirst[eid] = clampStat((v.thirst[eid] ?? 0) - (h.drinkTap.thirst * taken) / TANK_DRINK_L);
+      v.thirst[eid] = clampStat((v.thirst[eid] ?? 0) - (h.drinkTap.thirst * taken) / sip);
     },
   });
   registerAction('fillWater', {
     validate: (w, eid, a) => reasonOf(fillCheck(w, eid, a)),
-    durationMin: () => FILL_MIN,
+    durationMin: (w) => waterSettings(w).fillMin,
     complete(w, eid, a) {
       const s = fillCheck(w, eid, a);
       if (typeof s === 'string') return;

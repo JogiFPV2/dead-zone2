@@ -1,4 +1,9 @@
-import type { ContentBundle, CraftingSettings, LightingSettings } from '@deadzone/content';
+import type {
+  ContentBundle,
+  CraftingSettings,
+  LightingSettings,
+  WaterSettings,
+} from '@deadzone/content';
 
 /**
  * What the sim reads from a `ContentBundle` (a full bundle is assignable). Kept structural so
@@ -126,6 +131,8 @@ export interface ContentIndex {
   movement: ContentBundle['worldSettings']['movement'] | undefined;
   /** `worldSettings.simLod` (big-map LOD; optional for older bundles). */
   simLod: ContentBundle['worldSettings']['simLod'] | undefined;
+  /** `worldSettings.water` (tank drink, bottle fill; optional for older bundles, docs 9.59). */
+  water: WaterSettings | undefined;
   /** `worldSettings.vehicles` (vehicle gameplay; optional for older bundles). */
   vehicles: ContentBundle['worldSettings']['vehicles'] | undefined;
   /** `worldSettings.utilities` (mains power / water shutoff; optional for older bundles). */
@@ -298,6 +305,7 @@ export function compileContent(content: SimContent): ContentIndex {
     movement: (content.worldSettings as { movement?: ContentBundle['worldSettings']['movement'] })
       .movement,
     simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,
+    water: (content.worldSettings as { water?: WaterSettings }).water,
     vehicles: (content.worldSettings as { vehicles?: ContentBundle['worldSettings']['vehicles'] })
       .vehicles,
     utilities: (

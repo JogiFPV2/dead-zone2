@@ -144,11 +144,18 @@ export const saveHygieneSchema = z.object({
  * Furniture water tanks in the saved items section (protocol 36, docs 9.59): `waterTanks` = Map
  * `"x,y,z,n"` (map object tile and index on the tile) → litres left, only tanks that are not
  * full; the field is absent while every tank is full. Older saves lack it (all tanks full).
+ * This schema describes the decoded entry list. On disk the Map is encoded by the save codec as
+ * `{ "$m": [["x,y,z,n", litres], …] }`: validate a raw save with `saveWaterTanksRawSchema`.
  */
 export const saveWaterTanksSchema = z.object({
   waterTanks: z
     .array(z.tuple([z.string().regex(/^-?\d+,-?\d+,-?\d+,\d+$/), z.number().min(0).finite()]))
     .optional(),
+});
+
+/** `items.waterTanks` as it lies in the save file: `{ "$m": [["x,y,z,n", litres], …] }`. */
+export const saveWaterTanksRawSchema = z.object({
+  waterTanks: z.looseObject({ $m: saveWaterTanksSchema.shape.waterTanks.unwrap() }).optional(),
 });
 
 /**

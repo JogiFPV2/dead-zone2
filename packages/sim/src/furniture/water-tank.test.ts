@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { saveWaterTanksSchema } from '@deadzone/protocol/schema';
+import { saveWaterTanksRawSchema, saveWaterTanksSchema } from '@deadzone/protocol/schema';
 import { createSim, type Sim } from '../sim.js';
 import { baseContent, runMinutes, send } from '../test/content-fixtures.js';
 import { buildMap } from '../test/fixtures.js';
@@ -10,7 +10,7 @@ import { carriedItems } from '../items/actions.js';
 import { defOf } from '../items/store.js';
 import { playerItems } from '../items/inventory.js';
 import { utf8Decode } from '../save/codec.js';
-import { BOTTLE_L, TANK_DRINK_L } from './water.js';
+import { BOTTLE_L, FILL_MIN, TANK_DRINK_L, WATER_ITEMS, waterSettings } from './water.js';
 
 const content = await baseContent();
 const hy = content.worldSettings.survival.hygiene;
@@ -20,12 +20,12 @@ const SINK = { contentId: 'base:kitchen-sink', x: 9, y: 10 };
 const TOILET_ID = objectFurnitureId(TOILET.x, TOILET.y, 0, 0);
 const SINK_ID = objectFurnitureId(SINK.x, SINK.y, 0, 0);
 
-function sim(load?: Uint8Array): Sim {
+function sim(load?: Uint8Array, c: typeof content = content): Sim {
   return createSim({
     seed: 4,
     map: buildMap({ width: 32, height: 32, objects: [TOILET, SINK] }),
     spawn: { x: 10.5, y: 10.5 },
-    content,
+    content: c,
     dev: true,
     clockStart: { day: 1, hour: 12, minute: 0 },
     ...(load ? { load } : {}),
@@ -132,4 +132,68 @@ describe('furniture water tanks (placeable.waterTank)', () => {
       reasonPl: 'Brak wody w sieci',
     });
   });
+
+  it('reads worldSettings.water and waterContainer.capacityL; falls back without them', () => {
+    expect(waterSettings(sim().world)).toEqual(content.worldSettings.water);
+    const ws = content.worldSettings as unknown as Record<string, unknown>;
+    const { water: _drop, ...rest } = ws;
+    void _drop;
+    const old = { ...content, worldSettings: rest } as unknown as typeof content;
+    expect(waterSettings(sim(undefined, old).world)).toEqual({
+      tankDrinkL: TANK_DRINK_L,
+      fillMin: FILL_MIN,
+      bottles: WATER_ITEMS,
+    });
+    // Other values: 1 l per drink, 2 min to fill, a 0.25 l dirty bottle (5 sips of 0.05 l).
+    const custom = {
+      ...content,
+      worldSettings: {
+        ...content.worldSettings,
+        water: { ...content.worldSettings.water, tankDrinkL: 1, fillMin: 2 },
+      },
+      items: {
+        ...content.items,
+        'base:dirty-water-bottle': {
+          ...content.items['base:dirty-water-bottle']!,
+          waterContainer: { capacityL: 0.25 },
+        },
+      },
+    } as typeof content;
+    const s = sim(undefined, custom);
+    s.world.items!.water = false;
+    expect(act(s, TOILET_ID, 'drink-tank').durationMin).toBe(hy.drinkTap.durationMin);
+    send(s, { type: 'debugStat', stat: 'thirst', value: 90 });
+    use(s, TOILET_ID, 'drink-tank', hy.drinkTap.durationMin + 1);
+    expect(litres(s)).toBeCloseTo(9, 3);
+    send(s, { type: 'debugGiveItem', itemId: 'base:bottle' });
+    s.step();
+    expect(act(s, TOILET_ID, 'fill-water').durationMin).toBe(2);
+    use(s, TOILET_ID, 'fill-water', 3);
+    expect(carried(s)).toContainEqual({ id: 'base:dirty-water-bottle', uses: 5 });
+    expect(litres(s)).toBeCloseTo(8.75, 3);
+  });
+
+  it('on disk the tanks are `{ $m: [[key, litres]] }` (saveWaterTanksSchema entries)', () => {
+    const s = sim();
+    s.world.items!.waterTanks = new Map([['11,10,0,0', Math.fround(3.5)]]);
+    const text = utf8Decode(s.save());
+    const json = JSON.parse(text.slice(text.indexOf('{'))) as unknown;
+    const raw = findKey(json, 'waterTanks');
+    expect(raw).toEqual({ $m: [['11,10,0,0', 3.5]] });
+    expect(saveWaterTanksRawSchema.safeParse({ waterTanks: raw }).success).toBe(true);
+    expect(saveWaterTanksRawSchema.safeParse({ waterTanks: [['11,10,0,0', 3.5]] }).success).toBe(
+      false,
+    );
+  });
 });
+
+/** First value under `key` anywhere in a JSON tree. */
+function findKey(v: unknown, key: string): unknown {
+  if (!v || typeof v !== 'object') return undefined;
+  if (key in v) return (v as Record<string, unknown>)[key];
+  for (const x of Object.values(v)) {
+    const r = findKey(x, key);
+    if (r !== undefined) return r;
+  }
+  return undefined;
+}
