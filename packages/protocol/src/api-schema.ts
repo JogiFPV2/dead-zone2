@@ -133,6 +133,14 @@ export const saveSleepSchema = z.object({
 });
 
 /**
+ * Burnt food field in the saved item map (protocol 31): `burnt` = cooked food that came out
+ * burnt (`crafting.burn`); written only when true.
+ */
+export const saveItemBurntSchema = z.object({
+  burnt: z.literal(true).optional(),
+});
+
+/**
  * Wound care fields of a saved wound (protocol 27, survival section `wounds`): `stitched`, and
  * `cleanUntilAge` = wound age (minutes) until which it cannot get a dirt infection after
  * disinfecting. Written only when set; older saves have neither.

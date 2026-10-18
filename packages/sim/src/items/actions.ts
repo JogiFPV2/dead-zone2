@@ -64,6 +64,7 @@ export function addPieces(
   containerId: number,
   n: number,
   ageStamp: number,
+  burnt = false,
 ): void {
   const d = st.content.items[def]!;
   const max = stackLimit(st, d);
@@ -75,6 +76,7 @@ export function addPieces(
       const other = st.items.get(id);
       if (!other || other.def !== def || other.count >= max || other.inner) continue;
       if (other.uses !== fullUses(d) || other.condition !== maxCondition(d)) continue;
+      if ((other.burnt ?? false) !== burnt) continue;
       const k = Math.min(left, max - other.count);
       other.count += k;
       left -= k;
@@ -83,7 +85,8 @@ export function addPieces(
   }
   while (left > 0) {
     const k = Math.min(left, max);
-    createItem(st, def, containerId, k, ageStamp);
+    const item = createItem(st, def, containerId, k, ageStamp);
+    if (burnt) item.burnt = true;
     left -= k;
   }
   st.version++;
@@ -239,7 +242,14 @@ export function registerItemActions(): void {
       const def = defOf(w.items!, item);
       if (def.kind !== 'food') return;
       itemUsed(w, eid, a, item);
-      applyNutrition(w, eid, def.food.nutrition, 1 / def.food.portions);
+      const portion = 1 / def.food.portions;
+      if (item.burnt) {
+        // Burnt food: less nutrition, a bit of unhappiness (`crafting.burn`).
+        const burn = w.items!.content.crafting.burn;
+        applyNutrition(w, eid, def.food.nutrition, portion * burn.nutritionMultiplier);
+        const v = w.survival?.vitals.unhappiness;
+        if (v) v[eid] = clampStat((v[eid] ?? 0) + burn.unhappiness * portion);
+      } else applyNutrition(w, eid, def.food.nutrition, portion);
       consumeUse(w, item, def.food.emptyInto);
     },
   });

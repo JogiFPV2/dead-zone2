@@ -15,6 +15,7 @@ import { ticksPerGameMinute } from '../core/clock.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import type { SimWorld } from '../core/world.js';
 import { carriedItems } from '../items/actions.js';
+import { craftSources, evalRecipe, stationHeats } from '../crafting/crafting.js';
 import { applyItemCommand } from '../items/commands.js';
 import { canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
@@ -363,6 +364,33 @@ function objectActions(
         }),
       );
     }
+  }
+  // Stove: one `cook:<recipeId>` per known recipe of its station (parts it has, level it allows).
+  if (def?.kind === 'placeable' && def.placeable.cooking && def.placeable.station) {
+    typeId ??= 'stove';
+    const at = def.placeable.station;
+    const stove = {
+      ...at,
+      x: obj.x,
+      y: obj.y,
+      z: obj.z,
+      item: undefined,
+      cooking: def.placeable.cooking,
+    };
+    const src = craftSources(w, eid);
+    st.content.recipes.forEach((r, ri) => {
+      const rs = r.station;
+      if (!rs || rs.id !== at.id || rs.minLevel > at.level) return;
+      if (rs.appliance && !stove.cooking[rs.appliance]) return;
+      const ev = evalRecipe(w, eid, ri, src);
+      if (ev.state === 'notLearned' || ev.state === 'skillLocked') return;
+      const id = `cook:${r.id}`;
+      out.push(
+        stationHeats(st, stove, rs.appliance)
+          ? timed(w, eid, id, newAction('craft', { recipe: ri + 1, use: [] }))
+          : entry(id, 'no-power', { durationMin: ev.durationMin }),
+      );
+    });
   }
   if (!typeId || out.length === 0) return undefined;
   return { typeId, actions: out };

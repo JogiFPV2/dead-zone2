@@ -609,6 +609,8 @@ export type SimEvent =
       results: { def: string; count: number }[];
       /** Results that went to a ground pile (heavy stations, full inventory). */
       container?: ContainerId;
+      /** Food results came out burnt (protocol 31, `crafting.burn`). */
+      burnt?: boolean;
     }
   | { type: 'skillLevelUp'; tick: number; playerId: PlayerId; skill: string; level: number }
   /** Recipe learned (literature `unlocksRecipes`, profession, dev). */

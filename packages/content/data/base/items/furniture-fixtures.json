@@ -7,7 +7,8 @@
     "tags": ["base:furniture"],
     "placeable": {
       "containerType": "base:range",
-      "station": { "id": "base:station-fire", "level": 3 }
+      "station": { "id": "base:station-fire", "level": 3 },
+      "cooking": { "burners": "gas", "oven": "electric" }
     }
   },
   {

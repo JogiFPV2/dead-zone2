@@ -10,6 +10,7 @@ import {
   XpRewardSchema,
 } from '../common/index.js';
 import { StationLevelSchema } from '../station.js';
+import { ApplianceSchema } from '../item/cooking.js';
 import { IngredientSchema } from './ingredient.js';
 import { RecipeRepairSchema } from './repair.js';
 import { RecipeResultSchema } from './result.js';
@@ -39,6 +40,8 @@ export const RecipeKindSchema = z.enum(['craft', 'combine']);
 export const RecipeStationSchema = z.strictObject({
   id: StationRefSchema,
   minLevel: StationLevelSchema.default(1),
+  /** Kuchenka: potrzebna część (palniki / piekarnik); stacje bez `placeable.cooking` zawsze pasują. */
+  appliance: ApplianceSchema.optional(),
 });
 
 export const RecipeSchema = z

@@ -156,6 +156,7 @@ const sameState = (st: ItemStore, a: ItemInstance, b: ItemInstance): boolean =>
   a.def === b.def &&
   a.condition === b.condition &&
   a.uses === b.uses &&
+  (a.burnt ?? false) === (b.burnt ?? false) &&
   !a.inner &&
   !b.inner &&
   (!spoilageOf(defOf(st, a)) || (a.ageMin === b.ageMin && a.ageStamp === b.ageStamp));

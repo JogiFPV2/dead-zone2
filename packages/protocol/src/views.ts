@@ -154,6 +154,8 @@ export interface ItemView {
   frozen?: boolean;
   /** Thawing: game minutes left until thawed (then it spoils at the normal rate). */
   thawMin?: number;
+  /** Burnt food (protocol 31): less nutrition, more unhappiness (`crafting.burn`). */
+  burnt?: boolean;
   /** Building key (protocol 26): map-global building id it opens (`SimChunk.roomBuildings`). */
   buildingId?: number;
   /** Own container (bags, placed storage), opened like any other container. */
@@ -743,7 +745,19 @@ export interface RecipeStatusView {
   parts: RecipePartView[];
   tools: RecipePartView[];
   skills: { skill: string; need: number; have: number }[];
-  station?: { id: string; minLevel: number; level: number };
+  /**
+   * `appliance`: stove part the recipe needs (protocol 31); `noPower`: a station of the right
+   * level is near but the needed electric part has no power (state `stationLevelLocked`).
+   */
+  station?: {
+    id: string;
+    minLevel: number;
+    level: number;
+    appliance?: 'burners' | 'oven';
+    noPower?: boolean;
+  };
+  /** Chance (0..1) the food comes out burnt with the current cooking skill (protocol 31). */
+  burnChance?: number;
   /** Game minutes with the current skills and station. */
   durationMin: number;
 }
@@ -755,6 +769,14 @@ export interface StationNearbyView {
   y: number;
   /** Upgrade recipe to the next level (null at max or for map objects). */
   upgrade: string | null;
+  /**
+   * Stove (protocol 31, `placeable.cooking`): its parts and whether each heats now (gas always,
+   * electric only with power). Absent on stations without `cooking`.
+   */
+  cooking?: {
+    burners?: { heat: 'gas' | 'electric'; on: boolean };
+    oven?: { heat: 'gas' | 'electric'; on: boolean };
+  };
 }
 
 export interface CraftingView {

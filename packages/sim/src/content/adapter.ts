@@ -1,4 +1,4 @@
-import type { ContentBundle } from '@deadzone/content';
+import type { ContentBundle, CraftingSettings } from '@deadzone/content';
 
 /**
  * What the sim reads from a `ContentBundle` (a full bundle is assignable). Kept structural so
@@ -167,7 +167,23 @@ export interface CraftingConfig {
   nearbyRadiusTiles: number;
   timeReductionPerSkillLevel: number;
   minTimeMultiplier: number;
+  /** Burning cooked food (docs 9.52); bundles without it never burn. */
+  burn: BurnConfig;
 }
+
+export type BurnConfig = Omit<CraftingSettings['burn'], 'stations'> & {
+  stations: readonly string[];
+};
+
+const NO_BURN: BurnConfig = {
+  enabled: false,
+  stations: [],
+  skill: 'base:cooking',
+  chance: 0,
+  chancePerSkillLevel: 0,
+  nutritionMultiplier: 1,
+  unhappiness: 0,
+};
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -250,6 +266,7 @@ export function compileContent(content: SimContent): ContentIndex {
       nearbyRadiusTiles: cs.nearbyRadiusTiles ?? 3,
       timeReductionPerSkillLevel: cs.timeReductionPerSkillLevel ?? 0.05,
       minTimeMultiplier: cs.minTimeMultiplier ?? 0.5,
+      burn: cs.burn ?? NO_BURN,
     },
     zombieTypes: zombieIds.map((id) => content.zombieTypes![id]!),
     zombieTypeIndex: new Map(zombieIds.map((id, i) => [id, i])),

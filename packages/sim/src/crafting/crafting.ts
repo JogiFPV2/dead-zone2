@@ -1,3 +1,4 @@
+import type { Appliance, CookingAppliance, HeatSource } from '@deadzone/content';
 import { tooTiredToLearn } from '../leisure/leisure.js';
 import {
   CHUNK_SIZE,
@@ -25,7 +26,7 @@ import {
   type ItemInstance,
   type ItemStore,
 } from '../items/store.js';
-import { addXp, learnRecipe, progressOf } from '../progress/skills.js';
+import { addXp, learnRecipe, progressOf, skillLevel } from '../progress/skills.js';
 import { applyLeisure } from '../leisure/leisure.js';
 import { floorZ } from '../world/levels.js';
 import { anchorRect, objectRect } from '../furniture/footprint.js';
@@ -40,6 +41,29 @@ export interface StationAt {
   z: number;
   /** Station item lying on a ground pile (upgradable); undefined for map objects. */
   item: ItemInstance | undefined;
+  /** Stove parts (`placeable.cooking`); undefined = plain station (always heats). */
+  cooking?: CookingAppliance | undefined;
+}
+
+/** Placeable stove parts of item def `idx`. */
+const cookingOf = (st: ItemStore, idx: number): CookingAppliance | undefined => {
+  const d = st.content.items[idx];
+  return d?.kind === 'placeable' ? d.placeable.cooking : undefined;
+};
+
+/** Whether a stove part heats now: gas always (no gas network yet), electric with mains power. */
+export const heats = (st: ItemStore, heat: HeatSource | undefined): boolean =>
+  heat === 'gas' || (heat === 'electric' && st.powered);
+
+/**
+ * Station usable for a recipe needing `appliance`: plain stations always; stoves only when that
+ * part (any part when the recipe names none) heats now.
+ */
+export function stationHeats(st: ItemStore, s: StationAt, appliance?: Appliance): boolean {
+  const c = s.cooking;
+  if (!c) return true;
+  if (appliance) return heats(st, c[appliance]);
+  return heats(st, c.burners) || heats(st, c.oven);
 }
 
 interface Sources {
@@ -98,7 +122,7 @@ export function craftSources(w: SimWorld, eid: number): Sources {
       items.push(item);
       const s = st.content.stationOfItem.get(item.def);
       if (s && item.loc === cid && c.kind === 'ground')
-        stations.push({ ...s, x: c.x, y: c.y, z: c.z, item });
+        stations.push({ ...s, x: c.x, y: c.y, z: c.z, item, cooking: cookingOf(st, item.def) });
     }
   }
   // Stations placed on the map (fixed objects: usable, not upgradable).
@@ -115,7 +139,8 @@ export function craftSources(w: SimWorld, eid: number): Sources {
         const ok = w.furniture
           ? rectDist2(objectRect(w, x, y, obj.contentId, obj.rot), px, py) <= r * r
           : near(x, y);
-        if (s && ok) stations.push({ ...s, x, y, z, item: undefined });
+        if (s && idx !== undefined && ok)
+          stations.push({ ...s, x, y, z, item: undefined, cooking: cookingOf(st, idx) });
       }
     }
   }
@@ -137,7 +162,15 @@ export interface RecipeEval {
   parts: RecipePartView[];
   tools: RecipePartView[];
   skills: { skill: string; need: number; have: number }[];
-  station: { id: string; minLevel: number; level: number } | undefined;
+  station:
+    | {
+        id: string;
+        minLevel: number;
+        level: number;
+        appliance?: Appliance;
+        noPower?: boolean;
+      }
+    | undefined;
   /** Pieces to consume (item → count), only when all parts are there. */
   take: [ItemInstance, number][];
   toolItems: ItemInstance[];
@@ -168,10 +201,15 @@ export function evalRecipe(
   let station: RecipeEval['station'];
   let stationMul = 1;
   if (r.station) {
-    const level = src.stations
-      .filter((s) => s.id === r.station!.id)
+    const rs = r.station;
+    const all = src.stations.filter((s) => s.id === rs.id);
+    const level = all
+      .filter((s) => stationHeats(st, s, rs.appliance))
       .reduce((m, s) => Math.max(m, s.level), 0);
-    station = { id: r.station.id, minLevel: r.station.minLevel, level };
+    station = { id: rs.id, minLevel: rs.minLevel, level };
+    if (rs.appliance) station.appliance = rs.appliance;
+    // A stove of the right level is there but its needed electric part has no power.
+    if (level < rs.minLevel && all.some((s) => s.level >= rs.minLevel)) station.noPower = true;
     const def = st.content.stations.get(r.station.id);
     stationMul = def?.levels.find((l) => l.level === level)?.craftTimeMultiplier ?? 1;
   }
@@ -243,7 +281,7 @@ export function evalRecipe(
   const reason: CommandRejectReason | undefined = {
     notLearned: 'not-learned' as const,
     skillLocked: 'skill-too-low' as const,
-    stationLevelLocked: 'no-station' as const,
+    stationLevelLocked: station?.noPower ? ('no-power' as const) : ('no-station' as const),
     missingParts: tools.some((t) => t.have === 0)
       ? ('missing-tool' as const)
       : ('missing-parts' as const),
@@ -331,6 +369,25 @@ export function applyCraftCommand(
   return startAction(w, eid, newAction('craft', { recipe: best + 1, use }));
 }
 
+/** max(0, `burn.chance` − `chancePerSkillLevel` × cooking level) for a food recipe on a burn station. */
+export function burnChance(w: SimWorld, eid: number, r: RecipeDef): number {
+  const st = w.items!;
+  const b = st.content.crafting.burn;
+  if (!b.enabled || !r.station || !b.stations.includes(r.station.id)) return 0;
+  const food = r.results.some((x) => {
+    const i = st.content.itemIndex.get(x.item);
+    return i !== undefined && st.content.items[i]!.kind === 'food';
+  });
+  if (!food) return 0;
+  return Math.max(0, b.chance - b.chancePerSkillLevel * skillLevel(w, eid, b.skill));
+}
+
+/** Rolls burning (only when there is a chance, so other crafts keep the rng stream). */
+function rollBurn(w: SimWorld, eid: number, r: RecipeDef): boolean {
+  const c = burnChance(w, eid, r);
+  return c > 0 && w.rng.actions.nextFloat() < c;
+}
+
 const recipeOf = (w: SimWorld, a: ActionState): RecipeDef | undefined =>
   a.recipe ? w.items?.content.recipes[a.recipe - 1] : undefined;
 
@@ -374,6 +431,7 @@ export function registerCraftActions(): void {
       });
       const minute = gameMinuteAt(w.clock, w.tick);
       const p = playerItems(w, eid)!;
+      const burnt = rollBurn(w, eid, r);
       let pile: number | undefined;
       for (const res of r.results) {
         const def = st.content.itemIndex.get(res.item);
@@ -384,7 +442,7 @@ export function registerCraftActions(): void {
           carriedLoad(st, p) + d.weightKg * res.count > hardLimit(w, eid) + 1e-6;
         const into = heavy ? groundPile(st, tile.x, tile.y, tile.z).id : p.inventory;
         if (heavy) pile = into;
-        addPieces(st, def, into, res.count, minute);
+        addPieces(st, def, into, res.count, minute, burnt && d.kind === 'food');
       }
       if (r.repair && ev.repairItem) {
         const max = maxCondition(defOf(st, ev.repairItem));
@@ -400,6 +458,7 @@ export function registerCraftActions(): void {
         recipe: r.id,
         results: r.results.map((x) => ({ def: x.item, count: x.count })),
         ...(pile !== undefined ? { container: pile } : {}),
+        ...(burnt ? { burnt: true } : {}),
       });
     },
   });
@@ -456,6 +515,16 @@ export function registerCraftActions(): void {
 
 // ── View ────────────────────────────────────────────────────────────────────────────────────
 
+function cookingView(
+  st: ItemStore,
+  c: CookingAppliance,
+): NonNullable<StationNearbyView['cooking']> {
+  const v: NonNullable<StationNearbyView['cooking']> = {};
+  if (c.burners) v.burners = { heat: c.burners, on: heats(st, c.burners) };
+  if (c.oven) v.oven = { heat: c.oven, on: heats(st, c.oven) };
+  return v;
+}
+
 const cache = new WeakMap<SimWorld, Map<number, { key: string; view: CraftingView }>>();
 
 /** All recipes with their state + stations nearby (cached per items version and tile). */
@@ -485,6 +554,8 @@ export function craftingView(w: SimWorld, eid: number): CraftingView | undefined
       durationMin: ev.durationMin,
     };
     if (ev.station) v.station = ev.station;
+    const burn = burnChance(w, eid, r);
+    if (burn > 0) v.burnChance = Math.round(burn * 1000) / 1000;
     return v;
   });
   const stations: StationNearbyView[] = src.stations.map((s) => {
@@ -495,6 +566,7 @@ export function craftingView(w: SimWorld, eid: number): CraftingView | undefined
       x: s.x,
       y: s.y,
       upgrade: s.item && next ? next.recipe : null,
+      ...(s.cooking ? { cooking: cookingView(st, s.cooking) } : {}),
     };
   });
   stations.sort((a, b) => a.y - b.y || a.x - b.x || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

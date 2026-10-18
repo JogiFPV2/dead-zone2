@@ -56,6 +56,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       .u32(i.placed ? 1 : 0);
     // Only when thawing (older goldens unchanged).
     if (i.thawUntil !== undefined) h.u32(0x7468_6177).u32(i.thawUntil);
+    if (i.burnt) h.u32(0x6275_726e);
     if (i.buildingId !== undefined)
       h.u32(0x6b65_7901)
         .u32(i.buildingId % 0x1_0000_0000)

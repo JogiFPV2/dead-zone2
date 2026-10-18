@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ContainerTypeRefSchema, FootprintSchema, StationRefSchema } from '../common/index.js';
 import { StationLevelSchema } from '../station.js';
 import { itemBaseShape } from './base.js';
+import { CookingApplianceSchema } from './cooking.js';
 import { LightSchema } from './light.js';
 import { PowerConsumerSchema, PowerSourceSchema } from './power.js';
 
@@ -26,6 +27,8 @@ export const PlaceableItemSchema = z.strictObject({
     sleepSurface: z.enum(['bed', 'sofa']).optional(),
     /** Siedzisko (krzesło, fotel): odpoczynek `rest` w pełni (łóżko i kanapa też). */
     seat: z.boolean().optional(),
+    /** Kuchenka: źródło ciepła palników i piekarnika (`item/cooking.ts`). */
+    cooking: CookingApplianceSchema.optional(),
     /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
     footprint: FootprintSchema.optional(),
   }),

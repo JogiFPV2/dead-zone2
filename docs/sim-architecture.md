@@ -1477,3 +1477,29 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
   Etykiety są w `FURNITURE_ACTIONS_PL` / `FURNITURE_TYPES_PL`.
 - **Zapis:** bez nowych pól (`SAVE_VERSION` 3).
 - **Testy:** `leisure/radio-vcr.test.ts`.
+
+### 9.52 Gotowanie: kuchenki gaz/prąd, przypalanie (protokół 31) — kontrakt dla Silnika, Designera, Serwera i Modules
+
+- **Kuchenka:** nowe pole `placeable.cooking {burners?, oven?}` (`'gas' | 'electric'`, `@deadzone/content` `CookingApplianceSchema`).
+  - Gaz grzeje zawsze (bez sieci gazowej; kod `no-gas` zarezerwowany).
+  - Część elektryczna grzeje tylko z prądem (`items.powered`).
+  - `base:range`: palniki gazowe + piekarnik elektryczny.
+  - Stacja bez `cooking` (ognisko, piec, `base:kitchen-oven`) działa zawsze, jak dotąd.
+- **Receptury:** `station.appliance?: 'burners' | 'oven'`. Kuchenka liczy się jako stacja tylko wtedy, gdy ta część grzeje (bez `appliance`: dowolna). Dane: pieczony ziemniak = `oven`, gulasz i ryba z grilla = `burners`.
+  - Gdy jest kuchenka o dobrym poziomie, ale potrzebna część nie ma prądu: stan `stationLevelLocked`, powód `no-power` (zamiast `no-station`).
+  - Widok: `RecipeStatusView.station.appliance` / `noPower` oraz `StationNearbyView.cooking {burners?, oven?: {heat, on}}`.
+- **Menu kuchenki** (`typeId` `stove`, chyba że schowek nadał inny): `cook:<recipeId>`, jedna pozycja na znaną recepturę jej stacji, którą ta kuchenka obsługuje (poziom, część).
+  - Bez prądu w potrzebnej części: wyłączona z powodem `no-power`.
+  - Uruchamia zwykły `craft`. Etykieta „Gotuj”; nazwę receptury UI bierze z `recipeId`.
+- **Przypalanie:** `worldSettings.crafting.burn`:
+  - domyślnie stacja `base:station-fire`, szansa 0,25 − 0,05 × poziom `base:cooking` (od poziomu 5 nic się nie przypala);
+  - dotyczy tylko wyników-jedzenia;
+  - przypalone (`ItemInstance.burnt`, `ItemView.burnt`, `crafted.burnt`) daje 50 % wartości odżywczej i +10 smutku na całą porcję;
+  - nie łączy się w stos z nieprzypalonym.
+
+  `RecipeStatusView.burnChance` podaje szansę dla UI. Paczki bez `burn` nigdy nie przypalają (fixtures, stare goldeny).
+- **Zapis:** pole przedmiotu `burnt: true` tylko gdy ustawione (`saveItemBurntSchema` w `@deadzone/protocol/schema`). `SAVE_VERSION` 3. Hash tylko przy `burnt`.
+- **Modules:**
+  - `base:gas-stove` istnieje dziś tylko jako typ schowka. Żeby się na nim gotowało, potrzebny jest przedmiot `placeable` ze `station` fire i `cooking: {burners: 'gas', oven: 'gas'}`, z ikoną.
+  - `base:kitchen-oven` można oznaczyć `cooking`, jeśli ma być elektryczny.
+- **Testy:** `crafting/cooking.test.ts`.

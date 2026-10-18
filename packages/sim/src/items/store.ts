@@ -46,6 +46,8 @@ export interface ItemInstance {
   thawUntil?: number;
   /** Building key: map-global building id it opens (`SimChunk.roomBuildings`). */
   buildingId?: number;
+  /** Burnt cooked food (`crafting.burn`, docs 9.52); absent = not burnt. */
+  burnt?: true;
 }
 
 /**

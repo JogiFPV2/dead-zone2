@@ -30,6 +30,7 @@ export const FURNITURE_ACTIONS_PL = {
   read: 'Czytaj',
   'listen-radio': 'Słuchaj radia',
   'watch-vhs': 'Odtwórz kasetę',
+  cook: 'Gotuj',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -68,6 +69,7 @@ export const FURNITURE_TYPES_PL = {
   sofa: 'Kanapa',
   seat: 'Siedzisko',
   radio: 'Radio',
+  stove: 'Kuchenka',
   vcr: 'Magnetowid',
   other: 'Mebel',
 } as const satisfies Record<string, string>;
