@@ -1,0 +1,22 @@
+[
+  {
+    "id": "base:floor-lamp",
+    "name": "item.base.floor-lamp.name",
+    "kind": "placeable",
+    "weightKg": 4,
+    "tags": ["base:light"],
+    "placeable": {
+      "light": { "radiusTiles": 4, "intensity": 0.6, "color": "#ffdca8", "requiresPower": true }
+    }
+  },
+  {
+    "id": "base:desk-lamp",
+    "name": "item.base.desk-lamp.name",
+    "kind": "placeable",
+    "weightKg": 1,
+    "tags": ["base:light"],
+    "placeable": {
+      "light": { "radiusTiles": 2.5, "intensity": 0.5, "color": "#fff0d0", "requiresPower": true }
+    }
+  }
+]

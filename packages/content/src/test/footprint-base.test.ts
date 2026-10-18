@@ -11,6 +11,7 @@ const SIZES: Record<string, { w: number; h: number }> = {
   'base:metal-shelf': { w: 2, h: 1 },
   'base:bed': { w: 1, h: 2 },
   'base:double-bed': { w: 2, h: 2 },
+  'base:table': { w: 2, h: 1 },
 };
 
 describe('footprint mebli w paczce bazowej', () => {

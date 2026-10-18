@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base:table",
+    "name": "item.base.table.name",
+    "kind": "placeable",
+    "weightKg": 20,
+    "tags": ["base:furniture"],
+    "placeable": { "footprint": { "w": 2, "h": 1 } }
+  }
+]

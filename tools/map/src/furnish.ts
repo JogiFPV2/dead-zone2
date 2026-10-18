@@ -43,6 +43,7 @@ export const BASE_FOOTPRINTS: Readonly<Record<string, Footprint>> = {
   'base:bed': { w: 1, h: 2 },
   'base:desk': { w: 2, h: 1 },
   'base:double-bed': { w: 2, h: 2 },
+  'base:table': { w: 2, h: 1 },
   'base:metal-shelf': { w: 2, h: 1 },
   'base:shop-counter': { w: 2, h: 1 },
   'base:sofa': { w: 2, h: 1 },
