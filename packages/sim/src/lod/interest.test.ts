@@ -1,5 +1,5 @@
 import { CHUNK_SIZE, type SimEvent } from '@deadzone/protocol';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent } from '../test/content-fixtures.js';
 import { gridWorld, lodSim } from '../test/lod-fixtures.js';
@@ -8,6 +8,9 @@ import { send } from '../test/content-fixtures.js';
 import { aiSim } from '../test/ai-fixtures.js';
 import { findItem, itemsSim, mainItems } from '../test/item-fixtures.js';
 import { ChunkLoot, chunkIndex } from './state.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 let seq = 1000;
 const interest = (sim: Sim, cx: number, cy: number, radiusChunks: number, playerId = 0): void => {

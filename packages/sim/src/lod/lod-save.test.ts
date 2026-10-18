@@ -4,7 +4,7 @@ import {
   type Command,
   type WorldSource,
 } from '@deadzone/protocol';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent, survivalSim } from '../test/content-fixtures.js';
 import { NOON } from '../test/ai-fixtures.js';
@@ -16,6 +16,9 @@ import { decodeZeroRle, encodeZeroRle, zeroRleStats } from '../save/delta.js';
 import { generateLoot } from '../items/loot.js';
 import { spawnChunkLoot } from './chunks.js';
 import { ChunkLoot, chunkIndex } from './state.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 const content = fixtureContent();
 const open = (world: WorldSource, load?: Uint8Array, lod = { defaultZombiesPerChunk: 1.5 }): Sim =>

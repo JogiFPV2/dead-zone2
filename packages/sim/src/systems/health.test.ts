@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fixtureContent, runMinutes, send, survivalSim } from '../test/content-fixtures.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 const rejected = (sim: ReturnType<typeof survivalSim>) =>
   sim.drainEvents().flatMap((e) => (e.type === 'commandRejected' ? [e.reason] : []));

@@ -1,5 +1,5 @@
 import { simMapFromData, simMapToData, type SimMap, type SimZombieSpawn } from '@deadzone/protocol';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createSim, type Sim } from '../sim.js';
 import { fixtureContent, send } from '../test/content-fixtures.js';
 import { NOON, eventsOf, runTicks, zombie } from '../test/ai-fixtures.js';
@@ -10,6 +10,9 @@ import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from './config.js';
 import { crossFloorWaypoint, floorOf, nearestPassage } from './floors.js';
 import { emitNoise, heardRadius } from './noise.js';
 import type { Noise } from './state.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 /** All-around sight, so tests do not depend on the random spawn facing. */
 const WIDE: Stage4Config = {

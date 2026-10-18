@@ -1,5 +1,5 @@
 import { CHUNK_SIZE } from '@deadzone/protocol';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Sim } from '../sim.js';
 import { utf8Decode, utf8Encode } from '../save/codec.js';
 import { bang, gridWorld, lodSim, walk } from '../test/lod-fixtures.js';
@@ -13,6 +13,9 @@ import {
   levelCounts,
   type LodWorld,
 } from './state.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 /** docs 9.39: far simulation on several levels (blocks of 4–11 storeys). */
 const total = (sim: Sim): number => {

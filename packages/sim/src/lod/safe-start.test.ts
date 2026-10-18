@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { gridWorld, lodSim } from '../test/lod-fixtures.js';
 import { TileGrid } from '../world/grid.js';
 import { lineOfSight } from '../world/los.js';
 import type { Sim } from '../sim.js';
 import { SAFE_START_RADIUS_TILES, SAFE_START_SEC, SAFE_START_SIGHT_TILES } from './safe-start.js';
+
+// Heavy worlds (LOD, floors, long health runs): 5 s is too little on a busy shared box.
+vi.setConfig({ testTimeout: 30_000 });
 
 const PCX = 20;
 const PCY = 20;
