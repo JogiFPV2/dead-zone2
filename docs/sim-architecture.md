@@ -1550,3 +1550,12 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - **Zapis:** `dirt` w sekcji przetrwania (Float32Array jak reszta; `saveHygieneSchema`). `SAVE_VERSION` 3; starsze zapisy mają 0. Hash tylko przy brudzie > 0.
 - **Modules:** dodane tagi `base:water-tap` (typy schowków zlewów), `base:shower`, `base:bath` (placeable). Nowe meble wodne wystarczy otagować.
 - **Testy:** `survival/hygiene.test.ts`.
+
+### 9.55 Dane dla UI Silnika (#247, protokół 34) — kontrakt dla Silnika, Modules i Serwera
+
+- **Gotowanie:** akcja `cook:<recipeId>` ma `labelPl` = nazwa dania (pierwszy wynik receptury, polska nazwa z `i18n/pl.json` paczki; bez niej id bez przestrzeni nazw) i nowe pole `FurnitureActionView.recipe` (id receptury). Nagłówek podmenu to „Gotuj”. Nazwy: `SimOptions.namesPl` (worker czyta je sam z surowych paczek, `namesPlOf`).
+- **Budzik:** łóżko i kanapa ogłaszają `sleep-until:morning` oraz `sleep-until:<h>` dla `SLEEP_UNTIL_HOURS` = 6, 7, 8, 9, 12 (do `sleep.untilMaxHours`), z etykietą „Śpij N godz.”. Inne `sleep-until:<1..24>` wysłane przez klienta dalej działają.
+- **Moodle `base:dirty`:** gdy content ma moodle `base:dirty` (stat `dirt`), sim liczy go jak inne moodle (progi i histereza z danych; `statValue('dirt')`). Bez definicji sim używa domyślnych progów `DIRTY_LEVELS` 25/50/75/90 (poziomy 1–4, bez histerezy), wysyła `moodleChanged` i `MoodleView` jak zwykle. Modules: dopisać `moodles/dirty.json` i teksty, a do `CORE_STATS` stat `dirt` (bez tego walidacja contentu go nie przepuści).
+- **Zapalone okna:** `SimViewPatch.litWindows?: LitWindowView[]` (`{ edge, x, y, z }`, `x, y` = środek krawędzi okna w kaflach, `edge` = `openingKey`), liczone przez sim (`litWindows`: pokój z zapalonym włącznikiem lampą i prądem, zasłony odsłonięte, okno nie całkiem zabite). Tylko w promieniu `LIT_WINDOWS_RANGE_TILES` (48) od gracza, co 10 ticków, pełna lista przy zmianie. Lista jest niezależna od pory dnia; zombie wabi tylko w nocy.
+- **Zapis:** bez zmian (`SAVE_VERSION` 3). Poziom `base:dirty` z progów domyślnych jest pochodną `dirt` (nie w zapisie ani w haszu).
+- **Testy:** `furniture/ui-247.test.ts`.

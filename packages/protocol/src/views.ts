@@ -77,6 +77,17 @@ export interface SleepView {
   saveReady: boolean;
 }
 
+/** A lit window (`SimViewPatch.litWindows`, protocol 34). */
+export interface LitWindowView {
+  edge: number;
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** Range of `SimViewPatch.litWindows` around the player (tiles, Chebyshev). */
+export const LIT_WINDOWS_RANGE_TILES = 48;
+
 export interface MoodleView {
   /** Content id, e.g. `base:hunger` (label, polarity and icon come from content). */
   id: string;
@@ -473,6 +484,11 @@ export interface FurnitureActionView {
   noiseTiles?: number;
   /** The item this entry uses (`lockpick:<itemId>`): instance id and content id. */
   item?: { id: ItemId; def: string };
+  /**
+   * `cook:<recipeId>` (protocol 34): the recipe content id; `labelPl` is then the dish name (the
+   * first result item's Polish name), the submenu label is "Gotuj".
+   */
+  recipe?: string;
 }
 
 export interface FurnitureView {
@@ -544,6 +560,13 @@ export interface SimViewPatch {
    * are lit only while it is on and there is power; lamps in rooms without a switch as before.
    */
   lightsOn?: { x: number; y: number; z: number }[];
+  /**
+   * Windows leaking room light now (protocol 34), computed by the sim: every window of a room lit
+   * by a switched-on lamp with power, curtains open and not fully boarded, within
+   * `LIT_WINDOWS_RANGE_TILES` of the player. `x, y` = middle of the window edge (tiles), `edge` =
+   * `openingKey`. Full list when it changes (also day and night: zombies are lured only at night).
+   */
+  litWindows?: LitWindowView[];
   /** Placed lures (world markers), full list when any changes (positions rounded to 0.1). */
   lures?: LureView[];
   /** The local player's character (after `newCharacter`; also the first view after a load). */

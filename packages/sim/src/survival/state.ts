@@ -104,6 +104,11 @@ export interface SurvivalWorld {
   readonly virusDeath: Uint32Array;
   /** Moodle levels, `eid * moodleCount + moodleIndex`. */
   readonly moodles: Uint8Array;
+  /**
+   * Fallback `base:dirty` level (0..4) when the content has no such moodle (`DIRTY_LEVELS`):
+   * derived from `dirt` every tick (not saved, not hashed).
+   */
+  readonly dirtyLevel: Uint8Array;
   /** Derived modifier cache (not hashed): `eid * MOD_STATS.length + slot`, mul and add. */
   readonly modMul: Float32Array;
   readonly modAdd: Float32Array;
@@ -148,6 +153,7 @@ export function createSurvivalWorld(
     virusIncubation: new Uint32Array(capacity),
     virusDeath: new Uint32Array(capacity),
     moodles: new Uint8Array(capacity * content.moodles.length),
+    dirtyLevel: new Uint8Array(capacity),
     modMul: new Float32Array(mods).fill(1),
     modAdd: new Float32Array(mods),
     wounds: new Map(),
@@ -187,7 +193,24 @@ export const modded = (s: SurvivalWorld, eid: number, slot: number, base: number
 export const clampStat = (v: number): number => Math.fround(v < 0 ? 0 : v > 100 ? 100 : v);
 
 /** Moodle stat value (content stat id), or undefined for stats the sim does not track yet. */
+/** Moodle id of dirt (protocol 34): content `moodles/dirty.json` with stat `dirt`, or the fallback. */
+export const DIRTY_MOODLE = 'base:dirty';
+/** Fallback `base:dirty` thresholds (dirt 0..100, level 1..4) when the content has none. */
+export const DIRTY_LEVELS = [25, 50, 75, 90] as const;
+
+/** The content has no `base:dirty` moodle: the sim derives it from `DIRTY_LEVELS`. */
+export const dirtyFallback = (s: SurvivalWorld): boolean =>
+  s.content.survival.hygiene !== undefined && !s.content.moodleIndex.has(DIRTY_MOODLE);
+
+/** Fallback `base:dirty` level of a dirt value (no hysteresis). */
+export function dirtyLevelOf(dirt: number): number {
+  let l = 0;
+  for (const t of DIRTY_LEVELS) if (dirt >= t) l++;
+  return l;
+}
+
 export function statValue(s: SurvivalWorld, eid: number, stat: string): number | undefined {
+  if (stat === 'dirt') return s.dirt[eid] ?? 0;
   if (stat === 'injury') return Math.fround(100 - (s.vitals.health[eid] ?? 0));
   if (stat === 'carry-load') return s.carryLoad[eid] ?? 0;
   const arr = (s.vitals as Record<string, Float32Array | undefined>)[stat];

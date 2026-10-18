@@ -66,6 +66,21 @@ export function unpackObjectId(id: number): { x: number; y: number; z: number; n
   return { x, y, z, n };
 }
 
+/** Alarm lengths offered on a bed / sofa (`sleep-until:<h>`, besides `sleep-until:morning`). */
+export const SLEEP_UNTIL_HOURS = [6, 7, 8, 9, 12] as const;
+
+/** Polish dish name of a recipe: its first result item (`SimOptions.namesPl`), else the id. */
+export function dishNamePl(
+  w: SimWorld,
+  r: { id: string; results: readonly { item: string }[] },
+): string {
+  const item = r.results[0]?.item;
+  const name = item === undefined ? undefined : w.namesPl?.[item];
+  if (name) return name;
+  const raw = (item ?? r.id).replace(/^[^:]*:/, '').replace(/-/g, ' ');
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 /** Most entries in one menu patch (nearest to the aim point first). */
 export const MAX_FURNITURE_ENTRIES = 8;
 
@@ -366,9 +381,13 @@ function objectActions(
       };
       out.push(entry('sleep', reason, {}, sleep()));
       out.push(entry('sleep-until:morning', reason, {}, sleep('morning')));
+      // Offered alarms (protocol 34): `SLEEP_UNTIL_HOURS` up to `sleep.untilMaxHours`; any other
+      // `sleep-until:<1..24>` still runs when the client sends it.
+      const maxH = w.survival?.content.survival.sleep.untilMaxHours ?? 24;
+      const hours: number[] = SLEEP_UNTIL_HOURS.filter((x) => x <= maxH);
       const h = cmd?.actionId.startsWith('sleep-until:') ? Number(cmd.actionId.slice(12)) : NaN;
-      if (Number.isInteger(h) && h >= 1 && h <= 24)
-        out.push(entry(cmd!.actionId, reason, {}, sleep(h)));
+      if (Number.isInteger(h) && h >= 1 && h <= 24 && !hours.includes(h)) hours.push(h);
+      for (const x of hours) out.push(entry(`sleep-until:${x}`, reason, {}, sleep(x)));
     }
     out.push(timed(w, eid, 'rest', newAction('rest')));
     // Read a carried book / magazine sitting here.
@@ -434,10 +453,12 @@ function objectActions(
       const ev = evalRecipe(w, eid, ri, src);
       if (ev.state === 'notLearned' || ev.state === 'skillLocked') return;
       const id = `cook:${r.id}`;
+      // Dish name (protocol 34): the first result item's Polish name, the submenu is "Gotuj".
+      const dish = { labelPl: dishNamePl(w, r), recipe: r.id };
       out.push(
         stationHeats(st, stove, rs.appliance)
-          ? timed(w, eid, id, newAction('craft', { recipe: ri + 1, use: [] }))
-          : entry(id, 'no-power', { durationMin: ev.durationMin }),
+          ? timed(w, eid, id, newAction('craft', { recipe: ri + 1, use: [] }), dish)
+          : entry(id, 'no-power', { durationMin: ev.durationMin, ...dish }),
       );
     });
   }

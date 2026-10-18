@@ -42,10 +42,21 @@ const WINDOW_SCAN_TILES = 8;
  * Windows leaking light now: outside tile centre of each window of a room lit by a switched-on
  * lamp (curtains open, fewer planks than `barricade.maxPlanks`). Deduplicated, in lamp order.
  */
-export function litWindows(w: SimWorld): { key: number; x: number; y: number; z: number }[] {
+export interface LitWindow {
+  key: number;
+  /** Outside tile centre (the lure point). */
+  x: number;
+  y: number;
+  z: number;
+  /** Middle of the window edge (the glow, `SimViewPatch.litWindows`). */
+  wx: number;
+  wy: number;
+}
+
+export function litWindows(w: SimWorld): LitWindow[] {
   const ai = w.ai;
   const o = w.openings;
-  const out: { key: number; x: number; y: number; z: number }[] = [];
+  const out: LitWindow[] = [];
   if (!ai || o.lightsOn.size === 0) return out;
   const seen = new Set<number>();
   const map = o.map;
@@ -60,19 +71,19 @@ export function litWindows(w: SimWorld): { key: number; x: number; y: number; z:
     for (let ty = ly - r; ty <= ly + r; ty++) {
       for (let tx = lx - r; tx <= lx + r; tx++) {
         if (roomSig(map, tx, ty, z) !== room) continue;
-        const edges: [number, number, number][] = [
-          [openingKey(0, tx, ty, z), tx, ty - 1],
-          [openingKey(0, tx, ty + 1, z), tx, ty + 1],
-          [openingKey(1, tx, ty, z), tx - 1, ty],
-          [openingKey(1, tx + 1, ty, z), tx + 1, ty],
+        const edges: [number, number, number, number, number][] = [
+          [openingKey(0, tx, ty, z), tx, ty - 1, tx + 0.5, ty],
+          [openingKey(0, tx, ty + 1, z), tx, ty + 1, tx + 0.5, ty + 1],
+          [openingKey(1, tx, ty, z), tx - 1, ty, tx, ty + 0.5],
+          [openingKey(1, tx + 1, ty, z), tx + 1, ty, tx + 1, ty + 0.5],
         ];
-        for (const [key, ox, oy] of edges) {
+        for (const [key, ox, oy, wx, wy] of edges) {
           if (seen.has(key) || o.curtains.has(key)) continue;
           if (edgeKindOf(o, key) !== OpeningKind.window) continue;
           if (roomSig(map, ox, oy, z) !== undefined) continue;
           if ((o.states.get(key)?.planks ?? 0) >= o.cfg.barricade.maxPlanks) continue;
           seen.add(key);
-          out.push({ key, x: ox + 0.5, y: oy + 0.5, z });
+          out.push({ key, x: ox + 0.5, y: oy + 0.5, z, wx, wy });
         }
       }
     }

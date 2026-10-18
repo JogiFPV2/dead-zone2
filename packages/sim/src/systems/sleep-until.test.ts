@@ -85,6 +85,11 @@ describe('sleep {until} (stage 4)', () => {
     expect(bed.actions.map((a) => [a.id, a.reason])).toEqual([
       ['sleep', 'not-tired'],
       ['sleep-until:morning', 'not-tired'],
+      ['sleep-until:6', 'not-tired'],
+      ['sleep-until:7', 'not-tired'],
+      ['sleep-until:8', 'not-tired'],
+      ['sleep-until:9', 'not-tired'],
+      ['sleep-until:12', 'not-tired'],
       ['rest', 'not-tired'],
     ]);
     expect(bed.actions[1]!.labelPl).toBe('Śpij do rana');

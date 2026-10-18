@@ -82,7 +82,14 @@ import { attach, createSimWorld, sortedQuery, spawnEntity, type SimWorld } from 
 import type { EnqueueResult } from './commands/queue.js';
 import { writeRenderSnapshot, renderEntityCount } from './snapshot/render.js';
 import { ViewTracker, woundViews } from './snapshot/views.js';
-import { VITAL_STATS, createSurvivalWorld, initVitals, type VitalStat } from './survival/state.js';
+import {
+  DIRTY_MOODLE,
+  VITAL_STATS,
+  createSurvivalWorld,
+  dirtyFallback,
+  initVitals,
+  type VitalStat,
+} from './survival/state.js';
 import { DEFAULT_AMBIENT_C } from './systems/survival.js';
 import { threatNearby } from './systems/sleep.js';
 import type { MinuteTicks } from './systems/clock.js';
@@ -127,6 +134,11 @@ export interface SimOptions {
    * it the sim runs movement only: no clock-driven survival, moodles or health.
    */
   content?: SimContent | undefined;
+  /**
+   * Polish item names by content id (the pack's `i18n/pl.json` `items`; the worker reads them from
+   * the raw packs). Menu labels only, e.g. the dish of `cook:<recipeId>`; without them the id.
+   */
+  namesPl?: Readonly<Record<string, string>> | undefined;
   /** Allows debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). Default false. */
   dev?: boolean | undefined;
   /**
@@ -433,6 +445,7 @@ export function createSim(input: SimOptions): Sim {
         opts.combatConfig,
       ),
   });
+  if (opts.namesPl) w.namesPl = opts.namesPl;
   const lodCfg: SimLodConfig = {
     ...DEFAULT_SIM_LOD,
     ...(w.survival?.content.simLod ?? {}),
@@ -714,6 +727,8 @@ export function createSim(input: SimOptions): Sim {
         const level = s.moodles[eid * n + i] ?? 0;
         if (level > 0) moodles[s.content.moodles[i]!.id] = level;
       }
+      if (dirtyFallback(s) && (s.dirtyLevel[eid] ?? 0) > 0)
+        moodles[DIRTY_MOODLE] = s.dirtyLevel[eid] ?? 0;
       return {
         alive: !s.dead[eid],
         sleeping: s.asleep[eid] === 1,

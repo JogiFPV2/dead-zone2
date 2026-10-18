@@ -13,6 +13,7 @@ import { skillViews } from '../progress/skills.js';
 import { Pen, PENALTY_SLOTS } from '../survival/penalties.js';
 import { edgeKindOf, openingView } from '../openings/state.js';
 import { unpackSwitchKey } from '../ai/state.js';
+import { litWindows } from '../furniture/lighting.js';
 import {
   BODY_PARTS,
   GAITS,
@@ -25,6 +26,8 @@ import {
   type WeaponKind,
   type CombatView,
   type MoodleView,
+  type LitWindowView,
+  LIT_WINDOWS_RANGE_TILES,
   type PlayerId,
   type PlayerView,
   type PenaltiesView,
@@ -52,7 +55,7 @@ import {
   openContainerView,
 } from '../items/views.js';
 import { restCapOf, sleepRealSec, threatNearby } from '../systems/sleep.js';
-import { SLEEP_SURFACES } from '../survival/state.js';
+import { DIRTY_MOODLE, dirtyFallback, SLEEP_SURFACES } from '../survival/state.js';
 import { threatLevel } from '../ai/threat.js';
 import { heldCondition, meleeOf } from '../combat/system.js';
 import { twoHanded } from '../items/inventory.js';
@@ -211,6 +214,7 @@ export class ViewTracker {
   private deathSent = false;
   private openingsVersion = 0;
   private lightsSig = '';
+  private litKey = '';
   private luresKey = '';
   private utilitiesKey = '';
   private penaltiesKey = '';
@@ -273,6 +277,11 @@ export class ViewTracker {
         const level = s.moodles[eid * list.length + i] ?? 0;
         if ((this.moodles[i] ?? 0) !== level) changed.push({ id: list[i]!.id, level });
         this.moodles[i] = level;
+      }
+      if (dirtyFallback(s)) {
+        const level = s.dirtyLevel[eid] ?? 0;
+        if ((this.moodles[list.length] ?? 0) !== level) changed.push({ id: DIRTY_MOODLE, level });
+        this.moodles[list.length] = level;
       }
       if (changed.length > 0) p.moodles = changed;
       const wounds = woundViews(w, eid);
@@ -422,6 +431,21 @@ export class ViewTracker {
       if (sig !== this.lightsSig) {
         this.lightsSig = sig;
         patch.lightsOn = on.map(unpackSwitchKey);
+      }
+    }
+    // Lit windows (protocol 34): every 10 ticks near the player, full list when it changes.
+    if (eid !== undefined && w.tick % 10 === 0 && (w.openings.lightsOn.size > 0 || this.litKey)) {
+      const px = w.c.Position.x[eid] ?? 0;
+      const py = w.c.Position.y[eid] ?? 0;
+      const r = LIT_WINDOWS_RANGE_TILES;
+      const lit: LitWindowView[] = litWindows(w)
+        .filter((l) => Math.abs(l.wx - px) <= r && Math.abs(l.wy - py) <= r)
+        .map((l) => ({ edge: l.key, x: l.wx, y: l.wy, z: l.z }))
+        .sort((a, b) => a.edge - b.edge);
+      const key = lit.map((l) => l.edge).join(',');
+      if (key !== this.litKey) {
+        this.litKey = key;
+        patch.litWindows = lit;
       }
     }
     return Object.keys(patch).length > 0 ? patch : undefined;

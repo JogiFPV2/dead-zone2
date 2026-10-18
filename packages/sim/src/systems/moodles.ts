@@ -1,6 +1,12 @@
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { MOD_STATS, type CompiledMoodle, type ConditionDef } from '../content/adapter.js';
-import { statValue, type SurvivalWorld } from '../survival/state.js';
+import {
+  dirtyFallback,
+  dirtyLevelOf,
+  DIRTY_MOODLE,
+  statValue,
+  type SurvivalWorld,
+} from '../survival/state.js';
 import { characterMods, hasTrait } from '../character/character.js';
 import { skillLevel } from '../progress/skills.js';
 
@@ -30,6 +36,7 @@ export function moodlesSystem(w: SimWorld, refreshMods: boolean): void {
   if (!s) return;
   const list = s.content.moodles;
   const n = list.length;
+  const fallback = dirtyFallback(s);
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
     if (s.dead[eid]) continue;
     let changed = refreshMods;
@@ -51,6 +58,22 @@ export function moodlesSystem(w: SimWorld, refreshMods: boolean): void {
         from,
         to,
       });
+    }
+    if (fallback) {
+      // `base:dirty` without a content definition (protocol 34): levels from `DIRTY_LEVELS`.
+      const from = s.dirtyLevel[eid] ?? 0;
+      const to = dirtyLevelOf(s.dirt[eid] ?? 0);
+      if (to !== from) {
+        s.dirtyLevel[eid] = to;
+        w.events.push({
+          type: 'moodleChanged',
+          tick: w.tick,
+          playerId: w.c.Player.id[eid] ?? 0,
+          moodle: DIRTY_MOODLE,
+          from,
+          to,
+        });
+      }
     }
     if (changed) refreshModifiers(w, s, eid);
   }

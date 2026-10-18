@@ -79,7 +79,12 @@ describe('cooking on a range (stage 6)', () => {
     const menu = stove(s);
     expect(menu.contentId).toBe('base:range');
     const bake = menu.actions.find((a) => a.id === 'cook:base:bake-potato')!;
-    expect(bake).toMatchObject({ enabled: false, reason: 'no-power', labelPl: 'Gotuj' });
+    expect(bake).toMatchObject({
+      enabled: false,
+      reason: 'no-power',
+      labelPl: 'Baked potato',
+      recipe: 'base:bake-potato',
+    });
     const grill = menu.actions.find((a) => a.id === 'cook:base:grill-fish')!;
     expect(grill.enabled).toBe(true);
     send(s, { type: 'useFurniture', furnitureId: menu.furnitureId, actionId: grill.id });

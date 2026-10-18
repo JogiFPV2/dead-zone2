@@ -150,6 +150,7 @@ export function startSimWorkerHost(
           ...(msg.vehicles ? { spawnVehicles: msg.vehicles } : {}),
           ...(msg.populateAnimals ? { populateAnimals: msg.populateAnimals } : {}),
           content,
+          ...(msg.content ? { namesPl: namesPlOf(msg.content) } : {}),
           dev: msg.dev ?? false,
           floorLoot: msg.floorLoot ?? true,
           ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
@@ -255,4 +256,17 @@ export function startSimWorkerHost(
 function buildContent(src: SimContentSource) {
   const packs: PackSource[] = src.packs.map((p) => ({ dir: p.dir, files: [...p.files] }));
   return buildContentBundle(packs);
+}
+
+/** Polish item names from the raw packs (`i18n/pl.json` → `items`; later packs override). */
+export function namesPlOf(src: SimContentSource): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const p of src.packs)
+    for (const f of p.files) {
+      if (f.path !== 'i18n/pl.json' || !('json' in f)) continue;
+      const items = (f.json as { items?: unknown } | null)?.items;
+      if (!items || typeof items !== 'object') continue;
+      for (const [k, v] of Object.entries(items)) if (typeof v === 'string') out[k] = v;
+    }
+  return out;
 }

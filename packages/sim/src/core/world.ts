@@ -46,6 +46,11 @@ export interface SimWorld {
   /** Characters' world maps: fog of war, trail, markers (map/player-map.ts; not hashed). */
   playerMap: PlayerMapWorld | undefined;
   /**
+   * Polish item names by content id (`SimOptions.namesPl`, the pack's `i18n/pl.json` `items`):
+   * menu labels such as the dish of `cook:<recipeId>`. Display only (not saved, not hashed).
+   */
+  namesPl?: Readonly<Record<string, string>> | undefined;
+  /**
    * Eids of entities removed by the LOD (no components left), reused by the next spawn (LIFO).
    * State: saved, so eids stay identical after a load. Empty without LOD.
    */
