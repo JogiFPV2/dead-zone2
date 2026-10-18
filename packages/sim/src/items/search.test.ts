@@ -273,6 +273,26 @@ describe('scattered loot', () => {
     expect(layout(scatterSim(4))).not.toBe(layout(sim));
   });
 
+  it('chunk zones (SimChunk.zones, lazy worlds) scatter like map zones', () => {
+    const onChunk = buildMap({
+      floor: (x) => (x < 32 ? 1 : 2),
+      floorTiles: [null, 'scat:asphalt', 'scat:grass'],
+      chunkZones: (cx, cy) =>
+        cx === 1 && cy === 1 ? [{ id: 'bush-1', role: 'bushes', z: 0, rects: [BUSH] }] : undefined,
+    });
+    const sim = createSim({
+      seed: 3,
+      map: onChunk,
+      spawn: { x: 10.5, y: 10.5 },
+      content: scatterContent(),
+      dev: true,
+      clockStart: NOON,
+      floorLoot: true,
+    });
+    expect(hiddenTiles(sim).length).toBeGreaterThan(0);
+    expect(hiddenTiles(sim)).toEqual(hiddenTiles(scatterSim(3)));
+  });
+
   it('without a floor palette terrain tables find nothing', () => {
     const sim = createSim({
       seed: 3,

@@ -134,6 +134,13 @@ export interface AiWorld {
   readonly darkZones: SimZone[];
   /** Zones that hide a player in dense cover (`COVER_ZONES`: bushes): zombies lose the track faster. */
   readonly coverZones: SimZone[];
+  /** `SimMap.zones`: the static part of `darkZones` / `coverZones` (derived, not saved). */
+  readonly mapZones: readonly SimZone[];
+  /**
+   * Zones of live chunks (`SimChunk.zones`) by LOD column index, all levels (derived: rebuilt by
+   * the LOD from `liveChunks` after a load). Maps with `listChunks` add every chunk at init.
+   */
+  readonly chunkZones: Map<number, readonly SimZone[]>;
   /** Noises of the last `farThinkEveryTicks` ticks, in emission order (state, hashed). */
   noises: Noise[];
   readonly spatial: SpatialHash;
@@ -179,6 +186,46 @@ export interface AiWorld {
 
 /** Zone roles / ids / tags of dense cover (bushes, hedges). */
 export const COVER_ZONES: readonly string[] = ['bushes', 'cover'];
+
+const isCover = (zn: SimZone): boolean =>
+  COVER_ZONES.includes(zn.role) ||
+  COVER_ZONES.includes(zn.id) ||
+  (zn.tags ?? []).some((t) => COVER_ZONES.includes(t));
+
+/**
+ * Rebuilds `darkZones` / `coverZones` in place: map zones first, then chunk zones by ascending
+ * key (deterministic regardless of load order).
+ */
+export function rebuildZones(ai: AiWorld): void {
+  const all: SimZone[] = [...ai.mapZones];
+  for (const k of [...ai.chunkZones.keys()].sort((a, b) => a - b))
+    all.push(...ai.chunkZones.get(k)!);
+  ai.darkZones.length = 0;
+  ai.coverZones.length = 0;
+  for (const zn of all) {
+    if (zn.role === 'dark') ai.darkZones.push(zn);
+    if (isCover(zn)) ai.coverZones.push(zn);
+  }
+}
+
+/** Map zones plus, for maps with `listChunks` (no LOD), the zones of every chunk. */
+function initialZones(
+  map: SimMap,
+): Pick<AiWorld, 'darkZones' | 'coverZones' | 'mapZones' | 'chunkZones'> {
+  const r = {
+    darkZones: [] as SimZone[],
+    coverZones: [] as SimZone[],
+    mapZones: map.zones ?? [],
+    chunkZones: new Map<number, readonly SimZone[]>(),
+  };
+  const list = map.listChunks?.() ?? [];
+  list.forEach((a, i) => {
+    const zones = map.getChunk(a.cx, a.cy, a.z)?.zones;
+    if (zones && zones.length > 0) r.chunkZones.set(i, zones);
+  });
+  rebuildZones(r as AiWorld);
+  return r;
+}
 
 export function createAiWorld(
   content: ContentIndex,
@@ -227,13 +274,7 @@ export function createAiWorld(
     })),
     spawnWeights: content.zombieTypes.map((t) => Math.round((t.spawnWeight ?? 1) * 1000)),
     lights: collectLights(content, map),
-    darkZones: (map.zones ?? []).filter((zn) => zn.role === 'dark'),
-    coverZones: (map.zones ?? []).filter(
-      (zn) =>
-        COVER_ZONES.includes(zn.role) ||
-        COVER_ZONES.includes(zn.id) ||
-        (zn.tags ?? []).some((t) => COVER_ZONES.includes(t)),
-    ),
+    ...initialZones(map),
     noises: [],
     spatial: new SpatialHash(),
     paths: new Map(),

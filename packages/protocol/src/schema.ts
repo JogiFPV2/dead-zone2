@@ -629,6 +629,25 @@ const localTile = z
   .min(0)
   .max(CHUNK_SIZE - 1);
 
+const zoneSchema = z.object({
+  id: z.string().max(128),
+  role: z.string().max(128),
+  z: chunkInt,
+  rects: z
+    .array(
+      z.object({
+        x: z.number().int(),
+        y: z.number().int(),
+        w: z.number().int().min(1),
+        h: z.number().int().min(1),
+      }),
+    )
+    .max(4096),
+  tags: z.array(z.string().max(128)).max(64).optional(),
+});
+
+const chunkCoord = z.number().finite().min(0).max(CHUNK_SIZE);
+
 export const simMapDataSchema = z.object({
   chunks: z.array(
     z.object({
@@ -648,6 +667,15 @@ export const simMapDataSchema = z.object({
         .optional(),
       buildingKinds: z
         .record(z.string().regex(/^[1-9]\d{0,15}$/), z.string().regex(/^[a-z]+(-[a-z]+)*$/))
+        .optional(),
+      zones: z.array(zoneSchema).max(256).optional(),
+      blockers: z
+        .array(
+          z
+            .strictObject({ x0: chunkCoord, y0: chunkCoord, x1: chunkCoord, y1: chunkCoord })
+            .refine((b) => b.x0 < b.x1 && b.y0 < b.y1, 'blocker: x0 < x1 and y0 < y1'),
+        )
+        .max(1024)
         .optional(),
       objects: z
         .array(
@@ -684,27 +712,7 @@ export const simMapDataSchema = z.object({
         .optional(),
     }),
   ),
-  zones: z
-    .array(
-      z.object({
-        id: z.string().max(128),
-        role: z.string().max(128),
-        z: chunkInt,
-        rects: z
-          .array(
-            z.object({
-              x: z.number().int(),
-              y: z.number().int(),
-              w: z.number().int().min(1),
-              h: z.number().int().min(1),
-            }),
-          )
-          .max(4096),
-        tags: z.array(z.string().max(128)).max(64).optional(),
-      }),
-    )
-    .max(4096)
-    .optional(),
+  zones: z.array(zoneSchema).max(4096).optional(),
   edgeKinds: z.array(z.enum(SIM_EDGE_KINDS).nullable()).max(0x10000).optional(),
   floorTiles: z.array(contentId.nullable()).max(0x10000).optional(),
 });

@@ -48,6 +48,21 @@ export interface SimChunk {
    */
   readonly buildingKinds?: Readonly<Record<string, string>> | undefined;
   /**
+   * Zones of this chunk (protocol 35, lazily generated worlds): same shape as `SimMap.zones`,
+   * rects in global tiles, clipped to the chunk. The sim adds them while the chunk is live (LOD)
+   * or for the whole map at init (maps with `listChunks`) and drops them when it is released:
+   * `bushes` / `cover` (lose the track), `dark`, and loot `scatter.zones` of this chunk.
+   */
+  readonly zones?: readonly SimZone[] | undefined;
+  /**
+   * Static collision blockers (protocol 35): axis-aligned rectangles in chunk-local tiles
+   * (metres, 0..CHUNK_SIZE, `x0 < x1`, `y0 < y1`) on this chunk's level, e.g. the feet of high
+   * voltage pylons and catenary masts. They stop players, zombies, animals and physics bodies
+   * like a wall; sight, sound and pathfinding ignore them (thin, the circle slides around).
+   * Level-crossing barriers are not blockers.
+   */
+  readonly blockers?: readonly SimBlocker[] | undefined;
+  /**
    * Map objects (chunk `objects` in content): storage types (`containers/`) and placeables with
    * `containerType` become world storage; the rest is ignored by the sim for now.
    */
@@ -149,6 +164,14 @@ export interface SimZoneRect {
   readonly h: number;
 }
 
+/** A static collision rectangle of a chunk (`SimChunk.blockers`), chunk-local tiles. */
+export interface SimBlocker {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
 /**
  * Map zone from the manifest (`zones[]`): a union of rectangles on level `z`. The sim reads
  * role `dark` (unlit areas: a player there without an active light is invisible to zombies).
@@ -231,6 +254,8 @@ export function simMapFromData(data: SimMapData): SimMap {
       rooms: c.rooms,
       ...(c.roomBuildings ? { roomBuildings: c.roomBuildings } : {}),
       ...(c.buildingKinds ? { buildingKinds: c.buildingKinds } : {}),
+      ...(c.zones ? { zones: c.zones } : {}),
+      ...(c.blockers ? { blockers: c.blockers } : {}),
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
       ...(c.vehicles ? { vehicles: c.vehicles } : {}),
@@ -273,6 +298,10 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
         ...(c.rooms ? { rooms: { ...c.rooms } } : {}),
         ...(c.roomBuildings ? { roomBuildings: { ...c.roomBuildings } } : {}),
         ...(c.buildingKinds ? { buildingKinds: { ...c.buildingKinds } } : {}),
+        ...(c.zones
+          ? { zones: c.zones.map((zn) => ({ ...zn, rects: zn.rects.map((r) => ({ ...r })) })) }
+          : {}),
+        ...(c.blockers ? { blockers: c.blockers.map((b) => ({ ...b })) } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
         ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
         ...(c.vehicles ? { vehicles: c.vehicles.map((v) => ({ ...v })) } : {}),

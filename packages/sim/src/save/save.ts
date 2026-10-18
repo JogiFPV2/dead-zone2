@@ -58,6 +58,8 @@ const SKIP_AI = [
   'lights',
   'darkZones',
   'coverZones',
+  'mapZones',
+  'chunkZones',
   'spatial',
   'combat',
 ];

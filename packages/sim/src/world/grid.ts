@@ -138,6 +138,42 @@ export class TileGrid {
     return this.isVoid(tx, ty, z) || this.furnitureBlocks(tx, ty, z);
   }
 
+  /**
+   * Static blockers (`SimChunk.blockers`, pylon / mast feet) of the chunks that touch the box
+   * [x0, x1] × [y0, y1] on level z, as world-tile rectangles, in chunk (y, x) then list order.
+   * `key` is unique per blocker (negative, never a tile obstacle key).
+   */
+  forBlockers(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    z: number,
+    fn: (key: number, bx0: number, bx1: number, by0: number, by1: number) => void,
+  ): void {
+    const cx0 = Math.floor(x0 / CHUNK_SIZE);
+    const cx1 = Math.floor(x1 / CHUNK_SIZE);
+    const cy0 = Math.floor(y0 / CHUNK_SIZE);
+    const cy1 = Math.floor(y1 / CHUNK_SIZE);
+    for (let cy = cy0; cy <= cy1; cy++) {
+      for (let cx = cx0; cx <= cx1; cx++) {
+        const list = this.chunkAt(cx, cy, z)?.blockers;
+        if (list === undefined) continue;
+        const ox = cx * CHUNK_SIZE;
+        const oy = cy * CHUNK_SIZE;
+        for (let i = 0; i < list.length; i++) {
+          const b = list[i]!;
+          const bx0 = ox + b.x0;
+          const bx1 = ox + b.x1;
+          const by0 = oy + b.y0;
+          const by1 = oy + b.y1;
+          if (bx1 < x0 || bx0 > x1 || by1 < y0 || by0 > y1) continue;
+          fn(-1 - (((cx + 0x2000) * 0x4000 + (cy + 0x2000)) * 1024 + i), bx0, bx1, by0, by1);
+        }
+      }
+    }
+  }
+
   /** Furniture occupies the tile (footprint flag on; always false when off). */
   furnitureBlocks(tx: number, ty: number, z: number): boolean {
     return this.furniture !== undefined && (this.furniture.flags(tx, ty, z) & FF.blocks) !== 0;

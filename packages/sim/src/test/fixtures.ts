@@ -31,6 +31,10 @@ export interface MapSpec {
   edgeId?: (x: number, y: number) => number;
   edgeKinds?: readonly (SimEdgeKind | null)[];
   zones?: readonly SimZone[];
+  /** `SimChunk.zones` per chunk (level 0). */
+  chunkZones?: (cx: number, cy: number) => readonly SimZone[] | undefined;
+  /** `SimChunk.blockers` in world tiles (level 0), each kept in the chunk of its x0, y0. */
+  blockers?: readonly { x0: number; y0: number; x1: number; y1: number }[];
   /** Floor palette (content tile id per floor value). */
   floorTiles?: readonly (string | null)[];
 }
@@ -73,6 +77,15 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           y: o.y - cy * CHUNK_SIZE,
           ...(o.rot !== undefined ? { rot: o.rot } : {}),
         }));
+      const chunkZones = spec.chunkZones?.(cx, cy);
+      const blockers = (spec.blockers ?? [])
+        .filter((b) => Math.floor(b.x0 / CHUNK_SIZE) === cx && Math.floor(b.y0 / CHUNK_SIZE) === cy)
+        .map((b) => ({
+          x0: b.x0 - cx * CHUNK_SIZE,
+          y0: b.y0 - cy * CHUNK_SIZE,
+          x1: b.x1 - cx * CHUNK_SIZE,
+          y1: b.y1 - cy * CHUNK_SIZE,
+        }));
       for (let z = 0; z < (spec.levels ?? 1); z++) {
         chunks.push({
           cx,
@@ -85,6 +98,8 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           ...(spec.room && spec.roomBuildings ? { roomBuildings: spec.roomBuildings } : {}),
           ...(spec.buildingKinds ? { buildingKinds: spec.buildingKinds } : {}),
           ...(objects.length > 0 && z === 0 ? { objects } : {}),
+          ...(z === 0 && chunkZones ? { zones: chunkZones } : {}),
+          ...(z === 0 && blockers.length > 0 ? { blockers } : {}),
         });
       }
     }

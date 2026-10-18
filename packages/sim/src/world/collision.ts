@@ -68,6 +68,15 @@ function sweep(
       }
     }
   }
+  // Static blockers (pylon / mast feet): rectangles in world tiles.
+  if (axis === 0)
+    grid.forBlockers(lo, across - r, hi, across + r, z, (_k, x0, x1, y0, y1) =>
+      test(x0, x1, y0, y1),
+    );
+  else
+    grid.forBlockers(across - r, lo, across + r, hi, z, (_k, x0, x1, y0, y1) =>
+      test(y0, y1, x0, x1),
+    );
   return target;
 }
 
@@ -96,7 +105,10 @@ export function moveCircle(
   return out;
 }
 
-/** True if the circle overlaps any void tile, furniture tile (footprint flag) or wall edge. */
+/**
+ * True if the circle overlaps any void tile, furniture tile (footprint flag), wall edge or
+ * static blocker (`SimChunk.blockers`).
+ */
 export function circleOverlaps(
   grid: TileGrid,
   z: number,
@@ -117,7 +129,11 @@ export function circleOverlaps(
       if (grid.hasWallW(tx, ty, z) && hit(tx, tx, ty, ty + 1)) return true;
     }
   }
-  return false;
+  let blocked = false;
+  grid.forBlockers(x - r, y - r, x + r, y + r, z, (_k, x0, x1, y0, y1) => {
+    if (hit(x0, x1, y0, y1)) blocked = true;
+  });
+  return blocked;
 }
 
 /**
@@ -160,6 +176,7 @@ function forObstacles(
       if (grid.hasWallW(tx, ty, z)) fn(k + 2, tx, tx, ty, ty + 1);
     }
   }
+  grid.forBlockers(x - reach - 1, y - reach - 1, x + reach + 1, y + reach + 1, z, fn);
 }
 
 const ignored: number[] = [];

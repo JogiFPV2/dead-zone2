@@ -251,7 +251,9 @@ export function scatterLootChunk(
     if (rolls <= 0) continue;
     const zones =
       sc.zones.length > 0
-        ? (map.zones ?? []).filter((zn) => zn.z === addr.z && zoneMatches(zn, sc.zones))
+        ? [...(map.zones ?? []), ...(chunk.zones ?? [])].filter(
+            (zn) => zn.z === addr.z && zoneMatches(zn, sc.zones),
+          )
         : undefined;
     if (zones && zones.length === 0) continue;
     const tiles: number[] = [];

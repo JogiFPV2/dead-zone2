@@ -1,11 +1,11 @@
-import { CHUNK_SIZE } from '@deadzone/protocol';
+import { CHUNK_SIZE, type SimZone } from '@deadzone/protocol';
 import { hasComponent, removeComponent } from 'bitecs';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import { deriveSeed, Rng } from '../core/rng.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { colKey } from '../world/chunk-events.js';
 import { spawnZombie } from '../ai/zombies.js';
-import { ZombieState } from '../ai/state.js';
+import { rebuildZones, ZombieState } from '../ai/state.js';
 import { removeBody } from '../physics/step.js';
 import { circleOverlaps } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
@@ -179,6 +179,35 @@ function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
     keepLive.push(i);
   }
   lod.liveChunks = keepLive.sort((a, b) => a - b);
+  syncChunkZones(w, lod);
+}
+
+/**
+ * Lazy worlds (no `listChunks`): `SimChunk.zones` of live chunks (all levels) are in
+ * `ai.chunkZones` exactly while the chunk is live; added on load, dropped on release.
+ */
+function syncChunkZones(w: SimWorld, lod: LodWorld): void {
+  const ai = w.ai;
+  if (!ai || w.map.listChunks) return;
+  const live = new Set(lod.liveChunks);
+  let changed = false;
+  for (const k of [...ai.chunkZones.keys()]) {
+    if (live.has(k)) continue;
+    ai.chunkZones.delete(k);
+    changed = true;
+  }
+  for (const i of lod.liveChunks) {
+    if (ai.chunkZones.has(i)) continue;
+    const cx = lod.bounds.cx0 + (i % lod.wChunks);
+    const cy = lod.bounds.cy0 + Math.floor(i / lod.wChunks);
+    const zones: SimZone[] = [];
+    for (let z = lod.bounds.z0; z <= lod.bounds.z1; z++)
+      zones.push(...(w.map.getChunk(cx, cy, z)?.zones ?? []));
+    // Empty entries too: the chunk was checked (no lookups again while it stays live).
+    ai.chunkZones.set(i, zones);
+    if (zones.length > 0) changed = true;
+  }
+  if (changed) rebuildZones(ai);
 }
 
 /** Folds zombies standing in inactive cells into their cell's counter (keeps damaged hp). */

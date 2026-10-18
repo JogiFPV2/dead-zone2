@@ -19,7 +19,7 @@ import {
   snapshotEntityCount,
   tileIndex,
 } from './index.js';
-import { parseCommand, parseMainToWorker } from './schema.js';
+import { parseCommand, parseMainToWorker, simMapDataSchema } from './schema.js';
 import type { SimMapData } from './map.js';
 
 it('exposes a positive integer protocol version', () => {
@@ -179,7 +179,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 20 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0, gait walk)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(20);
-    expect(PROTOCOL_VERSION).toBe(34);
+    expect(PROTOCOL_VERSION).toBe(35);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {
@@ -433,6 +433,24 @@ describe('setInterest and chunk-local rooms (docs 9.24)', () => {
     expect(data.chunks[0]!.roomBuildings).toEqual({ '1': 70_001 });
     expect(c?.buildingKinds).toEqual({ '70001': 'shop' });
     expect(data.chunks[0]!.buildingKinds).toEqual({ '70001': 'shop' });
+  });
+
+  it('chunk zones and blockers (protocol 35): pass through and validate', () => {
+    const blank = new Uint16Array(CHUNK_TILES);
+    const zones = [{ id: 'b', role: 'bushes', z: 0, rects: [{ x: 3, y: 4, w: 2, h: 2 }] }];
+    const blockers = [{ x0: 1, y0: 2, x1: 1.6, y1: 2.6 }];
+    const chunk = { cx: 0, cy: 0, z: 0, floor: blank, edgeN: blank, edgeW: blank, zones, blockers };
+    const map = simMapFromData({ chunks: [chunk] });
+    expect(map.getChunk(0, 0, 0)?.zones).toEqual(zones);
+    expect(map.getChunk(0, 0, 0)?.blockers).toEqual(blockers);
+    const data = simMapToData(map, { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
+    expect(data.chunks[0]!.zones).toEqual(zones);
+    expect(data.chunks[0]!.blockers).toEqual(blockers);
+    expect(simMapDataSchema.safeParse({ chunks: [chunk] }).success).toBe(true);
+    const bad = (b: object) =>
+      simMapDataSchema.safeParse({ chunks: [{ ...chunk, blockers: [b] }] }).success;
+    expect(bad({ x0: 2, y0: 2, x1: 1, y1: 3 })).toBe(false);
+    expect(bad({ x0: 0, y0: 0, x1: 33, y1: 1 })).toBe(false);
   });
 });
 
