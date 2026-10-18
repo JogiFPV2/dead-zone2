@@ -27,3 +27,29 @@ pnpm --filter @deadzone/assets assets check   # licencje + obecność plików z 
   `CHROME`); PNG są w repo, CI ich nie renderuje.
 - Runtime: `apps/game/src/assets/loader.ts`; strona testowa (tylko dev): `?assettest=1`
   (`&budgetmb=N` pokazuje ostrzeżenie budżetu GPU).
+
+## Materiał modelu: `vc` albo `pbr`
+
+Pilot stylu realistycznego (`render.style = 'real'` w kliencie). Wpis modelu w packu może mieć
+`material` i `pbr` (`src/material.ts`):
+
+```json
+{
+  "id": "blok-p4",
+  "material": "pbr",
+  "pbr": {
+    "atlas": "textures/blok-p4/atlas.ktx2",
+    "normal": "textures/blok-p4/normal.ktx2",
+    "roughness": "textures/blok-p4/roughness.ktx2"
+  }
+}
+```
+
+- `material: 'vc' | 'pbr'`, domyślnie `vc` (kolory wierzchołków / paleta packu, dzisiejszy wygląd).
+  Stare dane bez pola zostają bez zmian, a `manifest.json` nie dostaje żadnego pola.
+- `pbr: { atlas, normal?, roughness? }`: ścieżki względne do `apps/game/public` (bez `/` na
+  początku, bez `..`), formaty `.ktx2`, `.png`, `.webp`, `.jpg`. Wymagane przy `material: 'pbr'`,
+  odrzucane przy `vc`.
+- Model `pbr` trafia do manifestu z `material: "pbr"` i `pbr`; `assets check` sprawdza, czy
+  tekstury istnieją. Schemat `MaterialFieldsSchema` można dołożyć do innych wpisów (np. zestaw
+  miasta `deadzone-town`).

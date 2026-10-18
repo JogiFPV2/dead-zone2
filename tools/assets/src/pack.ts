@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PbrMapsSchema, MATERIAL_KINDS, materialProblem, type MaterialFields } from './material.js';
 
 /** Licences accepted without discussion (PLAN.md: CC0 at the start). SPDX ids. */
 export const ALLOWED_LICENCES = ['CC0-1.0'] as const;
@@ -70,8 +71,28 @@ export const PackSchema = z
         'lod: ratios i distances różnej długości',
       )
       .optional(),
-    /** Models to import from `root`: file name (without `.glb`) = id, or `{ id, file }`. */
-    models: z.array(z.union([Id, z.strictObject({ id: Id, file: z.string().min(1) })])).min(1),
+    /**
+     * Models to import from `root`: file name (without `.glb`) = id, or `{ id, file?, material?,
+     * pbr? }` (`file` defaults to `id`; `material` see `material.ts`, default `vc`).
+     */
+    models: z
+      .array(
+        z.union([
+          Id,
+          z
+            .strictObject({
+              id: Id,
+              file: z.string().min(1).optional(),
+              material: z.enum(MATERIAL_KINDS).optional(),
+              pbr: PbrMapsSchema.optional(),
+            })
+            .superRefine((m, ctx) => {
+              const problem = materialProblem(m);
+              if (problem) ctx.addIssue({ code: 'custom', message: `${m.id}: ${problem}` });
+            }),
+        ]),
+      )
+      .min(1),
     /** Keep skins and animations (characters): no LOD, no palette. */
     animated: z.boolean().optional(),
     /**
@@ -86,8 +107,10 @@ export const PackSchema = z
   );
 
 /** `{ id, file }` of a `models` entry. */
-export const modelRef = (m: Pack['models'][number]): { id: string; file: string } =>
-  typeof m === 'string' ? { id: m, file: m } : m;
+export const modelRef = (
+  m: Pack['models'][number],
+): { id: string; file: string } & MaterialFields =>
+  typeof m === 'string' ? { id: m, file: m } : { ...m, file: m.file ?? m.id };
 
 export type Pack = z.output<typeof PackSchema>;
 

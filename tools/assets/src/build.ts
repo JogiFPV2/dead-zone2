@@ -14,6 +14,7 @@ import {
   type ManifestPack,
 } from './manifest.js';
 import { countTriangles, optimize, ready } from './optimize.js';
+import { materialOf } from './material.js';
 import { modelRef, parsePack, type Pack } from './pack.js';
 import { encodeTexture } from './texture.js';
 
@@ -74,7 +75,9 @@ async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
   ];
   const assets: ManifestAsset[] = [];
   for (const ref of pack.models) {
-    const { id: model, file: srcFile } = modelRef(ref);
+    const r = modelRef(ref);
+    const { id: model, file: srcFile } = r;
+    const mat = materialOf(r);
     const input = join(src, `${srcFile}.glb`);
     const lods: ManifestLod[] = [];
     for (const [i, lvl] of levels.entries()) {
@@ -96,6 +99,7 @@ async function buildPack(io: NodeIO, pack: Pack, paths: BuildPaths) {
       pack: pack.id,
       sourceBytes: (await stat(input)).size,
       lods,
+      ...(mat.material === 'pbr' ? { material: 'pbr' as const, pbr: mat.pbr } : {}),
     });
   }
   return { entry: packEntry(pack, palette), assets };

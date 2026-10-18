@@ -1,3 +1,4 @@
+import type { PbrMaps } from './material.js';
 import type { Pack } from './pack.js';
 
 export const MANIFEST_VERSION = 1;
@@ -17,6 +18,10 @@ export interface ManifestAsset {
   pack: string;
   sourceBytes: number;
   lods: ManifestLod[];
+  /** Only for `pbr` models (absent = `vc`, today's vertex colours / palette). */
+  material?: 'pbr';
+  /** PBR maps, paths relative to `apps/game/public`. */
+  pbr?: PbrMaps;
 }
 
 export interface ManifestPack {

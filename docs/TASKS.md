@@ -115,6 +115,9 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Footprint w kolizjach i szukaniu mebla (Symulacja) — blokada ruchu i wzroku na wszystkich `occupiedTiles`, „najbliższy mebel” (spanie, przeszukiwanie, stacje, telewizor, zlew) liczony od najbliższego zajętego kafla, a nie od kotwicy
 - [ ] Footprint w renderze (Silnik) — `fitTile` w `map-objects.ts` skaluje model do `footprintForId` (W×H po obrocie, minus szczelina) zamiast 0,96 kafla, model w `footprintCenter`; to samo dla szarych pudełek i x-raya
 - [ ] Footprint w `furnish.ts` (Silnik 2) — rozstawianie sprawdza wszystkie `occupiedTiles` (wolne, w tym samym pokoju, bez ściany/drzwi między kaflami, plecy do pełnej ściany na całej szerokości); przebudować mapy — po nowych rozmiarach na obecnych mapach nakłada się 246 kafli w `osm-okulickiego` i 69 w `town-catalog` (kanapy, łóżka, `base:metal-shelf`)
+- [x] Pole materiału modelu `material: vc | pbr` + `pbr { atlas, normal?, roughness? }` (Modules) — `tools/assets/src/material.ts`, wpisy modeli w packach, manifest (tylko dla `pbr`), `assets check`; README „Materiał modelu”
+- [ ] Dane PBR dla pilota stylu realistycznego (Designer) — atlasy (`atlas`, `normal`, `roughness`, ścieżki względne do `public`) i `material: "pbr"` dla `blok-p4`, `blok-p10`, domów, drzew i auta
+- [ ] Czytanie `material` / `pbr` z manifestu w kliencie (Silnik) — przy `render.style = 'real'` materiał PBR z atlasu zamiast kolorów wierzchołków / palety; brak pola = `vc`
 - [ ] Footprint przy przesuwaniu mebli (Fizyka) — cel przesunięcia i obrotu musi mieć wolne wszystkie `occupiedTiles`; obrót 2×1 wokół kotwicy NW zmienia zajęte kafle
 - [ ] Test map: obiekty nie nachodzą na siebie wg `occupiedTiles` (Modules) — po przebudowie map przez Silnika 2
 - [ ] Łóżko podwójne `base:double-bed` 2×2 (Modules + Designer) — przedmiot, model, ikona; `furnish.ts` stawia je w sypialniach z miejscem

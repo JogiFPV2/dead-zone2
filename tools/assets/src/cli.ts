@@ -50,6 +50,14 @@ async function check(): Promise<void> {
   ];
   for (const f of files)
     await stat(join(paths.outDir, f)).catch(() => problems.push(`brak pliku ${f}`));
+  // PBR maps (`material: 'pbr'`) are relative to apps/game/public.
+  const pub = join(repo, 'apps/game/public');
+  for (const a of m.assets) {
+    if (!a.pbr) continue;
+    for (const f of [a.pbr.atlas, a.pbr.normal, a.pbr.roughness]) {
+      if (f) await stat(join(pub, f)).catch(() => problems.push(`${a.id}: brak tekstury ${f}`));
+    }
+  }
   if (problems.length) throw new Error(problems.join('\n'));
   console.log(
     `OK: ${m.packs.length} pack(i), ${m.assets.length} assetów, licencje ${ALLOWED_LICENCES.join(', ')}`,
