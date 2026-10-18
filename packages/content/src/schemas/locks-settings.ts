@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LockKindSchema } from './building-kind.js';
 import { FractionSchema, NoiseSchema, SkillRefSchema, TagSchema } from './common/index.js';
 
 /** Czas akcji w sekundach rzeczywistych przy ×1 (20 ticków / s). */
@@ -13,6 +14,11 @@ const SecSchema = z.number().min(0.05).max(600);
 export const LocksSettingsSchema = z
   .strictObject({
     exteriorLockedChance: FractionSchema.default(0),
+    /**
+     * Szansa zamka per rodzaj budynku (`BUILDING_KINDS` z generatora) albo `gate` (brama w
+     * ogrodzeniu). Rodzaj spoza mapy dostaje `exteriorLockedChance`. Odczyt: `exteriorLockedChanceFor`.
+     */
+    exteriorLockedChanceByBuilding: z.partialRecord(LockKindSchema, FractionSchema).optional(),
     /** Tag klucza do budynku (przedmiot z `buildingId` w stanie gry). */
     keyTag: TagSchema.default('base:building-key'),
     /** Czas otwarcia / zamknięcia kluczem (s). */
@@ -41,3 +47,4 @@ export const LocksSettingsSchema = z
     knockNoise: NoiseSchema.default({ radiusTiles: 6, volume: 0.4 }),
   })
   .prefault({});
+export type LocksSettings = z.infer<typeof LocksSettingsSchema>;

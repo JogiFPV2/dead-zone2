@@ -318,6 +318,33 @@ narzędziem `tools/map` (`pnpm --filter @deadzone/map map build tools/map/bluepr
   `zone_empty`, `zone_out_of_bounds`.
 - Stanu dynamicznego (otwarte, rozbite, zabite deskami, zawartość schowków) nie ma w plikach chunków.
 
+## Zamki drzwi
+
+Drzwi zewnętrzne budynku (pokój po jednej stronie, dwór po drugiej) są na starcie zamknięte na klucz z szansą zależną od
+rodzaju budynku: `openings.locks.exteriorLockedChanceByBuilding` (opcjonalna mapa rodzaj → 0–1). Rodzaj spoza mapy albo
+budynek bez rodzaju dostaje `exteriorLockedChance` (domyślna). Brama / furtka w ogrodzeniu to osobny typ krawędzi i ma
+klucz `gate`, niezależnie od budynku. `SimChunk.lockedDoors` z generatora ma pierwszeństwo przed losowaniem.
+
+Rodzaj budynku sim wylicza z typów jego pomieszczeń (zebranych po `roomBuildings`):
+`buildingKindFromRooms(roomTypes)`, potem `exteriorLockedChanceFor(locks, kind)` (dla bramy: `'gate'`). Tabela
+`BUILDING_KIND_ROOMS` (`schemas/building-kind.ts`) jest w kolejności priorytetu — wygrywa pierwszy wiersz, którego
+pomieszczenie jest w budynku. Nazwy rodzajów to podzbiór `BUILDING_KINDS` generatora (`tools/map/src/osm/types.ts`).
+
+| Priorytet | Rodzaj                            | Pomieszczenia                                                                            | Szansa                       |
+| --------- | --------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------- |
+| 1–3       | `hospital`, `school`, `police`    | `base:room-hospital`, `-school`, `-police`                                               | 0,2                          |
+| 4–7       | `pharmacy`, `shop`, `fuel`, `gym` | `-pharmacy`; `-shop`, `-video-store`, `-gun-store`, `-bookstore`; `-gas-station`; `-gym` | 0,7                          |
+| 8         | `house`                           | `-living-room`, `-kitchen`, `-bedroom`                                                   | 0,4                          |
+| 9–10      | `office`, `industrial`            | `-office`; `-warehouse`                                                                  | 0,7                          |
+| 11        | `garage`                          | `-garage`                                                                                | 0,5                          |
+| 12        | `ruin`                            | `-ruin`                                                                                  | 0                            |
+| —         | `gate`                            | brama w ogrodzeniu (krawędź `gate`)                                                      | 0,1                          |
+| —         | brak rodzaju                      | np. sama `-hall` (kościół), `-bathroom`                                                  | 0,4 (`exteriorLockedChance`) |
+
+Sklep z mieszkaniami na piętrze to sklep, dom z garażem to dom, szpital z apteką to szpital. Rodzajów generatora, których
+nie da się odróżnić po pomieszczeniach, nie ma w mapie: `block` i `kostka` wychodzą jako `house`, `station` jako `shop`,
+`fire-station` jako `office`, `shed` jako `garage`, `church` bez rodzaju.
+
 ## Footprint mebli
 
 Mebel (typ schowka w `containers/` albo przedmiot `placeable`) może mieć `footprint: { w, h }` w kaflach

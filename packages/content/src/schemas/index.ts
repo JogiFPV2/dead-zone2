@@ -25,6 +25,8 @@ export * from './sim-lod-settings.js';
 export * from './map-markers-settings.js';
 export * from './ai-settings.js';
 export * from './openings-settings.js';
+export * from './building-kind.js';
+export * from './locks-settings.js';
 export * from './vehicles-settings.js';
 export * from './utilities-settings.js';
 export * from './vehicles-repair-settings.js';
