@@ -9,6 +9,7 @@ import {
 import { LootCategorySchema } from '../loot-category.js';
 import { ImprovisedWeaponSchema } from './improvised-weapon.js';
 import { ThrowableSchema } from './throwable.js';
+import { WaterContainerSchema } from './water-container.js';
 
 /**
  * Pola wspólne dla wszystkich rodzajów przedmiotów.
@@ -31,5 +32,7 @@ export const itemBaseShape = {
   improvisedWeapon: ImprovisedWeaponSchema.optional(),
   /** Kategoria dla lootu schowków; brak = wyliczona z `kind` i tagów (`lootCategoryOf`). */
   lootCategory: LootCategorySchema.optional(),
+  /** Pojemnik na wodę (butelka): pojemność w litrach (`item/water-container.ts`). */
+  waterContainer: WaterContainerSchema.optional(),
   ext: ExtSchema,
 } as const;

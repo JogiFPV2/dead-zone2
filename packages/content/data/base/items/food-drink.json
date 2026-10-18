@@ -25,6 +25,7 @@
     "name": "item.base.water-bottle.name",
     "kind": "drink",
     "weightKg": 0.55,
+    "waterContainer": { "capacityL": 0.5 },
     "drink": {
       "perUse": { "thirst": -20 },
       "uses": 5,

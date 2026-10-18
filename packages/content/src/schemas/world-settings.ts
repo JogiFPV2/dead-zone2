@@ -20,6 +20,7 @@ import {
   FurnitureTallSchema,
 } from './furniture-settings.js';
 import { LightingSettingsSchema } from './lighting-settings.js';
+import { WaterSettingsSchema } from './water-settings.js';
 
 /**
  * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
@@ -81,6 +82,8 @@ export const WorldSettingsSchema = z.strictObject({
   furnitureLongSideAccess: FurnitureLongSideAccessSchema,
   /** Włączniki światła, zasłony, światło w oknie wabiące zombie (Symulacja). */
   lighting: LightingSettingsSchema,
+  /** Picie ze zbiornika i napełnianie butelek: ilość łyku, czas, butelki (Symulacja). */
+  water: WaterSettingsSchema,
   ext: ExtSchema,
 });
 

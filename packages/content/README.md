@@ -164,6 +164,13 @@ do zagotowania), `refillFromMains` (domyślnie `true`) = dopełnia się, dopóki
 zostaje tylko zapas. Przykład: toaleta `base:toilet` = `{ capacityL: 10, quality: 'tainted', refillFromMains: true }`.
 Pobór i gotowanie wody liczy symulacja.
 
+Butelka to przedmiot z `waterContainer: { capacityL }` (dowolny `kind`, `schemas/item/water-container.ts`, typ
+`WaterContainer`; base: `base:bottle`, `base:water-bottle`, `base:dirty-water-bottle` po 0,5 l). Picie i napełnianie
+ustawia `worldSettings.water` (`world-settings/water.json`, `schemas/water-settings.ts`, typ `WaterSettings`):
+`tankDrinkL` (0,25 l na łyk `drink-tank`; pragnienie jak `hygiene.drinkTap.thirst`), `fillMin` (0,5 min gry na
+`fill-water`), `bottles { empty, clean, tainted }` (pusta butelka i to, czym staje się po napełnieniu czystą / brudną
+wodą). Porcja napełniania = `capacityL / drink.uses` przedmiotu wynikowego.
+
 ## Tworzenie postaci
 
 - Palety (`palettes/`): `{ id, name, kind: skin | hair | cloth, colors: [{ id, hex }] }` (base: `base:skin` 8, `base:hair` 10,

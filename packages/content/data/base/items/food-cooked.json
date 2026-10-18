@@ -69,6 +69,7 @@
     "name": "item.base.dirty-water-bottle.name",
     "kind": "drink",
     "weightKg": 0.55,
+    "waterContainer": { "capacityL": 0.5 },
     "drink": { "perUse": { "thirst": -20, "sicknessChance": 0.4 }, "uses": 5, "drinkMin": 0.5 }
   },
   {

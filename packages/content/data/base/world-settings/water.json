@@ -1,0 +1,11 @@
+{
+  "water": {
+    "tankDrinkL": 0.25,
+    "fillMin": 0.5,
+    "bottles": {
+      "empty": "base:bottle",
+      "clean": "base:water-bottle",
+      "tainted": "base:dirty-water-bottle"
+    }
+  }
+}

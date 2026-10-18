@@ -5,6 +5,7 @@
     "kind": "weapon_melee",
     "weightKg": 0.4,
     "tags": ["base:glass"],
+    "waterContainer": { "capacityL": 0.5 },
     "throwable": {
       "rangeTiles": 10,
       "damage": 2,

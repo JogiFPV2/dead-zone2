@@ -22,6 +22,7 @@ export * from './cooking.js';
 export * from './light.js';
 export * from './power.js';
 export * from './water-tank.js';
+export * from './water-container.js';
 export * from './vhs.js';
 export * from './placeable.js';
 export * from './lure.js';
