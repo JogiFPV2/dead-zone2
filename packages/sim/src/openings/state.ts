@@ -6,9 +6,14 @@ import {
   type OpeningState,
   type OpeningView,
   type SimEdgeKind,
+  type SimChunk,
   type SimMap,
 } from '@deadzone/protocol';
-import type { ContentBundle } from '@deadzone/content';
+import {
+  buildingKindFromRooms,
+  exteriorLockedChanceFor,
+  type ContentBundle,
+} from '@deadzone/content';
 import { deriveSeed, Rng } from '../core/rng.js';
 import { FENCE_HP } from '../physics/constants.js';
 
@@ -148,6 +153,11 @@ export interface OpeningsWorld {
   readonly seed: number;
   /** Edge key → locked at the start (`baseState`; derived cache, not saved). */
   readonly lockCache: Map<number, boolean>;
+  /**
+   * Building id → room types of all its rooms (`SimChunk.rooms` gathered by `roomBuildings`),
+   * built once on the first lock roll (derived from the map, not saved).
+   */
+  buildingRooms: Map<number, Set<string>> | undefined;
 }
 
 export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0): OpeningsWorld {
@@ -174,6 +184,7 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0):
     map,
     seed,
     lockCache: new Map(),
+    buildingRooms: undefined,
   };
 }
 
@@ -345,10 +356,53 @@ export function edgeTiles(key: number): [{ x: number; y: number }, { x: number; 
       ];
 }
 
+/** Room types per building id over the whole map (`listChunks`), sorted chunk order. */
+function buildingRoomsOf(o: OpeningsWorld): Map<number, Set<string>> {
+  if (o.buildingRooms) return o.buildingRooms;
+  const out = new Map<number, Set<string>>();
+  for (const a of o.map.listChunks?.() ?? []) addChunkRooms(out, o.map.getChunk(a.cx, a.cy, a.z));
+  o.buildingRooms = out;
+  return out;
+}
+
+function addChunkRooms(out: Map<number, Set<string>>, chunk: SimChunk | undefined): void {
+  if (!chunk?.roomBuildings || !chunk.rooms) return;
+  for (const [room, building] of Object.entries(chunk.roomBuildings)) {
+    const type = chunk.rooms[room];
+    if (!type || !building) continue;
+    let set = out.get(building);
+    if (!set) out.set(building, (set = new Set()));
+    set.add(type);
+  }
+}
+
 /**
- * Door / gate locked at the start: `SimChunk.lockedDoors` when the generator gave it, else an
- * exterior door (a room on one side, outside on the other) with `locks.exteriorLockedChance`,
- * rolled from the world seed per door. Cached; not saved (derived from map + seed).
+ * Room types of the building behind an exterior door: every room with the same `roomBuildings`
+ * id (whole map when it can list chunks, else the 3 × 3 chunks around the door on its level
+ * `z`); a room with no building id counts alone.
+ */
+function buildingRoomTypes(o: OpeningsWorld, x: number, y: number, z: number): string[] {
+  const cx = Math.floor(x / CHUNK_SIZE);
+  const cy = Math.floor(y / CHUNK_SIZE);
+  const chunk = o.map.getChunk(cx, cy, z);
+  const room = chunk?.room?.[tileIndex(x - cx * CHUNK_SIZE, y - cy * CHUNK_SIZE)] ?? 0;
+  if (!chunk || !room) return [];
+  const building = chunk.roomBuildings?.[String(room)] ?? 0;
+  const own = chunk.rooms?.[String(room)];
+  if (!building) return own ? [own] : [];
+  if (o.map.listChunks) return [...(buildingRoomsOf(o).get(building) ?? [])];
+  const near = new Map<number, Set<string>>();
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) addChunkRooms(near, o.map.getChunk(cx + dx, cy + dy, z));
+  return [...(near.get(building) ?? [])];
+}
+
+/**
+ * Door / gate locked at the start: `SimChunk.lockedDoors` when the generator gave it (always
+ * wins), else rolled from the world seed per edge with `exteriorLockedChanceFor(locks, kind)`:
+ * an exterior door (a room on one side, outside on the other) by the kind of its building
+ * (`buildingKindFromRooms` over the building's room types), a gate as `gate`. Cached; not saved
+ * (derived from map + seed).
  */
 export function lockedAtStart(o: OpeningsWorld, key: number): boolean {
   const hit = o.lockCache.get(key);
@@ -360,20 +414,28 @@ export function lockedAtStart(o: OpeningsWorld, key: number): boolean {
   if (!chunk) return false;
   let locked = false;
   const kind = edgeKindOf(o, key);
+  const locks = o.cfg.locks;
   if (kind === OpeningKind.door || kind === OpeningKind.gate) {
     if (chunk.lockedDoors) {
       const code = tileIndex(k.tx - cx * CHUNK_SIZE, k.ty - cy * CHUNK_SIZE) * 2 + (key % 2);
       locked = chunk.lockedDoors.includes(code);
-    } else {
-      const chance = o.cfg.locks?.exteriorLockedChance ?? 0;
+    } else if (locks) {
+      const [a, b] = edgeTiles(key);
+      const ra = roomAt(o.map, a.x, a.y, k.z);
+      const rb = roomAt(o.map, b.x, b.y, k.z);
+      if (!ra || !rb) return false;
+      let chance = 0;
+      if (kind === OpeningKind.gate) chance = exteriorLockedChanceFor(locks, 'gate');
+      else if ((ra.room === 0) !== (rb.room === 0)) {
+        const t = ra.room ? a : b;
+        chance = exteriorLockedChanceFor(
+          locks,
+          buildingKindFromRooms(buildingRoomTypes(o, t.x, t.y, k.z)),
+        );
+      }
       if (chance > 0) {
-        const [a, b] = edgeTiles(key);
-        const ra = roomAt(o.map, a.x, a.y, k.z);
-        const rb = roomAt(o.map, b.x, b.y, k.z);
-        if (ra && rb && (ra.room === 0) !== (rb.room === 0)) {
-          const roll = Rng.fromSeed(deriveSeed(o.seed, 'door-lock', k.tx, k.ty, k.z, key % 2));
-          locked = roll.nextFloat() < chance;
-        } else if (!ra || !rb) return false;
+        const roll = Rng.fromSeed(deriveSeed(o.seed, 'door-lock', k.tx, k.ty, k.z, key % 2));
+        locked = roll.nextFloat() < chance;
       }
     }
   }

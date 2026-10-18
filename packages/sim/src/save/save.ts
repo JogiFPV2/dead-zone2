@@ -151,7 +151,11 @@ export function saveWorld(w: SimWorld): Uint8Array {
           combat: encodeFields(w.ai.combat, SKIP_COMBAT, usedOf),
         }
       : {}),
-    openings: encodeFields(w.openings, ['cfg', 'kinds', 'map', 'seed', 'lockCache'], usedOf),
+    openings: encodeFields(
+      w.openings,
+      ['cfg', 'kinds', 'map', 'seed', 'lockCache', 'buildingRooms'],
+      usedOf,
+    ),
     physics: encodeFields(w.physics, SKIP_PHYSICS, usedOf),
     world: {
       seed: w.source.seed,
