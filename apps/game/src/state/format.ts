@@ -25,6 +25,8 @@ export function describeEvent(e: SimEvent): string {
       return `${e.treatment} ${e.part}${e.success ? '' : ' failed'}`;
     case 'knocked':
       return 'knock knock';
+    case 'washed':
+      return `${e.use}: dirt ${e.dirt}`;
     case 'fellAsleep':
       return 'fell asleep';
     case 'characterCreated':

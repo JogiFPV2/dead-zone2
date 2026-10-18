@@ -6,6 +6,7 @@ import {
   type FurnitureReason,
   type FurnitureView,
   type UseFurnitureCommand,
+  type WaterUse,
 } from '@deadzone/protocol';
 import { objectRect } from './footprint.js';
 import { rectDist2 } from '../world/furniture.js';
@@ -18,6 +19,7 @@ import { carriedItems } from '../items/actions.js';
 import { craftSources, evalRecipe, stationHeats } from '../crafting/crafting.js';
 import { switchKeyOf } from '../ai/state.js';
 import { setCurtains, setLight } from './lighting.js';
+import { objectHasTag, waterAction } from '../survival/hygiene.js';
 import { applyItemCommand } from '../items/commands.js';
 import { canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
@@ -380,6 +382,24 @@ function objectActions(
           item: { id: item.id, def: defOf(st, item).id },
         }),
       );
+    }
+  }
+  // Mains water (docs 9.54): sink / washbasin (drink, wash), shower, bath.
+  const hy = w.survival?.content.survival.hygiene;
+  if (hy) {
+    const water = (id: string, use: WaterUse) => out.push(timed(w, eid, id, waterAction(use)));
+    if (objectHasTag(w, obj.contentId, hy.tapTag)) {
+      typeId = 'sink';
+      water('drink-tap', 'drink');
+      water('wash', 'wash');
+    }
+    if (objectHasTag(w, obj.contentId, hy.showerTag)) {
+      typeId ??= 'shower';
+      water('shower', 'shower');
+    }
+    if (objectHasTag(w, obj.contentId, hy.bathTag)) {
+      typeId ??= 'bath';
+      water('bath', 'bath');
     }
   }
   // Light switch: turns the powered lamps of its room on / off (docs 9.53).

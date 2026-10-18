@@ -122,6 +122,20 @@ export interface RestCommand extends CommandHeader {
   type: 'rest';
 }
 
+/** What to do with mains water (`useWater`, protocol 33). */
+export type WaterUse = 'drink' | 'wash' | 'shower' | 'bath';
+export const WATER_USES: readonly WaterUse[] = ['drink', 'wash', 'shower', 'bath'];
+
+/**
+ * Mains water at a fixture in reach (protocol 33, `survival.hygiene`): `drink` / `wash` at a
+ * sink or washbasin (tag `hygiene.tapTag`), `shower` (`showerTag`), `bath` (`bathTag`). Timed;
+ * `no-station` without the fixture, `no-water` when the water is off.
+ */
+export interface UseWaterCommand extends CommandHeader {
+  type: 'useWater';
+  use: WaterUse;
+}
+
 /**
  * Listen to a radio set in reach (protocol 30): a placeable tagged `leisure.radioTag`
  * (`base:station-radio`); with `power` it needs mains (`no-power`), none near → `no-station`.
@@ -896,6 +910,7 @@ export type Command =
   | AimCommand
   | SleepCommand
   | RestCommand
+  | UseWaterCommand
   | ListenRadioCommand
   | WakeCommand
   | SetTimeScaleCommand

@@ -16,7 +16,7 @@
     "name": "item.base.bathtub.name",
     "kind": "placeable",
     "weightKg": 60,
-    "tags": ["base:furniture"],
+    "tags": ["base:furniture", "base:bath"],
     "placeable": { "footprint": { "w": 2, "h": 1 } }
   },
   {
@@ -24,7 +24,7 @@
     "name": "item.base.shower.name",
     "kind": "placeable",
     "weightKg": 40,
-    "tags": ["base:furniture"],
+    "tags": ["base:furniture", "base:shower"],
     "placeable": {}
   },
   {

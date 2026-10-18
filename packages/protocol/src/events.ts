@@ -154,6 +154,11 @@ export type ActionKind =
   | 'rest'
   /** Listen to the radio (`listenRadio`, protocol 30). */
   | 'listen'
+  /** Mains water (`useWater`, protocol 33): drink at a tap, wash, shower, bath. */
+  | 'drinkTap'
+  | 'wash'
+  | 'shower'
+  | 'bath'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -865,6 +870,14 @@ export type SimEvent =
    * A leisure session finished (`read`, TV, VHS): fatigue rested and boredom / stress removed
    * (points, actually applied).
    */
+  /** Washed at a sink, showered or bathed (`useWater`, protocol 33): dirt left 0–100. */
+  | {
+      type: 'washed';
+      tick: number;
+      playerId: PlayerId;
+      use: 'wash' | 'shower' | 'bath';
+      dirt: number;
+    }
   | {
       type: 'leisureCompleted';
       tick: number;

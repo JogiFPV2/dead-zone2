@@ -75,6 +75,7 @@
   {
     "id": "base:kitchen-sink",
     "name": "container.base.kitchen-sink.name",
+    "tags": ["base:water-tap"],
     "category": "cabinet",
     "capacityKg": 15,
     "defaultLootTable": "base:under-sink",

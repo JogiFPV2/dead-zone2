@@ -49,6 +49,10 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'stitch',
   'rest',
   'listen',
+  'drinkTap',
+  'wash',
+  'shower',
+  'bath',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;

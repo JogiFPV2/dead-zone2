@@ -72,6 +72,12 @@ export const sleepCommandSchema = z.strictObject({
 });
 /** `rest` (protocol 29). */
 export const restCommandSchema = z.strictObject({ ...header, type: z.literal('rest') });
+/** `useWater` (protocol 33). */
+export const useWaterCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('useWater'),
+  use: z.enum(['drink', 'wash', 'shower', 'bath']),
+});
 /** `listenRadio` (protocol 30). */
 export const listenRadioCommandSchema = z.strictObject({
   ...header,
@@ -533,6 +539,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   aimCommandSchema,
   sleepCommandSchema,
   restCommandSchema,
+  useWaterCommandSchema,
   listenRadioCommandSchema,
   wakeCommandSchema,
   setTimeScaleCommandSchema,

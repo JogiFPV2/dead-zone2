@@ -66,6 +66,7 @@
   {
     "id": "base:bathroom-sink",
     "name": "container.base.bathroom-sink.name",
+    "tags": ["base:water-tap"],
     "category": "cabinet",
     "capacityKg": 8,
     "defaultLootTable": "base:under-sink",

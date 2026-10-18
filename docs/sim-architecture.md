@@ -1523,3 +1523,30 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
   - Brak przedmiotu włącznika w `base`. Potrzebny placeable z tagiem `base:light-switch` (z ikoną), który Silnik 2 stawia po jednym w pokoju z lampą sufitową (`ROOM_KITS`).
   - Do tego czasu lampy działają jak dotąd i nic nie wabi.
 - **Testy:** `furniture/lighting.test.ts`.
+
+### 9.54 Łazienka i woda z sieci: brud, mycie, prysznic, wanna, picie z kranu (protokół 33) — kontrakt dla Silnika, Designera, Serwera i Modules
+
+- **Brud** (`SurvivalWorld.dirt`, 0–100): rośnie co minutę gry o `survival.hygiene.dirtPerHour` / 60. Domyślnie w schemacie jest 0 (fixtures i stare goldeny bez zmian), baza ustawia 1,5/h (`world-settings/survival-mind.json`).
+  - Powyżej `unhappyFromDirt` (50) brud dokłada smutku, liniowo do `unhappinessPerHourAtMax` (3/h) przy 100.
+  - Widok: `PlayerView.dirt` (całe punkty, przy zmianie; brak, póki 0).
+- **Komenda `useWater {use: 'drink' | 'wash' | 'shower' | 'bath'}`** (`useWaterCommandSchema`, `client.useWater`). To akcje czasowe `drinkTap` / `wash` / `shower` / `bath`, dopisane na końcu `ActionKind`.
+  - Wymagany obiekt z tagiem w zasięgu `reachTiles` 1,5:
+    - `tapTag` `base:water-tap` dla `drink` i `wash` (typy schowków `base:kitchen-sink`, `base:bathroom-sink`; tagi typu schowka też się liczą);
+    - `showerTag` `base:shower` (`base:shower`);
+    - `bathTag` `base:bath` (`base:bathtub`).
+
+    Bez obiektu: `no-station`. Bez wody w sieci (`items.water`, wyłącza się po 7–30 dniach, 9.46): `no-water`.
+  - Efekty (dane):
+
+    | Akcja | Czas | Brud | Smutek | Stres | Pragnienie |
+    |---|---|---|---|---|---|
+    | `wash` | 5 min | −30 | — | — | — |
+    | `shower` | 10 min | −100 | −5 | −5 | — |
+    | `bath` | 30 min | −100 | −15 | −15 | — |
+    | `drink` | 1 min | — | — | — | −30 |
+
+    Po myciu przychodzi zdarzenie `washed {use, dirt}`.
+- **Menu:** zlew / umywalka (`typeId` `sink`): `drink-tap`, `wash`, obok schowka pod zlewem. Prysznic (`shower`): `shower`. Wanna (`bath`): `bath`. Wyłączone mają powód `no-water`. Etykiety są w `FURNITURE_ACTIONS_PL` / `FURNITURE_TYPES_PL`.
+- **Zapis:** `dirt` w sekcji przetrwania (Float32Array jak reszta; `saveHygieneSchema`). `SAVE_VERSION` 3; starsze zapisy mają 0. Hash tylko przy brudzie > 0.
+- **Modules:** dodane tagi `base:water-tap` (typy schowków zlewów), `base:shower`, `base:bath` (placeable). Nowe meble wodne wystarczy otagować.
+- **Testy:** `survival/hygiene.test.ts`.

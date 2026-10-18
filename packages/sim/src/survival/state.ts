@@ -81,6 +81,8 @@ export interface SurvivalWorld {
   readonly sleepStart: Uint32Array;
   /** Alarm: absolute game minute to wake at (`sleep {until}`), 0 = until rested. */
   readonly sleepUntil: Uint32Array;
+  /** Dirt 0..100 (`survival.hygiene`, docs 9.54); saved, hashed only when nonzero. */
+  readonly dirt: Float32Array;
   /** Current sleep: surface (SLEEP_SURFACES index), fatigue recovered, ticks asleep, saved flag. */
   readonly sleepSurface: Uint8Array;
   readonly sleepRecovered: Float32Array;
@@ -133,6 +135,7 @@ export function createSurvivalWorld(
     asleep: new Uint8Array(capacity),
     sleepStart: new Uint32Array(capacity),
     sleepUntil: new Uint32Array(capacity),
+    dirt: new Float32Array(capacity),
     sleepSurface: new Uint8Array(capacity),
     sleepRecovered: new Float32Array(capacity),
     sleepTicks: new Uint32Array(capacity),

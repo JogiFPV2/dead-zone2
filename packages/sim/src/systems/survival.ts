@@ -3,6 +3,7 @@ import { effectiveGait } from './movement.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
 import { clampStat, modded, type SurvivalWorld } from '../survival/state.js';
+import { hygieneMinute } from '../survival/hygiene.js';
 
 /** Ambient temperature until weather exists (inside the comfort band of the base data). */
 export const DEFAULT_AMBIENT_C = 20;
@@ -97,6 +98,8 @@ function survivalMinute(w: SimWorld, s: SurvivalWorld, eid: number, ambientC: nu
   v.unhappiness[eid] = clampStat(
     (v.unhappiness[eid] ?? 0) + (unhappyGain > 0 ? unhappyGain : -u.decayPerMin),
   );
+
+  hygieneMinute(s, eid);
 
   // Wetness (no rain yet; indoor/outdoor is unknown, so the slower outdoor rate).
   const wetness = clampStat((v.wetness[eid] ?? 0) - cfg.wetness.dryOutdoorsPerMin);

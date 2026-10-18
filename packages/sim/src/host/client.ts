@@ -24,6 +24,7 @@ import type {
   SimSpeed,
   WorkerToMain,
   MarkerColor,
+  WaterUse,
 } from '@deadzone/protocol';
 
 /** Structural subset of `Worker` (a real DOM Worker is assignable to it). */
@@ -92,6 +93,8 @@ export interface SimWorkerClient {
   rest(): void;
   /** Listen to a radio set in reach (`listenRadio`, protocol 30). */
   listenRadio(): void;
+  /** Mains water at a fixture in reach (`useWater`, protocol 33): drink, wash, shower, bath. */
+  useWater(use: WaterUse): void;
   wake(): void;
   /** Watch the powered TV nearby (`watch` action); `vhs` = a carried VHS tape. */
   watchTv(vhs?: ItemId): void;
@@ -361,6 +364,7 @@ export function createSimWorkerClient(
       }),
     rest: () => cmd({ type: 'rest' }),
     listenRadio: () => cmd({ type: 'listenRadio' }),
+    useWater: (use) => cmd({ type: 'useWater', use }),
     wake: () => post({ kind: 'cmd', cmd: { ...nextHeader(), type: 'wake' } }),
     watchTv: (vhs) => cmd({ type: 'watchTv', ...(vhs !== undefined ? { vhs } : {}) }),
     search: (target) => cmd({ type: 'search', ...target }),

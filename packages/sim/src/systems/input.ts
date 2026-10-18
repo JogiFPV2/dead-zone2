@@ -12,6 +12,7 @@ import { applyCraftCommand, isCraftCommand } from '../crafting/crafting.js';
 import { applyProgressCommand } from '../progress/skills.js';
 import { applyItemCommand, isItemCommand } from '../items/commands.js';
 import { applyLeisureCommand, isLeisureCommand } from '../leisure/leisure.js';
+import { applyUseWater } from '../survival/hygiene.js';
 import { applyLureCommand, isLureCommand } from '../lures/lures.js';
 import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
 import { applyUseFurniture } from '../furniture/menu.js';
@@ -106,6 +107,9 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
       if (reason) reject(w, cmd, reason);
     } else if (isOpeningCommand(cmd)) {
       const reason = applyOpeningCommand(w, grid, eid, cmd);
+      if (reason) reject(w, cmd, reason);
+    } else if (cmd.type === 'useWater') {
+      const reason = applyUseWater(w, eid, cmd);
       if (reason) reject(w, cmd, reason);
     } else if (isLeisureCommand(cmd)) {
       const reason = applyLeisureCommand(w, eid, cmd);

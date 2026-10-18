@@ -193,6 +193,7 @@ export class ViewTracker {
   private alive: boolean | undefined;
   private sleeping: boolean | undefined;
   private sleepKey = '';
+  private dirt = 0;
   private readonly stats = new Map<ViewStat, number>();
   private moodles: number[] = [];
   private woundsKey = '';
@@ -256,6 +257,9 @@ export class ViewTracker {
         if (this.sleepKey !== '' || sleep) p.sleep = sleep;
         this.sleepKey = slk;
       }
+      // Dirt (protocol 33): whole points, when it changes (nothing while clean).
+      const dirt = Math.round(s.dirt[eid] ?? 0);
+      if (dirt !== this.dirt) p.dirt = this.dirt = dirt;
       for (const stat of VIEW_STATS) {
         const v = round1(s.vitals[stat][eid] ?? 0);
         if (this.stats.get(stat) !== v) {

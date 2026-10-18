@@ -133,6 +133,14 @@ export const saveSleepSchema = z.object({
 });
 
 /**
+ * Hygiene in the saved survival section (protocol 33, docs 9.54): `dirt` = per-entity dirt
+ * 0..100 (Float32Array like the other survival arrays). Older saves lack it (all clean).
+ */
+export const saveHygieneSchema = z.object({
+  dirt: z.array(z.number().min(0).max(100)).optional(),
+});
+
+/**
  * Lighting state in the saved openings section (protocol 32, docs 9.53): `curtains` = window edge
  * keys with drawn curtains (`openingKey`), `lightsOn` = packed tiles of switched-on light switches
  * (((z + 128) × 65536 + y + 32768) × 65536 + x + 32768). Both empty by default; older saves lack them.

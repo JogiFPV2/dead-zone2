@@ -10,6 +10,7 @@ import { registerVehicleActions } from '../vehicles/actions.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { registerLockActions } from '../furniture/locks.js';
 import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.js';
+import { registerHygieneActions } from '../survival/hygiene.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -174,6 +175,7 @@ export function registerItemActions(): void {
   registerOpeningActions();
   registerLockActions();
   registerWoundCareActions();
+  registerHygieneActions();
   registerVehicleActions();
 
   registerAction('search', {

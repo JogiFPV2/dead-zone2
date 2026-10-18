@@ -51,6 +51,7 @@
       "vhs": { "fatigueRest": 8, "boredomReduction": 30, "stressReduction": 15 },
       "tvTag": "base:station-tv",
       "tvRadiusTiles": 1.5
-    }
+    },
+    "hygiene": { "dirtPerHour": 1.5 }
   }
 }

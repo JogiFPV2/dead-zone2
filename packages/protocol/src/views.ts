@@ -106,6 +106,8 @@ export interface PlayerView {
   sleeping?: boolean;
   /** Sleep state when it changes (null = awake). */
   sleep?: SleepView | null;
+  /** Dirt 0–100 (protocol 33, `survival.hygiene`), rounded, when it changes; absent while 0. */
+  dirt?: number;
   /** Changed stats only, rounded to 0.1. */
   stats?: Partial<Record<ViewStat, number>>;
   /** Changed moodles only. */
