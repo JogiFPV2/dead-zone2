@@ -51,19 +51,33 @@ describe('createWorkerPool', () => {
   });
 
   it('caps worker memory: a worker over its heap gets 413, the pool keeps working', async () => {
+    // Test-only worker (src/test/oom-worker.mjs): a save over `maxStateBytes` fills the heap in
+    // 1 MiB chunks, so the 32 MiB cap is hit in a few dozen allocations instead of a long GC crawl
+    // over tiny objects; smaller saves get a cheap success reply. Pool budget and test timeout are
+    // generous so a loaded CI box cannot turn the expected 413 into a 422 timeout.
     pool = createWorkerPool({
       size: 1,
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
       maxHeapMb: 32,
       workerUrl: new URL('../test/oom-worker.mjs', import.meta.url),
     });
-    const small = { ...OPTS, maxStateBytes: 1024 * 1024 };
-    const err = await failure(pool.validate(envelope(ID, 5), small));
+    const normal = envelope(ID, 5);
+    const opts = { ...OPTS, maxStateBytes: 1024 * 1024 };
+    const oversized = envelope(ID, 5, { padding: 1024 * 1024 });
+    expect(oversized.length).toBeGreaterThan(opts.maxStateBytes);
+
+    const err = await failure(pool.validate(oversized, opts));
+    expect(err).toBeInstanceOf(HttpError);
     expect(err).toMatchObject({ statusCode: 413, code: 'payload_too_large' });
-    expect(await failure(pool.validate(envelope(ID, 5), small))).toMatchObject({
-      statusCode: 413,
-    });
-  }, 60_000);
+
+    // The OOM-killed worker is replaced: a normal save validates, then another oversized one is 413.
+    const ok = await pool.validate(normal, opts);
+    expect(ok.header.characterId).toBe(ID);
+    expect(ok.sizeBytes).toBe(normal.length);
+    expect(ok.sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(await failure(pool.validate(oversized, opts))).toMatchObject({ statusCode: 413 });
+    expect((await pool.validate(normal, opts)).header.world_seed).toBe(5);
+  }, 90_000);
 
   it('refuses a heap cap too small for the state limit (one big string would crash Node)', async () => {
     pool = createWorkerPool({ size: 1, timeoutMs: 10_000, maxHeapMb: 64 });
