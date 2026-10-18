@@ -26,6 +26,7 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     stressChunks: 250,
     stressLatencyMs: 0,
     perf: false,
+    render: { style: 'default', quality: 'medium' },
   });
   expect(parseBootOptions('?time=06:30&timescale=30')).toMatchObject({ time: 390, timescale: 30 });
   expect(parseBootOptions('?time=25:00').time).toBeUndefined();

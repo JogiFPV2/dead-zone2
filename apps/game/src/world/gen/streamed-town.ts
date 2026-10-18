@@ -45,7 +45,7 @@ export class StreamedTown {
   ) {
     this.root.name = 'streamed-town';
     this.lookup = new BuildingLookup(loaded, false);
-    this.terrainMat = terrainMaterial(kit.detail);
+    this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail);
   }
 
   loadChunk(cx: number, cy: number, z: number): { bytes: number; triangles: number } {

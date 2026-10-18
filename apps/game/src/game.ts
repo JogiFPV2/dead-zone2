@@ -138,7 +138,13 @@ import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
 import { ShelfFill } from './world/shelf-fill.js';
-import { CONTAINER_MODELS, ModelKit, PILE_MODEL, PLAYER_MODEL } from './models/model-kit.js';
+import {
+  CONTAINER_MODELS,
+  ModelKit,
+  PILE_MODEL,
+  PLAYER_MODEL,
+  ktx2For,
+} from './models/model-kit.js';
 import { brighten, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
@@ -182,6 +188,24 @@ const parsedBoot = parseBootOptions(window.location.search);
 // A character plays in its own world: its map and seed.
 const boot = session ? { ...parsedBoot, map: session.character.worldSettings.map } : parsedBoot;
 const simSeed = session?.character.worldSeed ?? SIM_SEED;
+// `?style=real` (render.style = 'real'): realistic PBR pilot. Off by default: nothing of it loads
+// and the frame goes through `stylePass` exactly as before.
+const realStyle =
+  boot.render.style === 'real'
+    ? await import('./render/real/real-style.js')
+        .then((m) =>
+          m.RealStyle.load(
+            renderer,
+            ktx2For(renderer),
+            boot.render.quality,
+            import.meta.env.BASE_URL,
+          ),
+        )
+        .catch((e: unknown) => {
+          console.error('Realistic style failed to load; default look', e);
+          return undefined;
+        })
+    : undefined;
 /** New game from the creator (menu / `?creator=1`); undefined = default character or a save. */
 const newCharacter = session ? session.created : takeNewCharacter();
 // Base pack for the sim (survival content), fetched in parallel with the map/scene setup.
@@ -298,6 +322,7 @@ const townKit =
   boot.town && !stressWorld
     ? await import('./world/town/kit.js')
         .then((m) => m.loadTownKit())
+        .then((kit) => (realStyle ? realStyle.townKit(kit) : kit))
         .catch((e: unknown) => {
           console.error('Town kit failed to load; grey-box world', e);
           return undefined;
@@ -1602,6 +1627,17 @@ const lighting = createWorldLighting(
 // Street lamps are world content; the sun / moon light and its shadow fit stay in render space.
 worldRoot.add(lighting.lamps.root);
 const dayCycle = new DayCycle(DAY_CYCLE);
+if (realStyle) {
+  realStyle.attach(scene, camera, lighting.sky.directional, window.devicePixelRatio);
+  realStyle.setOrigin(floating.x, floating.z);
+  floating.onShift((o) => realStyle.setOrigin(o.x, o.z));
+  if (boot.pbrDemo) worldRoot.add(realStyle.demo(boot.pbrDemo.x, boot.pbrDemo.z));
+  Object.assign(window, {
+    __dzReal: { quality: realStyle.quality, budget: () => realStyle.budget() },
+  });
+}
+/** One frame to the screen: the realistic pipeline when on, else the graphics style pass. */
+const drawFrame = realStyle ? () => realStyle.render() : () => stylePass.render(scene, camera);
 const timeOverride = import.meta.env.DEV ? boot.time : undefined;
 const bootMs = performance.now();
 let lightMinute = DAY_CYCLE.fallbackMinute;
@@ -1619,6 +1655,7 @@ function resize(): void {
   renderer.setSize(width, height);
   resizeIsometricCamera(camera, width / Math.max(height, 1), VIEW_HEIGHT);
   hud.resize(width, height);
+  realStyle?.setSize(width, height);
   // Sleep screen and notices live outside the HUD layer: same scale as the HUD (1920×1080 ref).
   container?.style.setProperty('--dz-sleep-scale', String(scaledUi(computeUiScale(width, height))));
 }
@@ -1729,7 +1766,7 @@ renderer.setAnimationLoop((time) => {
   lastFrameMs = time;
   if (pause.simPaused) {
     // Paused: the world stands still behind the menu (no input, view or HUD updates).
-    stylePass.render(scene, camera);
+    drawFrame();
     return;
   }
   // In a car WASD drive (`drive`, vehicle controller), no `move` / `aim`.
@@ -1787,6 +1824,7 @@ renderer.setAnimationLoop((time) => {
   // Sun direction from the shared `sunAt` (same as the sim's light level); moon at night.
   applySun(look, sunForClock(lightMinute, gameState.get().clock?.day ?? 1));
   lighting.applyCompiled(look, dayCycle.lampLevel(lightMinute));
+  realStyle?.afterLighting();
   streamedTown?.setMinute(lightMinute);
   if (townKit && townStructures) {
     townStructures.setMinute(lightMinute);
@@ -1867,7 +1905,7 @@ renderer.setAnimationLoop((time) => {
     targeting: ui.targetZombieHp,
   });
   const t1 = performance.now();
-  stylePass.render(scene, camera);
+  drawFrame();
   frameSample.updateMs = t1 - t0;
   frameSample.renderMs = performance.now() - t1;
   recordFrame?.(frameSample, renderer);

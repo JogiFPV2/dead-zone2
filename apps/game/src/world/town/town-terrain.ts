@@ -54,7 +54,7 @@ export class TownTerrain {
     private readonly kit: TownKit,
   ) {
     this.root.name = 'town-terrain';
-    this.material = terrainMaterial(kit.detail);
+    this.material = kit.terrainMaterial ?? terrainMaterial(kit.detail);
   }
 
   loadRange(range: ChunkRange): void {

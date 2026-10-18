@@ -5,7 +5,15 @@ import {
   SRGBColorSpace,
   TextureLoader,
 } from 'three';
-import type { AnimationClip, Object3D, Texture, WebGLRenderer } from 'three';
+import type {
+  AnimationClip,
+  BufferGeometry,
+  Material,
+  Mesh,
+  Object3D,
+  Texture,
+  WebGLRenderer,
+} from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
@@ -14,7 +22,15 @@ import { GpuBudget } from './budget.js';
 import { RefCache } from './cache.js';
 import { estimateObjectGeometry, estimateTexture } from './estimate.js';
 import { buildLod } from './lod.js';
-import { assetUrl, findAsset, parseManifest, type AssetManifest } from './manifest.js';
+import {
+  assetUrl,
+  findAsset,
+  parseManifest,
+  pbrModelFile,
+  pbrVariantFile,
+  type AssetManifest,
+  type ManifestAsset,
+} from './manifest.js';
 import { MaterialRegistry } from './materials.js';
 
 export interface AssetLoaderOptions {
@@ -32,6 +48,27 @@ export interface AssetLoaderOptions {
    */
   ktx2?: KTX2Loader;
 }
+
+/**
+ * Realistic style (`?style=real`): models with `material: 'pbr'` load their `*.pbr.glb` variant
+ * with the shared `deadzone-pbr` material. Set once by the game when the style is on; unset (the
+ * default) every asset loads exactly as before.
+ */
+export interface PbrModelHook {
+  readonly material: Material;
+  /** glTF TEXCOORD_0 / 1 → pbrUv / pbrL (`preparePbrGeometry`). */
+  prepare(g: BufferGeometry): BufferGeometry;
+}
+
+let pbrHook: PbrModelHook | undefined;
+
+export function setPbrModelHook(hook: PbrModelHook | undefined): void {
+  pbrHook = hook;
+}
+
+/** Whether `asset` takes the PBR path (style on + `material: 'pbr'`). */
+export const usesPbr = (asset: Pick<ManifestAsset, 'material'>, hook = pbrHook): boolean =>
+  !!hook && asset.material === 'pbr';
 
 /**
  * Runtime loader for pipeline output: GLTFLoader + MeshoptDecoder + KTX2Loader, cache by URL,
@@ -79,7 +116,7 @@ export class AssetLoader {
     await this.ensurePalette(asset.pack);
     const levels = await Promise.all(
       asset.lods.map(async (l) => ({
-        object: (await this.acquire(l.file)).scene.clone(),
+        object: await this.instance(asset, l.file),
         distance: l.distance,
       })),
     );
@@ -105,7 +142,22 @@ export class AssetLoader {
     const asset = findAsset(this.requireManifest(), id);
     const lod = asset.lods[Math.min(level, asset.lods.length - 1)]!;
     await this.ensurePalette(asset.pack);
-    return (await this.acquire(lod.file)).scene.clone();
+    return this.instance(asset, lod.file);
+  }
+
+  /** A clone of one level: the PBR model on the PBR path (fallback: the current file). */
+  private async instance(asset: ManifestAsset, file: string): Promise<Object3D> {
+    const hook = pbrHook;
+    if (hook && usesPbr(asset, hook)) {
+      try {
+        const o = (await this.acquirePbr(pbrModelFile(asset, file), hook)).scene.clone();
+        if (asset.scale) o.scale.multiplyScalar(asset.scale);
+        return o;
+      } catch (e) {
+        console.warn(`deadzone-pbr: ${asset.id} bez wariantu PBR, obecny model`, e);
+      }
+    }
+    return (await this.acquire(file)).scene.clone();
   }
 
   release(id: string): void {
@@ -114,6 +166,7 @@ export class AssetLoader {
 
   releaseFile(file: string): void {
     this.scenes.release(assetUrl(this.baseUrl, file));
+    if (pbrHook) this.scenes.release(assetUrl(this.baseUrl, pbrVariantFile(file)));
   }
 
   /** Unloads everything: cached geometry, palette textures, shared materials. */
@@ -139,6 +192,22 @@ export class AssetLoader {
     return this.scenes.acquire(url, async () => {
       const g = await this.gltf.loadAsync(url);
       this.materials.bind(g.scene);
+      this.budget.set(url, estimateObjectGeometry(g.scene));
+      return g;
+    });
+  }
+
+  private acquirePbr(file: string, hook: PbrModelHook): Promise<GLTF> {
+    const url = assetUrl(this.baseUrl, file);
+    return this.scenes.acquire(url, async () => {
+      const g = await this.gltf.loadAsync(url);
+      g.scene.traverse((o) => {
+        const m = o as Mesh;
+        if (!m.isMesh) return;
+        hook.prepare(m.geometry);
+        (m.material as Material).dispose();
+        m.material = hook.material;
+      });
       this.budget.set(url, estimateObjectGeometry(g.scene));
       return g;
     });

@@ -59,6 +59,10 @@ export interface TownKit {
   readonly material: MeshStandardMaterial;
   readonly cells: TownCells;
   readonly detail: Texture;
+  /** Palette cells by name (uv centre, colour); the realistic style maps them to PBR layers. */
+  readonly cellIndex?: Readonly<Record<string, { uv: [number, number]; hex: string }>>;
+  /** Terrain material override (realistic style); absent = `terrainMaterial(detail)`. */
+  readonly terrainMaterial?: MeshStandardMaterial;
 }
 
 /** Night emission of lit windows (spec: day 0, night 1.6). */
@@ -186,7 +190,7 @@ export async function loadTownKit(
     side: DoubleSide,
   });
   material.name = 'deadzone-town/palette';
-  return { geometries, material, cells, detail };
+  return { geometries, material, cells, detail, cellIndex: index.cells };
 }
 
 /** Shop window modules `shopwin-<skin>` (+ `-lit`, `-broken`) for every wall skin. */

@@ -9,11 +9,29 @@ export interface ManifestLod {
   triangles: number;
 }
 
+/** Three 13-layer KTX2 arrays + layers.json (paths relative to apps/game/public). */
+export interface ManifestPbrSet {
+  albedo: string;
+  normal: string;
+  orm: string;
+}
+
+export interface ManifestPbrMaps extends ManifestPbrSet {
+  layers: string;
+  /** 512 set for the low preset (medium / high use the 1024 set above). */
+  lowRes?: ManifestPbrSet;
+}
+
 export interface ManifestAsset {
   id: string;
   pack: string;
   sourceBytes: number;
   lods: ManifestLod[];
+  /** `pbr` = realistic-style model (`*.pbr.glb` next to the file); absent = `vc` (today). */
+  material?: 'pbr';
+  pbr?: ManifestPbrMaps;
+  /** Uniform scale to metres of the PBR model (e.g. Kenney sedan 1.69). */
+  scale?: number;
 }
 
 export interface ManifestPack {
@@ -75,6 +93,48 @@ function parsePack(p: Obj, at: string): ManifestPack {
   return pack;
 }
 
+const PUBLIC_PATH = /^(?![a-z]+:)(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+\.(ktx2|json)$/i;
+const path = (o: Obj, k: string): string | undefined =>
+  typeof o[k] === 'string' && PUBLIC_PATH.test(o[k]) ? o[k] : undefined;
+
+function parseSet(v: unknown): ManifestPbrSet | undefined {
+  if (!isObj(v)) return undefined;
+  const albedo = path(v, 'albedo');
+  const normal = path(v, 'normal');
+  const orm = path(v, 'orm');
+  return albedo && normal && orm ? { albedo, normal, orm } : undefined;
+}
+
+/**
+ * `material` / `pbr` / `scale` (realistic style). Tolerant: an older or broken shape is ignored
+ * and the asset stays `vc`, so the current look never fails on it.
+ */
+export function parsePbrFields(a: Obj): Pick<ManifestAsset, 'material' | 'pbr' | 'scale'> {
+  const out: Pick<ManifestAsset, 'material' | 'pbr' | 'scale'> = {};
+  if (typeof a.scale === 'number' && Number.isFinite(a.scale) && a.scale > 0) out.scale = a.scale;
+  if (a.material !== 'pbr') return out;
+  out.material = 'pbr';
+  const set = parseSet(a.pbr);
+  const layers = isObj(a.pbr) ? path(a.pbr, 'layers') : undefined;
+  if (set && layers) {
+    const lowRes = parseSet((a.pbr as Obj).lowRes);
+    out.pbr = { ...set, layers, ...(lowRes ? { lowRes } : {}) };
+  }
+  return out;
+}
+
+/** `foo.glb` → `foo.pbr.glb`: the realistic-style variant next to a current model. */
+export const pbrVariantFile = (file: string): string =>
+  file.endsWith('.pbr.glb') ? file : file.replace(/\.glb$/i, '.pbr.glb');
+
+/**
+ * File of the PBR model for one level: a built PBR asset (`pbr` data, e.g.
+ * `models/deadzone-pbr/sedan.glb`, meshopt) is the model itself; otherwise the raw
+ * `*.pbr.glb` next to the current file.
+ */
+export const pbrModelFile = (asset: Pick<ManifestAsset, 'pbr'>, file: string): string =>
+  asset.pbr ? file : pbrVariantFile(file);
+
 function parseAsset(a: Obj, at: string, packs: Set<string>): ManifestAsset {
   const asset: ManifestAsset = {
     id: str(a, 'id', at),
@@ -86,6 +146,7 @@ function parseAsset(a: Obj, at: string, packs: Set<string>): ManifestAsset {
       bytes: num(l, 'bytes', `${at}.lods[${i}]`),
       triangles: num(l, 'triangles', `${at}.lods[${i}]`),
     })),
+    ...parsePbrFields(a),
   };
   // Licence rule (PLAN.md): an asset without a licensed pack entry is refused.
   if (!packs.has(asset.pack)) throw new Error(`manifest ${asset.id}: brak packa z licencją`);

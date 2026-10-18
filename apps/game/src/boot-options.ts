@@ -1,6 +1,7 @@
 import { DEBUG_STATS, type DebugStat, type SimVehicleSpawn } from '@deadzone/protocol';
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
+import { parseRenderOptions, type RenderOptions } from './render/real/options.js';
 
 /**
  * `test` = generated test map; a generated world (`world/gen/maps.ts`: `osm-stw` = OSM map of
@@ -66,6 +67,13 @@ export interface BootOptions {
    * `worldSettings.furniture.footprint` (render only; the sim follows its own settings).
    */
   footprint?: true;
+  /**
+   * `?style=real&quality=low|medium|high`: realistic PBR pilot (`render.style = 'real'`); the
+   * default look is untouched when absent.
+   */
+  render: RenderOptions;
+  /** Dev `?pbrdemo=x,z` (with `?style=real`): Designer's PBR models laid out at that tile. */
+  pbrDemo?: { x: number; z: number };
 }
 
 /**
@@ -154,6 +162,7 @@ export function parseBootOptions(search: string): BootOptions {
   const time = parseTimeParam(q.get('time'));
   const at = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(-?\d{1,2}))?$/.exec(q.get('spawn') ?? '');
   const cam = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/.exec(q.get('cam') ?? '');
+  const demo = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(q.get('pbrdemo') ?? '');
   return {
     map,
     crowd,
@@ -190,5 +199,7 @@ export function parseBootOptions(search: string): BootOptions {
     stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
     perf: q.get('perf') === '1',
     ...(q.get('footprint') === '1' ? { footprint: true as const } : {}),
+    render: parseRenderOptions(search),
+    ...(demo ? { pbrDemo: { x: Number(demo[1]), z: Number(demo[2]) } } : {}),
   };
 }
