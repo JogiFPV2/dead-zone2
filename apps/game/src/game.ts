@@ -34,6 +34,8 @@ import { createScene } from './scene.js';
 import {
   DAY_CYCLE,
   DayCycle,
+  applySun,
+  sunForClock,
   clockMinute,
   createWorldLighting,
   formatMinute,
@@ -1771,7 +1773,10 @@ renderer.setAnimationLoop((time) => {
   );
   simStreamSync?.update({ x: rig.target.x, y: rig.target.z }, streaming.streamer.config);
   lightMinute = currentMinute(performance.now());
-  lighting.applyCompiled(dayCycle.sample(lightMinute), dayCycle.lampLevel(lightMinute));
+  const look = dayCycle.sample(lightMinute);
+  // Sun direction from the shared `sunAt` (same as the sim's light level); moon at night.
+  applySun(look, sunForClock(lightMinute, gameState.get().clock?.day ?? 1));
+  lighting.applyCompiled(look, dayCycle.lampLevel(lightMinute));
   streamedTown?.setMinute(lightMinute);
   if (townKit && townStructures) {
     townStructures.setMinute(lightMinute);

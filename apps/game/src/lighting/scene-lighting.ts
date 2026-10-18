@@ -14,6 +14,16 @@ import { compilePreset, type CompiledPreset } from './compiled.js';
 import { LIGHTING_CONFIG, SPEC_CAMERA_DISTANCE, type LightingPreset } from './preset.js';
 import { DEFAULT_SHADOW_FIT, fitShadowFrustum, type OrthoView } from './shadow-fit.js';
 
+/**
+ * Depth towards the light that the shadow camera must cover beyond the view: a caster of
+ * height `maxY` outside the view still throws its shadow (length maxY / tan(elevation)) onto
+ * the screen when the sun is low. `dirY` = sin(elevation) of the normalised light direction.
+ */
+export function shadowDepthPadding(dirY: number): number {
+  const base = DEFAULT_SHADOW_FIT.depthPadding;
+  return Math.max(base, DEFAULT_SHADOW_FIT.maxY / Math.max(0.15, dirY) + 2);
+}
+
 /** Renderer settings of the spec (4.1). PCFSoftShadowMap is gone in r186, so PCFShadowMap. */
 export function configureRenderer(renderer: WebGLRenderer, preset: LightingPreset): void {
   renderer.shadowMap.enabled = true;
@@ -85,6 +95,7 @@ export class SceneLighting {
     const fit = fitShadowFrustum(view, this.direction, {
       ...DEFAULT_SHADOW_FIT,
       mapSize: LIGHTING_CONFIG.shadowMapSize,
+      depthPadding: shadowDepthPadding(this.direction.y),
     });
     const d = this.directional;
     d.position.copy(fit.position);
