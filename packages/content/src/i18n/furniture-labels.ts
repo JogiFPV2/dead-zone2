@@ -22,6 +22,11 @@ export const FURNITURE_ACTIONS_PL = {
   'climb-through': 'Wejdź przez okno',
   'open-storage': 'Otwórz',
   watch: 'Oglądaj',
+  'insert-tape': 'Włóż kasetę',
+  sleep: 'Śpij',
+  'sleep-until:morning': 'Śpij do rana',
+  'sleep-until': 'Śpij',
+  rest: 'Odpocznij',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -56,6 +61,9 @@ export const FURNITURE_TYPES_PL = {
   counter: 'Lada',
   trunk: 'Bagażnik',
   tv: 'Telewizor',
+  bed: 'Łóżko',
+  sofa: 'Kanapa',
+  seat: 'Siedzisko',
   other: 'Mebel',
 } as const satisfies Record<string, string>;
 
@@ -64,6 +72,8 @@ const lookup = (t: Readonly<Record<string, string>>, k: string): string | undefi
 /** Label of an action id (`lockpick:123` → the `lockpick` label); fallback: the id. */
 export function furnitureActionPl(id: string): string {
   const head = id.split(':', 1)[0] ?? id;
+  const hours = /^sleep-until:(\d+)$/.exec(id)?.[1];
+  if (hours) return `Śpij ${hours} godz.`;
   return lookup(FURNITURE_ACTIONS_PL, id) ?? lookup(FURNITURE_ACTIONS_PL, head) ?? id;
 }
 
@@ -76,3 +86,12 @@ export function furnitureReasonPl(reason: string): string {
 export function furnitureTypePl(typeId: string): string {
   return lookup(FURNITURE_TYPES_PL, typeId) ?? typeId;
 }
+
+/**
+ * Specific Polish texts for a generic reason code (`reasonPl` instead of the default
+ * `FURNITURE_REASONS_PL[reason]`), e.g. „Wejdź przez okno” greyed out with `invalid-state`.
+ */
+export const FURNITURE_REASON_DETAILS_PL = {
+  'window-closed': 'Okno zamknięte',
+  'window-boarded': 'Okno zabite deskami',
+} as const satisfies Record<string, string>;
