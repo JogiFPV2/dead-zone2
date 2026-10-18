@@ -1,0 +1,183 @@
+{
+  "id": "deadzone-pbr",
+  "name": "Deadzone PBR (pilot stylu realistycznego)",
+  "version": "1",
+  "author": "Deadzone (Designer); sedan: Kenney Car Kit; tekstury: ambientCG",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://github.com/JogiFPV2/deadzone-web/blob/main/docs/STYLE.md",
+  "files": [
+    {
+      "path": "pbr/blok-p4.pbr.glb",
+      "sha256": "4fb53a23b8b9600640b7cc67bb8b3e9c9248f9f4f9c44ed64291237bfc8e612d",
+      "name": "blok-p4.pbr.glb"
+    },
+    {
+      "path": "pbr/blok-p10.pbr.glb",
+      "sha256": "b38fc69bb9469f237259966725cbd47ed2c859d21372cc57bd32e50862bb2a36",
+      "name": "blok-p10.pbr.glb"
+    },
+    {
+      "path": "pbr/smietnik.pbr.glb",
+      "sha256": "c22d3229cfb6593e4c727504c41ddcdd86e427056a5231eac06c6b671951b181",
+      "name": "smietnik.pbr.glb"
+    },
+    {
+      "path": "pbr/dom-kostka-namiot.pbr.glb",
+      "sha256": "9a8dd2bc9bf8d72a6f03931a138082f16eff94225e65fd2c97570bc9507299ef",
+      "name": "dom-kostka-namiot.pbr.glb"
+    },
+    {
+      "path": "pbr/dom-90.pbr.glb",
+      "sha256": "1d58d30f5aa323ffccbf97b2c441e1e7979d01a7dbcc4afb9f642d5a3211ed01",
+      "name": "dom-90.pbr.glb"
+    },
+    {
+      "path": "pbr/sedan.pbr.glb",
+      "sha256": "361c3cdd55e591ce894f76c78ce239a158b40e05fa91b94601f7590abdedeca2",
+      "name": "sedan.pbr.glb"
+    },
+    {
+      "path": "pbr/drzewo-lisciaste.pbr.glb",
+      "sha256": "d9b2e13cc5c629f0f2bd3ae53cbf113840339140d1976b54bb3610786bd92e46",
+      "name": "drzewo-lisciaste.pbr.glb"
+    },
+    {
+      "path": "pbr/krzak.pbr.glb",
+      "sha256": "eccf40cc1816c08ea498a5b28b36601c69908d57db410704474bb46f3b16cd5d",
+      "name": "krzak.pbr.glb"
+    }
+  ],
+  "root": ".",
+  "models": [
+    {
+      "id": "blok-p4",
+      "file": "blok-p4.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "blok-p10",
+      "file": "blok-p10.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "smietnik",
+      "file": "smietnik.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "dom-kostka-namiot",
+      "file": "dom-kostka-namiot.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "dom-90",
+      "file": "dom-90.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "sedan",
+      "file": "sedan.pbr",
+      "scale": 1.69,
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "drzewo-lisciaste",
+      "file": "drzewo-lisciaste.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    },
+    {
+      "id": "krzak",
+      "file": "krzak.pbr",
+      "material": "pbr",
+      "pbr": {
+        "albedo": "textures/pbr/deadzone-pbr-albedo-1024.ktx2",
+        "normal": "textures/pbr/deadzone-pbr-normal-1024.ktx2",
+        "orm": "textures/pbr/deadzone-pbr-orm-1024.ktx2",
+        "layers": "textures/pbr/layers.json",
+        "lowRes": {
+          "albedo": "textures/pbr/deadzone-pbr-albedo-512.ktx2",
+          "normal": "textures/pbr/deadzone-pbr-normal-512.ktx2",
+          "orm": "textures/pbr/deadzone-pbr-orm-512.ktx2"
+        }
+      }
+    }
+  ]
+}

@@ -198,21 +198,49 @@ rozmieszcza (`spawnWeight` 0), a klient jej nie rysuje (`HIDDEN_ANIMAL_TYPES`).
 Gołąb ma w źródle tylko pozy lotu (także w `idle-animation`), więc skrypt eksportu dodaje klip `perch-animation`
 (idle ze skrzydłami złożonymi wzdłuż ciała).
 
+## Styl realistyczny (PBR), pilot (`apps/game/public/textures/pbr/`, `apps/game/public/models/deadzone-pbr/`)
+
+Materiał `deadzone-pbr` to jedna tablica tekstur na cały świat: 13 warstw, KTX2 Basis ETC1S z mipmapami. Pliki to `deadzone-pbr-{albedo,normal,orm}-{1024,512}.ktx2`, opis warstw jest w `layers.json`. Do tego 8 modeli `*.pbr.glb`, w których indeks warstwy i brud są zapisane w `TEXCOORD_1`. Zasady i budżet: `docs/STYLE.md`.
+Zestawy ambientCG pobrano w wersji 1K-JPG. Designer je obrobił (kadr, desaturacja, wyrównanie jasności, ORM = AO / Roughness / Metalness), a źródła i skrypty leżą w `/workspace/assets-src/pbr/` (`build_textures.py`, `build.sh`, KTX-Software 4.4.2). Warstwy `szklo` i `gladki` są proceduralne. Licencja ambientCG to CC0 1.0 (https://docs.ambientcg.com/license/), więc atrybucja nie jest wymagana. Podajemy ją z dobrej praktyki.
+
+| Warstwa                    | Źródło             | Autor               | URL                                              | Licencja |
+| -------------------------- | ------------------ | ------------------- | ------------------------------------------------ | -------- |
+| 0 asfalt                   | Asphalt031         | ambientCG           | https://ambientcg.com/view?id=Asphalt031         | CC0-1.0  |
+| 1 plyty (chodnik z płyt)   | PavingStones136    | ambientCG           | https://ambientcg.com/view?id=PavingStones136    | CC0-1.0  |
+| 2 kostka                   | PavingStones128    | ambientCG           | https://ambientcg.com/view?id=PavingStones128    | CC0-1.0  |
+| 3 trawa (też liście)       | Grass004           | ambientCG           | https://ambientcg.com/view?id=Grass004           | CC0-1.0  |
+| 4 ziemia (też maska brudu) | Ground037          | ambientCG           | https://ambientcg.com/view?id=Ground037          | CC0-1.0  |
+| 5 beton (wielka płyta)     | Concrete034        | ambientCG           | https://ambientcg.com/view?id=Concrete034        | CC0-1.0  |
+| 6 tynk jasny               | Plaster001         | ambientCG           | https://ambientcg.com/view?id=Plaster001         | CC0-1.0  |
+| 7 cegla                    | Bricks085          | ambientCG           | https://ambientcg.com/view?id=Bricks085          | CC0-1.0  |
+| 8 papa                     | Asphalt033         | ambientCG           | https://ambientcg.com/view?id=Asphalt033         | CC0-1.0  |
+| 9 blacha trapezowa         | CorrugatedSteel005 | ambientCG           | https://ambientcg.com/view?id=CorrugatedSteel005 | CC0-1.0  |
+| 10 drewno                  | Planks021          | ambientCG           | https://ambientcg.com/view?id=Planks021          | CC0-1.0  |
+| 11 szklo, 12 gladki        | proceduralne       | Deadzone (Designer) | —                                                | CC0-1.0  |
+
+| Model                                                     | Trójkąty            | Geometria                                                                                                | Licencja |
+| --------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
+| `blok-p4.pbr.glb`, `blok-p10.pbr.glb`, `smietnik.pbr.glb` | 5 830 / 6 050 / 520 | własne, proceduralne (jak `buildings/*.glb` w `/workspace/assets-src/ASSETS.md`)                         | CC0-1.0  |
+| `dom-kostka-namiot.pbr.glb`, `dom-90.pbr.glb`             | 1 684 / 1 536       | własne (budynki część 2)                                                                                 | CC0-1.0  |
+| `sedan.pbr.glb`                                           | 2 032               | Kenney, Car Kit (kenney.nl/assets/car-kit), UV i warstwy Designera; jednostki Kenney, w grze skala ×1,69 | CC0-1.0  |
+| `drzewo-lisciaste.pbr.glb`, `krzak.pbr.glb`               | 1 336 / 400         | własne                                                                                                   | CC0-1.0  |
+
 ## Pack testowy pipeline'u (nieużywany w scenie gry)
 
 <!-- assets-pipeline:begin -->
 <!-- Generowane przez `pnpm --filter @deadzone/assets assets build`; nie edytuj ręcznie. -->
 
-| Pack                                         | Autor                                        | Licencja                                                      | Źródło                                                                              | W repo                                                        |
-| -------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Rabbit (Kelgar)                              | Čestmír Dammer (CDmir), via OpenGameArt      | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/rabbit-0                                            | 1 modeli (`apps/game/public/models/cdmir-rabbit/`)            |
-| Meble Deadzone (modele własne, skala 1:1)    | Deadzone (Designer)                          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://github.com/JogiFPV2/deadzone-web                                            | 6 modeli (`apps/game/public/models/deadzone-furniture/`)      |
-| Furniture Kit                                | Kenney (www.kenney.nl)                       | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/furniture-kit                                              | 10 modeli (`apps/game/public/models/kenney-furniture/`)       |
-| Survival Kit                                 | Kenney (www.kenney.nl)                       | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/survival-kit                                               | 11 modeli (`apps/game/public/models/kenney-survival/`)        |
-| Low poly 3D Pigeon (rigged + animated)       | mujtaba-io, via OpenGameArt                  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/low-poly-3d-pigeon-model-rigged-animated-untextured | 1 modeli (`apps/game/public/models/mujtaba-pigeon/`)          |
-| Animated animals (Deer, Stag, Shiba Inu)     | Quaternius (quaternius.com), via Poly Pizza  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://quaternius.com/packs/ultimateanimatedanimals.html                           | 3 modeli (`apps/game/public/models/quaternius-animals/`)      |
-| Animal Pack Vol.2 (Cat)                      | Quaternius (quaternius.com), via OpenGameArt | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/animated-animales-low-poly                          | 1 modeli (`apps/game/public/models/quaternius-animals-vol2/`) |
-| Animated characters (Casual, Worker, Hoodie) | Quaternius (quaternius.com), via Poly Pizza  | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://poly.pizza/u/Quaternius                                                     | 3 modeli (`apps/game/public/models/quaternius-characters/`)   |
+| Pack                                         | Autor                                                           | Licencja                                                      | Źródło                                                                              | W repo                                                        |
+| -------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Rabbit (Kelgar)                              | Čestmír Dammer (CDmir), via OpenGameArt                         | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/rabbit-0                                            | 1 modeli (`apps/game/public/models/cdmir-rabbit/`)            |
+| Meble Deadzone (modele własne, skala 1:1)    | Deadzone (Designer)                                             | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://github.com/JogiFPV2/deadzone-web                                            | 6 modeli (`apps/game/public/models/deadzone-furniture/`)      |
+| Deadzone PBR (pilot stylu realistycznego)    | Deadzone (Designer); sedan: Kenney Car Kit; tekstury: ambientCG | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://github.com/JogiFPV2/deadzone-web/blob/main/docs/STYLE.md                    | 8 modeli (`apps/game/public/models/deadzone-pbr/`)            |
+| Furniture Kit                                | Kenney (www.kenney.nl)                                          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/furniture-kit                                              | 10 modeli (`apps/game/public/models/kenney-furniture/`)       |
+| Survival Kit                                 | Kenney (www.kenney.nl)                                          | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://kenney.nl/assets/survival-kit                                               | 11 modeli (`apps/game/public/models/kenney-survival/`)        |
+| Low poly 3D Pigeon (rigged + animated)       | mujtaba-io, via OpenGameArt                                     | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/low-poly-3d-pigeon-model-rigged-animated-untextured | 1 modeli (`apps/game/public/models/mujtaba-pigeon/`)          |
+| Animated animals (Deer, Stag, Shiba Inu)     | Quaternius (quaternius.com), via Poly Pizza                     | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://quaternius.com/packs/ultimateanimatedanimals.html                           | 3 modeli (`apps/game/public/models/quaternius-animals/`)      |
+| Animal Pack Vol.2 (Cat)                      | Quaternius (quaternius.com), via OpenGameArt                    | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://opengameart.org/content/animated-animales-low-poly                          | 1 modeli (`apps/game/public/models/quaternius-animals-vol2/`) |
+| Animated characters (Casual, Worker, Hoodie) | Quaternius (quaternius.com), via Poly Pizza                     | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://poly.pizza/u/Quaternius                                                     | 3 modeli (`apps/game/public/models/quaternius-characters/`)   |
 
 <!-- assets-pipeline:end -->
 
