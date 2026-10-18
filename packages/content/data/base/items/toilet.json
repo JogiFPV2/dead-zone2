@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base:toilet",
+    "name": "item.base.toilet.name",
+    "kind": "placeable",
+    "weightKg": 25,
+    "tags": ["base:furniture", "base:toilet"],
+    "placeable": { "footprint": { "w": 1, "h": 1 } }
+  }
+]

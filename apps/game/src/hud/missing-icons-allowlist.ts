@@ -4,7 +4,7 @@
  */
 export const MISSING_ICONS_ALLOWLIST: ReadonlySet<string> = new Set<string>([
   // Meble bez ikony (Designer): kuchenka gazowa jako przedmiot, krzesło, fotel, włącznik światła,
-  // stół, lampa stojąca, lampka biurkowa.
+  // stół, lampa stojąca, lampka biurkowa, toaleta.
   'base:armchair',
   'base:chair',
   'base:desk-lamp',
@@ -12,4 +12,5 @@ export const MISSING_ICONS_ALLOWLIST: ReadonlySet<string> = new Set<string>([
   'base:gas-stove',
   'base:light-switch',
   'base:table',
+  'base:toilet',
 ]);
