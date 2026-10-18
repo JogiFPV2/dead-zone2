@@ -5,6 +5,7 @@ import {
   createOpeningsWorld,
   DEFAULT_OPENINGS_CONFIG,
   lockedAtStart,
+  lockKindOf,
   openingKey,
   type OpeningsConfig,
 } from './state.js';
@@ -134,5 +135,40 @@ describe('locks at start by building kind (exteriorLockedChanceFor)', () => {
     expect(a.some(Boolean)).toBe(true);
     expect(a.every(Boolean)).toBe(false);
     expect(roll(43)).not.toEqual(a);
+  });
+});
+
+describe('locks at start from SimChunk.buildingKinds (#249)', () => {
+  const chances = {
+    exteriorLockedChance: 0,
+    exteriorLockedChanceByBuilding: { shop: 0, house: 0, police: 1, garage: 1 },
+  };
+
+  it('the generator kind wins over the room types', () => {
+    // Building 7 has a shop room (rooms say `shop`), the generator says `police`.
+    const o = world(chances, 1, buildMap({ ...spec, buildingKinds: { '7': 'police' } }));
+    expect(lockedAtStart(o, SHOP)).toBe(true);
+    // Building 8 has no generator kind: rooms decide (`house`, 0).
+    expect(lockedAtStart(o, HOUSE)).toBe(false);
+  });
+
+  it('generator aliases (shed → garage); unknown kinds fall back to the rooms', () => {
+    const shed = world(chances, 1, buildMap({ ...spec, buildingKinds: { '8': 'shed' } }));
+    expect(lockedAtStart(shed, HOUSE)).toBe(true);
+    const odd = world(chances, 1, buildMap({ ...spec, buildingKinds: { '8': 'castle' } }));
+    expect(lockedAtStart(odd, HOUSE)).toBe(false);
+  });
+
+  it('lockKindOf: identity for the content kinds, aliases, undefined otherwise', () => {
+    for (const k of ['hospital', 'school', 'police', 'pharmacy', 'shop', 'fuel', 'gym'])
+      expect(lockKindOf(k)).toBe(k);
+    for (const k of ['house', 'office', 'industrial', 'garage', 'ruin'])
+      expect(lockKindOf(k)).toBe(k);
+    expect(lockKindOf('block')).toBe('house');
+    expect(lockKindOf('kostka')).toBe('house');
+    expect(lockKindOf('station')).toBe('shop');
+    expect(lockKindOf('fire-station')).toBe('office');
+    expect(lockKindOf('church')).toBeUndefined();
+    expect(lockKindOf(undefined)).toBeUndefined();
   });
 });

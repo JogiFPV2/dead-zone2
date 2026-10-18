@@ -10,8 +10,10 @@ import {
   type SimMap,
 } from '@deadzone/protocol';
 import {
+  BUILDING_KINDS,
   buildingKindFromRooms,
   exteriorLockedChanceFor,
+  type BuildingKind,
   type ContentBundle,
 } from '@deadzone/content';
 import { deriveSeed, Rng } from '../core/rng.js';
@@ -405,10 +407,56 @@ function buildingRoomTypes(o: OpeningsWorld, x: number, y: number, z: number): s
 }
 
 /**
+ * Generator kinds without their own lock chance (`building-kind.ts` in content): what they lock
+ * like. Kinds of `BUILDING_KINDS` map to themselves.
+ */
+const KIND_ALIASES: Readonly<Record<string, BuildingKind | undefined>> = {
+  block: 'house',
+  kostka: 'house',
+  station: 'shop',
+  'fire-station': 'office',
+  shed: 'garage',
+};
+const KNOWN_KINDS: ReadonlySet<string> = new Set(BUILDING_KINDS);
+
+/** Lock kind of a generator `buildingKind` (#249); `undefined` = unknown (fall back to rooms). */
+export function lockKindOf(kind: string | undefined): BuildingKind | undefined {
+  if (kind === undefined) return undefined;
+  return KNOWN_KINDS.has(kind) ? (kind as BuildingKind) : KIND_ALIASES[kind];
+}
+
+/**
+ * Kind of the building behind an exterior door from `SimChunk.buildingKinds` (#249): the chunk of
+ * the inside tile, else the 3 × 3 chunks around it (a building's kind sits in the chunks holding
+ * its rooms). `undefined` without a building id or a known kind.
+ */
+function chunkBuildingKind(
+  o: OpeningsWorld,
+  x: number,
+  y: number,
+  z: number,
+): BuildingKind | undefined {
+  const cx = Math.floor(x / CHUNK_SIZE);
+  const cy = Math.floor(y / CHUNK_SIZE);
+  const building = roomAt(o.map, x, y, z)?.building ?? 0;
+  if (!building) return undefined;
+  const id = String(building);
+  const own = lockKindOf(o.map.getChunk(cx, cy, z)?.buildingKinds?.[id]);
+  if (own) return own;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const k = lockKindOf(o.map.getChunk(cx + dx, cy + dy, z)?.buildingKinds?.[id]);
+      if (k) return k;
+    }
+  return undefined;
+}
+
+/**
  * Door / gate locked at the start: `SimChunk.lockedDoors` when the generator gave it (always
  * wins), else rolled from the world seed per edge with `exteriorLockedChanceFor(locks, kind)`:
  * an exterior door (a room on one side, outside on the other) by the kind of its building
- * (`buildingKindFromRooms` over the building's room types), a gate as `gate`. Cached; not saved
+ * (`SimChunk.buildingKinds` from the generator, #249, via `lockKindOf`; else
+ * `buildingKindFromRooms` over the building's room types), a gate as `gate`. Cached; not saved
  * (derived from map + seed).
  */
 export function lockedAtStart(o: OpeningsWorld, key: number): boolean {
@@ -437,7 +485,8 @@ export function lockedAtStart(o: OpeningsWorld, key: number): boolean {
         const t = ra.room ? a : b;
         chance = exteriorLockedChanceFor(
           locks,
-          buildingKindFromRooms(buildingRoomTypes(o, t.x, t.y, k.z)),
+          chunkBuildingKind(o, t.x, t.y, k.z) ??
+            buildingKindFromRooms(buildingRoomTypes(o, t.x, t.y, k.z)),
         );
       }
       if (chance > 0) {

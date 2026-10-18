@@ -23,6 +23,8 @@ export interface MapSpec {
   rooms?: Record<string, string>;
   /** Room id → building id (same for every chunk). */
   roomBuildings?: Record<string, number>;
+  /** `SimChunk.buildingKinds` (#249), building id → generator kind; set on every chunk. */
+  buildingKinds?: Record<string, string>;
   /** Floors 0..levels − 1, all the same as level 0 (default 1). */
   levels?: number;
   /** Edge id of walls (default 1), with `edgeKinds` as the palette (e.g. 2 = window). */
@@ -81,6 +83,7 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           edgeW,
           ...(spec.room ? { room, rooms: spec.rooms ?? {} } : {}),
           ...(spec.room && spec.roomBuildings ? { roomBuildings: spec.roomBuildings } : {}),
+          ...(spec.buildingKinds ? { buildingKinds: spec.buildingKinds } : {}),
           ...(objects.length > 0 && z === 0 ? { objects } : {}),
         });
       }

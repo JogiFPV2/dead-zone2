@@ -1559,3 +1559,9 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - **Zapalone okna:** `SimViewPatch.litWindows?: LitWindowView[]` (`{ edge, x, y, z }`, `x, y` = środek krawędzi okna w kaflach, `edge` = `openingKey`), liczone przez sim (`litWindows`: pokój z zapalonym włącznikiem lampą i prądem, zasłony odsłonięte, okno nie całkiem zabite). Tylko w promieniu `LIT_WINDOWS_RANGE_TILES` (48) od gracza, co 10 ticków, pełna lista przy zmianie. Lista jest niezależna od pory dnia; zombie wabi tylko w nocy.
 - **Zapis:** bez zmian (`SAVE_VERSION` 3). Poziom `base:dirty` z progów domyślnych jest pochodną `dirt` (nie w zapisie ani w haszu).
 - **Testy:** `furniture/ui-247.test.ts`.
+
+### 9.56 Zamki na starcie z `SimChunk.buildingKinds` (#249) — kontrakt dla Silnika 2 i Modules
+
+- Drzwi zewnętrzne biorą rodzaj budynku z `SimChunk.buildingKinds[buildingId]` (chunk kafla po stronie budynku, potem 3 × 3 chunki wokół). Dopiero gdy go brak albo jest nieznany, sim liczy rodzaj jak dotąd z pomieszczeń (`buildingKindFromRooms`). `lockedDoors` dalej wygrywa z losowaniem.
+- Mapowanie (`lockKindOf`): rodzaje z `BUILDING_KINDS` (hospital, school, police, pharmacy, shop, fuel, gym, house, office, industrial, garage, ruin) przechodzą 1:1 na klucze `exteriorLockedChanceByBuilding`; aliasy generatora `block`/`kostka` → `house`, `station` → `shop`, `fire-station` → `office`, `shed` → `garage`; reszta (np. `church`) → rodzaj z pomieszczeń, a bez niego `exteriorLockedChance`.
+- Protokół i zapis bez zmian (zamki startowe są pochodną mapy i ziarna).
