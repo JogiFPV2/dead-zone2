@@ -1,0 +1,29 @@
+{
+  "id": "base:dirty",
+  "name": "moodle.base.dirty.name",
+  "polarity": "negative",
+  "maxLevel": 4,
+  "stat": "dirt",
+  "levels": [
+    {
+      "label": "moodle.base.dirty.level-1",
+      "enterAt": 25,
+      "exitAt": 20
+    },
+    {
+      "label": "moodle.base.dirty.level-2",
+      "enterAt": 50,
+      "exitAt": 45
+    },
+    {
+      "label": "moodle.base.dirty.level-3",
+      "enterAt": 75,
+      "exitAt": 70
+    },
+    {
+      "label": "moodle.base.dirty.level-4",
+      "enterAt": 90,
+      "exitAt": 85
+    }
+  ]
+}

@@ -8,6 +8,7 @@ const MOODLES: Record<string, string> = {
   'base:boredom': 'Nuda',
   'base:cold': 'Zimno',
   'base:comfortable': 'Wygoda',
+  'base:dirty': 'Brud',
   'base:drunk': 'Upojenie',
   'base:fatigue': 'Zmęczenie',
   'base:heavy-load': 'Obciążenie',

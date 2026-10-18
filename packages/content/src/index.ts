@@ -7,6 +7,7 @@ export * from './places/index.js';
 export * from './combat/index.js';
 export * from './i18n/entity-names.js';
 export * from './i18n/furniture-labels.js';
+export * from './i18n/moodle-texts.js';
 export * from './wires/index.js';
 export * from './footprint/index.js';
 export * from './loot/index.js';

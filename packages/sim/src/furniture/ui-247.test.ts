@@ -91,8 +91,10 @@ describe('UI #247 (protocol 34)', () => {
   });
 
   it('base:dirty fallback (no content moodle): levels 25/50/75/90, view and event', () => {
-    expect(base.moodles[DIRTY_MOODLE]).toBeUndefined();
-    const s = sim([]);
+    const moodles = Object.fromEntries(
+      Object.entries(base.moodles).filter(([id]) => id !== DIRTY_MOODLE),
+    );
+    const s = sim([], { content: { ...base, moodles } as unknown as ContentBundle });
     const eid = s.world.players.get(0)!;
     s.step();
     s.drainView();
@@ -113,6 +115,22 @@ describe('UI #247 (protocol 34)', () => {
     expect(
       s.drainEvents().filter((e) => e.type === 'moodleChanged' && e.moodle === DIRTY_MOODLE),
     ).toHaveLength(6);
+  });
+
+  it('base pack moodles/dirty.json (stat dirt): 25/50/75/90 like the fallback, no fallback', () => {
+    const def = base.moodles[DIRTY_MOODLE]!;
+    expect(def.stat).toBe('dirt');
+    expect(def.levels.map((l) => l.enterAt)).toEqual([...DIRTY_LEVELS]);
+    const s = sim([]);
+    const eid = s.world.players.get(0)!;
+    const levels: number[] = [];
+    for (const d of [10, 25, 49, 50, 80, 95, 0]) {
+      s.world.survival!.dirt[eid] = d;
+      s.step();
+      levels.push(s.getSurvival()!.moodles[DIRTY_MOODLE] ?? 0);
+    }
+    expect(levels).toEqual([0, 1, 1, 2, 3, 4, 0]);
+    expect(s.world.survival!.dirtyLevel[eid]).toBe(0);
   });
 
   it('base:dirty from content (stat dirt) uses its thresholds instead of the fallback', () => {

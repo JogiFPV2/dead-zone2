@@ -25,6 +25,8 @@ export const CORE_STATS = [
   'injury',
   'comfort',
   'satiety',
+  /** Brud (higiena, Symulacja #243/#248): moodle `base:dirty`. */
+  'dirt',
   // wartości fizyczne
   'body-temperature-c',
   'body-weight-kg',

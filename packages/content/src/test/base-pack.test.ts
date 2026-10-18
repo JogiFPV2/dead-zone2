@@ -49,6 +49,7 @@ describe('paczka bazowa data/base', () => {
         'wet',
         'heavy-load',
         'drunk',
+        'dirty',
       ].sort(),
     );
     expect(pol('positive')).toEqual(['comfortable', 'well-fed']);
