@@ -19,4 +19,14 @@ describe('toaleta base:toilet', () => {
     const t = b.items['base:toilet']!;
     for (const tag of [h.tapTag, h.showerTag, h.bathTag]) expect(t.tags).not.toContain(tag);
   });
+
+  it('zbiornik spłuczki: 10 l brudnej wody, dopełnia się z sieci', async () => {
+    const t = (await baseBundle()).items['base:toilet']!;
+    if (t.kind !== 'placeable') throw new Error('base:toilet nie jest placeable');
+    expect(t.placeable.waterTank).toEqual({
+      capacityL: 10,
+      quality: 'tainted',
+      refillFromMains: true,
+    });
+  });
 });

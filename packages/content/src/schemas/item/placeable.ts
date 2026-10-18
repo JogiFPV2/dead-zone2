@@ -5,6 +5,7 @@ import { itemBaseShape } from './base.js';
 import { CookingApplianceSchema } from './cooking.js';
 import { LightSchema } from './light.js';
 import { PowerConsumerSchema, PowerSourceSchema } from './power.js';
+import { WaterTankSchema } from './water-tank.js';
 
 /**
  * Przedmiot, który po postawieniu staje się obiektem świata — np. skrzynia z desek albo lampa.
@@ -29,6 +30,8 @@ export const PlaceableItemSchema = z.strictObject({
     seat: z.boolean().optional(),
     /** Kuchenka: źródło ciepła palników i piekarnika (`item/cooking.ts`). */
     cooking: CookingApplianceSchema.optional(),
+    /** Zbiornik wody (spłuczka toalety): skończony zapas, jakość, dopełnianie z sieci (`item/water-tank.ts`). */
+    waterTank: WaterTankSchema.optional(),
     /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
     footprint: FootprintSchema.optional(),
   }),

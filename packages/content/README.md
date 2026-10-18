@@ -156,6 +156,14 @@ tankLiters, litersPerHour, noise }` (paliwo: `base:gas-can` z tagiem `base:fuel`
   `vhs_duplicate_skill`. Loot: tabela `base:vhs-tapes` w salonie, sypialni i księgarni, wypożyczalnia `base:video-rental`
   (`base:room-video-store`).
 
+## Zbiornik wody (`placeable.waterTank`)
+
+Mebel może mieć zbiornik wody: `waterTank: { capacityL, quality, refillFromMains }` (`schemas/item/water-tank.ts`,
+typ `WaterTank`). `capacityL` > 0 to skończony zapas w litrach, `quality` to `clean` (pitna) albo `tainted` (brudna,
+do zagotowania), `refillFromMains` (domyślnie `true`) = dopełnia się, dopóki działa woda w sieci; po odcięciu
+zostaje tylko zapas. Przykład: toaleta `base:toilet` = `{ capacityL: 10, quality: 'tainted', refillFromMains: true }`.
+Pobór i gotowanie wody liczy symulacja.
+
 ## Tworzenie postaci
 
 - Palety (`palettes/`): `{ id, name, kind: skin | hair | cloth, colors: [{ id, hex }] }` (base: `base:skin` 8, `base:hair` 10,
