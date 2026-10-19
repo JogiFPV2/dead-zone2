@@ -13,6 +13,7 @@ import { stairStepAllowed } from './levels.js';
  *   (`worldSettings.furnitureTall`) blocks too.
  * - `sound`: returns the number of muffling edges crossed (walls, closed doors / windows),
  *   capped at `cap`; open doors and broken windows do not count.
+ * - Exact walls (`SimChunk.wallSegments`) also block `sight` and `walk` (`crossesSegment`).
  * - `walk`: an edge blocking movement, a void tile, a furniture tile (footprint flag) or stepping onto / off a flight of stairs
  *   other than along it through the entrance blocks (straight-line walkability for AI).
  */
@@ -135,7 +136,8 @@ export const lineOfSight = (
   y0: number,
   x1: number,
   y1: number,
-): boolean => trace(grid, z, x0, y0, x1, y1, Mode.Sight, 0);
+): boolean =>
+  trace(grid, z, x0, y0, x1, y1, Mode.Sight, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
 
 /** Straight line without any edge or void tile (AI can steer directly). */
 export const walkableLine = (
@@ -145,7 +147,53 @@ export const walkableLine = (
   y0: number,
   x1: number,
   y1: number,
-): boolean => trace(grid, z, x0, y0, x1, y1, Mode.Walk, 0);
+): boolean =>
+  trace(grid, z, x0, y0, x1, y1, Mode.Walk, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+
+const orient = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number): number =>
+  (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+
+/**
+ * The line crosses or touches an exact wall (`SimChunk.wallSegments`, docs 9.63). Openings are
+ * gaps in the segments, so windows and doorways stay to the tile edges; sound stays on tiles.
+ * Skipped until a chunk with segments was read (the trace reads every chunk on the line).
+ */
+function crossesSegment(
+  grid: TileGrid,
+  z: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): boolean {
+  if (!grid.segmentsSeen) return false;
+  let hit = false;
+  grid.forSegments(
+    Math.min(x0, x1),
+    Math.min(y0, y1),
+    Math.max(x0, x1),
+    Math.max(y0, y1),
+    z,
+    (_k, ax, ay, bx, by) => {
+      if (hit) return;
+      const d1 = orient(x0, y0, x1, y1, ax, ay);
+      const d2 = orient(x0, y0, x1, y1, bx, by);
+      if ((d1 > 0 && d2 > 0) || (d1 < 0 && d2 < 0)) return;
+      const d3 = orient(ax, ay, bx, by, x0, y0);
+      const d4 = orient(ax, ay, bx, by, x1, y1);
+      if ((d3 > 0 && d4 > 0) || (d3 < 0 && d4 < 0)) return;
+      // Collinear and apart: the bounding boxes already overlap, so only degenerate cases remain.
+      if (d1 === 0 && d2 === 0 && d3 === 0 && d4 === 0) {
+        const t = (px: number, py: number) => (Math.abs(x1 - x0) >= Math.abs(y1 - y0) ? px : py);
+        const lo = Math.min(t(x0, y0), t(x1, y1));
+        const hi = Math.max(t(x0, y0), t(x1, y1));
+        if (Math.max(t(ax, ay), t(bx, by)) < lo || Math.min(t(ax, ay), t(bx, by)) > hi) return;
+      }
+      hit = true;
+    },
+  );
+  return hit;
+}
 
 /** Walls and windows between two points (sound damping), at most `cap`. */
 export function edgesBetween(

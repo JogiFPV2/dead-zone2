@@ -1619,3 +1619,15 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 - **Zasięg miejsca do odcinka otworu:** `seatReachTiles` (domyślnie 2,4, było 1,6 od zombie do miejsca) liczy się od miejsca do odcinka otworu (`seatInReach` / `segDist2`, wspólne z punktami stania AI w `ai/vehicle-window.ts`). Sedan: przednia szyba sięga przedniego rzędu (2,2), tylna tylnego (1,5), boczne miejsc po swojej stronie (0,5). Zombie nadal musi stać ≤ `windowReachTiles` od otworu.
 - **Stan / zapis / hash:** hp szyb (`Vehicle.windows`) jak dotąd w zapisie i hashu. Protokół bez zmian (zdarzenie `vehiclePartBroken` i maska szyb w snapshocie istnieją od v14).
 - **Testy (`vehicles/windows.test.ts`):** ciosy zbijają szybę po stronie ataku, potem trafiają; hp spada o `zombieWindowDmg` na cios; zombie z tyłu / z przodu bije tylną / przednią szybę; sedan: wyciągnięcie kierowcy przez przednią szybę; szybkie auto bez uszkodzeń; determinizm i zapis / odczyt. Testy z „całymi szybami” używają `zombieWindowDmg: 0`.
+
+### 9.63 Ściany skośne (`SimChunk.wallSegments`, #197) i stopy słupów dla aut, protokół bez zmian
+
+- Kolizja: odcinki to dodatkowe przeszkody obok rastra kafli. Raster jest konserwatywny i leży tuż wewnątrz linii (docs/osm.md), więc zewnętrzna ściana jest dokładna. Gdy chunk nie ma `wallSegments`, działa tylko kolizja kaflowa (fallback bez zmian).
+  - `moveCircle`: okrąg r kontra kapsuła odcinka na osi ruchu.
+  - `circleOverlaps`, `slideCircle`, `circleContacts`: najbliższy punkt odcinka, ślizg wzdłuż skosu.
+  - Klucze odcinków w `ignored` < −2^46, poniżej kluczy blockerów.
+- Linia wzroku: `lineOfSight` (Sight) i `walkableLine` (Walk) odrzucają linię, która przecina albo dotyka odcinka (`world/los.ts`, `crossesSegment`). Dźwięk (Sound), pokoje i pathfinding zostają na kaflach. Otwory drzwi i okien są już przerwami w odcinkach (~1,2 m), więc przez nie widać i da się przejść.
+- Auta (`vehicles/collide.ts`): box kontra odcinek (SAT: oś odcinka, jego normalna, osie auta; `obbVsSegment`) i kontra stopy słupów `SimChunk.blockers`. Oba typy dają uderzenie `targetKind: 'wall'`. Wcześniej auta przejeżdżały przez słupy. `zones` i `blockers` dla pieszych były już w #256.
+- Odcinki pocięte na chunki mogą się powtarzać, co nie przeszkadza (min/max, bez sumowania). Kolejność to chunki po y, potem po x, potem indeks na liście. Matematyka jest czysta, bez RNG, więc wynik jest deterministyczny.
+- Wydajność: LOS sprawdza odcinki dopiero wtedy, gdy grid wczytał chunk z odcinkami (`segmentsSeen`). Kolizja dokłada jedno `chunkAt` na chunk w boxie ruchu i odrzucenie po bboxie.
+- `simMapFromData`/`simMapToData` kopiują `wallSegments`, a schemat chunka przyjmuje je jako opcjonalne. Widok się nie zmienia, więc protokół zostaje 37 (bez podbicia). Zapis bez zmian (`SAVE_VERSION` 3).

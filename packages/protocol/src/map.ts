@@ -276,6 +276,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       ...(c.buildingKinds ? { buildingKinds: c.buildingKinds } : {}),
       ...(c.zones ? { zones: c.zones } : {}),
       ...(c.blockers ? { blockers: c.blockers } : {}),
+      ...(c.wallSegments ? { wallSegments: c.wallSegments } : {}),
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
       ...(c.vehicles ? { vehicles: c.vehicles } : {}),
@@ -322,6 +323,7 @@ export function simMapToData(map: SimMap, range: SimChunkRange): SimMapData {
           ? { zones: c.zones.map((zn) => ({ ...zn, rects: zn.rects.map((r) => ({ ...r })) })) }
           : {}),
         ...(c.blockers ? { blockers: c.blockers.map((b) => ({ ...b })) } : {}),
+        ...(c.wallSegments ? { wallSegments: c.wallSegments.map((g) => ({ ...g })) } : {}),
         ...(c.objects ? { objects: c.objects.map((o) => ({ ...o })) } : {}),
         ...(c.stairs ? { stairs: c.stairs.map((st) => ({ ...st })) } : {}),
         ...(c.vehicles ? { vehicles: c.vehicles.map((v) => ({ ...v })) } : {}),

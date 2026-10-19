@@ -41,8 +41,10 @@ function sweep(
     const dq = across < q0 ? q0 - across : across > q1 ? across - q1 : 0;
     if (dq >= r) return;
     const h = Math.sqrt(r2 - dq * dq);
-    const enter = p0 - h;
-    const exit = p1 + h;
+    clamp(p0 - h, p1 + h);
+  };
+  // The centre overlaps the obstacle while `along` is inside (enter, exit).
+  const clamp = (enter: number, exit: number): void => {
     if (d > 0) {
       if (along < exit && along <= enter + SKIN)
         target = Math.min(target, Math.max(along, enter - SKIN));
@@ -77,7 +79,101 @@ function sweep(
     grid.forBlockers(across - r, lo, across + r, hi, z, (_k, x0, x1, y0, y1) =>
       test(y0, y1, x0, x1),
     );
+  // Exact walls (`SimChunk.wallSegments`): the capsule of radius r around each segment.
+  const segBox = axis === 0 ? [lo, across - r, hi, across + r] : [across - r, lo, across + r, hi];
+  grid.forSegments(segBox[0]!, segBox[1]!, segBox[2]!, segBox[3]!, z, (_k, ax, ay, bx, by) => {
+    const iv =
+      axis === 0
+        ? capsuleSpan(along, across, 1, 0, ax, ay, bx, by, r)
+        : capsuleSpan(across, along, 0, 1, ax, ay, bx, by, r);
+    if (iv) clamp(along + iv[0], along + iv[1]);
+  });
   return target;
+}
+
+const span: [number, number] = [0, 0];
+
+/**
+ * Where the line (px, py) + t·(dx, dy) (unit axis direction) is inside the capsule of radius r
+ * around segment A–B: the open interval (t0, t1), or undefined. The capsule is convex, so the
+ * hull of the pieces (the two end discs and the strip along the segment) is the interval.
+ */
+function capsuleSpan(
+  px: number,
+  py: number,
+  dx: number,
+  dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  r: number,
+): [number, number] | undefined {
+  let t0 = Infinity;
+  let t1 = -Infinity;
+  const disc = (cx: number, cy: number): void => {
+    const ox = px - cx;
+    const oy = py - cy;
+    const b = ox * dx + oy * dy;
+    const D = b * b - (ox * ox + oy * oy - r * r);
+    if (D <= 0) return;
+    const q = Math.sqrt(D);
+    t0 = Math.min(t0, -b - q);
+    t1 = Math.max(t1, -b + q);
+  };
+  disc(ax, ay);
+  disc(bx, by);
+  const lx = bx - ax;
+  const ly = by - ay;
+  const L = Math.sqrt(lx * lx + ly * ly);
+  if (L > 0) {
+    const ux = lx / L;
+    const uy = ly / L;
+    // Along the segment s(t) ∈ [0, L], across it |h(t)| < r; both linear in t.
+    let lo = -Infinity;
+    let hi = Infinity;
+    const slab = (v0: number, dv: number, a: number, b: number): void => {
+      if (dv === 0) {
+        if (v0 <= a || v0 >= b) lo = Infinity;
+        return;
+      }
+      const ta = (a - v0) / dv;
+      const tb = (b - v0) / dv;
+      lo = Math.max(lo, Math.min(ta, tb));
+      hi = Math.min(hi, Math.max(ta, tb));
+    };
+    const ox = px - ax;
+    const oy = py - ay;
+    slab(ox * ux + oy * uy, dx * ux + dy * uy, 0, L);
+    slab(-ox * uy + oy * ux, -dx * uy + dy * ux, -r, r);
+    if (lo < hi) {
+      t0 = Math.min(t0, lo);
+      t1 = Math.max(t1, hi);
+    }
+  }
+  if (!(t0 < t1)) return undefined;
+  span[0] = t0;
+  span[1] = t1;
+  return span;
+}
+
+/** Closest point of segment A–B to (px, py), written to `cp`. */
+const cp = { x: 0, y: 0 };
+function closestOnSegment(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): void {
+  const lx = bx - ax;
+  const ly = by - ay;
+  const l2 = lx * lx + ly * ly;
+  let t = l2 > 0 ? ((px - ax) * lx + (py - ay) * ly) / l2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  cp.x = ax + t * lx;
+  cp.y = ay + t * ly;
 }
 
 export interface Vec2 {
@@ -107,7 +203,7 @@ export function moveCircle(
 
 /**
  * True if the circle overlaps any void tile, furniture tile (footprint flag), wall edge or
- * static blocker (`SimChunk.blockers`).
+ * static blocker (`SimChunk.blockers`) or exact wall (`SimChunk.wallSegments`).
  */
 export function circleOverlaps(
   grid: TileGrid,
@@ -132,6 +228,13 @@ export function circleOverlaps(
   let blocked = false;
   grid.forBlockers(x - r, y - r, x + r, y + r, z, (_k, x0, x1, y0, y1) => {
     if (hit(x0, x1, y0, y1)) blocked = true;
+  });
+  if (blocked) return true;
+  grid.forSegments(x - r, y - r, x + r, y + r, z, (_k, ax, ay, bx, by) => {
+    closestOnSegment(x, y, ax, ay, bx, by);
+    const ex = x - cp.x;
+    const ey = y - cp.y;
+    if (ex * ex + ey * ey < r2) blocked = true;
   });
   return blocked;
 }
@@ -161,7 +264,7 @@ function forObstacles(
   y: number,
   reach: number,
   voidBlocks: boolean,
-  fn: (key: number, x0: number, x1: number, y0: number, y1: number) => void,
+  fn: Obstacle,
 ): void {
   const ty0 = Math.floor(y - reach) - 1;
   const ty1 = Math.floor(y + reach) + 1;
@@ -177,6 +280,39 @@ function forObstacles(
     }
   }
   grid.forBlockers(x - reach - 1, y - reach - 1, x + reach + 1, y + reach + 1, z, fn);
+  grid.forSegments(x - reach, y - reach, x + reach, y + reach, z, (k, ax, ay, bx, by) =>
+    fn(k, ax, bx, ay, by, true),
+  );
+}
+
+/**
+ * An obstacle: an axis-aligned rect [x0, x1] × [y0, y1] (degenerate = wall edge), or with `seg`
+ * a wall segment from (x0, y0) to (x1, y1).
+ */
+type Obstacle = (
+  key: number,
+  x0: number,
+  x1: number,
+  y0: number,
+  y1: number,
+  seg?: boolean,
+) => void;
+
+/** Closest point of an obstacle to (px, py), written to `cp`. */
+function closestOf(
+  px: number,
+  py: number,
+  x0: number,
+  x1: number,
+  y0: number,
+  y1: number,
+  seg: boolean | undefined,
+): void {
+  if (seg) closestOnSegment(px, py, x0, y0, x1, y1);
+  else {
+    cp.x = px < x0 ? x0 : px > x1 ? x1 : px;
+    cp.y = py < y0 ? y0 : py > y1 ? y1 : py;
+  }
 }
 
 const ignored: number[] = [];
@@ -194,9 +330,10 @@ export function slideCircle(
   voidBlocks = true,
 ): Vec2 {
   ignored.length = 0;
-  forObstacles(grid, z, x, y, r, voidBlocks, (k, x0, x1, y0, y1) => {
-    const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0;
-    const ey = y < y0 ? y0 - y : y > y1 ? y - y1 : 0;
+  forObstacles(grid, z, x, y, r, voidBlocks, (k, x0, x1, y0, y1, seg) => {
+    closestOf(x, y, x0, x1, y0, y1, seg);
+    const ex = x - cp.x;
+    const ey = y - cp.y;
     if (ex * ex + ey * ey < (r - SKIN) * (r - SKIN)) ignored.push(k);
   });
   const len = Math.sqrt(dx * dx + dy * dy);
@@ -214,10 +351,11 @@ export function slideCircle(
       let bny = 0;
       let bcx = 0;
       let bcy = 0;
-      forObstacles(grid, z, px, py, r, voidBlocks, (k, x0, x1, y0, y1) => {
+      forObstacles(grid, z, px, py, r, voidBlocks, (k, x0, x1, y0, y1, seg) => {
         if (ignored.length > 0 && ignored.includes(k)) return;
-        const cx = px < x0 ? x0 : px > x1 ? x1 : px;
-        const cy = py < y0 ? y0 : py > y1 ? y1 : py;
+        closestOf(px, py, x0, x1, y0, y1, seg);
+        const cx = cp.x;
+        const cy = cp.y;
         const ex = px - cx;
         const ey = py - cy;
         const d2 = ex * ex + ey * ey;
@@ -228,7 +366,7 @@ export function slideCircle(
         if (d > 0) {
           nx = ex / d;
           ny = ey / d;
-        } else if (x0 === x1 || y0 === y1) {
+        } else if (seg || x0 === x1 || y0 === y1) {
           // Centre exactly on an edge: back along the substep.
           nx = -sx / (len / n);
           ny = -sy / (len / n);
@@ -265,9 +403,10 @@ export function circleContacts(
 ): number[] {
   normals.length = 0;
   const lim = r + CONTACT_EPS;
-  forObstacles(grid, z, x, y, lim, voidBlocks, (_k, x0, x1, y0, y1) => {
-    const cx = x < x0 ? x0 : x > x1 ? x1 : x;
-    const cy = y < y0 ? y0 : y > y1 ? y1 : y;
+  forObstacles(grid, z, x, y, lim, voidBlocks, (_k, x0, x1, y0, y1, seg) => {
+    closestOf(x, y, x0, x1, y0, y1, seg);
+    const cx = cp.x;
+    const cy = cp.y;
     const ex = x - cx;
     const ey = y - cy;
     const d2 = ex * ex + ey * ey;

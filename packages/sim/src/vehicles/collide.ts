@@ -15,6 +15,7 @@ import {
   obbOf,
   obbVsEdge,
   obbVsObb,
+  obbVsSegment,
   zoneAt,
   type Mtv,
 } from './geometry.js';
@@ -107,6 +108,34 @@ function collideStatic(
       }
     }
   }
+  // Pylon / mast feet (`SimChunk.blockers`) and exact walls (`SimChunk.wallSegments`).
+  const solid = (m: Mtv | undefined, cx: number, cy: number): void => {
+    if (!m) return;
+    v.x = f(v.x + m.nx * m.depth);
+    v.y = f(v.y + m.ny * m.depth);
+    const closing = bounce(v, m, cfg.restitution);
+    if (closing > 0) {
+      const e = cfg.restitution;
+      if (closing > 1) v.angVel = f(v.angVel * 0.6);
+      const energy = 0.5 * t.mass * closing * closing * (1 - e * e);
+      out.push(impact(v, o, 'wall', 0, -1, energy, closing, cx, cy, m));
+    }
+    hit = true;
+  };
+  grid.forBlockers(v.x - ex, v.y - ey, v.x + ex, v.y + ey, z, (_k, x0, x1, y0, y1) => {
+    const b = {
+      x: (x0 + x1) / 2,
+      y: (y0 + y1) / 2,
+      hx: 1,
+      hy: 0,
+      hl: (x1 - x0) / 2,
+      hw: (y1 - y0) / 2,
+    };
+    solid(obbVsObb(b, obbOf(v, t)), b.x, b.y);
+  });
+  grid.forSegments(v.x - ex, v.y - ey, v.x + ex, v.y + ey, z, (_k, ax, ay, bx, by) =>
+    solid(obbVsSegment(obbOf(v, t), ax, ay, bx, by), (ax + bx) / 2, (ay + by) / 2),
+  );
   return hit;
 }
 

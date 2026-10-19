@@ -17,6 +17,9 @@ const WALL = EF.present | EF.blocksMove | EF.blocksSight | EF.muffles;
 const stairKey = (tx: number, ty: number, z: number): number =>
   ((tx + 0x100000) * 0x200000 + (ty + 0x100000)) * 256 + (z + 128);
 
+/** Segment keys start below every blocker key (`forBlockers`: > −2^42). */
+const SEGMENT_KEY_BASE = -(2 ** 46);
+
 /**
  * Resolves world tile coordinates to a chunk and a layer index (floor division for negatives).
  * Doors and windows (`SimMap.edgeKinds`) take their flags from the openings state (world state,
@@ -90,8 +93,53 @@ export class TileGrid {
       this.lastCy = cy;
       this.lastZ = z;
       this.lastChunk = this.map.getChunk(cx, cy, z);
+      if (this.lastChunk?.wallSegments?.length) this.segmentsSeen = true;
     }
     return this.lastChunk;
+  }
+
+  /**
+   * Some chunk read so far has `wallSegments` (only a shortcut: on maps without slanted
+   * buildings line of sight skips the segment pass; collision reads the chunks it needs anyway).
+   */
+  segmentsSeen = false;
+
+  /**
+   * Exact walls (`SimChunk.wallSegments`, world metres, docs 9.63) of the chunks that touch the
+   * box [x0, x1] × [y0, y1] on level z whose bounds touch the box, in chunk (y, x) then list
+   * order. `key` is unique per segment (negative, below the blocker keys).
+   */
+  forSegments(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    z: number,
+    fn: (key: number, ax: number, ay: number, bx: number, by: number) => void,
+  ): void {
+    const cx0 = Math.floor(x0 / CHUNK_SIZE);
+    const cx1 = Math.floor(x1 / CHUNK_SIZE);
+    const cy0 = Math.floor(y0 / CHUNK_SIZE);
+    const cy1 = Math.floor(y1 / CHUNK_SIZE);
+    for (let cy = cy0; cy <= cy1; cy++) {
+      for (let cx = cx0; cx <= cx1; cx++) {
+        const list = this.chunkAt(cx, cy, z)?.wallSegments;
+        if (list === undefined) continue;
+        for (let i = 0; i < list.length; i++) {
+          const g = list[i]!;
+          if (g.z !== z) continue;
+          if (Math.max(g.x0, g.x1) < x0 || Math.min(g.x0, g.x1) > x1) continue;
+          if (Math.max(g.y0, g.y1) < y0 || Math.min(g.y0, g.y1) > y1) continue;
+          fn(
+            SEGMENT_KEY_BASE - (((cx + 0x2000) * 0x4000 + (cy + 0x2000)) * 4096 + i),
+            g.x0,
+            g.y0,
+            g.x1,
+            g.y1,
+          );
+        }
+      }
+    }
   }
 
   private layer(tx: number, ty: number, z: number, name: 'floor' | 'edgeN' | 'edgeW'): number {

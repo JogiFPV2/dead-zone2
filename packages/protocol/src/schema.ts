@@ -677,6 +677,19 @@ export const simMapDataSchema = z.object({
         )
         .max(1024)
         .optional(),
+      wallSegments: z
+        .array(
+          z.strictObject({
+            x0: z.number().finite(),
+            y0: z.number().finite(),
+            x1: z.number().finite(),
+            y1: z.number().finite(),
+            z: chunkInt,
+            building: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
+          }),
+        )
+        .max(4096)
+        .optional(),
       objects: z
         .array(
           z.object({

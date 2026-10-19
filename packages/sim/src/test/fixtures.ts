@@ -35,6 +35,8 @@ export interface MapSpec {
   chunkZones?: (cx: number, cy: number) => readonly SimZone[] | undefined;
   /** `SimChunk.blockers` in world tiles (level 0), each kept in the chunk of its x0, y0. */
   blockers?: readonly { x0: number; y0: number; x1: number; y1: number }[];
+  /** `SimChunk.wallSegments` in world metres (level 0), listed in every chunk their bounds touch. */
+  wallSegments?: readonly { x0: number; y0: number; x1: number; y1: number }[];
   /** Floor palette (content tile id per floor value). */
   floorTiles?: readonly (string | null)[];
 }
@@ -86,6 +88,15 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           x1: b.x1 - cx * CHUNK_SIZE,
           y1: b.y1 - cy * CHUNK_SIZE,
         }));
+      const segs = (spec.wallSegments ?? [])
+        .filter(
+          (g) =>
+            Math.max(g.x0, g.x1) >= cx * CHUNK_SIZE &&
+            Math.min(g.x0, g.x1) <= (cx + 1) * CHUNK_SIZE &&
+            Math.max(g.y0, g.y1) >= cy * CHUNK_SIZE &&
+            Math.min(g.y0, g.y1) <= (cy + 1) * CHUNK_SIZE,
+        )
+        .map((g) => ({ ...g, z: 0 }));
       for (let z = 0; z < (spec.levels ?? 1); z++) {
         chunks.push({
           cx,
@@ -100,6 +111,7 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           ...(objects.length > 0 && z === 0 ? { objects } : {}),
           ...(z === 0 && chunkZones ? { zones: chunkZones } : {}),
           ...(z === 0 && blockers.length > 0 ? { blockers } : {}),
+          ...(z === 0 && segs.length > 0 ? { wallSegments: segs } : {}),
         });
       }
     }

@@ -57,6 +57,44 @@ export function obbVsEdge(o: Obb, ax: number, ay: number, horizontal: boolean): 
 }
 
 /**
+ * Box vs any segment A–B (exact walls, `SimChunk.wallSegments`). Separating axes: the segment
+ * and its normal, the box's nose and side. Push for the box (from the segment into the box).
+ */
+export function obbVsSegment(
+  o: Obb,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): Mtv | undefined {
+  const lx = bx - ax;
+  const ly = by - ay;
+  const L = Math.sqrt(lx * lx + ly * ly);
+  if (L === 0) return undefined;
+  const sx = lx / L;
+  const sy = ly / L;
+  const cx = (ax + bx) / 2;
+  const cy = (ay + by) / 2;
+  let best: Mtv | undefined;
+  const axes: [number, number][] = [
+    [sx, sy],
+    [-sy, sx],
+    [o.hx, o.hy],
+    [-o.hy, o.hx],
+  ];
+  for (const [ux, uy] of axes) {
+    const d = (cx - o.x) * ux + (cy - o.y) * uy;
+    const overlap = radiusOn(o, ux, uy) + (L / 2) * Math.abs(sx * ux + sy * uy) - Math.abs(d);
+    if (overlap <= 0) return undefined;
+    if (!best || overlap < best.depth) {
+      const s = d > 0 ? -1 : 1;
+      best = { depth: overlap, nx: ux * s, ny: uy * s };
+    }
+  }
+  return best;
+}
+
+/**
  * Circle vs box: push for the circle (normal from the box to the circle) and the contact point
  * on the box, or undefined.
  */
