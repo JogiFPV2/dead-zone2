@@ -10,15 +10,69 @@
   "sha256": "e67652d0932cee41683f74711c03d3e192a2af9979ef8e6b237711f5482d46b0",
   "root": "Models/GLTF format",
   "models": [
-    { "id": "fridge", "file": "kitchenFridge" },
-    { "id": "fridge-small", "file": "kitchenFridgeSmall" },
-    { "id": "kitchen-cabinet", "file": "kitchenCabinet" },
-    { "id": "kitchen-cabinet-drawer", "file": "kitchenCabinetDrawer" },
-    { "id": "bookcase-closed-doors", "file": "bookcaseClosedDoors" },
-    { "id": "bookcase-closed", "file": "bookcaseClosed" },
-    { "id": "bookcase-closed-wide", "file": "bookcaseClosedWide" },
-    { "id": "bookcase-open", "file": "bookcaseOpen" },
-    { "id": "cabinet-bed-drawer", "file": "cabinetBedDrawer" },
-    { "id": "cardboard-box-closed", "file": "cardboardBoxClosed" }
+    {
+      "id": "fridge",
+      "file": "kitchenFridge"
+    },
+    {
+      "id": "fridge-small",
+      "file": "kitchenFridgeSmall"
+    },
+    {
+      "id": "kitchen-cabinet",
+      "file": "kitchenCabinet"
+    },
+    {
+      "id": "kitchen-cabinet-drawer",
+      "file": "kitchenCabinetDrawer"
+    },
+    {
+      "id": "bookcase-closed-doors",
+      "file": "bookcaseClosedDoors"
+    },
+    {
+      "id": "bookcase-closed",
+      "file": "bookcaseClosed"
+    },
+    {
+      "id": "bookcase-closed-wide",
+      "file": "bookcaseClosedWide"
+    },
+    {
+      "id": "bookcase-open",
+      "file": "bookcaseOpen"
+    },
+    {
+      "id": "cabinet-bed-drawer",
+      "file": "cabinetBedDrawer"
+    },
+    {
+      "id": "cardboard-box-closed",
+      "file": "cardboardBoxClosed"
+    },
+    {
+      "id": "table",
+      "file": "table"
+    },
+    {
+      "id": "chair",
+      "file": "chair"
+    },
+    {
+      "id": "lamp-round-floor",
+      "file": "lampRoundFloor"
+    },
+    {
+      "id": "lamp-square-ceiling",
+      "file": "lampSquareCeiling"
+    },
+    {
+      "id": "lamp-round-table",
+      "file": "lampRoundTable"
+    },
+    {
+      "id": "toilet",
+      "file": "toilet"
+    }
   ]
 }

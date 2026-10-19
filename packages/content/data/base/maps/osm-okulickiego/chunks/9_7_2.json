@@ -444,16 +444,34 @@
   ],
   "objects": [
     {
+      "contentId": "base:chair",
+      "x": 0,
+      "y": 0,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 1,
       "y": 0,
       "rot": 3
     },
     {
-      "contentId": "base:chair",
+      "contentId": "base:desk",
       "x": 6,
       "y": 0,
-      "rot": 2
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 6,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 7,
+      "y": 0,
+      "rot": 1
     },
     {
       "contentId": "base:chair",
@@ -462,7 +480,19 @@
       "rot": 2
     },
     {
+      "contentId": "base:table",
+      "x": 0,
+      "y": 1,
+      "rot": 1
+    },
+    {
       "contentId": "base:desk",
+      "x": 1,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 1,
       "y": 1,
       "rot": 3
@@ -475,24 +505,54 @@
     },
     {
       "contentId": "base:chair",
-      "x": 12,
+      "x": 5,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk",
+      "x": 11,
       "y": 1,
       "rot": 3
     },
     {
-      "contentId": "base:desk",
-      "x": 13,
+      "contentId": "base:desk-lamp",
+      "x": 11,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 12,
       "y": 1,
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 10,
+      "contentId": "base:chair",
+      "x": 4,
+      "y": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 5,
       "y": 2,
       "rot": 1
     },
     {
+      "contentId": "base:dresser",
+      "x": 6,
+      "y": 2,
+      "rot": 3
+    },
+    {
       "contentId": "base:desk",
+      "x": 0,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 0,
       "y": 3,
       "rot": 1
@@ -504,16 +564,46 @@
       "rot": 3
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 1,
+      "y": 3,
+      "rot": 3
+    },
+    {
       "contentId": "base:chair",
       "x": 2,
       "y": 3,
       "rot": 1
     },
     {
-      "contentId": "base:desk",
-      "x": 11,
+      "contentId": "base:chair",
+      "x": 4,
       "y": 3,
       "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 9,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 10,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 11,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 5,
+      "y": 4,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -522,16 +612,28 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 7,
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 4,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 9,
       "y": 4,
       "rot": 2
     },
     {
-      "contentId": "base:chair",
-      "x": 12,
+      "contentId": "base:desk",
+      "x": 11,
       "y": 4,
-      "rot": 1
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 11,
+      "y": 4,
+      "rot": 2
     },
     {
       "contentId": "base:dresser",
@@ -558,43 +660,43 @@
       "rot": 0
     },
     {
-      "contentId": "base:bathroom-cabinet",
+      "contentId": "base:toilet",
       "x": 4,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:desk",
+      "contentId": "base:bathroom-cabinet",
+      "x": 5,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
+      "x": 6,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bed",
       "x": 7,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:bed",
-      "x": 9,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:bed",
-      "x": 10,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:tv-stand",
+      "contentId": "base:vcr",
       "x": 11,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:tv",
+      "contentId": "base:tv-stand",
       "x": 12,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:tv",
       "x": 13,
       "y": 31,
       "rot": 0

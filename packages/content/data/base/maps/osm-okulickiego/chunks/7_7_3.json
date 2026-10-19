@@ -227,6 +227,12 @@
   "objects": [
     {
       "contentId": "base:chair",
+      "x": 21,
+      "y": 0,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
       "x": 23,
       "y": 0,
       "rot": 2
@@ -236,6 +242,18 @@
       "x": 25,
       "y": 0,
       "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 28,
+      "y": 0,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 0,
+      "rot": 1
     },
     {
       "contentId": "base:bookshelf",
@@ -292,7 +310,19 @@
       "rot": 2
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 23,
+      "y": 3,
+      "rot": 2
+    },
+    {
       "contentId": "base:desk",
+      "x": 25,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 25,
       "y": 3,
       "rot": 2

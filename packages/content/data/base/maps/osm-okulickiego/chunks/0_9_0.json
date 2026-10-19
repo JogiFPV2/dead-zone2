@@ -126,7 +126,19 @@
   ],
   "objects": [
     {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 0,
+      "rot": 3
+    },
+    {
       "contentId": "base:desk",
+      "x": 30,
+      "y": 2,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 30,
       "y": 2,
       "rot": 0

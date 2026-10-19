@@ -177,7 +177,19 @@
       "rot": 0
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 23,
+      "y": 30,
+      "rot": 0
+    },
+    {
       "contentId": "base:desk",
+      "x": 27,
+      "y": 30,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 27,
       "y": 30,
       "rot": 3
@@ -190,7 +202,7 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 29,
+      "x": 30,
       "y": 30,
       "rot": 0
     },
@@ -199,6 +211,12 @@
       "x": 23,
       "y": 31,
       "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 24,
+      "y": 31,
+      "rot": 1
     }
   ],
   "rooms": {

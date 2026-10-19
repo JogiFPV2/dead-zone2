@@ -147,23 +147,17 @@
     {
       "contentId": "base:bookshelf",
       "x": 30,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:locker",
-      "x": 31,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 30,
       "y": 2,
       "rot": 3
     },
     {
       "contentId": "base:desk",
+      "x": 30,
+      "y": 3,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 30,
       "y": 3,
       "rot": 3
@@ -176,6 +170,12 @@
     },
     {
       "contentId": "base:desk",
+      "x": 30,
+      "y": 5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 30,
       "y": 5,
       "rot": 3

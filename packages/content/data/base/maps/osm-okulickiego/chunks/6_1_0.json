@@ -266,8 +266,20 @@
       "rot": 3
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 22,
+      "y": 31,
+      "rot": 3
+    },
+    {
       "contentId": "base:chair",
       "x": 23,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 24,
       "y": 31,
       "rot": 1
     },
@@ -279,6 +291,12 @@
     },
     {
       "contentId": "base:desk",
+      "x": 31,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 31,
       "y": 31,
       "rot": 1

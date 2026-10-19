@@ -496,6 +496,12 @@
   ],
   "objects": [
     {
+      "contentId": "base:ceiling-lamp",
+      "x": 1,
+      "y": 0,
+      "rot": 0
+    },
+    {
       "contentId": "base:metal-shelf",
       "x": 12,
       "y": 0,
@@ -512,6 +518,18 @@
       "x": 0,
       "y": 1,
       "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 3,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 4,
+      "y": 1,
+      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",

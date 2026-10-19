@@ -82,6 +82,16 @@ interface KitItem {
   then?: KitItem;
   /** As a `then`: on a front tile of the piece before, facing it (a chair at the desk). */
   atFront?: boolean;
+  /**
+   * Chairs around this piece (a table): on its free front tiles first, then at its two ends,
+   * each facing it; count = clamp(round(area / per), min, max). Fewer than `min` fit: the piece
+   * moves to its next spot (or is left out).
+   */
+  seats?: { id: string; min: number; max: number; per: number };
+  /** Stands on top of this piece once it is placed (a desk lamp on the desk, no own tile). */
+  top?: string;
+  /** Prefers a free corner (walls or windows on two sides, no door): a floor lamp. */
+  corner?: boolean;
 }
 
 const K = (id: string, min = 1, max = min, per = 0, extra: Partial<KitItem> = {}): KitItem => ({
@@ -92,6 +102,41 @@ const K = (id: string, min = 1, max = min, per = 0, extra: Partial<KitItem> = {}
   ...extra,
 });
 const TALL = { tall: true };
+const CHAIR = 'base:chair';
+/**
+ * Seats that never stand right next to one of the same type (8-neighbourhood, a free tile
+ * between): sofas, armchairs, benches. Chairs are left out: they sit side by side at a table.
+ */
+export const SPACED_SEATS: ReadonlySet<string> = new Set([
+  'base:sofa',
+  'base:armchair',
+  'base:bench',
+]);
+const FLOOR_LAMP_ID = 'base:floor-lamp';
+
+/**
+ * Lamps (#254): a ceiling lamp in the middle of every home room (no tile of its own, it hangs).
+ * Floor lamps (a corner of living rooms and bedrooms) and desk lamps (`top` of a desk) are in
+ * the kits. Every room with a lamp gets a light switch by its door (`lightSwitches`).
+ */
+export const CEILING_LAMP_ROOMS: ReadonlySet<string> = new Set([
+  'base:room-kitchen',
+  'base:room-bathroom',
+  'base:room-bedroom',
+  'base:room-living-room',
+]);
+export const CEILING_LAMP = 'base:ceiling-lamp';
+export const FLOOR_LAMP = FLOOR_LAMP_ID;
+export const DESK_LAMP = 'base:desk-lamp';
+/**
+ * Objects without a tile of their own: they hang from the ceiling or stand on other furniture
+ * (no footprint in the content, the sim does not block on them). Never counted as overlaps.
+ */
+export const OVERLAY_OBJECTS: ReadonlySet<string> = new Set([
+  CEILING_LAMP,
+  DESK_LAMP,
+  'base:light-switch',
+]);
 
 /** Furniture kit per room type, in placement order (first items get the best spots). */
 export const ROOM_KITS: Record<string, KitItem[]> = {
@@ -101,6 +146,8 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     // Range (stove + oven, #211) or a gas stove (#246): both cook.
     K('base:range', 1, 1, 0, { alt: ['base:range', 'base:gas-stove'] }),
     K('base:kitchen-sink', 1, 1),
+    // Kitchen table (#254) with 1–3 chairs, before the counters so it gets a wall.
+    K('base:table', 1, 1, 0, { seats: { id: CHAIR, min: 1, max: 3, per: 5 } }),
     K('base:kitchen-counter', 1, 3, 5),
     K('base:kitchen-cabinet', 1, 3, 6),
     K('base:freezer', 0, 1, 14),
@@ -109,7 +156,11 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     K('base:bed', 1, 2, 12),
     K('base:wardrobe', 1, 1, 0, TALL),
     K('base:dresser', 1, 1),
-    K('base:desk', 0, 1, 12, { then: K('base:chair', 1, 1, 0, { atFront: true }) }),
+    K(FLOOR_LAMP_ID, 1, 1, 0, { corner: true }),
+    K('base:desk', 0, 1, 12, {
+      then: K(CHAIR, 1, 1, 0, { atFront: true }),
+      top: 'base:desk-lamp',
+    }),
   ],
   'base:room-living-room': [
     // TV corner first (stand, TV, VCR by the TV, radio), so small rooms still get it (#211).
@@ -125,12 +176,17 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     K('base:radio-set', 1, 1, 0, { near: ['base:tv-stand', 'base:tv', 'base:vcr'] }),
     K('base:sofa', 1, 2, 14),
     K('base:armchair', 1, 1),
+    K(FLOOR_LAMP_ID, 1, 1, 0, { corner: true }),
+    // Dining table with 2–4 chairs where the room is big enough.
+    K('base:table', 0, 1, 16, { seats: { id: CHAIR, min: 2, max: 4, per: 5 } }),
     K('base:bookshelf', 1, 2, 16, TALL),
     K('base:dresser', 0, 1, 18),
   ],
   'base:room-bathroom': [
     K('base:bathroom-sink', 1, 1),
     K('base:bathtub', 1, 1, 0, { alt: ['base:bathtub', 'base:shower'] }),
+    // Toilet (#258): back to a solid wall, facing the room, never in the doorway.
+    K('base:toilet', 1, 1, 0, TALL),
     K('base:bathroom-cabinet', 1, 1),
   ],
   'base:room-hospital': [
@@ -170,11 +226,24 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     K('base:tool-chest', 0, 2, 200),
   ],
   'base:room-police': [K('base:locker', 1, 3, 10, TALL), K('base:gun-locker', 0, 1, 24, TALL)],
-  'base:room-school': [K('base:locker', 1, 3, 14, TALL), K('base:bookshelf', 0, 1, 24, TALL)],
+  'base:room-school': [
+    // Teacher's table (no desk in a school: `placeIn`), its chair and a desk lamp on it.
+    K('base:table', 1, 1, 0, {
+      seats: { id: CHAIR, min: 1, max: 1, per: 0 },
+      top: 'base:desk-lamp',
+    }),
+    K('base:locker', 1, 3, 14, TALL),
+    K('base:bookshelf', 0, 1, 24, TALL),
+  ],
   'base:room-gym': [K('base:locker', 1, 4, 14, TALL), K('base:bench', 1, 3, 30)],
   'base:room-office': [
-    K('base:desk', 1, 2, 12, { then: K('base:chair', 1, 1, 0, { atFront: true }) }),
+    K('base:desk', 1, 2, 12, {
+      then: K(CHAIR, 1, 1, 0, { atFront: true }),
+      top: 'base:desk-lamp',
+    }),
     K('base:bookshelf', 1, 2, 12, TALL),
+    // Meeting table in bigger offices.
+    K('base:table', 0, 1, 20, { seats: { id: CHAIR, min: 2, max: 4, per: 6 } }),
     K('base:dresser', 0, 1, 14),
   ],
   'base:room-ruin': [K('base:crate', 0, 1, 10)],
@@ -458,6 +527,17 @@ export function furnishView(
       };
     };
 
+    /** Whether any of the 8 neighbours of `cells` (outside them) holds a `id`. */
+    const touchesSame = (cells: readonly [number, number][], id: string): boolean => {
+      const own = new Set(cells.map(([x, y]) => key(x, y, z)));
+      for (const [x, y] of cells)
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const k = key(x + dx, y + dy, z);
+            if (!own.has(k) && idAt.get(k) === id) return true;
+          }
+      return false;
+    };
     /** Scored spots for `item` (most wanted first). */
     const candidates = (item: KitItem, fp: Footprint): Spot[] => {
       const cands: Spot[] = [];
@@ -484,6 +564,8 @@ export function furnishView(
               }
             }
           if (item.mustTouch && !touches) continue;
+          // Seats of one type keep a tile apart (two sofas side by side read as one bench).
+          if (SPACED_SEATS.has(item.id) && touchesSame(spot.tiles, item.id)) continue;
           cands.push({ ...spot, score });
         }
       }
@@ -507,18 +589,118 @@ export function furnishView(
           front: [],
           score: 0,
         }));
+    /** Keeps the room's free tiles as connected as before when `keys` get taken. */
+    const keepsConnected = (keys: Iterable<string>): boolean => {
+      const ks = [...keys];
+      for (const k of ks) taken.add(k);
+      const ok = components(view, tiles, z, roomId, taken, indoor) <= comps0;
+      for (const k of ks) taken.delete(k);
+      return ok;
+    };
+    /**
+     * Chairs around `parent` (front tiles, then both ends), each facing it; `own` = the parent's
+     * own front tiles (a chair never takes the front tile another piece needs).
+     */
+    const seatSpots = (parent: Spot, own: ReadonlySet<string>): Spot[] => {
+      const res: Spot[] = [];
+      const seen = new Set<string>();
+      const add = (x: number, y: number, fromX: number, fromY: number) => {
+        const k = key(x, y, z);
+        if (seen.has(k) || parent.keys.has(k)) return;
+        seen.add(k);
+        if (!free(x, y) || (fronts.has(k) && !own.has(k))) return;
+        const sd = SIDES.find((q) => q.dx === x - fromX && q.dy === y - fromY)!;
+        if (!view.open(fromX, fromY, z, sd.s)) return;
+        // Back toward the side away from the table: faces it.
+        res.push({ x, y, rot: sd.rot, tiles: [[x, y]], keys: new Set([k]), front: [], score: 0 });
+      };
+      const sd = SIDES.find((q) => q.rot === parent.rot)!;
+      for (const k of parent.front) {
+        const [fx, fy] = k.split(',').map(Number) as [number, number];
+        add(fx, fy, fx + sd.dx, fy + sd.dy);
+      }
+      // Ends: along the wall, beside the first and the last tile of the back row.
+      const ax = sd.dy !== 0 ? 1 : 0;
+      const ay = sd.dy !== 0 ? 0 : 1;
+      const along = parent.tiles.map(([x, y]) => x * ax + y * ay);
+      const lo = Math.min(...along);
+      const hi = Math.max(...along);
+      for (const [tx, ty] of parent.tiles) {
+        const a = tx * ax + ty * ay;
+        if (a === lo) add(tx - ax, ty - ay, tx, ty);
+        if (a === hi) add(tx + ax, ty + ay, tx, ty);
+      }
+      return res;
+    };
+    /** Free corners for a 1×1 piece: solid edges on two adjacent sides, back to one of them. */
+    const cornerSpots = (): Spot[] => {
+      const res: Spot[] = [];
+      const solid = (x: number, y: number, s: Side) => {
+        const e = view.edge(x, y, z, s);
+        return e === 'wall' || e === 'window';
+      };
+      for (const [x, y] of tiles) {
+        if (!usable(x, y) || SIDES.some((q) => view.edge(x, y, z, q.s) === 'door')) continue;
+        for (let i = 0; i < 4; i++) {
+          const a = SIDES[i]!;
+          const b = SIDES[(i + 1) % 4]!;
+          if (!solid(x, y, a.s) || !solid(x, y, b.s)) continue;
+          for (const back of [a, b]) {
+            const fx = x - back.dx;
+            const fy = y - back.dy;
+            if (!free(fx, fy) || !view.open(x, y, z, opposite(back.s))) continue;
+            res.push({
+              x,
+              y,
+              rot: back.rot,
+              tiles: [[x, y]],
+              keys: new Set([key(x, y, z)]),
+              front: [key(fx, fy, z)],
+              score: rand(),
+            });
+          }
+        }
+      }
+      return res.sort((p, q) => q.score - p.score);
+    };
     const placeOne = (item: KitItem, parent?: Spot): boolean => {
-      const spots = item.atFront && parent ? frontSpots(parent) : candidates(item, fpOf(item.id));
+      const spots =
+        item.atFront && parent
+          ? frontSpots(parent)
+          : item.corner
+            ? [...cornerSpots(), ...candidates(item, fpOf(item.id))]
+            : candidates(item, fpOf(item.id));
       for (const c of spots) {
-        for (const k of c.keys) taken.add(k);
-        const ok = components(view, tiles, z, roomId, taken, indoor) <= comps0;
-        for (const k of c.keys) taken.delete(k);
-        if (!ok) continue;
+        if (!keepsConnected(c.keys)) continue;
         const o = { contentId: item.id, x: c.x, y: c.y, z, rot: c.rot };
         put(o);
         const added = c.front.filter((k) => !fronts.has(k));
         for (const k of added) fronts.add(k);
-        if (!item.then || placeOne(item.then, c)) return true;
+        const chairs: PlacedObject[] = [];
+        let ok = !item.then || placeOne(item.then, c);
+        if (ok && item.seats) {
+          const s = item.seats;
+          const want = Math.max(s.min, Math.min(s.max, s.per ? Math.round(area / s.per) : s.min));
+          const own = new Set(added);
+          for (const seat of seatSpots(c, own)) {
+            if (chairs.length >= want) break;
+            if (!free(seat.x, seat.y) || !keepsConnected(seat.keys)) continue;
+            const ch = { contentId: s.id, x: seat.x, y: seat.y, z, rot: seat.rot };
+            put(ch);
+            chairs.push(ch);
+          }
+          if (chairs.length < s.min) {
+            for (const ch of chairs) unput(ch);
+            ok = false;
+          }
+        }
+        if (ok) {
+          if (item.top) {
+            // On its anchor (NW) tile, drawn there with footprints on or off; no tile taken.
+            out.push({ contentId: item.top, x: c.x, y: c.y, z, rot: c.rot });
+          }
+          return true;
+        }
         unput(o);
         for (const k of added) fronts.delete(k);
       }
@@ -534,6 +716,26 @@ export function furnishView(
         Math.min(item.max ?? 1, item.per ? Math.round(area / item.per) : (item.min ?? 1)),
       );
       for (let n = 0; n < want; n++) placeOne(item);
+    }
+
+    // Lamps (#254).
+    if (meta && CEILING_LAMP_ROOMS.has(meta.roomType)) {
+      // Hangs over the tile nearest the room's middle (a free one if any, never a door tile).
+      const inner = tiles.filter(
+        ([x, y]) => indoor(x, y, z, roomId) && !keepFree.has(key(x, y, z)),
+      );
+      if (inner.length > 0) {
+        const mx = inner.reduce((s, t) => s + t[0], 0) / inner.length;
+        const my = inner.reduce((s, t) => s + t[1], 0) / inner.length;
+        const best = inner
+          .map(([x, y]) => ({
+            x,
+            y,
+            d: Math.hypot(x - mx, y - my) + (taken.has(key(x, y, z)) ? 3 : 0),
+          }))
+          .sort((p, q) => p.d - q.d || p.y - q.y || p.x - q.x)[0]!;
+        out.push({ contentId: CEILING_LAMP, x: best.x, y: best.y, z, rot: 0 });
+      }
     }
   }
 
@@ -615,25 +817,45 @@ export function furnishView(
     }
   }
   // --- light switches (#242 / #246): one by the door of every room with a powered lamp -------
-  for (const sw of lightSwitches(view, [...existing, ...out], (k) => taken.has(k))) put(sw);
+  // On the wall (no tile of its own): off door and stair tiles, best where nothing stands.
+  for (const sw of lightSwitches(
+    view,
+    [...existing, ...out],
+    (k) => taken.has(k),
+    (k) => keepFree.has(k),
+  ))
+    out.push(sw);
   return out.sort((a, b) => a.z - b.z || a.y - b.y || a.x - b.x);
 }
 
 /** Lamps that need power (`placeable.light.requiresPower`, default true): switched per room. */
-export const POWERED_LAMPS: ReadonlySet<string> = new Set(['base:ceiling-lamp']);
+export const POWERED_LAMPS: ReadonlySet<string> = new Set([
+  'base:ceiling-lamp',
+  'base:floor-lamp',
+  'base:desk-lamp',
+]);
 /** Light switch (`lighting.switchTag`); `placeable: {}` — blocks nothing, no footprint. */
 export const LIGHT_SWITCH = 'base:light-switch';
 
 /**
  * A light switch for every room with a powered lamp and no switch yet: on the wall right beside
  * the room's door (inside, the tile next to the door tile along the wall, back to that wall),
- * else on the door tile's neighbour inside the room. Deterministic (rooms, doors in tile order).
+ * else on the door tile's neighbour inside the room, else (no door of its own) on any wall of
+ * the room. Never on a door or stair tile (`isReserved`, default: tiles with a door edge); a tile
+ * where nothing stands (`isTaken`) wins. Deterministic (rooms, doors in tile order).
  */
 export function lightSwitches(
   view: FurnishView,
   objects: readonly PlacedObject[],
   isTaken: (k: string) => boolean = () => false,
+  isReserved?: (k: string) => boolean,
 ): PlacedObject[] {
+  const reserved =
+    isReserved ??
+    ((k: string) => {
+      const [x, y, z] = k.split(',').map(Number) as [number, number, number];
+      return SIDES.some((q) => view.edge(x, y, z, q.s) === 'door');
+    });
   const lampRooms = new Map<number, number>();
   const hasSwitch = new Set<number>();
   for (const o of objects) {
@@ -642,7 +864,9 @@ export function lightSwitches(
     if (POWERED_LAMPS.has(o.contentId)) lampRooms.set(r, o.z);
     if (o.contentId === LIGHT_SWITCH) hasSwitch.add(r);
   }
-  const used = new Set(objects.map((o) => key(o.x, o.y, o.z)));
+  const used = new Set(
+    objects.filter((o) => o.contentId === LIGHT_SWITCH).map((o) => key(o.x, o.y, o.z)),
+  );
   const out: PlacedObject[] = [];
   for (const [room, z] of [...lampRooms].sort((a, b) => a[0] - b[0])) {
     if (hasSwitch.has(room)) continue;
@@ -667,10 +891,10 @@ export function lightSwitches(
           const sx = x + ax!;
           const sy = y + ay!;
           const k = key(sx, sy, z);
-          if (view.room(sx, sy, z) !== room || used.has(k) || isTaken(k)) continue;
+          if (view.room(sx, sy, z) !== room || used.has(k) || reserved(k)) continue;
           if (!view.open(x, y, z, sideOf(ax!, ay!))) continue;
           const onWall = view.edge(sx, sy, z, sd.s) === 'wall';
-          const score = onWall ? 2 : 1;
+          const score = (onWall ? 2 : 1) + (isTaken(k) ? 0 : 2);
           if (score > bestScore) {
             bestScore = score;
             best = {
@@ -681,6 +905,20 @@ export function lightSwitches(
               rot: onWall ? sd.rot : (sd.rot + 2) % 4,
             };
           }
+        }
+      }
+    }
+    if (!best) {
+      // No door of its own (an opening into the hall): on any wall of the room.
+      for (const [x, y] of view.tiles(z)) {
+        if (view.room(x, y, z) !== room) continue;
+        const k = key(x, y, z);
+        if (used.has(k) || reserved(k)) continue;
+        const wall = SIDES.find((q) => view.edge(x, y, z, q.s) === 'wall');
+        const score = isTaken(k) ? 0 : 0.5;
+        if (wall && score > bestScore) {
+          bestScore = score;
+          best = { contentId: LIGHT_SWITCH, x, y, z, rot: wall.rot };
         }
       }
     }

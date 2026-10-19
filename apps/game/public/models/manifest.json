@@ -608,6 +608,19 @@
       ]
     },
     {
+      "id": "kenney-furniture/chair",
+      "pack": "kenney-furniture",
+      "sourceBytes": 10756,
+      "lods": [
+        {
+          "file": "kenney-furniture/chair.glb",
+          "distance": 0,
+          "bytes": 5516,
+          "triangles": 170
+        }
+      ]
+    },
+    {
       "id": "kenney-furniture/fridge",
       "pack": "kenney-furniture",
       "sourceBytes": 20116,
@@ -656,6 +669,71 @@
           "distance": 0,
           "bytes": 15828,
           "triangles": 174
+        }
+      ]
+    },
+    {
+      "id": "kenney-furniture/lamp-round-floor",
+      "pack": "kenney-furniture",
+      "sourceBytes": 6600,
+      "lods": [
+        {
+          "file": "kenney-furniture/lamp-round-floor.glb",
+          "distance": 0,
+          "bytes": 5564,
+          "triangles": 76
+        }
+      ]
+    },
+    {
+      "id": "kenney-furniture/lamp-round-table",
+      "pack": "kenney-furniture",
+      "sourceBytes": 6604,
+      "lods": [
+        {
+          "file": "kenney-furniture/lamp-round-table.glb",
+          "distance": 0,
+          "bytes": 5588,
+          "triangles": 76
+        }
+      ]
+    },
+    {
+      "id": "kenney-furniture/lamp-square-ceiling",
+      "pack": "kenney-furniture",
+      "sourceBytes": 5628,
+      "lods": [
+        {
+          "file": "kenney-furniture/lamp-square-ceiling.glb",
+          "distance": 0,
+          "bytes": 5128,
+          "triangles": 60
+        }
+      ]
+    },
+    {
+      "id": "kenney-furniture/table",
+      "pack": "kenney-furniture",
+      "sourceBytes": 8196,
+      "lods": [
+        {
+          "file": "kenney-furniture/table.glb",
+          "distance": 0,
+          "bytes": 4664,
+          "triangles": 120
+        }
+      ]
+    },
+    {
+      "id": "kenney-furniture/toilet",
+      "pack": "kenney-furniture",
+      "sourceBytes": 18112,
+      "lods": [
+        {
+          "file": "kenney-furniture/toilet.glb",
+          "distance": 0,
+          "bytes": 12732,
+          "triangles": 230
         }
       ]
     },

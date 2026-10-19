@@ -243,6 +243,12 @@
   "objects": [
     {
       "contentId": "base:bathroom-cabinet",
+      "x": 0,
+      "y": 24,
+      "rot": 0
+    },
+    {
+      "contentId": "base:toilet",
       "x": 1,
       "y": 24,
       "rot": 0

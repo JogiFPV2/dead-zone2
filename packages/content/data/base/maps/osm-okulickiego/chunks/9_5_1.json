@@ -336,10 +336,28 @@
   ],
   "objects": [
     {
+      "contentId": "base:ceiling-lamp",
+      "x": 1,
+      "y": 0,
+      "rot": 0
+    },
+    {
       "contentId": "base:chair",
       "x": 13,
       "y": 0,
       "rot": 3
+    },
+    {
+      "contentId": "base:shower",
+      "x": 0,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 3,
+      "y": 1,
+      "rot": 0
     },
     {
       "contentId": "base:bathroom-cabinet",

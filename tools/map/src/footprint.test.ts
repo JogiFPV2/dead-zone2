@@ -4,13 +4,16 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ContentBundle } from '@deadzone/content';
 import { BASE_PACK_DIR, buildContentBundleFromDirs } from '@deadzone/content/node';
-import { footprintForId } from '@deadzone/content/footprint';
+import { footprintForId, occupiedTiles } from '@deadzone/content/footprint';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { blockedTiles, footprintIssues } from './footprint-check.js';
 import {
   LIGHT_SWITCH,
   MapView,
+  OVERLAY_OBJECTS,
   POWERED_LAMPS,
+  SPACED_SEATS,
+  components,
   lightSwitches,
   type PlacedObject,
 } from './furnish.js';
@@ -87,6 +90,137 @@ describe('footprint mebli na mapach contentu', () => {
         expect(view.rooms.get(view.room(r.x, r.y, r.z))?.roomType).toBe('base:room-living-room');
       expect(radios.length, id).toBeGreaterThan(0);
     }
+  });
+
+  it('kanapy, fotele i ławki tego samego typu nie stoją stykiem (kratka odstępu)', () => {
+    let seats = 0;
+    for (const id of MAP_IDS) {
+      const { objects } = loadMap(id);
+      const owner = new Map<string, number>();
+      const list = objects.filter((o) => SPACED_SEATS.has(o.contentId));
+      list.forEach((o, i) => {
+        for (const t of occupiedTiles(o.x, o.y, o.rot, fp(o.contentId)))
+          owner.set(`${o.contentId},${t.x},${t.y},${o.z}`, i);
+      });
+      list.forEach((o, i) => {
+        seats++;
+        for (const t of occupiedTiles(o.x, o.y, o.rot, fp(o.contentId)))
+          for (let dy = -1; dy <= 1; dy++)
+            for (let dx = -1; dx <= 1; dx++) {
+              const j = owner.get(`${o.contentId},${t.x + dx},${t.y + dy},${o.z}`);
+              expect(
+                j === undefined || j === i,
+                `${id}: ${o.contentId} (${o.x}, ${o.y}, ${o.z}) styka się z drugim`,
+              ).toBe(true);
+            }
+      });
+    }
+    expect(seats).toBeGreaterThan(10);
+  });
+
+  it('toaleta w każdej łazience, która ma na nią miejsce (#258)', () => {
+    const SIDES = [
+      ['n', 0, -1],
+      ['e', 1, 0],
+      ['s', 0, 1],
+      ['w', -1, 0],
+    ] as const;
+    const OPP = { n: 's', s: 'n', e: 'w', w: 'e' } as const;
+    let toilets = 0;
+    for (const id of MAP_IDS) {
+      const { view, objects } = loadMap(id);
+      const { doors, stairs } = blockedTiles(view);
+      const occ = new Set<string>();
+      for (const o of objects)
+        if (!OVERLAY_OBJECTS.has(o.contentId))
+          for (const t of occupiedTiles(o.x, o.y, o.rot, fp(o.contentId)))
+            occ.add(`${t.x},${t.y},${o.z}`);
+      const baths = new Map<number, number>();
+      for (const [r, m] of view.rooms) if (m.roomType === 'base:room-bathroom') baths.set(r, 0);
+      for (const o of objects)
+        if (o.contentId === 'base:toilet') {
+          const r = view.room(o.x, o.y, o.z);
+          expect(baths.has(r), `${id}: toaleta (${o.x}, ${o.y}) poza łazienką`).toBe(true);
+          // Back to a solid wall, front open into the room.
+          const [s, dx, dy] = SIDES[o.rot & 3]!;
+          expect(view.edge(o.x, o.y, o.z, s), `${id}: toaleta (${o.x}, ${o.y}) bez ściany`).toBe(
+            'wall',
+          );
+          expect(view.open(o.x, o.y, o.z, OPP[s])).toBe(true);
+          expect(view.room(o.x - dx, o.y - dy, o.z)).toBe(r);
+          baths.set(r, (baths.get(r) ?? 0) + 1);
+          toilets++;
+        }
+      // A bathroom without one has no free wall tile with a free front (doors, stairs aside).
+      const tiles = new Map<number, [number, number, number][]>();
+      for (const z of view.levels)
+        for (const [x, y] of view.tiles(z)) {
+          const r = view.room(x, y, z);
+          if (baths.get(r) === 0) (tiles.get(r) ?? tiles.set(r, []).get(r)!).push([x, y, z]);
+        }
+      // Front rows of the furniture stay free (a toilet never blocks the sink).
+      const fronts = new Set<string>();
+      for (const o of objects) {
+        if (OVERLAY_OBJECTS.has(o.contentId) || o.contentId === 'base:chair') continue;
+        const [, dx, dy] = SIDES[o.rot & 3]!;
+        const cells = occupiedTiles(o.x, o.y, o.rot, fp(o.contentId));
+        const own = new Set(cells.map((t) => `${t.x},${t.y}`));
+        for (const t of cells)
+          if (!own.has(`${t.x - dx},${t.y - dy}`)) fronts.add(`${t.x - dx},${t.y - dy},${o.z}`);
+      }
+      const free = (x: number, y: number, z: number) => {
+        const k = `${x},${y},${z}`;
+        return !occ.has(k) && !doors.has(k) && !stairs.has(k);
+      };
+      const indoor = (x: number, y: number, z: number, r: number) => view.room(x, y, z) === r;
+      for (const [r, list] of tiles) {
+        const xy = list.map(([x, y]) => [x, y] as [number, number]);
+        const z0 = list[0]![2];
+        const before = components(view, xy, z0, r, occ, indoor);
+        const spot = list.find(([x, y, z]) =>
+          SIDES.some(
+            ([s, dx, dy]) =>
+              free(x, y, z) &&
+              !fronts.has(`${x},${y},${z}`) &&
+              components(view, xy, z, r, new Set([...occ, `${x},${y},${z}`]), indoor) <= before &&
+              view.edge(x, y, z, s) === 'wall' &&
+              view.open(x, y, z, OPP[s]) &&
+              view.room(x - dx, y - dy, z) === r &&
+              free(x - dx, y - dy, z),
+          ),
+        );
+        expect(spot, `${id}: łazienka ${r} bez toalety, a miejsce jest przy ${String(spot)}`).toBe(
+          undefined,
+        );
+      }
+    }
+    expect(toilets).toBeGreaterThan(10);
+  });
+
+  it('przy każdym stole w kuchni stoi krzesło przodem do stołu (#254)', () => {
+    let tables = 0;
+    for (const id of MAP_IDS) {
+      const { view, objects } = loadMap(id);
+      const chairs = objects.filter((o) => o.contentId === 'base:chair');
+      for (const t of objects.filter((o) => o.contentId === 'base:table')) {
+        if (view.rooms.get(view.room(t.x, t.y, t.z))?.roomType !== 'base:room-kitchen') continue;
+        tables++;
+        const cells = occupiedTiles(t.x, t.y, t.rot, fp(t.contentId));
+        // rot = the chair's back side: it faces the tile on the opposite side.
+        const facing = [
+          [0, 1],
+          [-1, 0],
+          [0, -1],
+          [1, 0],
+        ] as const;
+        const seated = chairs.some((c) => {
+          const [dx, dy] = facing[c.rot & 3]!;
+          return c.z === t.z && cells.some((q) => q.x === c.x + dx && q.y === c.y + dy);
+        });
+        expect(seated, `${id}: stół (${t.x}, ${t.y}, ${t.z}) bez krzesła`).toBe(true);
+      }
+    }
+    expect(tables).toBeGreaterThan(0);
   });
 
   it('w każdym pokoju z lampą na prąd jest włącznik światła (#242, #246)', () => {

@@ -1248,31 +1248,73 @@
   "objects": [
     {
       "contentId": "base:locker",
-      "x": 16,
+      "x": 7,
       "y": 1,
       "rot": 0
     },
     {
       "contentId": "base:locker",
-      "x": 17,
+      "x": 8,
       "y": 1,
       "rot": 0
+    },
+    {
+      "contentId": "base:table",
+      "x": 13,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 13,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 3,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 13,
+      "y": 2,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 3,
+      "y": 6,
+      "rot": 1
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 13,
+      "y": 8,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 15,
+      "y": 8,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
-      "x": 17,
+      "x": 16,
       "y": 8,
       "rot": 2
     },
     {
-      "contentId": "base:locker",
-      "x": 18,
-      "y": 8,
-      "rot": 2
+      "contentId": "base:table",
+      "x": 0,
+      "y": 9,
+      "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": 1,
+      "contentId": "base:desk-lamp",
+      "x": 0,
       "y": 9,
       "rot": 0
     },
@@ -1289,6 +1331,18 @@
       "rot": 0
     },
     {
+      "contentId": "base:chair",
+      "x": 7,
+      "y": 9,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 8,
+      "y": 9,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 10,
       "y": 9,
@@ -1301,10 +1355,34 @@
       "rot": 0
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 11,
+      "y": 9,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 13,
       "y": 9,
       "rot": 0
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 15,
+      "y": 9,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 0,
+      "y": 10,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 9,
+      "y": 10,
+      "rot": 2
     },
     {
       "contentId": "base:chair",
@@ -1319,16 +1397,10 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 21,
-      "y": 11,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 2,
+      "contentId": "base:light-switch",
+      "x": 3,
       "y": 12,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:desk",
@@ -1337,28 +1409,76 @@
       "rot": 2
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 7,
+      "y": 12,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 12,
+      "y": 12,
+      "rot": 2
+    },
+    {
       "contentId": "base:bookshelf",
+      "x": 14,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 17,
+      "y": 17,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 20,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 20,
       "y": 20,
       "rot": 1
     },
     {
       "contentId": "base:locker",
-      "x": 20,
-      "y": 21,
-      "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": 17,
-      "y": 24,
-      "rot": 2
-    },
-    {
-      "contentId": "base:locker",
       "x": 18,
       "y": 24,
       "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 19,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 20,
+      "y": 24,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 17,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:ceiling-lamp",
+      "x": 15,
+      "y": 28,
+      "rot": 0
     }
   ],
   "rooms": {

@@ -650,19 +650,25 @@
   ],
   "objects": [
     {
-      "contentId": "base:desk",
-      "x": 7,
+      "contentId": "base:light-switch",
+      "x": 6,
       "y": 0,
       "rot": 3
     },
     {
-      "contentId": "base:chair",
-      "x": 8,
+      "contentId": "base:bookshelf",
+      "x": 7,
       "y": 0,
-      "rot": 1
+      "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
+      "x": 8,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:light-switch",
       "x": 9,
       "y": 0,
       "rot": 0
@@ -680,28 +686,52 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:chair",
+      "x": 8,
       "y": 2,
-      "rot": 3
+      "rot": 0
     },
     {
       "contentId": "base:chair",
       "x": 9,
       "y": 2,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:desk",
-      "x": 10,
+      "contentId": "base:ceiling-lamp",
+      "x": 14,
       "y": 2,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
       "x": 6,
       "y": 3,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 7,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 7,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk",
+      "x": 9,
+      "y": 3,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 9,
+      "y": 3,
+      "rot": 2
     },
     {
       "contentId": "base:dresser",
@@ -710,16 +740,22 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 6,
+      "contentId": "base:light-switch",
+      "x": 14,
       "y": 4,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:bookshelf",
       "x": 8,
       "y": 5,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 9,
+      "y": 5,
+      "rot": 2
     },
     {
       "contentId": "base:shower",

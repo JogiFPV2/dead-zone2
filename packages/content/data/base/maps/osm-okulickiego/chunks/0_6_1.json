@@ -220,16 +220,22 @@
   ],
   "objects": [
     {
-      "contentId": "base:locker",
-      "x": 30,
-      "y": 21,
-      "rot": 3
+      "contentId": "base:table",
+      "x": 31,
+      "y": 19,
+      "rot": 0
     },
     {
-      "contentId": "base:locker",
-      "x": 30,
-      "y": 22,
-      "rot": 3
+      "contentId": "base:desk-lamp",
+      "x": 31,
+      "y": 19,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 20,
+      "rot": 2
     }
   ],
   "rooms": {

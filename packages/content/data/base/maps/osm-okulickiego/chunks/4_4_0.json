@@ -239,7 +239,20 @@
       "contentId": "base:wooden-window"
     }
   ],
-  "objects": [],
+  "objects": [
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 0,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 0,
+      "y": 3,
+      "rot": 1
+    }
+  ],
   "rooms": {
     "55": {
       "roomType": "base:room-bathroom",

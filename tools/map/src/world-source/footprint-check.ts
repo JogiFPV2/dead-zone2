@@ -1,5 +1,6 @@
 import { CHUNK_SIZE } from '@deadzone/content';
-import { occupiedTiles, type Footprint } from '@deadzone/content/footprint';
+import { DEFAULT_FOOTPRINT, occupiedTiles, type Footprint } from '@deadzone/content/footprint';
+import { OVERLAY_OBJECTS } from '../furnish.js';
 import type { GenColumn } from './generator.js';
 import { EDGE_PALETTE } from './palette.js';
 
@@ -84,13 +85,22 @@ export function columnFootprintIssues(
         const y0 = c.cy * C + o.y;
         const at = `${o.contentId} (${x0}, ${y0}, z ${l.z}, rot ${o.rot})`;
         const home = room.get(k(x0, y0, l.z));
-        const tiles = occupiedTiles(x0, y0, o.rot, footprint(o.contentId));
+        const overlay = OVERLAY_OBJECTS.has(o.contentId);
+        const tiles = occupiedTiles(
+          x0,
+          y0,
+          o.rot,
+          overlay ? DEFAULT_FOOTPRINT : footprint(o.contentId),
+        );
         for (const t of tiles) {
           if (!inSample(t.x, t.y, l.z)) continue;
           const tk = k(t.x, t.y, l.z);
           const prev = cover.get(tk);
-          if (prev !== undefined) out.push({ kind: 'overlap', at: `${at} × ${prev} @ ${tk}` });
-          else cover.set(tk, at);
+          // Overlay objects (ceiling lamp, desk lamp) cover no tile: never an overlap.
+          if (!overlay) {
+            if (prev !== undefined) out.push({ kind: 'overlap', at: `${at} × ${prev} @ ${tk}` });
+            else cover.set(tk, at);
+          }
           if (room.get(tk) !== home) out.push({ kind: 'room', at: `${at} @ ${tk}` });
           if (doors.has(tk)) out.push({ kind: 'door', at: `${at} @ ${tk}` });
           if (stairs.has(tk)) out.push({ kind: 'stairs', at: `${at} @ ${tk}` });

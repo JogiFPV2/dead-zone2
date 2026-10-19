@@ -225,8 +225,8 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 6,
+      "contentId": "base:table",
+      "x": 5,
       "y": 31,
       "rot": 0
     },
@@ -238,6 +238,12 @@
     },
     {
       "contentId": "base:desk",
+      "x": 8,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 8,
       "y": 31,
       "rot": 0

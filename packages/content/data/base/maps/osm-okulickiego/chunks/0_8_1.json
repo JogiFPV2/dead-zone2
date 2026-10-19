@@ -339,22 +339,58 @@
   ],
   "objects": [
     {
-      "contentId": "base:bathroom-cabinet",
-      "x": 30,
-      "y": 0,
-      "rot": 3
-    },
-    {
       "contentId": "base:bookshelf",
       "x": 30,
-      "y": 10,
-      "rot": 0
+      "y": 9,
+      "rot": 2
     },
     {
       "contentId": "base:locker",
       "x": 31,
+      "y": 9,
+      "rot": 2
+    },
+    {
+      "contentId": "base:table",
+      "x": 30,
       "y": 10,
-      "rot": 0
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 30,
+      "y": 10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 12,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 30,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 30,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 31,
+      "rot": 1
     }
   ],
   "rooms": {

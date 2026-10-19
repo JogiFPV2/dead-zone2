@@ -180,6 +180,12 @@
       "rot": 3
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 5,
+      "y": 31,
+      "rot": 3
+    },
+    {
       "contentId": "base:chair",
       "x": 6,
       "y": 31,
@@ -192,10 +198,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 8,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
       "x": 9,
       "y": 31,
-      "rot": 0
+      "rot": 1
     }
   ],
   "rooms": {

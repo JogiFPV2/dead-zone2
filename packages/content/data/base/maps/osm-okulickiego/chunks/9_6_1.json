@@ -527,10 +527,22 @@
   ],
   "objects": [
     {
-      "contentId": "base:bathtub",
+      "contentId": "base:dresser",
+      "x": 0,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathroom-sink",
       "x": 1,
       "y": 25,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:bathtub",
+      "x": 2,
+      "y": 25,
+      "rot": 0
     },
     {
       "contentId": "base:bookshelf",
@@ -545,7 +557,19 @@
       "rot": 0
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 7,
+      "y": 25,
+      "rot": 0
+    },
+    {
       "contentId": "base:desk",
+      "x": 9,
+      "y": 25,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 9,
       "y": 25,
       "rot": 0
@@ -555,6 +579,12 @@
       "x": 13,
       "y": 25,
       "rot": 1
+    },
+    {
+      "contentId": "base:ceiling-lamp",
+      "x": 3,
+      "y": 26,
+      "rot": 0
     },
     {
       "contentId": "base:chair",
@@ -581,20 +611,14 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 0,
-      "y": 27,
+      "contentId": "base:desk-lamp",
+      "x": 13,
+      "y": 26,
       "rot": 1
     },
     {
-      "contentId": "base:bathroom-sink",
-      "x": 1,
-      "y": 27,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bathroom-cabinet",
-      "x": 5,
+      "contentId": "base:bookshelf",
+      "x": 0,
       "y": 27,
       "rot": 1
     },
@@ -603,12 +627,36 @@
       "x": 0,
       "y": 28,
       "rot": 1
+    },
+    {
+      "contentId": "base:toilet",
+      "x": 1,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 2,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 4,
+      "y": 28,
+      "rot": 2
     },
     {
       "contentId": "base:dresser",
       "x": 6,
       "y": 28,
       "rot": 3
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 9,
+      "y": 28,
+      "rot": 2
     },
     {
       "contentId": "base:bookshelf",
@@ -623,20 +671,44 @@
       "rot": 2
     },
     {
+      "contentId": "base:light-switch",
+      "x": 13,
+      "y": 28,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 1,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 2,
+      "y": 31,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 4,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 5,
+      "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 9,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:desk",
-      "x": 6,
+      "contentId": "base:light-switch",
+      "x": 11,
       "y": 31,
       "rot": 0
     },

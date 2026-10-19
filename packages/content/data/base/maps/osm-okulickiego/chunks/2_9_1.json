@@ -887,46 +887,106 @@
   ],
   "objects": [
     {
-      "contentId": "base:locker",
-      "x": 16,
+      "contentId": "base:light-switch",
+      "x": 13,
       "y": 0,
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:locker",
       "x": 17,
       "y": 0,
       "rot": 0
     },
     {
+      "contentId": "base:light-switch",
+      "x": 19,
+      "y": 0,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 6,
+      "y": 1,
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 30,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 31,
+      "y": 1,
+      "rot": 2
+    },
+    {
       "contentId": "base:bookshelf",
-      "x": 28,
-      "y": 1,
-      "rot": 2
+      "x": 6,
+      "y": 2,
+      "rot": 3
     },
     {
-      "contentId": "base:locker",
-      "x": 29,
-      "y": 1,
-      "rot": 2
+      "contentId": "base:table",
+      "x": 20,
+      "y": 2,
+      "rot": 3
     },
     {
-      "contentId": "base:locker",
-      "x": 7,
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:toilet",
+      "x": 15,
       "y": 3,
       "rot": 1
     },
     {
       "contentId": "base:locker",
-      "x": 7,
-      "y": 5,
+      "x": 19,
+      "y": 3,
       "rot": 1
     },
     {
-      "contentId": "base:locker",
-      "x": 7,
-      "y": 6,
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 3,
       "rot": 1
+    },
+    {
+      "contentId": "base:ceiling-lamp",
+      "x": 11,
+      "y": 4,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 19,
+      "y": 4,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 6,
+      "y": 5,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 16,
+      "y": 6,
+      "rot": 0
     },
     {
       "contentId": "base:chair",
@@ -941,10 +1001,34 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 7,
+      "contentId": "base:chair",
+      "x": 1,
       "y": 7,
-      "rot": 1
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 2,
+      "y": 7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 2,
+      "y": 7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 4,
+      "y": 7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 5,
+      "y": 7,
+      "rot": 2
     },
     {
       "contentId": "base:bathroom-sink",
@@ -965,14 +1049,14 @@
       "rot": 2
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:table",
       "x": 16,
       "y": 7,
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 20,
+      "contentId": "base:desk-lamp",
+      "x": 16,
       "y": 7,
       "rot": 2
     },
@@ -983,7 +1067,19 @@
       "rot": 2
     },
     {
+      "contentId": "base:desk-lamp",
+      "x": 21,
+      "y": 7,
+      "rot": 2
+    },
+    {
       "contentId": "base:desk",
+      "x": 23,
+      "y": 7,
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
       "x": 23,
       "y": 7,
       "rot": 2

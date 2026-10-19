@@ -428,22 +428,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:freezer",
-      "x": 0,
-      "y": 24,
-      "rot": 0
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:chair",
       "x": 1,
       "y": 24,
-      "rot": 0
+      "rot": 1
     },
     {
-      "contentId": "base:kitchen-cabinet",
-      "x": 2,
-      "y": 24,
-      "rot": 0
+      "contentId": "base:chair",
+      "x": 0,
+      "y": 25,
+      "rot": 2
     },
     {
       "contentId": "base:kitchen-counter",
@@ -453,6 +447,18 @@
     },
     {
       "contentId": "base:kitchen-cabinet",
+      "x": 0,
+      "y": 27,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 1,
+      "y": 27,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
       "x": 3,
       "y": 27,
       "rot": 1

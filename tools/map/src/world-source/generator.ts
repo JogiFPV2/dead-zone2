@@ -1,6 +1,6 @@
 import { CHUNK_SIZE } from '@deadzone/content';
 import { occupiedTiles } from '@deadzone/content/footprint';
-import { baseFootprint } from '../furnish.js';
+import { OVERLAY_OBJECTS, baseFootprint } from '../furnish.js';
 import { solveBuilding, type SolvedBuilding } from './building.js';
 import {
   EDGE_PALETTE,
@@ -325,13 +325,15 @@ export class PlanChunkGenerator {
           for (const t of occupiedTiles(o.x, o.y, o.rot, baseFootprint(o.contentId)))
             if (t.x >= X0 && t.y >= Y0 && t.x < X0 + C && t.y < Y0 + C)
               cells.push((t.y - Y0) * C + (t.x - X0));
-          if (cells.some((j) => taken.has(j))) continue;
+          // Overlay objects (ceiling lamp, desk lamp on its desk) take no tile.
+          const overlay = OVERLAY_OBJECTS.has(o.contentId);
+          if (!overlay && cells.some((j) => taken.has(j))) continue;
           // Never in a doorway of any building (both sides of every door stay free).
           if (z === 0 && doorAt(o.x, o.y)) continue;
           // An outdoor prop never stands in another building.
           if (z === 0 && !room[i] && occ[ri(o.x - X0, o.y - Y0)]) continue;
           if (z === 0 && cells.some((j) => room[j] && owner[j] !== s.gid)) continue;
-          for (const j of cells) taken.add(j);
+          if (!overlay) for (const j of cells) taken.add(j);
           objects.push({ contentId: o.contentId, x: o.x - X0, y: o.y - Y0, rot: o.rot });
         }
       }

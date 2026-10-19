@@ -61,6 +61,13 @@ export const CONTAINER_MODELS: Record<string, string> = {
   'base:tool-chest': 'kenney-survival/box',
   'base:locker': 'kenney-furniture/bookcase-closed',
   'base:gun-locker': 'kenney-furniture/bookcase-closed',
+  // #254 (Kenney Furniture Kit, CC0) until Designer's real-scale models.
+  'base:table': 'kenney-furniture/table',
+  'base:chair': 'kenney-furniture/chair',
+  'base:floor-lamp': 'kenney-furniture/lamp-round-floor',
+  'base:desk-lamp': 'kenney-furniture/lamp-round-table',
+  'base:ceiling-lamp': 'kenney-furniture/lamp-square-ceiling',
+  'base:toilet': 'kenney-furniture/toilet',
 };
 export const PILE_MODEL = 'kenney-furniture/cardboard-box-closed';
 export const PLAYER_MODEL = 'quaternius-characters/casual';

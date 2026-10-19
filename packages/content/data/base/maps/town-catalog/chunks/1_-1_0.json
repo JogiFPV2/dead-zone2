@@ -371,6 +371,18 @@
       "rot": 3
     },
     {
+      "contentId": "base:ceiling-lamp",
+      "x": 7,
+      "y": 21,
+      "rot": 0
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 7,
+      "y": 21,
+      "rot": 3
+    },
+    {
       "contentId": "base:bathroom-sink",
       "x": 8,
       "y": 21,

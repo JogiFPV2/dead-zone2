@@ -10,7 +10,10 @@ import { footprintForId, occupiedTiles } from '@deadzone/content/footprint';
 import { footprintIssues } from './footprint-check.js';
 import {
   BASE_FOOTPRINTS,
+  LIGHT_SWITCH,
   MapView,
+  OVERLAY_OBJECTS,
+  POWERED_LAMPS,
   ROOM_KITS,
   baseFootprint,
   components,
@@ -54,8 +57,15 @@ function placeIns(): Map<string, readonly string[] | undefined> {
 interface Chain {
   id: string;
   then?: Chain;
+  seats?: { id: string };
+  top?: string;
 }
-const thenIds = (k: Chain): string[] => (k.then ? [k.then.id, ...thenIds(k.then)] : []);
+/** Ids a kit item brings along: its `then` chain, its chairs and what stands on it. */
+const thenIds = (k: Chain): string[] => [
+  ...(k.then ? [k.then.id, ...thenIds(k.then)] : []),
+  ...(k.seats ? [k.seats.id] : []),
+  ...(k.top ? [k.top] : []),
+];
 
 describe('room kits (content data)', () => {
   it('use only existing furniture, each within its placeIn', () => {
@@ -101,6 +111,7 @@ describe('room kits (content data)', () => {
         'base:bathroom-sink',
         'base:bathtub',
         'base:shower',
+        'base:toilet',
       ]),
     );
     for (const shop of ['base:room-shop', 'base:room-pharmacy', 'base:room-gas-station'])
@@ -128,16 +139,19 @@ function unit(type: string, rot: number): Blueprint {
 }
 
 /** Checks every furnishing rule; returns a list of human-readable violations. */
-function violations(bp: Blueprint, objs: readonly PlacedObject[]): string[] {
+function violations(bp: Blueprint, all: readonly PlacedObject[]): string[] {
   const bad: string[] = [];
   const view = new MapView(buildMap({ ...bp, objects: [] }).chunks);
   const k = (x: number, y: number, z: number) => `${x},${y},${z}`;
+  // Overlays (ceiling lamp, desk lamp on its desk) take no tile: checked apart below.
+  const tops = all.filter((o) => OVERLAY_OBJECTS.has(o.contentId));
+  const objs = all.filter((o) => !OVERLAY_OBJECTS.has(o.contentId));
   const taken = new Set(
     objs.flatMap((o) =>
       occupiedTiles(o.x, o.y, o.rot, baseFootprint(o.contentId)).map((t) => k(t.x, t.y, o.z)),
     ),
   );
-  for (const i of footprintIssues(view, objs, baseFootprint))
+  for (const i of footprintIssues(view, all, baseFootprint))
     bad.push(`${i.at}: ${i.kind === 'room' ? 'footprint leaves its room' : i.kind}`);
   // Door sides and stairs (runs, foot, landing).
   const reserved = new Set<string>();
@@ -171,10 +185,10 @@ function violations(bp: Blueprint, objs: readonly PlacedObject[]): string[] {
     const at = `${o.contentId} (${o.x}, ${o.y}, z ${o.z})`;
     const room = view.room(o.x, o.y, o.z);
     if (o.contentId === 'base:chair') {
-      // A chair stands at a desk (on its front tile), facing it.
+      // A chair stands at a desk or a table (front tile or an end of a table), facing it.
       const [, cdx, cdy] = SIDE[o.rot]!;
-      if (idAt.get(k(o.x - cdx, o.y - cdy, o.z)) !== 'base:desk')
-        bad.push(`${at}: chair not at a desk`);
+      const at2 = idAt.get(k(o.x - cdx, o.y - cdy, o.z));
+      if (at2 !== 'base:desk' && at2 !== 'base:table') bad.push(`${at}: chair not at a desk`);
       if (reserved.has(k(o.x, o.y, o.z))) bad.push(`${at}: in a doorway or on stairs`);
       continue;
     }
@@ -198,12 +212,7 @@ function violations(bp: Blueprint, objs: readonly PlacedObject[]): string[] {
         const fx = t.x - dx;
         const fy = t.y - dy;
         const blocker = idAt.get(k(fx, fy, o.z));
-        if (
-          blocker !== undefined &&
-          blocker !== 'base:chair' &&
-          o.contentId !== 'base:light-switch'
-        )
-          bad.push(`${at}: front blocked`);
+        if (blocker !== undefined && blocker !== 'base:chair') bad.push(`${at}: front blocked`);
         if (!view.open(t.x, t.y, o.z, OPP[side])) bad.push(`${at}: faces a wall`);
         if (!OK.has(o.contentId) && view.room(fx, fy, o.z) !== room)
           bad.push(`${at}: faces another room`);
@@ -215,6 +224,21 @@ function violations(bp: Blueprint, objs: readonly PlacedObject[]): string[] {
       const f = view.floor(o.x, o.y, o.z);
       if (!f || !OPT.propFloor(f)) bad.push(`${at}: prop on ${f}`);
     }
+  }
+  // A desk lamp stands on a desk (or a school table), a ceiling lamp hangs inside a room, a
+  // switch is on a wall of its room.
+  for (const o of tops) {
+    const at = `${o.contentId} (${o.x}, ${o.y}, z ${o.z})`;
+    const under = idAt.get(k(o.x, o.y, o.z));
+    if (o.contentId === 'base:desk-lamp' && under !== 'base:desk' && under !== 'base:table')
+      bad.push(`${at}: desk lamp not on a desk (${under})`);
+    if (view.room(o.x, o.y, o.z) === 0) bad.push(`${at}: outside a room`);
+    if (
+      o.contentId === 'base:light-switch' &&
+      view.edge(o.x, o.y, o.z, SIDE[o.rot]![0]) === undefined
+    )
+      bad.push(`${at}: switch not on a wall`);
+    if (reserved.has(k(o.x, o.y, o.z))) bad.push(`${at}: in a doorway or on stairs`);
   }
   // Free tiles of every room stay as connected as without furniture.
   const rooms = new Map<number, { z: number; tiles: [number, number][] }>();
@@ -296,6 +320,53 @@ describe('furnish: meble w środku, rekwizyty na dworze', () => {
         type,
       ).toBe(true);
     }
+  });
+
+  it('stół w kuchni z krzesłem, lampy w domu, włącznik w każdym pokoju z lampą (#254)', () => {
+    let tables = 0;
+    let deskLamps = 0;
+    const lampTypes = new Set<string>();
+    for (const type of CATALOG_IDS)
+      for (const seed of [1, 2, 3]) {
+        const bp = unit(type, seed % 4);
+        const objs = furnish(bp, { ...OPT, seed });
+        const view = new MapView(buildMap(bp).chunks);
+        const typeOf = (o: PlacedObject) => view.rooms.get(view.room(o.x, o.y, o.z))?.roomType;
+        const chairs = objs.filter((o) => o.contentId === 'base:chair');
+        for (const t of objs.filter((o) => o.contentId === 'base:table')) {
+          const cells = occupiedTiles(t.x, t.y, t.rot, baseFootprint(t.contentId));
+          const seated = chairs.some((c) => {
+            const [, dx, dy] = SIDE[c.rot]!;
+            return c.z === t.z && cells.some((q) => q.x === c.x - dx && q.y === c.y - dy);
+          });
+          if (typeOf(t) === 'base:room-kitchen') {
+            tables++;
+            expect(seated, `${type} seed ${seed}: stół w kuchni bez krzesła`).toBe(true);
+          }
+        }
+        const switched = new Set(
+          objs.filter((o) => o.contentId === LIGHT_SWITCH).map((o) => view.room(o.x, o.y, o.z)),
+        );
+        for (const l of objs.filter((o) => POWERED_LAMPS.has(o.contentId))) {
+          lampTypes.add(`${l.contentId} ${typeOf(l)}`);
+          if (l.contentId === 'base:desk-lamp') deskLamps++;
+          expect(
+            switched.has(view.room(l.x, l.y, l.z)),
+            `${type} seed ${seed}: ${l.contentId} (${l.x}, ${l.y}) bez włącznika`,
+          ).toBe(true);
+        }
+      }
+    expect(tables).toBeGreaterThan(0);
+    expect(deskLamps).toBeGreaterThan(0);
+    expect([...lampTypes]).toEqual(
+      expect.arrayContaining([
+        'base:ceiling-lamp base:room-kitchen',
+        'base:ceiling-lamp base:room-bathroom',
+        'base:ceiling-lamp base:room-living-room',
+        'base:floor-lamp base:room-living-room',
+        'base:floor-lamp base:room-bedroom',
+      ]),
+    );
   });
 
   it('sprawdzarka łapie szafę na trawie i mebel w drzwiach', () => {

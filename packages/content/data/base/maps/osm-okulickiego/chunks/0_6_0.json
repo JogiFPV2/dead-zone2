@@ -215,10 +215,40 @@
   ],
   "objects": [
     {
-      "contentId": "base:locker",
+      "contentId": "base:table",
       "x": 30,
-      "y": 25,
+      "y": 22,
       "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 30,
+      "y": 22,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 22,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 31,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 30,
+      "y": 27,
+      "rot": 0
+    },
+    {
+      "contentId": "base:locker",
+      "x": 31,
+      "y": 27,
+      "rot": 0
     }
   ],
   "rooms": {

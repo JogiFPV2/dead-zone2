@@ -11,6 +11,7 @@ import {
 } from 'three';
 import type { NearbyContainerView } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
+import { LEVEL_HEIGHT } from './instances.js';
 import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from './chunk.js';
 import { NO_CUTAWAY, type Cutaway } from './cutaway.js';
@@ -50,7 +51,33 @@ const SIZES: Record<string, [number, number, number]> = {
   'base:gun-locker': [0.8, 1.8, 0.5],
   // PLACEHOLDER until a pump model (vehicle UI mockup sprite only).
   'base:fuel-pump': [0.6, 1.7, 0.45],
+  // #254: Kenney models fit to these heights (per tile; the table spans its 2×1 footprint).
+  'base:table': [0.95, 0.76, 0.9],
+  'base:chair': [0.5, 0.9, 0.5],
+  'base:floor-lamp': [0.4, 1.6, 0.4],
+  'base:desk-lamp': [0.25, 0.4, 0.25],
+  'base:ceiling-lamp': [0.45, 0.35, 0.45],
+  'base:light-switch': [0.08, 0.12, 0.03],
+  'base:toilet': [0.45, 0.8, 0.7],
 };
+
+/**
+ * Objects that do not stand on the floor (#254): lifted by `lift` m above it and pushed `back`
+ * m toward the wall at their back (`rot`). A desk lamp stands on its desk (+0.75 m, like the
+ * radio), a ceiling lamp hangs under the ceiling, a light switch sits on the wall at 1.1 m.
+ */
+const RAISED: Record<string, { lift: number; back?: number }> = {
+  'base:desk-lamp': { lift: 0.75 },
+  'base:ceiling-lamp': { lift: LEVEL_HEIGHT - 0.1 - 0.35 },
+  'base:light-switch': { lift: 1.1, back: 0.47 },
+};
+/** Back direction (sim tiles) per `rot`: 0 = north wall, 1 = east, 2 = south, 3 = west. */
+const BACK: readonly [number, number][] = [
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+];
 const DEFAULT_SIZE: [number, number, number] = [0.8, 0.8, 0.8];
 
 interface Obj {
@@ -189,7 +216,11 @@ export class MapObjects {
     const [w, h, d] = this.boxSize(o);
     const fp = this.fpOf(o);
     const c = fp ? footprintCenter(o.tx, o.ty, o.rot, fp) : { x: o.tx + 0.5, y: o.ty + 0.5 };
-    const p = simToWorld(c.x, c.y, o.z);
+    const raised = RAISED[o.contentId];
+    const [bx, by] = BACK[o.rot & 3]!;
+    const back = raised?.back ?? 0;
+    const p = simToWorld(c.x + bx * back, c.y + by * back, o.z);
+    p.y += raised?.lift ?? 0;
     o.mesh.geometry = this.box(w, h, d);
     o.mesh.position.set(p.x, p.y + h / 2, p.z);
     o.mesh.rotation.y = (-o.rot * Math.PI) / 2;

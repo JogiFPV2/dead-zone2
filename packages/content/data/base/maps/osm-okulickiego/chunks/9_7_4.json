@@ -155,10 +155,22 @@
   ],
   "objects": [
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 0,
       "y": 31,
       "rot": 1
+    },
+    {
+      "contentId": "base:toilet",
+      "x": 5,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:floor-lamp",
+      "x": 6,
+      "y": 31,
+      "rot": 0
     },
     {
       "contentId": "base:wardrobe",
@@ -173,13 +185,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:desk",
-      "x": 9,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:tv",
+      "contentId": "base:vcr",
       "x": 11,
       "y": 31,
       "rot": 0
@@ -191,7 +197,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:tv",
       "x": 13,
       "y": 31,
       "rot": 0

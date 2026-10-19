@@ -427,21 +427,63 @@
   ],
   "objects": [
     {
+      "contentId": "base:dresser",
+      "x": 30,
+      "y": 4,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 9,
+      "rot": 0
+    },
+    {
       "contentId": "base:bookshelf",
       "x": 30,
       "y": 10,
       "rot": 2
     },
     {
+      "contentId": "base:table",
+      "x": 31,
+      "y": 10,
+      "rot": 2
+    },
+    {
       "contentId": "base:locker",
-      "x": 30,
-      "y": 22,
-      "rot": 3
+      "x": 31,
+      "y": 11,
+      "rot": 0
     },
     {
       "contentId": "base:locker",
       "x": 30,
-      "y": 23,
+      "y": 20,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 30,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 30,
+      "y": 21,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
+      "y": 21,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bathroom-cabinet",
+      "x": 30,
+      "y": 26,
       "rot": 3
     }
   ],

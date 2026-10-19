@@ -143,8 +143,26 @@
   ],
   "objects": [
     {
+      "contentId": "base:bookshelf",
+      "x": 24,
+      "y": 30,
+      "rot": 0
+    },
+    {
       "contentId": "base:locker",
-      "x": 27,
+      "x": 25,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:table",
+      "x": 26,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 26,
       "y": 30,
       "rot": 0
     },
@@ -153,6 +171,12 @@
       "x": 28,
       "y": 30,
       "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 26,
+      "y": 31,
+      "rot": 2
     }
   ],
   "rooms": {

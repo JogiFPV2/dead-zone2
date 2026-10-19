@@ -1,6 +1,6 @@
 import { STAIR_STEP } from '@deadzone/content';
 import { occupiedTiles, type Footprint } from '@deadzone/content/footprint';
-import type { FurnishView, PlacedObject } from './furnish.js';
+import { OVERLAY_OBJECTS, type FurnishView, type PlacedObject } from './furnish.js';
 
 /**
  * Footprint checks of placed furniture (spec: footprint mebli, #218), shared by the furnishing
@@ -10,6 +10,8 @@ import type { FurnishView, PlacedObject } from './furnish.js';
  *   outside rooms (or an outdoor prop reaches into a room),
  * - `door`: a covered tile is a door tile or the tile in front of a door (both sides),
  * - `stairs`: a covered tile is a stair run, its foot or its landing.
+ * Overlay objects (`OVERLAY_OBJECTS`: a ceiling lamp, a desk lamp on its desk) cover no tile:
+ * only their own tile is checked for room / door / stairs, never for overlaps.
  */
 export interface FootprintIssue {
   kind: 'overlap' | 'room' | 'door' | 'stairs';
@@ -60,6 +62,12 @@ export function footprintIssues(
   for (const o of objs) {
     const at = `${o.contentId} (${o.x}, ${o.y}, z ${o.z}, rot ${o.rot})`;
     const room = view.room(o.x, o.y, o.z);
+    if (OVERLAY_OBJECTS.has(o.contentId)) {
+      const tk = k(o.x, o.y, o.z);
+      if (doors.has(tk)) out.push({ kind: 'door', at: `${at} @ ${tk}` });
+      if (opt.stairs !== false && stairs.has(tk)) out.push({ kind: 'stairs', at: `${at} @ ${tk}` });
+      continue;
+    }
     for (const t of occupiedTiles(o.x, o.y, o.rot, footprint(o.contentId))) {
       const tk = k(t.x, t.y, o.z);
       const prev = cover.get(tk);
