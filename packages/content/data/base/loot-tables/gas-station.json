@@ -108,7 +108,11 @@
       {
         "item": "base:painkillers",
         "weight": 1
-      }
+      },
+      { "item": "base:lighter", "weight": 3 },
+      { "item": "base:matches", "weight": 2 },
+      { "item": "base:battery", "weight": 3, "count": { "min": 1, "max": 4 } },
+      { "item": "base:flashlight", "weight": 1, "rarity": "uncommon" }
     ]
   }
 ]

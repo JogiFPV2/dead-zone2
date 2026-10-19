@@ -66,7 +66,9 @@
       {
         "item": "base:bandage",
         "weight": 3
-      }
+      },
+      { "item": "base:ammo-9mm", "weight": 3, "count": { "min": 5, "max": 15 } },
+      { "item": "base:shotgun-shell", "weight": 2, "count": { "min": 3, "max": 8 } }
     ]
   },
   {
@@ -126,7 +128,10 @@
         "item": "base:military-backpack",
         "weight": 1,
         "rarity": "rare"
-      }
+      },
+      { "item": "base:ammo-9mm", "weight": 3, "count": { "min": 10, "max": 20 } },
+      { "item": "base:ammo-38", "weight": 2, "count": { "min": 6, "max": 12 } },
+      { "item": "base:shotgun-shell", "weight": 3, "count": { "min": 4, "max": 10 } }
     ]
   }
 ]
