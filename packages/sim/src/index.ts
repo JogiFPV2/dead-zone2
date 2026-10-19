@@ -180,3 +180,4 @@ export {
   type SaveErrorCode,
   type SaveWorldHeader,
 } from './save/save.js';
+export type { FurnitureMoveCheck, FurnitureMoveMode } from './physics/furniture.js';

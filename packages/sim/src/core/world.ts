@@ -18,6 +18,7 @@ import { createClock, type Clock, type ClockStart } from './clock.js';
 import { createComponents, type Components } from './components.js';
 import { createRngStreams, type RngStreams } from './rng.js';
 import { createPhysicsWorld } from '../physics/step.js';
+import { furnitureOverlay } from '../physics/furniture-overlay.js';
 import type { PhysicsWorld } from '../physics/types.js';
 import type { PhysicsConfig } from '../physics/constants.js';
 
@@ -109,12 +110,15 @@ export function createSimWorld(opts: {
   const clock = createClock(opts.dayLengthMinutes, opts.clockStart);
   const survival = opts.survival?.(clock);
   const rng = createRngStreams(opts.seed);
+  const physics = createPhysicsWorld(rng.physics, opts.physicsConfig);
+  // Moved furniture overrides the map objects (`physics/furniture-overlay.ts`).
+  const map = furnitureOverlay(opts.map, physics);
   return {
     ecs: createWorld(),
     c: createComponents(opts.capacity),
     capacity: opts.capacity,
     seed: opts.seed | 0,
-    map: opts.map,
+    map,
     source: opts.source,
     lod: undefined,
     safeStart: undefined,
@@ -137,8 +141,8 @@ export function createSimWorld(opts: {
       survival?.content.openings ?? DEFAULT_OPENINGS_CONFIG,
       opts.seed,
     ),
-    furniture: createFurnitureIndex(opts.map, survival?.content),
-    physics: createPhysicsWorld(rng.physics, opts.physicsConfig),
+    furniture: createFurnitureIndex(map, survival?.content),
+    physics,
     dev: opts.dev ?? false,
     events: [],
     sortedCache: new Map(),

@@ -33,6 +33,8 @@ export function createPhysicsWorld(
     stairs: [],
     multiLevel: false,
     vehicles: new Map(),
+    furnitureMoves: new Map(),
+    furnitureRev: 0,
   };
 }
 
@@ -292,6 +294,27 @@ export function writePhysicsHash(pw: PhysicsWorld, h: HashWriter): void {
     if (b.vehicle) h.u32(0x7f20_00a2).u32(b.vehicle).u32(b.seat);
   }
   writeVehicleHash(pw, h);
+  writeFurnitureHash(pw, h);
+}
+
+/** Moved furniture (origin key order); only when any moved, so other states keep their hashes. */
+function writeFurnitureHash(pw: PhysicsWorld, h: HashWriter): void {
+  if (pw.furnitureMoves.size === 0) return;
+  h.u32(0x7f20_00f0).u32(pw.furnitureMoves.size);
+  for (const k of [...pw.furnitureMoves.keys()].sort()) {
+    const m = pw.furnitureMoves.get(k)!;
+    hashStr(h, k);
+    hashStr(h, m.contentId);
+    h.u32(m.x >>> 0)
+      .u32(m.y >>> 0)
+      .u32(m.z >>> 0)
+      .u32(m.rot);
+  }
+}
+
+function hashStr(h: HashWriter, s: string): void {
+  h.u32(s.length);
+  for (let i = 0; i < s.length; i++) h.u32(s.charCodeAt(i));
 }
 
 /** Vehicles (StableId order); written only when there are any, so old states keep their hashes. */

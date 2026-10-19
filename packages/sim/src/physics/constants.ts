@@ -16,6 +16,50 @@ const perTick = (tilesPerSec: number): number => Math.fround(tilesPerSec / TICKS
 const sec = (s: number): number => Math.round(s * TICKS_PER_SECOND);
 
 /**
+ * Furniture moved by players (`furniture.ts`, docs 9.61). Weight: the content `weightKg` of a
+ * placeable, else footprint tiles × `kgPerTile` (`kgPerTileTall` for tall pieces), plus the
+ * contents of its storage (`countContents`). Strength in kg: `basePushKg` × (1 +
+ * `perStrengthLevel` × strength skill) × (1 − `fatigueWeight` × fatigue / 100) × wound penalty
+ * (`Pen.action`) × `loadMul[load level]` × `enduranceMul[endurance level]`; × `pullMul` for a
+ * pull, × `rotateMul` for a rotation. Heavier than that = `too-heavy`.
+ */
+export interface FurnitureConfig {
+  enabled: boolean;
+  /** Reach from the player centre to the nearest occupied tile centre. */
+  reachTiles: number;
+  kgPerTile: number;
+  kgPerTileTall: number;
+  countContents: boolean;
+  basePushKg: number;
+  perStrengthLevel: number;
+  pullMul: number;
+  rotateMul: number;
+  fatigueWeight: number;
+  /** By load level 0..4 / endurance level 0..4 (`modifiers.ts`). */
+  loadMul: readonly number[];
+  enduranceMul: readonly number[];
+  /** One tile / one rotation at no load; × (1 + `slowPerLoad` × weight / strength). */
+  moveTicks: number;
+  rotateTicks: number;
+  slowPerLoad: number;
+  /** Cost on completion: endurance − (base + perKg × kg), fatigue + perKg × kg (0..100 stats). */
+  enduranceBase: number;
+  endurancePerKg: number;
+  fatiguePerKg: number;
+  /** Scrape noise on completion: radius base + perKg × kg tiles (`ai/noise.ts`, `action`). */
+  noiseRadiusTiles: number;
+  noisePerKg: number;
+  noiseVolume: number;
+  /**
+   * Moved furniture on the tile right behind a closed door / window / gate (the side away from
+   * the crowd) resists the crowd: kg / `refMassKg` × `doorResistPerUnit` zombie units (`crowd.ts`
+   * `edgePressure`). Net crowd pressure ≥ `pushBackUnits` pushes it one tile into the room.
+   */
+  doorResistPerUnit: number;
+  pushBackUnits: number;
+}
+
+/**
  * Load levels like the PZ "Heavy Load" moodle (and `base:heavy-load`): carried weight / capacity
  * in % enters level 1 above 100 %, then 125 / 150 / 175 %. Index = level 0..4.
  */
@@ -109,6 +153,8 @@ export interface PhysicsConfig {
   activeChunkRadius?: number;
   /** Vehicles (`vehicles/*`): driving model, collisions, enter / exit (m/s based). */
   vehicle: VehicleConfig;
+  /** Pushing / pulling / rotating furniture, furniture against a door (`furniture.ts`). */
+  furniture: FurnitureConfig;
   /** Vaulting over low fences / through windows (`vault.ts`). */
   vault: VaultConfig;
   /** Knock-back of firearm hits per weapon category (`combat/firearms.ts` → `physicsHit`). */
@@ -266,6 +312,31 @@ export const FENCE_HP = 40;
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   vehicle: DEFAULT_VEHICLE_CONFIG,
+  furniture: {
+    enabled: true,
+    reachTiles: 1.5,
+    kgPerTile: 35,
+    kgPerTileTall: 45,
+    countContents: true,
+    basePushKg: 70,
+    perStrengthLevel: 0.1,
+    pullMul: 0.7,
+    rotateMul: 0.9,
+    fatigueWeight: 0.4,
+    loadMul: [1, 0.9, 0.75, 0.6, 0.45],
+    enduranceMul: [1, 0.95, 0.85, 0.7, 0.5],
+    moveTicks: sec(1),
+    rotateTicks: sec(1.5),
+    slowPerLoad: 1.5,
+    enduranceBase: 1,
+    endurancePerKg: 0.05,
+    fatiguePerKg: 0.004,
+    noiseRadiusTiles: 4,
+    noisePerKg: 0.05,
+    noiseVolume: 0.6,
+    doorResistPerUnit: 1.5,
+    pushBackUnits: 2.5,
+  },
   /** Zombies are heavier (dead weight): less inertia multiplier, harder to push over. */
   bodyMassKg: { player: 80, zombie: 90 },
   refMassKg: 80,

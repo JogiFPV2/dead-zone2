@@ -179,7 +179,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 20 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0, gait walk)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(20);
-    expect(PROTOCOL_VERSION).toBe(36);
+    expect(PROTOCOL_VERSION).toBe(37);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {

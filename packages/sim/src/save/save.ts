@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, type WorldSource } from '@deadzone/protocol';
+import { furnitureLoaded } from '../physics/furniture.js';
 import { decodePlayerMaps, encodePlayerMaps, type PlayerMapSave } from '../map/player-map.js';
 import { decodeLod, encodeLod, type LodSave } from './delta.js';
 import { addComponent, addEntity, hasComponent } from 'bitecs';
@@ -64,7 +65,16 @@ const SKIP_AI = [
   'combat',
 ];
 const SKIP_COMBAT = ['cfg', 'targets'];
-const SKIP_PHYSICS = ['cfg', 'rng', 'order', 'orderSize', 'presses', 'stairs', 'multiLevel'];
+const SKIP_PHYSICS = [
+  'cfg',
+  'rng',
+  'order',
+  'orderSize',
+  'presses',
+  'stairs',
+  'multiLevel',
+  'furnitureRev',
+];
 
 interface SaveFile {
   format: string;
@@ -297,6 +307,7 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
   if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
   w.physics.rng = w.rng.physics;
   w.physics.orderSize = -1;
+  furnitureLoaded(w);
   for (const v of w.physics.vehicles.values()) {
     ensureVehicleParts(v);
     ensureVehicleGameplay(v);

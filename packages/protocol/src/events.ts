@@ -175,7 +175,12 @@ export type ActionKind =
   /** Tank → gas can through a hose (`siphonFuel`). */
   | 'siphonFuel'
   /** Repair / replace a vehicle part (`repairVehicle`). */
-  | 'repairVehicle';
+  | 'repairVehicle'
+  /**
+   * Push / pull a piece of furniture one tile, or rotate it 90° (protocol 37, Physics
+   * `physics/furniture.ts`, `sim.pushFurniture` / `pullFurniture` / `rotateFurniture`).
+   */
+  | 'moveFurniture';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -684,6 +689,30 @@ export type SimEvent =
       y: number;
       z: number;
       broke: boolean;
+    }
+  /**
+   * A piece of furniture moved (protocol 37, `physics/furniture.ts`): pushed / pulled one tile or
+   * rotated 90° by a player (`playerId`), or pushed back from a door by crowd pressure
+   * (`cause: 'crowd'`). The id is anchor based (`useFurniture.furnitureId`), so it changes:
+   * `fromId` → `toId`. (x, y, z) = new north-west tile, `w` × `h` = occupied tiles after `rot`.
+   * Comes with `chunkChanged {reason: 'object'}` for the old and the new chunk.
+   */
+  | {
+      type: 'furnitureMoved';
+      tick: number;
+      cause: 'push' | 'pull' | 'rotate' | 'crowd';
+      playerId?: PlayerId;
+      contentId: string;
+      fromId: number;
+      toId: number;
+      fromX: number;
+      fromY: number;
+      x: number;
+      y: number;
+      z: number;
+      rot: number;
+      w: number;
+      h: number;
     }
   /**
    * A door / window / fence edge changed state or took damage (renderer: door sprite, broken

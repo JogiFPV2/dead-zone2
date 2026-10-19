@@ -124,6 +124,11 @@ export interface ActionState {
   pump?: [number, number] | undefined;
   /** `drinkTank` / `fillWater`: the map object (tile x, y, z, index on the tile). */
   fixture?: [number, number, number, number] | undefined;
+  /**
+   * `moveFurniture` (`physics/furniture.ts`): origin key of the piece, mode (0 push, 1 pull,
+   * 2 rotate) and the player's side of it at the start (the direction stays fixed).
+   */
+  furniture?: { origin: string; mode: number; dir: { dx: number; dy: number } } | undefined;
 }
 
 export interface ItemStore {

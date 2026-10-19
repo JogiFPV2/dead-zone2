@@ -16,6 +16,7 @@ import {
   CHUNK_SIZE,
   snapshotByteLength,
   type Command,
+  type CommandRejectReason,
   type PlayerId,
   type SimEvent,
   type SimMap,
@@ -107,6 +108,13 @@ import { writePhysicsHash } from './physics/step.js';
 import { registerMovementModifier } from './systems/movement.js';
 import { TileGrid } from './world/grid.js';
 import { initUtilities } from './items/utilities.js';
+import {
+  canMoveFurniture,
+  registerFurnitureGrid,
+  startFurnitureMove,
+  type FurnitureMoveCheck,
+  type FurnitureMoveMode,
+} from './physics/furniture.js';
 
 export interface SimOptions {
   seed: number;
@@ -372,6 +380,23 @@ export interface Sim {
   getContainer(id: number): ContainerView | undefined;
   /** Current timed action of a player (null = none). */
   getAction(playerId?: PlayerId): ActionView | null;
+  /**
+   * Furniture (Physics, docs 9.61): starts the timed `moveFurniture` action of player `playerId`
+   * on the piece `furnitureId` (`useFurniture` id, `furnitureActions`): push it one tile away
+   * from the player / pull it one tile towards the player (who steps back) / rotate it 90°
+   * clockwise about its north-west tile. Undefined = started (or queued); else the reason
+   * (`too-heavy`, `blocked`, `out-of-range`, `invalid-target`, `busy`, ...). Call from the step
+   * owner (hashed state), like a command.
+   */
+  pushFurniture(furnitureId: number, playerId?: PlayerId): CommandRejectReason | undefined;
+  pullFurniture(furnitureId: number, playerId?: PlayerId): CommandRejectReason | undefined;
+  rotateFurniture(furnitureId: number, playerId?: PlayerId): CommandRejectReason | undefined;
+  /** Would that move work now? Weight vs strength, duration, direction (pure query). */
+  canMoveFurniture(
+    furnitureId: number,
+    mode: FurnitureMoveMode,
+    playerId?: PlayerId,
+  ): FurnitureMoveCheck;
   /** Escape hatch for tests and tools; systems' internals, not a stable API. */
   readonly world: SimWorld;
   /** Whole sim state as a versioned save (UTF-8 JSON bytes); `createSim({ load })` restores it. */
@@ -502,8 +527,13 @@ export function createSim(input: SimOptions): Sim {
   };
   if (w.lod && source.bounds.z1 > source.bounds.z0) ctx.grid.multiLevel = true;
   w.physics.stairs = ctx.grid.stairs;
+  registerFurnitureGrid(w, ctx.grid);
   w.physics.multiLevel = ctx.grid.multiLevel;
   const views = new ViewTracker(0);
+  const moveFurniture = (id: number, mode: FurnitureMoveMode, playerId: PlayerId) => {
+    const eid = w.players.get(playerId);
+    return eid === undefined ? 'unknown-player' : startFurnitureMove(w, eid, id, mode);
+  };
   const c = w.c;
 
   const spawnPlayer = (playerId: PlayerId, x: number, y: number, z: number): number => {
@@ -871,6 +901,23 @@ export function createSim(input: SimOptions): Sim {
     getAction(playerId = 0) {
       const eid = w.players.get(playerId);
       return eid === undefined ? null : actionView(w, eid);
+    },
+    pushFurniture: (id, playerId = 0) => moveFurniture(id, 'push', playerId),
+    pullFurniture: (id, playerId = 0) => moveFurniture(id, 'pull', playerId),
+    rotateFurniture: (id, playerId = 0) => moveFurniture(id, 'rotate', playerId),
+    canMoveFurniture(id, mode, playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined
+        ? {
+            ok: false,
+            reason: 'unknown-player',
+            weightKg: 0,
+            strengthKg: 0,
+            ticks: 0,
+            dx: 0,
+            dy: 0,
+          }
+        : canMoveFurniture(w, eid, id, mode);
     },
     getPlayer(playerId = 0) {
       const eid = w.players.get(playerId);

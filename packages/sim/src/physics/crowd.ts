@@ -8,6 +8,7 @@ import { canAct, canMove } from './modifiers.js';
 import { PHYS_TICKS_PER_SECOND } from './constants.js';
 import type { PhysicsBody } from './types.js';
 import { floorZ } from '../world/levels.js';
+import { crowdPushFurniture, furnitureDoorResist, movedPieceOn } from './furniture.js';
 
 /**
  * Crowd pressure (PZ hordes): zombies pressing on a closed door / window / fence add up their
@@ -43,6 +44,8 @@ export interface EdgePressure {
   units: number;
   pushers: number;
   resist: number;
+  /** Part of `resist` from moved furniture right behind the edge (`furniture.ts`). */
+  furniture: number;
 }
 
 const purposeful = (s: number): boolean =>
@@ -61,7 +64,7 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
   const k = unpackKey(key);
   const c = edgeCentre(side, k.tx, k.ty);
   const edge = side === 0 ? k.ty : k.tx;
-  const out: EdgePressure = { units: 0, pushers: 0, resist: 0 };
+  const out: EdgePressure = { units: 0, pushers: 0, resist: 0, furniture: 0 };
   const reach2 = cc.reachTiles * cc.reachTiles;
   w.ai?.spatial.query(c.x, c.y, cc.reachTiles, (o) => {
     if (floorZ(w, o) !== k.z || (Zombie.hp[o] ?? 0) <= 0) return;
@@ -101,7 +104,21 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
   // Planks: `barricadeResist` for a full barricade, proportionally less for fewer planks.
   const planks = state === OS.barricaded ? w.openings.cfg.barricade.maxPlanks : planksOf(w, key);
   out.resist += (cc.barricadeResist * planks) / w.openings.cfg.barricade.maxPlanks;
+  // Moved furniture on the tile behind the edge (away from the crowd) holds it shut.
+  out.furniture = furnitureDoorResist(w, behindPiece(w, key, sign));
+  out.resist += out.furniture;
   return out;
+}
+
+/** Moved furniture on the tile behind edge `key` as seen from the crowd on side `sign`. */
+function behindPiece(w: SimWorld, key: number, sign: number) {
+  if (w.physics.furnitureMoves.size === 0) return undefined;
+  const k = unpackKey(key);
+  // N edge of (tx, ty) lies between rows ty − 1 and ty; W edge between columns tx − 1 and tx.
+  const near = sign > 0 ? -1 : 0;
+  return key % 2 === 0
+    ? movedPieceOn(w, k.tx, k.ty + near, k.z)
+    : movedPieceOn(w, k.tx + near, k.ty, k.z);
 }
 
 const levelOf = (excess: number, lv: readonly [number, number]): number =>
@@ -149,6 +166,13 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
     side === 0 ? (w.c.Position.y[first] ?? 0) - k.ty : (w.c.Position.x[first] ?? 0) - k.tx;
   const p = edgePressure(w, key, pos >= 0 ? 1 : -1, state);
   const net = p.units - p.resist;
+  // Enough pressure shoves the furniture behind the door one tile into the room (it then no
+  // longer holds the door; the push uses the same placement checks as a player's).
+  if (p.furniture > 0 && net >= w.physics.cfg.furniture.pushBackUnits) {
+    const piece = behindPiece(w, key, pos >= 0 ? 1 : -1);
+    const d = pos >= 0 ? -1 : 1;
+    if (piece) crowdPushFurniture(w, piece, side === 1 ? d : 0, side === 0 ? d : 0);
+  }
   const excess = net - cc.freeUnits;
   const level = levelOf(excess, cc.levelUnits);
   if (level !== prev) emitPressure(w, key, kind, level, p);

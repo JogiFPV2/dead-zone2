@@ -107,6 +107,22 @@ export interface PhysicsWorld {
   multiLevel: boolean;
   /** Vehicles by StableId (`vehicles/*`; saved, hashed only when there are any). */
   readonly vehicles: Map<number, Vehicle>;
+  /**
+   * Moved furniture (`furniture.ts`): origin `cx,cy,z,i` (chunk and index in its map `objects`)
+   * → current placement. Overrides the map (`furnitureOverlay`); saved, hashed only when any.
+   */
+  readonly furnitureMoves: Map<string, FurnitureMove>;
+  /** Bumped on every change of `furnitureMoves` (overlay cache; transient). */
+  furnitureRev: number;
+}
+
+/** Placement of a moved map object: north-west tile and rotation (same level as the origin). */
+export interface FurnitureMove {
+  contentId: string;
+  x: number;
+  y: number;
+  z: number;
+  rot: number;
 }
 
 /** Hit or shove of `attackerId` on `targetId`, resolved by `physicsStep` in the given order. */
