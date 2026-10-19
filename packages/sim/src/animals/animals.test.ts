@@ -105,6 +105,27 @@ describe('animals: content and spawn', () => {
   });
 });
 
+describe('animals: lazy maps', () => {
+  it('populateAnimals without a chunk list (generated worlds) uses the chunks around the player', () => {
+    const m = buildMap({});
+    const lazy = { ...m };
+    delete lazy.listChunks;
+    const make = () =>
+      createSim({
+        seed: 4,
+        map: lazy,
+        spawn: { x: 10.5, y: 10.5 },
+        content: animalContent(),
+        dev: true,
+        populateAnimals: 30,
+      }).getAnimals();
+    const a = make();
+    expect(a.length).toBeGreaterThan(15);
+    expect(make()).toEqual(a);
+    for (const p of a) expect(dist(p, { x: 10.5, y: 10.5 })).toBeGreaterThanOrEqual(12);
+  });
+});
+
 describe('animals: AI', () => {
   it('grazes and wanders around its home (walk / idle anims)', () => {
     const sim = animalSim({ animals: [{ x: 40.5, y: 40.5, type: 'fixture:rabbit' }] });

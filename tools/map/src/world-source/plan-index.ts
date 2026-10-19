@@ -1,5 +1,5 @@
 import type { AreaKind, OsmBuilding, RoadKind } from '../osm/types.js';
-import { dm, type WorldPlanInput } from './plan.js';
+import { dm, type PlanFeatures, type WorldPlanInput } from './plan.js';
 
 /** Grid cell of the spatial index (tiles). */
 export const INDEX_CELL = 64;
@@ -22,7 +22,24 @@ export interface IRoad {
 }
 export interface IRail {
   bridge: boolean;
+  /** OSM id (infra: track ends and switches between rails). */
+  id: number;
+  /** Electrified (`contact_line`): catenary. */
+  el: boolean;
+  /** Siding / spur (`service=*`): a dead end gets a buffer stop. */
+  siding: boolean;
   pts: Float64Array;
+}
+export interface IPower {
+  id: number;
+  kind: 'hv110' | 'hv220' | 'hv400' | 'lv';
+  circuits: 1 | 2;
+  pts: Float64Array;
+}
+export interface IRailNode {
+  kind: 'switch' | 'buffer_stop' | 'level_crossing';
+  x: number;
+  y: number;
 }
 export interface IWater {
   r: number;
@@ -106,12 +123,18 @@ class Grid<T> {
   private readonly cells = new Map<number, number[]>();
   readonly items: T[] = [];
   readonly boxes: Box[] = [];
+  /** Sort key of each item (query order); insertion index unless given. */
+  private readonly order: number[] = [];
+  private sorted = true;
   private stamp: Uint32Array = new Uint32Array(0);
   private gen = 0;
 
-  add(item: T, box: Box): void {
+  add(item: T, box: Box, order?: number): void {
     const i = this.items.push(item) - 1;
     this.boxes.push(box);
+    const o = order ?? i;
+    if (this.order.length && o < this.order[this.order.length - 1]!) this.sorted = false;
+    this.order.push(o);
     for (let cy = Math.floor(box.y0 / INDEX_CELL); cy <= Math.floor(box.y1 / INDEX_CELL); cy++)
       for (let cx = Math.floor(box.x0 / INDEX_CELL); cx <= Math.floor(box.x1 / INDEX_CELL); cx++) {
         const k = cy * 65536 + cx;
@@ -119,6 +142,14 @@ class Grid<T> {
         if (l) l.push(i);
         else this.cells.set(k, [i]);
       }
+  }
+
+  /** All item indices in query order. */
+  ordered(): number[] {
+    const idx = this.items.map((_, i) => i);
+    if (this.sorted) return idx;
+    const o = this.order;
+    return idx.sort((a, b) => o[a]! - o[b]! || a - b);
   }
 
   /** Indices of items whose box overlaps `q`, ascending (= insertion order). */
@@ -136,7 +167,11 @@ class Grid<T> {
           out.push(i);
         }
       }
-    return out.sort((a, b) => a - b);
+    if (this.sorted) return out.sort((a, b) => a - b);
+    // Items added out of order (lazily loaded OSM tiles): by key, so the result does not depend
+    // on which tile came first.
+    const o = this.order;
+    return out.sort((a, b) => o[a]! - o[b]! || a - b);
   }
 }
 
@@ -148,6 +183,8 @@ class Grid<T> {
 export class PlanIndex {
   readonly roads = new Grid<IRoad>();
   readonly rails = new Grid<IRail>();
+  readonly power = new Grid<IPower>();
+  readonly railNodes = new Grid<IRailNode>();
   readonly waters = new Grid<IWater>();
   readonly areas = new Grid<IArea>();
   readonly buildings = new Grid<IBuilding>();
@@ -155,49 +192,95 @@ export class PlanIndex {
   readonly trees = new Grid<[number, number]>();
   readonly pois = new Grid<{ kind: string; x: number; y: number; name?: string | undefined }>();
 
+  /** Features already indexed, by layer and id (lazily loaded tiles repeat edge features). */
+  private readonly seen = new Set<string>();
+
   constructor(readonly plan: WorldPlanInput) {
-    const f = plan.features;
-    // Areas in paint order (rank, then file order): query results are already sorted.
-    const areas = f.areas
-      .map((a, i) => ({ a, i, rank: AREA_ORDER.indexOf(a.kind) }))
-      .filter((e) => e.rank >= 0)
-      .sort((p, q) => p.rank - q.rank || p.i - q.i);
-    for (const { a, rank } of areas) {
+    this.addFeatures(plan.features);
+  }
+
+  /**
+   * Adds features (the whole plan, or one lazily loaded OSM tile). Ordered features carry their
+   * global rank in the full file (`ord`, building `gid`), so query results do not depend on load
+   * order; without them the file order is used (the whole plan at once).
+   */
+  addFeatures(f: PlanFeatures): void {
+    const fresh = (layer: string, id: number) => {
+      const k = `${layer}${id}`;
+      if (this.seen.has(k)) return false;
+      this.seen.add(k);
+      return true;
+    };
+    // Areas in paint order (rank, then file order).
+    f.areas.forEach((a, i) => {
+      const rank = AREA_ORDER.indexOf(a.kind);
+      // Key = file rank: a multipolygon's outer rings are separate areas with one OSM id.
+      if (rank < 0 || !fresh(`a${a.part ?? ''}:`, a.ord ?? i)) return;
       const rings = a.rings.map(dm);
-      this.areas.add({ kind: a.kind, rank, rings }, boxOf(rings));
-    }
-    for (const w of f.waterways) {
+      this.areas.add({ kind: a.kind, rank, rings }, boxOf(rings), rank * 1e7 + (a.ord ?? i));
+    });
+    f.waterways.forEach((w, i) => {
+      if (!fresh(`w${w.part ?? ''}:`, w.ord ?? i)) return;
       const pts = dm(w.pts);
       const r = Math.max(1, w.width / 2);
-      this.waters.add({ r, pts }, boxOf(pts, r + 1));
-    }
-    for (const r of f.rails) {
-      if (r.kind === 'disused') continue;
+      this.waters.add({ r, pts }, boxOf(pts, r + 1), w.ord ?? i);
+    });
+    f.rails.forEach((r, i) => {
+      if (r.kind === 'disused' || !fresh('r', r.id)) return;
       const pts = dm(r.pts);
-      this.rails.add({ bridge: !!r.bridge, pts }, boxOf(pts, 3));
+      this.rails.add(
+        { bridge: !!r.bridge, id: r.id, el: !!r.el, siding: r.kind === 'siding', pts },
+        boxOf(pts, 3),
+        r.ord ?? i,
+      );
+    });
+    (f.power ?? []).forEach((w, i) => {
+      if (!fresh('p', w.id)) return;
+      const pts = dm(w.pts);
+      this.power.add(
+        { id: w.id, kind: w.kind, circuits: w.circuits, pts },
+        boxOf(pts, 8),
+        w.ord ?? i,
+      );
+    });
+    for (const n of f.railNodes ?? []) {
+      const x = n.x / 10;
+      const y = n.y / 10;
+      if (!fresh(`n${n.kind}:`, Math.round(y * 10) * 1e6 + Math.round(x * 10))) continue;
+      this.railNodes.add(
+        { kind: n.kind, x, y },
+        { x0: x, y0: y, x1: x, y1: y },
+        Math.round(y * 10) * 1e6 + Math.round(x * 10),
+      );
     }
-    const roads = f.roads
-      .map((r, i) => ({ r, i, rank: ROAD_ORDER.indexOf(r.kind) }))
-      .filter((e) => e.rank >= 0 && !e.r.tunnel)
-      .sort((p, q) => Number(!!p.r.bridge) - Number(!!q.r.bridge) || p.rank - q.rank || p.i - q.i);
-    for (const { r } of roads) {
+    f.roads.forEach((r, i) => {
+      const rank = ROAD_ORDER.indexOf(r.kind);
+      if (rank < 0 || r.tunnel || !fresh('h', r.id)) return;
       const pts = dm(r.pts);
       const half = Math.max(0.75, r.width / 2);
       const rs = r.sidewalk > 0 ? r.width / 2 + r.sidewalk : 0;
       this.roads.add(
         { kind: r.kind, r: half, rs, bridge: !!r.bridge, pts },
         boxOf(pts, Math.max(half, rs) + 1),
+        Number(!!r.bridge) * 1e9 + rank * 1e7 + (r.ord ?? i),
       );
-    }
-    const sorted = [...f.buildings].sort((a, b) => a.id - b.id);
-    sorted.forEach((b, i) => {
-      const rings = b.rings.map(dm);
-      this.buildings.add({ gid: i + 1, b, rings, box: boxOf(rings) }, boxOf(rings));
     });
+    // Building ids: rank in OSM id order over the whole file (`gid` from the tile writer).
+    const byId = f.buildings.some((b) => b.gid === undefined)
+      ? new Map([...f.buildings].sort((a, b) => a.id - b.id).map((b, i) => [b.id, i + 1]))
+      : undefined;
+    for (const b of f.buildings) {
+      if (!fresh('b', b.id)) continue;
+      const gid = b.gid ?? byId!.get(b.id)!;
+      const rings = b.rings.map(dm);
+      this.buildings.add({ gid, b, rings, box: boxOf(rings) }, boxOf(rings), gid);
+    }
+    // Points: ordered by position (a tree / POI lives in exactly one tile).
+    const pt = (x: number, y: number) => Math.round(y * 10) * 1e6 + Math.round(x * 10);
     for (let i = 0; i + 1 < f.trees.length; i += 2) {
       const x = f.trees[i]! / 10;
       const y = f.trees[i + 1]! / 10;
-      this.trees.add([x, y], { x0: x, y0: y, x1: x, y1: y });
+      this.trees.add([x, y], { x0: x, y0: y, x1: x, y1: y }, pt(x, y));
     }
     for (const row of f.treeRows) {
       const p = dm(row);
@@ -210,14 +293,14 @@ export class PlanIndex {
         for (let d = 0; d < l; d += 7) {
           const x = ax + ((bx - ax) * d) / l;
           const y = ay + ((by - ay) * d) / l;
-          this.trees.add([x, y], { x0: x, y0: y, x1: x, y1: y });
+          this.trees.add([x, y], { x0: x, y0: y, x1: x, y1: y }, pt(x, y));
         }
       }
     }
     for (const p of f.pois) {
       const x = p.x / 10;
       const y = p.y / 10;
-      this.pois.add({ kind: p.kind, x, y, name: p.name }, { x0: x, y0: y, x1: x, y1: y });
+      this.pois.add({ kind: p.kind, x, y, name: p.name }, { x0: x, y0: y, x1: x, y1: y }, pt(x, y));
     }
   }
 }

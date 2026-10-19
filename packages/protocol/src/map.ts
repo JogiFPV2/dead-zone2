@@ -84,6 +84,26 @@ export interface SimChunk {
    * for lock / key / fuel from `worldSettings.vehicles.spawn`. Optional.
    */
   readonly vehicles?: readonly SimChunkVehicle[] | undefined;
+  /**
+   * Exact walls of slanted buildings on this level (docs/osm.md „wallSegments”): straight
+   * segments in **world metres** (1 tile = 1 m, absolute map coordinates, not chunk-local),
+   * clipped to this chunk, with the openings' gaps already cut. The tile edges of the same
+   * building stay a conservative raster just inside these lines (doors / windows / rooms keep
+   * working on them); a sim that knows segments may collide / trace LOS against them exactly.
+   * Optional; corner posts drawn by the client are decoration and are not listed.
+   */
+  readonly wallSegments?: readonly SimWallSegment[] | undefined;
+}
+
+/** One wall segment (`SimChunk.wallSegments`): world metres, `z` = level (= the chunk's). */
+export interface SimWallSegment {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+  readonly z: number;
+  /** Map-global building id (`roomBuildings` values); optional for the sim, used by the client. */
+  readonly building?: number | undefined;
 }
 
 /**

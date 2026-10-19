@@ -51,6 +51,36 @@ sklep + zaplecze, sale szkolne, biura, sale szpitalne…), meble i łupy wg typu
 (`furnish`, loot tables), korytarze i klatki: `base:room-hall` (tabela `base:hall`). Test
 `osm.test.ts`: z każdego kafla każdego piętra każdego budynku da się dojść do wyjścia.
 
+## Ściany skośnych budynków: `wallSegments` (ocena + format dla Symulacji)
+
+Ocena: obrys OSM obrócony względem siatki rasteryzowany do krawędzi kafli daje „ząbki”
+(1267 z 23670 budynków poza siatką po wyrównaniu obróconych/dopasowanych). Wariant minimalny
+rozszerzony o pole dla sima (wdrożony, `GENERATOR_REV` 5):
+
+- **Render**: ściany zewnętrzne takich budynków rysowane wektorowo z obrysu
+  (`apps/game/src/world/town/vector-walls.ts`); rastrowe zewnętrzne ściany-pełne tych budynków
+  nie są rysowane, drzwi/okna zostają na krawędziach kafli i widać je w przerwach obrysu.
+  Słupki w narożnikach („rogatki”) to dekoracja, **bez kolizji**. Dachy zostają rastrowe.
+- **Raster (kafle, `SimChunk` jak dotąd)**: konserwatywny — kafel należy do budynku tylko wtedy,
+  gdy jego środek jest w obrysie i żadna krawędź obrysu go nie przecina (`fillRingsInner`).
+  Schodek jest więc zawsze po wewnętrznej stronie linii: kolizja na krawędziach kafli nigdy nie
+  wystaje poza ścianę wektorową (szczelina między nimi to przestrzeń „w ścianie”).
+- **`SimChunk.wallSegments?: readonly SimWallSegment[]`** (`packages/protocol/src/map.ts`),
+  obecne tylko w chunkach/poziomach ze skośnymi budynkami:
+  - `{ x0, y0, x1, y1, z, building? }`;
+  - `x/y` w **metrach świata, absolutnie** (1 kafel = 1 m, ta sama oś co `tx/ty`), nie lokalnie
+    względem chunka;
+  - `z` = poziom chunka (kondygnacja), taki sam jak `SimChunk.z`;
+  - odcinki są **przycięte do prostokąta chunka** (Liang–Barsky); odcinek leżący dokładnie na
+    granicy może wystąpić w obu chunkach — deduplikacja niepotrzebna dla kolizji/LOS;
+  - **otwory już wycięte**: przy zewnętrznych drzwiach i oknach danego poziomu jest przerwa
+    ~1,2 m (przejście/okno sim nadal bierze z krawędzi kafli: drzwi/okna mają tam swoje typy);
+  - `building` = `BuildingId` budynku (ten sam co w kaflach), do pokojów/dźwięku;
+  - grubość ściany nie jest zapisana: render używa 0,15 m, sim traktuje odcinek jako linię
+    (albo kapsułę o promieniu gracza).
+- Sim: dokładna kolizja i LOS na odcinkach (obok krawędzi kafli), dźwięk i pokoje mogą zostać
+  na kaflach. Do zrobienia po stronie Symulacji — klient i generator już to emitują.
+
 ## Scena `osm-okulickiego` (tło menu)
 
 320 × 320 m wokół wiaduktu ul. KEN nad torami przy ul. Okulickiego (środek wycinka UTM

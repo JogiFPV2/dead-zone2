@@ -51,33 +51,7 @@ export function townDecor(
     for (let x = x0; x < x1; x++) {
       const t = f(x, z);
       if (t === 'base:sidewalk') {
-        // Curb side of an east-west road: the road is right below (south) or above (north).
-        const crossRoad = road(x - 1, z) || road(x + 1, z);
-        if (
-          !crossRoad &&
-          road(x, z + 1) &&
-          ((x % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === 0
-        )
-          lamps.push(lamp(x + 0.5, z + 0.45, 0, 1));
-        if (
-          !crossRoad &&
-          road(x, z - 1) &&
-          ((x % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === LAMP_SPACING / 2
-        )
-          lamps.push(lamp(x + 0.5, z + 0.55, 0, -1));
-        const alongRoad = road(x, z - 1) || road(x, z + 1);
-        if (
-          !alongRoad &&
-          road(x + 1, z) &&
-          ((z % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === LAMP_SPACING / 2
-        )
-          lamps.push(lamp(x + 0.45, z + 0.5, 1, 0));
-        if (
-          !alongRoad &&
-          road(x - 1, z) &&
-          ((z % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === 0
-        )
-          lamps.push(lamp(x + 0.55, z + 0.5, -1, 0));
+        lampsAt(f, x, z, lamps);
         // Power poles on the outer edge (sidewalk next to the lots).
         const outerN = !walk(x, z - 1) && !road(x, z - 1) && walk(x, z + 1);
         const outerS = false;
@@ -128,8 +102,50 @@ export function townDecor(
     });
   }
   return { props, lamps };
+}
 
-  function lamp(x: number, z: number, armX: number, armZ: number): LampDef {
-    return { x, z, armX, armZ, working: hash01(Math.floor(x), Math.floor(z), 31) > 0.25 };
-  }
+function lamp(x: number, z: number, armX: number, armZ: number): LampDef {
+  return { x, z, armX, armZ, working: hash01(Math.floor(x), Math.floor(z), 31) > 0.25 };
+}
+
+/**
+ * Street lamps of the sidewalk tile (x, z): on the curb side every LAMP_SPACING m (alternating
+ * sides), arm over the road, ~1 in 4 broken.
+ */
+export function lampsAt(
+  f: (x: number, z: number) => string | undefined,
+  x: number,
+  z: number,
+  lamps: LampDef[],
+): void {
+  const road = (x: number, z: number) => f(x, z) === 'base:asphalt';
+  // Curb side of an east-west road: the road is right below (south) or above (north).
+  const crossRoad = road(x - 1, z) || road(x + 1, z);
+  if (!crossRoad && road(x, z + 1) && ((x % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === 0)
+    lamps.push(lamp(x + 0.5, z + 0.45, 0, 1));
+  if (
+    !crossRoad &&
+    road(x, z - 1) &&
+    ((x % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === LAMP_SPACING / 2
+  )
+    lamps.push(lamp(x + 0.5, z + 0.55, 0, -1));
+  const alongRoad = road(x, z - 1) || road(x, z + 1);
+  if (
+    !alongRoad &&
+    road(x + 1, z) &&
+    ((z % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === LAMP_SPACING / 2
+  )
+    lamps.push(lamp(x + 0.45, z + 0.5, 1, 0));
+  if (!alongRoad && road(x - 1, z) && ((z % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === 0)
+    lamps.push(lamp(x + 0.55, z + 0.5, -1, 0));
+}
+
+/** Street lamps only (generated maps: the window around the player; no props, cheap). */
+export function streetLampsOf(tiles: MapTiles, range: ChunkRange): LampDef[] {
+  const lamps: LampDef[] = [];
+  const f = (x: number, z: number) => tiles.floor(x, z);
+  for (let z = range.cy0 * CHUNK_SIZE; z < (range.cy1 + 1) * CHUNK_SIZE; z++)
+    for (let x = range.cx0 * CHUNK_SIZE; x < (range.cx1 + 1) * CHUNK_SIZE; x++)
+      if (f(x, z) === 'base:sidewalk') lampsAt(f, x, z, lamps);
+  return lamps;
 }

@@ -1,3 +1,5 @@
+import { coverZones } from './cover.js';
+import { chunkInfra, type GenInfra } from './infra.js';
 import { CHUNK_SIZE } from '@deadzone/content';
 import { occupiedTiles } from '@deadzone/content/footprint';
 import { OVERLAY_OBJECTS, baseFootprint } from '../furnish.js';
@@ -17,7 +19,14 @@ import {
 } from './palette.js';
 import { AREA_ORDER, PlanIndex, type IBuilding } from './plan-index.js';
 import { generatorVersionNumber, type WorldPlanInput } from './plan.js';
-import { AREA_TREES, ROAD_GROUND, fillRings, rasterGround, type Raster } from './raster.js';
+import {
+  AREA_TREES,
+  ROAD_GROUND,
+  clipSegment,
+  fillRings,
+  rasterGround,
+  type Raster,
+} from './raster.js';
 
 const C = CHUNK_SIZE;
 const CT = C * C;
@@ -38,6 +47,23 @@ export interface GenLevel {
   stairs: { tx: number; ty: number; dir: 'N' | 'E' | 'S' | 'W'; len: number }[];
   /** Parked cars (level 0): centre in local tiles. */
   vehicles?: { x: number; y: number; heading: number; type: string }[];
+  /**
+   * Outline walls of slanted buildings on this level, clipped to the chunk (world metres, see
+   * `SimChunk.wallSegments`), with the global building id for the renderer.
+   */
+  wallSegments?: { x0: number; y0: number; x1: number; y1: number; z: number; building: number }[];
+  /**
+   * Level 0: dense-cover zones (`SimChunk.zones`, sim #256): `bushes` (scrub, hedges) / `cover`
+   * (woods), one per role, rectangles in global tiles inside this chunk; id `cover:cx,cy:role`.
+   */
+  zones?: {
+    id: string;
+    role: string;
+    z: number;
+    rects: { x: number; y: number; w: number; h: number }[];
+  }[];
+  /** Level 0: feet of HV towers and catenary masts (`SimChunk.blockers`, chunk-local metres). */
+  blockers?: { x0: number; y0: number; x1: number; y1: number }[];
 }
 
 /** Render metadata of a building touching the chunk (`BuildingMeta`). */
@@ -52,6 +78,8 @@ export interface GenBuildingMeta {
   rect: boolean;
   type: string;
   kind: string;
+  /** Slanted building with vector walls: outline (x, y pairs, world metres) for a flat roof. */
+  outline?: number[];
 }
 
 /**
@@ -85,6 +113,8 @@ export interface GenColumn {
   /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
   trees: number[];
   buildings: GenBuildingMeta[];
+  /** Power lines, railway track, switches, crossings, catenary (render only, world metres). */
+  infra?: GenInfra;
 }
 
 export const VEHICLE_TYPE = 'base:sedan';
@@ -92,6 +122,9 @@ export const FUEL_PUMP = 'base:fuel-pump';
 /** Max parked cars per chunk (`SimChunk.vehicles`). */
 const MAX_CARS = 64;
 const RASTER_MARGIN = 12;
+/** `Raster.area` values (+1) of the vegetation areas that make cover zones. */
+const SCRUB_RANK = AREA_ORDER.indexOf('scrub') + 1;
+const FOREST_RANK = AREA_ORDER.indexOf('forest') + 1;
 
 /** Deterministic 0..1 hash of integer coordinates. */
 export function hash01(x: number, y: number, salt: number): number {
@@ -247,6 +280,7 @@ export class PlanChunkGenerator {
       const rooms: [number, string, number][] = [];
       const kinds = new Map<number, string>();
       const stairs: GenLevel['stairs'] = [];
+      const walls: NonNullable<GenLevel['wallSegments']> = [];
       let any = z === 0;
       for (const s of list) {
         const L = s.levels.get(z);
@@ -285,6 +319,13 @@ export class PlanChunkGenerator {
               any = true;
             }
           }
+        for (const g of s.segments ?? []) {
+          if (g.z !== z) continue;
+          const c = clipSegment(g.x0, g.y0, g.x1, g.y1, X0, Y0, X0 + C, Y0 + C);
+          if (!c || Math.hypot(c[2] - c[0], c[3] - c[1]) < 1e-3) continue;
+          walls.push({ x0: c[0], y0: c[1], x1: c[2], y1: c[3], z, building: s.gid });
+          any = true;
+        }
         for (const st of s.stairs) {
           if (st.z !== z || st.x < X0 || st.y < Y0 || st.x >= X0 + C || st.y >= Y0 + C) continue;
           stairs.push({ tx: st.x - X0, ty: st.y - Y0, dir: st.dir, len: st.len });
@@ -339,6 +380,7 @@ export class PlanChunkGenerator {
       }
       const level: GenLevel = { z, floor, edgeN, edgeW, rooms, objects, stairs };
       if (rooms.length) level.room = room;
+      if (walls.length) level.wallSegments = walls;
       if (kinds.size) level.buildingKinds = [...kinds];
       if (roof.some((v) => v !== 0)) level.roof = roof;
       if (z === 0) {
@@ -369,8 +411,42 @@ export class PlanChunkGenerator {
         rect: s.rect,
         type: s.type,
         kind: s.kind,
+        ...(s.outline ? { outline: s.outline } : {}),
       }));
     const out: GenColumn = { cx, cy, levels, trees, buildings };
+    const infra = chunkInfra(this.index, cx, cy, C);
+    if (infra) out.infra = infra;
+    // Dense cover: scrub / hedges → bushes, woods → cover (open ground only).
+    const cls = new Uint8Array(CT);
+    let anyCover = false;
+    for (let i = 0; i < CT; i++) {
+      const j = ri(i % C, (i / C) | 0);
+      const a = r.area[j]!;
+      const v = a === SCRUB_RANK ? 1 : a === FOREST_RANK ? 2 : 0;
+      if (!v || occ[j] || owner[i] || r.deck[j]) continue;
+      const g = r.g[j]!;
+      if (g !== G_GRASS && g !== G_DIRT) continue;
+      cls[i] = v;
+      anyCover = true;
+    }
+    if (anyCover)
+      ground.zones = coverZones(cls, C).map((zn) => ({
+        id: `cover:${cx},${cy}:${zn.role}`,
+        role: zn.role,
+        z: 0,
+        rects: zn.rects.map((q) => ({ x: X0 + q.x, y: Y0 + q.y, w: q.w, h: q.h })),
+      }));
+    // Tower / mast feet; a pad on a road tile is dropped (the road runs between the legs;
+    // pads on the track bed are dropped in `chunkInfra`).
+    const feet = (infra?.blockers ?? []).filter((b) => {
+      for (let y = Math.floor(b.y0); y < Math.ceil(b.y1); y++)
+        for (let x = Math.floor(b.x0); x < Math.ceil(b.x1); x++) {
+          const gg = r.g[ri(x, y)]!;
+          if (gg === G_ASPHALT || r.deck[ri(x, y)]) return false;
+        }
+      return true;
+    });
+    if (feet.length) ground.blockers = feet;
     const roads = this.vectorRoads(X0, Y0);
     if (roads.length) out.roads = roads;
     const under = new Uint16Array(CT);
@@ -678,17 +754,19 @@ export class PlanChunkGenerator {
    */
   chunkKind(cx: number, cy: number): string | undefined {
     if (!this.inBounds(cx, cy)) return undefined;
-    const k = (this.kinds ??= this.computeKinds());
+    const k = (this.kinds ??= this.plan.chunkKinds ?? this.computeKinds());
     const b = this.bounds;
     return CHUNK_KINDS[k[(cy - b.cy0) * (b.cx1 - b.cx0 + 1) + (cx - b.cx0)]!];
   }
 
-  private computeKinds(): Uint8Array {
+  /** Zone kinds of every chunk in the bounds (row-major, `CHUNK_KINDS` indices). */
+  computeKinds(): Uint8Array {
     const b = this.bounds;
     const W = b.cx1 - b.cx0 + 1;
     const H = b.cy1 - b.cy0 + 1;
     const area = new Uint8Array(W * H);
-    for (const a of this.index.areas.items) {
+    for (const ai of this.index.areas.ordered()) {
+      const a = this.index.areas.items[ai]!;
       const rings = a.rings.map((ring) => {
         const out = new Float64Array(ring.length);
         for (let i = 0; i < ring.length; i += 2) {
@@ -701,15 +779,22 @@ export class PlanChunkGenerator {
         area[i] = a.rank + 1;
       });
     }
+    // Buildings around each chunk: every building counts in the chunks within KIND_RADIUS of
+    // its box (a block of flats is bigger than a chunk; the streets between blocks are „bloki”).
+    const R = KIND_RADIUS;
     const counts = new Map<number, Record<string, number>>();
     for (const ib of this.index.buildings.items) {
-      const x = Math.floor((ib.box.x0 + ib.box.x1) / 2 / C) - b.cx0;
-      const y = Math.floor((ib.box.y0 + ib.box.y1) / 2 / C) - b.cy0;
-      if (x < 0 || y < 0 || x >= W || y >= H) continue;
-      const k = y * W + x;
-      const c = counts.get(k) ?? {};
-      c[ib.b.kind] = (c[ib.b.kind] ?? 0) + 1;
-      counts.set(k, c);
+      const bx0 = Math.max(0, Math.floor(ib.box.x0 / C) - b.cx0 - R);
+      const by0 = Math.max(0, Math.floor(ib.box.y0 / C) - b.cy0 - R);
+      const bx1 = Math.min(W - 1, Math.floor(ib.box.x1 / C) - b.cx0 + R);
+      const by1 = Math.min(H - 1, Math.floor(ib.box.y1 / C) - b.cy0 + R);
+      for (let y = by0; y <= by1; y++)
+        for (let x = bx0; x <= bx1; x++) {
+          const k = y * W + x;
+          const c = counts.get(k) ?? {};
+          c[ib.b.kind] = (c[ib.b.kind] ?? 0) + 1;
+          counts.set(k, c);
+        }
     }
     const out = new Uint8Array(W * H);
     const id = (s: string) => (CHUNK_KINDS as readonly string[]).indexOf(s);
@@ -727,12 +812,16 @@ export class PlanChunkGenerator {
           n('hospital') +
           n('police') +
           n('station') +
-          n('church');
-        if (n('industrial') > 0 && n('industrial') >= n('house')) kind = 'przemysl';
-        else if (n('block') >= 2) kind = services >= 3 ? 'centrum' : 'bloki';
+          n('church') +
+          n('gym') +
+          n('fire-station');
+        const homes = n('house') + n('kostka');
+        if (n('industrial') > 0 && n('industrial') >= homes + n('block')) kind = 'przemysl';
+        // Blocks with shops / offices / public buildings around: the town centre.
+        else if (n('block') >= 1 && services >= 3 && services + n('block') >= 5) kind = 'centrum';
+        else if (n('block') >= 2) kind = 'bloki';
         else if (services >= 3) kind = 'uslugi';
-        else if (n('house') + n('kostka') >= 2)
-          kind = ak === 'farmland' || ak === 'meadow' || !ak ? 'wies' : 'domy';
+        else if (homes >= 2) kind = ak === 'farmland' || ak === 'meadow' || !ak ? 'wies' : 'domy';
         else kind = ak === 'military' ? 'wojsko' : 'farma';
       } else if (ak === 'water') kind = 'woda';
       else if (ak && AREA_TREES[ak] === 1) kind = 'las';
@@ -806,6 +895,9 @@ export class PlanChunkGenerator {
     }));
   }
 }
+
+/** Chunks around a building (each side) where it counts for the zone kind. */
+export const KIND_RADIUS = 1;
 
 export const CHUNK_KINDS = [
   'centrum',

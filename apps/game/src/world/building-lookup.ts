@@ -34,13 +34,25 @@ export class BuildingLookup {
     private readonly cacheChunks = true,
   ) {}
 
+  // Last chunk asked for (cached mode): runs of lookups in one chunk skip the key / map.
+  private lastCx = NaN;
+  private lastCy = NaN;
+  private lastZ = NaN;
+  private lastChunk: ChunkData | undefined;
+
   at(tx: number, ty: number, z: number): BuildingId {
     const cx = Math.floor(tx / CHUNK_SIZE);
     const cy = Math.floor(ty / CHUNK_SIZE);
     if (!this.cacheChunks) return buildingInChunk(this.source.getChunk(cx, cy, z), tx, ty);
-    const key = `${cx},${cy},${z}`;
-    if (!this.cache.has(key)) this.cache.set(key, this.source.getChunk(cx, cy, z));
-    return buildingInChunk(this.cache.get(key), tx, ty);
+    if (cx !== this.lastCx || cy !== this.lastCy || z !== this.lastZ) {
+      const key = `${cx},${cy},${z}`;
+      if (!this.cache.has(key)) this.cache.set(key, this.source.getChunk(cx, cy, z));
+      this.lastCx = cx;
+      this.lastCy = cy;
+      this.lastZ = z;
+      this.lastChunk = this.cache.get(key);
+    }
+    return buildingInChunk(this.lastChunk, tx, ty);
   }
 
   /** Building owning the edge: the tile's own building, else the neighbour across the edge. */

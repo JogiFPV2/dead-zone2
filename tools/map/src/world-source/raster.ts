@@ -110,6 +110,91 @@ export function fillRings(
   }
 }
 
+/**
+ * Conservative fill: only tiles whose whole square lies inside the rings (centre inside and no
+ * ring edge crosses the square). The tile stair-steps of a slanted outline then always stay on
+ * the inner side of the line (vector walls are drawn on the line itself).
+ */
+export function fillRingsInner(
+  rings: readonly Float64Array[],
+  x0: number,
+  y0: number,
+  w: number,
+  h: number,
+  set: (i: number) => void,
+): void {
+  const inside = new Uint8Array(w * h);
+  fillRings(rings, x0, y0, w, h, (i) => (inside[i] = 1));
+  const E = 1e-7;
+  for (const r of rings) {
+    const n = r.length >> 1;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const ax = r[2 * j]!;
+      const ay = r[2 * j + 1]!;
+      const bx = r[2 * i]!;
+      const by = r[2 * i + 1]!;
+      const tx0 = Math.max(x0, Math.floor(Math.min(ax, bx)));
+      const tx1 = Math.min(x0 + w - 1, Math.floor(Math.max(ax, bx)));
+      const ty0 = Math.max(y0, Math.floor(Math.min(ay, by)));
+      const ty1 = Math.min(y0 + h - 1, Math.floor(Math.max(ay, by)));
+      for (let ty = ty0; ty <= ty1; ty++)
+        for (let tx = tx0; tx <= tx1; tx++) {
+          const k = (ty - y0) * w + (tx - x0);
+          if (
+            inside[k] &&
+            segmentCrossesBox(ax, ay, bx, by, tx + E, ty + E, tx + 1 - E, ty + 1 - E)
+          )
+            inside[k] = 0;
+        }
+    }
+  }
+  for (let i = 0; i < inside.length; i++) if (inside[i]) set(i);
+}
+
+/** Whether segment a–b meets the open box (Liang–Barsky clip). */
+export function segmentCrossesBox(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): boolean {
+  return clipSegment(ax, ay, bx, by, x0, y0, x1, y1) !== undefined;
+}
+
+/** Part of segment a–b inside the box [x0, x1] × [y0, y1] (Liang–Barsky), or undefined. */
+export function clipSegment(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): [number, number, number, number] | undefined {
+  const dx = bx - ax;
+  const dy = by - ay;
+  let t0 = 0;
+  let t1 = 1;
+  const p = [-dx, dx, -dy, dy];
+  const q = [ax - x0, x1 - ax, ay - y0, y1 - ay];
+  for (let k = 0; k < 4; k++) {
+    if (p[k] === 0) {
+      if (q[k]! < 0) return undefined;
+      continue;
+    }
+    const t = q[k]! / p[k]!;
+    if (p[k]! < 0) t0 = Math.max(t0, t);
+    else t1 = Math.min(t1, t);
+    if (t0 > t1) return undefined;
+  }
+  return [ax + dx * t0, ay + dy * t0, ax + dx * t1, ay + dy * t1];
+}
+
 /** Tiles whose centre lies within `r` of the polyline, clipped to the window. */
 export function stroke(
   pts: Float64Array,

@@ -64,18 +64,18 @@ export class StreamedTown {
     let bytes = 0;
     let triangles = 0;
     if (z === 0) {
-      const under = col.under;
       const pal = this.loaded.tilePalette;
-      const X0 = cx * CHUNK_SIZE;
-      const Y0 = cy * CHUNK_SIZE;
       const vector =
-        col.roads || under
+        col.roads || col.under
           ? {
               roads: col.roads ?? [],
+              // Also the neighbour chunks' layer (curbs at the chunk edge look across it).
               underAt: (x: number, y: number) => {
-                if (!under || x < X0 || y < Y0 || x >= X0 + CHUNK_SIZE || y >= Y0 + CHUNK_SIZE)
-                  return undefined;
-                const id = under[(y - Y0) * CHUNK_SIZE + (x - X0)]!;
+                const ncx = Math.floor(x / CHUNK_SIZE);
+                const ncy = Math.floor(y / CHUNK_SIZE);
+                const u = (ncx === cx && ncy === cy ? col : this.loaded.column(ncx, ncy))?.under;
+                if (!u) return undefined;
+                const id = u[(y - ncy * CHUNK_SIZE) * CHUNK_SIZE + (x - ncx * CHUNK_SIZE)]!;
                 return id ? (pal[id] ?? undefined) : undefined;
               },
             }
@@ -115,6 +115,25 @@ export class StreamedTown {
       footprintOf: (b) => {
         const m = metas.get(b);
         return m?.rect ? { x0: m.x0, z0: m.y0, x1: m.x1, z1: m.y1 } : undefined;
+      },
+      outlineOf: (b) => {
+        const m = metas.get(b);
+        return m?.outline ? { outline: m.outline, floors: m.floors } : undefined;
+      },
+      blokOf: (b) => {
+        const m = metas.get(b);
+        if (!m || m.kind !== 'block' || m.floors < 3) return undefined;
+        return {
+          floors: m.floors,
+          x0: m.x0,
+          y0: m.y0,
+          x1: m.x1,
+          y1: m.y1,
+          outline: m.outline,
+          // About a third of the blocks were insulated after 2000 (blok-p4-docieplony).
+          insulated: (Math.imul(b, 2654435761) >>> 0) % 3 === 0,
+          seed: b % 97,
+        };
       },
     });
     const trees: [number, number][] = [];

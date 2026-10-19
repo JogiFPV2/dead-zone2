@@ -22,14 +22,18 @@ import {
 import { GENERATOR_REV, type LandCover, type WorldPlanInput } from './plan.js';
 import {
   OSM_ROTATION_DEG,
+  OSM_WORLD_SIZE,
   rotatePt,
   rotation,
   straightenOsmMap,
   unrotatePt,
 } from './straighten.js';
 
-/** Full OSM square: 16 384 m = 512 × 512 chunks. */
-export const OSM_WORLD_CHUNKS = 512;
+/**
+ * World of the OSM square: 22 528 m = 704 × 704 chunks, so the 16 384 m square rotated by
+ * `OSM_ROTATION_DEG` fits whole (shifted by `OSM_SHIFT`; corners beyond it are empty).
+ */
+export const OSM_WORLD_CHUNKS = OSM_WORLD_SIZE / CHUNK_SIZE;
 
 /**
  * Window of the square around a point of the raw OSM frame, in the rotated world frame
@@ -99,7 +103,7 @@ export function osmPlan(
     id: opts.id ?? 'osm-stw',
     version: `osm-stw-${opts.dataHash.slice(0, 12)}-${opts.region}${rot}-g${GENERATOR_REV}`,
     seed: 0x05f3a1,
-    size: map.size,
+    size: OSM_WORLD_SIZE,
     bounds: opts.bounds,
     // Streets on the tile axes, outlines squared (no zigzag edges): `straighten.ts`.
     features: straightenOsmMap(map, deg),

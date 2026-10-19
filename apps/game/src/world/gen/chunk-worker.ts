@@ -1,20 +1,33 @@
 /// <reference lib="webworker" />
-import type { PlanChunkGenerator } from '@deadzone/map/world-source';
+import type { OsmTiles, PlanChunkGenerator } from '@deadzone/map/world-source';
 import { columnBuffers } from './convert.js';
-import { loadGenerator } from './load-plan.js';
+import { loadWorld } from './load-plan.js';
 import type { FromChunkWorker, ToChunkWorker } from './protocol.js';
 
 /**
  * Chunk worker of a generated map: loads the world plan once (spatial index, no chunks), then
- * answers `chunk` requests with generated columns (layers transferred, zero copy).
+ * answers `chunk` requests with generated columns (layers transferred, zero copy). The tiled OSM
+ * map loads the data tiles a chunk needs first (fetched once each; the generation waits only for
+ * chunks at the edge of what is loaded).
  */
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 let gen: PlanChunkGenerator | undefined;
+let tiles: OsmTiles | undefined;
 const queue: ToChunkWorker[] = [];
 const post = (m: FromChunkWorker, transfer: Transferable[] = []) => scope.postMessage(m, transfer);
 
 function handle(m: ToChunkWorker): void {
   if (m.t !== 'chunk' || !gen) return;
+  if (tiles && !tiles.ready(m.cx, m.cy)) {
+    tiles.ensure(m.cx, m.cy).then(
+      () => handle(m),
+      (err: unknown) => {
+        console.error(`chunk ${m.cx},${m.cy}: dane OSM`, err);
+        post({ t: 'chunk', id: m.id, col: null, ms: 0 });
+      },
+    );
+    return;
+  }
   const t0 = performance.now();
   let col = null;
   try {
@@ -30,9 +43,11 @@ scope.addEventListener('message', (e: MessageEvent<ToChunkWorker>) => {
   const m = e.data;
   if (m.t === 'init') {
     const t0 = performance.now();
-    loadGenerator(m.spec)
-      .then((g) => {
+    loadWorld(m.spec)
+      .then((w) => {
+        const g = w.gen;
         gen = g;
+        tiles = w.tiles;
         const start = g.start();
         post({
           t: 'ready',

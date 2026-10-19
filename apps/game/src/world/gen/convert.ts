@@ -11,6 +11,10 @@ export const TREE_DECOR: ContentId = 'base:tree';
 export interface GenBuildingInfo extends BuildingMeta {
   /** Footprint fills its bounding box: a pitched roof may span the whole building. */
   readonly rect: boolean;
+  /** Slanted building with vector walls: outline (x, y pairs, world metres), flat roof. */
+  readonly outline?: readonly number[];
+  /** Building kind (`block`, `house`…; the block facade). */
+  readonly kind?: string;
 }
 
 function levelData(cx: number, cy: number, l: GenLevel): ChunkData {
@@ -30,6 +34,7 @@ function levelData(cx: number, cy: number, l: GenLevel): ChunkData {
       : {}),
     ...(l.stairs.length ? { stairs: l.stairs } : {}),
     ...(l.vehicles?.length ? { vehicles: l.vehicles } : {}),
+    ...(l.wallSegments?.length ? { wallSegments: l.wallSegments } : {}),
   };
 }
 
@@ -51,6 +56,8 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     y1: b.y1,
     floors: b.floors,
     rect: b.rect,
+    kind: b.kind,
+    ...(b.outline ? { outline: b.outline } : {}),
   }));
   const roads: VectorRoad[] | undefined = col.roads?.map((r) => ({
     surface: GROUND_TILES[r.ground] ?? 'base:asphalt',
@@ -68,6 +75,7 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     buildings,
     ...(roads?.length ? { roads } : {}),
     ...(col.under ? { under: col.under } : {}),
+    ...(col.infra ? { infra: col.infra } : {}),
   };
 }
 
@@ -109,5 +117,8 @@ export function levelToSimChunk(l: GenLevel, waterTile: TileId): SimChunk {
       : {}),
     ...(l.stairs.length ? { stairs: l.stairs } : {}),
     ...(l.vehicles?.length ? { vehicles: l.vehicles } : {}),
+    ...(l.wallSegments?.length ? { wallSegments: l.wallSegments } : {}),
+    ...(l.zones?.length ? { zones: l.zones } : {}),
+    ...(l.blockers?.length ? { blockers: l.blockers } : {}),
   };
 }

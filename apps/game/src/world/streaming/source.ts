@@ -1,3 +1,4 @@
+import type { GenInfra } from '@deadzone/map/world-source';
 import { CHUNK_SIZE as SIM_CHUNK_SIZE } from '@deadzone/protocol';
 import {
   CHUNK_SIZE,
@@ -61,6 +62,8 @@ export interface WorldChunk {
    * stair-stepped road tiles.
    */
   readonly under?: Uint16Array;
+  /** Power lines, railway, catenary (generated maps, render only, world metres). */
+  readonly infra?: GenInfra;
 }
 
 /** One run of a road polyline touching a chunk (chunk-local tiles, flat x, y pairs). */

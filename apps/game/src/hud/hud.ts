@@ -87,7 +87,8 @@ export interface HudOptions {
   /** Game root (`#app`): vignette, mood attributes and the HUD layer go here. */
   root: HTMLElement;
   bindings: () => Bindings;
-  geometry: MinimapGeometry;
+  /** Minimap layers; a function = re-read every frame (generated maps: follows the player). */
+  geometry: MinimapGeometry | (() => MinimapGeometry);
   pois?: MinimapVM['pois'];
   /** Toast for the local player's door / window commands (rejections, `doorForced`). */
   openingToast?: (e: SimEvent) => string | undefined;
@@ -224,11 +225,13 @@ export function createHud(opts: HudOptions): Hud {
   const threat = createThreatBanner({ level: 'low' });
   const setThreat = gated(threat);
   const threatGroup = group('threat', threat.el);
+  const geometry = opts.geometry;
+  const geo = typeof geometry === 'function' ? geometry : () => geometry;
   const minimapVM = (f: Pick<HudFrame, 'px' | 'py' | 'facing' | 'cameraYaw'>): MinimapVM => ({
     player: { x: f.px, z: f.py, heading: f.facing },
     cameraYaw: f.cameraYaw,
-    roads: opts.geometry.roads,
-    buildings: opts.geometry.buildings,
+    roads: geo().roads,
+    buildings: geo().buildings,
     pois: opts.pois ?? [],
     enemies: [],
   });

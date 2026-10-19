@@ -75,10 +75,11 @@ describe('rejestr i loader plików miejsc', () => {
   });
   it('wczytuje Stalową Wolę (zamrożone, niepuste)', async () => {
     const places = await loadPlaces('osm-stw');
-    expect(places?.length).toBeGreaterThan(50);
+    // Cały kwadrat 16 km: 148 miejsc OSM (bez `locality`).
+    expect(places?.length).toBe(148);
     expect(Object.isFrozen(places)).toBe(true);
-    // Współrzędne w układzie mapy obróconym o 27° (OSM_ROTATION_DEG, generator rev 2).
-    expect(nearestPlace(places, 9470, 15910)).toBe('Centrum');
+    // Układ mapy obrócony o 27° i przesunięty o 3072 m w świat 22 528 m (generator rev 3).
+    expect(nearestPlace(places, 12542, 18982)).toBe('Centrum');
   });
   it('mapa bez wpisu albo brak pliku → null; zły plik → błąd', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'places-'));

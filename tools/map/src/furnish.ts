@@ -802,6 +802,25 @@ export function furnishView(
     // Bin right by the main door (1–2 tiles aside).
     pick((x, y) => (near(x, y) <= 2 ? 3 - near(x, y) : -Infinity), 'base:trash-bin');
     if (any(DUMPSTER)) pick((x, y) => near(x, y), 'base:dumpster');
+    // Block of flats (several klatki or 4+ storeys): a bin shelter, two dumpsters side by side
+    // 4–10 tiles from the main entrance (altana śmietnikowa by the block).
+    const ownStair = (s: { x: number; y: number; z: number }) =>
+      view.rooms.get(view.room(s.x, s.y, s.z))?.buildingId === b;
+    const klatki = view.stairs.filter((s) => s.z === 0 && ownStair(s)).length;
+    const tall = view.stairs.some((s) => s.z >= 2 && ownStair(s));
+    if (any(HOME) && (klatki >= 2 || tall)) {
+      const first = out.length;
+      pick(
+        (x, y) => (near(x, y) >= 4 && near(x, y) <= 10 ? 6 - Math.abs(near(x, y) - 6) : -Infinity),
+        'base:dumpster',
+      );
+      const d = out.length > first ? out[out.length - 1] : undefined;
+      if (d)
+        pick(
+          (x, y) => (Math.abs(x - d.x) + Math.abs(y - d.y) === 1 ? 1 : -Infinity),
+          'base:dumpster',
+        );
+    }
     if (any(BENCH)) {
       pick(
         (x, y) => (near(x, y) >= 2 && near(x, y) <= 4 ? 4 - near(x, y) : -Infinity),

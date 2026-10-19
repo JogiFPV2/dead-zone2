@@ -1,4 +1,4 @@
-import type { SimChunkVehicle } from '@deadzone/protocol';
+import type { SimChunkVehicle, SimWallSegment } from '@deadzone/protocol';
 
 /**
  * Local chunk contract for the renderer. The shared map format is still being agreed,
@@ -49,6 +49,8 @@ export interface ChunkData {
    * local tiles, heading in rad, vehicle type content id. Drawn from the vehicle snapshot.
    */
   readonly vehicles?: readonly SimChunkVehicle[];
+  /** Outline walls of slanted buildings (`SimChunk.wallSegments`, world metres): vector walls. */
+  readonly wallSegments?: readonly SimWallSegment[];
 }
 
 /** A flight of stairs: bottom tile (tx, ty) local to the chunk, `len` tiles climbing `dir`. */

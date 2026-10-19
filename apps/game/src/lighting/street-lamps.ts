@@ -66,14 +66,16 @@ export class StreetLamps {
   private readonly bodyMaterial = placeholderMaterial(LAMP_GREY);
   private readonly bulbMaterial: MeshStandardMaterial = placeholderMaterial('#ffd9a0');
   private readonly glowMaterial: MeshBasicMaterial;
-  private readonly glow: InstancedMesh | undefined;
+  private glow: InstancedMesh | undefined;
+  /** Instanced lamp meshes (rebuilt by `setLamps`). */
+  private meshes: InstancedMesh[] = [];
   private readonly budget: LightBudget;
   private active: number[] = [];
   private preset: CompiledPreset['lamps'] | undefined;
   private level = 1;
 
   constructor(
-    private readonly lamps: readonly LampDef[],
+    private lamps: readonly LampDef[],
     options: StreetLampsOptions = {},
   ) {
     this.root.name = 'street-lamps';
@@ -95,12 +97,6 @@ export class StreetLamps {
     for (const g of [pole, arm, head]) if (g !== this.bodyGeometry) g.dispose();
     this.bulbGeometry.translate(LAMP_ARM_LENGTH, 4.2, 0);
 
-    const working = lamps.filter((l) => l.working);
-    const body = this.instanced(this.bodyGeometry, this.bodyMaterial, lamps, 'lamp-body');
-    body.castShadow = true;
-    body.receiveShadow = true;
-    this.instanced(this.bulbGeometry, this.bulbMaterial, working, 'lamp-bulbs');
-
     this.glowMaterial = new MeshBasicMaterial({
       map: glowTexture(),
       transparent: true,
@@ -108,18 +104,7 @@ export class StreetLamps {
       blending: AdditiveBlending,
       fog: true,
     });
-    if (working.length) {
-      this.glow = new InstancedMesh(this.glowGeometry, this.glowMaterial, working.length);
-      this.glow.name = 'lamp-glow';
-      const m = new Matrix4();
-      working.forEach((l, i) => {
-        const h = lampHead(l);
-        this.glow?.setMatrixAt(i, m.makeTranslation(h.x, GLOW_Y, h.z));
-      });
-      this.glow.computeBoundingSphere();
-      this.glow.renderOrder = 1;
-      this.root.add(this.glow);
-    }
+    this.build();
 
     for (let i = 0; i < this.budget.maxLights; i++) {
       const s = new SpotLight();
@@ -135,6 +120,49 @@ export class StreetLamps {
       this.lights.push(s);
       this.root.add(s, s.target);
     }
+  }
+
+  /** Body, bulb and glow instances of the current lamp list. */
+  private build(): void {
+    const lamps = this.lamps;
+    const working = lamps.filter((l) => l.working);
+    const body = this.instanced(this.bodyGeometry, this.bodyMaterial, lamps, 'lamp-body');
+    body.castShadow = true;
+    body.receiveShadow = true;
+    this.meshes.push(body);
+    this.meshes.push(this.instanced(this.bulbGeometry, this.bulbMaterial, working, 'lamp-bulbs'));
+    this.glow = undefined;
+    if (working.length) {
+      const glow = new InstancedMesh(this.glowGeometry, this.glowMaterial, working.length);
+      glow.name = 'lamp-glow';
+      const m = new Matrix4();
+      working.forEach((l, i) => {
+        const h = lampHead(l);
+        glow.setMatrixAt(i, m.makeTranslation(h.x, GLOW_Y, h.z));
+      });
+      glow.computeBoundingSphere();
+      glow.renderOrder = 1;
+      this.root.add(glow);
+      this.meshes.push(glow);
+      this.glow = glow;
+    }
+  }
+
+  /**
+   * Replaces the lamp list (generated maps: the lamps around the player, rebuilt as it moves).
+   * Same 3 draw calls; the light pool is reassigned on the next `update`.
+   */
+  setLamps(lamps: readonly LampDef[]): void {
+    for (const m of this.meshes) {
+      this.root.remove(m);
+      m.dispose();
+    }
+    this.meshes = [];
+    this.lamps = lamps;
+    this.active = [];
+    this.build();
+    this.refreshLevel();
+    this.assign();
   }
 
   /** Lamp look from a preset (a day preset would set intensity 0, glow 0, no emission). */

@@ -162,7 +162,7 @@ export function idHash(id: number, salt = 0): number {
 /** Highest storey number we generate (blueprint z ≤ 15 → 16 storeys). */
 export const MAX_LEVELS = 16;
 
-/** Storeys from `building:levels` (or `height` / 3 m); undefined = not tagged. */
+/** Storeys from `building:levels` (or floor(`height` / 2.8 m)); undefined = not tagged. */
 export function levelsFromTags(t: Tags): number | undefined {
   const raw = t['building:levels'] ?? t.levels;
   if (raw) {
@@ -173,7 +173,7 @@ export function levelsFromTags(t: Tags): number | undefined {
     if (nums.length) return Math.min(MAX_LEVELS, Math.max(1, Math.round(Math.max(...nums))));
   }
   const h = t.height ? Number.parseFloat(t.height) : NaN;
-  if (Number.isFinite(h) && h > 0) return Math.min(MAX_LEVELS, Math.max(1, Math.round(h / 3)));
+  if (Number.isFinite(h) && h > 0) return Math.min(MAX_LEVELS, Math.max(1, Math.floor(h / 2.8)));
   return undefined;
 }
 

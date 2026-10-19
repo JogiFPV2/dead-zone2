@@ -86,7 +86,7 @@
   {
     "id": "base:pharmacy",
     "rooms": ["base:room-pharmacy"],
-    "containers": ["base:metal-shelf", "base:locker", "base:shop-counter", "base:kitchen-counter"],
+    "containers": ["base:metal-shelf", "base:locker", "base:shop-counter"],
     "chance": 0.8,
     "rolls": {
       "min": 1,
@@ -176,7 +176,7 @@
   {
     "id": "base:grocery",
     "rooms": ["base:room-shop"],
-    "containers": ["base:metal-shelf", "base:shop-counter", "base:kitchen-counter"],
+    "containers": ["base:metal-shelf", "base:shop-counter"],
     "chance": 0.85,
     "rolls": {
       "min": 2,
@@ -340,7 +340,7 @@
   {
     "id": "base:bathroom",
     "rooms": ["base:room-bathroom"],
-    "containers": ["base:bathroom-cabinet", "base:kitchen-cabinet"],
+    "containers": ["base:bathroom-cabinet"],
     "chance": 0.6,
     "rolls": {
       "min": 1,

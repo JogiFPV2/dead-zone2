@@ -11,13 +11,21 @@ export type GeneratedMapSpec =
       /** Data file (`deadzone-osm-1` JSON), relative to the game's base URL or absolute. */
       url: string;
     }
+  | {
+      /** The whole 16 km square as lazily loaded 1 km tiles (`deadzone-osm-tiles-1`). */
+      kind: 'osm-tiles';
+      /** Manifest URL (tiles next to it), relative to the game's base URL or absolute. */
+      url: string;
+    }
   | { kind: 'plan-4'; seed: number; size: number };
 
 /** The OSM map of Stalowa Wola: the playable world source for `LATEST_MAP`. */
 export const OSM_STW_MAP = 'osm-stw';
 
 export const GENERATED_MAPS: Readonly<Record<string, GeneratedMapSpec>> = {
-  [OSM_STW_MAP]: {
+  [OSM_STW_MAP]: { kind: 'osm-tiles', url: 'osm/stw-16km/manifest.json' },
+  /** The 1.5 km window by ul. Okulickiego (single data file; small, for tests and comparisons). */
+  'osm-okulickiego': {
     kind: 'osm',
     region: 'okulickiego',
     url: 'osm/stw-okulickiego.deadzone-osm-1.json',
@@ -36,7 +44,7 @@ export function resolveSpec(
   baseUrl: string,
   override?: string | null,
 ): GeneratedMapSpec {
-  if (spec.kind !== 'osm') return spec;
+  if (spec.kind === 'plan-4') return spec;
   const url = override || spec.url;
   return {
     ...spec,

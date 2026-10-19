@@ -18,7 +18,8 @@ import {
   tileId,
 } from './palette.js';
 import type { IBuilding, PlanIndex } from './plan-index.js';
-import { fillRings, rasterGround, type Raster } from './raster.js';
+import { fillRings, fillRingsInner, rasterGround, type Raster } from './raster.js';
+import { SQUARE_TOLERANCE_DEG, ringOrientation } from './straighten.js';
 
 type Side = 'n' | 's' | 'e' | 'w';
 
@@ -26,6 +27,14 @@ type Side = 'n' | 's' | 'e' | 'w';
 const ROOM_Z_STRIDE = 4096;
 /** Room id of tiles owned by another building in a building's furnishing view. */
 const FOREIGN = 0xffff;
+/** Road distance (tiles) at which a door's score reaches its floor of 1 (100 − 3 · d). */
+const DOOR_FAR = 33;
+const NB4 = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
 /** Window margin around a building (door scoring looks this far for roads). */
 const MARGIN = 20;
 
@@ -41,8 +50,121 @@ export interface BuildingLevel {
   edgeW: Uint16Array;
 }
 
+/**
+ * Wall segment of a slanted building's outline (world metres = tiles, level `z`), with gaps at
+ * the exterior doors / windows of that level. Same shape as `SimChunk.wallSegments` entries.
+ */
+export interface WallSegment {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  z: number;
+}
+
+/** Gap cut into a vector wall around an exterior door / window (metres along the wall). */
+const OPENING_GAP = 1.2;
+/** Max distance (m) from an opening's tile edge to the outline for the gap to apply. */
+const OPENING_REACH = 1.6;
+
+/** Outline left slanted at runtime: single ring, off the axes by more than the snap tolerance. */
+export function isSlanted(ib: IBuilding): boolean {
+  if (ib.rings.length !== 1) return false;
+  const o = ringOrientation(Array.from(ib.rings[0]!));
+  return Math.abs(o.deg) > SQUARE_TOLERANCE_DEG;
+}
+
+/**
+ * Outline edges per level, minus a gap at every exterior door / window edge of that level
+ * (projected onto the nearest edge): the sim walks through doorways and sees through windows,
+ * their state stays on the tile edges.
+ */
+function outlineSegments(
+  ring: Float64Array,
+  levels: Map<number, BuildingLevel>,
+  fx: number,
+  fy: number,
+  W: number,
+  kindOf: (v: number) => string | undefined,
+): WallSegment[] {
+  const n = ring.length >> 1;
+  const edges: [number, number, number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const e: [number, number, number, number] = [
+      ring[2 * i]!,
+      ring[2 * i + 1]!,
+      ring[2 * j]!,
+      ring[2 * j + 1]!,
+    ];
+    if (Math.hypot(e[2] - e[0], e[3] - e[1]) > 1e-6) edges.push(e);
+  }
+  const out: WallSegment[] = [];
+  for (const [z, L] of levels) {
+    const gaps: [number, number][][] = edges.map(() => []);
+    const roomAt = (gx: number, gy: number) =>
+      gx < 0 || gy < 0 || gx >= W || gy * W + gx >= L.room.length ? 0 : L.room[gy * W + gx]!;
+    const opening = (mx: number, my: number) => {
+      let best = -1;
+      let bd = OPENING_REACH;
+      let bt = 0;
+      edges.forEach(([ax, ay, bx, by], k) => {
+        const dx = bx - ax;
+        const dy = by - ay;
+        const len2 = dx * dx + dy * dy;
+        const t = Math.max(0, Math.min(1, ((mx - ax) * dx + (my - ay) * dy) / len2));
+        const d = Math.hypot(ax + dx * t - mx, ay + dy * t - my);
+        if (d < bd) {
+          bd = d;
+          best = k;
+          bt = t * Math.sqrt(len2);
+        }
+      });
+      if (best >= 0) gaps[best]!.push([bt - OPENING_GAP / 2, bt + OPENING_GAP / 2]);
+    };
+    for (let i = 0; i < L.edgeN.length; i++) {
+      const gx = i % W;
+      const gy = (i - gx) / W;
+      for (const axis of ['N', 'W'] as const) {
+        const v = axis === 'N' ? L.edgeN[i]! : L.edgeW[i]!;
+        const k = v ? kindOf(v) : undefined;
+        if (k !== 'door' && k !== 'window') continue;
+        const a = roomAt(gx, gy);
+        const b = axis === 'N' ? roomAt(gx, gy - 1) : roomAt(gx - 1, gy);
+        if ((a === 0) === (b === 0)) continue;
+        if (axis === 'N') opening(fx + gx + 0.5, fy + gy);
+        else opening(fx + gx, fy + gy + 0.5);
+      }
+    }
+    edges.forEach(([ax, ay, bx, by], k) => {
+      const len = Math.hypot(bx - ax, by - ay);
+      const ux = (bx - ax) / len;
+      const uy = (by - ay) / len;
+      let from = 0;
+      for (const [g0, g1] of gaps[k]!.sort((p, q) => p[0] - q[0])) {
+        if (g0 > from + 1e-3)
+          out.push({
+            x0: ax + ux * from,
+            y0: ay + uy * from,
+            x1: ax + ux * Math.min(g0, len),
+            y1: ay + uy * Math.min(g0, len),
+            z,
+          });
+        from = Math.max(from, g1);
+      }
+      if (from < len - 1e-3)
+        out.push({ x0: ax + ux * from, y0: ay + uy * from, x1: bx, y1: by, z });
+    });
+  }
+  return out;
+}
+
 /** A building with interiors, stairs and furniture: a pure function of the plan and its id. */
 export interface SolvedBuilding {
+  /** Slanted building: its outline as wall segments per level (vector walls, sim collision). */
+  segments?: WallSegment[];
+  /** Slanted building with vector walls: its outline (x, y pairs, world metres) for the roof. */
+  outline?: number[];
   gid: number;
   osmId: number;
   kind: string;
@@ -75,9 +197,9 @@ export interface SolvedBuilding {
 }
 
 /** Raw OSM fill of a building on a window, minus road / rail / bridge-deck tiles. */
-function rawFill(b: IBuilding, r: Raster, out: Uint8Array, value = 1): number {
+function rawFill(b: IBuilding, r: Raster, out: Uint8Array, value = 1, inner = false): number {
   let n = 0;
-  fillRings(b.rings, r.x0, r.y0, r.w, r.h, (i) => {
+  (inner ? fillRingsInner : fillRings)(b.rings, r.x0, r.y0, r.w, r.h, (i) => {
     const g = r.g[i]!;
     if (g === G_ASPHALT || g === G_RAIL || g === G_WATER || r.deck[i]) return;
     out[i] = value;
@@ -164,7 +286,10 @@ export function solveBuilding(
     if (o.gid < ib.gid) rawFill(o, r, lower);
   }
   const own = new Uint8Array(n);
-  rawFill(ib, r, own);
+  // Slanted outline left off the grid (not squared, not turned): conservative fill, the tile
+  // stair-steps stay inside the line; walls are drawn on the outline (`segments`).
+  const slanted = isSlanted(ib);
+  const ownCount = rawFill(ib, r, own, 1, slanted);
   const mask = new Uint8Array(w * h);
   let count = 0;
   for (let y = 0; y < h; y++)
@@ -177,6 +302,11 @@ export function solveBuilding(
     }
   if (count < 6) return undefined;
   keepLargest(mask, w, h);
+  let kept = 0;
+  for (let i = 0; i < mask.length; i++) kept += mask[i]!;
+  // Vector walls only when the raster is the whole conservative fill (not cut by a road, a rail
+  // or an older building): the outline then encloses exactly this building.
+  const vector = slanted && kept === ownCount;
   const mine = (x: number, y: number) =>
     x >= fx && y >= fy && x < fx + w && y < fy + h && mask[(y - fy) * w + (x - fx)] === 1;
   // Distance to the nearest road / sidewalk / parking tile (BFS around other buildings).
@@ -194,14 +324,11 @@ export function solveBuilding(
   }
   for (let k = 0; k < q.length; k++) {
     const i = q[k]!;
+    // Door scores bottom out at DOOR_FAR (score 1): no need to flood the rest of the window.
+    if (dist[i]! >= DOOR_FAR) continue;
     const x = i % r.w;
     const y = (i - x) / r.w;
-    for (const [dx, dy] of [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ] as const) {
+    for (const [dx, dy] of NB4) {
       const nx = x + dx;
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= r.w || ny >= r.h) continue;
@@ -330,6 +457,7 @@ export function solveBuilding(
     return lx < 0 || ly < 0 || lx >= r.w || ly >= r.h ? -1 : ly * r.w + lx;
   };
   const kindOf = (v: number) => EDGE_PALETTE[v]?.kind;
+  const tileLists = new Map<number, [number, number][]>();
   const view: FurnishView = {
     rooms: roomInfo,
     levels: new Set(levels.keys()),
@@ -371,10 +499,17 @@ export function solveBuilding(
       const e = this.edge(x, y, z, s);
       return e === undefined || e === 'door';
     },
-    *tiles(z) {
+    tiles(z) {
+      // One array per storey kind (furnishing walks it several times).
       const m = z === 0 ? 2 : 0;
-      for (let y = fy - m; y < fy + h + m; y++)
-        for (let x = fx - m; x < fx + w + m; x++) yield [x, y];
+      let list = tileLists.get(m);
+      if (!list) {
+        list = [];
+        for (let y = fy - m; y < fy + h + m; y++)
+          for (let x = fx - m; x < fx + w + m; x++) list.push([x, y]);
+        tileLists.set(m, list);
+      }
+      return list;
     },
   };
   const objects = furnishView(view, [], {
@@ -397,7 +532,9 @@ export function solveBuilding(
         bx1 = Math.max(bx1, fx + x);
         by1 = Math.max(by1, fy + y);
       }
+  const segments = vector ? outlineSegments(ib.rings[0]!, levels, fx, fy, W, kindOf) : undefined;
   return {
+    ...(segments ? { segments, outline: Array.from(ib.rings[0]!) } : {}),
     gid: ib.gid,
     osmId: ib.b.id,
     kind: ib.b.kind,

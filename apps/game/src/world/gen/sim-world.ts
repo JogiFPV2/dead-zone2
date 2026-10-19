@@ -3,6 +3,7 @@ import {
   EDGE_PALETTE,
   TILE_PALETTE,
   type GenColumn,
+  type OsmTiles,
   type PlanChunkGenerator,
 } from '@deadzone/map/world-source';
 import { levelToSimChunk } from './convert.js';
@@ -12,8 +13,14 @@ import { levelToSimChunk } from './convert.js';
  * are generated on demand (one column = all storeys, kept in a small LRU; the sim caches
  * `SimChunk`s itself), zone kinds come from the plan's chunk-resolution raster (cheap: the sim
  * asks for every chunk of the world when populating its LOD).
+ * Cover zones and pylon blockers ride on each chunk (`SimChunk.zones` / `blockers`, #256).
  */
-export function generatorWorldSource(gen: PlanChunkGenerator, columnCache = 48): WorldSource {
+export function generatorWorldSource(
+  gen: PlanChunkGenerator,
+  columnCache = 48,
+  /** Lazily loaded OSM tiles: a chunk whose data is not in yet is not cached (asked again). */
+  tiles?: OsmTiles,
+): WorldSource {
   const water = TILE_PALETTE.indexOf('base:water');
   const cols = new Map<number, GenColumn | null>();
   const { cx0, cy0, cx1, cy1 } = gen.bounds;
@@ -25,6 +32,10 @@ export function generatorWorldSource(gen: PlanChunkGenerator, columnCache = 48):
       cols.delete(k);
       cols.set(k, c);
       return c;
+    }
+    if (tiles && !tiles.ready(cx, cy)) {
+      void tiles.ensure(cx, cy);
+      return null;
     }
     c = gen.column(cx, cy) ?? null;
     cols.set(k, c);

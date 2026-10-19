@@ -14,7 +14,7 @@ import { simToWorld } from '../sim/coords.js';
 import { LEVEL_HEIGHT } from './instances.js';
 import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from './chunk.js';
-import { NO_CUTAWAY, type Cutaway } from './cutaway.js';
+import { NO_CUTAWAY, isLevelHidden, type Cutaway } from './cutaway.js';
 import { MarkerBatch, animateMarker } from './ground-piles.js';
 import {
   buildInstances,
@@ -124,6 +124,9 @@ const XRAY_OPACITY = 0.3;
  * PLACEHOLDER map objects (chunk `objects`: storage and furniture) as grey boxes. Storage in
  * reach that this player has not searched yet gets a floating marker; searched storage is darker.
  */
+/** Minimum interval between streaming-driven furniture instance rebuilds (ms). */
+const REBUILD_EVERY_MS = 750;
+
 export class MapObjects {
   readonly root = new Group();
   private readonly objects: Obj[] = [];
@@ -139,7 +142,11 @@ export class MapObjects {
   private instances: InstancedMesh[] = [];
   private origin = { x: 0, z: 0 };
   private instancesDirty = false;
+  /** Rebuild on the next update regardless of the throttle (floating origin moved). */
+  private instancesUrgent = false;
+  private lastRebuildMs = -Infinity;
   private cutaway: Cutaway = NO_CUTAWAY;
+  private cutKey = '-';
   /** Every visible marker in one draw call. */
   private readonly markerBatch = new MarkerBatch(this.root, 'map-object-markers');
   /** Furniture footprints (`worldSettings.furniture.footprint`); off = one tile each, as before. */
@@ -188,6 +195,8 @@ export class MapObjects {
       this.root.add(mesh, marker);
       this.objects.push(obj);
       this.applyCutaway(obj);
+      // Drawn by the next (throttled) instance rebuild, not as a lone mesh meanwhile.
+      if (this.model) mesh.visible = false;
     }
     this.instancesDirty = true;
     // Markers / searched shades for the new objects on the next update.
@@ -308,6 +317,18 @@ export class MapObjects {
     return parts;
   }
 
+  /**
+   * One instanced copy of every model in `ids` under `root` (shader warm-up: compile their
+   * programs before the first such furniture streams in). `dispose()` the result afterwards.
+   */
+  prewarm(ids: readonly string[], root: Group): { dispose(): void } {
+    const placements = ids
+      .filter((id) => this.partsOf(`${id}|1`))
+      .map((id) => ({ model: id, x: 0, y: -50, z: 0, rotY: 0 }));
+    const { meshes } = buildInstances(placements, (id) => this.partsOf(`${id}|1`), root);
+    return { dispose: () => disposeInstances(meshes, root) };
+  }
+
   /** Model instancing key: `contentId|height`, plus the footprint while footprints are on. */
   private modelKey(o: Obj): string {
     const fp = this.fpOf(o);
@@ -342,6 +363,7 @@ export class MapObjects {
    */
   private rebuildInstances(): void {
     this.instancesDirty = false;
+    this.instancesUrgent = false;
     disposeInstances(this.instances, this.root);
     this.instances = [];
     const keys = this.objects.map((o) => {
@@ -386,6 +408,7 @@ export class MapObjects {
     if (x === this.origin.x && z === this.origin.z) return;
     this.origin = { x, z };
     this.instancesDirty = true;
+    this.instancesUrgent = true;
   }
 
   /**
@@ -393,14 +416,16 @@ export class MapObjects {
    * building, is hidden with those floors (no beds floating over a cut-away storey).
    */
   setCutaway(c: Cutaway): void {
-    if (c.building === this.cutaway.building && (c.z ?? 0) === (this.cutaway.z ?? 0)) return;
+    const key = `${c.building}:${c.z ?? 0}:${[...(c.occluders ?? [])].sort((a, b) => a - b).join(',')}`;
+    if (key === this.cutKey) return;
+    this.cutKey = key;
     this.cutaway = c;
     for (const o of this.objects) this.applyCutaway(o);
   }
 
   private applyCutaway(o: Obj): void {
     const c = this.cutaway;
-    o.hidden = c.building !== NO_BUILDING && o.building === c.building && o.z > (c.z ?? 0);
+    o.hidden = isLevelHidden(c, o.building, o.z);
     if (o.slots) {
       if (!o.xray) setSlotsVisible(o.slots, !o.hidden);
     } else o.mesh.visible = !o.hidden;
@@ -474,7 +499,17 @@ export class MapObjects {
   }
 
   update(nearby: readonly NearbyContainerView[], nowMs: number): void {
-    if (this.instancesDirty) this.rebuildInstances();
+    // A rebuild is O(loaded objects) and re-uploads every batch: while chunks stream in, at most
+    // one per REBUILD_EVERY_MS (the origin shift is immediate).
+    if (
+      this.instancesDirty &&
+      (this.instancesUrgent ||
+        nowMs - this.lastRebuildMs >= REBUILD_EVERY_MS ||
+        nowMs < this.lastRebuildMs)
+    ) {
+      this.lastRebuildMs = nowMs;
+      this.rebuildInstances();
+    }
     if (nearby !== this.lastNearby) {
       this.lastNearby = nearby;
       const unsearched = new Set<string>();

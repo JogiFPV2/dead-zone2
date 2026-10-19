@@ -17,7 +17,9 @@ import {
   type OsmMap,
   type OsmPlace,
   type OsmPoi,
+  type OsmPower,
   type OsmRail,
+  type OsmRailNode,
   type OsmRoad,
   type OsmWaterway,
 } from './types.js';
@@ -194,6 +196,12 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
     }
   }
 
+  // Hedges (`barrier=hedge`, open or closed lines): thin scrub strips per segment (cover zones).
+  for (const w of raw.ways) {
+    if (w.t.barrier !== 'hedge' || !inSquare(w.g)) continue;
+    for (const q of hedgeStrips(w.g)) areas.push({ id: w.id, kind: 'scrub', rings: [flat(q)] });
+  }
+
   // Buildings with POIs attached.
   const bl = polys.filter(
     (p) => p.t.building && p.t.building !== 'no' && p.t.location !== 'underground',
@@ -318,6 +326,7 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
 
   const roads: OsmRoad[] = [];
   const rails: OsmRail[] = [];
+  const power: OsmPower[] = [];
   const waterways: OsmWaterway[] = [];
   const treeRows: number[][] = [];
   for (const w of raw.ways) {
@@ -347,8 +356,14 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
         id: w.id,
         kind,
         ...(t.bridge && t.bridge !== 'no' ? { bridge: 1 as const } : {}),
+        ...(t.electrified === 'contact_line' && rw !== 'disused' ? { el: 1 as const } : {}),
         pts: flat(w.g),
       });
+      continue;
+    }
+    const pw = powerLine(t);
+    if (pw) {
+      power.push({ id: w.id, ...pw, pts: flat(w.g) });
       continue;
     }
     const ww = t.waterway;
@@ -415,6 +430,18 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
       const [x, y] = centroid(p.rings[0]!);
       pois.push({ kind: 'fuel', x: dm(x), y: dm(y), ...(p.t.name ? { name: p.t.name } : {}) });
     }
+  // Switches, buffer stops and level crossings: rail nodes on a vertex of a kept rail.
+  const railVertex = new Set<string>();
+  for (const r of rails)
+    for (let i = 0; i + 1 < r.pts.length; i += 2) railVertex.add(`${r.pts[i]},${r.pts[i + 1]}`);
+  const railNodes: OsmRailNode[] = [];
+  for (const n of raw.nodes) {
+    const k = n.t.railway;
+    if (k !== 'switch' && k !== 'buffer_stop' && k !== 'level_crossing') continue;
+    const x = dm(n.p[0]);
+    const y = dm(n.p[1]);
+    if (railVertex.has(`${x},${y}`)) railNodes.push({ kind: k, x, y });
+  }
   const N1 = raw.N0 + raw.size;
   return {
     map: {
@@ -428,6 +455,8 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
       source: raw.source,
       roads,
       rails,
+      power,
+      railNodes,
       waterways,
       areas,
       buildings,
@@ -438,6 +467,60 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
     },
     stats,
   };
+}
+
+/** Power line kind and circuits of a way (`power=line` by voltage, `minor_line` = low voltage). */
+export function powerLine(t: Tags): Pick<OsmPower, 'kind' | 'circuits'> | undefined {
+  if (t.power !== 'line' && t.power !== 'minor_line') return undefined;
+  const volts = (t.voltage ?? '')
+    .split(';')
+    .map((v) => Number.parseFloat(v))
+    .filter((v) => Number.isFinite(v));
+  const top = volts.length ? Math.max(...volts) : 0;
+  const kind: OsmPower['kind'] =
+    t.power === 'minor_line' || (top > 0 && top <= 1000)
+      ? 'lv'
+      : top >= 380_000
+        ? 'hv400'
+        : top >= 200_000
+          ? 'hv220'
+          : 'hv110';
+  const circuits = Number.parseInt(t.circuits ?? '', 10);
+  const cables = Number.parseInt(t.cables ?? '', 10);
+  const two =
+    kind !== 'lv' &&
+    ((Number.isFinite(circuits) && circuits >= 2) ||
+      (!Number.isFinite(circuits) && Number.isFinite(cables) && cables >= 6) ||
+      volts.length >= 2);
+  return { kind, circuits: two ? 2 : 1 };
+}
+
+/** Half width of a hedge strip (m): wide enough that every tile it crosses has its centre in. */
+export const HEDGE_HALF_WIDTH = 0.9;
+
+/** Closed quads (5 points) along a hedge line, one per segment, ends extended by the half width. */
+export function hedgeStrips(g: readonly P[], half = HEDGE_HALF_WIDTH): P[][] {
+  const out: P[][] = [];
+  for (let i = 1; i < g.length; i++) {
+    const [ax, ay] = g[i - 1]!;
+    const [bx, by] = g[i]!;
+    const len = Math.hypot(bx - ax, by - ay);
+    if (len < 1e-6) continue;
+    const ux = (bx - ax) / len;
+    const uy = (by - ay) / len;
+    const nx = -uy * half;
+    const ny = ux * half;
+    const a: P = [ax - ux * half, ay - uy * half];
+    const b: P = [bx + ux * half, by + uy * half];
+    const q: P[] = [
+      [a[0] + nx, a[1] + ny],
+      [b[0] + nx, b[1] + ny],
+      [b[0] - nx, b[1] - ny],
+      [a[0] - nx, a[1] - ny],
+    ];
+    out.push([...q, q[0]!]);
+  }
+  return out;
 }
 
 export function unflat(f: readonly number[]): P[] {

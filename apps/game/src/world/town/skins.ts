@@ -36,6 +36,21 @@ export const EXT_CELLS: readonly (readonly [string, string])[] = [
   ['char-dark', '#2c2826'],
   ['rail', '#3c4446'],
   ['water', '#2c4650'],
+  // Blocks of flats (Designer's blok-p4 / blok-p10 / blok-p4-docieplony): balconies, canopies.
+  ['blok-balc-a', '#7a7f84'],
+  ['blok-balc-b', '#8b6a4e'],
+  ['blok-balc-c', '#6c7a5c'],
+  ['blok-balc-d', '#94886a'],
+  ['blok-balc-e', '#5b7480'],
+  ['blok-balc-f', '#8e989a'],
+  ['blok-slab', '#7f7d76'],
+  ['blok-canopy', '#7d7b74'],
+  ['blok-joint', '#55534d'],
+  ['blok-sign', '#2f5a8a'],
+  ['blok-vent', '#7a776f'],
+  ['blok-accent-a', '#a8704e'],
+  ['blok-accent-b', '#6f8c88'],
+  ['blok-accent-c', '#b59a55'],
 ];
 
 /** Catalogue skin -> wall cells replacing `wall-plaster` / `wall-plaster-dark`. */

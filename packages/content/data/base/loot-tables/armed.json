@@ -72,12 +72,7 @@
   {
     "id": "base:gun-store",
     "rooms": ["base:room-gun-store"],
-    "containers": [
-      "base:gun-locker",
-      "base:metal-shelf",
-      "base:shop-counter",
-      "base:kitchen-counter"
-    ],
+    "containers": ["base:gun-locker", "base:metal-shelf", "base:shop-counter"],
     "chance": 0.9,
     "rolls": {
       "min": 2,

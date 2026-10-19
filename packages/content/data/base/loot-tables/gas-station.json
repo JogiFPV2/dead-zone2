@@ -2,7 +2,7 @@
   {
     "id": "base:gas-station",
     "rooms": ["base:room-gas-station"],
-    "containers": ["base:metal-shelf", "base:shop-counter", "base:kitchen-counter"],
+    "containers": ["base:metal-shelf", "base:shop-counter"],
     "chance": 0.85,
     "rolls": {
       "min": 2,

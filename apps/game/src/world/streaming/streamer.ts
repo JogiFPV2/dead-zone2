@@ -35,6 +35,11 @@ export interface ChunkBuilder {
     data: WorldChunk | undefined,
     summary: ChunkSummary | undefined,
   ): BuiltChunk;
+  /**
+   * Deferred work of earlier builds (e.g. upper storeys of near chunks), done within `budgetMs`
+   * after the frame's builds. Returns whether work is left.
+   */
+  step?(budgetMs: number): boolean;
 }
 
 interface Rec {
@@ -323,6 +328,8 @@ export class ChunkStreamer {
       r.rebuild = false;
       n++;
     }
+    // Deferred builder work with what is left of the budget (at least a slice per frame).
+    if (this.builder.step) this.builder.step(Math.max(1, budgetMs - (this.now() - t0)));
     this.buildMs = this.now() - t0;
   }
 

@@ -15,14 +15,12 @@ import { simToWorld } from '../sim/coords.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE } from './chunk.js';
 import {
-  PROP_KINDS,
   SHELF_PROFILES,
   displayFill,
   hashId,
   layoutProfile,
   propSlots,
   shelfOrigin,
-  slotCount,
   visibleProps,
   type PropKind,
   type PropSlot,
@@ -67,17 +65,25 @@ interface Furniture {
   seededFor?: ContainerId;
 }
 
+/** First capacity of a prop kind's InstancedMesh; doubles when a layout needs more. */
+const MIN_CAPACITY = 256;
+
 /**
  * Props on furniture shelves showing how full each storage is (deadzone-loot-spec §3).
  * One InstancedMesh per prop kind for the whole map (6 draw calls, no shadow casting) instead of
  * per furniture, to stay inside the 250 draw-call budget. Closed furniture only shows its
  * contents while its loot panel is open (the furniture model is see-through then, `onXray`).
+ *
+ * Cheap to keep while the window follows the player (`setRange`): meshes and materials stay
+ * (no shader recompiles), capacities grow on demand and only the used instances are uploaded.
  */
 export class ShelfFill {
   readonly root = new Group();
   private readonly furniture: Furniture[] = [];
   private readonly byTile = new Map<string, Furniture>();
   private readonly meshes = new Map<PropKind, InstancedMesh>();
+  private readonly materials = new Map<PropKind, MeshStandardMaterial>();
+  private readonly geometries = new Map<PropKind, BufferGeometry>();
   private lastStorages: readonly StorageMarkerView[] | undefined;
   private lastActive: ContainerId | undefined;
   private xray: Furniture | undefined;
@@ -87,56 +93,70 @@ export class ShelfFill {
   shown = 0;
 
   constructor(
-    source: ChunkSource,
+    private readonly source: ChunkSource,
     range: ChunkRange,
     private readonly onXray?: (tx: number, ty: number, z: number, on: boolean) => void,
+    /** Storeys to read (default the range's own). */
+    private readonly levels: readonly number[] = [range.z],
   ) {
-    const capacity = new Map<PropKind, number>(PROP_KINDS.map((k) => [k, 0]));
-    for (let cy = range.cy0; cy <= range.cy1; cy++) {
-      for (let cx = range.cx0; cx <= range.cx1; cx++) {
-        const z = range.z;
-        for (const o of source.getChunk(cx, cy, z)?.objects ?? []) {
-          const profile = SHELF_PROFILES[o.contentId];
-          if (!profile) continue;
-          const tx = cx * CHUNK_SIZE + o.x;
-          const ty = cy * CHUNK_SIZE + o.y;
-          const f: Furniture = {
-            key: `${tx},${ty},${z}`,
-            tx,
-            ty,
-            z,
-            rot: o.rot,
-            contentId: o.contentId,
-            profile,
-            layout: profile,
-            origin: new Vector3(),
-            yaw: (-o.rot * Math.PI) / 2,
-          };
-          this.placeOrigin(f);
-          this.furniture.push(f);
-          this.byTile.set(f.key, f);
-          // Any kind of the mix may take every slot.
-          for (const k of PROP_KINDS) {
-            if ((profile.mix[k] ?? 0) > 0) capacity.set(k, capacity.get(k)! + slotCount(profile));
+    this.setRange(range);
+  }
+
+  /** Re-reads the furniture of a new window (meshes kept; the next `update` re-lays). */
+  setRange(range: ChunkRange): void {
+    const old = this.byTile;
+    const keep = new Map(old);
+    this.furniture.length = 0;
+    this.byTile.clear();
+    for (const z of this.levels)
+      for (let cy = range.cy0; cy <= range.cy1; cy++) {
+        for (let cx = range.cx0; cx <= range.cx1; cx++) {
+          for (const o of this.source.getChunk(cx, cy, z)?.objects ?? []) {
+            const profile = SHELF_PROFILES[o.contentId];
+            if (!profile) continue;
+            const tx = cx * CHUNK_SIZE + o.x;
+            const ty = cy * CHUNK_SIZE + o.y;
+            const key = `${tx},${ty},${z}`;
+            const prev = keep.get(key);
+            if (prev && prev.profile === profile) {
+              this.furniture.push(prev);
+              this.byTile.set(key, prev);
+              continue;
+            }
+            const f: Furniture = {
+              key,
+              tx,
+              ty,
+              z,
+              rot: o.rot,
+              contentId: o.contentId,
+              profile,
+              layout: profile,
+              origin: new Vector3(),
+              yaw: (-o.rot * Math.PI) / 2,
+            };
+            this.placeOrigin(f);
+            this.furniture.push(f);
+            this.byTile.set(key, f);
           }
         }
       }
-    }
-    for (const kind of PROP_KINDS) {
-      const n = capacity.get(kind)!;
-      if (n === 0) continue;
-      const mesh = new InstancedMesh(
-        PROP_GEOMETRY[kind](),
-        new MeshStandardMaterial({ roughness: 0.7 }),
-        n,
-      );
-      mesh.count = 0;
-      mesh.receiveShadow = true;
-      mesh.frustumCulled = false;
-      mesh.name = `shelf-${kind}`;
-      this.meshes.set(kind, mesh);
-      this.root.add(mesh);
-    }
+    this.lastStorages = undefined;
+  }
+
+  /** Frees the instanced meshes. */
+  dispose(): void {
+    if (this.xray) this.onXray?.(this.xray.tx, this.xray.ty, this.xray.z, false);
+    for (const m of this.meshes.values()) m.dispose();
+    for (const g of this.geometries.values()) g.dispose();
+    for (const m of this.materials.values()) m.dispose();
+    this.meshes.clear();
+    this.root.clear();
+  }
+
+  /** Instance capacity of a kind (tests). */
+  capacity(kind: PropKind): number {
+    return this.meshes.get(kind)?.instanceMatrix.count ?? 0;
   }
 
   /** Slot layout centre of `f` for the current footprints (`shelfOrigin`). */
@@ -170,10 +190,10 @@ export class ShelfFill {
     if (storages === this.lastStorages && active === this.lastActive) return;
     this.lastStorages = storages;
     this.lastActive = active;
-    const counts = new Map<PropKind, number>();
-    for (const k of this.meshes.keys()) counts.set(k, 0);
+    // Pass 1: what to show (slots per furniture), so capacities grow before placing.
+    const show: { f: Furniture; n: number }[] = [];
+    const need = new Map<PropKind, number>();
     let xray: Furniture | undefined;
-    this.shown = 0;
     for (const s of storages) {
       const f = this.byTile.get(`${s.x},${s.y},${s.z}`);
       if (!f) continue;
@@ -185,13 +205,32 @@ export class ShelfFill {
         f.seededFor = s.id;
       }
       const n = visibleProps(displayFill(s.fillPct, s.searched, s.id), f.slots.length);
-      for (let i = 0; i < n; i++) this.place(f, f.slots[i]!, counts, i);
+      for (let i = 0; i < n; i++) {
+        const k = f.slots[i]!.kind;
+        need.set(k, (need.get(k) ?? 0) + 1);
+      }
+      show.push({ f, n });
+    }
+    for (const [k, n] of need) this.ensure(k, n);
+    const counts = new Map<PropKind, number>();
+    for (const k of this.meshes.keys()) counts.set(k, 0);
+    this.shown = 0;
+    for (const { f, n } of show) {
+      for (let i = 0; i < n; i++) this.place(f, f.slots![i]!, counts, i);
       this.shown += n;
     }
     for (const [k, mesh] of this.meshes) {
-      mesh.count = counts.get(k)!;
+      const count = counts.get(k)!;
+      mesh.count = count;
+      // Upload only the used instances (not the whole capacity).
+      mesh.instanceMatrix.clearUpdateRanges();
+      mesh.instanceMatrix.addUpdateRange(0, Math.max(1, count) * 16);
       mesh.instanceMatrix.needsUpdate = true;
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      if (mesh.instanceColor) {
+        mesh.instanceColor.clearUpdateRanges();
+        mesh.instanceColor.addUpdateRange(0, Math.max(1, count) * 3);
+        mesh.instanceColor.needsUpdate = true;
+      }
     }
     if (xray !== this.xray) {
       if (this.xray) this.onXray?.(this.xray.tx, this.xray.ty, this.xray.z, false);
@@ -200,10 +239,34 @@ export class ShelfFill {
     }
   }
 
+  /** Mesh of `kind` with room for `n` instances (created / doubled on demand). */
+  private ensure(kind: PropKind, n: number): void {
+    const cur = this.meshes.get(kind);
+    if (cur && cur.instanceMatrix.count >= n) return;
+    let cap = cur ? cur.instanceMatrix.count : MIN_CAPACITY;
+    while (cap < n) cap *= 2;
+    let geometry = this.geometries.get(kind);
+    if (!geometry) this.geometries.set(kind, (geometry = PROP_GEOMETRY[kind]()));
+    let material = this.materials.get(kind);
+    if (!material)
+      this.materials.set(kind, (material = new MeshStandardMaterial({ roughness: 0.7 })));
+    if (cur) {
+      this.root.remove(cur);
+      cur.dispose();
+    }
+    const mesh = new InstancedMesh(geometry, material, cap);
+    mesh.count = 0;
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    mesh.name = `shelf-${kind}`;
+    this.meshes.set(kind, mesh);
+    this.root.add(mesh);
+  }
+
   private place(f: Furniture, slot: PropSlot, counts: Map<PropKind, number>, i: number): void {
     const mesh = this.meshes.get(slot.kind);
     if (!mesh) return;
-    const at = counts.get(slot.kind)!;
+    const at = counts.get(slot.kind) ?? 0;
     if (at >= mesh.instanceMatrix.count) return;
     const cos = Math.cos(f.yaw);
     const sin = Math.sin(f.yaw);

@@ -1,652 +1,890 @@
 [
   {
     "name": "Agatówka",
-    "x": 5292,
-    "y": 2465.9
+    "x": 8364,
+    "y": 5537.9,
+    "kind": "village"
+  },
+  {
+    "name": "Barce",
+    "x": 11048.9,
+    "y": 19607.2,
+    "kind": "district"
   },
   {
     "name": "Bartnia Łąka",
-    "x": 9338.8,
-    "y": 4838.2
+    "x": 12410.8,
+    "y": 7910.2,
+    "kind": "village"
   },
   {
     "name": "Bąków",
-    "x": 10248.1,
-    "y": 3806.8
+    "x": 13320.1,
+    "y": 6878.8,
+    "kind": "village"
   },
   {
     "name": "Berdechów",
-    "x": 4736.6,
-    "y": 858
+    "x": 7808.6,
+    "y": 3930,
+    "kind": "village"
   },
   {
     "name": "Błonie",
-    "x": 12651.4,
-    "y": 14379.6
+    "x": 15723.4,
+    "y": 17451.6,
+    "kind": "village"
   },
   {
     "name": "Borek",
-    "x": 13543.7,
-    "y": 14537.2
+    "x": 16615.7,
+    "y": 17609.2,
+    "kind": "village"
   },
   {
     "name": "Borowska",
-    "x": 10027.7,
-    "y": 4517.2
+    "x": 13099.7,
+    "y": 7589.2,
+    "kind": "village"
   },
   {
     "name": "Brandwica",
-    "x": 9222.9,
-    "y": 3940.8
+    "x": 12294.9,
+    "y": 7012.8,
+    "kind": "village"
+  },
+  {
+    "name": "Branówka",
+    "x": 7777.9,
+    "y": 364.5,
+    "kind": "village"
+  },
+  {
+    "name": "Buczyna",
+    "x": 8975.4,
+    "y": 1292,
+    "kind": "village"
+  },
+  {
+    "name": "Burdze",
+    "x": 1651.7,
+    "y": 14025.7,
+    "kind": "village"
   },
   {
     "name": "Centrum",
-    "x": 9463,
-    "y": 15916
+    "x": 12535,
+    "y": 18988,
+    "kind": "district"
   },
   {
     "name": "Charzewice",
-    "x": 5810.4,
-    "y": 3547.8
+    "x": 8882.4,
+    "y": 6619.8,
+    "kind": "district"
   },
   {
     "name": "Chłopska Wola",
-    "x": 8864.2,
-    "y": 6145.2
+    "x": 11936.2,
+    "y": 9217.2,
+    "kind": "village"
   },
   {
     "name": "Chyły",
-    "x": 6215.8,
-    "y": 12241.7
+    "x": 9287.8,
+    "y": 15313.7,
+    "kind": "village"
   },
   {
     "name": "Ciemny Kąt",
-    "x": 2915.8,
-    "y": 9312.9
+    "x": 5987.8,
+    "y": 12384.9,
+    "kind": "district"
   },
   {
     "name": "Dąbrowa",
-    "x": 3371.7,
-    "y": 844.4
+    "x": 6443.7,
+    "y": 3916.4,
+    "kind": "village"
   },
   {
     "name": "Dąbrowa",
-    "x": 3559.6,
-    "y": 694.5
+    "x": 6631.6,
+    "y": 3766.5,
+    "kind": "village"
   },
   {
     "name": "Dolina",
-    "x": 7645.3,
-    "y": 5557.4
+    "x": 10717.3,
+    "y": 8629.4,
+    "kind": "district"
   },
   {
     "name": "Dołek",
-    "x": 3451,
-    "y": 1705.3
+    "x": 6523,
+    "y": 4777.3,
+    "kind": "village"
   },
   {
     "name": "Dwór",
-    "x": 4921.8,
-    "y": 173.1
+    "x": 7993.8,
+    "y": 3245.1,
+    "kind": "village"
   },
   {
     "name": "Góra",
-    "x": 10513.1,
-    "y": 4178.9
+    "x": 13585.1,
+    "y": 7250.9,
+    "kind": "village"
   },
   {
     "name": "Górka",
-    "x": 8800.7,
-    "y": 6062.3
+    "x": 11872.7,
+    "y": 9134.3,
+    "kind": "village"
   },
   {
     "name": "Isep",
-    "x": 8929.6,
-    "y": 3435.2
+    "x": 12001.6,
+    "y": 6507.2,
+    "kind": "village"
   },
   {
     "name": "Jasna Polana",
-    "x": 11436.5,
-    "y": 8592.7
+    "x": 14508.5,
+    "y": 11664.7,
+    "kind": "village"
   },
   {
     "name": "Jastkowice",
-    "x": 11175.1,
-    "y": 5803.1
+    "x": 14247.1,
+    "y": 8875.1,
+    "kind": "village"
   },
   {
     "name": "Kaczyłów",
-    "x": 11848.7,
-    "y": 10084.6
+    "x": 14920.7,
+    "y": 13156.6,
+    "kind": "village"
   },
   {
     "name": "Kamień",
-    "x": 12497,
-    "y": 15679.9
+    "x": 15569,
+    "y": 18751.9,
+    "kind": "village"
   },
   {
     "name": "Karnaty",
-    "x": 8350,
-    "y": 4836.9
+    "x": 11422,
+    "y": 7908.9,
+    "kind": "district"
   },
   {
     "name": "Kępa Rzeczycka",
-    "x": 8366.2,
-    "y": 223.6
+    "x": 11438.2,
+    "y": 3295.6,
+    "kind": "village"
   },
   {
     "name": "Kłyżów",
-    "x": 12157.7,
-    "y": 13629
+    "x": 15229.7,
+    "y": 16701,
+    "kind": "village"
   },
   {
     "name": "Kolonia Jastkowice",
-    "x": 10767.9,
-    "y": 6781.8
+    "x": 13839.9,
+    "y": 9853.8,
+    "kind": "village"
   },
   {
     "name": "Koniec",
-    "x": 11170,
-    "y": 5058.9
+    "x": 14242,
+    "y": 8130.9,
+    "kind": "village"
   },
   {
     "name": "Krzyżowe Drogi",
-    "x": 5209.7,
-    "y": 7442.1
+    "x": 8281.7,
+    "y": 10514.1,
+    "kind": "district"
+  },
+  {
+    "name": "Kuziory",
+    "x": 19499.7,
+    "y": 11232.3,
+    "kind": "village"
   },
   {
     "name": "Lipowiec",
-    "x": 15471.5,
-    "y": 3373.2
+    "x": 18543.5,
+    "y": 6445.2,
+    "kind": "village"
   },
   {
     "name": "Ludian",
-    "x": 12146.6,
-    "y": 4073.3
+    "x": 15218.6,
+    "y": 7145.3,
+    "kind": "village"
   },
   {
     "name": "Łany",
-    "x": 4204.4,
-    "y": 407.4
+    "x": 7276.4,
+    "y": 3479.4,
+    "kind": "village"
+  },
+  {
+    "name": "Łączki",
+    "x": 8725.1,
+    "y": 1569.4,
+    "kind": "village"
   },
   {
     "name": "Łęka",
-    "x": 10688.6,
-    "y": 5917
+    "x": 13760.6,
+    "y": 8989,
+    "kind": "village"
   },
   {
     "name": "Łowy",
-    "x": 4701.5,
-    "y": 990.5
+    "x": 7773.5,
+    "y": 4062.5,
+    "kind": "village"
   },
   {
     "name": "Ług",
-    "x": 12827.1,
-    "y": 16310.3
+    "x": 15899.1,
+    "y": 19382.3,
+    "kind": "village"
   },
   {
     "name": "Majdan",
-    "x": 11173.3,
-    "y": 1749.4
+    "x": 14245.3,
+    "y": 4821.4,
+    "kind": "village"
   },
   {
     "name": "Majdan",
-    "x": 13452.3,
-    "y": 8184.8
+    "x": 16524.3,
+    "y": 11256.8,
+    "kind": "village"
+  },
+  {
+    "name": "Majdan Zbydniowski",
+    "x": 7703.5,
+    "y": 293.3,
+    "kind": "village"
   },
   {
     "name": "Malce",
-    "x": 7789.8,
-    "y": 12822.3
+    "x": 10861.8,
+    "y": 15894.3,
+    "kind": "district"
   },
   {
     "name": "Mierchówka",
-    "x": 10381.7,
-    "y": 2149
+    "x": 13453.7,
+    "y": 5221,
+    "kind": "village"
   },
   {
     "name": "Młynarze",
-    "x": 12610.8,
-    "y": 14534.7
+    "x": 15682.8,
+    "y": 17606.7,
+    "kind": "village"
   },
   {
     "name": "Moskale",
-    "x": 7572.7,
-    "y": 13781.7
+    "x": 10644.7,
+    "y": 16853.7,
+    "kind": "district"
   },
   {
     "name": "Moskale",
-    "x": 14340.3,
-    "y": 8128.6
+    "x": 17412.3,
+    "y": 11200.6,
+    "kind": "village"
   },
   {
     "name": "Moskale-PGO",
-    "x": 8621.1,
-    "y": 14262.2
+    "x": 11693.1,
+    "y": 17334.2,
+    "kind": "district"
   },
   {
     "name": "Musików",
-    "x": 10802.4,
-    "y": 2529.4
+    "x": 13874.4,
+    "y": 5601.4,
+    "kind": "village"
+  },
+  {
+    "name": "Mysolin",
+    "x": 8403.4,
+    "y": 1067.3,
+    "kind": "village"
   },
   {
     "name": "Myszowie",
-    "x": 4620.1,
-    "y": 142.8
+    "x": 7692.1,
+    "y": 3214.8,
+    "kind": "village"
   },
   {
     "name": "Nad Kępą",
-    "x": 11171.8,
-    "y": 5314.3
+    "x": 14243.8,
+    "y": 8386.3,
+    "kind": "village"
+  },
+  {
+    "name": "Nadjeziorze",
+    "x": 14517.4,
+    "y": 20541.3,
+    "kind": "village"
   },
   {
     "name": "Nieroda",
-    "x": 1076.6,
-    "y": 13514
+    "x": 4148.6,
+    "y": 16586,
+    "kind": "village"
   },
   {
     "name": "Nisko",
-    "x": 9252.1,
-    "y": 15615.9
+    "x": 12324.1,
+    "y": 18687.9,
+    "kind": "town"
   },
   {
     "name": "Obojna",
-    "x": 3716.8,
-    "y": 2196.6
+    "x": 6788.8,
+    "y": 5268.6,
+    "kind": "village"
   },
   {
     "name": "Odmoście",
-    "x": 11289.9,
-    "y": 6689.7
+    "x": 14361.9,
+    "y": 9761.7,
+    "kind": "village"
   },
   {
     "name": "Olszowiec",
-    "x": 11898.8,
-    "y": 12044.3
+    "x": 14970.8,
+    "y": 15116.3,
+    "kind": "village"
   },
   {
     "name": "Oręda",
-    "x": 11463.4,
-    "y": 5653.1
+    "x": 14535.4,
+    "y": 8725.1,
+    "kind": "village"
   },
   {
     "name": "Osiedle Centralne",
-    "x": 6754.9,
-    "y": 8105.3
+    "x": 9826.9,
+    "y": 11177.3,
+    "kind": "district"
   },
   {
     "name": "Osiedle Energetyków",
-    "x": 6811.2,
-    "y": 11639.4
+    "x": 9883.2,
+    "y": 14711.4,
+    "kind": "district"
   },
   {
     "name": "Osiedle Fabryczne",
-    "x": 6115.3,
-    "y": 8178.5
+    "x": 9187.3,
+    "y": 11250.5,
+    "kind": "district"
   },
   {
     "name": "Osiedle Flisaków",
-    "x": 7433,
-    "y": 8619.7
+    "x": 10505,
+    "y": 11691.7,
+    "kind": "district"
   },
   {
     "name": "Osiedle Hutników",
-    "x": 6476.8,
-    "y": 11591.7
+    "x": 9548.8,
+    "y": 14663.7,
+    "kind": "district"
   },
   {
     "name": "Osiedle Lasowiaków",
-    "x": 7315.7,
-    "y": 8998
+    "x": 10387.7,
+    "y": 12070,
+    "kind": "district"
   },
   {
     "name": "Osiedle Leśna",
-    "x": 6485.4,
-    "y": 9345.3
+    "x": 9557.4,
+    "y": 12417.3,
+    "kind": "district"
   },
   {
     "name": "Osiedle Metalowców",
-    "x": 5654,
-    "y": 8536.9
+    "x": 8726,
+    "y": 11608.9,
+    "kind": "district"
   },
   {
     "name": "Osiedle Młodynie",
-    "x": 6735.2,
-    "y": 7140.9
+    "x": 9807.2,
+    "y": 10212.9,
+    "kind": "district"
   },
   {
     "name": "Osiedle na Skarpie",
-    "x": 7476.8,
-    "y": 8262.7
+    "x": 10548.8,
+    "y": 11334.7,
+    "kind": "district"
   },
   {
     "name": "Osiedle Piaski",
-    "x": 6208.1,
-    "y": 5539.1
+    "x": 9280.1,
+    "y": 8611.1,
+    "kind": "district"
   },
   {
     "name": "Osiedle Podlesie",
-    "x": 5467,
-    "y": 8203.9
+    "x": 8539,
+    "y": 11275.9,
+    "kind": "district"
   },
   {
     "name": "Osiedle Poręby",
-    "x": 7107.4,
-    "y": 7186.2
+    "x": 10179.4,
+    "y": 10258.2,
+    "kind": "district"
   },
   {
     "name": "Osiedle Śródmieście",
-    "x": 6605,
-    "y": 8832.3
+    "x": 9677,
+    "y": 11904.3,
+    "kind": "district"
   },
   {
     "name": "Osiedle Tysiąclecia",
-    "x": 8667.5,
-    "y": 15149
+    "x": 11739.5,
+    "y": 18221,
+    "kind": "district"
   },
   {
     "name": "Osiedle Widok",
-    "x": 6925.2,
-    "y": 6442.5
+    "x": 9997.2,
+    "y": 9514.5,
+    "kind": "district"
   },
   {
     "name": "Osiedle Wyzwolenia",
-    "x": 6215.5,
-    "y": 7573.7
+    "x": 9287.5,
+    "y": 10645.7,
+    "kind": "district"
   },
   {
     "name": "Osiedle Zasanie",
-    "x": 8256,
-    "y": 9819.7
+    "x": 11328,
+    "y": 12891.7,
+    "kind": "village"
   },
   {
     "name": "Ostrówek Duży",
-    "x": 4520.1,
-    "y": 1518.9
+    "x": 7592.1,
+    "y": 4590.9,
+    "kind": "village"
   },
   {
     "name": "Ostrówek Mały",
-    "x": 4687.3,
-    "y": 1229.4
+    "x": 7759.3,
+    "y": 4301.4,
+    "kind": "village"
   },
   {
     "name": "Palenie",
-    "x": 11236.5,
-    "y": 7507.2
+    "x": 14308.5,
+    "y": 10579.2,
+    "kind": "village"
   },
   {
     "name": "Pasieka",
-    "x": 2341.2,
-    "y": 1886
+    "x": 5413.2,
+    "y": 4958,
+    "kind": "village"
   },
   {
     "name": "Pasternik",
-    "x": 9747.4,
-    "y": 428.8
+    "x": 12819.4,
+    "y": 3500.8,
+    "kind": "village"
   },
   {
     "name": "Pilchów",
-    "x": 6633.8,
-    "y": 2235
+    "x": 9705.8,
+    "y": 5307,
+    "kind": "village"
   },
   {
     "name": "Piskorowy Staw",
-    "x": 15093,
-    "y": 12511
+    "x": 18165,
+    "y": 15583,
+    "kind": "village"
   },
   {
     "name": "Pławo",
-    "x": 7536.2,
-    "y": 8135.2
+    "x": 10608.2,
+    "y": 11207.2,
+    "kind": "district"
   },
   {
     "name": "Pod Górką",
-    "x": 9307.9,
-    "y": 229.4
+    "x": 12379.9,
+    "y": 3301.4,
+    "kind": "village"
   },
   {
     "name": "Pod Jeziorem",
-    "x": 10024.4,
-    "y": 273.1
+    "x": 13096.4,
+    "y": 3345.1,
+    "kind": "village"
   },
   {
     "name": "Podborek",
-    "x": 10328.5,
-    "y": 8837.3
+    "x": 13400.5,
+    "y": 11909.3,
+    "kind": "village"
   },
   {
     "name": "Podchoinie",
-    "x": 5859.3,
-    "y": 4066.4
+    "x": 8931.3,
+    "y": 7138.4,
+    "kind": "district"
   },
   {
     "name": "Podkarczmie",
-    "x": 10162.5,
-    "y": 1411
+    "x": 13234.5,
+    "y": 4483,
+    "kind": "village"
   },
   {
     "name": "Podkorzeniec",
-    "x": 12290.3,
-    "y": 13274.2
+    "x": 15362.3,
+    "y": 16346.2,
+    "kind": "village"
   },
   {
     "name": "Podkościele",
-    "x": 11037.4,
-    "y": 9357.2
+    "x": 14109.4,
+    "y": 12429.2,
+    "kind": "village"
   },
   {
     "name": "Podlesie",
-    "x": 11136.7,
-    "y": 1443.2
+    "x": 14208.7,
+    "y": 4515.2,
+    "kind": "village"
   },
   {
     "name": "Podlesie",
-    "x": 13715.1,
-    "y": 10781.5
+    "x": 16787.1,
+    "y": 13853.5,
+    "kind": "village"
   },
   {
     "name": "Podorenda",
-    "x": 10766.5,
-    "y": 10222.1
+    "x": 13838.5,
+    "y": 13294.1,
+    "kind": "village"
   },
   {
     "name": "Podsanie",
-    "x": 8032.2,
-    "y": 12039
+    "x": 11104.2,
+    "y": 15111,
+    "kind": "village"
   },
   {
     "name": "Podsanie",
-    "x": 10310.1,
-    "y": 14057.9
+    "x": 13382.1,
+    "y": 17129.9,
+    "kind": "district"
+  },
+  {
+    "name": "Poręby",
+    "x": 8322.6,
+    "y": 758.1,
+    "kind": "village"
   },
   {
     "name": "Posanie",
-    "x": 8404.5,
-    "y": 3968.7
+    "x": 11476.5,
+    "y": 7040.7,
+    "kind": "district"
+  },
+  {
+    "name": "Poświętna",
+    "x": 14066.4,
+    "y": 20615.3,
+    "kind": "village"
   },
   {
     "name": "Przyłęk",
-    "x": 6887.4,
-    "y": 2068.3
+    "x": 9959.4,
+    "y": 5140.3,
+    "kind": "village"
   },
   {
     "name": "Pysznica",
-    "x": 10911.5,
-    "y": 9581.2
+    "x": 13983.5,
+    "y": 12653.2,
+    "kind": "village"
+  },
+  {
+    "name": "Racławice",
+    "x": 13620.2,
+    "y": 20169.4,
+    "kind": "village"
   },
   {
     "name": "Radeczyna",
-    "x": 15053.7,
-    "y": 7786.4
+    "x": 18125.7,
+    "y": 10858.4,
+    "kind": "village"
   },
   {
     "name": "Rędziny",
-    "x": 10854,
-    "y": 12501.3
+    "x": 13926,
+    "y": 15573.3,
+    "kind": "village"
   },
   {
     "name": "Rędziny",
-    "x": 11700.7,
-    "y": 14978.2
+    "x": 14772.7,
+    "y": 18050.2,
+    "kind": "village"
   },
   {
     "name": "Rozwadowska Górka",
-    "x": 6606,
-    "y": 6548.5
+    "x": 9678,
+    "y": 9620.5,
+    "kind": "district"
   },
   {
     "name": "Rozwadów",
-    "x": 6916.4,
-    "y": 5578.1
+    "x": 9988.4,
+    "y": 8650.1,
+    "kind": "district"
   },
   {
     "name": "Ruda Jastkowska",
-    "x": 13104.7,
-    "y": 7450.3
+    "x": 16176.7,
+    "y": 10522.3,
+    "kind": "village"
   },
   {
     "name": "Rybówka",
-    "x": 3645.6,
-    "y": 2401.2
+    "x": 6717.6,
+    "y": 5473.2,
+    "kind": "village"
   },
   {
     "name": "Rzeczyca Długa",
-    "x": 10918,
-    "y": 1502.5
+    "x": 13990,
+    "y": 4574.5,
+    "kind": "village"
   },
   {
     "name": "Rzeczyca Okrągła",
-    "x": 9962.6,
-    "y": 505.8
+    "x": 13034.6,
+    "y": 3577.8,
+    "kind": "village"
   },
   {
     "name": "Sadzawki",
-    "x": 9958,
-    "y": 1626.4
+    "x": 13030,
+    "y": 4698.4,
+    "kind": "village"
   },
   {
     "name": "Sandomierska",
-    "x": 6249.9,
-    "y": 1763.2
+    "x": 9321.9,
+    "y": 4835.2,
+    "kind": "village"
   },
   {
     "name": "Sęk",
-    "x": 13248.5,
-    "y": 6039
+    "x": 16320.5,
+    "y": 9111,
+    "kind": "village"
+  },
+  {
+    "name": "Skrzypacze",
+    "x": 848.4,
+    "y": 14563.9,
+    "kind": "village"
   },
   {
     "name": "Smuga",
-    "x": 3434.1,
-    "y": 2058.5
+    "x": 6506.1,
+    "y": 5130.5,
+    "kind": "village"
   },
   {
     "name": "Sochy",
-    "x": 8151.5,
-    "y": 2123.1
+    "x": 11223.5,
+    "y": 5195.1,
+    "kind": "district"
   },
   {
     "name": "Sołtysy",
-    "x": 11068.7,
-    "y": 10952.8
+    "x": 14140.7,
+    "y": 14024.8,
+    "kind": "village"
   },
   {
     "name": "Stalowa Wola",
-    "x": 6676.4,
-    "y": 8725.7
+    "x": 9748.4,
+    "y": 11797.7,
+    "kind": "town"
   },
   {
     "name": "Sudoły",
-    "x": 8312,
-    "y": 10152.3
+    "x": 11384,
+    "y": 13224.3,
+    "kind": "village"
   },
   {
     "name": "Swoły",
-    "x": 7245.9,
-    "y": 11474.6
+    "x": 10317.9,
+    "y": 14546.6,
+    "kind": "village"
   },
   {
     "name": "Szklana Górka",
-    "x": 11099.2,
-    "y": 10660.5
+    "x": 14171.2,
+    "y": 13732.5,
+    "kind": "village"
   },
   {
     "name": "Targowisko",
-    "x": 15366.6,
-    "y": 8981.9
+    "x": 18438.6,
+    "y": 12053.9,
+    "kind": "village"
   },
   {
     "name": "Turbia",
-    "x": 4390.9,
-    "y": 846.5
+    "x": 7462.9,
+    "y": 3918.5,
+    "kind": "village"
   },
   {
     "name": "U Linii",
-    "x": 10002.4,
-    "y": 956.7
+    "x": 13074.4,
+    "y": 4028.7,
+    "kind": "village"
   },
   {
     "name": "Ugor",
-    "x": 4064.3,
-    "y": 1672
+    "x": 7136.3,
+    "y": 4744,
+    "kind": "village"
   },
   {
     "name": "Ugory",
-    "x": 10775.4,
-    "y": 7506.9
+    "x": 13847.4,
+    "y": 10578.9,
+    "kind": "village"
+  },
+  {
+    "name": "Waldekówka",
+    "x": 14519,
+    "y": 20200.9,
+    "kind": "village"
   },
   {
     "name": "Węgry",
-    "x": 11328.4,
-    "y": 6035.5
+    "x": 14400.4,
+    "y": 9107.5,
+    "kind": "village"
+  },
+  {
+    "name": "Wiejsyna",
+    "x": 8996.2,
+    "y": 962.1,
+    "kind": "village"
+  },
+  {
+    "name": "Wolina",
+    "x": 14029.6,
+    "y": 21821.2,
+    "kind": "village"
   },
   {
     "name": "Wólka",
-    "x": 10544.6,
-    "y": 6262.2
+    "x": 13616.6,
+    "y": 9334.2,
+    "kind": "village"
+  },
+  {
+    "name": "Wólka Turebska",
+    "x": 8760.5,
+    "y": 814.4,
+    "kind": "village"
   },
   {
     "name": "Wygon",
-    "x": 6385.9,
-    "y": 2408.4
+    "x": 9457.9,
+    "y": 5480.4,
+    "kind": "village"
   },
   {
     "name": "Zagonie",
-    "x": 13569.7,
-    "y": 6917.8
+    "x": 16641.7,
+    "y": 9989.8,
+    "kind": "village"
   },
   {
     "name": "Zagóra",
-    "x": 13025.7,
-    "y": 13620.5
+    "x": 16097.7,
+    "y": 16692.5,
+    "kind": "village"
   },
   {
     "name": "Zagórze",
-    "x": 3814.4,
-    "y": 2709.4
+    "x": 6886.4,
+    "y": 5781.4,
+    "kind": "village"
   },
   {
     "name": "Zagumnie",
-    "x": 4225.7,
-    "y": 1287.2
+    "x": 7297.7,
+    "y": 4359.2,
+    "kind": "village"
   },
   {
     "name": "Zasanie",
-    "x": 11175.1,
-    "y": 13386.4
+    "x": 14247.1,
+    "y": 16458.4,
+    "kind": "district"
   },
   {
     "name": "Zastruże",
-    "x": 10098.9,
-    "y": 1408.9
+    "x": 13170.9,
+    "y": 4480.9,
+    "kind": "village"
+  },
+  {
+    "name": "Zatorze",
+    "x": 11174,
+    "y": 3070.6,
+    "kind": "village"
   },
   {
     "name": "Zawale",
-    "x": 9527,
-    "y": 4216.5
+    "x": 12599,
+    "y": 7288.5,
+    "kind": "village"
   },
   {
     "name": "Ziarny",
-    "x": 10016.5,
-    "y": 9366.4
+    "x": 13088.5,
+    "y": 12438.4,
+    "kind": "village"
   }
 ]

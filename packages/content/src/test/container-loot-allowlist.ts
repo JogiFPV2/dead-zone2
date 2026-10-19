@@ -28,20 +28,4 @@ export const ITEM_EXCEPTIONS: readonly ItemException[] = [
   },
 ];
 
-/**
- * Przejściowe: rozstawienie mebli (`tools/map/src/furnish.ts`) stawia szafkę kuchenną
- * w łazience i blat kuchenny jako ladę w sklepach. Do usunięcia, gdy Silnik 2 podmieni je na
- * `base:bathroom-cabinet` i `base:shop-counter` (docs/TASKS.md).
- */
-export const TABLE_EXCEPTIONS: readonly TableException[] = [
-  {
-    table: 'base:bathroom',
-    container: 'base:kitchen-cabinet',
-    reason: 'szafka kuchenna stoi w łazience zamiast base:bathroom-cabinet',
-  },
-  ...['base:grocery', 'base:gas-station', 'base:gun-store', 'base:pharmacy'].map((table) => ({
-    table,
-    container: 'base:kitchen-counter',
-    reason: 'blat kuchenny służy za ladę zamiast base:shop-counter',
-  })),
-];
+export const TABLE_EXCEPTIONS: readonly TableException[] = [];

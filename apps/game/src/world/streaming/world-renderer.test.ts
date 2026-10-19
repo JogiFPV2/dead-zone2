@@ -90,3 +90,32 @@ describe('StreamedWorldRenderer disposal', () => {
     expect(tracker.disposed).toBe(tracker.created);
   });
 });
+
+describe('StreamedWorldRenderer staged near build', () => {
+  it('builds the ground level at once, storeys later within the budget, and cancels on dispose', async () => {
+    const { StreamedWorldRenderer } = await import('./world-renderer.js');
+    const r = new StreamedWorldRenderer(undefined, false);
+    const loads: string[] = [];
+    const unloads: string[] = [];
+    r.addNearLayer({
+      loadChunk: (cx, cy, z) => void loads.push(`${cx},${cy},${z}`),
+      unloadChunk: (cx, cy, z) => void unloads.push(`${cx},${cy},${z}`),
+    });
+    const data = { levels: new Map([0, 1, 2].map((z) => [z, {}])) } as never;
+    const a = r.build(1, 1, LOD_NEAR, data, undefined);
+    const b = r.build(2, 1, LOD_NEAR, data, undefined);
+    expect(loads).toEqual(['1,1,0', '2,1,0']);
+    expect(r.pendingJobs).toBe(4);
+    // At least one job per step even with no budget left.
+    expect(r.step(0)).toBe(true);
+    expect(loads).toEqual(['1,1,0', '2,1,0', '1,1,1']);
+    // Disposing drops its pending storeys and unloads only what was built.
+    a.dispose();
+    expect(unloads).toEqual(['1,1,0', '1,1,1']);
+    expect(r.pendingJobs).toBe(2);
+    expect(r.step(Infinity)).toBe(false);
+    expect(loads.slice(3)).toEqual(['2,1,1', '2,1,2']);
+    b.dispose();
+    expect(unloads.slice(2)).toEqual(['2,1,0', '2,1,1', '2,1,2']);
+  });
+});

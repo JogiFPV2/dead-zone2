@@ -3,10 +3,10 @@ import {
   CHUNK_SIZE,
   NO_BUILDING,
   tileIndex,
+  type BuildingId,
   type ChunkRange,
   type ChunkSource,
 } from './../world/chunk.js';
-import { BuildingLookup } from '../world/building-lookup.js';
 
 export interface MinimapGeometry {
   /** Horizontal runs of road tiles as 1 m wide lines (draw with `roadWidth: 1`). */
@@ -26,32 +26,51 @@ export const isRoadTile = (id: string | null | undefined): boolean =>
 export function minimapGeometry(source: ChunkSource, range: ChunkRange): MinimapGeometry {
   const x0 = range.cx0 * CHUNK_SIZE;
   const x1 = (range.cx1 + 1) * CHUNK_SIZE;
-  const y0 = range.cy0 * CHUNK_SIZE;
-  const y1 = (range.cy1 + 1) * CHUNK_SIZE;
-  const lookup = new BuildingLookup(source);
   const roads: Polyline[] = [];
   const boxes = new Map<number, { x0: number; y0: number; x1: number; y1: number }>();
-  const floorAt = (x: number, y: number): string | null | undefined => {
-    const c = source.getChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE), range.z);
-    if (!c) return undefined;
-    const lx = x - c.coord.cx * CHUNK_SIZE;
-    const ly = y - c.coord.cy * CHUNK_SIZE;
-    return source.tilePalette[c.floor[tileIndex(lx, ly)] ?? 0];
+  // Per chunk row: the chunks once, palette ids → road flag once (no per-tile lookups).
+  const roadId = new Map<number, boolean>();
+  const isRoadId = (id: number): boolean => {
+    let r = roadId.get(id);
+    if (r === undefined) roadId.set(id, (r = isRoadTile(source.tilePalette[id])));
+    return r;
   };
-  for (let y = y0; y < y1; y++) {
-    let runStart: number | undefined;
-    for (let x = x0; x <= x1; x++) {
-      const road = x < x1 && isRoadTile(floorAt(x, y));
-      if (road && runStart === undefined) runStart = x;
-      if (!road && runStart !== undefined) {
-        roads.push([
-          { x: runStart, z: y + 0.5 },
-          { x, z: y + 0.5 },
-        ]);
-        runStart = undefined;
-      }
-      if (x < x1) {
-        const b = lookup.at(x, y, range.z);
+  for (let cy = range.cy0; cy <= range.cy1; cy++) {
+    const row = [];
+    for (let cx = range.cx0; cx <= range.cx1; cx++) {
+      const c = source.getChunk(cx, cy, range.z);
+      const owner = new Map<number, BuildingId>();
+      row.push({ c, owner });
+    }
+    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+      const y = cy * CHUNK_SIZE + ly;
+      let runStart: number | undefined;
+      for (let x = x0; x <= x1; x++) {
+        let road = false;
+        let b: BuildingId = NO_BUILDING;
+        if (x < x1) {
+          const e = row[Math.floor((x - x0) / CHUNK_SIZE)]!;
+          const c = e.c;
+          if (c) {
+            const i = tileIndex(x - c.coord.cx * CHUNK_SIZE, ly);
+            road = isRoadId(c.floor[i] ?? 0);
+            const roomId = c.room?.[i] ?? 0;
+            if (roomId !== 0 && c.rooms) {
+              let o = e.owner.get(roomId);
+              if (o === undefined)
+                e.owner.set(roomId, (o = c.rooms.get(roomId)?.buildingId ?? NO_BUILDING));
+              b = o;
+            }
+          }
+        }
+        if (road && runStart === undefined) runStart = x;
+        if (!road && runStart !== undefined) {
+          roads.push([
+            { x: runStart, z: y + 0.5 },
+            { x, z: y + 0.5 },
+          ]);
+          runStart = undefined;
+        }
         if (b !== NO_BUILDING) {
           const box = boxes.get(b);
           if (!box) boxes.set(b, { x0: x, y0: y, x1: x + 1, y1: y + 1 });

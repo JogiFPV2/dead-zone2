@@ -72,6 +72,8 @@ export type RoadKind =
 
 export interface OsmRoad {
   id: number;
+  /** Rank in the whole file (lazily loaded tiles: query order independent of load order). */
+  ord?: number;
   kind: RoadKind;
   /** Carriageway width (m). */
   width: number;
@@ -86,13 +88,41 @@ export interface OsmRoad {
 
 export interface OsmRail {
   id: number;
+  /** Rank in the whole file (lazily loaded tiles: query order independent of load order). */
+  ord?: number;
   kind: 'rail' | 'tram' | 'siding' | 'disused';
   bridge?: 1;
+  /** `electrified=contact_line` (catenary masts and wires). */
+  el?: 1;
   pts: number[];
+}
+
+/** Power line (`power=line` / `minor_line`): every vertex a tower / pole. */
+export interface OsmPower {
+  id: number;
+  /** Rank in the whole file (lazily loaded tiles). */
+  ord?: number;
+  /** By `voltage`: 110 / 220 / 400 kV lines, `lv` = low voltage (`minor_line`, ≤ 1 kV). */
+  kind: 'hv110' | 'hv220' | 'hv400' | 'lv';
+  /** Circuits (`circuits`, or `cables` / 3): 2 = double-circuit towers. */
+  circuits: 1 | 2;
+  pts: number[];
+}
+
+/** Railway point features (on a rail vertex): switches, buffer stops, level crossings. */
+export interface OsmRailNode {
+  kind: 'switch' | 'buffer_stop' | 'level_crossing';
+  /** Decimetres. */
+  x: number;
+  y: number;
 }
 
 export interface OsmWaterway {
   id: number;
+  /** Rank in the whole file (lazily loaded tiles: query order independent of load order). */
+  ord?: number;
+  /** Piece of a large feature clipped to one tile (+ margin): indexed apart from other pieces. */
+  part?: number;
   kind: 'river' | 'stream' | 'canal' | 'ditch';
   width: number;
   name?: string;
@@ -125,6 +155,10 @@ export type AreaKind =
 
 export interface OsmArea {
   id: number;
+  /** Rank in the whole file (lazily loaded tiles: query order independent of load order). */
+  ord?: number;
+  /** Piece of a large feature clipped to one tile (+ margin): indexed apart from other pieces. */
+  part?: number;
   kind: AreaKind;
   name?: string;
   /** Outer ring first, then holes (each a closed flat ring). */
@@ -133,6 +167,8 @@ export interface OsmArea {
 
 export interface OsmBuilding {
   id: number;
+  /** Global building id: rank in OSM id order over the whole file (tiles keep it). */
+  gid?: number;
   type: BuildingType;
   kind: BuildingKind;
   typeFrom: Source;
@@ -172,6 +208,10 @@ export interface OsmMap {
   source: string;
   roads: OsmRoad[];
   rails: OsmRail[];
+  /** Power lines (optional: older files have none). */
+  power?: OsmPower[];
+  /** Railway switches, buffer stops and level crossings (optional). */
+  railNodes?: OsmRailNode[];
   waterways: OsmWaterway[];
   areas: OsmArea[];
   buildings: OsmBuilding[];

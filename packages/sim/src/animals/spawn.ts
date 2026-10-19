@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, type SimAnimalSpawn } from '@deadzone/protocol';
+import { CHUNK_SIZE, type SimAnimalSpawn, type SimChunkAddress } from '@deadzone/protocol';
 import type { AiWorld } from '../ai/state.js';
 import { secToTicks } from '../ai/zombies.js';
 import { attach, sortedQuery, spawnEntity, type SimWorld } from '../core/world.js';
@@ -103,15 +103,41 @@ export function spawnAnimals(w: SimWorld, spawns: readonly SimAnimalSpawn[]): nu
 
 /** Players closer than this are avoided by map population (animals would bolt at once). */
 export const POPULATE_MIN_PLAYER_TILES = 12;
+/** Lazily generated maps (no chunk list): chunks this far around each player are populated. */
+export const POPULATE_LAZY_RADIUS = 4;
 /** Random tiles tried per animal in its chunk. */
 const POPULATE_TRIES = 12;
+
+/**
+ * Ground chunks around the players (lazy maps: generated on demand, so the whole map is never
+ * walked), each once.
+ */
+function lazyChunks(players: readonly { x: number; y: number }[]): SimChunkAddress[] {
+  const seen = new Set<string>();
+  const out: SimChunkAddress[] = [];
+  const R = POPULATE_LAZY_RADIUS;
+  for (const p of players) {
+    const pcx = Math.floor(p.x / CHUNK_SIZE);
+    const pcy = Math.floor(p.y / CHUNK_SIZE);
+    for (let cy = pcy - R; cy <= pcy + R; cy++)
+      for (let cx = pcx - R; cx <= pcx + R; cx++) {
+        const k = `${cx},${cy}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push({ cx, cy, z: 0 });
+      }
+  }
+  return out;
+}
 
 /**
  * Populates the map with up to `count` animals (`createSim({ populateAnimals })`, worker
  * `init.populateAnimals`). Habitat by chunk: a chunk with any room tile (buildings) is `town`,
  * one with floor but no rooms is `wild`; `any` takes both. Per animal: type by `spawnWeight`,
  * a chunk of its habitat (falls back to any chunk when the map has none), then random outdoor
- * floor tiles (room 0, free for its radius, ≥ POPULATE_MIN_PLAYER_TILES from players). All
+ * floor tiles (room 0, free for its radius, ≥ POPULATE_MIN_PLAYER_TILES from players). Lazy
+ * (generated) maps list no chunks: the ground chunks within POPULATE_LAZY_RADIUS of the players
+ * are used. All
  * randomness from RNG `animals`, chunks in (z, cy, cx) order, so the result depends only on the
  * seed, the map and the content.
  */
@@ -120,7 +146,12 @@ export function populateAnimals(w: SimWorld, grid: TileGrid, count: number): num
   if (!ai || count <= 0 || ai.animalTypes.length === 0) return [];
   const town: { cx: number; cy: number; z: number }[] = [];
   const wild: { cx: number; cy: number; z: number }[] = [];
-  const list = [...(w.map.listChunks?.() ?? [])].sort(
+  const players = sortedQuery(w, 'players', [w.c.Player]).map((e) => ({
+    x: w.c.Position.x[e] ?? 0,
+    y: w.c.Position.y[e] ?? 0,
+    z: Math.floor(w.c.Position.z[e] ?? 0),
+  }));
+  const list = [...(w.map.listChunks?.() ?? lazyChunks(players))].sort(
     (a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx,
   );
   for (const addr of list) {
@@ -138,11 +169,6 @@ export function populateAnimals(w: SimWorld, grid: TileGrid, count: number): num
   }
   const all = [...town, ...wild].sort((a, b) => a.z - b.z || a.cy - b.cy || a.cx - b.cx);
   if (all.length === 0) return [];
-  const players = sortedQuery(w, 'players', [w.c.Player]).map((e) => ({
-    x: w.c.Position.x[e] ?? 0,
-    y: w.c.Position.y[e] ?? 0,
-    z: Math.floor(w.c.Position.z[e] ?? 0),
-  }));
   const rng = w.rng.animals;
   const out: number[] = [];
   for (let n = 0; n < count; n++) {

@@ -73,12 +73,15 @@ beforeAll(() => {
 
 describe('generated map registry', () => {
   it('names the OSM map and plan-4, resolves the data URL against the base URL', () => {
-    expect(generatedMap('osm-stw')?.kind).toBe('osm');
+    expect(generatedMap('osm-stw')?.kind).toBe('osm-tiles');
+    expect(generatedMap('osm-okulickiego')?.kind).toBe('osm');
     expect(generatedMap('plan-4')?.kind).toBe('plan-4');
     expect(generatedMap('test-town')).toBeUndefined();
     expect(generatedMap('constructor')).toBeUndefined();
     const spec = resolveSpec(GENERATED_MAPS['osm-stw']!, '/deadzone-play/');
-    expect(spec.kind === 'osm' && spec.url).toBe(
+    expect(spec.kind === 'osm-tiles' && spec.url).toBe('/deadzone-play/osm/stw-16km/manifest.json');
+    const crop = resolveSpec(GENERATED_MAPS['osm-okulickiego']!, '/deadzone-play/');
+    expect(crop.kind === 'osm' && crop.url).toBe(
       '/deadzone-play/osm/stw-okulickiego.deadzone-osm-1.json',
     );
     expect(genStartRange({ cx0: 0, cy0: 0, cx1: 9, cy1: 9 }, { x: 40, y: 300 }, 2)).toEqual({

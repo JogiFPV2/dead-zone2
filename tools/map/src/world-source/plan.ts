@@ -4,7 +4,9 @@ import type {
   OsmBuilding,
   OsmPlace,
   OsmPoi,
+  OsmPower,
   OsmRail,
+  OsmRailNode,
   OsmRoad,
   OsmWaterway,
 } from '../osm/types.js';
@@ -18,6 +20,10 @@ import type {
 export interface PlanFeatures {
   roads: readonly OsmRoad[];
   rails: readonly OsmRail[];
+  /** Power lines (optional). */
+  power?: readonly OsmPower[] | undefined;
+  /** Railway switches, buffer stops, level crossings (optional). */
+  railNodes?: readonly OsmRailNode[] | undefined;
   waterways: readonly OsmWaterway[];
   areas: readonly OsmArea[];
   buildings: readonly OsmBuilding[];
@@ -49,6 +55,11 @@ export interface WorldPlanInput {
   /** Start hint (tiles); the generator snaps it to the nearest free sidewalk. */
   start: { x: number; y: number };
   landCover?: LandCover | undefined;
+  /**
+   * Precomputed zone kinds of every chunk in the bounds (row-major, `CHUNK_KINDS` indices): lazily
+   * loaded maps cannot compute them from features they do not have yet.
+   */
+  chunkKinds?: Uint8Array | undefined;
   /** On-screen attribution (OSM: „© współtwórcy OpenStreetMap”). */
   attribution?: string | undefined;
 }
@@ -56,12 +67,17 @@ export interface WorldPlanInput {
 /**
  * Bump on every change of generated chunks for the same plan (part of the version string).
  * 2: OSM rotated onto the street grid, squared outlines, vector roads + ground under them.
- * 3: furniture placed by footprint (2×1 / 1×2: bed, sofa, desk, counter, metal shelf, bathtub),
- *    building kinds, #211 room kits (range, sinks, bathtub / shower, TV + VCR, radio).
- * 4: #254 room kits: tables with chairs, ceiling / floor / desk lamps, a switch in every lit room;
- *    sofas / armchairs / benches of one type a tile apart.
+ * 3: whole 16 km square (world 22 528 m, rotated square shifted inside), lazily loaded tiles,
+ *    feature order by global rank, outlines squared to their own axis off the street grid.
+ * 4: off-grid buildings turned onto the grid (tile data), huge halls in sections with gates,
+ *    furniture of big rooms (rack rows, hall workshops), zone kinds from the chunks around.
+ * 5–11 (#197): blok facades, bins by blocks, storeys from height, infra (power, track,
+ *    crossings, catenary), room kits, cover zones.
+ * 12: main #249 merged in: furniture placed by footprint, building kinds, its room kits.
+ * 13: cover zones and HV tower / catenary mast feet per chunk (`SimChunk.zones` / `blockers`).
+ * 14: main #257 merged in: #254 kits (tables with chairs, lamps, switches), toilet, seats a tile apart.
  */
-export const GENERATOR_REV = 4;
+export const GENERATOR_REV = 14;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

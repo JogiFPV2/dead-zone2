@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { startSimWorkerHost, type WorkerPortLike } from '@deadzone/sim/worker-host';
-import { loadGenerator } from './load-plan.js';
+import { loadWorld } from './load-plan.js';
 import type { SimWorldMessage } from './protocol.js';
 import { generatorWorldSource } from './sim-world.js';
 
@@ -17,8 +17,11 @@ let started = false;
 scope.addEventListener('message', (e: MessageEvent<unknown>) => {
   const m = e.data as Partial<SimWorldMessage> | undefined;
   if (m && m.kind === 'dz-world' && m.spec) {
-    loadGenerator(m.spec)
-      .then((gen) => {
+    // Tiled OSM map: ±1 km of tiles around the start's own before the sim starts, the rest in the
+    // background (the player cannot outrun it; a chunk asked for early is generated after).
+    loadWorld(m.spec, fetch, 1)
+      .then(({ gen, tiles }) => {
+        void tiles?.ensureAll().catch((err: unknown) => console.error('mapa OSM', err));
         const port: WorkerPortLike = {
           postMessage: (msg, transfer) => scope.postMessage(msg, transfer),
           addEventListener: (_t, fn) => listeners.push(fn),
@@ -31,7 +34,7 @@ scope.addEventListener('message', (e: MessageEvent<unknown>) => {
               setTimeout(fn, ms);
             },
           },
-          { world: generatorWorldSource(gen) },
+          { world: generatorWorldSource(gen, 48, tiles) },
         );
         started = true;
         for (const d of early.splice(0)) for (const fn of listeners) fn({ data: d });

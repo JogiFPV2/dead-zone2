@@ -15,7 +15,17 @@ import {
   type ChunkRange,
   type ChunkSource,
 } from '../chunk.js';
-import { NO_CUTAWAY, cutawayKey, isEdgeLowered, isRoofHidden, type Cutaway } from '../cutaway.js';
+import {
+  CUT_NEAR,
+  NO_CUTAWAY,
+  cutawayKey,
+  isLevelHidden,
+  isEdgeLowered,
+  isRoofHidden,
+  type Cutaway,
+} from '../cutaway.js';
+import { VectorWalls } from './vector-walls.js';
+import type { SimWallSegment } from '@deadzone/protocol';
 import { LEVEL_HEIGHT } from '../instances.js';
 import { WALL_HEIGHT } from '../structure-instances.js';
 import type { TownKit } from './kit.js';
@@ -28,7 +38,8 @@ import {
   windowLit,
   type Skin,
 } from './modules.js';
-import { pitchedRoof } from './roof.js';
+import { blokFacade, type BlokInfo } from './blok-facade.js';
+import { outlineRoof, pitchedRoof } from './roof.js';
 import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 
@@ -47,6 +58,14 @@ export interface TownStructuresOptions {
    * the mesh to the scene and disposes it; levels add / remove their own instances.
    */
   sharedBatch?: ((chunk: string) => SharedTownBatch) | undefined;
+  /**
+   * Streamed worlds: outline (x, y pairs, world metres) and storeys of a slanted building with
+   * vector walls: its top level gets a flat roof on the outline instead of roof tiles.
+   */
+  outlineOf?:
+    ((b: BuildingId) => { outline: readonly number[]; floors: number } | undefined) | undefined;
+  /** Streamed worlds: blocks of flats get the Designer's facade (balconies, canopies, roof). */
+  blokOf?: ((b: BuildingId) => BlokInfo | undefined) | undefined;
 }
 
 /** A BatchedMesh shared by several `TownStructures` (grown on demand). */
@@ -120,6 +139,8 @@ export class TownStructures {
   /** Level of the loaded range (0 = ground). */
   z = 0;
   private cut: Cutaway = NO_CUTAWAY;
+  /** Outline walls of slanted buildings on this level. */
+  private vector: VectorWalls | undefined;
   /** Building whose instances on this level are dimmed (player above this level). */
   private dimmed: BuildingId = NO_BUILDING;
   private key = '-';
@@ -166,7 +187,32 @@ export class TownStructures {
         one.clone().setScalar(s),
       );
 
+    // Slanted buildings: walls drawn on their outline (`VectorWalls`), not as tile stair-steps.
+    const segments: SimWallSegment[] = [];
+    for (let cy = range.cy0; cy <= range.cy1; cy++)
+      for (let cx = range.cx0; cx <= range.cx1; cx++)
+        for (const s of this.source.getChunk(cx, cy, range.z)?.wallSegments ?? []) segments.push(s);
+    this.vector?.dispose();
+    this.vector = undefined;
+    if (segments.length) {
+      this.vector = new VectorWalls(
+        segments,
+        range.z,
+        baseY,
+        this.kit.cells,
+        this.kit.material,
+        (b) => layout.skins.get(b) ?? 'plaster',
+        // Below the top storey the wall reaches the next floor: no slot at the slab edge.
+        (b) => {
+          const o = this.opts.outlineOf?.(b);
+          return o && range.z < o.floors - 1 ? LEVEL_HEIGHT : WALL_HEIGHT;
+        },
+      );
+      this.root.add(this.vector.root);
+    }
+    const vectorBuildings = this.vector?.buildings;
     for (const e of layout.edges) {
+      if (vectorBuildings?.has(e.building) && !e.interior && e.kind === 'wall') continue;
       const x = e.axis === 'N' ? e.tx + 0.5 : e.tx;
       const z = e.axis === 'N' ? e.ty : e.ty + 0.5;
       const look = { lowered: false };
@@ -177,7 +223,36 @@ export class TownStructures {
         edge: e,
       });
     }
+    // Vector roofs on the top level, clipped to this range's chunks (streamed one by one).
+    const outlined = new Set<BuildingId>();
+    for (const b of new Set([
+      ...layout.roofs.map((r) => r.building),
+      ...(this.vector?.buildings ?? []),
+    ])) {
+      const o = this.opts.outlineOf?.(b);
+      if (!o || range.z !== o.floors - 1) continue;
+      outlined.add(b);
+      const skin: Skin = layout.skins.get(b) ?? 'plaster';
+      const content = layout.roofs.find((r) => r.building === b)?.content;
+      const geo = outlineRoof(
+        o.outline,
+        roofColour(b, content),
+        WALL_CELL[skin],
+        this.kit.cells,
+        baseY + WALL_HEIGHT,
+        {
+          x0: range.cx0 * CHUNK_SIZE,
+          y0: range.cy0 * CHUNK_SIZE,
+          x1: (range.cx1 + 1) * CHUNK_SIZE,
+          y1: (range.cy1 + 1) * CHUNK_SIZE,
+        },
+      );
+      const at = geo?.boundingBox?.getCenter(new Vector3());
+      if (geo && at && geo.getAttribute('position').count > 0)
+        push(at.x, at.z, { geo, m: new Matrix4(), roof: b });
+    }
     for (const r of layout.roofs) {
+      if (outlined.has(r.building)) continue;
       const y = baseY + WALL_HEIGHT;
       // Streamed chunks see only their part of a building: the whole footprint comes from the
       // building metadata, and only the chunk holding its centre draws the pitched roof.
@@ -248,6 +323,40 @@ export class TownStructures {
     }
     for (const s of railingGeometry(tiles, range, baseY, this.kit.cells)) {
       push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
+    }
+    // Blocks of flats: balconies, panel joints, entrance canopies, roof vents (hidden with the
+    // level / the roof like the slabs).
+    const blokOf = this.opts.blokOf;
+    if (blokOf) {
+      const outward = (e: TownEdge) => {
+        const [ix, iy, ox, oy] =
+          e.axis === 'N' ? [e.tx, e.ty, e.tx, e.ty - 1] : [e.tx, e.ty, e.tx - 1, e.ty];
+        if (this.lookup.at(ix, iy, range.z) === e.building) return -1;
+        if (this.lookup.at(ox, oy, range.z) === e.building) return 1;
+        return 0;
+      };
+      const x0 = range.cx0 * CHUNK_SIZE;
+      const z0 = range.cy0 * CHUNK_SIZE;
+      const x1 = (range.cx1 + 1) * CHUNK_SIZE;
+      const z1 = (range.cy1 + 1) * CHUNK_SIZE;
+      for (const p of blokFacade(
+        layout.edges,
+        segments,
+        range.z,
+        baseY,
+        blokOf,
+        outward,
+        (x, z) => x >= x0 && x < x1 && z >= z0 && z < z1,
+        (c) => this.kit.cells.uv(c),
+      )) {
+        push(
+          p.x,
+          p.z,
+          p.roof
+            ? { geo: p.geo, m: new Matrix4(), roof: p.building }
+            : { geo: p.geo, m: new Matrix4(), slab: p.building },
+        );
+      }
     }
     for (const p of props) {
       if (!this.kit.geometries.has(p.name)) continue;
@@ -363,7 +472,19 @@ export class TownStructures {
     const prev = this.cut;
     this.key = key;
     this.cut = c;
+    this.vector?.setCutaway(c);
     const touched = new Set([prev.building, c.building]);
+    // Buildings between the camera and the player, before and now.
+    for (const p of [prev, c]) for (const b of p.occluders ?? []) touched.add(b);
+    // Neighbours around the player (their walls may hide it: `CUT_NEAR`), before and now.
+    for (const p of [prev, c]) {
+      if (p.building === NO_BUILDING) continue;
+      for (let y = p.ty - CUT_NEAR - 1; y <= p.ty + CUT_NEAR + 1; y++)
+        for (let x = p.tx - CUT_NEAR - 1; x <= p.tx + CUT_NEAR + 1; x++) {
+          const b = this.lookup.at(x, y, p.z ?? 0);
+          if (b !== NO_BUILDING) touched.add(b);
+        }
+    }
     const level = c.z ?? 0;
     const dim = c.building !== NO_BUILDING && this.z < level ? c.building : NO_BUILDING;
     if (dim !== this.dimmed) {
@@ -373,7 +494,8 @@ export class TownStructures {
     }
     for (const b of touched) {
       // Levels above the player's are not drawn in the player's building (spec 3.1).
-      const hidden = b === c.building && b !== NO_BUILDING && this.z > level;
+      // Occluders too: cut down to the player's floor.
+      const hidden = isLevelHidden(c, b, this.z);
       const here = this.z === level;
       for (const it of this.edgesByBuilding.get(b) ?? []) {
         it.batch.mesh.setVisibleAt(it.instance, !hidden);
@@ -434,6 +556,8 @@ export class TownStructures {
   }
 
   dispose(): void {
+    this.vector?.dispose();
+    this.vector = undefined;
     for (const b of this.batches.values()) {
       if (!b.shared) {
         b.mesh.dispose();

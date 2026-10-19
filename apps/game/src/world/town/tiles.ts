@@ -17,18 +17,33 @@ export class MapTiles {
     readonly z: number,
   ) {}
 
+  // Last chunk asked for: tile scans stay in one chunk for long runs (no key / map per tile).
+  private lastCx = NaN;
+  private lastCy = NaN;
+  private lastChunk: ChunkData | undefined;
+
+  private chunkAt(cx: number, cy: number): ChunkData | undefined {
+    if (cx === this.lastCx && cy === this.lastCy) return this.lastChunk;
+    const key = `${cx},${cy}`;
+    if (!this.cache.has(key)) this.cache.set(key, this.source.getChunk(cx, cy, this.z));
+    this.lastCx = cx;
+    this.lastCy = cy;
+    return (this.lastChunk = this.cache.get(key));
+  }
+
   chunk(tx: number, ty: number): { c: ChunkData | undefined; i: number } {
     const cx = Math.floor(tx / CHUNK_SIZE);
     const cy = Math.floor(ty / CHUNK_SIZE);
-    const key = `${cx},${cy}`;
-    if (!this.cache.has(key)) this.cache.set(key, this.source.getChunk(cx, cy, this.z));
-    return { c: this.cache.get(key), i: tileIndex(tx - cx * CHUNK_SIZE, ty - cy * CHUNK_SIZE) };
+    return { c: this.chunkAt(cx, cy), i: tileIndex(tx - cx * CHUNK_SIZE, ty - cy * CHUNK_SIZE) };
   }
 
   /** Floor content id, undefined outside the map / empty. */
   floor(tx: number, ty: number): ContentId | undefined {
-    const { c, i } = this.chunk(tx, ty);
-    const id = c?.floor[i] ?? 0;
+    const cx = Math.floor(tx / CHUNK_SIZE);
+    const cy = Math.floor(ty / CHUNK_SIZE);
+    const c = this.chunkAt(cx, cy);
+    if (!c) return undefined;
+    const id = c.floor[tileIndex(tx - cx * CHUNK_SIZE, ty - cy * CHUNK_SIZE)] ?? 0;
     return id === 0 ? undefined : (this.source.tilePalette[id] ?? undefined);
   }
 

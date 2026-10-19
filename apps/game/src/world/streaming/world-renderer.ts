@@ -22,7 +22,10 @@ export class StreamedWorldRenderer implements ChunkBuilder {
   readonly decor = new DecorLayer();
   private readonly layers: NearLayer[] = [];
   /** Near chunks currently built: key → levels. */
-  private readonly near = new Map<string, { cx: number; cy: number; levels: number[] }>();
+  private readonly near = new Map<
+    string,
+    { cx: number; cy: number; levels: number[]; built: [NearLayer, number][] }
+  >();
   private readonly material = new MeshStandardMaterial({
     vertexColors: true,
     roughness: 0.92,
@@ -41,8 +44,15 @@ export class StreamedWorldRenderer implements ChunkBuilder {
   /** Adds a near layer; it gets every near chunk that is already built. */
   addNearLayer(layer: NearLayer): void {
     this.layers.push(layer);
-    for (const { cx, cy, levels } of this.near.values()) {
-      for (const z of levels) layer.loadChunk(cx, cy, z);
+    for (const [key, e] of this.near) {
+      for (const z of e.levels) {
+        if (z > 0) {
+          this.jobs.push({ key, cx: e.cx, cy: e.cy, z, layer });
+          continue;
+        }
+        layer.loadChunk(e.cx, e.cy, z);
+        e.built.push([layer, z]);
+      }
     }
   }
 
@@ -66,13 +76,49 @@ export class StreamedWorldRenderer implements ChunkBuilder {
     this.decor.dispose();
   }
 
+  /**
+   * Upper storeys (z > 0) of near chunks still to build, one (layer, level) per job: the ground
+   * level replaces the mid LOD at once, the storeys follow over the next frames within the
+   * streamer's build budget (`step`).
+   */
+  private readonly jobs: { key: string; cx: number; cy: number; z: number; layer: NearLayer }[] =
+    [];
+
+  step(budgetMs: number): boolean {
+    const t0 = performance.now();
+    let n = 0;
+    while (this.jobs.length > 0) {
+      if (n > 0 && performance.now() - t0 >= budgetMs) break;
+      const j = this.jobs.shift()!;
+      const e = this.near.get(j.key);
+      if (!e) continue;
+      j.layer.loadChunk(j.cx, j.cy, j.z);
+      e.built.push([j.layer, j.z]);
+      n++;
+    }
+    return this.jobs.length > 0;
+  }
+
+  /** Deferred storeys waiting (tests / perf). */
+  get pendingJobs(): number {
+    return this.jobs.length;
+  }
+
   private buildNear(cx: number, cy: number, data: WorldChunk): BuiltChunk {
-    const levels = [...data.levels.keys()];
+    const levels = [...data.levels.keys()].sort((a, b) => a - b);
+    const key = `${cx},${cy}`;
+    const entry = { cx, cy, levels, built: [] as [NearLayer, number][] };
+    this.near.set(key, entry);
     let bytes = 0;
     let triangles = 0;
     for (const z of levels) {
       for (const l of this.layers) {
+        if (z > 0) {
+          this.jobs.push({ key, cx, cy, z, layer: l });
+          continue;
+        }
         const s = l.loadChunk(cx, cy, z);
+        entry.built.push([l, z]);
         if (s) {
           bytes += s.bytes;
           triangles += s.triangles;
@@ -84,14 +130,14 @@ export class StreamedWorldRenderer implements ChunkBuilder {
       bytes += s.bytes;
       triangles += s.triangles;
     }
-    const key = `${cx},${cy}`;
-    this.near.set(key, { cx, cy, levels });
     return {
       bytes,
       triangles,
       dispose: () => {
-        this.near.delete(key);
-        for (const z of levels) for (const l of this.layers) l.unloadChunk(cx, cy, z);
+        if (this.near.get(key) === entry) this.near.delete(key);
+        for (let i = this.jobs.length - 1; i >= 0; i--)
+          if (this.jobs[i]!.key === key) this.jobs.splice(i, 1);
+        for (const [l, z] of entry.built) l.unloadChunk(cx, cy, z);
         this.decor.unload(cx, cy);
       },
     };

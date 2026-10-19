@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { OsmMap } from '../osm/types.js';
 import {
   dominantRoadAngle,
+  OSM_SHIFT,
   rotatePt,
   rotation,
   straightenOsmMap,
@@ -84,7 +85,7 @@ describe('straighten (grid alignment of OSM)', () => {
     expect(Math.abs(a - 63)).toBeLessThanOrEqual(1.5);
   });
 
-  it('a building a few degrees off the axes becomes an axis-aligned rectangle; a 40° one stays', () => {
+  it('a building a few degrees off the axes becomes axis-aligned; a 40° one is squared to its own axis', () => {
     const stats = {} as StraightenStats;
     const m = straightenOsmMap(
       map({
@@ -96,14 +97,20 @@ describe('straighten (grid alignment of OSM)', () => {
       0,
       stats,
     );
-    expect(stats.buildingsSquared).toBe(1);
+    expect(stats.buildingsSquared).toBe(2);
+    expect(stats.buildingsLocal).toBe(1);
     const r = m.buildings[0]!.rings[0]!;
     expect(r).toHaveLength(10);
     for (let i = 0; i + 3 < r.length; i += 2) {
       // Every edge horizontal or vertical.
       expect(r[i] === r[i + 2] || r[i + 1] === r[i + 3]).toBe(true);
     }
-    expect(m.buildings[1]!.rings[0]).toEqual(rect(8200, 8200, 12, 8, 40));
+    // Already a clean rectangle at 40°: kept within rounding.
+    const want = rect(8200 + OSM_SHIFT, 8200 + OSM_SHIFT, 12, 8, 40);
+    const got = m.buildings[1]!.rings[0]!;
+    expect(got).toHaveLength(10);
+    for (const v of got)
+      expect(Math.min(...want.map((w) => Math.abs(w - v)))).toBeLessThanOrEqual(1);
   });
 
   it('an L-shaped outline keeps its six right-angled corners', () => {
@@ -117,7 +124,7 @@ describe('straighten (grid alignment of OSM)', () => {
       expect(r[i] === r[i + 2] || r[i + 1] === r[i + 3]).toBe(true);
   });
 
-  it('rotates every feature about the square centre', () => {
+  it('rotates every feature about the square centre (and shifts it into the world)', () => {
     const m = straightenOsmMap(
       map({
         trees: [81920 + 100, 81920],
@@ -125,7 +132,8 @@ describe('straighten (grid alignment of OSM)', () => {
       }),
       90,
     );
-    expect(m.trees).toEqual([81920, 81920 + 100]);
-    expect(m.places[0]).toMatchObject({ x: 81920 - 100, y: 81920 });
+    const sh = OSM_SHIFT * 10;
+    expect(m.trees).toEqual([81920 + sh, 81920 + 100 + sh]);
+    expect(m.places[0]).toMatchObject({ x: 81920 - 100 + sh, y: 81920 + sh });
   });
 });

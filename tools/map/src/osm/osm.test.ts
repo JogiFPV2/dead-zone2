@@ -38,6 +38,8 @@ describe('OSM tags → our building types', () => {
     expect(levelsFromTags({ 'building:levels': '11' })).toBe(11);
     expect(levelsFromTags({ 'building:levels': '4;5' })).toBe(5);
     expect(levelsFromTags({ height: '9' })).toBe(3);
+    // floor(height / 2.8): 16.5 m → 5 storeys (not round(16.5 / 3) = 6).
+    expect(levelsFromTags({ height: '16.5' })).toBe(5);
     expect(levelsFromTags({})).toBeUndefined();
     for (let id = 1; id < 400; id++) {
       const block = defaultLevels('block', id, 700, 30 + (id % 60));
@@ -108,6 +110,8 @@ const SHAPES: [string, BuildingKind, number, Footprint][] = [
   ['hospital U 5 storeys', 'hospital', 5, fp(50, 34, (x, y) => y < 12 || x < 12 || x >= 38)],
   ['church nave 1 tall storey', 'church', 1, fp(30, 14, (x, y) => !(x > 24 && (y < 4 || y > 9)))],
   ['industrial hall', 'industrial', 1, fp(60, 40, () => true)],
+  ['huge industrial hall in sections', 'industrial', 1, fp(170, 96, () => true)],
+  ['huge L-shaped hall in sections', 'industrial', 1, fp(160, 120, (x, y) => x < 70 || y < 40)],
 ];
 
 describe('generated interiors fit any footprint', () => {
@@ -116,10 +120,13 @@ describe('generated interiors fit any footprint', () => {
     (_n, kind, levels, f) => {
       const { res, map } = build(kind, levels, f);
       expect(res.levels).toBe(levels);
-      // One flight per storey above the ground floor.
-      expect(res.stairs.map((s) => s.zFrom ?? 0).sort((a, b) => a - b)).toEqual(
+      // One flight per storey above the ground floor in every stairwell (blocks: one per klatka).
+      const per = new Map<number, number>();
+      for (const st of res.stairs) per.set(st.zFrom ?? 0, (per.get(st.zFrom ?? 0) ?? 0) + 1);
+      expect([...per.keys()].sort((a, b) => a - b)).toEqual(
         Array.from({ length: levels - 1 }, (_, i) => i),
       );
+      expect(new Set(per.values()).size).toBeLessThanOrEqual(1);
       expect(res.doors.length).toBeGreaterThan(0);
       const chunks = map.chunks.map((c) => c.json);
       for (let z = 0; z < levels; z++)
@@ -151,5 +158,72 @@ describe('OSM scene osm-okulickiego (content map in the base pack)', () => {
     const storeys = [...rooms.values()].reduce((n, zs) => n + zs.size - 1, 0);
     expect(flights).toBe(storeys);
     expect(rooms.size).toBeGreaterThan(50);
+  });
+});
+
+describe('new building types', () => {
+  it('a long block of flats has a klatka per ~16 m, each with its own entrance and stairs', () => {
+    const { res } = build(
+      'block',
+      5,
+      fp(62, 12, () => true),
+    );
+    const klatki = res.stairs.filter((s) => (s.zFrom ?? 0) === 0).length;
+    expect(klatki).toBe(4);
+    expect(res.stairs).toHaveLength(4 * 4);
+    expect(res.doors).toHaveLength(4);
+    // Entrances on one long side, ~16 m apart.
+    const xs = res.doors.map((d) => d.x).sort((a, b) => a - b);
+    for (let i = 1; i < xs.length; i++) expect(xs[i]! - xs[i - 1]!).toBeGreaterThan(12);
+    expect(new Set(res.doors.map((d) => d.side)).size).toBe(1);
+    // Flats: every room of a floor except the klatki is a flat (no corridor through the block).
+    const types = Object.values(res.building.rooms).map((r) => r.type);
+    expect(types.filter((t) => t === 'base:room-hall')).toHaveLength(4);
+    expect(types.length).toBeGreaterThanOrEqual(4 + 4 * 2);
+  });
+
+  it('a big industrial building is one open hall with offices and a double gate', () => {
+    const { res } = build(
+      'industrial',
+      1,
+      fp(60, 40, () => true),
+    );
+    const rooms = Object.values(res.building.rooms);
+    expect(rooms.map((r) => r.type)).toContain('base:room-warehouse');
+    expect(rooms.length).toBeLessThanOrEqual(3);
+    // Gate: two doors side by side on the same wall.
+    const [a, b] = res.doors;
+    expect(a && b && a.side === b.side && Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1).toBe(
+      true,
+    );
+  });
+
+  it('a huge hall is split into ~40 m sections joined by double gates, with workshops', () => {
+    const { res } = build(
+      'industrial',
+      1,
+      fp(170, 96, () => true),
+    );
+    const rooms = Object.entries(res.building.rooms);
+    const halls = rooms.filter(
+      ([, r]) => r.type !== 'base:room-office' && r.type !== 'base:room-bathroom',
+    );
+    // (170 − 4) / 40 ≈ 4 along, 96 / 40 ≈ 2 across.
+    expect(halls).toHaveLength(8);
+    expect(halls.map(([, r]) => r.type)).toContain('base:room-garage');
+    // Inner doors between sections come in pairs side by side (gates).
+    const hallChars = new Set(halls.map(([c]) => c));
+    const plan = res.building.plan;
+    const inner = (res.building.openings ?? []).filter((o) => {
+      if (o.type !== 'door') return false;
+      const [x, y] = o.at;
+      const [dx, dy] =
+        o.side === 'e' ? [1, 0] : o.side === 's' ? [0, 1] : o.side === 'w' ? [-1, 0] : [0, -1];
+      const a = plan[y]?.[x];
+      const b = plan[y + dy]?.[x + dx];
+      return a !== b && hallChars.has(a ?? '') && hallChars.has(b ?? '');
+    });
+    // 8 sections in a 4 × 2 grid: 3 × 2 + 4 × 1 = 10 partitions, 2 doors each.
+    expect(inner).toHaveLength(20);
   });
 });

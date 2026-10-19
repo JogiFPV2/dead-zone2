@@ -85,6 +85,8 @@ export interface TerrainVectorRoads {
   underAt: (x: number, z: number) => ContentId | undefined;
 }
 
+/** Indoor floor height (above every road ribbon, see RIBBON_Y). */
+export const INDOOR_Y = 0.02;
 /** Ribbon heights: dirt < sidewalk < curb < asphalt < paint, all under indoor floors (2 cm). */
 const RIBBON_Y = { dirt: 0.004, sidewalk: 0.008, curb: 0.011, asphalt: 0.014, paint: 0.017 };
 /** Bridges (decks over rails / water) above every ordinary road layer. */
@@ -129,7 +131,10 @@ export function buildTerrainGeometry(
       .lerp(col('grass-d'), Math.max(0, Math.min(1, (vnoise(x + 50, z, 3) - 0.5) * 3)));
 
   const floorAt = (x: number, z: number) => tiles.floor(x, z);
-  const isRoad = (x: number, z: number) => floorAt(x, z) === 'base:asphalt';
+  // Road tiles under a smooth vector road are not tile roads: no stair-stepped tile curbs along
+  // them (the ribbon has its own curb), e.g. where a paved area or a plaza meets a diagonal road.
+  const isRoad = (x: number, z: number) =>
+    floorAt(x, z) === 'base:asphalt' && !vector?.underAt(x, z);
   const runs = new Map<string, number>();
   const run = (x: number, z: number, dx: number, dz: number): number => {
     const k = `${x},${z},${dx},${dz}`;
@@ -151,8 +156,10 @@ export function buildTerrainGeometry(
       any = true;
       const room = tiles.roomType(x, z);
       const look = floorLook(floor, room);
-      // Smooth roads run under indoor floors: lift every indoor floor to 2 cm.
-      const y = vector && room ? Math.max(look.y ?? 0, 0.02) : (look.y ?? 0);
+      // Smooth roads run under indoor floors: lift every indoor floor to 2 cm. In every chunk, not
+      // only those with a road layer: otherwise a hall across a chunk edge gets a 2 cm step there
+      // and the background shows through the crack (a white line along the hall).
+      const y = room ? Math.max(look.y ?? 0, INDOOR_Y) : (look.y ?? 0);
       let c = col(look.cell)
         .clone()
         .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));

@@ -54,7 +54,8 @@ import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
 import { tileOf } from './world/building-lookup.js';
-import { cameraSide } from './world/cutaway.js';
+import { cameraSide, occludersOf } from './world/cutaway.js';
+import { FrameSections } from './dev/frame-sections.js';
 import { furnitureFootprintsFromFiles, isRealScale } from './world/furniture-footprint.js';
 import {
   createWorldStreaming,
@@ -64,6 +65,7 @@ import {
 } from './world/streaming/setup.js';
 import { chunkSourceToWorld, type LoadedChunks } from './world/streaming/source.js';
 import type { OpeningsLike } from './world/gen/streamed-town.js';
+import { FollowWindow } from './world/gen/follow-window.js';
 import { genStartRange, nearestPlace } from './world/gen/maps.js';
 import { CHUNK_SIZE } from './world/chunk.js';
 import { OpeningsView } from './world/openings.js';
@@ -187,6 +189,8 @@ const session = takeSession();
 const parsedBoot = parseBootOptions(window.location.search);
 // A character plays in its own world: its map and seed.
 const boot = session ? { ...parsedBoot, map: session.character.worldSettings.map } : parsedBoot;
+// Shader info logs force a synchronous compile wait on every new program: dev builds only.
+renderer.debug.checkShaderErrors = import.meta.env.DEV && !boot.perf;
 const simSeed = session?.character.worldSeed ?? SIM_SEED;
 // `?style=real` (render.style = 'real'): realistic PBR pilot. Off by default: nothing of it loads
 // and the frame goes through `stylePass` exactly as before.
@@ -241,9 +245,9 @@ const loadedWorld: LoadedMap = genWorld
         edgePalette: genWorld.source.edgePalette,
         getChunk: (cx, cy, z) => loadedChunks.current?.getChunk(cx, cy, z),
       },
-      // Whole-map consumers (minimap, paper map, beds / sofas, shelf fill) read the loaded
-      // chunks inside this window around the start; the world itself streams without limits.
-      range: genStartRange(genWorld.source.bounds, genWorld.source.info.start, 12),
+      // Start window only: the whole-map consumers (minimap, paper map, beds / sofas, shelf
+      // fill) follow the player (`follow` below); the world itself streams without limits.
+      range: genStartRange(genWorld.source.bounds, genWorld.source.info.start, 8),
       zones: [],
     }
   : stressWorld
@@ -255,6 +259,13 @@ const loadedWorld: LoadedMap = genWorld
     : boot.map !== 'test'
       ? await import('./world/load-content-map.js').then((m) => m.loadBaseMap(boot.map))
       : { source: createTestMap(), range: TEST_MAP_RANGE, zones: [] };
+/** Generated maps: the chunk window of the whole-map consumers, following the player. */
+const follow = genWorld
+  ? new FollowWindow(genWorld.source.bounds, genWorld.source.info.start, 8)
+  : undefined;
+/** Storeys the whole-map consumers read (generated maps stream every storey per chunk). */
+const consumerLevels = (z: number): number[] =>
+  genWorld ? Array.from({ length: genWorld.source.levels.max + 1 }, (_, i) => i) : [z];
 // OSM scenes (`?map=osm-okulickiego`): parked cars, framed zombies and trees from the scene file.
 const osm = stressWorld ? undefined : osmScene(boot.map);
 const sceneWorld: LoadedMap = osm
@@ -428,6 +439,26 @@ if (streamedTown) {
   });
   worldRoot.add(streamedTown.root);
 }
+// Generated maps: power lines, railway and catenary per near chunk (Designer's infra models).
+if (genWorld && !stressWorld) {
+  void import('./world/infra/kit.js')
+    .then(async (m) => {
+      const { InfraLayer } = await import('./world/infra/infra-layer.js');
+      const layer = new InfraLayer(await m.loadInfraKit());
+      worldRoot.add(layer.root);
+      const loaded = streaming.streamer.loaded;
+      streaming.lod.addNearLayer({
+        loadChunk: (cx, cy, z) => {
+          if (z === 0) layer.loadChunk(cx, cy, loaded.column(cx, cy)?.infra);
+          return { bytes: 0, triangles: 0 };
+        },
+        unloadChunk: (cx, cy, z) => {
+          if (z === 0) layer.unloadChunk(cx, cy);
+        },
+      });
+    })
+    .catch((e: unknown) => console.error('Infra models failed to load', e));
+}
 const streamedOpenings = genLayers
   ? new genLayers.StreamedOpenings(streaming.streamer.loaded, streamedTown, townKit)
   : undefined;
@@ -546,10 +577,17 @@ if (boot.sim === 'worker') {
             : [],
         }
       : {}),
-    // Content maps get animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits).
-    // Generated worlds: not yet (populating walks the whole map).
+    // Animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits). Generated worlds:
+    // around the start (the sim populates the chunks near the player, not the whole map).
     populateAnimals:
-      boot.map !== 'test' && !genWorld ? startAnimalCount(world.range, boot.animals) : 0,
+      boot.map === 'test'
+        ? 0
+        : startAnimalCount(
+            genWorld
+              ? genStartRange(genWorld.source.bounds, genWorld.source.info.start, 4)
+              : world.range,
+            boot.animals,
+          ),
     content: await simContent,
     character: newCharacter?.spec,
     save: session?.save?.data,
@@ -767,11 +805,12 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).get('arrow') ===
 
 // HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
 const openingFeedback = new OpeningFeedback(PLAYER_ID);
+let minimapGeo = minimapGeometry(world.source, follow?.range ?? world.range);
 const hud = createHud({
   root: container,
   openingToast: (e) => openingFeedback.toast(e),
   bindings: () => settings.get().input.bindings,
-  geometry: minimapGeometry(world.source, world.range),
+  geometry: () => minimapGeo,
   pois: world.zones
     .filter((z) => z.role === 'extraction')
     .flatMap((z) =>
@@ -816,7 +855,9 @@ const sleep = createSleepController({
 });
 gameState.subscribe((next, prev) => sleep.observe(next, prev));
 /** Beds, sofas and TVs of the map (sleep / TV buttons); filled once content is indexed. */
-const mapObjectList = mapObjectsOf(world.source, world.range);
+const objectsIn = (range: typeof world.range) =>
+  consumerLevels(range.z).flatMap((z) => mapObjectsOf(world.source, { ...range, z }));
+let mapObjectList = objectsIn(follow?.range ?? world.range);
 let spots: LeisureSpot[] = [];
 input.on('sleep', () => sleep.toggleSleep());
 input.on('watchTv', () => {
@@ -1012,7 +1053,7 @@ const bigMap = createBigMap({
   paper: () =>
     renderPaper(
       world.source,
-      world.range,
+      genWorld ? genStartRange(genWorld.source.bounds, bigMapPlayer(), 20) : world.range,
       (x, y) => structures.lookup.at(x, y, world.range.z) !== NO_BUILDING,
     ),
   zoom: settings.get().view.bigMapZoom,
@@ -1164,10 +1205,32 @@ for (let z = world.range.z + 1; z <= world.range.z + upperTown.length; z++) {
     }
   }
 }
-const shelfFill = new ShelfFill(world.source, world.range, (tx, ty, z, on) =>
-  mapObjects.setXray(tx, ty, z, on),
-);
+const newShelfFill = (range: typeof world.range) =>
+  new ShelfFill(
+    world.source,
+    range,
+    (tx, ty, z, on) => mapObjects.setXray(tx, ty, z, on),
+    consumerLevels(range.z),
+  );
+const shelfFill = newShelfFill(follow?.range ?? world.range);
 worldRoot.add(shelfFill.root);
+/** Generated maps: the consumers' window moved or its chunks streamed in → rebuild them. */
+const refreshFollow = (): void => {
+  const range = follow!.range;
+  minimapGeo = minimapGeometry(world.source, range);
+  sections.mark('follow:minimap');
+  mapObjectList = objectsIn(range);
+  spots = leisureSpots(mapObjectList, hudContent);
+  pumpTiles = mapObjectList
+    .filter((o) => o.contentId === FUEL_PUMP)
+    .map((o) => ({ x: o.tx, y: o.ty, z: o.z }));
+  sections.mark('follow:objects');
+  if (town) lighting.lamps.setLamps(town.streetLampsOf(new town.MapTiles(world.source, 0), range));
+  sections.mark('follow:lamps');
+  // Same meshes / materials, new furniture list (no reallocation, no shader recompiles).
+  shelfFill.setRange(range);
+  sections.mark('follow:shelves');
+};
 // CC0 models (tools/assets → public/models); grey placeholders stay until/unless they load.
 let zombieViews: InstancedZombies | undefined;
 void ModelKit.create(renderer).then(async (kit) => {
@@ -1178,6 +1241,20 @@ void ModelKit.create(renderer).then(async (kit) => {
     return model ? kit.staticModel(model, isRealScale(id) ? undefined : h) : undefined;
   });
   groundPiles.pileModel = () => kit.staticModel(PILE_MODEL, 0.45) ?? new Group();
+  // Shader warm-up: compile every furniture model's program now (parallel, off the frame) instead
+  // of synchronously in the frame where the first such piece streams in.
+  if (renderer.compileAsync) {
+    const warm = new Group();
+    worldRoot.add(warm);
+    const w = mapObjects.prewarm(Object.keys(CONTAINER_MODELS), warm);
+    void renderer
+      .compileAsync(scene, camera)
+      .catch(() => undefined)
+      .finally(() => {
+        w.dispose();
+        worldRoot.remove(warm);
+      });
+  }
   try {
     const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
     brighten(p.object);
@@ -1395,7 +1472,7 @@ function otherTargetDist(): number {
   }
   return d;
 }
-const pumpTiles = mapObjectList
+let pumpTiles = mapObjectList
   .filter((o) => o.contentId === FUEL_PUMP)
   .map((o) => ({ x: o.tx, y: o.ty, z: o.z }));
 const vehicles = new VehicleController({
@@ -1666,6 +1743,8 @@ resize();
 let afterRender: ((r: WebGLRenderer) => void) | undefined;
 let recordFrame: ((s: FrameSample, r: WebGLRenderer) => void) | undefined;
 let perfFrame: ((r: WebGLRenderer, cpuMs: number) => void) | undefined;
+/** CPU time per frame-loop section (`__dzFrame.sections()`, dev perf). */
+const sections = new FrameSections();
 if (boot.perf) {
   void import('./dev/perf-overlay.js').then(({ createPerfOverlay }) => {
     perfFrame = createPerfOverlay(document.body, {
@@ -1685,6 +1764,7 @@ if (boot.perf || boot.stress) {
   // Streaming test hooks (also in the public build, behind ?perf / ?stress).
   const mock = sim instanceof MockSimClient ? sim : undefined;
   Object.assign(window, {
+    __dzFrame: { sections: () => sections.report(), reset: () => sections.reset() },
     __dzStream: {
       streamer: streaming.streamer,
       stats: () => streaming.streamer.stats(),
@@ -1736,7 +1816,9 @@ if (import.meta.env.DEV) {
       /** Feeds a fake own `playerNoise` to the noise circle (screenshots of the tiers). */
       noise: (e: Parameters<NoiseRingModel['push']>[0]) =>
         noise.push(e, performance.now(), settings.get().interface.noiseDisplay),
-      shelfFill,
+      get shelfFill() {
+        return shelfFill;
+      },
       mapObjects,
       animals: () => animalViews,
       groundPiles,
@@ -1754,6 +1836,12 @@ if (import.meta.env.DEV) {
 
 let lastFrameMs: number | undefined;
 let cameraSnapped = false;
+/** Occluder raycast cache (see the cutaway in the frame loop). */
+let occCache: { key: string; at: number; set: ReadonlySet<number> } = {
+  key: '',
+  at: 0,
+  set: new Set(),
+};
 // Dev `?hold=base:crowbar` / `?hold=chainsaw`: weapon drawn in the hand regardless of the
 // inventory (grip previews, `weapons/grip.ts`). An optional `@grip` suffix overrides the grip.
 const devQuery = import.meta.env.DEV ? new URLSearchParams(location.search) : undefined;
@@ -1762,6 +1850,7 @@ const devHoldParam = devQuery?.get('hold') ?? null;
 const devAim = devQuery?.get('aim') === '1';
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
+  sections.start();
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;
   if (pause.simPaused) {
@@ -1790,7 +1879,24 @@ renderer.setAnimationLoop((time) => {
     // Floor level of the body (fractional on stairs / while falling).
     const level = Math.floor(state.z + 1e-3);
     const building = structures.lookup.at(tx, ty, level);
-    const cut = { building, tx, ty, side: cameraSide(rig.targetYaw), z: level };
+    // Buildings between the camera and the player are cut down to its floor too (raycast);
+    // recomputed on a new tile / floor / view and twice a second (chunks streaming in).
+    const occKey = `${tx},${ty},${level},${building},${rig.targetYaw.toFixed(3)}`;
+    const nowMs = performance.now();
+    if (occKey !== occCache.key || nowMs - occCache.at > 500) {
+      const at = (x: number, y: number, z: number) => structures.lookup.at(x, y, z);
+      const occ = occludersOf(at, state.x, state.y, level, rig.targetYaw, building);
+      const same = occ.size === occCache.set.size && [...occ].every((b) => occCache.set.has(b));
+      occCache = { key: occKey, at: nowMs, set: same ? occCache.set : occ };
+    }
+    const cut = {
+      building,
+      tx,
+      ty,
+      side: cameraSide(rig.targetYaw),
+      z: level,
+      occluders: occCache.set,
+    };
     structures.setCutaway(cut);
     for (const l of upperTown) l.setCutaway(cut);
     openings.setCutaway(cut);
@@ -1798,6 +1904,7 @@ renderer.setAnimationLoop((time) => {
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }
+  sections.mark('player+cutaway');
   cameraInput.update(time);
   if (import.meta.env.DEV && boot.cam) {
     rig.target.set(boot.cam.x, 0, boot.cam.z);
@@ -1809,6 +1916,9 @@ renderer.setAnimationLoop((time) => {
   floating.update(rig.target.x, rig.target.z);
   rig.update(time);
   floating.syncWorldCamera(camera, worldCamera);
+  sections.mark('camera');
+  if (follow && state && follow.update(state, streaming.streamer.loaded.size, time))
+    refreshFollow();
   // Stream around the player and the camera target (they differ while the camera catches up).
   streaming.streamer.update(
     state
@@ -1818,7 +1928,9 @@ renderer.setAnimationLoop((time) => {
         ]
       : [startPoint],
   );
+  sections.mark('stream');
   simStreamSync?.update({ x: rig.target.x, y: rig.target.z }, streaming.streamer.config);
+  sections.mark('simsync');
   lightMinute = currentMinute(performance.now());
   const look = dayCycle.sample(lightMinute);
   // Sun direction from the shared `sunAt` (same as the sim's light level); moon at night.
@@ -1834,6 +1946,7 @@ renderer.setAnimationLoop((time) => {
       : 0;
   }
   lighting.update(camera, rig.target.x, rig.target.z);
+  sections.mark('light');
   const gs = gameState.get();
   const nowMs = performance.now();
   carPoses = carList.map((c) => vehicleView.poseOf(c.stableId, nowMs) ?? c);
@@ -1847,6 +1960,7 @@ renderer.setAnimationLoop((time) => {
   shelfFill.update(gs.storages, gs.container?.id);
   openings.update(time / 1000);
   inventory.update();
+  sections.mark('objects');
   if (state) {
     hud.frame({
       now: performance.now(),
@@ -1876,7 +1990,9 @@ renderer.setAnimationLoop((time) => {
     hud.setPrompt(
       veh.prompt ?? (vehicles.seated || veh.hud.repair ? { mode: 'hidden' } : basePrompt),
     );
+    sections.mark('hud');
     bigMap.frame(performance.now(), { x: state.x, y: state.y, heading: state.facing });
+    sections.mark('map');
     // 2 s after `C` switches sneaking on: the own step ring whatever „Pokazuj hałas” says.
     const nowMs = performance.now();
     if (sneak.revealing(nowMs) && sneak.sneaking(nowMs)) {
@@ -1904,13 +2020,17 @@ renderer.setAnimationLoop((time) => {
     showWounded: ui.showZombieHp,
     targeting: ui.targetZombieHp,
   });
+  sections.mark('misc');
   const t1 = performance.now();
   drawFrame();
+  sections.mark('render');
   frameSample.updateMs = t1 - t0;
   frameSample.renderMs = performance.now() - t1;
   recordFrame?.(frameSample, renderer);
   afterRender?.(renderer);
   perfFrame?.(renderer, performance.now() - frameStart);
+  sections.mark('overlay');
+  sections.end();
 });
 
 // Dev only: switch / freeze the graphics style for screenshots and measurements.

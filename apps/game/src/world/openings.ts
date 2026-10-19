@@ -12,7 +12,7 @@ import type { TownKit } from './town/kit.js';
 import { placeholderMaterial } from '../lighting/materials.js';
 import type { BuildingLookup } from './building-lookup.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
-import { NO_CUTAWAY, isEdgeLowered, type Cutaway } from './cutaway.js';
+import { NO_CUTAWAY, isEdgeLowered, isLevelHidden, type Cutaway } from './cutaway.js';
 import { LEVEL_HEIGHT } from './instances.js';
 import { LOWERED_HEIGHT, WINDOW_HEIGHT, WALL_HEIGHT, collectEdges } from './structure-instances.js';
 
@@ -532,7 +532,12 @@ export class OpeningsView {
         const axis = e.side === 'n' ? 'N' : 'W';
         const lowered = isEdgeLowered(this.cutaway, e.building, axis, e.tx, e.ty);
         const state = this.states.get(key) ?? 'closed';
-        if (mesh) {
+        if (isLevelHidden(this.cutaway, e.building, e.z)) {
+          // Storey above the player's floor in a cut building: not drawn.
+          this.m.makeScale(0, 0, 0);
+          if (mesh) mesh.setMatrixAt(i, this.m);
+          else if (this.batch && ids?.[i] !== undefined) this.batch.setMatrixAt(ids[i], this.m);
+        } else if (mesh) {
           openingMatrix(this.m, e, state, shake, lowered);
           mesh.setMatrixAt(i, this.m);
         } else if (this.batch && ids?.[i] !== undefined) {
@@ -547,7 +552,8 @@ export class OpeningsView {
 
   private updateExtras(): void {
     const lowered = (e: OpeningEdge) =>
-      isEdgeLowered(this.cutaway, e.building, e.side === 'n' ? 'N' : 'W', e.tx, e.ty);
+      isEdgeLowered(this.cutaway, e.building, e.side === 'n' ? 'N' : 'W', e.tx, e.ty) ||
+      isLevelHidden(this.cutaway, e.building, e.z);
     // Meshes with nothing to show are hidden: no draw call (and no shadow pass) for empty batches.
     if (this.plankMesh) {
       let any = false;
