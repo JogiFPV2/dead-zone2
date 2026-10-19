@@ -11,7 +11,8 @@
       { "item": "base:rag", "weight": 3 },
       { "item": "base:scrap-metal", "weight": 2 },
       { "item": "base:wooden-stick", "weight": 2 },
-      { "item": "base:canned-beans", "weight": 1, "rarity": "uncommon" }
+      { "item": "base:canned-beans", "weight": 1, "rarity": "uncommon" },
+      { "item": "base:glass-shards", "weight": 2, "count": { "min": 1, "max": 4 } }
     ]
   },
   {

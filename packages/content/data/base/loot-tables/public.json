@@ -201,7 +201,9 @@
         "item": "base:tv",
         "weight": 1,
         "rarity": "uncommon"
-      }
+      },
+      { "item": "base:metal-sheet", "weight": 3, "count": { "min": 1, "max": 2 } },
+      { "item": "base:electronics-scrap", "weight": 2, "count": { "min": 1, "max": 4 } }
     ]
   },
   {
