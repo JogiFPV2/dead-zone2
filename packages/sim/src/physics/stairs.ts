@@ -198,6 +198,32 @@ export function physicsLevelMove(
   // Players slide along walls (substeps, rounded corners), others use the per-axis sweep.
   if (b.kind === 'player') slideCircle(grid, z, x, y, dx, dy, r, out);
   else moveCircle(grid, z, x, y, dx, dy, r, out);
+  flightZones(w, grid, eid, b, x, y, dx, dy, r, z, true, out);
+  return true;
+}
+
+/**
+ * A body off the flights moved from (x, y) to `out` on level z: entering a flight's corridor
+ * only through its entrance (then it is on the flight, moved along it), never from the side or
+ * under the top (blocked; the x part of the sweep is kept when it is clear). Shared by walking
+ * and knock-back: a zombie's hit or shove at the bottom of the stairs used to push the player
+ * into the corridor with `stair` 0, where it then walked along under the flight on the ground
+ * floor and could never get onto it (osm-okulickiego, `?zspawn=2`).
+ */
+function flightZones(
+  w: SimWorld,
+  grid: TileGrid,
+  eid: number,
+  b: PhysicsBody,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  r: number,
+  z: number,
+  scaled: boolean,
+  out: { x: number; y: number },
+): void {
   for (const s of stairsNear(grid, out.x, out.y, z, r)) {
     const now = stairLocal(s, x, y);
     const next = stairLocal(s, out.x, out.y);
@@ -208,18 +234,17 @@ export function physicsLevelMove(
       if (entranceBlocked(w, b, s, r)) {
         out.x = Math.fround(x);
         out.y = Math.fround(y);
-        return true;
+        return;
       }
       b.stair = s.id + 1;
-      stairMove(w, eid, b, s, x, y, dx, dy, r, true, out);
-      return true;
+      stairMove(w, eid, b, s, x, y, dx, dy, r, scaled, out);
+      return;
     }
     // From the side (or under the top): blocked; keep the x part of the sweep if it is clear.
     const xOnly = stairLocal(s, out.x, y);
     if (inZone(s, xOnly.along, xOnly.across, r)) out.x = Math.fround(x);
     out.y = Math.fround(y);
   }
-  return true;
 }
 
 /** Highest level below `z` with a floor at (tx, ty) (within `fall.maxLevels`). */
@@ -260,8 +285,10 @@ export function knockbackMove(
   moveCircle(grid, z, b.x, b.y, dx, dy, r, out, false);
   const tx = Math.floor(out.x);
   const ty = Math.floor(out.y);
-  if (!grid.isVoid(tx, ty, z)) return;
-  if (landingLevel(w, grid, tx, ty, z) === undefined) moveCircle(grid, z, b.x, b.y, dx, dy, r, out);
+  if (grid.isVoid(tx, ty, z) && landingLevel(w, grid, tx, ty, z) === undefined)
+    moveCircle(grid, z, b.x, b.y, dx, dy, r, out);
+  // Flights: into a corridor only through the entrance (as when walking).
+  if (w.physics.stairs.length > 0) flightZones(w, grid, eid, b, b.x, b.y, dx, dy, r, z, false, out);
 }
 
 /** Fall time in ticks for a drop of `levels`: √(2h / g). */
