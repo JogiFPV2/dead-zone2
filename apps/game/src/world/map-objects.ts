@@ -31,6 +31,8 @@ import {
   isRealScale,
   objectAtTile,
   objectTiles,
+  surfaceLift,
+  surfaceSpread,
   type FurnitureFootprints,
 } from './furniture-footprint.js';
 
@@ -56,6 +58,8 @@ const SIZES: Record<string, [number, number, number]> = {
   'base:chair': [0.5, 0.9, 0.5],
   'base:floor-lamp': [0.4, 1.6, 0.4],
   'base:desk-lamp': [0.25, 0.4, 0.25],
+  // PLACEHOLDER until a TV model: a small CRT on its stand (#272), not a 0.8 m cube over the VCR.
+  'base:tv': [0.55, 0.45, 0.45],
   'base:ceiling-lamp': [0.45, 0.35, 0.45],
   'base:light-switch': [0.08, 0.12, 0.03],
   'base:toilet': [0.45, 0.8, 0.7],
@@ -94,6 +98,10 @@ interface Obj {
   material: MeshStandardMaterial;
   marker: Mesh;
   markerY: number;
+  /** Height above the floor: the top of the furniture below for `onSurface` pieces, else 0. */
+  lift: number;
+  /** Sideways offset (m, along its wall) among `onSurface` pieces sharing a worktop tile. */
+  spread: number;
   /** This object's instances in its chunk's furniture `InstancedMesh`es (model loaded). */
   slots?: InstanceSlots;
   /** Instancing key while drawn as an instanced grey box (no model). */
@@ -151,6 +159,8 @@ export class MapObjects {
   private readonly markerBatch = new MarkerBatch(this.root, 'map-object-markers');
   /** Furniture footprints (`worldSettings.furniture.footprint`); off = one tile each, as before. */
   private footprints: FurnitureFootprints = FOOTPRINTS_OFF;
+  /** Fitted model tops per model key (fallback surface height when content has none). */
+  private readonly tops = new Map<string, number>();
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -188,6 +198,8 @@ export class MapObjects {
         material,
         marker,
         markerY: 0,
+        lift: 0,
+        spread: 0,
         building: buildingAt(chunk, o.x, o.y),
         hidden: false,
       };
@@ -198,6 +210,7 @@ export class MapObjects {
       // Drawn by the next (throttled) instance rebuild, not as a lone mesh meanwhile.
       if (this.model) mesh.visible = false;
     }
+    this.relift(`${cx},${cy},${z}`);
     this.instancesDirty = true;
     // Markers / searched shades for the new objects on the next update.
     this.lastNearby = undefined;
@@ -228,13 +241,47 @@ export class MapObjects {
     const raised = RAISED[o.contentId];
     const [bx, by] = BACK[o.rot & 3]!;
     const back = raised?.back ?? 0;
-    const p = simToWorld(c.x + bx * back, c.y + by * back, o.z);
-    p.y += raised?.lift ?? 0;
+    // Along the wall (model +x after the `rot` turn) = back direction turned 90°.
+    const p = simToWorld(c.x + bx * back - by * o.spread, c.y + by * back + bx * o.spread, o.z);
+    // Stacked on a piece below (`o.lift`): its top replaces the fixed desk-lamp lift.
+    if (o.lift === 0) p.y += raised?.lift ?? 0;
     o.mesh.geometry = this.box(w, h, d);
-    o.mesh.position.set(p.x, p.y + h / 2, p.z);
+    const y = p.y + o.lift;
+    o.mesh.position.set(p.x, y + h / 2, p.z);
     o.mesh.rotation.y = (-o.rot * Math.PI) / 2;
-    o.markerY = p.y + h + 0.45;
+    o.markerY = y + h + 0.45;
     o.marker.position.set(p.x, o.markerY, p.z);
+  }
+
+  /**
+   * Lifts `onSurface` pieces (VCR on a TV stand, lamp on a desk) to the top of the furniture
+   * below: content `surfaceHeightM`, else the lower model's fitted bounding-box top. `chunk`
+   * limits it to one chunk's objects (the piece below shares the tile, so the chunk).
+   */
+  private relift(chunk?: string): void {
+    for (const o of this.objects) {
+      if (chunk !== undefined && o.chunk !== chunk) continue;
+      const lift = surfaceLift(this.objects, this.footprints, o, (b) => this.modelTop(b));
+      const spread = surfaceSpread(this.objects, this.footprints, o);
+      if (lift === o.lift && spread === o.spread) continue;
+      o.lift = lift;
+      o.spread = spread;
+      this.layout(o);
+      this.instancesDirty = true;
+    }
+  }
+
+  /** Top of an object's fitted model (m above its base), or its grey box height without one. */
+  private modelTop(o: Obj): number {
+    const key = this.modelKey(o);
+    let top = this.tops.get(key);
+    if (top === undefined) {
+      const m = this.fittedModel(o.contentId, o.height, this.fpOf(o));
+      top = m ? new Box3().setFromObject(m).max.y : this.boxSize(o)[1];
+      if (!Number.isFinite(top)) top = this.boxSize(o)[1];
+      if (m) this.tops.set(key, top);
+    }
+    return top;
   }
 
   /** Footprint of an object while footprints are on (undefined = off: one tile, today's fit). */
@@ -256,7 +303,9 @@ export class MapObjects {
   setFootprints(f: FurnitureFootprints): void {
     if (f === this.footprints) return;
     this.footprints = f;
+    this.tops.clear();
     for (const o of this.objects) this.layout(o);
+    this.relift();
     this.parts.clear();
     this.instancesDirty = true;
   }
@@ -437,6 +486,8 @@ export class MapObjects {
   applyModels(model: ModelFn): void {
     this.model = model;
     this.parts.clear();
+    this.tops.clear();
+    this.relift();
     this.rebuildInstances();
   }
 

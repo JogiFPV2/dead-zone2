@@ -2,6 +2,8 @@ import {
   DEFAULT_FOOTPRINT,
   footprintForId,
   occupiedTiles,
+  onSurfaceForId,
+  surfaceHeightForId,
   type Footprint,
   type FootprintCatalog,
   type TileXY,
@@ -16,6 +18,10 @@ export interface FurnitureFootprints {
   readonly enabled: boolean;
   /** Footprint at `rot = 0` (`w` along the wall = model +x, `h` into the room = model +z). */
   of(contentId: string): Footprint;
+  /** Top height (m) of a piece other furniture stands on (`surfaceHeightM`); undefined = none. */
+  surfaceOf?(contentId: string): number | undefined;
+  /** Whether a piece stands on the furniture below (`placeable.onSurface`: TV, VCR, radio, lamp). */
+  onSurface?(contentId: string): boolean;
 }
 
 export const FOOTPRINTS_OFF: FurnitureFootprints = Object.freeze({
@@ -76,7 +82,77 @@ export function furnitureFootprintsFromFiles(
       if (typeof id === 'string') into[id] = def as object;
     }
   }
-  return enabled ? footprintsOn(catalog) : FOOTPRINTS_OFF;
+  const surfaces = surfacesOf(catalog);
+  return enabled ? { ...footprintsOn(catalog), ...surfaces } : { ...FOOTPRINTS_OFF, ...surfaces };
+}
+
+/** Surface lookups (`surfaceHeightM`, `onSurface`) from a content catalog, both flags. */
+export function surfacesOf(
+  catalog: FootprintCatalog,
+): Pick<FurnitureFootprints, 'surfaceOf' | 'onSurface'> {
+  return {
+    surfaceOf: (id) => surfaceHeightForId(catalog, id),
+    onSurface: (id) => onSurfaceForId(catalog, id),
+  };
+}
+
+/**
+ * How high a map object stands above its floor: a piece with `onSurface` (VCR, radio, desk lamp)
+ * on a tile covered by other furniture sits on that piece's top, `surfaceHeightM` from content,
+ * else `fallbackTop` (the lower model's fitted bounding-box top). Anything else stands on the
+ * floor (0), as does an `onSurface` piece with nothing underneath.
+ */
+export function surfaceLift<
+  T extends { contentId: string; tx: number; ty: number; z: number; rot?: number | undefined },
+>(
+  objects: readonly T[],
+  fps: FurnitureFootprints,
+  o: T,
+  fallbackTop: (below: T) => number | undefined,
+): number {
+  if (!fps.onSurface?.(o.contentId)) return 0;
+  const below = surfaceBelow(objects, fps, o);
+  if (!below) return 0;
+  return fps.surfaceOf?.(below.contentId) ?? fallbackTop(below) ?? 0;
+}
+
+/** Wall / ceiling fittings sharing a tile with furniture (#254): never a worktop. */
+const NOT_A_SURFACE: ReadonlySet<string> = new Set(['base:light-switch', 'base:ceiling-lamp']);
+
+/**
+ * The furniture an `onSurface` piece stands on: one with `surfaceHeightM` on its tile first,
+ * else any other floor piece there (wall switches and ceiling lamps never count).
+ */
+function surfaceBelow<
+  T extends { contentId: string; tx: number; ty: number; z: number; rot?: number | undefined },
+>(objects: readonly T[], fps: FurnitureFootprints, o: T): T | undefined {
+  const others = objects.filter(
+    (b) => b !== o && !fps.onSurface?.(b.contentId) && !NOT_A_SURFACE.has(b.contentId),
+  );
+  const tops = others.filter((b) => fps.surfaceOf?.(b.contentId) !== undefined);
+  return objectAtTile(tops, fps, o.tx, o.ty, o.z) ?? objectAtTile(others, fps, o.tx, o.ty, o.z);
+}
+
+/** Spacing (m = tiles) between `onSurface` pieces sharing one worktop tile (`surfaceSpread`). */
+export const SURFACE_SPREAD_M = 0.45;
+
+/**
+ * Sideways offset (m, along the piece's wall, model +x) of an `onSurface` piece that shares its
+ * tile with other `onSurface` pieces on furniture (#282 puts the VCR and the TV, or a radio, on
+ * the TV stand's anchor tile): spread evenly about the tile centre in map order, so none stands
+ * inside another. 0 for a piece alone, on the floor or not `onSurface`. Deterministic.
+ */
+export function surfaceSpread<
+  T extends { contentId: string; tx: number; ty: number; z: number; rot?: number | undefined },
+>(objects: readonly T[], fps: FurnitureFootprints, o: T): number {
+  if (!fps.onSurface?.(o.contentId)) return 0;
+  const group = objects.filter(
+    (b) => b.tx === o.tx && b.ty === o.ty && b.z === o.z && fps.onSurface?.(b.contentId),
+  );
+  if (group.length < 2) return 0;
+  if (!surfaceBelow(objects, fps, o)) return 0;
+  const step = Math.min(SURFACE_SPREAD_M, 1 / group.length);
+  return (group.indexOf(o) - (group.length - 1) / 2) * step;
 }
 
 /** Footprints on, sizes from a content catalog (unknown ids = 1×1). */

@@ -270,9 +270,9 @@ describe('furnitureFootprintsFromFiles', () => {
   ];
 
   it('is off unless worldSettings.furniture.footprint is true', () => {
-    expect(furnitureFootprintsFromFiles(files(false))).toBe(FOOTPRINTS_OFF);
-    expect(furnitureFootprintsFromFiles(files(undefined))).toBe(FOOTPRINTS_OFF);
-    expect(furnitureFootprintsFromFiles([])).toBe(FOOTPRINTS_OFF);
+    expect(furnitureFootprintsFromFiles(files(false)).enabled).toBe(false);
+    expect(furnitureFootprintsFromFiles(files(undefined)).enabled).toBe(false);
+    expect(furnitureFootprintsFromFiles([]).enabled).toBe(false);
     expect(footprintFlag({ furnitureFootprint: true })).toBe(true);
     expect(footprintFlag(null)).toBe(false);
   });
