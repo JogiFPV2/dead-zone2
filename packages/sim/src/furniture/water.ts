@@ -15,6 +15,7 @@ import {
 } from '../items/store.js';
 import { objectHasTag } from '../survival/hygiene.js';
 import { clampStat } from '../survival/state.js';
+import { poisoningSettings, rollPoisoning } from '../survival/poisoning.js';
 import { rectDist2 } from '../world/furniture.js';
 import { floorZ } from '../world/levels.js';
 import { objectRect } from './footprint.js';
@@ -27,8 +28,8 @@ import { objectRect } from './footprint.js';
  * (`water.bottles`, size `waterContainer.capacityL`) there or at a tap (mains). While mains water
  * is on a `refillFromMains` tank refills at once (stays full); after the cut it only drains.
  * Litres left of tanks that are not full: `ItemStore.waterTanks` (`x,y,z,n` → litres; saved only
- * then). Tainted water fills the tainted bottle (boil before drinking); drinking it straight has
- * no sickness yet, like `drink.sicknessChance` (not simulated).
+ * then). Tainted water fills the tainted bottle (boil before drinking); drinking it straight
+ * rolls food poisoning with that bottle's `drink.perUse.sicknessChance` (docs 9.60).
  */
 
 /**
@@ -157,6 +158,15 @@ function sourceOf(
   return st.water ? { litres: Infinity, quality: 'clean' } : 'no-water';
 }
 
+/** Poisoning chance of one drink of tainted water: the tainted bottle's, else the fallback. */
+function taintedChance(w: SimWorld): number {
+  const st = w.items!;
+  const i = st.content.itemIndex.get(waterSettings(w).bottles.tainted);
+  const d = i === undefined ? undefined : st.content.items[i];
+  const c = d?.kind === 'drink' ? d.drink.perUse.sicknessChance : undefined;
+  return c ?? (w.survival ? poisoningSettings(w.survival).taintedChance : 0);
+}
+
 const idOf = (w: SimWorld, id: string): number | undefined => w.items!.content.itemIndex.get(id);
 
 /**
@@ -232,6 +242,8 @@ export function registerWaterActions(): void {
       const h = sv.content.survival.hygiene;
       const v = sv.vitals;
       v.thirst[eid] = clampStat((v.thirst[eid] ?? 0) - (h.drinkTap.thirst * taken) / sip);
+      // Tainted water straight from the tank: the tainted bottle's chance per sip (docs 9.60).
+      if (s.quality === 'tainted') rollPoisoning(w, eid, (taintedChance(w) * taken) / sip);
     },
   });
   registerAction('fillWater', {

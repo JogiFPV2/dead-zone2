@@ -83,6 +83,9 @@ export interface SurvivalWorld {
   readonly sleepUntil: Uint32Array;
   /** Dirt 0..100 (`survival.hygiene`, docs 9.54); saved, hashed only when nonzero. */
   readonly dirt: Float32Array;
+  /** Food poisoning (`survival/poisoning.ts`, docs 9.60): sickness 0..100 and the dose still to rise. */
+  readonly poison: Float32Array;
+  readonly poisonLoad: Float32Array;
   /** Current sleep: surface (SLEEP_SURFACES index), fatigue recovered, ticks asleep, saved flag. */
   readonly sleepSurface: Uint8Array;
   readonly sleepRecovered: Float32Array;
@@ -141,6 +144,8 @@ export function createSurvivalWorld(
     sleepStart: new Uint32Array(capacity),
     sleepUntil: new Uint32Array(capacity),
     dirt: new Float32Array(capacity),
+    poison: new Float32Array(capacity),
+    poisonLoad: new Float32Array(capacity),
     sleepSurface: new Uint8Array(capacity),
     sleepRecovered: new Float32Array(capacity),
     sleepTicks: new Uint32Array(capacity),

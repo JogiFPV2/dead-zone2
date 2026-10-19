@@ -59,6 +59,7 @@ export const MOD_STATS = [
   'search-speed',
   'carry-capacity-kg',
   'footstep-noise',
+  'food-sickness-chance',
 ] as const;
 export type ModStat = (typeof MOD_STATS)[number];
 export const ModSlot = Object.fromEntries(MOD_STATS.map((s, i) => [s, i])) as Record<

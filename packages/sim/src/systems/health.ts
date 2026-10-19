@@ -3,6 +3,7 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
 import { clampStat, deathCauseIndex, modded, type SurvivalWorld } from '../survival/state.js';
 import { bandageDirty, recomputeWoundStats } from '../survival/wounds.js';
+import { poisonMinute } from '../survival/poisoning.js';
 
 /**
  * Pipeline step 12 (per game minute): wounds (ageing, clotting, dirt infection, healing), the
@@ -83,6 +84,10 @@ function healthMinute(w: SimWorld, s: SurvivalWorld, eid: number, minute: number
       return;
     }
   }
+
+  // Food poisoning (tainted water): sickness, nausea, health down to `minHealth` at most.
+  const poisonLoss = poisonMinute(s, eid, s.virus[eid] ? (v.sickness[eid] ?? 0) : 0);
+  if (poisonLoss > 0) v.health[eid] = clampStat((v.health[eid] ?? 0) - poisonLoss);
 
   // HP.
   const hunger = v.hunger[eid] ?? 0;

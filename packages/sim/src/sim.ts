@@ -609,6 +609,11 @@ export function createSim(input: SimOptions): Sim {
         if (s.sleepUntil[eid]) h.u32(0x51ee_a001).u32(s.sleepUntil[eid] ?? 0);
         // Dirt (protocol 33): only when nonzero (keeps older goldens).
         if (s.dirt[eid]) h.u32(0xd127_0001).f32(s.dirt[eid] ?? 0);
+        // Food poisoning (docs 9.60): only when nonzero (keeps older goldens).
+        if (s.poison[eid] || s.poisonLoad[eid])
+          h.u32(0x9015_0001)
+            .f32(s.poison[eid] ?? 0)
+            .f32(s.poisonLoad[eid] ?? 0);
         h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
         h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
         // Real sleep time: only when it differs from ×1 (keeps older goldens).

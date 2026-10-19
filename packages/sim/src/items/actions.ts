@@ -12,6 +12,7 @@ import { registerLockActions } from '../furniture/locks.js';
 import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.js';
 import { registerHygieneActions } from '../survival/hygiene.js';
 import { registerWaterActions } from '../furniture/water.js';
+import { rollPoisoning } from '../survival/poisoning.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -115,7 +116,7 @@ export function consumeUse(w: SimWorld, item: ItemInstance, emptyInto: string | 
 /**
  * Nutrition of one portion (`scale` = 1 / portions for food, 1 for a drink use). Hunger below 0
  * turns into satiety (`nutrition.satiety.perKcalWhenFull`), calories go to the energy balance.
- * Not yet: macros, `sicknessChance` (food poisoning) and effects of rotten food (no data).
+ * Not yet: macros, food `sicknessChance` and effects of rotten food (drinks roll it, docs 9.60).
  */
 export function applyNutrition(w: SimWorld, eid: number, n: Nutrition, scale: number): void {
   const s = w.survival;
@@ -271,6 +272,8 @@ export function registerItemActions(): void {
       if (def.kind !== 'drink') return;
       itemUsed(w, eid, a, item);
       applyNutrition(w, eid, def.drink.perUse, 1);
+      // Tainted water (dirty-water bottle): chance of food poisoning (docs 9.60).
+      rollPoisoning(w, eid, def.drink.perUse.sicknessChance ?? 0);
       consumeUse(w, item, def.drink.emptyInto);
     },
   });
