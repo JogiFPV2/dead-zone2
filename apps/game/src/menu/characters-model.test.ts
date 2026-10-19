@@ -41,7 +41,7 @@ describe('characters model', () => {
 
   it('builds alive and dead cards', () => {
     expect(cardView(base, now, true)).toMatchObject({
-      sub: 'TEST TOWN · AKTYWNA',
+      sub: 'TEST TOWN · AKTYWNA · STARA MAPA',
       days: { label: 'PRZEŻYŁA', value: '12 DNI' },
       second: { label: 'OSTATNIO GRANA', value: 'dzisiaj, 19:52' },
       actions: ['play', 'delete'],
@@ -53,7 +53,7 @@ describe('characters model', () => {
     );
     expect(dead).toMatchObject({
       dead: true,
-      sub: 'TEST TOWN · ZMARŁY',
+      sub: 'TEST TOWN · ZMARŁY · STARA MAPA',
       days: { label: 'PRZEŻYŁ', value: '1 DZIEŃ' },
       second: { label: 'PRZYCZYNA', value: 'Wykrwawienie', danger: true },
       actions: ['delete'],
@@ -67,6 +67,12 @@ describe('characters model', () => {
     expect(
       cardView({ ...base, worldSettings: { map: 'test', mode: 'survive' } }, now, true).sub,
     ).toBe('MAPA TESTOWA · AKTYWNA');
+    expect(
+      cardView({ ...base, worldSettings: { map: 'test-town', mode: 'survive' } }, now, true).sub,
+    ).toContain('STARA MAPA');
+    expect(
+      cardView({ ...base, worldSettings: { map: 'osm-stw', mode: 'survive' } }, now, true).sub,
+    ).not.toContain('STARA MAPA');
   });
 
   it('moves focus between cards, actions and Nowa postać', () => {

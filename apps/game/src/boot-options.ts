@@ -80,7 +80,7 @@ export interface BootOptions {
  * The newest playable map: every new game in the public build starts on it. A character saved on
  * another content map keeps loading there (its `worldSettings.map`) and its card says „stara mapa”.
  */
-export const LATEST_MAP: MapChoice = 'test-town';
+export const LATEST_MAP: MapChoice = 'osm-stw';
 
 /** A saved world on a content map other than the newest one (the dev test map never counts). */
 export const isOldMap = (map: string): boolean => map !== LATEST_MAP && map !== 'test';

@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
 import {
+  LATEST_MAP,
+  isOldMap,
   parseBootOptions,
   parseCarParam,
   parseGiveParam,
@@ -102,4 +104,11 @@ it('parses dev cars (`?car=`) and pumps (`?pump=`)', () => {
     cars: [{ x: 5, y: 6 }],
     pumps: [{ x: 7, y: 8 }],
   });
+});
+
+it('the newest map is the OSM map of Stalowa Wola (osm-stw)', () => {
+  expect(LATEST_MAP).toBe('osm-stw');
+  expect(isOldMap('osm-stw')).toBe(false);
+  expect(isOldMap('test-town')).toBe(true);
+  expect(isOldMap('test')).toBe(false);
 });
