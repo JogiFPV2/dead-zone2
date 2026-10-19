@@ -1,5 +1,6 @@
 import type { SimEvent } from '@deadzone/protocol';
 import { CHUNK_SIZE } from '../chunk.js';
+import { movedChunks } from '../furniture-moves.js';
 import { LOD_NEAR, type StreamConfig } from './rings.js';
 
 /** Upper bound of `setInterest.radiusChunks` (protocol schema: 0..16). */
@@ -31,6 +32,9 @@ export function interestFor(target: { x: number; y: number }, cfg: StreamConfig)
  * - `chunkChanged` events (opening / object) rebuild that chunk (`invalidate`), coalesced per frame
  *   (one rebuild per chunk, whatever the level or reason). The sim no longer sends `loot`: ground
  *   piles come in the view (`nearby`), not in chunk data.
+ * - `chunkChanged {reason: 'object'}` that comes with a `furnitureMoved` (same tick, same chunk)
+ *   rebuilds nothing: `MapObjects.moveFurniture` already moved that piece (no second model, no
+ *   jump back to the map's place).
  */
 export class SimStreamSync {
   private last: Interest | undefined;
@@ -58,8 +62,15 @@ export class SimStreamSync {
 
   /** Sim events: remembers `chunkChanged` chunks for the next `flush`. */
   onEvents(events: readonly SimEvent[]): void {
+    const moved = new Set<string>();
     for (const e of events) {
-      if (e.type === 'chunkChanged') this.changed.set(`${e.cx},${e.cy}`, { cx: e.cx, cy: e.cy });
+      if (e.type !== 'furnitureMoved') continue;
+      for (const c of movedChunks(e)) moved.add(`${e.tick}|${c}`);
+    }
+    for (const e of events) {
+      if (e.type !== 'chunkChanged') continue;
+      if (e.reason === 'object' && moved.has(`${e.tick}|${e.cx},${e.cy}`)) continue;
+      this.changed.set(`${e.cx},${e.cy}`, { cx: e.cx, cy: e.cy });
     }
   }
 

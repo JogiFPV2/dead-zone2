@@ -44,7 +44,7 @@ import {
 import { createTestLamps } from './world/test-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
-import type { CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
+import type { ActionView, CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
 import { SnapshotEntityKind, TARGET_MAX_TILES } from '@deadzone/protocol';
 import { SAVE_VERSION, TICK_MS } from '@deadzone/sim';
 import type { CloudPlay } from './account/cloud-play.js';
@@ -1196,6 +1196,18 @@ input.on('reload', () => {
 const groundPiles = new GroundPiles();
 worldRoot.add(groundPiles.root);
 const { mapObjects } = streaming;
+// Furniture pushed / pulled / turned (protocol 37): the model slides to its new tiles (the chunk
+// is not rebuilt for it, sim-sync.ts), the mover's body steps with it.
+simWorker?.onEvents((events) => {
+  for (const e of events) {
+    if (e.type !== 'furnitureMoved') continue;
+    mapObjects.moveFurniture(e);
+    if (e.playerId === PLAYER_ID) player.furnitureMoved();
+  }
+});
+simWorker?.onView((view) => {
+  if (view.furnitureMoves) mapObjects.setFurnitureMoves(view.furnitureMoves);
+});
 // Upper floors are not streamed (laid out whole, like `upperTown`): load their furniture too.
 for (let z = world.range.z + 1; z <= world.range.z + upperTown.length; z++) {
   for (let cy = world.range.cy0; cy <= world.range.cy1; cy++) {
@@ -1793,6 +1805,14 @@ if (import.meta.env.DEV && !boot.perf) {
   );
 }
 const frameSample: FrameSample = { updateMs: 0, renderMs: 0 };
+/** Dev `__dzAnim.furnitureAction(...)`: a `moveFurniture` action shown without the sim (frames). */
+let devFurnitureAction:
+  | {
+      furniture: NonNullable<ActionView['furniture']>;
+      k: number;
+      seconds: number;
+    }
+  | undefined;
 // Dev hook for headless screenshots / debugging of the animation layer (read-only access).
 if (import.meta.env.DEV) {
   const devItemOf = (def: string): ItemId | undefined =>
@@ -1809,6 +1829,8 @@ if (import.meta.env.DEV) {
       floating,
       rig,
       player,
+      /** Pauses / resumes the sim worker (frames of a running action). */
+      simPaused: (paused: boolean) => sim.setPaused(paused),
       /** Sends a stamped (debug) command, e.g. `{ type: 'debugSpawnZombie', x, y, count }`. */
       send: (body: CommandBody) => sim.send(stamper.stamp(body)),
       characters,
@@ -1821,6 +1843,10 @@ if (import.meta.env.DEV) {
         return shelfFill;
       },
       mapObjects,
+      /** Shows a furniture move action at progress `k` (undefined = none); view only. */
+      furnitureAction: (a: typeof devFurnitureAction) => {
+        devFurnitureAction = a;
+      },
       animals: () => animalViews,
       groundPiles,
       /** Id of the first carried item of content `def`. */
@@ -1868,6 +1894,20 @@ renderer.setAnimationLoop((time) => {
     const hand = devHoldWeapon(devHoldParam, weaponIndex) ?? loadout.hand;
     const back = loadout.back;
     player.aiming = devAim || isAiming(performance.now());
+    const action = gameState.get().action;
+    const span = action ? action.endTick - action.startTick : 0;
+    const dev = devFurnitureAction;
+    const f = action?.kind === 'moveFurniture' ? action.furniture : dev?.furniture;
+    const k = dev
+      ? dev.k
+      : action && span > 0
+        ? Math.min(1, Math.max(0, (simTick - action.startTick) / span))
+        : 0;
+    const seconds = dev ? dev.seconds : (span * TICK_MS) / 1000;
+    player.setFurnitureAction(
+      f ? { mode: f.mode, dirX: f.dirX, dirY: f.dirY, k, seconds } : undefined,
+    );
+    mapObjects.previewFurnitureMove(f, k);
     player.setWeapons(hand, back, weaponModels);
     player.apply(state, performance.now(), phys.get(phys.localId), simTick);
     // Seated: the body is inside the (placeholder) car.

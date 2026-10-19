@@ -30,6 +30,11 @@ import {
 import { LegPose } from '../anim/leg-pose.js';
 import { ArmPose, GRIP_SPECS, armBones } from '../anim/arm-pose.js';
 import type { BodyState } from '../anim/contract.js';
+import {
+  FurnitureMoveAnim,
+  type FurnitureMoveAction,
+  type FurnitureMoveMode,
+} from '../anim/furniture-move.js';
 
 /** Body states in which the hands keep the weapon grip (else the clip owns the arms). */
 const GRIP_STATES: ReadonlySet<BodyState> = new Set([
@@ -72,6 +77,8 @@ export class PlayerView {
   private hand: WeaponInfo | undefined;
   private arms: ArmPose | undefined;
   private attackStartMs = NaN;
+  /** Pushing / pulling / turning a piece of furniture (`moveFurniture`, `furnitureMoved`). */
+  private readonly furnitureMove = new FurnitureMoveAnim();
   /** Aiming (set by the game from input): the body faces the cursor instead of the movement. */
   aiming = false;
   /** Fallback state when no physics state is passed (mock / tests). */
@@ -105,6 +112,24 @@ export class PlayerView {
   }
 
   private rig: CharacterRig | undefined;
+
+  /**
+   * This character's running `moveFurniture` action (`ActionView.furniture` + progress), or
+   * undefined; per frame. The push / pull step plays from the first tick of the action.
+   */
+  setFurnitureAction(a: FurnitureMoveAction | undefined): void {
+    this.furnitureMove.setAction(a, { x: this.motion.x, y: this.motion.y });
+  }
+
+  /** The piece this character moved went (`furnitureMoved`): a pull ends a tile back. */
+  furnitureMoved(): void {
+    this.furnitureMove.completed = true;
+  }
+
+  /** Furniture move on screen, undefined = none (dev hook, tests). */
+  get furnitureMoveMode(): FurnitureMoveMode | undefined {
+    return this.furnitureMove.current;
+  }
 
   /** Replaces the capsule with an animated character (model faces +Z). */
   setModel(object: Object3D, clips: readonly AnimationClip[]): void {
@@ -208,6 +233,9 @@ export class PlayerView {
       },
       this.animPose,
     );
+    // Furniture move: slow push / pull step, heading held (the pull walks backwards).
+    const slide = this.furnitureMove.apply(nowMs, dt, pose);
+    const moving = this.furnitureMove.active || slide !== undefined;
     const turning = !Number.isNaN(pose.faceTo);
     // PZ-like (player/locomotion.ts): the body turns to the movement, or to the sim facing
     // (cursor, turned by the sim at a capped rate) while aiming / attacking / holding a gun aim.
@@ -234,14 +262,14 @@ export class PlayerView {
     this.lastFacing = mo.facing;
     // Movement direction (position deltas) vs. the body: forward, backwards or sideways gait.
     let forward = false;
-    if (pose.anim === 'walk' || pose.anim === 'run') {
+    if (!moving && (pose.anim === 'walk' || pose.anim === 'run')) {
       const g = gaitClip(mo.facing, mo.vx, mo.vy);
       if (g === 'back' || g === 'strafeLeft' || g === 'strafeRight') pose.anim = g;
       else forward = true;
     }
     this.loopTime += dt * PoseTracker.loopRate(pose.anim, loco.speed);
     // Height = z · floor height of the interpolated sim z (fractional on stairs / falling).
-    const w = simToWorld(mo.x, mo.y, mo.z);
+    const w = simToWorld(slide?.x ?? mo.x, slide?.y ?? mo.y, mo.z);
     this.root.position.set(w.x, w.y + pose.lift, w.z);
     this.root.rotation.y = facingToRotationY(mo.facing + pose.twist);
     // Body local +X is the facing: -Z rotation leans forward (accel lean, sprint), X rotation

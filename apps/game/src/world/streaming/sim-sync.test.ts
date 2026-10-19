@@ -69,4 +69,51 @@ describe('SimStreamSync', () => {
     s.flush();
     expect(inv.length).toBe(2);
   });
+
+  it('chunkChanged {object} that comes with furnitureMoved rebuilds nothing (moved in place)', () => {
+    const rebuilt: string[] = [];
+    const s = new SimStreamSync(
+      () => {},
+      (cx, cy) => rebuilt.push(`${cx},${cy}`),
+    );
+    const ev = (cx: number, reason: 'object' | 'opening', tick = 5): SimEvent => ({
+      type: 'chunkChanged',
+      tick,
+      cx,
+      cy: 0,
+      z: 0,
+      reason,
+    });
+    s.onEvents([
+      {
+        type: 'furnitureMoved',
+        tick: 5,
+        cause: 'push',
+        playerId: 0,
+        contentId: 'base:sofa',
+        fromId: 1,
+        toId: 2,
+        fromX: 31,
+        fromY: 3,
+        x: 32,
+        y: 3,
+        z: 0,
+        rot: 0,
+        w: 2,
+        h: 1,
+        carried: [],
+      },
+      ev(0, 'object'),
+      ev(1, 'object'),
+      // Something else in the same chunk, or object changes of another tick / chunk: rebuilt.
+      ev(0, 'opening'),
+      ev(1, 'object', 6),
+      ev(2, 'object'),
+    ]);
+    s.flush();
+    expect(rebuilt.sort()).toEqual(['0,0', '1,0', '2,0']);
+    s.onEvents([ev(0, 'object'), ev(1, 'object')]);
+    s.flush();
+    expect(rebuilt.length).toBe(5);
+  });
 });
