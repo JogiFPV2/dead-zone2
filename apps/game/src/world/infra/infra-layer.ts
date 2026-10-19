@@ -153,9 +153,9 @@ export class InfraLayer {
       add(
         'tor-kafel-1m',
         new Matrix4().compose(
-          v.set(infra.track[i]!, 0, infra.track[i + 1]!),
+          v.set(infra.track[i]!, 0, infra.track[i + 1]),
           q,
-          s.set(1, 1, infra.track[i + 3]!),
+          s.set(1, 1, infra.track[i + 3]),
         ),
       );
     }
@@ -194,7 +194,8 @@ export class InfraLayer {
     this.root.remove(g);
     for (const o of g.children) {
       if (o instanceof InstancedMesh) o.dispose();
-      if (o instanceof LineSegments) o.geometry.dispose();
+      // `instanceof LineSegments` narrows to LineSegments<any>, so geometry needs its type back.
+      if (o instanceof LineSegments) (o.geometry as BufferGeometry).dispose();
     }
     this.chunks.delete(k);
   }

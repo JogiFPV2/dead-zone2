@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { SimWallSegment } from '@deadzone/protocol';
-import type { BuildingId, ContentId } from '../chunk.js';
+import type { BuildingId } from '../chunk.js';
 import { blokBoxes, boxesGeometry, boxCentre, type BlokInfo } from './blok-facade.js';
 import type { TownEdge } from './layout.js';
 
 const B = 7 as BuildingId;
 const edge = (kind: TownEdge['kind'], tx: number, ty: number, axis: 'N' | 'W' = 'N'): TownEdge => ({
   kind,
-  content: 'base:wall' as ContentId,
+  content: 'base:wall',
   axis,
   tx,
   ty,
@@ -59,7 +59,15 @@ describe('blok facade', () => {
     expect(slabs.length).toBe(2 * 10);
     const top = blokBoxes([], segs, 4, 12, info, () => 0, all).filter((b) => b.roof);
     expect(top.length).toBeGreaterThan(4);
-    const none = blokBoxes([], segs, 4, 12, info, () => 0, () => false).filter((b) => b.roof);
+    const none = blokBoxes(
+      [],
+      segs,
+      4,
+      12,
+      info,
+      () => 0,
+      () => false,
+    ).filter((b) => b.roof);
     expect(none.length).toBe(0);
     const g = boxesGeometry(
       slabs.map((b) => b.box),

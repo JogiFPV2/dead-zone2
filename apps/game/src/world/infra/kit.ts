@@ -1,5 +1,6 @@
 import { attachFileSchema, type AttachPoint } from '@deadzone/content/wires';
-import { BufferGeometry, Float32BufferAttribute, MeshStandardMaterial, type Mesh } from 'three';
+import type { BufferGeometry } from 'three';
+import { Float32BufferAttribute, MeshStandardMaterial, type Mesh } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
