@@ -309,19 +309,13 @@
       "contentId": "base:table",
       "x": 19,
       "y": 30,
-      "rot": 3
+      "rot": 0
     },
     {
       "contentId": "base:chair",
-      "x": 20,
-      "y": 30,
-      "rot": 1
-    },
-    {
-      "contentId": "base:kitchen-cabinet",
       "x": 21,
       "y": 30,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:table",
@@ -330,8 +324,26 @@
       "rot": 1
     },
     {
+      "contentId": "base:radio-set",
+      "x": 18,
+      "y": 31,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 31,
+      "rot": 2
+    },
+    {
       "contentId": "base:chair",
       "x": 20,
+      "y": 31,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": 23,
       "y": 31,
       "rot": 1
     },

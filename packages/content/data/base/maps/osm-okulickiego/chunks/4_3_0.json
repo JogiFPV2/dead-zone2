@@ -464,7 +464,19 @@
       "rot": 1
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:tv-stand",
+      "x": 2,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 2,
+      "y": 28,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv",
       "x": 2,
       "y": 28,
       "rot": 1

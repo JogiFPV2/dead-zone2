@@ -1072,26 +1072,20 @@
       "rot": 1
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:table",
       "x": 14,
       "y": 30,
       "rot": 0
     },
     {
       "contentId": "base:radio-set",
-      "x": 15,
+      "x": 14,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:sofa",
       "x": 16,
-      "y": 30,
-      "rot": 0
-    },
-    {
-      "contentId": "base:tv",
-      "x": 17,
       "y": 30,
       "rot": 0
     },
@@ -1102,10 +1096,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:vcr",
+      "x": 18,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": 18,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:table",
       "x": 19,
       "y": 30,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 21,
+      "y": 30,
+      "rot": 1
     },
     {
       "contentId": "base:gas-stove",
@@ -1120,13 +1132,31 @@
       "rot": 1
     },
     {
-      "contentId": "base:kitchen-counter",
-      "x": 19,
+      "contentId": "base:chair",
+      "x": 14,
       "y": 31,
-      "rot": 3
+      "rot": 2
     },
     {
-      "contentId": "base:freezer",
+      "contentId": "base:chair",
+      "x": 15,
+      "y": 31,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 19,
+      "y": 31,
+      "rot": 2
+    },
+    {
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 31,
+      "rot": 2
+    },
+    {
+      "contentId": "base:kitchen-counter",
       "x": 22,
       "y": 31,
       "rot": 0
@@ -1138,26 +1168,20 @@
       "rot": 0
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:dresser",
       "x": 24,
       "y": 31,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": 25,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:wardrobe",
+      "contentId": "base:desk",
       "x": 26,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
-      "x": 27,
+      "contentId": "base:desk-lamp",
+      "x": 26,
       "y": 31,
       "rot": 0
     },

@@ -80,3 +80,23 @@ export function footprintIssues(
   }
   return out;
 }
+
+/**
+ * Objects that stand on a worktop (`onSurface`: TV, VCR, radio, desk lamp, #267) with no piece of
+ * furniture with a `surfaceHeightM` covering their tile (same level). Empty = all on furniture.
+ */
+export function surfaceIssues(
+  objs: readonly PlacedObject[],
+  footprint: (contentId: string) => Footprint,
+  surfaceHeight: (contentId: string) => number | undefined,
+  onSurface: (contentId: string) => boolean,
+): string[] {
+  const tops = new Set<string>();
+  for (const o of objs)
+    if (surfaceHeight(o.contentId) !== undefined)
+      for (const t of occupiedTiles(o.x, o.y, o.rot, footprint(o.contentId)))
+        tops.add(k(t.x, t.y, o.z));
+  return objs
+    .filter((o) => onSurface(o.contentId) && !tops.has(k(o.x, o.y, o.z)))
+    .map((o) => `${o.contentId} (${o.x}, ${o.y}, z ${o.z}) bez mebla z blatem`);
+}

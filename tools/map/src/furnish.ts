@@ -88,8 +88,17 @@ interface KitItem {
    * moves to its next spot (or is left out).
    */
   seats?: { id: string; min: number; max: number; per: number };
-  /** Stands on top of this piece once it is placed (a desk lamp on the desk, no own tile). */
-  top?: string;
+  /**
+   * Stand on top of this piece once it is placed, on its anchor tile, in this order (a desk
+   * lamp on the desk; a VCR, then the TV on it, on the TV stand). No tile of their own.
+   */
+  top?: string | readonly string[];
+  /**
+   * An `ON_SURFACE` item (#267): on the anchor tile of a piece of these types already in the
+   * room with nothing on it yet (first type first); none free: `stand` is placed for it (left
+   * out when that does not fit either).
+   */
+  onto?: { ids: readonly string[]; stand?: string };
   /** Prefers a free corner (walls or windows on two sides, no door): a floor lamp. */
   corner?: boolean;
 }
@@ -132,10 +141,28 @@ export const DESK_LAMP = 'base:desk-lamp';
  * Objects without a tile of their own: they hang from the ceiling or stand on other furniture
  * (no footprint in the content, the sim does not block on them). Never counted as overlaps.
  */
+/**
+ * Worktop height (m) of the base pack furniture with one (content `surfaceHeightM`, #267;
+ * `furnish.test.ts` checks it against the bundle). Kept here so the lazy world generator needs
+ * no content bundle.
+ */
+export const BASE_SURFACES: Readonly<Record<string, number>> = {
+  'base:tv-stand': 0.55,
+  'base:desk': 0.75,
+  'base:table': 0.75,
+  'base:shop-counter': 0.95,
+};
+/** Objects that stand on a worktop (`placeable.onSurface`, #267): never without one under them. */
+export const ON_SURFACE: ReadonlySet<string> = new Set([
+  'base:tv',
+  'base:vcr',
+  'base:radio-set',
+  DESK_LAMP,
+]);
 export const OVERLAY_OBJECTS: ReadonlySet<string> = new Set([
   CEILING_LAMP,
-  DESK_LAMP,
   'base:light-switch',
+  ...ON_SURFACE,
 ]);
 
 /** Furniture kit per room type, in placement order (first items get the best spots). */
@@ -166,19 +193,17 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     // TV corner first (stand, TV, VCR by the TV, radio), so small rooms still get it (#211).
     // TV corner (Symulacja #211): stand, the TV by it and its VCR right by them, all or none
     // of the TV and VCR (the stand only where both fit, else a plain stand).
-    K('base:tv-stand', 1, 1, 0, {
-      then: K('base:tv', 1, 1, 0, {
-        near: ['base:tv-stand'],
-        mustTouch: true,
-        then: K('base:vcr', 1, 1, 0, { near: ['base:tv', 'base:tv-stand'], mustTouch: true }),
-      }),
-    }),
-    K('base:radio-set', 1, 1, 0, { near: ['base:tv-stand', 'base:tv', 'base:vcr'] }),
+    // #267: the VCR and the TV on top of it stand on the stand (its tile, +surfaceHeightM).
+    K('base:tv-stand', 1, 1, 0, { top: ['base:vcr', 'base:tv'] }),
     K('base:sofa', 1, 2, 14),
     K('base:armchair', 1, 1),
     K(FLOOR_LAMP_ID, 1, 1, 0, { corner: true }),
     // Dining table with 2–4 chairs where the room is big enough.
     K('base:table', 0, 1, 16, { seats: { id: CHAIR, min: 2, max: 4, per: 5 } }),
+    // Radio on the table, else on a stand of its own (#267: never on the floor).
+    K('base:radio-set', 1, 1, 0, {
+      onto: { ids: ['base:table', 'base:desk'], stand: 'base:tv-stand' },
+    }),
     K('base:bookshelf', 1, 2, 16, TALL),
     K('base:dresser', 0, 1, 18),
   ],
@@ -695,10 +720,9 @@ export function furnishView(
           }
         }
         if (ok) {
-          if (item.top) {
-            // On its anchor (NW) tile, drawn there with footprints on or off; no tile taken.
-            out.push({ contentId: item.top, x: c.x, y: c.y, z, rot: c.rot });
-          }
+          // On its anchor (NW) tile, drawn there with footprints on or off; no tile taken.
+          for (const t of typeof item.top === 'string' ? [item.top] : (item.top ?? []))
+            out.push({ contentId: t, x: c.x, y: c.y, z, rot: c.rot });
           return true;
         }
         unput(o);
@@ -715,7 +739,29 @@ export function furnishView(
         item.min ?? 1,
         Math.min(item.max ?? 1, item.per ? Math.round(area / item.per) : (item.min ?? 1)),
       );
-      for (let n = 0; n < want; n++) placeOne(item);
+      for (let n = 0; n < want; n++) {
+        if (!item.onto) {
+          placeOne(item);
+          continue;
+        }
+        // On a free worktop of this room (anchor tile without an ON_SURFACE item yet).
+        const busy = new Set(
+          out.filter((o) => ON_SURFACE.has(o.contentId)).map((o) => key(o.x, o.y, o.z)),
+        );
+        const host = item.onto.ids
+          .flatMap((id) =>
+            out.filter(
+              (o) =>
+                o.contentId === id &&
+                o.z === z &&
+                view.room(o.x, o.y, z) === roomId &&
+                !busy.has(key(o.x, o.y, z)),
+            ),
+          )
+          .at(0);
+        if (host) out.push({ contentId: item.id, x: host.x, y: host.y, z, rot: host.rot });
+        else if (item.onto.stand) placeOne(K(item.onto.stand, 1, 1, 0, { top: item.id }));
+      }
     }
 
     // Lamps (#254).

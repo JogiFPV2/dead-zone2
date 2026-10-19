@@ -499,7 +499,7 @@
       "contentId": "base:sofa",
       "x": 16,
       "y": 13,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:light-switch",
@@ -508,7 +508,19 @@
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:tv-stand",
+      "x": 20,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 20,
+      "y": 13,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv",
       "x": 20,
       "y": 13,
       "rot": 1

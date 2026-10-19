@@ -1069,22 +1069,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:table",
-      "x": 16,
-      "y": 30,
-      "rot": 0
-    },
-    {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:bookshelf",
       "x": 18,
       "y": 30,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:freezer",
       "x": 20,
       "y": 30,
       "rot": 0
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 24,
+      "y": 30,
+      "rot": 2
+    },
+    {
+      "contentId": "base:dumpster",
+      "x": 25,
+      "y": 30,
+      "rot": 2
     },
     {
       "contentId": "base:chair",
@@ -1099,16 +1105,10 @@
       "rot": 2
     },
     {
-      "contentId": "base:chair",
-      "x": 16,
+      "contentId": "base:sofa",
+      "x": 18,
       "y": 31,
-      "rot": 2
-    },
-    {
-      "contentId": "base:chair",
-      "x": 17,
-      "y": 31,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:bed",

@@ -63,3 +63,4 @@ export {
   type OsmTileRef,
 } from './tiles.js';
 export { columnFootprintIssues, type ColumnFootprintIssue } from './footprint-check.js';
+export { surfaceIssues } from '../footprint-check.js';

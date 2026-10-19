@@ -274,31 +274,31 @@
       "rot": 1
     },
     {
-      "contentId": "base:floor-lamp",
-      "x": 14,
-      "y": 30,
-      "rot": 0
-    },
-    {
-      "contentId": "base:radio-set",
+      "contentId": "base:armchair",
       "x": 15,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:sofa",
       "x": 16,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:tv",
-      "x": 17,
+      "contentId": "base:tv-stand",
+      "x": 18,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:tv-stand",
+      "contentId": "base:vcr",
+      "x": 18,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
       "x": 18,
       "y": 30,
       "rot": 0

@@ -918,25 +918,25 @@
   ],
   "objects": [
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:bookshelf",
       "x": 19,
       "y": 14,
       "rot": 0
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:bookshelf",
       "x": 20,
       "y": 14,
       "rot": 0
     },
     {
-      "contentId": "base:tv-stand",
-      "x": 17,
+      "contentId": "base:armchair",
+      "x": 16,
       "y": 15,
-      "rot": 1
+      "rot": 3
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:armchair",
       "x": 18,
       "y": 15,
       "rot": 3
@@ -954,25 +954,19 @@
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:bookshelf",
       "x": 15,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:tv",
-      "x": 17,
-      "y": 16,
-      "rot": 1
-    },
-    {
-      "contentId": "base:tv-stand",
+      "contentId": "base:sofa",
       "x": 18,
       "y": 16,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:floor-lamp",
       "x": 21,
       "y": 16,
       "rot": 1
@@ -990,16 +984,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:tv-stand",
       "x": 17,
       "y": 17,
       "rot": 1
     },
     {
-      "contentId": "base:tv",
-      "x": 18,
+      "contentId": "base:radio-set",
+      "x": 17,
       "y": 17,
-      "rot": 3
+      "rot": 1
     },
     {
       "contentId": "base:ceiling-lamp",
@@ -1008,7 +1002,19 @@
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:table",
+      "x": 21,
+      "y": 17,
+      "rot": 1
+    },
+    {
+      "contentId": "base:radio-set",
       "x": 21,
       "y": 17,
       "rot": 1
@@ -1023,6 +1029,12 @@
       "contentId": "base:bed",
       "x": 25,
       "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 20,
+      "y": 18,
       "rot": 3
     },
     {
@@ -1056,10 +1068,22 @@
       "rot": 0
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:tv-stand",
       "x": 16,
       "y": 19,
-      "rot": 2
+      "rot": 3
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 16,
+      "y": 19,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv",
+      "x": 16,
+      "y": 19,
+      "rot": 3
     },
     {
       "contentId": "base:light-switch",
@@ -1110,7 +1134,19 @@
       "rot": 2
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:tv-stand",
+      "x": 21,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 21,
+      "y": 20,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv",
       "x": 21,
       "y": 20,
       "rot": 1
@@ -1152,22 +1188,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:sofa",
       "x": 26,
       "y": 21,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:tv-stand",
-      "x": 27,
+      "x": 28,
       "y": 21,
-      "rot": 0
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 28,
+      "y": 21,
+      "rot": 1
     },
     {
       "contentId": "base:tv",
       "x": 28,
       "y": 21,
-      "rot": 0
+      "rot": 1
     },
     {
       "contentId": "base:wardrobe",
@@ -1184,6 +1226,12 @@
     {
       "contentId": "base:kitchen-sink",
       "x": 21,
+      "y": 22,
+      "rot": 1
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 28,
       "y": 22,
       "rot": 1
     },
@@ -1242,10 +1290,16 @@
       "rot": 3
     },
     {
-      "contentId": "base:armchair",
-      "x": 28,
+      "contentId": "base:tv-stand",
+      "x": 27,
       "y": 24,
-      "rot": 1
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 27,
+      "y": 24,
+      "rot": 2
     },
     {
       "contentId": "base:light-switch",
@@ -1272,7 +1326,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:floor-lamp",
       "x": 26,
       "y": 25,
       "rot": 2

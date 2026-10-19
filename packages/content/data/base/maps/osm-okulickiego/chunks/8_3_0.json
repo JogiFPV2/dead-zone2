@@ -1335,10 +1335,16 @@
       "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:dresser",
       "x": 3,
       "y": 11,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:floor-lamp",
+      "x": 4,
+      "y": 11,
+      "rot": 0
     },
     {
       "contentId": "base:trash-bin",
@@ -1353,13 +1359,19 @@
       "rot": 0
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:tv-stand",
       "x": 5,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:radio-set",
+      "x": 5,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 7,
       "y": 12,
       "rot": 1
@@ -1369,6 +1381,12 @@
       "x": 5,
       "y": 13,
       "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 7,
+      "y": 13,
+      "rot": 1
     },
     {
       "contentId": "base:light-switch",
@@ -1383,20 +1401,20 @@
       "rot": 2
     },
     {
-      "contentId": "base:tv",
-      "x": 4,
-      "y": 15,
-      "rot": 2
-    },
-    {
       "contentId": "base:vcr",
-      "x": 5,
+      "x": 3,
       "y": 15,
       "rot": 2
     },
     {
-      "contentId": "base:radio-set",
-      "x": 6,
+      "contentId": "base:tv",
+      "x": 3,
+      "y": 15,
+      "rot": 2
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 4,
       "y": 15,
       "rot": 2
     },
@@ -1404,7 +1422,7 @@
       "contentId": "base:armchair",
       "x": 7,
       "y": 15,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
@@ -1431,10 +1449,22 @@
       "rot": 2
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:tv-stand",
+      "x": 0,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 0,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:floor-lamp",
       "x": 1,
       "y": 31,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:table",

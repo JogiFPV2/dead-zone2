@@ -76,8 +76,9 @@ export interface WorldPlanInput {
  * 12: main #249 merged in: furniture placed by footprint, building kinds, its room kits.
  * 13: cover zones and HV tower / catenary mast feet per chunk (`SimChunk.zones` / `blockers`).
  * 14: main #257 merged in: #254 kits (tables with chairs, lamps, switches), toilet, seats a tile apart.
+ * 15: #267 TV, VCR and radio stand on a worktop (TV stand, table), never on a bare tile.
  */
-export const GENERATOR_REV = 14;
+export const GENERATOR_REV = 15;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

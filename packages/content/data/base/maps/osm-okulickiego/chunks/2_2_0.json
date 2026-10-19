@@ -1075,7 +1075,7 @@
   ],
   "objects": [
     {
-      "contentId": "base:light-switch",
+      "contentId": "base:sofa",
       "x": 3,
       "y": 0,
       "rot": 1
@@ -1117,26 +1117,8 @@
       "rot": 2
     },
     {
-      "contentId": "base:tv-stand",
+      "contentId": "base:sofa",
       "x": 0,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:tv",
-      "x": 1,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:vcr",
-      "x": 2,
-      "y": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:radio-set",
-      "x": 3,
       "y": 1,
       "rot": 2
     },
@@ -1165,7 +1147,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:armchair",
       "x": 13,
       "y": 1,
       "rot": 2
@@ -1177,7 +1159,19 @@
       "rot": 2
     },
     {
+      "contentId": "base:vcr",
+      "x": 14,
+      "y": 1,
+      "rot": 2
+    },
+    {
       "contentId": "base:tv",
+      "x": 14,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 15,
       "y": 1,
       "rot": 2
@@ -1207,13 +1201,19 @@
       "rot": 1
     },
     {
-      "contentId": "base:wardrobe",
+      "contentId": "base:bed",
       "x": 2,
+      "y": 2,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 4,
       "y": 2,
       "rot": 0
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:radio-set",
       "x": 4,
       "y": 2,
       "rot": 0
@@ -1285,8 +1285,8 @@
       "rot": 3
     },
     {
-      "contentId": "base:light-switch",
-      "x": 3,
+      "contentId": "base:bed",
+      "x": 2,
       "y": 3,
       "rot": 1
     },
@@ -1315,6 +1315,12 @@
       "rot": 0
     },
     {
+      "contentId": "base:dresser",
+      "x": 0,
+      "y": 4,
+      "rot": 3
+    },
+    {
       "contentId": "base:ceiling-lamp",
       "x": 1,
       "y": 4,
@@ -1333,14 +1339,14 @@
       "rot": 3
     },
     {
-      "contentId": "base:bed",
+      "contentId": "base:wardrobe",
       "x": 0,
       "y": 5,
-      "rot": 2
+      "rot": 3
     },
     {
-      "contentId": "base:bed",
-      "x": 2,
+      "contentId": "base:light-switch",
+      "x": 3,
       "y": 5,
       "rot": 1
     },
@@ -1351,7 +1357,7 @@
       "rot": 3
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:floor-lamp",
       "x": 7,
       "y": 5,
       "rot": 1
@@ -1375,16 +1381,34 @@
       "rot": 1
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:chair",
+      "x": 2,
+      "y": 6,
+      "rot": 0
+    },
+    {
+      "contentId": "base:floor-lamp",
       "x": 3,
       "y": 6,
       "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
+      "x": 4,
+      "y": 6,
+      "rot": 3
     },
     {
       "contentId": "base:ceiling-lamp",
       "x": 5,
       "y": 6,
       "rot": 0
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 6,
+      "y": 6,
+      "rot": 1
     },
     {
       "contentId": "base:kitchen-counter",
@@ -1399,7 +1423,19 @@
       "rot": 1
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:tv-stand",
+      "x": 18,
+      "y": 6,
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 18,
+      "y": 6,
+      "rot": 1
+    },
+    {
+      "contentId": "base:tv",
       "x": 18,
       "y": 6,
       "rot": 1
@@ -1411,28 +1447,34 @@
       "rot": 0
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:desk",
       "x": 1,
       "y": 7,
       "rot": 2
     },
     {
-      "contentId": "base:vcr",
-      "x": 4,
+      "contentId": "base:desk-lamp",
+      "x": 1,
       "y": 7,
       "rot": 2
     },
     {
       "contentId": "base:tv-stand",
-      "x": 5,
+      "x": 6,
       "y": 7,
-      "rot": 2
+      "rot": 1
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 6,
+      "y": 7,
+      "rot": 1
     },
     {
       "contentId": "base:tv",
       "x": 6,
       "y": 7,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:kitchen-sink",

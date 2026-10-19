@@ -4,9 +4,14 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ContentBundle } from '@deadzone/content';
 import { BASE_PACK_DIR, buildContentBundleFromDirs } from '@deadzone/content/node';
-import { footprintForId, occupiedTiles } from '@deadzone/content/footprint';
+import {
+  footprintForId,
+  occupiedTiles,
+  onSurfaceForId,
+  surfaceHeightForId,
+} from '@deadzone/content/footprint';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { blockedTiles, footprintIssues } from './footprint-check.js';
+import { blockedTiles, footprintIssues, surfaceIssues } from './footprint-check.js';
 import {
   LIGHT_SWITCH,
   MapView,
@@ -27,6 +32,7 @@ import {
 const MAPS = join(BASE_PACK_DIR, 'maps');
 let bundle: ContentBundle;
 const fp = (id: string) => footprintForId(bundle, id);
+const sh = (id: string) => surfaceHeightForId(bundle, id);
 
 beforeAll(async () => {
   bundle = await buildContentBundleFromDirs([BASE_PACK_DIR]);
@@ -69,27 +75,35 @@ describe('footprint mebli na mapach contentu', () => {
     });
   }
 
-  it('przy każdym telewizorze stoi magnetowid (#211), w salonach radio', () => {
-    for (const id of ['osm-okulickiego', 'town-catalog']) {
+  it('TV, magnetowid, radio i lampka stoją na meblu z blatem (#267), radio tylko w salonach', () => {
+    let tops = 0;
+    for (const id of MAP_IDS) {
       const { view, objects } = loadMap(id);
-      const tvs = objects.filter((o) => o.contentId === 'base:tv');
-      const vcrs = objects.filter((o) => o.contentId === 'base:vcr');
-      expect(tvs.length, id).toBeGreaterThan(0);
-      for (const t of tvs)
+      tops += objects.filter((o) => onSurfaceForId(bundle, o.contentId)).length;
+      expect(
+        surfaceIssues(objects, fp, sh, (c) => onSurfaceForId(bundle, c)).slice(0, 20),
+        id,
+      ).toEqual([]);
+      // Every TV has its VCR under it (#211), on the same stand.
+      for (const t of objects.filter((o) => o.contentId === 'base:tv'))
         expect(
-          vcrs.some(
-            (v) =>
-              v.z === t.z &&
-              Math.abs(v.x - t.x) + Math.abs(v.y - t.y) <= 2 &&
-              view.room(v.x, v.y, v.z) === view.room(t.x, t.y, t.z),
+          objects.some(
+            (v) => v.contentId === 'base:vcr' && v.x === t.x && v.y === t.y && v.z === t.z,
           ),
           `${id}: TV (${t.x}, ${t.y}, ${t.z}) bez magnetowidu`,
         ).toBe(true);
-      const radios = objects.filter((o) => o.contentId === 'base:radio-set');
-      for (const r of radios)
+      for (const r of objects.filter((o) => o.contentId === 'base:radio-set'))
         expect(view.rooms.get(view.room(r.x, r.y, r.z))?.roomType).toBe('base:room-living-room');
-      expect(radios.length, id).toBeGreaterThan(0);
     }
+    for (const id of ['osm-okulickiego', 'town-catalog']) {
+      const { objects } = loadMap(id);
+      for (const c of ['base:tv', 'base:vcr', 'base:radio-set', 'base:desk-lamp'])
+        expect(
+          objects.some((o) => o.contentId === c),
+          `${id}: ${c}`,
+        ).toBe(true);
+    }
+    expect(tops).toBeGreaterThan(100);
   });
 
   it('kanapy, fotele i ławki tego samego typu nie stoją stykiem (kratka odstępu)', () => {
@@ -288,6 +302,19 @@ describe('footprint mebli w generatorze świata (plan-4, próbka chunków)', () 
     expect(objects).toBeGreaterThan(100);
     expect(big).toBeGreaterThan(10);
     const issues = columnFootprintIssues(cols, fp);
+    // #267: every onSurface object on a worktop (anchors in the chunk: same column).
+    const surf: string[] = [];
+    for (const c of cols)
+      for (const l of c.levels)
+        surf.push(
+          ...surfaceIssues(
+            l.objects.map((o) => ({ ...o, x: c.cx * 32 + o.x, y: c.cy * 32 + o.y, z: l.z })),
+            fp,
+            sh,
+            (id) => onSurfaceForId(bundle, id),
+          ),
+        );
+    expect(surf.slice(0, 20)).toEqual([]);
     expect(issues.map((i) => `${i.kind}: ${i.at}`).slice(0, 20)).toEqual([]);
   });
 });

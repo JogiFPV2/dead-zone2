@@ -622,10 +622,10 @@
       "rot": 2
     },
     {
-      "contentId": "base:kitchen-cabinet",
+      "contentId": "base:kitchen-counter",
       "x": 0,
       "y": 31,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:desk",
@@ -646,10 +646,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:sofa",
       "x": 11,
       "y": 31,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
+      "x": 13,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {

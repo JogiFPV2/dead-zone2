@@ -1040,12 +1040,6 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 18,
-      "y": 0,
-      "rot": 1
-    },
-    {
       "contentId": "base:chair",
       "x": 20,
       "y": 0,
@@ -1100,13 +1094,19 @@
       "rot": 1
     },
     {
+      "contentId": "base:chair",
+      "x": 14,
+      "y": 1,
+      "rot": 0
+    },
+    {
       "contentId": "base:ceiling-lamp",
       "x": 16,
       "y": 1,
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:dresser",
       "x": 18,
       "y": 1,
       "rot": 1
@@ -1142,10 +1142,22 @@
       "rot": 1
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:table",
       "x": 14,
       "y": 2,
       "rot": 3
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 14,
+      "y": 2,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
+      "x": 15,
+      "y": 2,
+      "rot": 1
     },
     {
       "contentId": "base:fridge-freezer",
@@ -1196,7 +1208,13 @@
       "rot": 3
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:chair",
+      "x": 15,
+      "y": 3,
+      "rot": 1
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 18,
       "y": 3,
       "rot": 1
@@ -1238,19 +1256,13 @@
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:sofa",
       "x": 14,
       "y": 4,
       "rot": 3
     },
     {
-      "contentId": "base:chair",
-      "x": 17,
-      "y": 4,
-      "rot": 3
-    },
-    {
-      "contentId": "base:table",
+      "contentId": "base:bookshelf",
       "x": 18,
       "y": 4,
       "rot": 1
@@ -1286,22 +1298,16 @@
       "rot": 2
     },
     {
-      "contentId": "base:dresser",
-      "x": 14,
-      "y": 5,
-      "rot": 3
-    },
-    {
       "contentId": "base:light-switch",
-      "x": 15,
+      "x": 17,
       "y": 5,
       "rot": 2
     },
     {
-      "contentId": "base:chair",
-      "x": 17,
+      "contentId": "base:floor-lamp",
+      "x": 18,
       "y": 5,
-      "rot": 3
+      "rot": 1
     },
     {
       "contentId": "base:kitchen-counter",
@@ -1412,10 +1418,16 @@
       "rot": 0
     },
     {
-      "contentId": "base:sofa",
+      "contentId": "base:floor-lamp",
       "x": 29,
       "y": 8,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 30,
+      "y": 8,
+      "rot": 0
     },
     {
       "contentId": "base:kitchen-cabinet",
@@ -1484,14 +1496,26 @@
       "rot": 0
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:table",
       "x": 29,
       "y": 10,
       "rot": 3
     },
     {
-      "contentId": "base:ceiling-lamp",
+      "contentId": "base:radio-set",
+      "x": 29,
+      "y": 10,
+      "rot": 3
+    },
+    {
+      "contentId": "base:chair",
       "x": 30,
+      "y": 10,
+      "rot": 1
+    },
+    {
+      "contentId": "base:ceiling-lamp",
+      "x": 31,
       "y": 10,
       "rot": 0
     },
@@ -1532,10 +1556,10 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 29,
+      "contentId": "base:chair",
+      "x": 30,
       "y": 11,
-      "rot": 3
+      "rot": 1
     },
     {
       "contentId": "base:chair",

@@ -1,11 +1,12 @@
 import { CENTRUM_SPOT } from './osm16-fixtures.js';
 // #131 on the whole 16 km osm-stw generator: furniture only in rooms, rooms closed to the outside.
 import { BASE_PACK_DIR, buildContentBundleFromDirs } from '@deadzone/content/node';
-import { footprintForId } from '@deadzone/content/footprint';
+import { footprintForId, onSurfaceForId, surfaceHeightForId } from '@deadzone/content/footprint';
 import {
   OUTDOOR_FLOORS,
   TILE_PALETTE,
   columnFootprintIssues,
+  surfaceIssues,
   type GenColumn,
 } from '@deadzone/map/world-source';
 import { CHUNK_SIZE } from '@deadzone/protocol';
@@ -111,6 +112,29 @@ describe('osm-stw furniture (#131) over the whole generator', () => {
     const fp = (id: string) => footprintForId(content, id);
     const issues = columnFootprintIssues(cols, fp);
     expect(issues.map((i) => `${i.kind}: ${i.at}`).slice(0, 20)).toEqual([]);
+    // #267: TV, VCR, radio and desk lamp stand on a worktop (their anchor tile, same column).
+    const surf: string[] = [];
+    let tops = 0;
+    for (const c of cols)
+      for (const l of c.levels) {
+        const objs = l.objects.map((o) => ({
+          ...o,
+          x: c.cx * CHUNK_SIZE + o.x,
+          y: c.cy * CHUNK_SIZE + o.y,
+          z: l.z,
+        }));
+        tops += objs.filter((o) => onSurfaceForId(content, o.contentId)).length;
+        surf.push(
+          ...surfaceIssues(
+            objs,
+            fp,
+            (id) => surfaceHeightForId(content, id),
+            (id) => onSurfaceForId(content, id),
+          ),
+        );
+      }
+    expect(surf.slice(0, 20)).toEqual([]);
+    expect(tops).toBeGreaterThan(500);
     const big = cols.flatMap((c) =>
       c.levels.flatMap((l) => l.objects.filter((o) => fp(o.contentId).w * fp(o.contentId).h > 1)),
     );

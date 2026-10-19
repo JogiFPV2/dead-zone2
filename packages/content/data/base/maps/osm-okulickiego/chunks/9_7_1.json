@@ -1894,26 +1894,38 @@
       "rot": 2
     },
     {
-      "contentId": "base:tv",
+      "contentId": "base:armchair",
       "x": 20,
       "y": 16,
       "rot": 3
     },
     {
       "contentId": "base:light-switch",
-      "x": 23,
+      "x": 21,
       "y": 16,
       "rot": 0
     },
     {
       "contentId": "base:floor-lamp",
+      "x": 23,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv-stand",
       "x": 24,
       "y": 16,
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
-      "x": 26,
+      "contentId": "base:vcr",
+      "x": 24,
+      "y": 16,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": 24,
       "y": 16,
       "rot": 0
     },
@@ -1930,16 +1942,22 @@
       "rot": 3
     },
     {
+      "contentId": "base:vcr",
+      "x": 20,
+      "y": 17,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv",
+      "x": 20,
+      "y": 17,
+      "rot": 3
+    },
+    {
       "contentId": "base:ceiling-lamp",
       "x": 21,
       "y": 17,
       "rot": 0
-    },
-    {
-      "contentId": "base:sofa",
-      "x": 23,
-      "y": 17,
-      "rot": 1
     },
     {
       "contentId": "base:ceiling-lamp",
@@ -1948,26 +1966,32 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:sofa",
+      "x": 26,
+      "y": 17,
+      "rot": 1
+    },
+    {
+      "contentId": "base:sofa",
       "x": 20,
       "y": 18,
       "rot": 3
     },
     {
+      "contentId": "base:tv-stand",
+      "x": 23,
+      "y": 18,
+      "rot": 1
+    },
+    {
       "contentId": "base:radio-set",
-      "x": 20,
-      "y": 19,
-      "rot": 3
+      "x": 23,
+      "y": 18,
+      "rot": 1
     },
     {
       "contentId": "base:armchair",
       "x": 24,
-      "y": 19,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 26,
       "y": 19,
       "rot": 2
     },
@@ -2050,13 +2074,13 @@
       "rot": 0
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:sofa",
       "x": 11,
       "y": 31,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:armchair",
       "x": 13,
       "y": 31,
       "rot": 0

@@ -1101,12 +1101,6 @@
       "rot": 3
     },
     {
-      "contentId": "base:vcr",
-      "x": 19,
-      "y": 0,
-      "rot": 1
-    },
-    {
       "contentId": "base:chair",
       "x": 22,
       "y": 0,
@@ -1153,6 +1147,18 @@
       "x": 17,
       "y": 1,
       "rot": 3
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 19,
+      "y": 1,
+      "rot": 2
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 19,
+      "y": 1,
+      "rot": 2
     },
     {
       "contentId": "base:floor-lamp",
@@ -1239,12 +1245,6 @@
       "rot": 0
     },
     {
-      "contentId": "base:light-switch",
-      "x": 24,
-      "y": 2,
-      "rot": 3
-    },
-    {
       "contentId": "base:toilet",
       "x": 16,
       "y": 3,
@@ -1275,10 +1275,28 @@
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:light-switch",
       "x": 24,
       "y": 4,
       "rot": 3
+    },
+    {
+      "contentId": "base:tv-stand",
+      "x": 25,
+      "y": 4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 25,
+      "y": 4,
+      "rot": 2
+    },
+    {
+      "contentId": "base:tv",
+      "x": 25,
+      "y": 4,
+      "rot": 2
     },
     {
       "contentId": "base:desk",

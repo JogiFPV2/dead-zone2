@@ -1287,7 +1287,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:armchair",
       "x": 5,
       "y": 14,
       "rot": 2
@@ -1335,7 +1335,19 @@
       "rot": 2
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:tv-stand",
+      "x": 1,
+      "y": 18,
+      "rot": 2
+    },
+    {
+      "contentId": "base:vcr",
+      "x": 1,
+      "y": 18,
+      "rot": 2
+    },
+    {
+      "contentId": "base:tv",
       "x": 1,
       "y": 18,
       "rot": 2

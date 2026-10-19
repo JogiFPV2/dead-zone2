@@ -1036,20 +1036,14 @@
       "rot": 1
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:armchair",
       "x": 14,
       "y": 30,
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:sofa",
       "x": 15,
-      "y": 30,
-      "rot": 0
-    },
-    {
-      "contentId": "base:vcr",
-      "x": 16,
       "y": 30,
       "rot": 0
     },
@@ -1060,7 +1054,19 @@
       "rot": 0
     },
     {
+      "contentId": "base:vcr",
+      "x": 17,
+      "y": 30,
+      "rot": 0
+    },
+    {
       "contentId": "base:tv",
+      "x": 17,
+      "y": 30,
+      "rot": 0
+    },
+    {
+      "contentId": "base:dresser",
       "x": 18,
       "y": 30,
       "rot": 0

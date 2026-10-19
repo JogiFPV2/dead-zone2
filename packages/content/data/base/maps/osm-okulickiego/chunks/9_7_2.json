@@ -684,7 +684,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:armchair",
       "x": 11,
       "y": 31,
       "rot": 0
@@ -696,7 +696,19 @@
       "rot": 0
     },
     {
+      "contentId": "base:vcr",
+      "x": 12,
+      "y": 31,
+      "rot": 0
+    },
+    {
       "contentId": "base:tv",
+      "x": 12,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:bookshelf",
       "x": 13,
       "y": 31,
       "rot": 0

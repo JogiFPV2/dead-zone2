@@ -185,19 +185,13 @@
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
+      "contentId": "base:sofa",
       "x": 11,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:tv-stand",
-      "x": 12,
-      "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:tv",
+      "contentId": "base:armchair",
       "x": 13,
       "y": 31,
       "rot": 0

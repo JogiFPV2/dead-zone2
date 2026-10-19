@@ -144,32 +144,38 @@
   ],
   "objects": [
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:tv-stand",
       "x": 0,
       "y": 31,
-      "rot": 0
-    },
-    {
-      "contentId": "base:radio-set",
-      "x": 1,
-      "y": 31,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:vcr",
+      "x": 0,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv",
+      "x": 0,
+      "y": 31,
+      "rot": 3
+    },
+    {
+      "contentId": "base:tv-stand",
       "x": 2,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:tv",
-      "x": 3,
+      "contentId": "base:radio-set",
+      "x": 2,
       "y": 31,
       "rot": 0
     },
     {
-      "contentId": "base:tv-stand",
-      "x": 4,
+      "contentId": "base:sofa",
+      "x": 3,
       "y": 31,
       "rot": 0
     },

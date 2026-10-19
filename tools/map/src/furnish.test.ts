@@ -6,10 +6,17 @@ import { parseBlueprint, type Blueprint } from './blueprint.js';
 import { buildMap } from './build.js';
 import { CATALOG, CATALOG_IDS, placeCatalog } from './catalog.js';
 import { BASE_PACK_DIR as BASE_PACK_DIR, buildContentBundleFromDirs } from '@deadzone/content/node';
-import { footprintForId, occupiedTiles } from '@deadzone/content/footprint';
+import {
+  footprintForId,
+  occupiedTiles,
+  onSurfaceForId,
+  surfaceHeightForId,
+} from '@deadzone/content/footprint';
 import { footprintIssues } from './footprint-check.js';
 import {
   BASE_FOOTPRINTS,
+  BASE_SURFACES,
+  ON_SURFACE,
   LIGHT_SWITCH,
   MapView,
   OVERLAY_OBJECTS,
@@ -58,13 +65,15 @@ interface Chain {
   id: string;
   then?: Chain;
   seats?: { id: string };
-  top?: string;
+  top?: string | readonly string[];
+  onto?: { ids: readonly string[]; stand?: string };
 }
 /** Ids a kit item brings along: its `then` chain, its chairs and what stands on it. */
 const thenIds = (k: Chain): string[] => [
   ...(k.then ? [k.then.id, ...thenIds(k.then)] : []),
   ...(k.seats ? [k.seats.id] : []),
-  ...(k.top ? [k.top] : []),
+  ...(typeof k.top === 'string' ? [k.top] : (k.top ?? [])),
+  ...(k.onto?.stand ? [k.onto.stand] : []),
 ];
 
 describe('room kits (content data)', () => {
@@ -230,8 +239,9 @@ function violations(bp: Blueprint, all: readonly PlacedObject[]): string[] {
   for (const o of tops) {
     const at = `${o.contentId} (${o.x}, ${o.y}, z ${o.z})`;
     const under = idAt.get(k(o.x, o.y, o.z));
-    if (o.contentId === 'base:desk-lamp' && under !== 'base:desk' && under !== 'base:table')
-      bad.push(`${at}: desk lamp not on a desk (${under})`);
+    // #267: TV, VCR, radio and desk lamp stand on a worktop.
+    if (ON_SURFACE.has(o.contentId) && BASE_SURFACES[under ?? ''] === undefined)
+      bad.push(`${at}: not on a worktop (${under})`);
     if (view.room(o.x, o.y, o.z) === 0) bad.push(`${at}: outside a room`);
     if (
       o.contentId === 'base:light-switch' &&
@@ -269,6 +279,18 @@ describe('furnish: meble w środku, rekwizyty na dworze', () => {
       if (fp.w * fp.h > 1) big[id] = fp;
     }
     expect(BASE_FOOTPRINTS).toEqual(big);
+  });
+
+  it('BASE_SURFACES i ON_SURFACE = surfaceHeightM i onSurface paczki base (#267)', async () => {
+    const bundle = await buildContentBundleFromDirs([BASE_PACK_DIR]);
+    const ids = [...Object.keys(bundle.containers), ...Object.keys(bundle.items)];
+    const tops: Record<string, number> = {};
+    for (const id of ids) {
+      const h = surfaceHeightForId(bundle, id);
+      if (h !== undefined) tops[id] = h;
+    }
+    expect(BASE_SURFACES).toEqual(tops);
+    expect([...ON_SURFACE].sort()).toEqual(ids.filter((id) => onSurfaceForId(bundle, id)).sort());
   });
 
   it('meble 2×1 i 1×2 stoją w pokoju plecami do ściany, przy każdym obrocie', () => {

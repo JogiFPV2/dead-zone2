@@ -186,10 +186,22 @@
       "rot": 3
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:floor-lamp",
       "x": 11,
       "y": 31,
-      "rot": 3
+      "rot": 0
+    },
+    {
+      "contentId": "base:table",
+      "x": 12,
+      "y": 31,
+      "rot": 0
+    },
+    {
+      "contentId": "base:radio-set",
+      "x": 12,
+      "y": 31,
+      "rot": 0
     }
   ],
   "rooms": {

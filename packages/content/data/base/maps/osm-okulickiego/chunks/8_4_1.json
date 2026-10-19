@@ -1001,46 +1001,64 @@
       "rot": 0
     },
     {
+      "contentId": "base:vcr",
+      "x": 1,
+      "y": 12,
+      "rot": 0
+    },
+    {
       "contentId": "base:tv",
+      "x": 1,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:sofa",
       "x": 2,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:vcr",
-      "x": 3,
-      "y": 12,
-      "rot": 0
-    },
-    {
-      "contentId": "base:radio-set",
+      "contentId": "base:armchair",
       "x": 4,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:radio-set",
+      "contentId": "base:tv-stand",
       "x": 5,
       "y": 12,
       "rot": 0
     },
     {
-      "contentId": "base:armchair",
+      "contentId": "base:vcr",
+      "x": 5,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:tv",
+      "x": 5,
+      "y": 12,
+      "rot": 0
+    },
+    {
+      "contentId": "base:floor-lamp",
       "x": 6,
       "y": 12,
       "rot": 0
+    },
+    {
+      "contentId": "base:light-switch",
+      "x": 1,
+      "y": 13,
+      "rot": 3
     },
     {
       "contentId": "base:ceiling-lamp",
       "x": 2,
       "y": 13,
       "rot": 0
-    },
-    {
-      "contentId": "base:light-switch",
-      "x": 5,
-      "y": 13,
-      "rot": 3
     },
     {
       "contentId": "base:ceiling-lamp",
@@ -1055,22 +1073,34 @@
       "rot": 1
     },
     {
-      "contentId": "base:light-switch",
+      "contentId": "base:floor-lamp",
       "x": 1,
       "y": 15,
       "rot": 3
     },
     {
-      "contentId": "base:sofa",
-      "x": 2,
+      "contentId": "base:tv-stand",
+      "x": 3,
       "y": 15,
       "rot": 2
     },
     {
-      "contentId": "base:floor-lamp",
+      "contentId": "base:radio-set",
+      "x": 3,
+      "y": 15,
+      "rot": 2
+    },
+    {
+      "contentId": "base:light-switch",
       "x": 5,
       "y": 15,
       "rot": 3
+    },
+    {
+      "contentId": "base:armchair",
+      "x": 6,
+      "y": 15,
+      "rot": 2
     },
     {
       "contentId": "base:floor-lamp",
