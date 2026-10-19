@@ -1,5 +1,5 @@
 {
-  "furnitureFootprint": false,
+  "furnitureFootprint": true,
   "furnitureTall": [
     "base:wardrobe",
     "base:bookshelf",

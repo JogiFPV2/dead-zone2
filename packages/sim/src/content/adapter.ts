@@ -203,7 +203,7 @@ const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 function furnitureSettings(ws: Partial<ContentBundle['worldSettings']>): ContentIndex['furniture'] {
   return {
-    footprint: ws.furnitureFootprint ?? false,
+    footprint: ws.furnitureFootprint ?? true,
     tall: ws.furnitureTall ?? [],
     longSide: ws.furnitureLongSideAccess ?? [],
   };

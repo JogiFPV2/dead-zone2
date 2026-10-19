@@ -1565,6 +1565,12 @@ Za flagą **`worldSettings.furnitureFootprint`** (domyślnie `false`, plik `worl
 - Drzwi zewnętrzne biorą rodzaj budynku z `SimChunk.buildingKinds[buildingId]` (chunk kafla po stronie budynku, potem 3 × 3 chunki wokół). Dopiero gdy go brak albo jest nieznany, sim liczy rodzaj jak dotąd z pomieszczeń (`buildingKindFromRooms`). `lockedDoors` dalej wygrywa z losowaniem.
 - Mapowanie (`lockKindOf`): rodzaje z `BUILDING_KINDS` (hospital, school, police, pharmacy, shop, fuel, gym, house, office, industrial, garage, ruin) przechodzą 1:1 na klucze `exteriorLockedChanceByBuilding`; aliasy generatora `block`/`kostka` → `house`, `station` → `shop`, `fire-station` → `office`, `shed` → `garage`; reszta (np. `church`) → rodzaj z pomieszczeń, a bez niego `exteriorLockedChance`.
 - Protokół i zapis bez zmian (zamki startowe są pochodną mapy i ziarna).
+### 9.57 Footprint mebli domyślnie włączony (#249 bez nakładania mebli)
+
+- `worldSettings.furnitureFootprint` = `true` w paczce bazowej (`world-settings/furniture.json`, czyta to też klient przez `footprintFlag`) i domyślnie w schemacie oraz adapterze simu. Zachowanie jak w 9.49 z włączoną flagą.
+- Paczka testowa simu (`fixturePack`) zostawia flagę wyłączoną, o ile test jej nie ustawi (ręczne mapy testowe mają meble na drodze).
+- Mapy demo: `apps/game/src/world/footprint.e2e.test.ts` (test-town, demo-house: start wolny, każdy mebel dostępny z wolnego kafla obok).
+- Protokół i zapis bez zmian; hash stanu na mapach z meblami może się różnić (inne ruchy/ścieżki).
 
 ### 9.58 Strefy i blokery z chunków (protokół 35) — kontrakt dla Silnika 2 i Serwera
 

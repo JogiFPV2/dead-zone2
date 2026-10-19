@@ -21,9 +21,9 @@ export const FURNITURE_LONG_SIDE_DEFAULT = ['base:shop-counter'] as const;
  * obiektu mapy, `@deadzone/content/footprint`). Mebel blokuje ruch i ścieżki na wszystkich
  * zajętych kaflach, wysoki (`furnitureTall`) zasłania też wzrok, a schowek i czynności są
  * dostępne z każdego kafla obok mebla (`furnitureLongSideAccess`: tylko wzdłuż dłuższych
- * krawędzi). Domyślnie wyłączone, dopóki mapy mają nachodzące na siebie meble.
+ * krawędzi). Domyślnie włączone (od #249 mapy nie mają nachodzących na siebie mebli).
  */
-export const FurnitureFootprintSchema = z.boolean().default(false);
+export const FurnitureFootprintSchema = z.boolean().default(true);
 /** Meble zasłaniające wzrok (szafy, regały, lodówki); reszta jest niższa od oczu. */
 export const FurnitureTallSchema = z.array(ContentIdSchema).default([...FURNITURE_TALL_DEFAULT]);
 /** Meble dostępne tylko z boku wzdłuż dłuższej krawędzi (z uwzględnieniem `rot`). */

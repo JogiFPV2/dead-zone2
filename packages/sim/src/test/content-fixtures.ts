@@ -13,14 +13,15 @@ const level = (enterAt: number, exitAt: number, modifiers: unknown[] = []) => ({
 
 /**
  * Small fixture pack (docs 8.2: tests do not depend on the real game balance): default
- * `worldSettings` from the schemas plus a few moodles and a bandage.
+ * `worldSettings` from the schemas plus a few moodles and a bandage. `furnitureFootprint` stays
+ * off unless a test sets it: the hand-made test maps put furniture on walking lines.
  */
 export function fixturePack(worldSettings: object = {}): SimContentPack {
   return {
     dir: 'fixture',
     files: [
       { path: 'mod.json', json: { id: 'fixture', name: 'Fixture', version: '0.0.0' } },
-      { path: 'world-settings.json', json: worldSettings },
+      { path: 'world-settings.json', json: { furnitureFootprint: false, ...worldSettings } },
       {
         path: 'moodles/hunger.json',
         json: {
