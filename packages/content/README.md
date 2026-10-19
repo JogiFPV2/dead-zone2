@@ -172,6 +172,12 @@ ustawia `worldSettings.water` (`world-settings/water.json`, `schemas/water-setti
 wodą). Porcja napełniania = `capacityL / drink.uses` przedmiotu wynikowego. Walidator: butelki muszą istnieć (`missing_ref`), a
 `clean` i `tainted` mieć `waterContainer` (`water_bottle_no_container`).
 
+Zatrucie brudną wodą: `worldSettings.water.poisoning` (`schemas/water-poisoning.ts`, typ `WaterPoisoning`; Symulacja,
+docs 9.60). Pola (base = domyślne): `taintedChance` 0.4 (szansa na łyk brudnej wody ze zbiornika, gdy butelka nie ma
+`drink.perUse.sicknessChance`), `dose` 35 (zatrucie z jednego trafienia), `risePerHour` 20 i `recoverPerHour` 4 (narastanie
+i ustępowanie), `nauseaFrom` 20 i `unhappinessPerHour` 4 (mdłości → przygnębienie), `healthLossFrom` 70,
+`healthLossPerMin` 0.02 i `minHealth` 10 (utrata zdrowia, nie poniżej progu). Gotowanie (`base:boil-water`) oczyszcza wodę.
+
 ## Tworzenie postaci
 
 - Palety (`palettes/`): `{ id, name, kind: skin | hair | cloth, colors: [{ id, hex }] }` (base: `base:skin` 8, `base:hair` 10,

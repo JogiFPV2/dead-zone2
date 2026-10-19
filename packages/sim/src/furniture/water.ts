@@ -48,13 +48,15 @@ export const WATER_ITEMS: WaterSettings['bottles'] = {
   tainted: 'base:dirty-water-bottle',
 };
 
-/** `worldSettings.water` of the content, with the fallbacks above. */
+/** `worldSettings.water` of the content, with the fallbacks above (`poisoning` only if set). */
 export function waterSettings(w: SimWorld): WaterSettings {
   const ws = w.items?.content.water;
   return {
     tankDrinkL: ws?.tankDrinkL ?? TANK_DRINK_L,
     fillMin: ws?.fillMin ?? FILL_MIN,
     bottles: { ...WATER_ITEMS, ...ws?.bottles },
+    // Poisoning values (#273) pass through as they are; absent = `POISONING` in the sim.
+    ...(ws?.poisoning ? { poisoning: ws.poisoning } : {}),
   };
 }
 

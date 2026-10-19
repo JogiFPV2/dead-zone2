@@ -134,6 +134,7 @@ describe('furniture water tanks (placeable.waterTank)', () => {
   });
 
   it('reads worldSettings.water and waterContainer.capacityL; falls back without them', () => {
+    // The whole `worldSettings.water`, `poisoning` included when the content has it (#273).
     expect(waterSettings(sim().world)).toEqual(content.worldSettings.water);
     const ws = content.worldSettings as unknown as Record<string, unknown>;
     const { water: _drop, ...rest } = ws;

@@ -6,6 +6,17 @@
       "empty": "base:bottle",
       "clean": "base:water-bottle",
       "tainted": "base:dirty-water-bottle"
+    },
+    "poisoning": {
+      "taintedChance": 0.4,
+      "dose": 35,
+      "risePerHour": 20,
+      "recoverPerHour": 4,
+      "nauseaFrom": 20,
+      "unhappinessPerHour": 4,
+      "healthLossFrom": 70,
+      "healthLossPerMin": 0.02,
+      "minHealth": 10
     }
   }
 }

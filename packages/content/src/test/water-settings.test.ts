@@ -7,6 +7,7 @@ import {
   type WaterSettings,
 } from '../index.js';
 import { baseBundle } from './base-bundle.js';
+import { SIM_POISONING } from './water-poisoning-sim.js';
 
 /** Values 1:1 with the sim constants of #260 (`packages/sim/src/furniture/water.ts`). */
 const SIM = {
@@ -65,6 +66,7 @@ describe('woda w paczce bazowej (1:1 ze stałymi sim z #260)', () => {
       tankDrinkL: SIM.TANK_DRINK_L,
       fillMin: SIM.FILL_MIN,
       bottles: SIM.WATER_ITEMS,
+      poisoning: SIM_POISONING,
     });
   });
 

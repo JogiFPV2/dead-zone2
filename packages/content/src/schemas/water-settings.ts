@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { GameMinutesSchema, ItemRefSchema } from './common/index.js';
+import { WaterPoisoningSchema } from './water-poisoning.js';
 
 const BOTTLES_DEFAULTS = {
   empty: 'base:bottle',
@@ -26,6 +27,8 @@ export const WaterSettingsSchema = z
     tankDrinkL: z.number().positive().finite().default(0.25),
     fillMin: GameMinutesSchema.default(0.5),
     bottles: WaterBottlesSchema,
+    /** Zatrucie brudną wodą (`water-poisoning.ts`); brak = wartości domyślne sim. */
+    poisoning: WaterPoisoningSchema.optional(),
   })
   .prefault({});
 
