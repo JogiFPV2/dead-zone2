@@ -107,6 +107,10 @@ export const REASON_ICONS: Readonly<Record<FurnitureReason, FurnIcon>> = {
   busy: 'clock',
   tired: 'moon',
   'not-tired': 'moon',
+  fixed: 'lock',
+  'wrong-side': 'walk',
+  'no-space': 'ban',
+  wall: 'ban',
 };
 
 /** Icon of a `reason` code (disabled rows). */

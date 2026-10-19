@@ -21,12 +21,19 @@ const sec = (s: number): number => Math.round(s * TICKS_PER_SECOND);
  * contents of its storage (`countContents`). Strength in kg: `basePushKg` × (1 +
  * `perStrengthLevel` × strength skill) × (1 − `fatigueWeight` × fatigue / 100) × wound penalty
  * (`Pen.action`) × `loadMul[load level]` × `enduranceMul[endurance level]`; × `pullMul` for a
- * pull, × `rotateMul` for a rotation. Heavier than that = `too-heavy`.
+ * pull, × `rotateMul` for a rotation. Heavier than that = `too-heavy`. An average character
+ * (base pack strength 5, rested): push 105 kg, pull 73.5 kg, rotate 94.5 kg (docs 9.61), so a
+ * metal shelf (90 kg empty, 130 kg full) never pulls; 49 kg is the pull at strength 0.
  */
 export interface FurnitureConfig {
   enabled: boolean;
   /** Reach from the player centre to the nearest occupied tile centre. */
   reachTiles: number;
+  /**
+   * Push / pull need the player beside an edge: off the piece on one axis and over its span on
+   * the other, within this many tiles (corners and overlaps = `wrong-side`).
+   */
+  sideSlackTiles: number;
   kgPerTile: number;
   kgPerTileTall: number;
   countContents: boolean;
@@ -315,6 +322,7 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   furniture: {
     enabled: true,
     reachTiles: 1.5,
+    sideSlackTiles: 0.25,
     kgPerTile: 35,
     kgPerTileTall: 45,
     countContents: true,

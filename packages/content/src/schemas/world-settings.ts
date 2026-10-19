@@ -16,6 +16,7 @@ import { VehiclesSettingsSchema } from './vehicles-settings.js';
 import { UtilitiesSettingsSchema } from './utilities-settings.js';
 import {
   FurnitureFootprintSchema,
+  FurnitureFixedSchema,
   FurnitureLongSideAccessSchema,
   FurnitureTallSchema,
 } from './furniture-settings.js';
@@ -80,6 +81,8 @@ export const WorldSettingsSchema = z.strictObject({
   furnitureTall: FurnitureTallSchema,
   /** Meble obsługiwane tylko wzdłuż dłuższej krawędzi przy `furnitureFootprint` (lada). */
   furnitureLongSideAccess: FurnitureLongSideAccessSchema,
+  /** Armatura przymocowana na stałe (toaleta, wanna…): nie da się jej przesunąć (Fizyka). */
+  furnitureFixed: FurnitureFixedSchema,
   /** Włączniki światła, zasłony, światło w oknie wabiące zombie (Symulacja). */
   lighting: LightingSettingsSchema,
   /** Picie ze zbiornika i napełnianie butelek: ilość łyku, czas, butelki (Symulacja). */

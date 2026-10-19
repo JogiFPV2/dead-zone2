@@ -13,6 +13,18 @@ export const FURNITURE_TALL_DEFAULT = [
   'base:gun-locker',
 ] as const;
 
+/**
+ * Domyślna armatura przymocowana do podłogi / instalacji (toaleta, wanna, prysznic, umywalka,
+ * zlew): nie da się jej pchać, ciągnąć ani obracać (`physics/furniture.ts`, powód `fixed`).
+ */
+export const FURNITURE_FIXED_DEFAULT = [
+  'base:toilet',
+  'base:bathtub',
+  'base:shower',
+  'base:bathroom-sink',
+  'base:kitchen-sink',
+] as const;
+
 /** Domyślne meble obsługiwane tylko z boku wzdłuż dłuższej krawędzi (lada: klient i sprzedawca). */
 export const FURNITURE_LONG_SIDE_DEFAULT = ['base:shop-counter'] as const;
 
@@ -30,3 +42,5 @@ export const FurnitureTallSchema = z.array(ContentIdSchema).default([...FURNITUR
 export const FurnitureLongSideAccessSchema = z
   .array(ContentIdSchema)
   .default([...FURNITURE_LONG_SIDE_DEFAULT]);
+/** Armatura przymocowana na stałe: nie przesuwa się (przesuwanie mebli, powód `fixed`). */
+export const FurnitureFixedSchema = z.array(ContentIdSchema).default([...FURNITURE_FIXED_DEFAULT]);

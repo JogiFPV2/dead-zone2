@@ -10,5 +10,12 @@
     "base:locker",
     "base:gun-locker"
   ],
-  "furnitureLongSideAccess": ["base:shop-counter"]
+  "furnitureLongSideAccess": ["base:shop-counter"],
+  "furnitureFixed": [
+    "base:toilet",
+    "base:bathtub",
+    "base:shower",
+    "base:bathroom-sink",
+    "base:kitchen-sink"
+  ]
 }

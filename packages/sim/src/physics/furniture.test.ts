@@ -3,7 +3,7 @@ import { buildContentBundle, type ContentBundle } from '@deadzone/content';
 import type { SimEvent, SimZombieSpawn } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
 import { NOON, eventsOf } from '../test/ai-fixtures.js';
-import { fixturePack } from '../test/content-fixtures.js';
+import { baseContent, fixturePack } from '../test/content-fixtures.js';
 import { buildMap, type MapSpec } from '../test/fixtures.js';
 import { createSim, type Sim } from '../sim.js';
 import { objectFurnitureId } from '../furniture/menu.js';
@@ -18,9 +18,16 @@ import { openingKey, OS } from '../openings/state.js';
  * - sofa 2×1 placeable 60 kg (push 70 kg at strength 0 → ok; pull × 0.7 = 49 → too heavy)
  * - safe 1×1 placeable 200 kg (too heavy)
  * - dresser 1×2 placeable 150 kg (door tests, with a stronger character)
+ * - bath 2×1 placeable 60 kg and shower 1×1 (no footprint): fixtures (`furnitureFixed`)
+ * - table 2×1 placeable 20 kg with a surface, TV 12 kg `onSurface` (carried with the table)
+ * The fixture pack has no strength skill (level 0): push 70 kg, pull 49 kg. With the base pack
+ * an average character (strength 5) pushes 105 kg and pulls 73.5 kg (see 'pull limit').
  */
 function content(): ContentBundle {
-  const pack = fixturePack({ furnitureFootprint: true });
+  const pack = fixturePack({
+    furnitureFootprint: true,
+    furnitureFixed: ['fixture:mv-bath', 'fixture:mv-shower'],
+  });
   return buildContentBundle([
     {
       ...pack,
@@ -60,6 +67,34 @@ function content(): ContentBundle {
               kind: 'placeable',
               weightKg: 150,
               placeable: { footprint: { w: 1, h: 2 } },
+            },
+            {
+              id: 'fixture:mv-bath',
+              name: 'item.fixture.mvbath',
+              kind: 'placeable',
+              weightKg: 60,
+              placeable: { footprint: { w: 2, h: 1 } },
+            },
+            {
+              id: 'fixture:mv-shower',
+              name: 'item.fixture.mvshower',
+              kind: 'placeable',
+              weightKg: 40,
+              placeable: {},
+            },
+            {
+              id: 'fixture:mv-table',
+              name: 'item.fixture.mvtable',
+              kind: 'placeable',
+              weightKg: 20,
+              placeable: { footprint: { w: 2, h: 1 }, surfaceHeightM: 0.75 },
+            },
+            {
+              id: 'fixture:mv-tv',
+              name: 'item.fixture.mvtv',
+              kind: 'placeable',
+              weightKg: 12,
+              placeable: { onSurface: true },
             },
           ],
         },
@@ -211,8 +246,8 @@ describe('furniture: collisions (every occupied tile after the move / rotation)'
     expect([blocks(s, 48, 30), blocks(s, 49, 30)]).toEqual([true, true]);
     // Walk up to it again and push: (49, 30)–(50, 30) would cross the wall at x = 50.
     s.world.c.Position.x[s.world.players.get(0)!] = 47.5;
-    expect(s.canMoveFurniture(id(48, 30), 'push')).toMatchObject({ ok: false, reason: 'blocked' });
-    expect(s.pushFurniture(id(48, 30))).toBe('blocked');
+    expect(s.canMoveFurniture(id(48, 30), 'push')).toMatchObject({ ok: false, reason: 'wall' });
+    expect(s.pushFurniture(id(48, 30))).toBe('wall');
   });
 
   it('rotation: 2×1 → 1×2 about the north-west tile; blocked by a wall edge or a piece', () => {
@@ -230,7 +265,7 @@ describe('furniture: collisions (every occupied tile after the move / rotation)'
     expect([blocks(s, 20, 20), blocks(s, 21, 20), blocks(s, 20, 21)]).toEqual([true, false, true]);
     // A sofa at (40, 20): rotated it would straddle the wall on the north edge of (40, 21).
     const t = sim([{ contentId: 'fixture:mv-sofa', x: 40, y: 20 }], { x: 39.5, y: 20.5 }, walls);
-    expect(t.rotateFurniture(id(40, 20))).toBe('blocked');
+    expect(t.rotateFurniture(id(40, 20))).toBe('wall');
     // A crate on (30, 21) blocks the rotation of a sofa at (30, 20).
     const u = sim(
       [
@@ -239,10 +274,10 @@ describe('furniture: collisions (every occupied tile after the move / rotation)'
       ],
       { x: 29.5, y: 20.5 },
     );
-    expect(u.rotateFurniture(id(30, 20))).toBe('blocked');
+    expect(u.rotateFurniture(id(30, 20))).toBe('no-space');
   });
 
-  it('pushing into another piece, a zombie or a doorway is blocked', () => {
+  it('pushing into another piece or a zombie: no-space; no room behind a puller: no-space', () => {
     const s = sim(
       [
         { contentId: 'fixture:mv-sofa', x: 10, y: 10 },
@@ -250,7 +285,7 @@ describe('furniture: collisions (every occupied tile after the move / rotation)'
       ],
       { x: 9.5, y: 10.5 },
     );
-    expect(s.pushFurniture(id(10, 10))).toBe('blocked');
+    expect(s.pushFurniture(id(10, 10))).toBe('no-space');
     const z = sim(
       [{ contentId: 'fixture:mv-crate', x: 10, y: 10 }],
       { x: 9.5, y: 10.5 },
@@ -259,13 +294,13 @@ describe('furniture: collisions (every occupied tile after the move / rotation)'
         zombies: [{ x: 11.5, y: 10.5 }],
       },
     );
-    expect(z.pushFurniture(id(10, 10))).toBe('blocked');
+    expect(z.pushFurniture(id(10, 10))).toBe('no-space');
     // Pull with a wall behind the player: the player cannot step back.
     const p = sim([{ contentId: 'fixture:mv-crate', x: 47, y: 10 }], { x: 49.5, y: 10.5 }, walls);
     p.world.c.Position.x[p.world.players.get(0)!] = 48.5;
     expect(p.canMoveFurniture(id(47, 10), 'pull').ok).toBe(true);
     const q = sim([{ contentId: 'fixture:mv-crate', x: 48, y: 10 }], { x: 49.5, y: 10.5 }, walls);
-    expect(q.canMoveFurniture(id(48, 10), 'pull')).toMatchObject({ ok: false, reason: 'blocked' });
+    expect(q.canMoveFurniture(id(48, 10), 'pull')).toMatchObject({ ok: false, reason: 'no-space' });
   });
 });
 
@@ -399,6 +434,327 @@ describe('furniture against a door vs the crowd (#66 / #129)', () => {
     const a = siege(true, 10);
     expect(a.pushedBack).toBeGreaterThan(0);
     expect(siege(true, 10).hash).toBe(a.hash);
+  });
+});
+
+describe('furniture: fixtures never move (reason fixed)', () => {
+  it('a fixture (content furnitureFixed) is fixed for push / pull / rotate and the command', () => {
+    const s = sim(
+      [
+        { contentId: 'fixture:mv-bath', x: 10, y: 10 },
+        { contentId: 'fixture:mv-shower', x: 10, y: 12 },
+      ],
+      { x: 9.5, y: 10.5 },
+    );
+    for (const mode of ['push', 'pull', 'rotate'] as const)
+      expect(s.canMoveFurniture(id(10, 10), mode)).toMatchObject({ ok: false, reason: 'fixed' });
+    expect(s.pushFurniture(id(10, 10))).toBe('fixed');
+    expect(s.pullFurniture(id(10, 10))).toBe('fixed');
+    expect(s.rotateFurniture(id(10, 10))).toBe('fixed');
+    // Also a fixture without a footprint (shower): `fixed`, not `invalid-target`.
+    expect(s.canMoveFurniture(id(10, 12), 'push').reason).toBe('fixed');
+    expect(s.getAction()).toBeNull();
+  });
+
+  it('base pack: toilet, bath, shower, bathroom sink and kitchen sink are fixed', async () => {
+    const content = await baseContent();
+    const ids = [
+      'base:toilet',
+      'base:bathtub',
+      'base:shower',
+      'base:bathroom-sink',
+      'base:kitchen-sink',
+    ];
+    expect(content.worldSettings.furnitureFixed).toEqual(ids);
+    for (const contentId of ids) {
+      const s = createSim({
+        seed: 1,
+        map: buildMap({ width: 32, height: 32, objects: [{ contentId, x: 10, y: 10 }] }),
+        spawn: { x: 9.5, y: 10.5 },
+        content,
+        dev: true,
+        clockStart: NOON,
+      });
+      expect(s.canMoveFurniture(id(10, 10), 'push').reason, contentId).toBe('fixed');
+      expect(s.pullFurniture(id(10, 10)), contentId).toBe('fixed');
+    }
+  });
+});
+
+describe('furniture: specific reasons (wrong-side, no-space, wall)', () => {
+  it('push / pull need the player beside an edge: corner or overlap = wrong-side, rotate ok', () => {
+    // Sofa 2×1 on (10, 10)–(11, 10).
+    const at = (x: number, y: number) =>
+      sim([{ contentId: 'fixture:mv-sofa', x: 10, y: 10 }], { x, y });
+    // Beside the long south edge, anywhere along it: push north / pull south.
+    for (const x of [10.2, 11, 11.8]) {
+      expect(at(x, 11.4).canMoveFurniture(id(10, 10), 'push')).toMatchObject({
+        ok: true,
+        dx: 0,
+        dy: -1,
+      });
+    }
+    expect(at(12.4, 10.5).canMoveFurniture(id(10, 10), 'push')).toMatchObject({ dx: -1, dy: 0 });
+    // At a corner (diagonal): no direction.
+    const corner = at(9.6, 9.6);
+    expect(corner.canMoveFurniture(id(10, 10), 'push')).toMatchObject({
+      ok: false,
+      reason: 'wrong-side',
+    });
+    // Too heavy wins over the side (60 kg sofa, pull 49 kg); a light crate at a corner.
+    expect(corner.pullFurniture(id(10, 10))).toBe('too-heavy');
+    const crate = sim([{ contentId: 'fixture:mv-crate', x: 10, y: 10 }], { x: 9.6, y: 9.6 });
+    expect(crate.pullFurniture(id(10, 10))).toBe('wrong-side');
+    expect(corner.canMoveFurniture(id(10, 10), 'rotate').ok).toBe(true);
+    // Overlapping the footprint (e.g. spawned into it).
+    expect(at(10.5, 10.5).canMoveFurniture(id(10, 10), 'push').reason).toBe('wrong-side');
+  });
+
+  it('base pack metal shelf: push at its side moves it; reasons are specific', async () => {
+    const content = await baseContent();
+    // Shelf rot 1 = 1×2 on (10, 10)–(10, 11). Average character (strength 5).
+    const at = (x: number, y: number, extra: Partial<MapSpec> = {}) =>
+      createSim({
+        seed: 1,
+        map: buildMap({
+          width: 32,
+          height: 32,
+          objects: [{ contentId: 'base:metal-shelf', x: 10, y: 10, rot: 1 }],
+          ...extra,
+        }),
+        spawn: { x, y },
+        content,
+        dev: true,
+        clockStart: NOON,
+      });
+    // Long east side: push west, both halves.
+    for (const y of [10.5, 11.5])
+      expect(at(11.4, y).canMoveFurniture(id(10, 10), 'push')).toMatchObject({
+        ok: true,
+        dx: -1,
+        dy: 0,
+      });
+    // Short south end: push north.
+    expect(at(10.5, 12.4).canMoveFurniture(id(10, 10), 'push')).toMatchObject({ ok: true, dy: -1 });
+    // A wall on the west edge of x = 10: pushing west from the east side.
+    const wall = at(11.4, 10.5, { wallW: (x) => x === 10 });
+    expect(wall.canMoveFurniture(id(10, 10), 'push').reason).toBe('wall');
+    // Another piece west of it: no space.
+    const crowded = createSim({
+      seed: 1,
+      map: buildMap({
+        width: 32,
+        height: 32,
+        objects: [
+          { contentId: 'base:metal-shelf', x: 10, y: 10, rot: 1 },
+          { contentId: 'base:dresser', x: 9, y: 11 },
+        ],
+      }),
+      spawn: { x: 11.4, y: 10.5 },
+      content,
+      dev: true,
+      clockStart: NOON,
+    });
+    expect(crowded.canMoveFurniture(id(10, 10), 'push').reason).toBe('no-space');
+    // Never a generic invalid-state from the usual places around it.
+    for (const [x, y] of [
+      [11.4, 10.5],
+      [11.4, 11.5],
+      [9.6, 10.5],
+      [10.5, 9.6],
+      [10.5, 12.4],
+      [9.4, 9.4],
+      [11.6, 12.6],
+    ] as const)
+      for (const mode of ['push', 'pull', 'rotate'] as const)
+        expect(at(x, y).canMoveFurniture(id(10, 10), mode).reason).not.toBe('invalid-state');
+  });
+});
+
+describe('furniture: pull limit (docs 9.61)', () => {
+  it('average character (base pack, strength 5): push 105, pull 73.5, rotate 94.5 kg', async () => {
+    const content = await baseContent();
+    const s = createSim({
+      seed: 1,
+      map: buildMap({
+        width: 32,
+        height: 32,
+        objects: [
+          { contentId: 'base:metal-shelf', x: 10, y: 10 },
+          { contentId: 'base:dresser', x: 10, y: 14 },
+        ],
+      }),
+      spawn: { x: 10.5, y: 11.4 },
+      content,
+      dev: true,
+      clockStart: NOON,
+    });
+    const f = DEFAULT_PHYSICS_CONFIG.furniture;
+    const avg = f.basePushKg * (1 + f.perStrengthLevel * 5);
+    const push = s.canMoveFurniture(id(10, 10), 'push');
+    const pull = s.canMoveFurniture(id(10, 10), 'pull');
+    expect(push.strengthKg).toBeCloseTo(avg, 3);
+    expect(push.strengthKg).toBeCloseTo(105, 3);
+    expect(pull.strengthKg).toBeCloseTo(avg * f.pullMul, 3);
+    expect(pull.strengthKg).toBeCloseTo(73.5, 3);
+    expect(s.canMoveFurniture(id(10, 10), 'rotate').strengthKg).toBeCloseTo(94.5, 3);
+    // Metal shelf: tall 2×1 = 2 × 45 = 90 kg empty, up to 90 + 40 kg (capacity) full. The
+    // average character pushes the empty frame, never pulls it, full or empty.
+    expect(push.weightKg).toBeGreaterThanOrEqual(90);
+    expect(pull).toMatchObject({ ok: false, reason: 'too-heavy' });
+    const full = 90 + content.containers['base:metal-shelf']!.capacityKg;
+    expect(full).toBe(130);
+    expect(full).toBeGreaterThan(push.strengthKg);
+    // A dresser (1 × 35 kg + contents ≤ 30 kg) is light enough to pull.
+    expect(35 + content.containers['base:dresser']!.capacityKg).toBeLessThan(pull.strengthKg);
+  });
+});
+
+describe('furniture: objects on the surface move with it (carried)', () => {
+  // Table 2×1 on (10, 10)–(11, 10), TV on its east tile.
+  const objs = [
+    { contentId: 'fixture:mv-table', x: 10, y: 10 },
+    { contentId: 'fixture:mv-tv', x: 11, y: 10 },
+  ];
+
+  it('push: the TV moves one tile with the table; the event lists it (fromId → toId)', () => {
+    const s = sim(objs, { x: 10.5, y: 11.4 });
+    expect(s.pushFurniture(id(10, 10))).toBeUndefined();
+    const ev = eventsOf(finish(s), 'furnitureMoved');
+    expect(ev).toHaveLength(1);
+    expect(ev[0]).toMatchObject({
+      x: 10,
+      y: 9,
+      carried: [{ fromId: id(11, 10), toId: id(11, 9) }],
+    });
+    const moves = [...s.world.physics.furnitureMoves.values()];
+    expect(moves).toContainEqual({ contentId: 'fixture:mv-tv', x: 11, y: 9, z: 0, rot: 0 });
+    // The overlay map shows the TV on its new tile.
+    const objects = s.world.map.getChunk(0, 0, 0)?.objects ?? [];
+    expect(objects.filter((o) => o.contentId === 'fixture:mv-tv')).toEqual([
+      { contentId: 'fixture:mv-tv', x: 11, y: 9 },
+    ]);
+  });
+
+  it('rotate: the TV turns with the table (east tile → south tile, rot + 1)', () => {
+    const s = sim(objs, { x: 9.5, y: 10.5 });
+    expect(s.rotateFurniture(id(10, 10))).toBeUndefined();
+    const ev = eventsOf(finish(s), 'furnitureMoved');
+    expect(ev[0]).toMatchObject({ rot: 1, w: 1, h: 2, carried: [{ toId: id(10, 11) }] });
+    expect([...s.world.physics.furnitureMoves.values()]).toContainEqual({
+      contentId: 'fixture:mv-tv',
+      x: 10,
+      y: 11,
+      z: 0,
+      rot: 1,
+    });
+  });
+
+  it('nothing on it: carried is empty; a TV elsewhere stays', () => {
+    const s = sim(
+      [
+        { contentId: 'fixture:mv-table', x: 10, y: 10 },
+        { contentId: 'fixture:mv-tv', x: 14, y: 10 },
+      ],
+      { x: 10.5, y: 11.4 },
+    );
+    s.pushFurniture(id(10, 10));
+    expect(eventsOf(finish(s), 'furnitureMoved')[0]?.carried).toEqual([]);
+    expect(s.world.physics.furnitureMoves.size).toBe(1);
+  });
+});
+
+describe('furniture: action view and the furnitureMoves view (client, protocol 38)', () => {
+  it('ActionView of moveFurniture carries the piece, the mode and the direction', () => {
+    const s = sim([{ contentId: 'fixture:mv-crate', x: 10, y: 10 }], { x: 9.5, y: 10.5 });
+    s.drainView();
+    expect(s.pushFurniture(id(10, 10))).toBeUndefined();
+    s.step();
+    expect(s.drainView()?.action?.furniture).toEqual({
+      furnitureId: id(10, 10),
+      mode: 'push',
+      dirX: 1,
+      dirY: 0,
+    });
+    finish(s);
+    const t = sim([{ contentId: 'fixture:mv-crate', x: 10, y: 10 }], { x: 10.5, y: 11.4 });
+    t.pullFurniture(id(10, 10));
+    t.step();
+    expect(t.drainView()?.action?.furniture).toMatchObject({ mode: 'pull', dirX: 0, dirY: 1 });
+    const r = sim([{ contentId: 'fixture:mv-sofa', x: 10, y: 10 }], { x: 9.5, y: 10.5 });
+    r.rotateFurniture(id(10, 10));
+    r.step();
+    expect(r.drainView()?.action?.furniture).toMatchObject({ mode: 'rotate', dirX: 0, dirY: 0 });
+  });
+
+  it('first view after a load lists the moved furniture (and carried objects); then on change', () => {
+    const map = () =>
+      buildMap({
+        width: 64,
+        height: 64,
+        objects: [
+          { contentId: 'fixture:mv-table', x: 10, y: 10 },
+          { contentId: 'fixture:mv-tv', x: 11, y: 10 },
+        ],
+      });
+    const a = createSim({
+      seed: 5,
+      map: map(),
+      spawn: { x: 10.5, y: 11.4 },
+      content: CONTENT,
+      dev: true,
+      clockStart: NOON,
+    });
+    // No moves: no field in the first view.
+    expect(a.drainView()?.furnitureMoves).toBeUndefined();
+    a.pushFurniture(id(10, 10));
+    let live: unknown;
+    for (let i = 0; i < 200 && a.getAction(); i++) {
+      a.step();
+      live = a.drainView()?.furnitureMoves ?? live;
+    }
+    const expected = [
+      {
+        contentId: 'fixture:mv-table',
+        fromX: 10,
+        fromY: 10,
+        fromRot: 0,
+        x: 10,
+        y: 9,
+        z: 0,
+        rot: 0,
+        w: 2,
+        h: 1,
+        id: id(10, 9),
+      },
+      {
+        contentId: 'fixture:mv-tv',
+        fromX: 11,
+        fromY: 10,
+        fromRot: 0,
+        x: 11,
+        y: 9,
+        z: 0,
+        rot: 0,
+        w: 1,
+        h: 1,
+        id: id(11, 9),
+      },
+    ];
+    expect(live).toEqual(expected);
+    const b = createSim({
+      seed: 5,
+      map: map(),
+      spawn: { x: 10.5, y: 11.4 },
+      content: CONTENT,
+      dev: true,
+      clockStart: NOON,
+      load: a.save(),
+    });
+    expect(b.drainView()?.furnitureMoves).toEqual(expected);
+    expect(b.hash()).toBe(a.hash());
+    b.step();
+    expect(b.drainView()?.furnitureMoves).toBeUndefined();
   });
 });
 

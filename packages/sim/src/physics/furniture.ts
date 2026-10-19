@@ -1,6 +1,7 @@
 import {
   CHUNK_SIZE,
   type CommandRejectReason,
+  type FurnitureMoveView,
   type PlayerId,
   type SimEvent,
 } from '@deadzone/protocol';
@@ -30,8 +31,10 @@ import type { FurnitureMove } from './types.js';
  * Pushing / pulling furniture one tile and rotating it 90° (docs 9.61). Mechanics only; the
  * menu / UI hooks call `sim.pushFurniture` / `pullFurniture` / `rotateFurniture` (timed action
  * `moveFurniture`) and `sim.canMoveFurniture`. A move is checked on every occupied tile after
- * the move (floor, no stairs, no other furniture, bodies, corpses, cars; no wall / closed
- * opening crossed; the piece never straddles an edge), weight against the character's strength.
+ * the move (floor, no stairs, no other furniture, bodies, corpses, cars → `no-space`; no wall /
+ * closed opening crossed, the piece never straddles an edge → `wall`), the player beside an edge
+ * (`wrong-side`), fixtures never move (`fixed`), weight against the character's strength.
+ * Small objects standing on the piece (`placeable.onSurface`) move with it (`carried`).
  * The new placement goes to `physics.furnitureMoves` (saved, hashed) and overrides the map
  * through `furnitureOverlay`; world storage and tank state move with the piece.
  */
@@ -76,6 +79,28 @@ export function registerFurnitureGrid(w: SimWorld, grid: TileGrid): void {
   s.add(grid);
 }
 
+/** Fixtures (`worldSettings.furnitureFixed`) and `placeable.onSurface` ids per content. */
+const fixedSets = new WeakMap<object, ReadonlySet<string>>();
+function contentOf(w: SimWorld) {
+  return w.items?.content ?? w.survival?.content;
+}
+
+/** Bolted to the floor / plumbing (toilet, bath, shower, sinks): never moves (reason `fixed`). */
+export function isFixedFurniture(w: SimWorld, contentId: string | undefined): boolean {
+  const c = contentOf(w);
+  if (!c || contentId === undefined) return false;
+  let set = fixedSets.get(c);
+  if (!set) fixedSets.set(c, (set = new Set(c.furniture.fixed ?? [])));
+  return set.has(contentId);
+}
+
+/** A small object standing on furniture (`placeable.onSurface`: TV, VCR, radio, desk lamp). */
+function standsOnSurface(w: SimWorld, contentId: string): boolean {
+  const c = contentOf(w);
+  const item = c?.items[c.itemIndex.get(contentId) ?? -1];
+  return item?.kind === 'placeable' && item.placeable.onSurface === true;
+}
+
 /** Objects on world tile (x, y, z) in chunk order: index in the chunk and the object. */
 function onTile(w: SimWorld, x: number, y: number, z: number) {
   const cx = Math.floor(x / CHUNK_SIZE);
@@ -117,6 +142,13 @@ export function furniturePiece(w: SimWorld, furnitureId: number): Piece | undefi
   if (!Number.isSafeInteger(furnitureId) || furnitureId < 2 ** 42) return undefined;
   const p = unpackObjectId(furnitureId);
   return pieceAt(w, p.x, p.y, p.z, p.n);
+}
+
+/** Content id of the map object of a `useFurniture` id (also objects that are not furniture). */
+function objectContentId(w: SimWorld, furnitureId: number): string | undefined {
+  if (!Number.isSafeInteger(furnitureId) || furnitureId < 2 ** 42) return undefined;
+  const p = unpackObjectId(furnitureId);
+  return onTile(w, p.x, p.y, p.z)[p.n]?.contentId;
 }
 
 /** Current piece of origin `key` (after earlier moves). */
@@ -191,12 +223,20 @@ export function furnitureStrengthKg(w: SimWorld, eid: number, mode: FurnitureMov
   return Math.fround(kg);
 }
 
-/** Cardinal direction from the piece towards the player (the side the player stands on). */
-function sideOf(r: TileRect, px: number, py: number): { dx: number; dy: number } {
+/**
+ * Cardinal direction from the piece towards the player: the side the player stands on. The
+ * player must be beside an edge, i.e. off the piece on one axis and, within `slack` tiles, over
+ * the piece's span on the other. At a corner (off on both axes) or overlapping the piece there
+ * is no push / pull direction: 0, 0 (`wrong-side`).
+ */
+function sideOf(r: TileRect, px: number, py: number, slack: number): { dx: number; dy: number } {
   const ox = px < r.x ? px - r.x : px > r.x + r.w ? px - (r.x + r.w) : 0;
   const oy = py < r.y ? py - r.y : py > r.y + r.h ? py - (r.y + r.h) : 0;
-  if (ox === 0 && oy === 0) return { dx: 0, dy: 0 };
-  return Math.abs(ox) >= Math.abs(oy) ? { dx: Math.sign(ox), dy: 0 } : { dx: 0, dy: Math.sign(oy) };
+  const offX = ox !== 0 && Math.abs(oy) <= slack;
+  const offY = oy !== 0 && Math.abs(ox) <= slack;
+  if (offX && (!offY || Math.abs(ox) >= Math.abs(oy))) return { dx: Math.sign(ox), dy: 0 };
+  if (offY) return { dx: 0, dy: Math.sign(oy) };
+  return { dx: 0, dy: 0 };
 }
 
 const inRect = (r: TileRect, tx: number, ty: number): boolean =>
@@ -210,9 +250,13 @@ function wallBetween(g: TileGrid, tx: number, ty: number, z: number, dx: number,
   return g.hasWallN(tx, ty, z);
 }
 
+/** Why a placement is not possible: walls / frames in the way, or a taken tile. */
+type PlacementReason = 'wall' | 'no-space';
+
 /**
  * Can `p` stand on `to` (moved by dx, dy from `p.rect`, or rotated in place when both are 0)?
- * `ignore` = entity allowed on the new tiles (the puller, who steps back).
+ * Undefined = yes, else the reason. `ignore` = entity allowed on the new tiles (the puller, who
+ * steps back).
  */
 function placementBlocked(
   w: SimWorld,
@@ -222,21 +266,25 @@ function placementBlocked(
   dx: number,
   dy: number,
   ignore: number,
-): boolean {
+): PlacementReason | undefined {
   const z = p.z;
   for (let ty = to.y; ty < to.y + to.h; ty++) {
     for (let tx = to.x; tx < to.x + to.w; tx++) {
-      if (g.isVoid(tx, ty, z) || g.stairAt(tx, ty, z)) return true;
-      if (!inRect(p.rect, tx, ty) && g.furnitureBlocks(tx, ty, z)) return true;
       // Never straddles a wall, a doorway or a window frame.
-      if (tx > to.x && g.edgeW(tx, ty, z) !== 0) return true;
-      if (ty > to.y && g.edgeN(tx, ty, z) !== 0) return true;
+      if (tx > to.x && g.edgeW(tx, ty, z) !== 0) return 'wall';
+      if (ty > to.y && g.edgeN(tx, ty, z) !== 0) return 'wall';
     }
   }
   if (dx || dy) {
     for (let ty = p.rect.y; ty < p.rect.y + p.rect.h; ty++)
       for (let tx = p.rect.x; tx < p.rect.x + p.rect.w; tx++)
-        if (wallBetween(g, tx, ty, z, dx, dy)) return true;
+        if (wallBetween(g, tx, ty, z, dx, dy)) return 'wall';
+  }
+  for (let ty = to.y; ty < to.y + to.h; ty++) {
+    for (let tx = to.x; tx < to.x + to.w; tx++) {
+      if (g.isVoid(tx, ty, z) || g.stairAt(tx, ty, z)) return 'no-space';
+      if (!inRect(p.rect, tx, ty) && g.furnitureBlocks(tx, ty, z)) return 'no-space';
+    }
   }
   // Bodies: anything with a collider on this level whose circle reaches a new tile.
   const { Position, Collider } = w.c;
@@ -247,21 +295,21 @@ function placementBlocked(
     const r = Collider.radius[eid] ?? 0;
     const cx = Math.min(Math.max(x, to.x), to.x + to.w);
     const cy = Math.min(Math.max(y, to.y), to.y + to.h);
-    if ((cx - x) * (cx - x) + (cy - y) * (cy - y) < r * r) return true;
+    if ((cx - x) * (cx - x) + (cy - y) * (cy - y) < r * r) return 'no-space';
   }
   // Corpses (lootable bodies) lying on a new tile.
   const st = w.items;
   if (st)
     for (const id of st.corpses.values()) {
       const c = st.containers.get(id);
-      if (c && c.z === z && inRect(to, Math.floor(c.x), Math.floor(c.y))) return true;
+      if (c && c.z === z && inRect(to, Math.floor(c.x), Math.floor(c.y))) return 'no-space';
     }
   const box = { x: to.x + to.w / 2, y: to.y + to.h / 2, hx: 1, hy: 0, hl: to.w / 2, hw: to.h / 2 };
   for (const v of w.physics.vehicles.values()) {
     const t = vehicleTypes(w)[v.type];
-    if (t && Math.floor(v.z) === z && obbVsObb(box, obbOf(v, t))) return true;
+    if (t && Math.floor(v.z) === z && obbVsObb(box, obbOf(v, t))) return 'no-space';
   }
-  return false;
+  return undefined;
 }
 
 function rotated(w: SimWorld, p: Piece): { rect: TileRect; rot: number } {
@@ -280,6 +328,7 @@ export function checkFurnitureMove(
   p: Piece | undefined,
   mode: FurnitureMoveMode,
   dir?: { dx: number; dy: number },
+  contentId?: string,
 ): FurnitureMoveCheck {
   const cfg = w.physics.cfg.furniture;
   const fail = (reason: CommandRejectReason, extra: Partial<FurnitureMoveCheck> = {}) => ({
@@ -293,6 +342,7 @@ export function checkFurnitureMove(
     ...extra,
   });
   if (!cfg.enabled || !w.furniture) return fail('invalid-state');
+  if (isFixedFurniture(w, p?.contentId ?? contentId)) return fail('fixed');
   if (!p) return fail('invalid-target');
   if (w.survival?.dead[eid] || w.survival?.asleep[eid]) return fail('invalid-state');
   const b = w.physics.bodies.get(w.c.StableId.value[eid] ?? 0);
@@ -306,37 +356,64 @@ export function checkFurnitureMove(
   const load = weightKg / Math.max(1e-6, strengthKg);
   const base = mode === 'rotate' ? cfg.rotateTicks : cfg.moveTicks;
   const ticks = Math.max(1, Math.round(base * (1 + cfg.slowPerLoad * Math.min(1, load))));
-  const side = dir ?? sideOf(p.rect, px, py);
+  const side = dir ?? sideOf(p.rect, px, py, cfg.sideSlackTiles);
   const dx = mode === 'rotate' ? 0 : (mode === 'push' ? -side.dx : side.dx) || 0;
   const dy = mode === 'rotate' ? 0 : (mode === 'push' ? -side.dy : side.dy) || 0;
   const info = { weightKg, strengthKg, ticks, dx, dy };
   if (weightKg > strengthKg) return fail('too-heavy', info);
-  if (mode !== 'rotate' && !dx && !dy) return fail('invalid-state', info);
+  if (mode !== 'rotate' && !dx && !dy) return fail('wrong-side', info);
   const g = gridOf(w);
   const to =
     mode === 'rotate' ? rotated(w, p).rect : { ...p.rect, x: p.rect.x + dx, y: p.rect.y + dy };
-  if (placementBlocked(w, g, p, to, dx, dy, mode === 'pull' ? eid : -1))
-    return fail('blocked', info);
+  const blocked = placementBlocked(w, g, p, to, dx, dy, mode === 'pull' ? eid : -1);
+  if (blocked) return fail(blocked, info);
   if (mode === 'pull') {
-    // The puller steps back one tile with the piece.
+    // The puller steps back one tile with the piece: no room behind = `no-space`.
     const r = w.c.Collider.radius[eid] ?? 0.3;
     const tx = Math.floor(px);
     const ty = Math.floor(py);
     if (wallBetween(g, tx, ty, p.z, dx, dy) || circleOverlaps(g, p.z, px + dx, py + dy, r))
-      return fail('blocked', info);
+      return fail('no-space', info);
     const { Position, Collider } = w.c;
     for (const o of sortedQuery(w, 'colliders', [Position, Collider])) {
       if (o === eid || floorZ(w, o) !== p.z) continue;
       const ox = (Position.x[o] ?? 0) - (px + dx);
       const oy = (Position.y[o] ?? 0) - (py + dy);
       const rr = r + (Collider.radius[o] ?? 0);
-      if (ox * ox + oy * oy < rr * rr) return fail('blocked', info);
+      if (ox * ox + oy * oy < rr * rr) return fail('no-space', info);
     }
   }
   return { ok: true, ...info };
 }
 
-/** Moves `p` to `to` / `rot`: state, storage, tanks, caches, events. */
+/** Records object `origin` at (x, y, z, rot): an override, or none when that is its map place. */
+function recordMove(w: SimWorld, origin: string, m: FurnitureMove): void {
+  const pw = w.physics;
+  const o = parseOrigin(origin);
+  const baseObj = baseMapOf(w.map).getChunk(o.cx, o.cy, o.z)?.objects?.[o.i];
+  const home =
+    baseObj &&
+    o.cx * CHUNK_SIZE + baseObj.x === m.x &&
+    o.cy * CHUNK_SIZE + baseObj.y === m.y &&
+    ((baseObj.rot ?? 0) & 3) === m.rot;
+  if (home) pw.furnitureMoves.delete(origin);
+  else pw.furnitureMoves.set(origin, m);
+}
+
+/** Small objects standing on `p` (`placeable.onSurface`, not furniture), by tile order. */
+function carriedBy(w: SimWorld, p: Piece) {
+  const out: { origin: string; contentId: string; x: number; y: number; rot: number; n: number }[] =
+    [];
+  for (let ty = p.rect.y; ty < p.rect.y + p.rect.h; ty++)
+    for (let tx = p.rect.x; tx < p.rect.x + p.rect.w; tx++)
+      onTile(w, tx, ty, p.z).forEach((o, n) => {
+        if (o.origin === p.origin || w.furniture?.resolve(o.contentId)) return;
+        if (standsOnSurface(w, o.contentId)) out.push({ ...o, x: tx, y: ty, rot: o.rot & 3, n });
+      });
+  return out;
+}
+
+/** Moves `p` to `to` / `rot`: state, carried objects, storage, tanks, caches, events. */
 function applyMove(
   w: SimWorld,
   p: Piece,
@@ -349,32 +426,41 @@ function applyMove(
   const st = w.items;
   const fromId = objectFurnitureId(p.x, p.y, p.z, p.n);
   const storage = piecesStorage(w, p);
-  // Tank state by origin on the old and the new anchor tile (indices on a tile may shift).
-  const tankKeys = (x: number, y: number) =>
-    onTile(w, x, y, p.z).map((o, n) => ({ origin: o.origin, key: `${x},${y},${p.z},${n}` }));
-  const before = [...tankKeys(p.x, p.y), ...tankKeys(to.x, to.y)];
+  const carried = carriedBy(w, p);
+  const carriedFrom = carried.map((c) => objectFurnitureId(c.x, c.y, p.z, c.n));
+  // Tank state by origin on every tile touched (indices on a tile may shift).
+  const tiles: [number, number][] = [];
+  for (const r of [p.rect, to])
+    for (let ty = r.y; ty < r.y + r.h; ty++)
+      for (let tx = r.x; tx < r.x + r.w; tx++)
+        if (!tiles.some(([x, y]) => x === tx && y === ty)) tiles.push([tx, ty]);
+  const tankKeys = () =>
+    tiles.flatMap(([x, y]) =>
+      onTile(w, x, y, p.z).map((o, n) => ({ origin: o.origin, key: `${x},${y},${p.z},${n}` })),
+    );
   const litres = new Map<string, number>();
-  for (const t of before) {
+  for (const t of tankKeys()) {
     const l = st?.waterTanks?.get(t.key);
     if (l !== undefined) {
       litres.set(t.origin, l);
       st!.waterTanks!.delete(t.key);
     }
   }
-  const o = parseOrigin(p.origin);
-  const baseObj = baseMapOf(w.map).getChunk(o.cx, o.cy, o.z)?.objects?.[o.i];
-  const home =
-    baseObj &&
-    o.cx * CHUNK_SIZE + baseObj.x === to.x &&
-    o.cy * CHUNK_SIZE + baseObj.y === to.y &&
-    ((baseObj.rot ?? 0) & 3) === rot;
-  if (home) pw.furnitureMoves.delete(p.origin);
-  else {
-    const m: FurnitureMove = { contentId: p.contentId, x: to.x, y: to.y, z: p.z, rot };
-    pw.furnitureMoves.set(p.origin, m);
-  }
+  recordMove(w, p.origin, { contentId: p.contentId, x: to.x, y: to.y, z: p.z, rot });
+  // Carried objects: same shift; a rotation turns them with the piece (clockwise about its NW
+  // tile: local (ox, oy) of a w × h piece → (h − 1 − oy, ox)).
+  const carriedTo = carried.map((c) => {
+    const ox = c.x - p.rect.x;
+    const oy = c.y - p.rect.y;
+    const turn = cause === 'rotate';
+    const x = turn ? to.x + (p.rect.h - 1 - oy) : c.x + (to.x - p.rect.x);
+    const y = turn ? to.y + ox : c.y + (to.y - p.rect.y);
+    const r = turn ? (c.rot + 1) & 3 : c.rot;
+    recordMove(w, c.origin, { contentId: c.contentId, x, y, z: p.z, rot: r });
+    return { x, y };
+  });
   pw.furnitureRev++;
-  for (const t of [...tankKeys(p.x, p.y), ...tankKeys(to.x, to.y)]) {
+  for (const t of tankKeys()) {
     const l = litres.get(t.origin);
     if (l !== undefined) (st!.waterTanks ??= new Map()).set(t.key, l);
   }
@@ -403,7 +489,16 @@ function applyMove(
   const grids = navGrids.get(w) ?? new Set<TileGrid>();
   grids.add(gridOf(w));
   for (const g of grids) invalidateNavArea(g, p.z, x0, y0, x1, y1);
-  const n = onTile(w, to.x, to.y, p.z).findIndex((t) => t.origin === p.origin);
+  const idOn = (origin: string, x: number, y: number) =>
+    objectFurnitureId(
+      x,
+      y,
+      p.z,
+      Math.max(
+        0,
+        onTile(w, x, y, p.z).findIndex((t) => t.origin === origin),
+      ),
+    );
   const ev: Extract<SimEvent, { type: 'furnitureMoved' }> = {
     type: 'furnitureMoved',
     tick: w.tick,
@@ -411,7 +506,7 @@ function applyMove(
     ...(playerId !== undefined ? { playerId } : {}),
     contentId: p.contentId,
     fromId,
-    toId: objectFurnitureId(to.x, to.y, p.z, Math.max(0, n)),
+    toId: idOn(p.origin, to.x, to.y),
     fromX: p.x,
     fromY: p.y,
     x: to.x,
@@ -420,14 +515,52 @@ function applyMove(
     rot,
     w: to.w,
     h: to.h,
+    carried: carried.map((c, i) => ({
+      fromId: carriedFrom[i]!,
+      toId: idOn(c.origin, carriedTo[i]!.x, carriedTo[i]!.y),
+    })),
   };
   w.events.push(ev);
-  markChunk(w, p.x, p.y, p.z, 'object');
-  if (
-    Math.floor(to.x / CHUNK_SIZE) !== Math.floor(p.x / CHUNK_SIZE) ||
-    Math.floor(to.y / CHUNK_SIZE) !== Math.floor(p.y / CHUNK_SIZE)
-  )
-    markChunk(w, to.x, to.y, p.z, 'object');
+  const marked = new Set<string>();
+  for (const [x, y] of [
+    [p.x, p.y],
+    [to.x, to.y],
+    ...carried.map((c) => [c.x, c.y] as const),
+    ...carriedTo.map((c) => [c.x, c.y] as const),
+  ] as const) {
+    const k = `${Math.floor(x / CHUNK_SIZE)},${Math.floor(y / CHUNK_SIZE)}`;
+    if (marked.has(k)) continue;
+    marked.add(k);
+    markChunk(w, x, y, p.z, 'object');
+  }
+}
+
+/** Every map object standing elsewhere than in the map data (`SimViewPatch.furnitureMoves`). */
+export function furnitureMovesView(w: SimWorld): FurnitureMoveView[] {
+  const pw = w.physics;
+  const out: FurnitureMoveView[] = [];
+  for (const key of [...pw.furnitureMoves.keys()].sort()) {
+    const m = pw.furnitureMoves.get(key)!;
+    const o = parseOrigin(key);
+    const base = baseMapOf(w.map).getChunk(o.cx, o.cy, o.z)?.objects?.[o.i];
+    if (!base) continue;
+    const s = w.furniture?.sizeOf(m.contentId, m.rot) ?? { w: 1, h: 1 };
+    const n = onTile(w, m.x, m.y, m.z).findIndex((t) => t.origin === key);
+    out.push({
+      contentId: m.contentId,
+      fromX: o.cx * CHUNK_SIZE + base.x,
+      fromY: o.cy * CHUNK_SIZE + base.y,
+      fromRot: (base.rot ?? 0) & 3,
+      x: m.x,
+      y: m.y,
+      z: m.z,
+      rot: m.rot,
+      w: s.w,
+      h: s.h,
+      id: objectFurnitureId(m.x, m.y, m.z, Math.max(0, n)),
+    });
+  }
+  return out;
 }
 
 // ── Timed action ─────────────────────────────────────────────────────────────────────────
@@ -490,13 +623,18 @@ export function startFurnitureMove(
   mode: FurnitureMoveMode,
 ): CommandRejectReason | undefined {
   const p = furniturePiece(w, furnitureId);
-  const c = checkFurnitureMove(w, eid, p, mode);
+  const c = checkFurnitureMove(w, eid, p, mode, undefined, objectContentId(w, furnitureId));
   if (!c.ok || !p) return c.reason ?? 'invalid-target';
   const a = newAction('moveFurniture');
   a.furniture = {
     origin: p.origin,
     mode: MODES.indexOf(mode),
-    dir: sideOf(p.rect, w.c.Position.x[eid] ?? 0, w.c.Position.y[eid] ?? 0),
+    dir: sideOf(
+      p.rect,
+      w.c.Position.x[eid] ?? 0,
+      w.c.Position.y[eid] ?? 0,
+      w.physics.cfg.furniture.sideSlackTiles,
+    ),
   };
   a.fixture = [p.x, p.y, p.z, p.n];
   return startAction(w, eid, a);
@@ -509,7 +647,14 @@ export function canMoveFurniture(
   furnitureId: number,
   mode: FurnitureMoveMode,
 ): FurnitureMoveCheck {
-  return checkFurnitureMove(w, eid, furniturePiece(w, furnitureId), mode);
+  return checkFurnitureMove(
+    w,
+    eid,
+    furniturePiece(w, furnitureId),
+    mode,
+    undefined,
+    objectContentId(w, furnitureId),
+  );
 }
 
 // ── Crowd ────────────────────────────────────────────────────────────────────────────────
@@ -523,7 +668,8 @@ export function movedPieceOn(w: SimWorld, tx: number, ty: number, z: number): Pi
   if (pw.furnitureMoves.size === 0 || !w.furniture) return undefined;
   for (const key of [...pw.furnitureMoves.keys()].sort()) {
     const m = pw.furnitureMoves.get(key)!;
-    if (m.z !== z) continue;
+    // Carried objects (a TV on the dresser) are not pieces.
+    if (m.z !== z || !w.furniture.resolve(m.contentId)) continue;
     const s = w.furniture.sizeOf(m.contentId, m.rot);
     if (inRect({ x: m.x, y: m.y, w: s.w, h: s.h }, tx, ty)) return pieceByOrigin(w, key);
   }

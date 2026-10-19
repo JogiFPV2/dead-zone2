@@ -390,6 +390,32 @@ export interface ActionView {
     lps: number;
     pump?: { x: number; y: number };
   };
+  /**
+   * `moveFurniture` (protocol 38, docs 9.61): the piece (`furnitureId` at the start of the
+   * action), the mode and the move direction in tiles (`dirX` / `dirY` ∈ −1..1, cardinal; 0, 0
+   * for `rotate`). Push = away from the player, pull = towards the player (who steps back).
+   */
+  furniture?: { furnitureId: number; mode: 'push' | 'pull' | 'rotate'; dirX: number; dirY: number };
+}
+
+/**
+ * A map object moved away from its map placement (protocol 38, docs 9.61; furniture and the
+ * small objects carried on it). `fromX` / `fromY` / `fromRot` = placement in the map data (the
+ * chunk the client loaded), `x` / `y` / `rot` = where it stands now (north-west tile), `w` × `h`
+ * = occupied tiles after `rot`, `id` = its current `furnitureId`.
+ */
+export interface FurnitureMoveView {
+  contentId: string;
+  fromX: number;
+  fromY: number;
+  fromRot: number;
+  x: number;
+  y: number;
+  z: number;
+  rot: number;
+  w: number;
+  h: number;
+  id: number;
 }
 
 /**
@@ -446,6 +472,10 @@ export const FURNITURE_REASONS = [
   'busy',
   'tired',
   'not-tired',
+  'fixed',
+  'wrong-side',
+  'no-space',
+  'wall',
 ] as const;
 export type FurnitureReason = (typeof FURNITURE_REASONS)[number];
 
@@ -565,6 +595,13 @@ export interface SimViewPatch {
    * whenever any of them changes (also in the first view after a load).
    */
   openings?: OpeningView[];
+  /**
+   * Moved furniture (protocol 38, docs 9.61): every map object standing elsewhere than in the
+   * map data, full list whenever any moves (also in the first view after a load, `[]` = none).
+   * The client applies it over the chunks it loads from map data; `furnitureMoved` events say
+   * the same live.
+   */
+  furnitureMoves?: FurnitureMoveView[];
   /**
    * Light switches turned on (protocol 32, docs 9.53), full list when it changes. Lamps
    * (`placeable.light` with `requiresPower`) in a room with a switch (same `room`, building, floor)

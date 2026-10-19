@@ -4,6 +4,7 @@ import { lightLevelAt, playerVisibility, stealthOf } from '../ai/light.js';
 import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
 import { furnitureActionsView } from '../furniture/menu.js';
+import { furnitureMovesView } from '../physics/furniture.js';
 import type { TileGrid } from '../world/grid.js';
 import { vehicleStateViews } from '../vehicles/views.js';
 import { pumpViews } from '../vehicles/pumps.js';
@@ -213,6 +214,8 @@ export class ViewTracker {
   private combatKey = '';
   private deathSent = false;
   private openingsVersion = 0;
+  /** `physics.furnitureRev` of the last `furnitureMoves` sent (undefined = first view). */
+  private furnitureRev: number | undefined;
   private lightsSig = '';
   private litKey = '';
   private luresKey = '';
@@ -418,6 +421,12 @@ export class ViewTracker {
         if (this.furnitureKey !== '' || furniture.length > 0) patch.furnitureActions = furniture;
         this.furnitureKey = key;
       }
+    }
+    // Moved furniture (protocol 38): first view when any, then the full list on every move.
+    if (this.furnitureRev !== w.physics.furnitureRev) {
+      if (this.furnitureRev !== undefined || w.physics.furnitureMoves.size > 0)
+        patch.furnitureMoves = furnitureMovesView(w);
+      this.furnitureRev = w.physics.furnitureRev;
     }
     if (w.openings.version !== this.openingsVersion) {
       this.openingsVersion = w.openings.version;

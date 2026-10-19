@@ -142,7 +142,13 @@ export interface ContentIndex {
    * `worldSettings.furnitureFootprint` / `furnitureTall` / `furnitureLongSideAccess` (optional
    * for older bundles: footprint off).
    */
-  furniture: { footprint: boolean; tall: readonly string[]; longSide: readonly string[] };
+  furniture: {
+    footprint: boolean;
+    tall: readonly string[];
+    longSide: readonly string[];
+    /** `worldSettings.furnitureFixed`: fixtures that cannot be moved (reason `fixed`). */
+    fixed: readonly string[];
+  };
   /** `worldSettings.loot.search` with defaults (search action, spot radius). */
   search: { searchSec: number; spotRadiusTiles: number };
   /** Loot tables with a `scatter` block (sorted by id): items spread over the map at init. */
@@ -207,6 +213,7 @@ function furnitureSettings(ws: Partial<ContentBundle['worldSettings']>): Content
     footprint: ws.furnitureFootprint ?? true,
     tall: ws.furnitureTall ?? [],
     longSide: ws.furnitureLongSideAccess ?? [],
+    fixed: ws.furnitureFixed ?? [],
   };
 }
 

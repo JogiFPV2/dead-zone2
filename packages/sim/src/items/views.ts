@@ -1,4 +1,5 @@
 import { unpackKey } from '../openings/state.js';
+import { objectFurnitureId } from '../furniture/menu.js';
 import type {
   ActionView,
   GroundPileView,
@@ -331,5 +332,20 @@ export function actionView(w: SimWorld, eid: number): ActionView | null {
   if (a.recipe) v.recipe = w.items!.content.recipes[a.recipe - 1]?.id ?? '';
   const part = actionPart(a);
   if (part) v.part = part;
+  if (a.furniture && a.fixture) {
+    // `moveFurniture` (protocol 38): push = away from the player's side, pull = towards it.
+    const mode = MOVE_MODES[a.furniture.mode] ?? 'push';
+    const s = mode === 'push' ? -1 : mode === 'pull' ? 1 : 0;
+    const [x, y, z, n] = a.fixture;
+    v.furniture = {
+      furnitureId: objectFurnitureId(x, y, z, n),
+      mode,
+      dirX: s * a.furniture.dir.dx || 0,
+      dirY: s * a.furniture.dir.dy || 0,
+    };
+  }
   return v;
 }
+
+/** `ActionState.furniture.mode` index → name (`physics/furniture.ts` `MODES`). */
+const MOVE_MODES = ['push', 'pull', 'rotate'] as const;

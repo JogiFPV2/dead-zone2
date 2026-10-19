@@ -58,6 +58,10 @@ export const FURNITURE_REASONS_PL = {
   busy: 'Trwa inna czynność',
   tired: 'Za zmęczony',
   'not-tired': 'Nie jesteś zmęczony',
+  fixed: 'Przymocowane',
+  'wrong-side': 'Stań przy boku mebla',
+  'no-space': 'Brak miejsca',
+  wall: 'Ściana na drodze',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_TYPES_PL = {

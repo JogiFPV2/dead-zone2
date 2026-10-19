@@ -45,7 +45,11 @@ export type CommandRejectReason =
   | 'locked'
   /** Target container or item is not within reach (1.5 tiles) of the player. */
   | 'out-of-range'
-  /** Does not fit: container capacity, bag tags, or the carry hard limit. */
+  /**
+   * Does not fit: container capacity, bag tags, or the carry hard limit. Moving furniture
+   * (protocol 38): a new tile is taken (another piece, a body, a corpse, a car, stairs, no floor)
+   * or, for a pull, there is no room behind the player.
+   */
   | 'no-space'
   /** Needs a tool the player does not carry (e.g. a can opener, `food.openWith`). */
   | 'missing-tool'
@@ -89,7 +93,16 @@ export type CommandRejectReason =
   /** Furniture too heavy to lift / push alone (Physics). */
   | 'too-heavy'
   /** The target place is taken. */
-  | 'blocked';
+  | 'blocked'
+  /** Moving furniture (protocol 38): a fixture bolted to the floor / plumbing (toilet, bath …). */
+  | 'fixed'
+  /**
+   * Moving furniture (protocol 38): the player is not beside an edge of the piece (at a corner,
+   * or overlapping it), so there is no push / pull direction.
+   */
+  | 'wrong-side'
+  /** Moving furniture (protocol 38): a wall, a door / window frame or a closed opening is in the way. */
+  | 'wall';
 
 /**
  * Why a chunk changed for the client: `opening` = a door / window / fence changed state or took
@@ -713,6 +726,12 @@ export type SimEvent =
       rot: number;
       w: number;
       h: number;
+      /**
+       * Protocol 38: small objects standing on the piece (`placeable.onSurface`: TV, VCR, radio,
+       * desk lamp) moved with it; their ids change like the piece's (`fromId` → `toId`). Empty
+       * when nothing stood on it.
+       */
+      carried: { fromId: number; toId: number }[];
     }
   /**
    * A door / window / fence edge changed state or took damage (renderer: door sprite, broken
