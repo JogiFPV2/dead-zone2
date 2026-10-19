@@ -15,6 +15,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const FURNITURE = join(here, '../furniture');
 const DATA = join(here, '../../../packages/content/data/base');
 const SLACK_PER_TILE = 0.15;
+/** `surfaceHeightM` vs the model's top (max y), metres. */
+const SURFACE_TOLERANCE_M = 0.05;
 
 type Fp = { w: number; h: number };
 
@@ -31,6 +33,27 @@ async function contentFootprints(): Promise<Map<string, Fp>> {
         if (typeof o?.id !== 'string') continue;
         const fp = o.footprint ?? o.placeable?.footprint;
         if (!out.has(o.id) || fp) out.set(o.id, fp ?? { w: 1, h: 1 });
+      }
+    }
+  }
+  return out;
+}
+
+/** `surfaceHeightM` of container types and placeables (`placeable.surfaceHeightM`). */
+async function contentSurfaces(): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const dir of ['containers', 'items']) {
+    for (const f of await readdir(join(DATA, dir))) {
+      if (!f.endsWith('.json')) continue;
+      const data: unknown = JSON.parse(await readFile(join(DATA, dir, f), 'utf8'));
+      if (!Array.isArray(data)) continue;
+      for (const o of data as {
+        id?: string;
+        surfaceHeightM?: number;
+        placeable?: { surfaceHeightM?: number };
+      }[]) {
+        const h = o?.surfaceHeightM ?? o?.placeable?.surfaceHeightM;
+        if (typeof o?.id === 'string' && typeof h === 'number') out.set(o.id, h);
       }
     }
   }
@@ -64,5 +87,23 @@ describe('real-scale furniture fits its content footprint', () => {
 
   it('bathtub (1.7 m) is 2×1, so it is never shrunk with footprints on', async () => {
     expect((await contentFootprints()).get('base:bathtub')).toEqual({ w: 2, h: 1 });
+  });
+
+  it('surfaceHeightM matches the model top (max y) within ±0.05 m', async () => {
+    const surfaces = await contentSurfaces();
+    const io = new NodeIO();
+    const problems: string[] = [];
+    let checked = 0;
+    for (const [id, h] of surfaces) {
+      const f = join(FURNITURE, `${id.replace(/^base:/, '')}.glb`);
+      const doc = await io.read(f).catch(() => undefined);
+      if (!doc) continue;
+      checked++;
+      const top = getBounds(doc.getRoot().listScenes()[0]!).max[1];
+      if (Math.abs(top - h) > SURFACE_TOLERANCE_M)
+        problems.push(`${id}: surfaceHeightM ${h} m, model ${top.toFixed(3)} m`);
+    }
+    expect(checked).toBeGreaterThanOrEqual(3);
+    expect(problems).toEqual([]);
   });
 });

@@ -16,7 +16,8 @@
     "weightKg": 1,
     "tags": ["base:light"],
     "placeable": {
-      "light": { "radiusTiles": 2.5, "intensity": 0.5, "color": "#fff0d0", "requiresPower": true }
+      "light": { "radiusTiles": 2.5, "intensity": 0.5, "color": "#fff0d0", "requiresPower": true },
+      "onSurface": true
     }
   }
 ]

@@ -10,3 +10,5 @@ export * from './rotated-footprint.js';
 export * from './occupied-tiles.js';
 export * from './footprint-center.js';
 export * from './footprint-for-id.js';
+export * from './surface-for-id.js';
+export { SurfaceHeightMSchema } from '../schemas/common/surface.js';

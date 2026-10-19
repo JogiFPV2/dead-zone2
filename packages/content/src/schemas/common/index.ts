@@ -12,3 +12,4 @@ export * from './condition.js';
 export * from './stat-modifier.js';
 export * from './ext.js';
 export * from './footprint.js';
+export * from './surface.js';

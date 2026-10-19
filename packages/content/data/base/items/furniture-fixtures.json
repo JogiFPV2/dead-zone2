@@ -45,7 +45,7 @@
     "kind": "placeable",
     "weightKg": 4,
     "tags": ["base:station-vcr"],
-    "placeable": { "power": { "consumesW": 20 } }
+    "placeable": { "power": { "consumesW": 20 }, "onSurface": true }
   },
   {
     "id": "base:radio-set",
@@ -53,6 +53,6 @@
     "kind": "placeable",
     "weightKg": 3,
     "tags": ["base:station-radio"],
-    "placeable": { "power": { "consumesW": 15 } }
+    "placeable": { "power": { "consumesW": 15 }, "onSurface": true }
   }
 ]

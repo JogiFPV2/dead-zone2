@@ -394,3 +394,10 @@ Rozmiary paczki bazowej (test `footprint-base.test.ts`): 2×1 — wanna `base:ba
 biurko `base:desk`, kanapa `base:sofa`, szeroki regał `base:metal-shelf`; 1×2 — łóżko `base:bed` (pojedyncze, 90×200 cm,
 wezgłowie przy ścianie). Reszta 1×1, m.in. wąski regał `base:bookshelf`, lodówki, kuchenki, piekarnik, zlewy,
 szafka RTV i prysznic. Łóżka podwójnego (2×2) w paczce jeszcze nie ma.
+
+Blaty: `surfaceHeightM` (m od podłogi, > 0, ≤ 3) na typie schowka albo w `placeable` to wysokość blatu, na którym
+można postawić mebel z `placeable.onSurface: true` (stoi na meblu pod spodem, nie na podłodze; nie blokuje kafla).
+Base: szafka RTV `base:tv-stand` 0.55, biurko `base:desk` 0.75, stół `base:table` 0.75, lada `base:shop-counter`
+0.95; na blatach: `base:tv`, `base:vcr`, `base:radio-set`, `base:desk-lamp`. Odczyt: `surfaceHeightForId(bundle, id)`,
+`onSurfaceForId(bundle, id)` (`@deadzone/content/footprint`). Test furniture-fit pilnuje, że blat zgadza się z górą
+modelu (`furniture/*.glb`, max y) ±0.05 m.

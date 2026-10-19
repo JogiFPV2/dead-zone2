@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { ContainerTypeRefSchema, FootprintSchema, StationRefSchema } from '../common/index.js';
+import {
+  ContainerTypeRefSchema,
+  FootprintSchema,
+  StationRefSchema,
+  SurfaceHeightMSchema,
+} from '../common/index.js';
 import { StationLevelSchema } from '../station.js';
 import { itemBaseShape } from './base.js';
 import { CookingApplianceSchema } from './cooking.js';
@@ -34,6 +39,10 @@ export const PlaceableItemSchema = z.strictObject({
     waterTank: WaterTankSchema.optional(),
     /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
     footprint: FootprintSchema.optional(),
+    /** Wysokość blatu (m), na którym można postawić mebel z `onSurface` (stół 0.75). */
+    surfaceHeightM: SurfaceHeightMSchema.optional(),
+    /** Stoi na blacie mebla pod spodem (telewizor, radio, lampka), nie na podłodze. */
+    onSurface: z.boolean().optional(),
   }),
 });
 

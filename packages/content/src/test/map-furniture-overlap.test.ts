@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { footprintForId, occupiedTiles } from '../footprint/index.js';
+import { footprintForId, occupiedTiles, onSurfaceForId } from '../footprint/index.js';
 import { CHUNK_SIZE } from '../schemas/map/constants.js';
 import { BASE_PACK_DIR, buildContentBundleFromDirs, validatePackDirs } from '../node/index.js';
 
@@ -7,8 +7,9 @@ import { BASE_PACK_DIR, buildContentBundleFromDirs, validatePackDirs } from '../
  * Furniture on the base maps never overlaps (#249, Silnik 2): every `occupiedTiles` tile of a
  * piece of furniture (content footprint, rotation, NW anchor, across chunk borders) belongs to
  * one piece only. "Furniture" as in the sim (`world/furniture.ts`): container types, and
- * placeables with a storage, a sleep surface, a station or an explicit footprint. Small
- * placeables (lamps, radios, VCRs, light switches) stand on other furniture and are skipped.
+ * placeables with a storage, a sleep surface, a station or an explicit footprint. Objects with
+ * `placeable.onSurface` (TV, VCR, radio, desk lamp) stand on other furniture and are skipped;
+ * other small placeables (light switch, ceiling lamp) do not block either.
  */
 describe('meble na mapach paczki bazowej się nie nakładają', () => {
   it('każdy kafel footprintu należy do jednego mebla (wszystkie mapy, piętra, obroty)', async () => {
@@ -17,6 +18,7 @@ describe('meble na mapach paczki bazowej się nie nakładają', () => {
       buildContentBundleFromDirs([BASE_PACK_DIR]),
     ]);
     const isFurniture = (id: string): boolean => {
+      if (onSurfaceForId(b, id)) return false;
       if (b.containers[id]) return true;
       const it = b.items[id];
       if (it?.kind !== 'placeable') return false;
@@ -47,5 +49,21 @@ describe('meble na mapach paczki bazowej się nie nakładają', () => {
     }
     expect(pieces).toBeGreaterThan(100);
     expect(problems.slice(0, 20)).toEqual([]);
+  });
+
+  it('onSurface: tylko małe placeable bez footprintu, schowka, łóżka i stacji', async () => {
+    const b = await buildContentBundleFromDirs([BASE_PACK_DIR]);
+    const on = Object.values(b.items).filter((i) => onSurfaceForId(b, i.id));
+    expect(on.map((i) => i.id).sort()).toEqual([
+      'base:desk-lamp',
+      'base:radio-set',
+      'base:tv',
+      'base:vcr',
+    ]);
+    for (const i of on) {
+      if (i.kind !== 'placeable') throw new Error(i.id);
+      const p = i.placeable;
+      expect(!!(p.containerType || p.sleepSurface || p.station || p.footprint), i.id).toBe(false);
+    }
   });
 });

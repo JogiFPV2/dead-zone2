@@ -5,7 +5,7 @@
     "kind": "placeable",
     "weightKg": 12,
     "tags": ["base:station-tv"],
-    "placeable": { "power": { "consumesW": 120 } }
+    "placeable": { "power": { "consumesW": 120 }, "onSurface": true }
   },
   {
     "id": "base:generator",

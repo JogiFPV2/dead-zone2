@@ -10,6 +10,7 @@ import {
   ItemRefSchema,
   LootTableRefSchema,
   RoomTypeSchema,
+  SurfaceHeightMSchema,
   TagListSchema,
 } from './common/index.js';
 import { LootCategorySchema } from './loot-category.js';
@@ -71,6 +72,8 @@ export const ContainerTypeSchema = z.strictObject({
   compartments: z.array(ContainerTypeRefSchema).optional(),
   /** Zajmowane kafle przy `rot = 0` (`footprintOf`); brak = 1×1. */
   footprint: FootprintSchema.optional(),
+  /** Wysokość blatu (m), na którym stoi mebel z `placeable.onSurface` (szafka RTV 0.55, biurko 0.75). */
+  surfaceHeightM: SurfaceHeightMSchema.optional(),
   model: z.string().optional(),
   ext: ExtSchema,
 });
