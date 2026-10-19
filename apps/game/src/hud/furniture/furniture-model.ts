@@ -62,6 +62,10 @@ export const furnitureIcon = (typeId: string): FurnIcon =>
 
 const ACTION_ICONS: [RegExp, FurnIcon][] = [
   [/^stop|cancel/, 'stop'],
+  // Push / pull / rotate (protocol 38): away from / towards the player, the floor tile it turns on.
+  [/^push$/, 'arrowUp'],
+  [/^pull$/, 'arrowDown'],
+  [/^rotate$/, 'floor'],
   [/curtain/, 'window'],
   [/^light-/, 'switch'],
   [/freez/, 'snow'],

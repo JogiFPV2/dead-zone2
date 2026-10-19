@@ -6,6 +6,7 @@ import { DEFAULT_SLEEP_SETTINGS } from '../sleep-settings.js';
 import { FURNITURE_FEATURES, hiddenByFeature } from './furniture-api.js';
 import {
   actionDurationLabel,
+  actionIcon,
   durationLabel,
   furnitureIcon,
   furnitureMenuVM,
@@ -352,6 +353,9 @@ describe('menu model (sim data, generic over typeId)', () => {
     expect(reasonIcon('threat')).toBe('zombie');
     expect(reasonIcon('no-key')).toBe('key');
     expect(reasonIcon('whatever')).toBe('ban');
+    expect(actionIcon('push')).toBe('arrowUp');
+    expect(actionIcon('pull')).toBe('arrowDown');
+    expect(actionIcon('rotate')).toBe('floor');
     expect(reasonText({ reason: 'no-water' })).toBe('Brak wody w sieci');
     expect(reasonText({ reason: 'threat', reasonPl: 'Zombie 5 m' })).toBe('Zombie 5 m');
   });
