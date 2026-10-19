@@ -1,4 +1,4 @@
-import { windowAccess } from '../vehicles/windows.js';
+import { carContact, zombieHitsWindow } from '../vehicles/windows.js';
 import { Pen, penaltyMul } from '../survival/penalties.js';
 import { BODY_PARTS, type HitSource } from '@deadzone/protocol';
 import { emitNoise } from '../ai/noise.js';
@@ -407,17 +407,22 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     const dx = (Position.x[pid] ?? 0) - (Position.x[zid] ?? 0);
     const dy = (Position.y[pid] ?? 0) - (Position.y[zid] ?? 0);
     const reach = zc.reachTiles + (Collider.radius[pid] ?? 0) + (Collider.radius[zid] ?? 0);
-    const inReach =
-      floorZ(w, pid) === z &&
-      dx * dx + dy * dy <= reach * reach &&
-      lineOfSight(
-        grid,
-        z,
-        Position.x[zid] ?? 0,
-        Position.y[zid] ?? 0,
-        Position.x[pid] ?? 0,
-        Position.y[pid] ?? 0,
-      );
+    // A player in a car: in reach when the zombie stands at the car (its edge within
+    // `reachTiles` of the box), not by the distance to the seat (`vehicles/windows.ts`).
+    const seated = bodyOf(w, pid)?.state === 'driving';
+    const car = seated ? carContact(w, zid, target, zc.reachTiles) : undefined;
+    const inReach = seated
+      ? car !== undefined
+      : floorZ(w, pid) === z &&
+        dx * dx + dy * dy <= reach * reach &&
+        lineOfSight(
+          grid,
+          z,
+          Position.x[zid] ?? 0,
+          Position.y[zid] ?? 0,
+          Position.x[pid] ?? 0,
+          Position.y[pid] ?? 0,
+        );
     if (!inReach) {
       cb.zombieReady[zid] = 0;
       continue;
@@ -432,9 +437,16 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     cb.swingTick[zid] = w.tick;
     if (dx !== 0 || dy !== 0) Facing.angle[zid] = atan2Bam(dy, dx);
     physicsBeginAttack(w, zid);
-    // A player sitting in a car is out of reach (the zombie bangs on the body), unless the
-    // zombie stands at a broken window on the player's side (`vehicles/windows.ts`).
-    if (bodyOf(w, pid)?.state === 'driving' && windowAccess(w, zid, target) < 0) continue;
+    // A player sitting in a car is out of reach: the blow hits the window on the zombie's side
+    // (`zombieWindowDmg`, broken at 0), unless the zombie stands at a broken window on the
+    // player's side (`vehicles/windows.ts`): then a normal hit.
+    if (seated) {
+      if (!car) continue;
+      if (car.access < 0) {
+        zombieHitsWindow(w, zid, car);
+        continue;
+      }
+    }
     const rng = w.rng.combat;
     if (!rng.chance(zc.hitChance)) continue;
     const dmg = Math.fround(t.damage.min + rng.nextFloat() * (t.damage.max - t.damage.min));

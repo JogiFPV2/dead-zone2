@@ -9,7 +9,8 @@ import { floorZ } from '../world/levels.js';
 import { walkableLine } from '../world/los.js';
 import { unseat } from './commands.js';
 import type { VehicleConfig } from './config.js';
-import { circleVsObb, obbOf } from './geometry.js';
+import { damageVehiclePart } from './damage.js';
+import { circleVsObb, obbOf, zoneAt } from './geometry.js';
 import { doorPoint, playerEidOf, seatPoint, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
 
@@ -94,7 +95,7 @@ export function vehicleOpeningsOf(w: SimWorld, v: Vehicle): VehicleOpening[] {
 }
 
 /** Distance² from (px, py) to the opening segment. */
-function segDist2(o: VehicleOpening, px: number, py: number): number {
+export function segDist2(o: VehicleOpening, px: number, py: number): number {
   // Segment direction = normal rotated 90°.
   const dx = -o.ny;
   const dy = o.nx;
@@ -123,10 +124,20 @@ function reaches(
   if ((x - o.x) * o.nx + (y - o.y) * o.ny < 0) return false;
   const r = (w.c.Collider.radius[zid] ?? 0.3) + cfg.windowReachTiles;
   if (segDist2(o, x, y) > r * r) return false;
-  const s = seatPoint(v, t, seat);
-  const dx = s.x - x;
-  const dy = s.y - y;
-  return dx * dx + dy * dy <= cfg.seatReachTiles * cfg.seatReachTiles;
+  return seatInReach(o, seatPoint(v, t, seat), cfg);
+}
+
+/**
+ * Seat point `s` is within `seatReachTiles` of the opening's segment (the arm goes in through
+ * the opening; measured to the segment, so the windscreen reaches the front row and the rear
+ * window the back row across the bonnet / boot). Shared with the AI stand points.
+ */
+export function seatInReach(
+  o: VehicleOpening,
+  s: { x: number; y: number },
+  cfg: VehicleConfig,
+): boolean {
+  return segDist2(o, s.x, s.y) <= cfg.seatReachTiles * cfg.seatReachTiles;
 }
 
 const speedOf = (v: Vehicle) => Math.sqrt(v.vx * v.vx + v.vy * v.vy);
@@ -149,6 +160,59 @@ export function windowAccess(w: SimWorld, zid: number, sid: number): number {
     return -1;
   }
   return -1;
+}
+
+/** A zombie at the car of a seated target (`carContact`). */
+export interface CarContact {
+  vehicle: Vehicle;
+  /** Window (0..3) through which it reaches the target's seat, or −1 (the car protects). */
+  access: number;
+  /** Side of the car it stands at (zone: front 0, rear 1, left 2, right 3). */
+  side: number;
+}
+
+/**
+ * `zombieAttacks` reach for a seated target `sid`: the zombie's edge is within `reach` of the
+ * car's box on the car's level and the car is ≤ `shakeOffSpeed`; undefined otherwise (out of
+ * reach, no swing).
+ */
+export function carContact(
+  w: SimWorld,
+  zid: number,
+  sid: number,
+  reach: number,
+): CarContact | undefined {
+  for (const v of [...w.physics.vehicles.values()].sort((a, b) => a.id - b.id)) {
+    if (!v.occupants.includes(sid)) continue;
+    const t = vehicleTypes(w)[v.type];
+    const cfg = w.physics.cfg.vehicle;
+    if (!t || speedOf(v) > cfg.shakeOffSpeed || floorZ(w, zid) !== Math.floor(v.z))
+      return undefined;
+    const x = w.c.Position.x[zid] ?? 0;
+    const y = w.c.Position.y[zid] ?? 0;
+    const obb = obbOf(v, t);
+    if (!circleVsObb(obb, x, y, (w.c.Collider.radius[zid] ?? 0.3) + reach)) return undefined;
+    return { vehicle: v, access: windowAccess(w, zid, sid), side: zoneAt(obb, x, y) };
+  }
+  return undefined;
+}
+
+/**
+ * A zombie blow at the car (target behind an intact window): the window on the side it stands
+ * loses `zombieWindowDmg` (an already broken one: the blow lands on the body, nothing happens).
+ * At 0 hp `vehiclePartBroken` at the zombie's position — the opening for `windowAccess`.
+ */
+export function zombieHitsWindow(w: SimWorld, zid: number, c: CarContact): void {
+  const dmg = w.physics.cfg.vehicle.zombieWindowDmg;
+  if (!(dmg > 0)) return;
+  damageVehiclePart(
+    w,
+    c.vehicle,
+    WINDOW_PARTS[c.side]!,
+    dmg,
+    w.c.Position.x[zid] ?? 0,
+    w.c.Position.y[zid] ?? 0,
+  );
 }
 
 /**

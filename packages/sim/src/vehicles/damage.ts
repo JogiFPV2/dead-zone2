@@ -111,6 +111,21 @@ function hurt(w: SimWorld, v: Vehicle, part: VehiclePart, dmg: number, x: number
   if (part === 'engine') stopBroken(w, v);
 }
 
+/**
+ * Damage from outside (zombie blows at a window, `windows.ts` `zombieHitsWindow`): `part`
+ * loses `dmg` hp, `vehiclePartBroken` at (x, y) when it reaches 0. Same path as impacts.
+ */
+export function damageVehiclePart(
+  w: SimWorld,
+  v: Vehicle,
+  part: VehiclePart,
+  dmg: number,
+  x: number,
+  y: number,
+): void {
+  hurt(w, v, part, dmg, x, y);
+}
+
 /** Wheel (FL 0, FR 1, RL 2, RR 3) nearest to the world point (x, y). */
 export function wheelAt(v: Vehicle, x: number, y: number): number {
   const dx = x - v.x;

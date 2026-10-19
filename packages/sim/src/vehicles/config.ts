@@ -107,7 +107,9 @@ export interface VehicleConfig {
   flatGripLoss: number;
   /**
    * Broken windows (`windows.ts`): a zombie reaches in when its edge is within
-   * `windowReachTiles` of the opening and the seat within `seatReachTiles`; after `pullTicks`
+   * `windowReachTiles` of the opening and the seat within `seatReachTiles` of the opening's
+   * segment (measured to the segment, so the windscreen / rear window reach the front / back
+   * row across the bonnet / boot: sedan 2.2 / 1.5 tiles); after `pullTicks`
    * of contact each tick pulls the person out with `pullChancePerTick` (knock-down impulse
    * `pullImpulse`). Faster than `shakeOffSpeed` (m/s) the car shakes them off / can't be reached.
    */
@@ -117,6 +119,12 @@ export interface VehicleConfig {
   pullChancePerTick: number;
   pullImpulse: number;
   shakeOffSpeed: number;
+  /**
+   * A zombie blow at a seated player behind an intact window (the zombie's edge within its
+   * reach of the car, car ≤ `shakeOffSpeed`): the window on the side it stands (`zoneAt`)
+   * loses this hp (0..100; 0 = windows never break from blows). At 0 hp `vehiclePartBroken`.
+   */
+  zombieWindowDmg: number;
 }
 
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
@@ -176,9 +184,10 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   tirePull: 0.015,
   flatGripLoss: 0.35,
   windowReachTiles: 0.5,
-  seatReachTiles: 1.6,
+  seatReachTiles: 2.4,
   pullTicks: 60,
   pullChancePerTick: 0.05,
   pullImpulse: 0.3,
   shakeOffSpeed: 3,
+  zombieWindowDmg: 10,
 };

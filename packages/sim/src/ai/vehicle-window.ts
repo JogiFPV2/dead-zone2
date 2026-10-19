@@ -2,7 +2,7 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { circleVsObb, obbOf } from '../vehicles/geometry.js';
 import { seatPoint, vehicleTypes } from '../vehicles/seats.js';
 import type { Vehicle } from '../vehicles/types.js';
-import { vehicleOpeningsOf, type VehicleOpening } from '../vehicles/windows.js';
+import { segDist2, vehicleOpeningsOf, type VehicleOpening } from '../vehicles/windows.js';
 import { circleOverlaps } from '../world/collision.js';
 import type { TileGrid } from '../world/grid.js';
 import { floorZ } from '../world/levels.js';
@@ -177,10 +177,9 @@ function standPoint(
   const at = (along: number) => {
     const px = o.x + ax * along + o.nx * out;
     const py = o.y + ay * along + o.ny * out;
-    const dx = seat.x - px;
-    const dy = seat.y - py;
-    // Margin under the mechanic's seat reach (f32 rounding of positions).
-    if (dx * dx + dy * dy > (seatReach - 0.05) * (seatReach - 0.05)) return undefined;
+    // The mechanic measures the seat to the opening's segment (`seatInReach`); margin for the
+    // f32 rounding of positions.
+    if (segDist2(o, seat.x, seat.y) > (seatReach - 0.05) * (seatReach - 0.05)) return undefined;
     if (circleOverlaps(grid, z, px, py, r)) return undefined;
     for (const u of w.physics.vehicles.values()) {
       if (u.id === v.id || Math.floor(u.z) !== z) continue;

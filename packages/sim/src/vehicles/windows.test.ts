@@ -3,11 +3,22 @@ import type { SimEvent } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
 import { eventsOf } from '../test/ai-fixtures.js';
 import { car, seatedSim, vehicleSim, type VehicleSimOptions } from '../test/vehicle-fixtures.js';
+import { DEFAULT_PHYSICS_CONFIG } from '../physics/constants.js';
 import { DEFAULT_VEHICLE_CONFIG } from './config.js';
 
 const cfg = DEFAULT_VEHICLE_CONFIG;
 /** Car at (20, 64) heading +x: the driver (seat 0) sits on the left (−y); a walker by that door. */
 const LEFT_ZOMBIE: VehicleSimOptions = { zombies: [{ x: 20.1, y: 62.4, type: 'fixture:walker' }] };
+/** Unbreakable windows (`zombieWindowDmg` 0): blows never get through glass. */
+const HARD_GLASS = {
+  physicsConfig: {
+    ...DEFAULT_PHYSICS_CONFIG,
+    vehicle: { ...DEFAULT_VEHICLE_CONFIG, zombieWindowDmg: 0 },
+  },
+};
+const one = (x: number, y: number): VehicleSimOptions => ({
+  zombies: [{ x, y, type: 'fixture:walker' }],
+});
 
 function watch(
   opts: VehicleSimOptions,
@@ -34,7 +45,7 @@ function watch(
 
 describe('vehicles: zombies at broken windows', () => {
   it('intact windows protect: the zombie bangs on the car, never hits the driver', () => {
-    const r = watch(LEFT_ZOMBIE, [], 400);
+    const r = watch({ ...LEFT_ZOMBIE, ...HARD_GLASS }, [], 400);
     expect(eventsOf(r.events, 'physics').some((e) => e.kind === 'attackStart')).toBe(true);
     expect(r.hits).toEqual([]);
     expect(eventsOf(r.events, 'vehicleExit')).toEqual([]);
@@ -42,7 +53,7 @@ describe('vehicles: zombies at broken windows', () => {
   });
 
   it('a broken window on the far side does not expose the driver', () => {
-    const r = watch(LEFT_ZOMBIE, ['windowRight'], 400);
+    const r = watch({ ...LEFT_ZOMBIE, ...HARD_GLASS }, ['windowRight'], 400);
     expect(r.hits).toEqual([]);
     expect(eventsOf(r.events, 'vehicleExit')).toEqual([]);
   });
@@ -171,6 +182,92 @@ describe('vehicles: zombies at broken windows', () => {
     }
     expect(eventsOf(eb, 'vehicleExit')).toEqual(eventsOf(ea, 'vehicleExit'));
     expect(eventsOf(ea, 'vehicleExit')).toHaveLength(1);
+    expect(b.hash()).toBe(a.sim.hash());
+  });
+
+  it('zombie blows break the window on the side of the attack, then hit through it', () => {
+    const r = watch(LEFT_ZOMBIE, [], 900);
+    const broken = eventsOf(r.events, 'vehiclePartBroken');
+    expect(broken.map((e) => e.part)).toEqual(['windowLeft']);
+    const c = car(r.sim);
+    // Only the left window (the zombie's side) took blows.
+    expect(c.windows[0]).toBe(100);
+    expect(c.windows[1]).toBe(100);
+    expect(c.windows[3]).toBe(100);
+    expect(c.windows[2]).toBe(0);
+    const at = broken[0]!.tick;
+    // At least 100 / zombieWindowDmg blows before it breaks, no hit before.
+    const swings = eventsOf(r.events, 'physics').filter(
+      (e) => e.kind === 'attackStart' && e.tick <= at,
+    );
+    expect(swings.length).toBeGreaterThanOrEqual(Math.ceil(100 / cfg.zombieWindowDmg));
+    expect(r.hits.filter((h) => h.tick <= at)).toEqual([]);
+    expect(r.hits.length).toBeGreaterThan(0);
+  });
+
+  it('window hp drops by zombieWindowDmg per blow (setting physics.vehicle.zombieWindowDmg)', () => {
+    const vehicle = { ...DEFAULT_VEHICLE_CONFIG, zombieWindowDmg: 25 };
+    const r = watch(
+      { ...LEFT_ZOMBIE, physicsConfig: { ...DEFAULT_PHYSICS_CONFIG, vehicle } },
+      [],
+      120,
+    );
+    const swings = eventsOf(r.events, 'physics').filter((e) => e.kind === 'attackStart').length;
+    expect(swings).toBeGreaterThan(0);
+    expect(car(r.sim).windows[2]).toBeCloseTo(Math.max(0, 100 - 25 * swings), 4);
+  });
+
+  it('a zombie at the rear hits the rear window, at the front the windscreen', () => {
+    for (const [z, part, idx] of [
+      [one(17.3, 64), 'windowRear', 1],
+      [one(22.7, 64), 'windowFront', 0],
+    ] as const) {
+      const r = watch(z, [], 400);
+      expect(car(r.sim).windows[idx]).toBeLessThan(100);
+      expect(car(r.sim).windows[2]).toBe(100);
+      expect(eventsOf(r.events, 'vehiclePartBroken').every((e) => e.part === part)).toBe(true);
+    }
+  });
+
+  it('sedan: the broken windscreen reaches the front row, the rear window the back row', () => {
+    const sim = vehicleSim();
+    const id = car(sim).stableId;
+    sim.setPartHp(id, 'windowFront', 0);
+    sim.setPartHp(id, 'windowRear', 0);
+    const o = sim.vehicleOpenings(id)!;
+    expect(o.map((x) => x.window)).toEqual(['front', 'rear']);
+    expect(o[0]!.seats).toEqual([0, 1]);
+    expect(o[1]!.seats).toEqual([2, 3]);
+    // The driver is pulled out through the windscreen by a zombie standing at the bonnet.
+    const r = watch(one(22.7, 63.8), ['windowFront'], 600);
+    expect(r.hits.length).toBeGreaterThan(0);
+    expect(eventsOf(r.events, 'vehicleExit')[0]).toMatchObject({ reason: 'pulled', seat: 0 });
+    expect(r.sim.getPlayer()!.x).toBeGreaterThan(22.3);
+  });
+
+  it('a moving car (> shakeOffSpeed) takes no window damage from blows', () => {
+    const r = watch(LEFT_ZOMBIE, [], 200, (_sim, i, ctl) => {
+      if (i >= 30) ctl.drive(1);
+    });
+    const c = car(r.sim);
+    expect(c.speed).toBeGreaterThan(cfg.shakeOffSpeed);
+    const hpAtSpeed = c.windows[2]!;
+    const more = watch(LEFT_ZOMBIE, [], 400, (_sim, i, ctl) => {
+      if (i >= 30) ctl.drive(1);
+    });
+    expect(car(more.sim).windows[2]).toBe(hpAtSpeed);
+  });
+
+  it('window blows are deterministic and survive save / load', () => {
+    const a = watch(LEFT_ZOMBIE, [], 200);
+    expect(car(a.sim).windows[2]).toBeLessThan(100);
+    const b = vehicleSim({ ...LEFT_ZOMBIE, load: a.sim.save(), spawnVehicles: [] });
+    expect(b.hash()).toBe(a.sim.hash());
+    for (let i = 0; i < 300; i++) {
+      a.sim.step();
+      b.step();
+    }
+    expect(car(b).windows).toEqual(car(a.sim).windows);
     expect(b.hash()).toBe(a.sim.hash());
   });
 });

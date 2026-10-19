@@ -1,7 +1,9 @@
 import { buildContentBundle } from '@deadzone/content';
 import type { SimEvent } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PHYSICS_CONFIG } from '../physics/constants.js';
 import { eventsOf } from '../test/ai-fixtures.js';
+import { DEFAULT_VEHICLE_CONFIG } from '../vehicles/config.js';
 import { fixturePack } from '../test/content-fixtures.js';
 import {
   car,
@@ -36,6 +38,14 @@ const buggyContent = buildContentBundle([
     ],
   },
 ]);
+
+/** Unbreakable windows (`zombieWindowDmg` 0): the old chase never breaks a window. */
+const HARD_GLASS = {
+  physicsConfig: {
+    ...DEFAULT_PHYSICS_CONFIG,
+    vehicle: { ...DEFAULT_VEHICLE_CONFIG, zombieWindowDmg: 0 },
+  },
+};
 
 type Part = 'windowLeft' | 'windowRight' | 'windowFront' | 'windowRear';
 
@@ -123,7 +133,7 @@ describe('ai: vehicle window target', () => {
 
   it('no broken window (or only one that does not reach the seat): the old chase, bangs on the car', () => {
     for (const broken of [[], ['windowRight']] as Part[][]) {
-      const r = run({ zombies: [walker(21, 58)] }, broken, 400);
+      const r = run({ zombies: [walker(21, 58)], ...HARD_GLASS }, broken, 400);
       expect(r.goals).toBe(0);
       expect(eventsOf(r.events, 'physics').some((e) => e.kind === 'attackStart')).toBe(true);
       expect(eventsOf(r.events, 'hit').filter((e) => e.source === 'zombie')).toEqual([]);
