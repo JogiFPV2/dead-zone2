@@ -1638,3 +1638,11 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 - Odcinki pocięte na chunki mogą się powtarzać, co nie przeszkadza (min/max, bez sumowania). Kolejność to chunki po y, potem po x, potem indeks na liście. Matematyka jest czysta, bez RNG, więc wynik jest deterministyczny.
 - Wydajność: LOS sprawdza odcinki dopiero wtedy, gdy grid wczytał chunk z odcinkami (`segmentsSeen`). Kolizja dokłada jedno `chunkAt` na chunk w boxie ruchu i odrzucenie po bboxie.
 - `simMapFromData`/`simMapToData` kopiują `wallSegments`, a schemat chunka przyjmuje je jako opcjonalne. Widok się nie zmienia, więc protokół zostaje 37 (bez podbicia). Zapis bez zmian (`SAVE_VERSION` 3).
+
+### 9.64 Menu mebli: pchanie, ciągnięcie, obrót (`push` / `pull` / `rotate`, protokół 39) — kontrakt dla Silnika i Serwera
+
+- `furnitureActions`: każdy mebel, który `sim.canMoveFurniture` może ruszyć, ma trzy nowe wpisy: `push` („Pchnij”), `pull` („Ciągnij”) i `rotate` („Obróć”). Etykiety są w `FURNITURE_ACTIONS_PL` (`@deadzone/content`). `durationMin` / `durationSec` biorą się z `ticks` sprawdzenia.
+- Wyszarzenie: `reason` to powód z `canMoveFurniture`, bez zamiany: `fixed`, `too-heavy`, `wrong-side`, `no-space`, `wall`, `out-of-range` (#286). Do tego `busy`, gdy kolejka akcji jest pełna. `invalid-state` pojawia się tylko wtedy, gdy sam sim go zwraca (np. gracz w aucie). `reasonPl` to domyślny tekst z `FURNITURE_REASONS_PL`. Test pilnuje, że każdy z tych powodów jest w `FURNITURE_REASONS` i ma polski tekst.
+- Bez wpisów: zbiorniki wody (stan na kaflu, docs 9.59), obiekty, które nie są meblem (`invalid-target`), oraz wszystko, gdy `physicsConfig.furniture.enabled` jest wyłączone. Armatura (`fixed`) ma wpisy wyszarzone „Przymocowane”.
+- `useFurniture {furnitureId, actionId: 'push' | 'pull' | 'rotate'}` startuje tę samą akcję co `sim.pushFurniture` / `pullFurniture` / `rotateFurniture`, tylko przez kolejkę komend (deterministycznie, hasz). Mebel bez innych akcji dostaje `typeId: 'other'`.
+- Nowe id akcji w menu, więc protokół 39 (38 to #286). Zapis bez zmian (`SAVE_VERSION` 3).

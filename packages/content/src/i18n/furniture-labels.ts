@@ -39,6 +39,9 @@ export const FURNITURE_ACTIONS_PL = {
   wash: 'Umyj się',
   shower: 'Weź prysznic',
   bath: 'Weź kąpiel',
+  push: 'Pchnij',
+  pull: 'Ciągnij',
+  rotate: 'Obróć',
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -110,10 +113,7 @@ export function furnitureTypePl(typeId: string): string {
   return lookup(FURNITURE_TYPES_PL, typeId) ?? typeId;
 }
 
-/**
- * Specific Polish texts for a generic reason code (`reasonPl` instead of the default
- * `FURNITURE_REASONS_PL[reason]`), e.g. „Wejdź przez okno” greyed out with `invalid-state`.
- */
+/** Specific `reasonPl` for a generic reason code, e.g. „Wejdź przez okno” with `invalid-state`. */
 export const FURNITURE_REASON_DETAILS_PL = {
   'window-closed': 'Okno zamknięte',
   'window-boarded': 'Okno zabite deskami',

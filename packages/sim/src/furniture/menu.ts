@@ -7,11 +7,12 @@ import {
   type FurnitureView,
   type UseFurnitureCommand,
   type WaterUse,
+  FURNITURE_REASONS,
 } from '@deadzone/protocol';
 import { objectRect } from './footprint.js';
 import { rectDist2 } from '../world/furniture.js';
 import { furnitureActionPl, furnitureReasonPl } from '@deadzone/content';
-import { newAction, previewAction, startAction } from '../actions/queue.js';
+import { MAX_QUEUED_ACTIONS, newAction, previewAction, startAction } from '../actions/queue.js';
 import { ticksPerGameMinute } from '../core/clock.js';
 import { TICKS_PER_SECOND } from '../core/constants.js';
 import type { SimWorld } from '../core/world.js';
@@ -41,6 +42,11 @@ import { skillLevel } from '../progress/skills.js';
 import type { TileGrid } from '../world/grid.js';
 import { floorZ } from '../world/levels.js';
 import { carriedLockpicks, insideOf, knock, lockpickChance } from './locks.js';
+import {
+  canMoveFurniture,
+  startFurnitureMove,
+  type FurnitureMoveMode,
+} from '../physics/furniture.js';
 
 /**
  * Context menu of furniture and edges (protocol 26, docs 9.47): `SimViewPatch.furnitureActions`
@@ -301,6 +307,8 @@ function objectActions(
   eid: number,
   obj: MapObj,
   cmd?: UseFurnitureCommand,
+  /** `objectFurnitureId` of the piece (push / pull / rotate). */
+  fid?: number,
 ): { typeId: string; actions: Act[] } | undefined {
   const st = w.items;
   if (!st) return undefined;
@@ -493,9 +501,44 @@ function objectActions(
       );
     });
   }
+  // Push / pull / rotate (#279/#286, docs 9.64): greyed out with the reason of `canMoveFurniture`.
+  // Not water tanks: their state is keyed by the tile (`Fixture`) and would stay behind.
+  if (
+    fid !== undefined &&
+    w.physics.cfg.furniture.enabled &&
+    w.furniture &&
+    !tankOf(w, obj.contentId)
+  ) {
+    for (const mode of MOVE_MODES) {
+      const c = canMoveFurniture(w, eid, fid, mode);
+      if (c.reason === 'invalid-target') break;
+      // Every reason of `canMoveFurniture` goes out as it is (fixed, too-heavy, wrong-side,
+      // no-space, wall, out-of-range, …); a full action queue greys it out as `busy`.
+      const reason = c.ok
+        ? queueFull(w, eid)
+          ? 'busy'
+          : undefined
+        : MOVE_REASONS.has(c.reason!)
+          ? c.reason
+          : 'invalid-state';
+      const extra: Partial<FurnitureActionView> = {};
+      if (c.ticks > 0)
+        extra.durationMin = Math.round((c.ticks / ticksPerGameMinute(w.clock)) * 1000) / 1000;
+      out.push(entry(mode, reason, extra, () => startFurnitureMove(w, eid, fid, mode)));
+    }
+    typeId ??= 'other';
+  }
   if (!typeId || out.length === 0) return undefined;
   return { typeId, actions: out };
 }
+
+const MOVE_MODES: readonly FurnitureMoveMode[] = ['push', 'pull', 'rotate'];
+/** Reasons shown as they are: every furniture-menu reason (`FURNITURE_REASONS`). */
+const MOVE_REASONS: ReadonlySet<string> = new Set(FURNITURE_REASONS);
+const queueFull = (w: SimWorld, eid: number): boolean => {
+  const p = playerItems(w, eid);
+  return !!p?.current && p.queue.length >= MAX_QUEUED_ACTIONS;
+};
 
 /** Carried VHS tapes (one per kind). */
 function tapes(w: SimWorld, eid: number) {
@@ -580,7 +623,7 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
           y: oy,
           z,
           build: (cmd) => {
-            const m = objectActions(w, eid, obj, cmd);
+            const m = objectActions(w, eid, obj, cmd, id);
             if (!m) return undefined;
             const tank = tankOf(w, obj.contentId);
             return {

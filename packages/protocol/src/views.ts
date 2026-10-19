@@ -484,7 +484,8 @@ export interface FurnitureActionView {
   /**
    * Stable action id (`open`, `close`, `smash`, `clear-glass`, `climb-through`, `barricade`,
    * `unbarricade`, `lock`, `unlock`, `unlock-key`, `lock-key`, `lockpick:<itemId>`, `force-pry`,
-   * `force-kick`, `knock`, `open-storage`, `watch`, `insert-tape:<itemId>`, …). Actions that use
+   * `force-kick`, `knock`, `open-storage`, `watch`, `insert-tape:<itemId>`, `push`, `pull`,
+   * `rotate` (protocol 39), …). Actions that use
    * a carried item are `<action>:<itemId>` (one entry per usable item); the prefix groups a
    * submenu.
    */

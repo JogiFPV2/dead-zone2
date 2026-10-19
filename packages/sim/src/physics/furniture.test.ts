@@ -6,7 +6,11 @@ import { NOON, eventsOf } from '../test/ai-fixtures.js';
 import { baseContent, fixturePack } from '../test/content-fixtures.js';
 import { buildMap, type MapSpec } from '../test/fixtures.js';
 import { createSim, type Sim } from '../sim.js';
-import { objectFurnitureId } from '../furniture/menu.js';
+import { furnitureActionsView, objectFurnitureId } from '../furniture/menu.js';
+import { send } from '../test/content-fixtures.js';
+import { FURNITURE_REASONS_PL } from '@deadzone/content';
+import { FURNITURE_REASONS } from '@deadzone/protocol';
+import { TileGrid } from '../world/grid.js';
 import { FF } from '../world/furniture.js';
 import { tileKey } from '../items/store.js';
 import { DEFAULT_PHYSICS_CONFIG, type PhysicsConfig } from './constants.js';
@@ -875,5 +879,151 @@ describe('furniture debug picture (DZ_SHOTS → fiz-furniture.png)', () => {
     const env = (globalThis as unknown as { process?: { env: Record<string, string | undefined> } })
       .process?.env;
     if (env?.DZ_SHOTS) await writeFileIfNode(`${env.DZ_SHOTS}/fiz-furniture.png`, png);
+  });
+});
+
+describe('furniture menu: push / pull / rotate (furnitureActions, useFurniture)', () => {
+  const menu = (s: Sim, fid: number) =>
+    furnitureActionsView(
+      s.world,
+      new TileGrid(s.world.openings.map, s.world.openings),
+      s.world.players.get(0)!,
+    ).find((f) => f.furnitureId === fid);
+  const act = (s: Sim, fid: number, a: string) => menu(s, fid)?.actions.find((x) => x.id === a);
+
+  it('lists push, pull and rotate with Polish labels and durations from canMoveFurniture', () => {
+    const s = sim([{ contentId: 'fixture:mv-crate', x: 10, y: 10 }], { x: 9.5, y: 10.5 });
+    const m = menu(s, id(10, 10))!;
+    const ids = m.actions.map((a) => a.id);
+    expect(ids).toEqual(expect.arrayContaining(['push', 'pull', 'rotate']));
+    const push = act(s, id(10, 10), 'push')!;
+    expect(push).toMatchObject({ labelPl: 'Pchnij', enabled: true });
+    expect(push.durationSec).toBeGreaterThan(0);
+    expect(act(s, id(10, 10), 'pull')!.labelPl).toBe('Ciągnij');
+    expect(act(s, id(10, 10), 'rotate')!.labelPl).toBe('Obróć');
+  });
+
+  it('greys out with the reason of canMoveFurniture (too-heavy, no-space, out-of-range)', () => {
+    const s = sim(
+      [
+        { contentId: 'fixture:safe', x: 10, y: 10 },
+        { contentId: 'fixture:mv-sofa', x: 10, y: 14 },
+        { contentId: 'fixture:mv-crate', x: 12, y: 14 },
+      ],
+      { x: 9.5, y: 10.5 },
+    );
+    const heavy = act(s, id(10, 10), 'push')!;
+    expect(s.canMoveFurniture(id(10, 10), 'push').reason).toBe('too-heavy');
+    expect(heavy).toMatchObject({ enabled: false, reason: 'too-heavy' });
+    expect(heavy.reasonPl).toBe('Za ciężki — potrzeba 2 osób');
+    // Out of reach: the move entries come back greyed out only in reach; the menu skips far pieces,
+    // so check the reason through canMoveFurniture and the command path.
+    expect(s.canMoveFurniture(id(10, 14), 'push').reason).toBe('out-of-range');
+    // The sofa (2×1 at 10..11, 14) pushed east runs into the crate at (12, 14): no space.
+    const t = sim(
+      [
+        { contentId: 'fixture:mv-sofa', x: 10, y: 14 },
+        { contentId: 'fixture:mv-crate', x: 12, y: 14 },
+      ],
+      { x: 9.5, y: 14.5 },
+    );
+    expect(t.canMoveFurniture(id(10, 14), 'push').reason).toBe('no-space');
+    expect(act(t, id(10, 14), 'push')).toMatchObject({
+      enabled: false,
+      reason: 'no-space',
+      reasonPl: 'Brak miejsca',
+    });
+  });
+
+  it('useFurniture push runs sim.pushFurniture (same result, same hash as the API)', () => {
+    const objects = [{ contentId: 'fixture:mv-crate', x: 10, y: 10 }];
+    const a = sim(objects, { x: 9.5, y: 10.5 });
+    const b = sim(objects, { x: 9.5, y: 10.5 });
+    send(a, { type: 'useFurniture', furnitureId: id(10, 10), actionId: 'push' });
+    a.step();
+    expect(a.getAction()?.kind).toBe('moveFurniture');
+    const ev = finish(a);
+    expect(eventsOf(ev, 'furnitureMoved')[0]).toMatchObject({ cause: 'push', x: 11, y: 10 });
+    expect(blocks(a, 11, 10)).toBe(true);
+    expect(b.pushFurniture(id(10, 10))).toBeUndefined();
+    finish(b);
+    expect(blocks(b, 11, 10)).toBe(true);
+    // A greyed-out entry is rejected with its reason.
+    const c = sim([{ contentId: 'fixture:safe', x: 10, y: 10 }], { x: 9.5, y: 10.5 });
+    send(c, { type: 'useFurniture', furnitureId: id(10, 10), actionId: 'push' });
+    c.step();
+    expect(c.getAction()).toBeNull();
+  });
+
+  it('every reason canMoveFurniture returns is a menu reason with a Polish text', () => {
+    // Reasons of `checkFurnitureMove` (physics/furniture.ts) plus `busy` of a full queue;
+    // `invalid-target` (not a piece) shows no move entries at all.
+    const found = [
+      'fixed',
+      'too-heavy',
+      'wrong-side',
+      'no-space',
+      'wall',
+      'out-of-range',
+      'busy',
+      'invalid-state',
+    ];
+    for (const r of found) {
+      expect(FURNITURE_REASONS as readonly string[]).toContain(r);
+      expect((FURNITURE_REASONS_PL as Record<string, string>)[r]).toBeTruthy();
+    }
+  });
+
+  it('greyed entries keep fixed, wrong-side and wall (never invalid-state)', () => {
+    const fixed = sim([{ contentId: 'fixture:mv-bath', x: 10, y: 10 }], { x: 9.5, y: 10.5 });
+    for (const mode of ['push', 'pull', 'rotate'])
+      expect(act(fixed, id(10, 10), mode)).toMatchObject({
+        enabled: false,
+        reason: 'fixed',
+        reasonPl: 'Przymocowane',
+      });
+    // Diagonal to the crate: no push / pull direction.
+    const diag = sim([{ contentId: 'fixture:mv-crate', x: 10, y: 10 }], { x: 9.6, y: 9.6 });
+    expect(diag.canMoveFurniture(id(10, 10), 'push').reason).toBe('wrong-side');
+    expect(act(diag, id(10, 10), 'push')).toMatchObject({ enabled: false, reason: 'wrong-side' });
+    // A crate next to the wall at x = 50, pushed east.
+    const wall = sim(
+      [{ contentId: 'fixture:mv-crate', x: 49, y: 30 }],
+      { x: 48.5, y: 30.5 },
+      {
+        wallW: (x) => x === 50,
+      },
+    );
+    expect(wall.canMoveFurniture(id(49, 30), 'push').reason).toBe('wall');
+    expect(act(wall, id(49, 30), 'push')).toMatchObject({
+      enabled: false,
+      reason: 'wall',
+      reasonPl: 'Ściana na drodze',
+    });
+    // No move entry ever falls back to invalid-state in these cases.
+    for (const s of [fixed, diag, wall])
+      for (const f of furnitureActionsView(
+        s.world,
+        new TileGrid(s.world.openings.map, s.world.openings),
+        s.world.players.get(0)!,
+      ))
+        for (const a of f.actions)
+          if (['push', 'pull', 'rotate'].includes(a.id)) expect(a.reason).not.toBe('invalid-state');
+  });
+
+  it('no move entries when the physics flag is off', () => {
+    const s = sim(
+      [{ contentId: 'fixture:mv-crate', x: 10, y: 10 }],
+      { x: 9.5, y: 10.5 },
+      {},
+      {
+        physicsConfig: {
+          ...DEFAULT_PHYSICS_CONFIG,
+          furniture: { ...DEFAULT_PHYSICS_CONFIG.furniture, enabled: false },
+        },
+      },
+    );
+    const ids = menu(s, id(10, 10))?.actions.map((x) => x.id) ?? [];
+    expect(ids).not.toContain('push');
   });
 });
