@@ -58,16 +58,18 @@ export const CONTAINER_MODELS: Record<string, string> = {
   'base:shower': 'deadzone-furniture/shower',
   'base:vcr': 'deadzone-furniture/vcr',
   'base:radio-set': 'deadzone-furniture/radio-set',
+  'base:chair': 'deadzone-furniture/chair',
+  'base:armchair': 'deadzone-furniture/armchair',
+  'base:light-switch': 'deadzone-furniture/light-switch',
+  'base:table': 'deadzone-furniture/table',
+  'base:floor-lamp': 'deadzone-furniture/floor-lamp',
+  'base:desk-lamp': 'deadzone-furniture/desk-lamp',
+  'base:toilet': 'deadzone-furniture/toilet',
   'base:tool-chest': 'kenney-survival/box',
   'base:locker': 'kenney-furniture/bookcase-closed',
   'base:gun-locker': 'kenney-furniture/bookcase-closed',
-  // #254 (Kenney Furniture Kit, CC0) until Designer's real-scale models.
-  'base:table': 'kenney-furniture/table',
-  'base:chair': 'kenney-furniture/chair',
-  'base:floor-lamp': 'kenney-furniture/lamp-round-floor',
-  'base:desk-lamp': 'kenney-furniture/lamp-round-table',
+  // #254 (Kenney Furniture Kit, CC0) until Designer's real-scale model.
   'base:ceiling-lamp': 'kenney-furniture/lamp-square-ceiling',
-  'base:toilet': 'kenney-furniture/toilet',
 };
 export const PILE_MODEL = 'kenney-furniture/cardboard-box-closed';
 export const PLAYER_MODEL = 'quaternius-characters/casual';

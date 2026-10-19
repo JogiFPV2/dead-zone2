@@ -209,5 +209,13 @@
   "base:lockpick-fork",
   "base:gloves",
   "base:double-bed",
-  "base:metal-shelf"
+  "base:metal-shelf",
+  "base:chair",
+  "base:armchair",
+  "base:light-switch",
+  "base:gas-stove",
+  "base:table",
+  "base:floor-lamp",
+  "base:desk-lamp",
+  "base:toilet"
 ]

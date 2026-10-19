@@ -96,6 +96,11 @@
   --_text: var(--color-accent-hi);
 }
 
+.dz-hud .dz-moodle[data-id='base:dirty'] {
+  --_dot: #9a7a4e;
+  --_text: #c4a57a;
+}
+
 /* The key-hint row only on F1 (the top bar lists the screens). */
 .dz-hud .dz-hints {
   height: 22px;

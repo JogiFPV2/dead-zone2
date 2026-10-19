@@ -152,6 +152,19 @@ export const REAL_SCALE_FURNITURE: ReadonlyMap<string, { readonly note?: string 
   ['base:bed', {}],
   ['base:sofa', {}],
   ['base:metal-shelf', {}],
+  ['base:chair', { note: 'seat 0.45 m, free-standing (tile centre)' }],
+  ['base:armchair', { note: 'seat 0.45 m, back to the wall' }],
+  ['base:light-switch', { note: 'wall plate 8×8 cm at 1.10 m, flush at z = −0.495, no footprint' }],
+  ['base:table', { note: 'dining table 160×80×75, free-standing (footprint centre)' }],
+  ['base:floor-lamp', { note: 'h 1.58 m, shade = light colour #f4e7c6 (future glow)' }],
+  [
+    'base:desk-lamp',
+    { note: 'h 0.36 m, on a desk/table at +0.75 m (no stacking yet: renders on the floor)' },
+  ],
+  [
+    'base:toilet',
+    { note: 'Kenney Furniture Kit toilet (CC0) scaled to 40×70×80, back to the wall' },
+  ],
 ]);
 
 export const isRealScale = (contentId: string): boolean => REAL_SCALE_FURNITURE.has(contentId);

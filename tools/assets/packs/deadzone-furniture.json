@@ -1,7 +1,7 @@
 {
   "id": "deadzone-furniture",
   "name": "Meble Deadzone (modele własne, skala 1:1)",
-  "author": "Deadzone (Designer)",
+  "author": "Deadzone (Designer); toaleta: Kenney Furniture Kit (przeskalowana)",
   "licence": "CC0-1.0",
   "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
   "source": "https://github.com/JogiFPV2/deadzone-web",
@@ -95,6 +95,41 @@
       "path": "furniture/radio-set.glb",
       "sha256": "b2dc30649ce23a18fe96739a93774fa056dd7eb28b72ef1d3bb11cc91252b54f",
       "name": "radio-set.glb"
+    },
+    {
+      "path": "furniture/chair.glb",
+      "sha256": "353ce0a75cdecf352ed3cd07519ba3a656aa8951c80ffa4ef2c1b41547e6677a",
+      "name": "chair.glb"
+    },
+    {
+      "path": "furniture/armchair.glb",
+      "sha256": "03965158d33f4c4a15d9fec63d50d08a9ce7723b0d1c84cfcc2daa4027647931",
+      "name": "armchair.glb"
+    },
+    {
+      "path": "furniture/light-switch.glb",
+      "sha256": "d1fd6ca83a5561cb52724830f52f3642b482bda749167bd0a80b3ddb9962c9ca",
+      "name": "light-switch.glb"
+    },
+    {
+      "path": "furniture/table.glb",
+      "sha256": "ec2b5d121c2524467d7b36f21ca49e4ff0ef98e19a2b3f06002a98120b26a82e",
+      "name": "table.glb"
+    },
+    {
+      "path": "furniture/floor-lamp.glb",
+      "sha256": "e7d064addcaf7530761272ea07f419b99b96bf91d0b2845a4e763ddccd9c6f95",
+      "name": "floor-lamp.glb"
+    },
+    {
+      "path": "furniture/desk-lamp.glb",
+      "sha256": "a516a1ba56102b63c4fc6be0ea65eb897c33354feb00658d22751aaf7b0c98bd",
+      "name": "desk-lamp.glb"
+    },
+    {
+      "path": "furniture/toilet.glb",
+      "sha256": "31b40863798306bc1771bc8b229422967e78b96c3024898e63821c89613ba6d0",
+      "name": "toilet.glb"
     }
   ],
   "root": "glb",
@@ -116,6 +151,13 @@
     "bathtub",
     "shower",
     "vcr",
-    "radio-set"
+    "radio-set",
+    "chair",
+    "armchair",
+    "light-switch",
+    "table",
+    "floor-lamp",
+    "desk-lamp",
+    "toilet"
   ]
 }
