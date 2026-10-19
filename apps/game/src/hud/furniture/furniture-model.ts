@@ -1,3 +1,4 @@
+import { isAlarmAction, type AlarmOption } from './sleep-alarm.js';
 import { FURNITURE_TYPES_PL, furnitureActionPl, furnitureReasonPl } from '@deadzone/content';
 import type {
   ContainerView,
@@ -24,6 +25,7 @@ import {
   type FurnitureView,
 } from './furniture-api.js';
 import type { FurnIcon } from './furniture-icons.js';
+import { waterTankLine } from './water-tank.js';
 
 const TYPE_ICONS: [RegExp, FurnIcon][] = [
   [/fridge|freezer/, 'fridge'],
@@ -35,7 +37,7 @@ const TYPE_ICONS: [RegExp, FurnIcon][] = [
   [/door|gate/, 'door'],
   [/window/, 'window'],
   [/light-switch|switch/, 'switch'],
-  [/bath|sink|tap|shower/, 'water'],
+  [/bath|sink|tap|shower|toilet/, 'water'],
 ];
 
 const lookup = (t: Readonly<Record<string, string>>, k: string): string | undefined => t[k];
@@ -60,6 +62,8 @@ export const furnitureIcon = (typeId: string): FurnIcon =>
 
 const ACTION_ICONS: [RegExp, FurnIcon][] = [
   [/^stop|cancel/, 'stop'],
+  [/curtain/, 'window'],
+  [/^light-/, 'switch'],
   [/freez/, 'snow'],
   [/take|loot|grab/, 'hand'],
   [/lockpick|-key$|^unlock$/, 'key'],
@@ -75,7 +79,7 @@ const ACTION_ICONS: [RegExp, FurnIcon][] = [
   [/radio|listen/, 'radio'],
   [/cook|burner|oven/, 'flame'],
   [/turn|switch|power|light/, 'power'],
-  [/wash|drink|fill|water/, 'water'],
+  [/wash|drink|fill|water|bath|shower/, 'water'],
   [/clean|dismantle|repair/, 'tool'],
 ];
 
@@ -196,6 +200,8 @@ export interface FurnMenuVM {
   typeId: string;
   icon: FurnIcon;
   dist?: string;
+  /** „Woda: 7/10 l, brudna” under the name (`view.waterTank`, protocol 36). */
+  tank?: string;
   pills: FurnPill[];
   rows: FurnRowVM[];
 }
@@ -204,6 +210,8 @@ export interface FurnMenuVM {
 export const DIALOG_ACTIONS: ReadonlySet<string> = new Set(['sleep']);
 /** Group (submenu) of VHS tapes. */
 export const TAPE_GROUP = 'insert-tape';
+/** Group (submenu) of stove recipes (`cook:<recipeId>`, protocol 31). */
+export const COOK_GROUP = 'cook';
 /** Types that need mains power / water: the header says when it is off. */
 const NEEDS_POWER = /fridge|freezer|(^|:)tv$|radio|light|switch|microwave|oven|range|stove/;
 const NEEDS_WATER = /bath|sink|shower|toilet|tap|basin/;
@@ -261,13 +269,16 @@ export function furnitureMenuVM(
 ): FurnMenuVM {
   const features = ctx.features ?? FURNITURE_FEATURES;
   const actions = view.actions.filter(
-    (a) => !hiddenByFeature(a.id, features) && !hiddenByFeature(a.labelPl, features),
+    (a) =>
+      !isAlarmAction(a.id) &&
+      !hiddenByFeature(a.id, features) &&
+      !hiddenByFeature(a.labelPl, features),
   );
   const rows: FurnRowVM[] = [];
   const groups = new Map<string, { row: FurnRowVM; acts: FurnitureActionView[] }>();
   for (const a of actions) {
     const colon = a.id.indexOf(':');
-    if (colon <= 0 || !a.item) {
+    if (colon <= 0 || (!a.item && a.id.slice(0, colon) !== COOK_GROUP)) {
       rows.push(rowOf(a));
       continue;
     }
@@ -318,6 +329,7 @@ export function furnitureMenuVM(
     typeId: view.typeId,
     icon: furnitureIcon(view.contentId && view.typeId === 'other' ? view.contentId : view.typeId),
     ...(p ? { dist: metres(Math.hypot(view.x - p.x, view.y - p.y)) } : {}),
+    ...(view.waterTank ? { tank: waterTankLine(view.waterTank) } : {}),
     pills: menuPills(view, actions, ctx),
     rows,
   };
@@ -332,6 +344,8 @@ function subRowOf(a: FurnitureActionView, prefix: string, ctx: MenuContext): Fur
     detail = t.detail;
     watched = t.watched;
     if (a.enabled) detail = [detail, actionDurationLabel(a)].filter(Boolean).join(' · ');
+  } else if (prefix === COOK_GROUP) {
+    return cookSubRow(a, ctx);
   } else {
     const parts = extrasOf(a).map((e) => e.text);
     const dur = actionDurationLabel(a);
@@ -349,6 +363,27 @@ function subRowOf(a: FurnitureActionView, prefix: string, ctx: MenuContext): Fur
   };
 }
 
+/**
+ * Stove recipe row: the sim's dish label and `recipe` (protocol 34), the burn chance with the
+ * current cooking skill (`crafting.recipes[].burnChance`, protocol 31) and the time.
+ */
+function cookSubRow(a: FurnitureActionView, ctx: MenuContext): FurnSubRowVM {
+  const burn = a.recipe
+    ? ctx.state.crafting?.recipes.find((r) => r.id === a.recipe)?.burnChance
+    : undefined;
+  const parts: string[] = [];
+  if (burn !== undefined && burn > 0) parts.push(`przypalenie ${Math.round(burn * 100)}%`);
+  const dur = actionDurationLabel(a);
+  if (dur) parts.push(dur);
+  return {
+    actionId: a.id,
+    label: a.labelPl,
+    detail: a.enabled ? parts.join(' · ') : '',
+    enabled: a.enabled,
+    ...(!a.enabled ? { why: reasonText(a) } : {}),
+  };
+}
+
 function menuPills(
   view: FurnitureView,
   actions: readonly FurnitureActionView[],
@@ -360,7 +395,13 @@ function menuPills(
   const u = ctx.utilities;
   if (reasons.has('no-power') || (u && !u.power && !u.powerSource && NEEDS_POWER.test(kind)))
     pills.push({ icon: 'bolt', text: 'BRAK PRĄDU', tone: 'bad' });
-  if (reasons.has('no-water') || (u && !u.water && NEEDS_WATER.test(kind)))
+  // A tank with water left still works with the mains off (toilet cistern, protocol 36).
+  const tankLeft = (view.waterTank?.litres ?? 0) > 0;
+  // An empty tank already says „Pusty zbiornik” on its rows; the pill is for taps with the mains cut.
+  if (
+    !view.waterTank &&
+    (reasons.has('no-water') || (u && !u.water && !tankLeft && NEEDS_WATER.test(kind)))
+  )
     pills.push({ icon: 'water', text: 'BRAK WODY', tone: 'bad' });
   if (reasons.has('locked') || actions.some((a) => /^unlock|^lockpick/.test(a.id)))
     pills.push({ icon: 'lock', text: 'ZAMKNIĘTE', tone: 'muted' });
@@ -580,6 +621,8 @@ export interface SleepChoiceVM {
   now: string;
   cards: SleepCardVM[];
   rows: { label: string; value: string; icon: FurnIcon; tone?: 'acc' | 'bad' }[];
+  /** Alarm choice (`sleep` / `sleep-until:*`); one is selected. */
+  alarms: { id: string; label: string; selected: boolean }[];
   /** Red blocked state (button disabled). */
   blocked?: string;
   blockedNote?: string;
@@ -611,8 +654,13 @@ export function sleepChoiceVM(
     nearby: ReadonlySet<SleepSurface>;
     /** The action as the sim sent it (enabled / reason). */
     action?: { enabled: boolean; reasonPl?: string | undefined } | undefined;
+    /** Alarm choices (`alarmOptions`) and the selected id. */
+    alarms?: readonly AlarmOption[];
+    alarm?: string;
   },
 ): SleepChoiceVM {
+  const alarms = o.alarms ?? [];
+  const picked = alarms.find((a) => a.id === o.alarm) ?? alarms[0];
   const bedRate = cfg.surfaces.bed.ratePerMin || 1;
   const cards = (['bed', 'sofa', 'floor'] as const).map((k): SleepCardVM => {
     const available = k === 'floor' || o.nearby.has(k);
@@ -631,7 +679,8 @@ export function sleepChoiceVM(
   const target = Math.max(cfg.wakeAtFatigue, fatigue - surf.cap);
   const mins = Math.min(cfg.maxDurationMin, (fatigue - target) / Math.max(1e-6, surf.ratePerMin));
   const clock = s.clock;
-  const wakeAt = clock ? clock.minuteOfDay + mins : undefined;
+  const wakeMin = picked?.hours !== undefined ? picked.hours * 60 : mins;
+  const wakeAt = clock && !picked?.morning ? clock.minuteOfDay + wakeMin : undefined;
   const wakeDay = clock && wakeAt !== undefined ? clock.day + Math.floor(wakeAt / 1440) : undefined;
   const saveMin = Math.floor(cfg.saveAfterRealSec / 60);
   const saveSec = String(cfg.saveAfterRealSec % 60).padStart(2, '0');
@@ -640,12 +689,20 @@ export function sleepChoiceVM(
     ...(wakeAt !== undefined
       ? [
           {
-            label: 'Pobudka (szac.)',
+            label: picked?.hours !== undefined ? 'Budzik' : 'Pobudka (szac.)',
             value: `${hhmm(wakeAt)} · dzień ${wakeDay}`,
             icon: 'clock' as const,
           },
         ]
-      : []),
+      : picked?.morning
+        ? [
+            {
+              label: 'Budzik',
+              value: `${hhmm(cfg.morningHour * 60)} · rano`,
+              icon: 'clock' as const,
+            },
+          ]
+        : []),
     { label: 'Zapis gry', value: `po ${saveMin}:${saveSec} nieprzerwanego snu`, icon: 'save' },
   ];
   let blocked: string | undefined;
@@ -664,6 +721,7 @@ export function sleepChoiceVM(
     now: clock ? `${hhmm(clock.minuteOfDay)} · dzień ${clock.day}` : '',
     cards,
     rows,
+    alarms: alarms.map((a) => ({ id: a.id, label: a.label, selected: a === picked })),
     ...(blocked ? { blocked } : {}),
     ...(blockedNote ? { blockedNote } : {}),
     canSleep: !blocked,

@@ -184,3 +184,12 @@ export const tagName = (id: string): string => TAGS[id] ?? humanizeId(id);
 export const partName = (p: { item?: string | undefined; tag?: string | undefined }): string =>
   p.item ? craftItemName(p.item) : p.tag ? tagName(p.tag) : '?';
 export { skillName };
+
+/** Marker of burnt food (`ItemView.burnt`, protocol 31) after the item name. */
+export const BURNT_PL = 'przypalone';
+
+/** Item name with its state marker: „Gulasz (przypalone)”. */
+export function itemViewName(it: { def: string; burnt?: boolean | undefined }): string {
+  const name = craftItemName(it.def);
+  return it.burnt ? `${name} (${BURNT_PL})` : name;
+}

@@ -4,6 +4,8 @@ export type SleepSurface = 'bed' | 'sofa' | 'floor';
 
 export interface HudSleepSettings {
   minFatigueToSleep: number;
+  /** `sleep-until:morning` alarm hour (`sleep.morningHour`, protocol 29). */
+  morningHour: number;
   wakeAtFatigue: number;
   maxDurationMin: number;
   surfaces: Record<SleepSurface, { ratePerMin: number; cap: number }>;
@@ -31,6 +33,7 @@ export const TV_TAG = 'base:station-tv';
 /** Base pack values (survival-mind.json), used until / unless content loads. */
 export const DEFAULT_SLEEP_SETTINGS: HudSleepSettings = {
   minFatigueToSleep: 30,
+  morningHour: 7,
   wakeAtFatigue: 2,
   maxDurationMin: 720,
   surfaces: {
@@ -79,6 +82,7 @@ export function readSleepSettings(json: unknown): HudSleepSettings | undefined {
   const tv = isObj(leisure.tv) ? leisure.tv : {};
   return {
     minFatigueToSleep: num(sl.minFatigueToSleep, d.minFatigueToSleep),
+    morningHour: num(sl.morningHour, d.morningHour),
     wakeAtFatigue: num(sl.wakeAtFatigue, d.wakeAtFatigue),
     maxDurationMin: num(sl.maxDurationMin, d.maxDurationMin),
     surfaces: { bed: surface('bed'), sofa: surface('sofa'), floor: surface('floor') },

@@ -158,6 +158,10 @@
   color: var(--muted);
   white-space: nowrap;
 }
+.dz-fm__tank {
+  margin-top: -6px;
+  padding: 0 10px 6px 32px;
+}
 .dz-fm__type {
   font: 400 9px var(--font-family-mono);
   color: var(--dim);
@@ -651,6 +655,27 @@
 }
 .dz-fs__card[data-cur='true'] .dz-fs__qb i {
   background: var(--acc);
+}
+.dz-fs__alarms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dz-fs__alarm {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 10px var(--font-family-mono);
+  cursor: pointer;
+}
+.dz-fs__alarm[data-sel='true'] {
+  border-color: var(--acc);
+  background: rgba(224, 162, 58, 0.08);
+  color: var(--acc-hi);
 }
 .dz-fs__rows {
   margin-top: 10px;

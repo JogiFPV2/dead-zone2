@@ -1,3 +1,4 @@
+import { itemViewName } from './crafting-labels.js';
 import type {
   ContainerId,
   ContainerView,
@@ -65,11 +66,12 @@ export function itemTooltip(
       ...(it.freshness === 'rotten' ? { tone: 'danger' as const } : {}),
     });
   }
+  if (it.burnt) stats.push({ label: 'Stan', value: 'Przypalone', tone: 'danger' });
   if (it.condition !== undefined && def?.durabilityMax) {
     stats.push(durabilityRow(it.condition, def.durabilityMax));
   }
   return {
-    name: craftItemName(it.def),
+    name: itemViewName(it),
     category: KIND_LABEL[def?.kind ?? ''] ?? 'Przedmiot',
     stats,
     actions: [
@@ -108,6 +110,7 @@ export function itemRow(
   }
   if (it.uses !== undefined) sub.push(`Pozostało: ${it.uses}`);
   if (it.freshness) sub.push(FRESHNESS[it.freshness]);
+  if (it.burnt) sub.push('Przypalone');
   const equipped = (it.equipped?.length ?? 0) > 0;
   const context = equipped
     ? 'unequip'

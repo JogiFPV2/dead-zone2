@@ -51,7 +51,7 @@ export function menuHtml(m: FurnMenuVM, sel: number, keys: MenuKeys): string {
     ? `<div class="dz-fm__pills">${m.pills.map(pillHtml).join('')}</div>`
     : '';
   return `<div class="dz-fm__mh">${furnIcon(m.icon, 15)}<b>${esc(m.title.toUpperCase())}</b>${m.dist ? `<span class="dz-fm__muted">${esc(m.dist)}</span>` : ''}<span class="dz-fm__grow"></span><span class="dz-fm__type">${esc(m.typeId)}</span></div>
-${pills}<div class="dz-fm__rows">${rows}</div>
+${m.tank ? `<div class="dz-fm__muted dz-fm__tank">${esc(m.tank)}</div>` : ''}${pills}<div class="dz-fm__rows">${rows}</div>
 <div class="dz-fm__mf">${keyChip('↑↓')} wybierz ${keyChip(keys.run)} wykonaj ${keyChip('→')} podmenu ${keyChip(keys.close)}</div>`;
 }
 
@@ -120,6 +120,18 @@ ${skills || `<div class="dz-ftv__note">${esc(w.note)}</div>`}
 
 const pctLabel = (x: number): string => `${Math.round(x * 100)}%`;
 
+/** Alarm chips of the sleep window (`sleep` / `sleep-until:*`, protocol 29). */
+function alarmsHtml(v: SleepChoiceVM): string {
+  if (v.alarms.length < 2) return '';
+  const chips = v.alarms
+    .map(
+      (a) =>
+        `<button type="button" class="dz-fs__alarm" data-alarm="${esc(a.id)}" data-sel="${a.selected}">${esc(a.label)}</button>`,
+    )
+    .join('');
+  return `<div class="dz-fs__label">BUDZIK · ←/→</div><div class="dz-fs__alarms">${chips}</div>`;
+}
+
 /** Sleep choice (furn-sleep.png; the length row is feature-gated). */
 export function sleepHtml(v: SleepChoiceVM, keys: { run: string; close: string }): string {
   const cards = v.cards
@@ -142,6 +154,7 @@ export function sleepHtml(v: SleepChoiceVM, keys: { run: string; close: string }
   return `<div class="dz-fs__head">${furnIcon('moon', 18)}<b>${esc(v.title)}</b><span class="dz-fm__grow"></span><span class="dz-fm__muted">teraz <b>${esc(v.now)}</b></span></div>
 <div class="dz-fs__label">JAKOŚĆ SNU · ZALEŻY OD MEBLA</div>
 <div class="dz-fs__cards">${cards}</div>
+${alarmsHtml(v)}
 <div class="dz-fs__rows">${rows}</div>
 ${blocked}
 <div class="dz-fs__foot"><button type="button" class="dz-fs__go" data-act="sleep" ${v.canSleep ? '' : 'disabled'}>${furnIcon('moon', 14)}ŚPIJ ${keyChip(keys.run)}</button><button type="button" class="dz-fs__cancel" data-act="cancel">ANULUJ ${keyChip(keys.close)}</button><span class="dz-fm__grow"></span><span class="dz-fm__muted">Esc w trakcie snu = obudź się</span></div>`;

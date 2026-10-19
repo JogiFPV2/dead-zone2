@@ -1,3 +1,4 @@
+import { itemViewName } from './crafting-labels.js';
 import type { ContainerId, ContainerView, ItemView } from '@deadzone/protocol';
 import type { GameState } from '../state/game-state.js';
 import type { HudContentIndex } from './content-index.js';
@@ -70,7 +71,7 @@ export function lootRow(it: ItemView, content: HudContentIndex): LootRowVM {
   const equipped = (it.equipped?.length ?? 0) > 0;
   return {
     id: it.id,
-    name: craftItemName(it.def),
+    name: itemViewName(it),
     sub: sub.join(' · '),
     ...(it.freshness ? { freshness: it.freshness } : {}),
     ...(durability !== undefined ? { durability } : {}),

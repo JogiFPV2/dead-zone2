@@ -23,6 +23,7 @@ import type {
   VehicleStateView,
   UtilitiesView,
   WoundView,
+  LitWindowView,
 } from '@deadzone/protocol';
 
 /**
@@ -38,6 +39,8 @@ export interface PlayerState {
   /** Visible moodles by content id → level (≥ 1); level 0 removes the entry. */
   moodles: Readonly<Record<string, number>>;
   wounds: readonly WoundView[];
+  /** Dirt 0–100 (`player.dirt`, protocol 33); absent until the sim sends it. */
+  dirt?: number;
 }
 
 /** Main inventory: the latest summary plus every carried container (patched by id). */
@@ -96,6 +99,8 @@ export interface GameState {
   furniture: readonly FurnitureView[];
   /** Mains power / water (view.utilities); absent until the sim sends it. */
   utilities?: UtilitiesView;
+  /** Lit windows near the player (view.litWindows, protocol 34; full list when it changes). */
+  litWindows: readonly LitWindowView[];
   /** Combat state of the local player (kills, weapon, cooldown). */
   combat?: CombatView;
   /** HUD target card (view.target, protocol 20); absent = no target. */
@@ -120,6 +125,7 @@ export const INITIAL_GAME_STATE: GameState = {
   skills: [],
   threat: 0,
   furniture: [],
+  litWindows: [],
   timeScaleHint: 1,
   recentEvents: [],
 };
@@ -178,6 +184,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
       moodles = next;
     }
     const sleep = p.sleep === undefined ? player.sleep : (p.sleep ?? undefined);
+    const dirt = p.dirt ?? player.dirt;
     player = {
       alive: p.alive ?? player.alive,
       sleeping: p.sleeping ?? player.sleeping,
@@ -185,6 +192,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
       stats: p.stats ? { ...player.stats, ...p.stats } : player.stats,
       moodles,
       wounds: p.wounds ?? player.wounds,
+      ...(dirt !== undefined ? { dirt } : {}),
     };
   }
   let next: GameState = {
@@ -200,6 +208,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
     ...(view.furnitureActions ? { furniture: view.furnitureActions } : {}),
     ...(view.utilities ? { utilities: view.utilities } : {}),
+    ...(view.litWindows ? { litWindows: view.litWindows } : {}),
     ...(view.combat ? { combat: view.combat } : {}),
     ...(view.crafting ? { crafting: view.crafting } : {}),
     ...(view.skills ? { skills: view.skills } : {}),

@@ -16,6 +16,7 @@ import {
   type FurnMenuVM,
   type FurnSubRowVM,
 } from './furniture-model.js';
+import { DEFAULT_ALARM, alarmOptions } from './sleep-alarm.js';
 import { fridgeHtml, menuHtml, sleepHtml, subHtml, watchHtml } from './furniture-views.js';
 
 /** Menu refresh (enabled / reasons follow the sim) and panel refresh. */
@@ -66,7 +67,7 @@ export class FurnitureUi {
   private readonly watchEl: HTMLDivElement;
   private readonly sleepEl: HTMLDivElement;
   private menu: MenuState | undefined;
-  private sleep: { view: FurnitureView } | undefined;
+  private sleep: { view: FurnitureView; alarm: string } | undefined;
   private fridgeId: number | undefined;
   private fridgeKey = '';
   /** Closed here; the sim's `closeContainer` lands a few ticks later. */
@@ -153,6 +154,12 @@ export class FurnitureUi {
     });
     this.sleepEl.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
+      const alarm = (e.target as HTMLElement).closest<HTMLElement>('[data-alarm]')?.dataset.alarm;
+      if (alarm && this.sleep) {
+        this.sleep.alarm = alarm;
+        this.renderSleep();
+        return;
+      }
       const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act;
       if (act === 'sleep') this.confirmSleep();
       else if (act === 'cancel') this.closeSleep();
@@ -282,6 +289,14 @@ export class FurnitureUi {
       return false;
     }
     if (this.sleep) {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+        const opts = alarmOptions(this.sleep.view);
+        const i = opts.findIndex((a) => a.id === this.sleep!.alarm);
+        const n = opts.length;
+        this.sleep.alarm = opts[(i + (e.code === 'ArrowRight' ? 1 : n - 1)) % n]!.id;
+        this.renderSleep();
+        return true;
+      }
       if (e.code === 'Enter' || this.opts.isRunKey(e.code)) {
         if (!e.repeat) this.confirmSleep();
         return true;
@@ -394,7 +409,7 @@ export class FurnitureUi {
     }
     if (DIALOG_ACTIONS.has(row.id)) {
       this.closeMenu();
-      this.sleep = { view: m.view };
+      this.sleep = { view: m.view, alarm: DEFAULT_ALARM };
       this.renderSleep();
       return;
     }
@@ -448,7 +463,12 @@ export class FurnitureUi {
     const cfg = this.opts.content().sleep ?? DEFAULT_SLEEP_SETTINGS;
     const action = sl.view.actions.find((a) => a.id === 'sleep');
     const surf = this.opts.surfaces();
-    const vm = sleepChoiceVM(s, cfg, { ...surf, action });
+    const vm = sleepChoiceVM(s, cfg, {
+      ...surf,
+      action,
+      alarms: alarmOptions(sl.view),
+      alarm: sl.alarm,
+    });
     const k = JSON.stringify(vm);
     if (k !== this.sleepKey) {
       this.sleepKey = k;
@@ -464,7 +484,8 @@ export class FurnitureUi {
     const cfg = this.opts.content().sleep ?? DEFAULT_SLEEP_SETTINGS;
     const action = sl.view.actions.find((a) => a.id === 'sleep');
     if (!sleepChoiceVM(s, cfg, { ...this.opts.surfaces(), action }).canSleep) return;
-    this.opts.source.use(sl.view, 'sleep');
+    const alarm = alarmOptions(sl.view).some((a) => a.id === sl.alarm) ? sl.alarm : DEFAULT_ALARM;
+    this.opts.source.use(sl.view, alarm);
     this.closeSleep();
   }
 

@@ -34,6 +34,7 @@ export class StreamedTown {
   private readonly columns = new Map<string, { batch: SharedTownBatch; levels: number }>();
   private cut: Cutaway | undefined;
   private minute = -1;
+  private roomLit: ReadonlySet<string> = new Set();
   private readonly broken = new Set<string>();
   /** Main-thread build ms of the last 512 chunk levels (perf probe: 60 fps budget). */
   readonly buildMs: number[] = [];
@@ -148,6 +149,7 @@ export class StreamedTown {
     this.levels.set(key(cx, cy, z), level);
     this.root.add(level.root);
     if (this.cut) level.setCutaway(this.cut);
+    level.setRoomLit(this.roomLitOf(key(cx, cy, z)));
     if (this.minute >= 0) level.setMinute(this.minute);
     for (const b of this.broken) {
       const [tx, ty, bz, axis] = b.split(',');
@@ -190,6 +192,26 @@ export class StreamedTown {
   setMinute(minute: number): void {
     this.minute = minute;
     for (const l of this.levels.values()) l.setMinute(minute);
+  }
+
+  /** Windows lit by room lights (`litWindowKeys`: `tx,ty,z,axis`), split per loaded level. */
+  setRoomLit(keys: ReadonlySet<string>): void {
+    this.roomLit = keys;
+    for (const [k, l] of this.levels) l.setRoomLit(this.roomLitOf(k));
+  }
+
+  private roomLitOf(levelKey: string): Set<string> {
+    const out = new Set<string>();
+    for (const w of this.roomLit) {
+      const [tx, ty, z, axis] = w.split(',');
+      const k = key(
+        Math.floor(Number(tx) / CHUNK_SIZE),
+        Math.floor(Number(ty) / CHUNK_SIZE),
+        Number(z),
+      );
+      if (k === levelKey) out.add(`${tx},${ty},${axis}`);
+    }
+    return out;
   }
 
   setWindowBroken(tx: number, ty: number, z: number, axis: 'N' | 'W', broken: boolean): void {

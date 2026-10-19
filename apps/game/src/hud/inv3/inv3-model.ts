@@ -4,6 +4,7 @@
  * stack grouping, the „Stan” column, client-side sorting, the grid fill and drop previews. Pure
  * functions over the game state; the DOM is in `inventory-v3.ts`.
  */
+import { itemViewName } from '../crafting-labels.js';
 import type { ContainerId, ContainerView, EquipSlot, ItemView } from '@deadzone/protocol';
 import type { TooltipItem } from '@deadzone/ui';
 import type { GameState } from '../../state/game-state.js';
@@ -229,7 +230,7 @@ export function itemRowV3(
     def: it.def,
     icon: itemIcon(def),
     ...(image ? { image } : {}),
-    name: craftItemName(it.def),
+    name: itemViewName(it),
     count: it.count,
     weightKg: it.weightKg,
     ...(state ? { state } : {}),

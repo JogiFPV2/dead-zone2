@@ -1,3 +1,4 @@
+import { isStoppableLeisure } from './leisure-actions.js';
 import type { Command, SimEvent, SleepView } from '@deadzone/protocol';
 import type { CommandBody } from '../sim/sim-client.js';
 import type { GameState } from '../state/game-state.js';
@@ -85,7 +86,7 @@ export function createSleepController(opts: SleepControllerOptions): SleepContro
     },
     wake,
     watchTv(vhs) {
-      if (vhs === undefined && opts.state().action?.kind === 'watch') {
+      if (vhs === undefined && isStoppableLeisure(opts.state().action?.kind)) {
         opts.send({ type: 'cancelAction' });
         return;
       }

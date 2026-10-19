@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ContainerView, FurnitureView } from '@deadzone/protocol';
 import { INITIAL_GAME_STATE, type GameState } from '../../state/game-state.js';
-import type { CommandBody } from '../../sim/sim-client.js';
 import { EMPTY_HUD_CONTENT, type HudContentIndex } from '../content-index.js';
 import { DEFAULT_SLEEP_SETTINGS } from '../sleep-settings.js';
 import { FURNITURE_FEATURES, hiddenByFeature } from './furniture-api.js';
@@ -19,7 +18,6 @@ import {
   watchVM,
 } from './furniture-model.js';
 import { SimFurnitureSource } from './sim-source.js';
-import { sleepEntries } from './sleep-entries.js';
 
 const def = (id: string, extra: object) => ({
   id,
@@ -360,19 +358,8 @@ describe('menu model (sim data, generic over typeId)', () => {
 });
 
 describe('sim source', () => {
-  const sofa = { contentId: 'base:sofa', tx: 10, ty: 10, z: 0 };
-  function source(list: FurnitureView[], s = state(), sent: unknown[] = []) {
-    return new SimFurnitureSource({
-      list: () => list,
-      useFurniture: (...a) => sent.push(a),
-      local: sleepEntries({
-        state: () => s,
-        content: () => content,
-        objects: () => [sofa, { contentId: 'base:bed', tx: 40, ty: 10, z: 0 }],
-        player: () => ({ x: 11.5, y: 10.5, z: 0 }),
-        send: (c: CommandBody) => sent.push(c),
-      }),
-    });
+  function source(list: FurnitureView[], sent: unknown[] = []) {
+    return new SimFurnitureSource({ list: () => list, useFurniture: (...a) => sent.push(a) });
   }
 
   it('picks the entry under the cursor: edge centre or object tile, nothing elsewhere', () => {
@@ -399,30 +386,24 @@ describe('sim source', () => {
     expect(fp.at(21.6, 5.5, 0)?.furnitureId).toBe(5);
   });
 
-  it('runs sim entries with useFurniture, beds / sofas with the sleep command', () => {
+  it('runs every entry (doors, beds) with useFurniture: no client-side duplicates', () => {
     const sent: unknown[] = [];
-    const src = source([lockedDoor], state(), sent);
+    const bed: FurnitureView = {
+      furnitureId: 77,
+      typeId: 'bed',
+      contentId: 'base:bed',
+      x: 10.5,
+      y: 10.5,
+      z: 0,
+      actions: [{ id: 'sleep', labelPl: 'Śpij', enabled: true }],
+    };
+    const src = source([lockedDoor, bed], sent);
     src.use(lockedDoor, 'lockpick:31');
-    const bed = src.at(10.5, 10.5, 0)!;
-    expect(bed).toMatchObject({ typeId: 'sofa', contentId: 'base:sofa' });
-    expect(bed.actions[0]).toMatchObject({ id: 'sleep', enabled: true });
-    src.use(bed, 'sleep');
-    expect(sent).toEqual([[4242, 'lockpick:31'], { type: 'sleep' }]);
-    // The far bed is not listed (out of reach).
-    expect(src.at(40.5, 10.5, 0)).toBeUndefined();
-  });
-
-  it('sleep entry: greyed with content reasons (not tired, threat)', () => {
-    expect(source([], state({}, 10)).at(10.5, 10.5, 0)!.actions[0]).toMatchObject({
-      enabled: false,
-      reason: 'not-tired',
-      reasonPl: 'Nie jesteś zmęczony',
-    });
-    expect(source([], state({ threat: 40 })).at(10.5, 10.5, 0)!.actions[0]).toMatchObject({
-      enabled: false,
-      reason: 'threat',
-      reasonPl: 'Zombie w pobliżu',
-    });
+    src.use(src.at(10.5, 10.5, 0)!, 'sleep-until:morning');
+    expect(sent).toEqual([
+      [4242, 'lockpick:31'],
+      [77, 'sleep-until:morning'],
+    ]);
   });
 });
 

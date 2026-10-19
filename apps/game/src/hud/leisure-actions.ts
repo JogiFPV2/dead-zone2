@@ -1,3 +1,4 @@
+import { furnitureActionPl, furnitureTypePl } from '@deadzone/content';
 import type { ActionVM } from '@deadzone/ui';
 import type { GameState } from '../state/game-state.js';
 import { actionProgress } from './hud-model.js';
@@ -9,7 +10,28 @@ import type { HudSleepSettings } from './sleep-settings.js';
 export const SLEEP_ACTION = 'sleep';
 export const TV_ACTION = 'watchTv';
 
-const SLEEP_LABEL = { bed: 'Śpij · łóżko', sofa: 'Śpij · kanapa', floor: 'Śpij na podłodze' };
+/** „Śpij · łóżko” from content labels (`FURNITURE_ACTIONS_PL`, `FURNITURE_TYPES_PL`). */
+const sleepLabel = (surface: 'bed' | 'sofa' | 'floor'): string =>
+  surface === 'floor'
+    ? `${furnitureActionPl('sleep')} na podłodze`
+    : `${furnitureActionPl('sleep')} · ${furnitureTypePl(surface).toLowerCase()}`;
+
+/**
+ * Timed furniture actions shown as a progress button (the TV key / button stops them), labelled
+ * with the content text of the furniture action that started them (`FURNITURE_ACTIONS_PL`).
+ */
+export const BUSY_ACTION_IDS: Readonly<Partial<Record<string, string>>> = {
+  rest: 'rest',
+  listen: 'listen-radio',
+  drinkTap: 'drink-tap',
+  wash: 'wash',
+  shower: 'shower',
+  bath: 'bath',
+};
+
+/** Watching or one of the timed furniture actions above: the TV key cancels it. */
+export const isStoppableLeisure = (kind: string | undefined): boolean =>
+  kind === 'watch' || (kind !== undefined && BUSY_ACTION_IDS[kind] !== undefined);
 
 export interface LeisureKeys {
   sleep: string;
@@ -44,6 +66,20 @@ export function leisureActionVMs(
       },
     ];
   }
+  const busy = s.action ? BUSY_ACTION_IDS[s.action.kind] : undefined;
+  if (busy) {
+    return [
+      {
+        id: TV_ACTION,
+        label: furnitureActionPl(busy),
+        icon: 'info',
+        key: keys.tv,
+        variant: 'primary',
+        enabled: true,
+        progress: Math.round((actionProgress(s, tick) ?? 0) * 50) / 50,
+      },
+    ];
+  }
   const out: ActionVM[] = [];
   const idle = s.action === undefined;
   if (tvNearby(spots, px, py, cfg.tvRadiusTiles)) {
@@ -60,7 +96,7 @@ export function leisureActionVMs(
   if (fatigue >= cfg.minFatigueToSleep) {
     out.push({
       id: SLEEP_ACTION,
-      label: SLEEP_LABEL[sleepSurfaceAt(spots, px, py)],
+      label: sleepLabel(sleepSurfaceAt(spots, px, py)),
       icon: 'bolt',
       key: keys.sleep,
       variant: 'secondary',

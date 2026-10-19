@@ -19,7 +19,7 @@ export interface FurnTile {
 
 /**
  * Where the menu gets its entries and how it runs them (`SimFurnitureSource`: the sim's list
- * plus client-only entries the sim does not list yet, e.g. sleeping on a bed).
+ * plus optional client-only entries; beds are in the sim list since protocol 29).
  */
 export interface FurnitureSource {
   /** Entry under sim point (`x`, `y`) on floor `z`; undefined = nothing there. */

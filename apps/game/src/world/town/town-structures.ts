@@ -1,3 +1,4 @@
+import { isLightNight } from '../lit-windows.js';
 import {
   BatchedMesh,
   Color,
@@ -145,6 +146,8 @@ export class TownStructures {
   private dimmed: BuildingId = NO_BUILDING;
   private key = '-';
   private litMinute = -1;
+  /** Windows of rooms with the light switched on (`tx,ty,axis`; sim `lightsOn`). */
+  private roomLit: ReadonlySet<string> = new Set();
 
   constructor(
     private readonly source: ChunkSource,
@@ -521,12 +524,34 @@ export class TownStructures {
     if (m === this.litMinute) return;
     this.litMinute = m;
     for (const it of this.windows) {
-      const lit = !it.edge.interior && it.edge.skin !== 'burnt' && windowLit(it.seed, m);
+      const lit = this.isLit(it, m);
       if (lit !== it.lit) {
         it.lit = lit;
         this.apply(it);
       }
     }
+  }
+
+  /**
+   * Windows lit by a switched-on room light (`tx,ty,axis` of this level, from `litWindowKeys`):
+   * at night they use the same `-lit` module as the decorative lit windows.
+   */
+  setRoomLit(keys: ReadonlySet<string>): void {
+    this.roomLit = keys;
+    if (this.litMinute < 0) return;
+    for (const it of this.windows) {
+      const lit = this.isLit(it, this.litMinute);
+      if (lit !== it.lit) {
+        it.lit = lit;
+        this.apply(it);
+      }
+    }
+  }
+
+  private isLit(it: EdgeItem, m: number): boolean {
+    if (it.edge.interior || it.edge.skin === 'burnt') return false;
+    if (windowLit(it.seed, m)) return true;
+    return isLightNight(m) && this.roomLit.has(`${it.edge.tx},${it.edge.ty},${it.edge.axis}`);
   }
 
   /** Smashed window (sim `openingChanged` broken): frame without glass. */

@@ -132,7 +132,7 @@ import {
 } from './hud/leisure-spots.js';
 import { FurnitureUi } from './hud/furniture/furniture-ui.js';
 import { SimFurnitureSource } from './hud/furniture/sim-source.js';
-import { sleepEntries } from './hud/furniture/sleep-entries.js';
+import { levelWindowKeys, litWindowKeys } from './world/lit-windows.js';
 import type { SleepSurface } from './hud/sleep-settings.js';
 import { LEVEL_HEIGHT } from './world/instances.js';
 import { loadItemIcons } from './hud/item-icons.js';
@@ -858,6 +858,14 @@ gameState.subscribe((next, prev) => sleep.observe(next, prev));
 const objectsIn = (range: typeof world.range) =>
   consumerLevels(range.z).flatMap((z) => mapObjectsOf(world.source, { ...range, z }));
 let mapObjectList = objectsIn(follow?.range ?? world.range);
+// Room lights seen through windows at night (`view.litWindows`, protocol 34; the sim already
+// leaves out curtained and boarded windows).
+function updateRoomLit(): void {
+  const keys = litWindowKeys(gameState.get().litWindows);
+  streamedTown?.setRoomLit(keys);
+  townStructures?.setRoomLit(levelWindowKeys(keys, world.range.z));
+  for (const l of upperTown) l.setRoomLit(levelWindowKeys(keys, l.z));
+}
 let spots: LeisureSpot[] = [];
 input.on('sleep', () => sleep.toggleSleep());
 input.on('watchTv', () => {
@@ -936,7 +944,8 @@ const loot = createLootWindow({
 });
 // Furniture UI (spec „Meble i czynności (UI)”): RMB menu over furniture / doors / windows
 // (`view.furnitureActions`, run with `useFurniture`), fridge window, watching panel, sleep choice.
-// Beds are not in the sim's list yet: `sleepEntries` adds them on the client (`sleep` command).
+// Beds come from the sim's list too (`sleep`, `sleep-until:*`, protocol 29): the sleep window
+// picks the alarm and runs the matching `useFurniture` action.
 // Multi-tile picking (`footprint` option) is left to the footprint render PR.
 const furniturePlayer = () => {
   const p = snapshots.sample(performance.now(), TICK_MS);
@@ -949,15 +958,6 @@ const furniture = new FurnitureUi({
     useFurniture: (furnitureId, actionId) => {
       sendBody({ type: 'useFurniture', furnitureId, actionId });
     },
-    local: sleepEntries({
-      state: () => gameState.get(),
-      content: () => hudContent,
-      objects: () => mapObjectList,
-      player: furniturePlayer,
-      send: (cmd) => {
-        sleep.track(sendBody(cmd));
-      },
-    }),
   }),
   state: () => gameState.get(),
   content: () => hudContent,
@@ -1677,6 +1677,7 @@ gameState.subscribe((_next, _prev, action) => {
     }
   }
   if (action.type === 'view' && action.view.openings) openings.setStates(action.view.openings);
+  if (action.type === 'view' && action.view.litWindows) updateRoomLit();
   if (action.type === 'events') openings.applyEvents(action.events);
   if (action.type === 'view' && action.view.characters) {
     characters.clear();
