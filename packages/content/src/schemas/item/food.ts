@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { GameMinutesSchema, ItemRefSchema, TagSchema } from '../common/index.js';
+import { FoodSpoiledPoisonLoadSchema, FoodSpoiledSicknessChanceSchema } from './food-spoiled.js';
 import { itemBaseShape } from './base.js';
 import { NutritionSchema } from './nutrition.js';
 import { SpoilageSchema } from './spoilage.js';
@@ -22,6 +23,10 @@ export const FoodItemSchema = z.strictObject({
     cooking: z
       .strictObject({ durationMin: GameMinutesSchema, cookedInto: ItemRefSchema })
       .optional(),
+    /** Szansa 0–1 na chorobę po zjedzeniu zepsutego; brak = `DEFAULT_FOOD_SPOILED_SICKNESS_CHANCE`. */
+    spoiledSicknessChance: FoodSpoiledSicknessChanceSchema.optional(),
+    /** Punkty zatrucia z zepsutego; brak = `DEFAULT_FOOD_SPOILED_POISON_LOAD`. */
+    spoiledPoisonLoad: FoodSpoiledPoisonLoadSchema.optional(),
     /** Pusty pojemnik po zjedzeniu. */
     emptyInto: ItemRefSchema.optional(),
   }),

@@ -37,6 +37,10 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
 - Zombie (`zombieTypes`): opcjonalne `attackReachM` (m, >0, ≤1.5, odstęp od krawędzi ciał; domyślnie
   `DEFAULT_ZOMBIE_ATTACK_REACH_M` = 0.3) i `windupMs` (`{ min, max }`, całkowite ms, min ≤ max; domyślnie
   `DEFAULT_ZOMBIE_WINDUP_MS` = 500–800). Brak pola = sim bierze wartość domyślną.
+- Leki: opcjonalne `medicine` przy każdym przedmiocie: `{ reduceSickness, durationMin }` (punkty choroby 0–100,
+  minuty gry >0; domyślnie `DEFAULT_MEDICINE_REDUCE_SICKNESS` = 30 i `DEFAULT_MEDICINE_DURATION_MIN` = 60).
+- Zepsute jedzenie: w `food` opcjonalne `spoiledSicknessChance` (0–1, domyślnie `DEFAULT_FOOD_SPOILED_SICKNESS_CHANCE` = 0.25)
+  i `spoiledPoisonLoad` (≥0, skala jak zatrucie wodą, domyślnie `DEFAULT_FOOD_SPOILED_POISON_LOAD` = 15). Schemat nie wstawia domyślnych.
 
 ## Miejsca
 

@@ -34,6 +34,10 @@
       "potency": 0.7,
       "durationMin": 1,
       "uses": 10
+    },
+    "medicine": {
+      "reduceSickness": 30,
+      "durationMin": 60
     }
   },
   {
@@ -46,6 +50,10 @@
       "potency": 0.1,
       "durationMin": 1,
       "uses": 30
+    },
+    "medicine": {
+      "reduceSickness": 30,
+      "durationMin": 60
     }
   }
 ]
