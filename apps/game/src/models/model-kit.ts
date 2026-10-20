@@ -74,6 +74,27 @@ export const CONTAINER_MODELS: Record<string, string> = {
 export const PILE_MODEL = 'kenney-furniture/cardboard-box-closed';
 export const PLAYER_MODEL = 'quaternius-characters/casual';
 export const ZOMBIE_MODELS = ['quaternius-characters/worker', 'quaternius-characters/hoodie'];
+/**
+ * `render.style = 'real'` characters (`deadzone-char`, slimmed Quaternius UBC + UAL clips, look
+ * baked to vertex colours, Quaternius bone and clip names). Only loaded with the flag on.
+ */
+export const REAL_PLAYER_MODEL = 'deadzone-char/survivor-m';
+export const REAL_ZOMBIE_MODELS = [
+  'deadzone-char/zombie-m-worker',
+  'deadzone-char/zombie-f-coat',
+  'deadzone-char/zombie-m-tracksuit',
+  'deadzone-char/zombie-f-shirt',
+];
+
+/** Player and zombie model ids of a render style (`default` = today's Quaternius models). */
+export function characterModels(style: 'default' | 'real'): {
+  player: string;
+  zombies: readonly string[];
+} {
+  return style === 'real'
+    ? { player: REAL_PLAYER_MODEL, zombies: REAL_ZOMBIE_MODELS }
+    : { player: PLAYER_MODEL, zombies: ZOMBIE_MODELS };
+}
 
 export interface CharacterTemplate {
   load(): Promise<{ object: Object3D; clips: AnimationClip[] }>;

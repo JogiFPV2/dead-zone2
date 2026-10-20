@@ -44,15 +44,37 @@ export function tintZombie(o: Object3D): void {
   });
 }
 
-/** Zombie character templates (object + clips), tinted. */
+/**
+ * Self-lighting of the realistic characters: their look is baked to vertex colours, which tint
+ * the emissive term in the instanced merge (emissive = colour = white here).
+ */
+export const REAL_CHARACTER_EMISSIVE = 0.12;
+
+/**
+ * Realistic (`deadzone-char`) look: colours are baked. Instanced zombies (`instanced`) get the
+ * subtle self-lighting, tinted by the vertex colours in the merge; a plain SkinnedMesh (player)
+ * gets none, since three.js does not tint emissive by vertex colour (it would grey the outfit).
+ */
+export function lightReal(o: Object3D, instanced = false): void {
+  editMaterials(o, (m) => {
+    if (instanced) m.emissive.copy(m.color);
+    else m.emissive.setRGB(0, 0, 0);
+    m.emissiveIntensity = instanced ? REAL_CHARACTER_EMISSIVE : 0;
+  });
+}
+
+/** Zombie character templates (object + clips), tinted (`ids` = realistic models: baked look). */
 export async function loadZombieTemplates(
   kit: ModelKit,
+  ids: readonly string[] = ZOMBIE_MODELS,
 ): Promise<{ object: Object3D; clips: AnimationClip[] }[]> {
   const out: { object: Object3D; clips: AnimationClip[] }[] = [];
-  for (const id of ZOMBIE_MODELS) {
+  const baked = ids !== ZOMBIE_MODELS;
+  for (const id of ids) {
     try {
       const t = await kit.character(id, PLAYER_HEIGHT);
-      tintZombie(t.object);
+      if (baked) lightReal(t.object, true);
+      else tintZombie(t.object);
       out.push(t);
     } catch (e) {
       console.warn(`zombie model ${id}`, e);

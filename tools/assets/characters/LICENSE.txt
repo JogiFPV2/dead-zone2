@@ -1,0 +1,10 @@
+deadzone-char: realistyczne postacie (render.style = 'real')
+
+Źródła (wszystkie CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/):
+- Universal Base Characters [Standard] - Quaternius, https://quaternius.itch.io/universal-base-characters
+  (ciała Superhero M/K, fryzury, tekstura skóry; License_Standard.txt: CC0)
+- Universal Animation Library [Standard] - Quaternius, https://quaternius.itch.io/universal-animation-library (CC0)
+- Universal Animation Library 2 [Standard] - Quaternius, https://quaternius.itch.io/universal-animation-library-2 (CC0)
+Zmiany Deadzone (Designer), również CC0: wyszczuplenie skalą kości (slim.py), ubrania-powłoki,
+wygląd zapieczony w kolory wierzchołków, rozkład zombie z ziarna, nazwy kości i klipów
+Quaterniusa, usunięte palce, decymacja (build-real.py, simplify.mjs).

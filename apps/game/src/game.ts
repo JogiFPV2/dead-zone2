@@ -144,10 +144,10 @@ import {
   CONTAINER_MODELS,
   ModelKit,
   PILE_MODEL,
-  PLAYER_MODEL,
+  characterModels,
   ktx2For,
 } from './models/model-kit.js';
-import { brighten, loadZombieTemplates } from './models/zombie-views.js';
+import { brighten, lightReal, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
 import { PhysAdapter } from './anim/phys-adapter.js';
@@ -1299,23 +1299,27 @@ void ModelKit.create(renderer).then(async (kit) => {
       });
   }
   try {
-    const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
-    brighten(p.object);
+    const real = realStyle !== undefined;
+    const p = await kit.character(characterModels(real ? 'real' : 'default').player, PLAYER_HEIGHT);
+    if (real) lightReal(p.object);
+    else brighten(p.object);
     addHulls(p.object);
     player.setModel(p.object, p.clips);
-    dressPlayer = (look) => {
-      void import('./creator/player-look.js')
-        .then((m) =>
-          m.dressCharacter(p.object, look, (asset) =>
-            kit.character(asset, PLAYER_HEIGHT).then((t) => t.object),
-          ),
-        )
-        // Outlines for the creator parts too (idempotent).
-        .then(() => addHulls(p.object))
-        .catch((e: unknown) => console.warn('player look', e));
-    };
+    // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
+    if (!real)
+      dressPlayer = (look) => {
+        void import('./creator/player-look.js')
+          .then((m) =>
+            m.dressCharacter(p.object, look, (asset) =>
+              kit.character(asset, PLAYER_HEIGHT).then((t) => t.object),
+            ),
+          )
+          // Outlines for the creator parts too (idempotent).
+          .then(() => addHulls(p.object))
+          .catch((e: unknown) => console.warn('player look', e));
+      };
     // Creator look right away; a loaded save brings its look in view.characterProfile.
-    if (newCharacter) dressPlayer(newCharacter.look);
+    if (newCharacter) dressPlayer?.(newCharacter.look);
     else if (gameState.get().characterProfile) dressFromProfile();
   } catch (e) {
     console.warn('player model', e);
@@ -1328,7 +1332,10 @@ void ModelKit.create(renderer).then(async (kit) => {
       worldRoot.add(animalViews.root);
     })
     .catch((e: unknown) => console.warn('animal models', e));
-  const templates = await loadZombieTemplates(kit);
+  const templates = await loadZombieTemplates(
+    kit,
+    characterModels(realStyle ? 'real' : 'default').zombies,
+  );
   if (templates.length) {
     zombieViews = await InstancedZombies.create(templates, crowd);
     worldRoot.add(zombieViews.root);

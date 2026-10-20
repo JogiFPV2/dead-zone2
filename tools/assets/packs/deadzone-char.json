@@ -1,0 +1,50 @@
+{
+  "id": "deadzone-char",
+  "name": "Postacie realistyczne Deadzone (styl real: ocalali, zombie)",
+  "author": "Quaternius (Universal Base Characters, Universal Animation Library 1+2), wyszczuplenie, ubrania i wygląd: Deadzone (Designer)",
+  "licence": "CC0-1.0",
+  "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "source": "https://quaternius.itch.io/universal-base-characters",
+  "files": [
+    {
+      "path": "characters/survivor-m.glb",
+      "sha256": "2a4ec28b765e34da10e91b863b2f9583263eaead0aeb775efd2b1e11d32ff960",
+      "name": "survivor-m.glb"
+    },
+    {
+      "path": "characters/survivor-f.glb",
+      "sha256": "bee810f3309ca92a37a8a172e7f2d573bd895211fa2bd022c0d3eece15f49965",
+      "name": "survivor-f.glb"
+    },
+    {
+      "path": "characters/zombie-m-worker.glb",
+      "sha256": "391b3131e5c41362c44581d3ee9c8a33f1169c78db70418229210fbdd5138236",
+      "name": "zombie-m-worker.glb"
+    },
+    {
+      "path": "characters/zombie-f-coat.glb",
+      "sha256": "828c5d4b4c8b0d727c2fff6b941c70e45822fbc202cffad08575ed5a8fa8a4c7",
+      "name": "zombie-f-coat.glb"
+    },
+    {
+      "path": "characters/zombie-m-tracksuit.glb",
+      "sha256": "ee6cc9585232921d8e2e75b69472c8ceb3a27787eb2fc135d92b04f1094ac2b7",
+      "name": "zombie-m-tracksuit.glb"
+    },
+    {
+      "path": "characters/zombie-f-shirt.glb",
+      "sha256": "64b632e1fc5c8a1d353adbe8cdd3c3e1873823d2adbe77da3efd7ede4ba3f686",
+      "name": "zombie-f-shirt.glb"
+    }
+  ],
+  "root": "glb",
+  "animated": true,
+  "models": [
+    "survivor-m",
+    "survivor-f",
+    "zombie-m-worker",
+    "zombie-f-coat",
+    "zombie-m-tracksuit",
+    "zombie-f-shirt"
+  ]
+}
