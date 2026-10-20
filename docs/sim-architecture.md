@@ -1657,3 +1657,11 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 - **Linia ciosu** (`meleeLine`, `world/los.ts`): blokują ściany, zamknięte drzwi, płoty, barykady, okna w każdym stanie (także otwarte i rozbite) oraz `wallSegments`. Blokuje też przejście przez narożnik w dowolnej kolejności. Otwarte drzwi przepuszczają. Wcześniej był to `lineOfSight`, więc cios przechodził przez okna.
 - **Stan:** `CombatWorld.zombieHitAt` (koniec zamachu) i `zombieNext` (najwcześniejszy następny zamach) są w haszu. `zombieReady` = tick wejścia w kontakt (dla karty celu „attacking”). Goldeny hasza zaktualizowane świadomie. Zapis bez zmian (`SAVE_VERSION` 3), widok bez zmian, protokół zostaje 39.
 - **Content:** zasięg i zamach są w `zombieTypes` (#287). Bez zmian w simie zostają `combat.zombie.hitChance` 0,7 i `carReachTiles` 0,9 oraz `ai.reachTiles` (luka zatrzymania) 0,15. Jeśli mają iść do contentu, Modules musi dodać `worldSettings.combat.zombie` {`hitChance`, `carReachM`} i `worldSettings.ai.stopGapM`.
+
+### 9.66 Leki na chorobę i zepsute jedzenie (protokół i SAVE_VERSION bez zmian)
+
+- **Lek** (`useItem` na przedmiocie `medical` z samym `reduce_sickness`, np. `base:antibiotics`, `base:vitamins`): bierze się od razu, bez części ciała, zużywa jedno użycie. `takeMedicine` (`survival/poisoning.ts`) dodaje `reduceSickness` rozłożone na `durationMin` minut; dawki się sumują.
+  - Wartości: `medicine {reduceSickness, durationMin}` z contentu, gdy będzie. Fallback: `MEDICINE_REDUCE_SICKNESS` 30 × `potency / 0,5` i `MEDICINE_DURATION_MIN` 60 (`medical.durationMin` to czas czynności, nie działania).
+  - Co minutę (`poisonMinute`) lek zmniejsza najpierw `poisonLoad`, potem `poison`. Nie leczy wirusa zombie.
+- **Zepsute jedzenie:** po zjedzeniu porcji `rotten` rzut `w.rng.health` z `food.spoiledSicknessChance` (fallback 0,25) × modyfikator `food-sickness-chance`; trafienie dodaje `food.spoiledPoisonLoad` (fallback 15) do `poisonLoad`. Każde jedzenie rzuca też `nutrition.sicknessChance` z pełną dawką (`POISONING.dose`), jak picie.
+- **Stan:** `SurvivalWorld.medicine` i `medicineRate` są w zapisie (sekcja survival, stare zapisy = 0) i w haszu tylko gdy niezerowe.

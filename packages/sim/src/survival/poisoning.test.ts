@@ -4,7 +4,7 @@ import { baseContent, runMinutes, send } from '../test/content-fixtures.js';
 import { buildMap } from '../test/fixtures.js';
 import { findItem } from '../test/item-fixtures.js';
 import { objectFurnitureId } from '../furniture/menu.js';
-import { POISONING } from './poisoning.js';
+import { MEDICINE_REDUCE_SICKNESS, POISONING, SPOILED_POISON_LOAD } from './poisoning.js';
 
 const content = await baseContent();
 const DIRTY = 'base:dirty-water-bottle';
@@ -119,5 +119,86 @@ describe('food poisoning from tainted water', () => {
     runMinutes(s, 120);
     expect(sv(s).vitals.health[eid(s)]).toBeGreaterThanOrEqual(POISONING.minHealth - 0.01);
     expect(sv(s).dead[eid(s)]).toBe(0);
+  });
+});
+
+const POTATO = 'base:potato';
+/** Content where the potato (and its `food`) is overridden. */
+function withFood(food: Record<string, unknown>): typeof content {
+  const d = content.items[POTATO]!;
+  if (d.kind !== 'food') throw new Error('potato is food');
+  return {
+    ...content,
+    items: { ...content.items, [POTATO]: { ...d, food: { ...d.food, ...food } } },
+  };
+}
+function eatPotato(s: Sim, rotten: boolean): void {
+  send(s, { type: 'debugGiveItem', itemId: POTATO });
+  s.step();
+  const it = findItem(s, POTATO)!;
+  if (rotten) s.world.items!.items.get(it.id)!.ageMin = 1e6;
+  send(s, { type: 'debugStat', stat: 'hunger', value: 80 });
+  send(s, { type: 'useItem', item: it.id });
+  runMinutes(s, 5);
+}
+const total = (s: Sim) => (sv(s).poisonLoad[eid(s)] ?? 0) + (sv(s).poison[eid(s)] ?? 0);
+
+describe('spoiled food and medicine (docs 9.66)', () => {
+  it('rotten food (chance 1) adds spoiledPoisonLoad; fresh food never; chance 0 never', () => {
+    const a = sim(withFood({ spoiledSicknessChance: 1 }));
+    eatPotato(a, true);
+    expect(total(a)).toBeCloseTo(SPOILED_POISON_LOAD, 3);
+    const fresh = sim(withFood({ spoiledSicknessChance: 1 }));
+    eatPotato(fresh, false);
+    expect(total(fresh)).toBe(0);
+    const never = sim(withFood({ spoiledSicknessChance: 0 }));
+    eatPotato(never, true);
+    expect(total(never)).toBe(0);
+    const custom = sim(withFood({ spoiledSicknessChance: 1, spoiledPoisonLoad: 40 }));
+    eatPotato(custom, true);
+    expect(total(custom)).toBeCloseTo(40, 3);
+  });
+
+  it('food sicknessChance 1 poisons with the full dose', () => {
+    const d = content.items[POTATO]!;
+    if (d.kind !== 'food') throw new Error('food');
+    const s = sim(withFood({ nutrition: { ...d.food.nutrition, sicknessChance: 1 } }));
+    eatPotato(s, false);
+    expect(total(s)).toBeCloseTo(POISONING.dose, 3);
+  });
+
+  it('default rotten chance 0.25 is deterministic per seed', () => {
+    const runs = [sim(), sim()].map((s) => {
+      for (let i = 0; i < 8; i++) eatPotato(s, true);
+      return total(s);
+    });
+    expect(runs[1]).toBe(runs[0]);
+  });
+
+  it('antibiotics lower sickness gradually over the duration, save keeps the hash', () => {
+    const s = sim(withChance(1));
+    sv(s).poison[eid(s)] = 50;
+    send(s, { type: 'debugGiveItem', itemId: 'base:antibiotics' });
+    s.step();
+    const pill = findItem(s, 'base:antibiotics')!;
+    const uses = pill.uses;
+    send(s, { type: 'useItem', item: pill.id });
+    s.step();
+    expect(findItem(s, 'base:antibiotics')!.uses).toBe(uses! - 1);
+    // potency 0.7 → 30 × 0.7 / 0.5 = 42 over 60 min.
+    const dose = (MEDICINE_REDUCE_SICKNESS * 0.7) / 0.5;
+    expect(sv(s).medicine[eid(s)]).toBeCloseTo(dose, 3);
+    runMinutes(s, 20);
+    const mid = sv(s).poison[eid(s)] ?? 0;
+    expect(mid).toBeLessThan(50);
+    expect(mid).toBeGreaterThan(50 - dose);
+    const b = sim(withChance(1), s.save());
+    expect(b.hash()).toBe(s.hash());
+    runMinutes(s, 60);
+    runMinutes(b, 60);
+    expect(b.hash()).toBe(s.hash());
+    expect(sv(s).medicine[eid(s)]).toBe(0);
+    expect(sv(s).poison[eid(s)]).toBeLessThan(50 - dose + 1);
+    expect(sickness(s)).toBe(sv(s).poison[eid(s)]);
   });
 });

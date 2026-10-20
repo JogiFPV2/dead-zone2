@@ -86,6 +86,9 @@ export interface SurvivalWorld {
   /** Food poisoning (`survival/poisoning.ts`, docs 9.60): sickness 0..100 and the dose still to rise. */
   readonly poison: Float32Array;
   readonly poisonLoad: Float32Array;
+  /** Medicine against sickness (docs 9.66): reduction still to apply and its rate per minute; saved. */
+  readonly medicine: Float32Array;
+  readonly medicineRate: Float32Array;
   /** Current sleep: surface (SLEEP_SURFACES index), fatigue recovered, ticks asleep, saved flag. */
   readonly sleepSurface: Uint8Array;
   readonly sleepRecovered: Float32Array;
@@ -146,6 +149,8 @@ export function createSurvivalWorld(
     dirt: new Float32Array(capacity),
     poison: new Float32Array(capacity),
     poisonLoad: new Float32Array(capacity),
+    medicine: new Float32Array(capacity),
+    medicineRate: new Float32Array(capacity),
     sleepSurface: new Uint8Array(capacity),
     sleepRecovered: new Float32Array(capacity),
     sleepTicks: new Uint32Array(capacity),

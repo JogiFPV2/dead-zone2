@@ -58,13 +58,75 @@ export function rollPoisoning(w: SimWorld, eid: number, chance: number): boolean
 }
 
 /**
+ * Spoiled food and medicine (docs 9.66). Content has no such fields yet; when it adds
+ * `food.spoiledSicknessChance` / `food.spoiledPoisonLoad` / `medicine {reduceSickness,
+ * durationMin}` they win over these fallbacks.
+ */
+export const SPOILED_SICKNESS_CHANCE = 0.25;
+export const SPOILED_POISON_LOAD = 15;
+export const MEDICINE_REDUCE_SICKNESS = 30;
+export const MEDICINE_DURATION_MIN = 60;
+
+const num = (v: unknown, d: number): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : d;
+
+/** Rotten food was eaten: chance of a smaller poisoning (load `spoiledPoisonLoad`). */
+export function rollSpoiledFood(w: SimWorld, eid: number, food: unknown): boolean {
+  const s = w.survival;
+  const f = (food ?? {}) as { spoiledSicknessChance?: unknown; spoiledPoisonLoad?: unknown };
+  const chance = num(f.spoiledSicknessChance, SPOILED_SICKNESS_CHANCE);
+  if (!s || !(chance > 0) || s.dead[eid]) return false;
+  const p = Math.min(1, chance * modded(s, eid, ModSlot['food-sickness-chance'], 1));
+  if (p <= 0 || !w.rng.health.chance(p)) return false;
+  const load = num(f.spoiledPoisonLoad, SPOILED_POISON_LOAD);
+  s.poisonLoad[eid] = Math.fround(Math.min(100, (s.poisonLoad[eid] ?? 0) + load));
+  return true;
+}
+
+/**
+ * Takes a dose of medicine: `reduceSickness` (for `reduce_sickness` items without a `medicine`
+ * block scaled by `potency / 0.5`) spread over `durationMin`. Doses stack.
+ */
+export function takeMedicine(
+  s: SurvivalWorld,
+  eid: number,
+  medicine: unknown,
+  potency?: number,
+): void {
+  const m = (medicine ?? {}) as { reduceSickness?: unknown; durationMin?: unknown };
+  let amount = num(m.reduceSickness, MEDICINE_REDUCE_SICKNESS);
+  if (m.reduceSickness === undefined && potency !== undefined) amount *= potency / 0.5;
+  const dur = Math.max(1, num(m.durationMin, MEDICINE_DURATION_MIN));
+  if (!(amount > 0)) return;
+  const total = (s.medicine[eid] ?? 0) + amount;
+  s.medicine[eid] = Math.fround(total);
+  s.medicineRate[eid] = Math.fround(Math.max(s.medicineRate[eid] ?? 0, total / dur));
+}
+
+/**
  * One game minute of poisoning (health step, after the virus): load → poison → recovery,
  * `sickness`, nausea; returns the health to lose this minute (already capped at `minHealth`).
  */
 export function poisonMinute(s: SurvivalWorld, eid: number, virusSickness: number): number {
+  let med = s.medicine[eid] ?? 0;
+  if (med > 0) {
+    // Medicine: lowers the pending load first, then the sickness itself.
+    let r = Math.min(med, s.medicineRate[eid] ?? 0);
+    med -= r;
+    const l = s.poisonLoad[eid] ?? 0;
+    const fromLoad = Math.min(l, r);
+    s.poisonLoad[eid] = Math.fround(l - fromLoad);
+    r -= fromLoad;
+    if (r > 0) s.poison[eid] = Math.fround(Math.max(0, (s.poison[eid] ?? 0) - r));
+    s.medicine[eid] = med > 1e-4 ? Math.fround(med) : 0;
+    if (!s.medicine[eid]) s.medicineRate[eid] = 0;
+  }
   const load = s.poisonLoad[eid] ?? 0;
   const before = s.poison[eid] ?? 0;
-  if (load <= 0 && before <= 0) return 0;
+  if (load <= 0 && before <= 0) {
+    if (med > 0) s.vitals.sickness[eid] = clampStat(virusSickness);
+    return 0;
+  }
   const cfg = poisoningSettings(s);
   let poison = before;
   if (load > 0) {

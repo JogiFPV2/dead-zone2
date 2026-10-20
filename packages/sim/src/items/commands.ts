@@ -5,7 +5,8 @@ import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { interruptActions, newAction, startAction } from '../actions/queue.js';
 import { bodyPartIndex } from '../survival/state.js';
-import { addPieces, carriedItems } from './actions.js';
+import { takeMedicine } from '../survival/poisoning.js';
+import { addPieces, carriedItems, consumeUse } from './actions.js';
 import {
   allowedSlots,
   canReach,
@@ -234,9 +235,22 @@ export function applyItemCommand(
       if (kind === 'literature') return startAction(w, eid, newAction('read', { item: item.id }));
       if (kind === 'vhs') return startAction(w, eid, newAction('watch', { item: item.id }));
       if (kind === 'medical') {
+        const def = defOf(st, item);
+        // Pills against sickness (`reduce_sickness` only, docs 9.66): taken at once, no part.
+        if (
+          def.kind === 'medical' &&
+          def.medical.effects.includes('reduce_sickness') &&
+          !def.medical.effects.includes('stop_bleeding') &&
+          !def.medical.effects.includes('disinfect')
+        ) {
+          if (!w.survival || item.uses <= 0) return 'invalid-state';
+          const med = (def as unknown as { medicine?: unknown }).medicine;
+          takeMedicine(w.survival, eid, med, def.medical.potency);
+          consumeUse(w, item, undefined);
+          return undefined;
+        }
         if (!cmd.part) return 'invalid-target';
         const part = bodyPartIndex(cmd.part);
-        const def = defOf(st, item);
         // Disinfectant only (hydrogen peroxide): the `disinfect` treatment with this item.
         if (def.kind === 'medical' && !def.medical.effects.includes('stop_bleeding'))
           if (def.medical.effects.includes('disinfect'))

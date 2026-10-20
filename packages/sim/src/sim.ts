@@ -644,6 +644,11 @@ export function createSim(input: SimOptions): Sim {
           h.u32(0x9015_0001)
             .f32(s.poison[eid] ?? 0)
             .f32(s.poisonLoad[eid] ?? 0);
+        // Medicine (docs 9.66): only when nonzero.
+        if (s.medicine[eid])
+          h.u32(0x3ed1_0001)
+            .f32(s.medicine[eid] ?? 0)
+            .f32(s.medicineRate[eid] ?? 0);
         h.u32(s.sleepSurface[eid] ?? 0).f32(s.sleepRecovered[eid] ?? 0);
         h.u32(s.sleepTicks[eid] ?? 0).u32(s.sleepSaved[eid] ?? 0);
         // Real sleep time: only when it differs from ×1 (keeps older goldens).

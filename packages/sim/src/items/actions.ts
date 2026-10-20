@@ -13,7 +13,7 @@ import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.
 import { registerHygieneActions } from '../survival/hygiene.js';
 import { registerWaterActions } from '../furniture/water.js';
 import { registerFurnitureMoveActions } from '../physics/furniture.js';
-import { rollPoisoning } from '../survival/poisoning.js';
+import { rollPoisoning, rollSpoiledFood } from '../survival/poisoning.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
@@ -257,6 +257,10 @@ export function registerItemActions(): void {
         const v = w.survival?.vitals.unhappiness;
         if (v) v[eid] = clampStat((v[eid] ?? 0) + burn.unhappiness * portion);
       } else applyNutrition(w, eid, def.food.nutrition, portion);
+      // Spoiled food and `sicknessChance` (docs 9.66): chance of food poisoning.
+      rollPoisoning(w, eid, def.food.nutrition.sicknessChance ?? 0);
+      if (freshness(w.items!, item, gameMinuteAt(w.clock, w.tick)) === 'rotten')
+        rollSpoiledFood(w, eid, def.food);
       consumeUse(w, item, def.food.emptyInto);
     },
   });
