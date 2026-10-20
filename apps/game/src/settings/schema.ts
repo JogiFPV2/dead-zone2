@@ -111,9 +111,13 @@ export interface InventorySortSetting {
   desc: boolean;
 }
 
+/** Ustawienia › Sterowanie › Tryb sterowania: auto-detect, touch controls or mouse + keyboard. */
+export const TOUCH_MODES = ['auto', 'touch', 'mouse'] as const;
+export type TouchModeSetting = (typeof TOUCH_MODES)[number];
+
 export interface Settings {
   version: typeof SETTINGS_VERSION;
-  input: { bindings: Bindings };
+  input: { bindings: Bindings; touchMode: TouchModeSetting };
   interface: InterfaceSettings;
   view: ViewSettings;
   graphics: GraphicsSettings;
@@ -122,7 +126,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
-  input: { bindings: DEFAULT_BINDINGS },
+  input: { bindings: DEFAULT_BINDINGS, touchMode: 'auto' },
   interface: { noiseDisplay: 'loud', showZombieHp: false, targetZombieHp: true },
   view: {
     cameraZoom: 1,
@@ -185,7 +189,12 @@ export function sanitizeSettings(raw: unknown): Settings {
   const da = DEFAULT_SETTINGS.audio;
   return {
     version: SETTINGS_VERSION,
-    input: { bindings: sanitizeBindings(obj(r.input).bindings) },
+    input: {
+      bindings: sanitizeBindings(obj(r.input).bindings),
+      touchMode: (TOUCH_MODES as readonly unknown[]).includes(obj(r.input).touchMode)
+        ? (obj(r.input).touchMode as TouchModeSetting)
+        : 'auto',
+    },
     interface: {
       noiseDisplay: (NOISE_DISPLAYS as readonly unknown[]).includes(ui.noiseDisplay)
         ? (ui.noiseDisplay as NoiseDisplay)

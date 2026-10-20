@@ -216,6 +216,16 @@ export class VehicleController {
     return true;
   }
 
+  /**
+   * Touch tap / long press at a floor point (sim m): the car menu when the targeted car is under
+   * the finger (within `reach` m of its centre), like RMB on desktop.
+   */
+  pressSecondaryAt(x: number, y: number, reach = 2.6): boolean {
+    const car = this.target?.car;
+    if (!car || Math.hypot(car.x - x, car.y - y) > reach) return false;
+    return this.pressSecondary();
+  }
+
   /** R pressed; true = handled (in the car: engine, hold = key). */
   pressReload(now: number): boolean {
     if (this.refuel?.mode === 'pump') {

@@ -5,6 +5,7 @@ import { percent } from '../audio/mix.js';
 import {
   GRAPHICS_STYLES,
   NOISE_DISPLAYS,
+  TOUCH_MODES,
   VIEW_DISTANCE_SETTINGS,
   type GraphicsStyle,
   type NoiseDisplay,
@@ -71,9 +72,15 @@ export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice' | 'uiScale';
 type VolumeId = Exclude<SliderId, 'uiScale'>;
 type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
-type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay';
+type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay' | 'touchMode';
 /** Rows with a button: the screen runs them (Edytuj HUD, Przywróć domyślny układ). */
 export type ButtonId = 'editHud' | 'resetHud';
+
+const TOUCH_MODE_OPTIONS: readonly ChoiceOption[] = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'touch', label: 'Dotyk' },
+  { id: 'mouse', label: 'Mysz' },
+];
 
 const STYLE_LABELS: Record<GraphicsStyle, string> = {
   classic: 'Klasyczny',
@@ -236,6 +243,14 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
     case 'controls':
       return [
         { kind: 'header', label: 'Sterowanie', note: 'zmiana klawiszy wkrótce' },
+        {
+          kind: 'choice',
+          id: 'touchMode',
+          label: 'Tryb sterowania',
+          hint: 'Auto wykrywa telefon lub tablet · zmiana po ponownym wejściu do gry',
+          options: TOUCH_MODE_OPTIONS,
+          value: d.input.touchMode,
+        },
         ...CONTROLS.map(([label, actions]): SettingsRow => ({
           kind: 'info',
           label,
@@ -356,6 +371,10 @@ export function chooseRow(d: Settings, id: ChoiceId, value: string): Settings {
   if (id === 'noiseDisplay') {
     const noiseDisplay = NOISE_DISPLAYS.find((v) => v === value);
     return noiseDisplay ? { ...d, interface: { ...d.interface, noiseDisplay } } : d;
+  }
+  if (id === 'touchMode') {
+    const touchMode = TOUCH_MODES.find((v) => v === value);
+    return touchMode ? { ...d, input: { ...d.input, touchMode } } : d;
   }
   if (id === 'viewDistance') {
     const viewDistance = VIEW_DISTANCE_SETTINGS.find((v) => v === value);

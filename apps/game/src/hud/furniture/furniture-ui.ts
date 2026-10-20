@@ -232,6 +232,16 @@ export class FurnitureUi {
     return true;
   }
 
+  /**
+   * Touch tap on an object: its default action (the first enabled row, as F / Enter in the menu
+   * would run it). A row with a submenu or a dialog opens that instead. False = nothing there.
+   */
+  useDefaultAt(x: number, y: number, z: number, sx: number, sy: number): boolean {
+    if (!this.openAt(x, y, z, sx, sy)) return false;
+    this.run();
+    return true;
+  }
+
   closeMenu(): void {
     if (!this.menu) return;
     this.menu = undefined;

@@ -73,7 +73,7 @@ export function createInteractPrompt(): InteractPrompt {
   const pKey = span('dz-ip__key dz-ip__key--primary');
   const pOpen = span('', 'Otwórz');
   const pSep = span('dz-ip__sep', '/');
-  const pHold = span('');
+  const pHold = span('dz-ip__hold');
   prompt.append(pKey, pOpen, pSep, pHold);
 
   const ring = document.createElement('div');

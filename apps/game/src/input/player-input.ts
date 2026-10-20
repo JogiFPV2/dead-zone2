@@ -5,6 +5,7 @@ import type { CommandStamper } from '../sim/sim-client.js';
 import { worldToSimFloor } from '../sim/coords.js';
 import { clientToNdc, ndcToFloor } from './aim.js';
 import type { InputMap } from './input-map.js';
+import { IDLE_STICK, stickMove, type StickVector } from './touch/virtual-stick.js';
 import { moveDirection, sameMove, type MoveKeys, type MoveVector } from './move-direction.js';
 
 /** Minimum gap between aim commands (one per 20 Hz tick is plenty). */
@@ -37,7 +38,11 @@ export class PlayerInput {
   private pointer: { x: number; y: number } | undefined;
   private lastAim: { x: number; y: number } | undefined;
   private lastAimMs = -Infinity;
+  /** Touch joystick (`TouchControls`); idle = keys decide. */
+  private stick: () => StickVector = () => IDLE_STICK;
   private readonly onPointer = (e: PointerEvent): void => {
+    // Touch aims only from the aim zone (`setTouchAim`), never from a tap or a drag elsewhere.
+    if (e.pointerType === 'touch') return;
     this.pointer = clientToNdc(e.clientX, e.clientY, this.element.getBoundingClientRect());
   };
 
@@ -50,13 +55,25 @@ export class PlayerInput {
     element.addEventListener('pointermove', this.onPointer);
   }
 
+  /** Touch aim zone: aim at this client point (CSS px); `undefined` = no touch aim. */
+  setTouchAim(p: { x: number; y: number } | undefined): void {
+    this.pointer = p ? clientToNdc(p.x, p.y, this.element.getBoundingClientRect()) : undefined;
+  }
+
+  /** Joystick source (touch): while deflected it replaces WASD (`stickMove`, full = run). */
+  setStick(stick: () => StickVector): void {
+    this.stick = stick;
+  }
+
   update(nowMs: number, cameraYaw: number, camera: Camera): void {
-    const move = moveDirection(moveKeys(this.input), cameraYaw);
-    const gait = moveGait(this.input);
+    const v = this.stick();
+    const fromStick = v.mag > 0 ? stickMove(v, cameraYaw) : undefined;
+    const move = fromStick ?? moveDirection(moveKeys(this.input), cameraYaw);
+    const gait = fromStick?.gait ?? moveGait(this.input);
     if (!sameMove(move, this.lastMove) || gait !== this.lastGait) {
-      this.lastMove = move;
+      this.lastMove = { dx: move.dx, dy: move.dy };
       this.lastGait = gait;
-      this.sim.send(this.stamper.stamp({ type: 'move', ...move, gait }));
+      this.sim.send(this.stamper.stamp({ type: 'move', dx: move.dx, dy: move.dy, gait }));
     }
     if (!this.pointer || nowMs - this.lastAimMs < AIM_INTERVAL_MS) return;
     const hit = ndcToFloor(camera, this.pointer.x, this.pointer.y);

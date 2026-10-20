@@ -37,6 +37,11 @@ export class InputMap {
   private readonly held = new Set<InputCode>();
   private suspended = false;
   private readonly handlers = new Map<Action, Set<ActionHandler>>();
+  private readonly releaseHandlers = new Map<Action, Set<() => void>>();
+  /** Actions held by on-screen touch buttons (`holdVirtual`), next to physical codes. */
+  private readonly virtualHeld = new Set<Action>();
+  /** Touch mode: touch pointers are gestures (tap, stick, pinch), not mouse buttons. */
+  private ignoreTouch = false;
   private readonly listeners: [
     EventTarget,
     string,
@@ -53,12 +58,17 @@ export class InputMap {
     this.listen(win, 'keydown', (e) => this.onKey(e as KeyboardEvent, true));
     this.listen(win, 'keyup', (e) => this.onKey(e as KeyboardEvent, false));
     this.listen(win, 'blur', () => this.releaseAll());
-    this.listen(element, 'pointerdown', (e) => this.onButton((e as PointerEvent).button, true));
+    this.listen(element, 'pointerdown', (e) => {
+      const p = e as PointerEvent;
+      if (this.ignoreTouch && p.pointerType === 'touch') return;
+      this.onButton(p.button, true);
+    });
     this.listen(win, 'pointerup', (e) => this.onButton((e as PointerEvent).button, false));
     // Chorded buttons (LMB while RMB is held to aim) fire `pointermove` with `button` ≥ 0, not
     // `pointerdown` / `pointerup` (Pointer Events spec).
     this.listen(element, 'pointermove', (e) => {
       const p = e as PointerEvent;
+      if (this.ignoreTouch && p.pointerType === 'touch') return;
       if (p.button >= 0) this.onButton(p.button, (p.buttons & buttonBit(p.button)) !== 0);
     });
     this.listen(element, 'wheel', (e) => this.onWheel(e as WheelEvent), { passive: false });
@@ -74,6 +84,7 @@ export class InputMap {
   }
 
   isDown(action: Action): boolean {
+    if (this.virtualHeld.has(action)) return true;
     for (const code of this.held) if (this.index.get(code)?.includes(action)) return true;
     return false;
   }
@@ -84,6 +95,36 @@ export class InputMap {
     if (!set) this.handlers.set(action, (set = new Set()));
     set.add(handler);
     return () => set.delete(handler);
+  }
+
+  /** Release handler of an action held by `holdVirtual` (touch buttons); returns unsubscribe. */
+  onRelease(action: Action, handler: () => void): () => void {
+    let set = this.releaseHandlers.get(action);
+    if (!set) this.releaseHandlers.set(action, (set = new Set()));
+    set.add(handler);
+    return () => set.delete(handler);
+  }
+
+  /**
+   * Holds / releases an action from an on-screen (touch) button, as if its key were held: the
+   * press fires `on(action)` handlers once and `isDown` is true until the release, which fires
+   * `onRelease` handlers. Ignored while suspended (releases still go through).
+   */
+  holdVirtual(action: Action, down: boolean): void {
+    if (!down) {
+      if (this.virtualHeld.delete(action)) {
+        for (const h of this.releaseHandlers.get(action) ?? []) h();
+      }
+      return;
+    }
+    if (this.suspended || this.virtualHeld.has(action)) return;
+    this.virtualHeld.add(action);
+    for (const h of this.handlers.get(action) ?? []) h({ action, code: 'Touch', amount: 1 });
+  }
+
+  /** Touch mode: touch pointers no longer count as mouse buttons (see `TouchControls`). */
+  setIgnoreTouchPointers(ignore: boolean): void {
+    this.ignoreTouch = ignore;
   }
 
   /**
@@ -101,13 +142,16 @@ export class InputMap {
 
   releaseAll(): void {
     this.held.clear();
+    for (const a of [...this.virtualHeld]) this.holdVirtual(a, false);
   }
 
   dispose(): void {
     for (const [t, type, fn, opts] of this.listeners) t.removeEventListener(type, fn, opts);
     this.listeners.length = 0;
     this.handlers.clear();
+    this.releaseHandlers.clear();
     this.held.clear();
+    this.virtualHeld.clear();
   }
 
   private listen(t: EventTarget, type: string, fn: EventListener, opts?: AddEventListenerOptions) {

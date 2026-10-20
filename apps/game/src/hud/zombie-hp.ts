@@ -85,6 +85,26 @@ export class ZombieHpLayer {
     return out.sort((a, b2) => a.d - b2.d || a.id - b2.id).map((o) => o.id);
   }
 
+  /** Live zombies on `level` within `maxDist` of (x, z) with their floor positions (auto aim). */
+  positionsNear(
+    x: number,
+    z: number,
+    level: number,
+    maxDist: number,
+  ): { id: number; x: number; z: number }[] {
+    const b = this.buffer;
+    const out: { id: number; x: number; z: number }[] = [];
+    for (let i = 0; i < this.sampledCount; i++) {
+      if (b.anim[i] === SnapshotAnim.dead || (b.hp[i] ?? 1) <= 0) continue;
+      const s = i * CROWD_SAMPLE_STRIDE;
+      if (Math.round(this.sampled[s + 2] ?? 0) !== Math.round(level)) continue;
+      const zx = this.sampled[s] ?? 0;
+      const zz = this.sampled[s + 1] ?? 0;
+      if (Math.hypot(zx - x, zz - z) <= maxDist) out.push({ id: b.slots.idAt(i), x: zx, z: zz });
+    }
+    return out;
+  }
+
   /** Targets the zombie nearest to the floor point (world x/z), or clears the target. */
   pickAt(x: number, z: number): number | undefined {
     const b = this.buffer;

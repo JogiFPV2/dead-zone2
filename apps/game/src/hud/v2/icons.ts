@@ -10,6 +10,18 @@ const PATHS = {
   cross: '<path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   minus: '<path d="M5 12h14"/>',
+  // Touch controls (mockup mobile-controls.png).
+  swords:
+    '<path d="M4 4l11 11M15 15l2.5-1L20 16.5 16.5 20 14 17.5zM20 4L9 15M9 15l-2.5-1L4 16.5 7.5 20 10 17.5z"/>',
+  hand: '<path d="M8 13V6a1.5 1.5 0 013 0v5M11 11V4.5a1.5 1.5 0 013 0V11M14 11V6a1.5 1.5 0 013 0v7c0 4-2.5 7-6 7s-5-2-6.5-4.5L3 12.5a1.5 1.5 0 012.5-1.6L8 13"/>',
+  run: '<circle cx="14" cy="4.5" r="1.8"/><path d="M10 21l2.5-5.5L10 12l3-4 3 3h3M7 10l3-2M12.5 15.5L16 18v3"/>',
+  sneak: '<circle cx="15" cy="6" r="1.8"/><path d="M5 20l4-4 3 1 1-5-4-1-3 3M13 12l4 2 2 4"/>',
+  pause: '<path d="M9 6v12M15 6v12"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  rotate:
+    '<path d="M4 12a8 8 0 0113.7-5.6L20 9M20 4v5h-5"/><rect x="7" y="11" width="10" height="7" rx="1"/>',
+  target:
+    '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
 } as const;
 
 export type ChromeIcon = keyof typeof PATHS;

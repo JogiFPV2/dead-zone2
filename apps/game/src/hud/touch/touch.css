@@ -1,0 +1,245 @@
+/* Touch controls (mockup mobile-controls.png, spec dz-html/mobile/m.html). Everything here is
+   scoped to html.is-touch: the desktop never gets the class, so its look is unchanged. */
+html.is-touch {
+  --dz-safe-l: env(safe-area-inset-left, 0px);
+  --dz-safe-r: env(safe-area-inset-right, 0px);
+  --dz-safe-t: env(safe-area-inset-top, 0px);
+  --dz-safe-b: env(safe-area-inset-bottom, 0px);
+  --dz-touch-bg: rgba(21, 25, 28, 0.55);
+  --dz-touch-line: rgba(220, 225, 228, 0.35);
+  --dz-touch-accent: #d9b64a;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html.is-touch canvas {
+  touch-action: none;
+}
+
+.dz-touch {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  font:
+    700 10px 'JetBrains Mono',
+    ui-monospace,
+    monospace;
+  color: #dfe3e5;
+}
+.dz-touch > * {
+  pointer-events: auto;
+}
+.dz-touch__move {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 44%;
+  height: 62%;
+  touch-action: none;
+}
+.dz-touch__aim {
+  position: absolute;
+  right: 0;
+  top: calc(56px + var(--dz-safe-t));
+  width: 30%;
+  height: 40%;
+  touch-action: none;
+}
+.dz-touch__stick {
+  position: absolute;
+  left: calc(70px + var(--dz-safe-l));
+  bottom: calc(40px + var(--dz-safe-b));
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid rgba(220, 225, 228, 0.4);
+  background: rgba(21, 25, 28, 0.35);
+  pointer-events: none !important;
+  opacity: 0.55;
+}
+.dz-touch__stick[data-active='true'] {
+  bottom: auto;
+  opacity: 1;
+}
+.dz-touch__stick i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -24px 0 0 -24px;
+  border-radius: 50%;
+  background: rgba(220, 225, 228, 0.55);
+}
+.dz-touch__btn {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--dz-touch-bg);
+  border: 2px solid var(--dz-touch-line);
+  color: inherit;
+  font: inherit;
+  text-shadow: 0 1px 4px #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  touch-action: none;
+}
+.dz-touch__btn--attack {
+  border-color: rgba(200, 69, 60, 0.8);
+}
+.dz-touch__btn[data-on] {
+  border-color: var(--dz-touch-accent);
+  color: var(--dz-touch-accent);
+}
+.dz-touch__btn[data-down] {
+  background: rgba(220, 225, 228, 0.25);
+}
+.dz-touch__top {
+  position: absolute;
+  top: calc(6px + var(--dz-safe-t));
+  right: calc(8px + var(--dz-safe-r));
+  display: flex;
+  gap: 6px;
+}
+.dz-touch__pill {
+  box-sizing: border-box;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(21, 25, 28, 0.66);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.dz-touch__rotate {
+  display: none;
+}
+@media (orientation: portrait) {
+  .dz-touch__rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #0d0f11;
+    color: var(--dz-touch-accent);
+    font:
+      700 16px 'JetBrains Mono',
+      ui-monospace,
+      monospace;
+  }
+  .dz-touch__rotate p {
+    margin: 0;
+  }
+  .dz-touch__rotate small {
+    color: #9aa;
+    font-size: 11px;
+  }
+}
+
+/* The desktop HUD on a phone: no key hints, no minimap / long top bar; HP and moodles go to the
+   top-left, quick slots 1–3 to the top bar (44 px), the context menu gets 44 px rows. */
+html.is-touch .dz-topbar,
+html.is-touch .dz-g--minimap,
+html.is-touch .dz-g--hints,
+html.is-touch .dz-lowres,
+html.is-touch .dz-g--weapon {
+  display: none !important;
+}
+html.is-touch .dz-g--status {
+  left: calc(8px + var(--dz-safe-l)) !important;
+  top: calc(6px + var(--dz-safe-t)) !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+html.is-touch .dz-g--hotbar {
+  left: auto !important;
+  right: calc(8px + 3 * 50px + 10px + var(--dz-safe-r)) !important;
+  top: calc(6px + var(--dz-safe-t)) !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+html.is-touch .dz-hotbar > :nth-child(n + 4) {
+  display: none !important;
+}
+html.is-touch .dz-hotbar > * {
+  width: 44px !important;
+  height: 44px !important;
+}
+html.is-touch .dz-fm__row {
+  min-height: 44px;
+}
+html.is-touch .dz-i3__row {
+  min-height: 48px;
+}
+html.is-touch .dz-i3__row {
+  touch-action: none;
+}
+/* Inventory on a phone: both panels side by side under the 56 px top bar, no key legend. */
+html.is-touch .dz-i3__stage {
+  --k: 1;
+}
+html.is-touch .dz-i3__panel {
+  top: calc(56px + var(--dz-safe-t));
+  bottom: calc(8px + var(--dz-safe-b));
+  height: auto;
+  width: calc(50% - 13px - (var(--dz-safe-l) + var(--dz-safe-r)) / 2);
+}
+html.is-touch .dz-i3__panel--own {
+  left: calc(8px + var(--dz-safe-l));
+}
+html.is-touch .dz-i3__panel--box {
+  right: calc(8px + var(--dz-safe-r));
+}
+html.is-touch .dz-i3__keys,
+html.is-touch .dz-fm__mf,
+html.is-touch kbd,
+html.is-touch .dz-key,
+html.is-touch [class*='__key'],
+html.is-touch .dz-ip__sep,
+html.is-touch .dz-ip__hold,
+html.is-touch .dz-i3__vt {
+  display: none !important;
+}
+/* Above every HUD layer and window: the portrait board and the close pill of windows. */
+.dz-touch-top {
+  position: fixed;
+  z-index: 2147483000;
+  pointer-events: none;
+}
+.dz-touch-top > * {
+  pointer-events: auto;
+}
+.dz-touch__close {
+  position: fixed;
+  top: calc(6px + var(--dz-safe-t));
+  left: calc(8px + var(--dz-safe-l));
+  padding: 0 12px;
+  gap: 6px;
+  font:
+    700 11px 'JetBrains Mono',
+    ui-monospace,
+    monospace;
+}
+.dz-touch__close[hidden] {
+  display: none;
+}
+
+/* Inventory grid of the mockup: 48 pt cells, drag after 150 ms (Pointer Events). */
+html.is-touch .dz-i3__grid {
+  grid-template-columns: repeat(auto-fill, 48px);
+  gap: 4px;
+}
+html.is-touch .dz-i3__tile {
+  width: 48px;
+  height: 48px;
+  touch-action: none;
+}

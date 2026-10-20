@@ -8,6 +8,16 @@ import {
 import { CameraRig } from './camera/rig.js';
 import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
+import { TouchControls } from './input/touch/touch-controls.js';
+import { DEFAULT_ZOOM_LIMITS } from './camera/zoom.js';
+import {
+  browserTouchEnv,
+  lockLandscape,
+  pixelRatioFor,
+  touchSettings,
+} from './input/touch/touch-settings.js';
+import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
+import { createTouchHud } from './hud/touch/touch-hud.js';
 import { InteractController } from './hud/v2/interact-controller.js';
 import { createBigMap } from './bigmap/bigmap-view.js';
 import { renderPaper } from './bigmap/paper.js';
@@ -19,7 +29,7 @@ import { PlayerInput } from './input/player-input.js';
 import { SneakToggle } from './input/sneak-toggle.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
-import { createSettingsStore } from './settings/store.js';
+import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './settings/store.js';
 import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
 import { installHudLayout } from './hud/layout/hud-layout-runtime.js';
 import { displayName } from './characters/display-name.js';
@@ -180,8 +190,24 @@ function localStorageOrUndefined(): Storage | undefined {
 const container = document.getElementById('app');
 if (!container) throw new Error('#app not found');
 
+// Phones / tablets (or `?touch=1`, Ustawienia › Sterowanie › Tryb sterowania): touch controls,
+// `quality=low` unless the URL sets it, DPR 1.5–2, landscape where the browser lets us lock it.
+const touchMode = touchSettings(
+  window.location.search,
+  browserTouchEnv(),
+  loadSettings(localStorageOrUndefined()?.getItem(SETTINGS_STORAGE_KEY) ?? null).settings.input
+    .touchMode,
+);
+document.documentElement.classList.toggle('is-touch', touchMode.touch);
 const renderer = new WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(
+  pixelRatioFor(
+    window.devicePixelRatio,
+    touchMode.touch,
+    touchMode.quality ??
+      (new URLSearchParams(window.location.search).get('quality') === 'low' ? 'low' : 'medium'),
+  ),
+);
 container.appendChild(renderer.domElement);
 
 /** The character from the menu (its world, its save slot); none for dev/test URLs. */
@@ -189,6 +215,18 @@ const session = takeSession();
 const settings = createSettingsStore();
 // „Styl grafiki: Realistyczny” (Ustawienia › Grafika) picks the render style; `?style=real|classic` wins.
 const parsedBoot = parseBootOptions(window.location.search, settings.get().graphics.renderStyle);
+if (touchMode.quality) parsedBoot.render.quality = touchMode.quality;
+/** Landscape lock took (`screen.orientation.lock`); otherwise only `touchMode.landscape` says so. */
+let landscapeLocked = false;
+if (touchMode.landscape) {
+  const tryLock = () =>
+    void lockLandscape().then((ok) => {
+      landscapeLocked ||= ok;
+    });
+  tryLock();
+  // Most browsers lock only after a user gesture (or in fullscreen): once more on the first touch.
+  window.addEventListener('pointerdown', tryLock, { once: true });
+}
 // A character plays in its own world: its map and seed.
 const boot = session ? { ...parsedBoot, map: session.character.worldSettings.map } : parsedBoot;
 // Shader info logs force a synchronous compile wait on every new program: dev builds only.
@@ -1022,8 +1060,22 @@ window.addEventListener(
   },
   true,
 );
+/** Touch: the car menu when the tap lands on the targeted car (same menu as RMB). */
+function openCarAtCursor(): boolean {
+  if (!cursorPx) return false;
+  const p = furniturePlayer();
+  if (!p) return false;
+  const ndc = clientToNdc(cursorPx.x, cursorPx.y, {
+    left: 0,
+    top: 0,
+    width: gameRoot.clientWidth,
+    height: gameRoot.clientHeight,
+  });
+  const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, p.z * LEVEL_HEIGHT + 0.5);
+  return !!hit && vehicles.pressSecondaryAt(hit.x, hit.z);
+}
 /** RMB click: the furniture menu for the object under the cursor; false = nothing there. */
-function openFurnitureAtCursor(): boolean {
+function openFurnitureAtCursor(useDefault = false): boolean {
   if (!cursorPx) return false;
   const p = furniturePlayer();
   if (!p) return false;
@@ -1032,7 +1084,10 @@ function openFurnitureAtCursor(): boolean {
   const ndc = clientToNdc(cursorPx.x, cursorPx.y, { left: 0, top: 0, width: w, height: h });
   // Furniture stands up to ~1 m: pick at knee height so the top of a bed / fridge counts.
   const hit = ndcToFloor(worldCamera, ndc.x, ndc.y, p.z * LEVEL_HEIGHT + 0.5);
-  return !!hit && furniture.openAt(hit.x, hit.z, p.z, cursorPx.x, cursorPx.y);
+  if (!hit) return false;
+  return useDefault
+    ? furniture.useDefaultAt(hit.x, hit.z, p.z, cursorPx.x, cursorPx.y)
+    : furniture.openAt(hit.x, hit.z, p.z, cursorPx.x, cursorPx.y);
 }
 const workshop = createWorkshopWindow({
   root: container,
@@ -1627,6 +1682,47 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   cursorPx = { x: e.clientX - r.left, y: e.clientY - r.top };
 });
 renderer.domElement.addEventListener('pointerleave', () => (cursorPx = undefined));
+// `use` (touch) = RMB short click: same release path as the mouse button.
+input.onRelease('secondaryAction', onSecondaryRelease);
+// Touch input layer (no visible UI yet: the touch HUD wires its stick and buttons to this API).
+const touch = touchMode.touch
+  ? new TouchControls({
+      input,
+      element: renderer.domElement,
+      // Tap on an object = its default action; hold 450 ms = its context menu (RMB); the
+      // ground does nothing.
+      tap: (x, y) => {
+        cursorPx = { x, y };
+        if (furniture.open || inventory.open || vehicles.seated) return false;
+        return openCarAtCursor() || openFurnitureAtCursor(true);
+      },
+      longPress: (x, y) => {
+        cursorPx = { x, y };
+        if (furniture.open || inventory.open || vehicles.seated) return false;
+        return openCarAtCursor() || openFurnitureAtCursor();
+      },
+      aim: (p) => playerInput.setTouchAim(p),
+      autoAim: () => {
+        const p = snapshots.sample(performance.now(), TICK_MS);
+        if (!p) return;
+        const near = zombieHp.positionsNear(p.x, p.y, p.z, AUTO_AIM_RANGE);
+        const t = autoAimTarget(p.x, p.y, p.facing, near);
+        if (t) sim.send(stamper.stamp({ type: 'aim', x: t.x, y: t.z }));
+      },
+      zoom: (d) => {
+        if (!container.dataset.modal) rig.zoomByWheel(d);
+      },
+      zoomStep: DEFAULT_ZOOM_LIMITS.step,
+      debug: touchMode.debug,
+      blocked: () => input.isSuspended || !!gameState.get().death,
+    })
+  : undefined;
+if (touch) playerInput.setStick(() => touch.vector());
+const touchHud = touch ? createTouchHud(container, touch) : undefined;
+if (touch && (import.meta.env.DEV || touchMode.debug))
+  Object.assign(window, {
+    __dzTouch: { controls: touch, mode: touchMode, landscapeLocked: () => landscapeLocked },
+  });
 const isGunAiming = (): boolean =>
   hud.firearm() !== undefined &&
   input.isDown('secondaryAction') &&
@@ -1930,6 +2026,7 @@ renderer.setAnimationLoop((time) => {
   }
   // In a car WASD drive (`drive`, vehicle controller), no `move` / `aim`.
   if (!vehicles.seated) playerInput.update(time, rig.targetYaw, worldCamera);
+  touchHud?.update({ sneaking: sneak.sneaking(time) });
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {

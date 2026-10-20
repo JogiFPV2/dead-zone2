@@ -1,4 +1,5 @@
 import './inventory-v3.css';
+import { dragDecision } from '../../input/touch/gestures.js';
 import type { ContainerId } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { InventorySortSetting, InventoryViewMode } from '../../settings/schema.js';
@@ -33,6 +34,9 @@ import {
   type InvSide,
   type InvSort,
 } from './inv3-model.js';
+
+const isTouchUi = (): boolean =>
+  typeof document !== 'undefined' && document.documentElement.classList.contains('is-touch');
 
 /** UI settings the window reads and writes (persisted in `view`). */
 export interface InventoryUiPrefs {
@@ -71,6 +75,7 @@ export interface InventoryWindow {
 }
 
 const DRAG_PX = 6;
+
 const DOUBLE_MS = 350;
 
 const h = <K extends keyof HTMLElementTagNameMap>(
@@ -264,6 +269,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         y: number;
         active: boolean;
         pointer: number;
+        /** Touch press (mobile): drags only after TOUCH_DRAG_HOLD_MS, earlier moves scroll. */
+        touch?: { at: number; y: number };
         target?: InvSectionVM | 'ground' | undefined;
       }
     | undefined;
@@ -272,7 +279,11 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   const send = (cmds: readonly (InvCommand | undefined)[]): void => {
     for (const c of cmds) if (c) opts.send(c);
   };
-  const prefs = (): InventoryUiPrefs => opts.prefs();
+  /** On a phone the inventory is always the 48 pt grid of the mobile mockup (no list toggle). */
+  const prefs = (): InventoryUiPrefs => {
+    const p = opts.prefs();
+    return isTouchUi() ? { ...p, view: 'grid' } : p;
+  };
   const sortOf = (side: InvSide): InventorySortSetting =>
     side === 'own' ? prefs().sort.player : prefs().sort.container;
   const setSort = (side: InvSide, s: InventorySortSetting): void => {
@@ -422,6 +433,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         y: e.clientY,
         active: false,
         pointer: e.pointerId,
+        ...(e.pointerType === 'touch' ? { touch: { at: e.timeStamp, y: e.clientY } } : {}),
       };
     });
     node.addEventListener('contextmenu', (e) => {
@@ -750,7 +762,9 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
           s.action?.kind === 'search'
             ? 'Przeszukiwanie…'
             : tabs.length
-              ? 'Wybierz pojemnik z zakładek (Q / E)'
+              ? isTouchUi()
+                ? 'Wybierz pojemnik z zakładek'
+                : 'Wybierz pojemnik z zakładek (Q / E)'
               : 'Brak pojemnika w zasięgu — podejdź i naciśnij F',
         ),
       );
@@ -904,7 +918,17 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   const onMove = (e: PointerEvent): void => {
     if (!drag || e.pointerId !== drag.pointer) return;
     if (!drag.active) {
-      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < DRAG_PX) return;
+      const moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
+      const t = drag.touch;
+      const go = dragDecision(!!t, t ? e.timeStamp - t.at : 0, moved, DRAG_PX);
+      if (go === 'wait') return;
+      if (go === 'scroll' && t) {
+        // A quick swipe scrolls the list (rows take every touch: `touch-action: none`).
+        const list = (e.target as HTMLElement | null)?.closest<HTMLElement>('.dz-i3__body');
+        if (list) list.scrollTop -= e.clientY - t.y;
+        t.y = e.clientY;
+        return;
+      }
       drag.active = true;
       hideTips();
       const s = opts.state();
