@@ -185,8 +185,11 @@ describe('spoiled food and medicine (docs 9.66)', () => {
     send(s, { type: 'useItem', item: pill.id });
     s.step();
     expect(findItem(s, 'base:antibiotics')!.uses).toBe(uses! - 1);
-    // potency 0.7 → 30 × 0.7 / 0.5 = 42 over 60 min.
-    const dose = (MEDICINE_REDUCE_SICKNESS * 0.7) / 0.5;
+    // Content `medicine.reduceSickness` (#291), else the default × potency / 0.5.
+    const def = content.items['base:antibiotics']!;
+    const m = (def as { medicine?: { reduceSickness?: number } }).medicine;
+    const potency = def.kind === 'medical' ? def.medical.potency : 0.5;
+    const dose = m?.reduceSickness ?? (MEDICINE_REDUCE_SICKNESS * potency) / 0.5;
     expect(sv(s).medicine[eid(s)]).toBeCloseTo(dose, 3);
     runMinutes(s, 20);
     const mid = sv(s).poison[eid(s)] ?? 0;

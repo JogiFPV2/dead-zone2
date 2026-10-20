@@ -1661,7 +1661,7 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 ### 9.66 Leki na chorobę i zepsute jedzenie (protokół i SAVE_VERSION bez zmian)
 
 - **Lek** (`useItem` na przedmiocie `medical` z samym `reduce_sickness`, np. `base:antibiotics`, `base:vitamins`): bierze się od razu, bez części ciała, zużywa jedno użycie. `takeMedicine` (`survival/poisoning.ts`) dodaje `reduceSickness` rozłożone na `durationMin` minut; dawki się sumują.
-  - Wartości: `medicine {reduceSickness, durationMin}` z contentu, gdy będzie. Fallback: `MEDICINE_REDUCE_SICKNESS` 30 × `potency / 0,5` i `MEDICINE_DURATION_MIN` 60 (`medical.durationMin` to czas czynności, nie działania).
+  - Wartości: `medicine {reduceSickness, durationMin}` z contentu (#291, antybiotyki i witaminy: 30 na 60 min). Fallback `DEFAULT_MEDICINE_*` z @deadzone/content: `MEDICINE_REDUCE_SICKNESS` 30 × `potency / 0,5` i `MEDICINE_DURATION_MIN` 60 (`medical.durationMin` to czas czynności, nie działania).
   - Co minutę (`poisonMinute`) lek zmniejsza najpierw `poisonLoad`, potem `poison`. Nie leczy wirusa zombie.
 - **Zepsute jedzenie:** po zjedzeniu porcji `rotten` rzut `w.rng.health` z `food.spoiledSicknessChance` (fallback 0,25) × modyfikator `food-sickness-chance`; trafienie dodaje `food.spoiledPoisonLoad` (fallback 15) do `poisonLoad`. Każde jedzenie rzuca też `nutrition.sicknessChance` z pełną dawką (`POISONING.dose`), jak picie.
 - **Stan:** `SurvivalWorld.medicine` i `medicineRate` są w zapisie (sekcja survival, stare zapisy = 0) i w haszu tylko gdy niezerowe.

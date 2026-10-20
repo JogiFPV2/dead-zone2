@@ -1,3 +1,9 @@
+import {
+  DEFAULT_FOOD_SPOILED_POISON_LOAD,
+  DEFAULT_FOOD_SPOILED_SICKNESS_CHANCE,
+  DEFAULT_MEDICINE_DURATION_MIN,
+  DEFAULT_MEDICINE_REDUCE_SICKNESS,
+} from '@deadzone/content';
 import type { SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
 import { clampStat, modded, type SurvivalWorld } from './state.js';
@@ -58,14 +64,13 @@ export function rollPoisoning(w: SimWorld, eid: number, chance: number): boolean
 }
 
 /**
- * Spoiled food and medicine (docs 9.66). Content has no such fields yet; when it adds
- * `food.spoiledSicknessChance` / `food.spoiledPoisonLoad` / `medicine {reduceSickness,
- * durationMin}` they win over these fallbacks.
+ * Spoiled food and medicine (docs 9.66): `food.spoiledSicknessChance` / `food.spoiledPoisonLoad` /
+ * item `medicine {reduceSickness, durationMin}` from content (#291), else its `DEFAULT_*`.
  */
-export const SPOILED_SICKNESS_CHANCE = 0.25;
-export const SPOILED_POISON_LOAD = 15;
-export const MEDICINE_REDUCE_SICKNESS = 30;
-export const MEDICINE_DURATION_MIN = 60;
+export const SPOILED_SICKNESS_CHANCE = DEFAULT_FOOD_SPOILED_SICKNESS_CHANCE;
+export const SPOILED_POISON_LOAD = DEFAULT_FOOD_SPOILED_POISON_LOAD;
+export const MEDICINE_REDUCE_SICKNESS = DEFAULT_MEDICINE_REDUCE_SICKNESS;
+export const MEDICINE_DURATION_MIN = DEFAULT_MEDICINE_DURATION_MIN;
 
 const num = (v: unknown, d: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? v : d;
