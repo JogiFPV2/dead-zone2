@@ -48,6 +48,10 @@
         "item": "base:big-hiking-bag",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:towel",
+        "weight": 1
       }
     ]
   },
@@ -113,6 +117,19 @@
         "item": "base:lockpick",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:hatchet",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:metal-sheet",
+        "weight": 1
+      },
+      {
+        "item": "base:scrap-metal",
+        "weight": 1
       }
     ]
   }

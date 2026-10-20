@@ -170,6 +170,24 @@
           "min": 1,
           "max": 1
         }
+      },
+      {
+        "item": "base:sterilized-rag",
+        "weight": 2
+      },
+      {
+        "item": "base:mag-field-medicine",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:first-aid-vol-2",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:cleaning-supplies",
+        "weight": 1
       }
     ]
   },
@@ -292,7 +310,18 @@
         "item": "base:cleaning-supplies",
         "weight": 2
       },
-      { "item": "base:garbage-bag", "weight": 2, "count": { "min": 1, "max": 3 } }
+      {
+        "item": "base:garbage-bag",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 1
+      }
     ]
   },
   {
@@ -380,7 +409,7 @@
       {
         "item": "base:antibiotics",
         "weight": 1,
-        "rarity": "uncommon"
+        "rarity": "rare"
       },
       {
         "item": "base:soap",
@@ -393,6 +422,28 @@
       {
         "item": "base:towel",
         "weight": 3
+      },
+      {
+        "item": "base:cleaning-supplies",
+        "weight": 2
+      },
+      {
+        "item": "base:sterilized-rag",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:splint",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:sewing-needle",
+        "weight": 1
+      },
+      {
+        "item": "base:thread",
+        "weight": 1
       }
     ]
   },

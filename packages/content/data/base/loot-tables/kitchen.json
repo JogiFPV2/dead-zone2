@@ -125,6 +125,14 @@
       {
         "item": "base:towel",
         "weight": 2
+      },
+      {
+        "item": "base:cleaning-supplies",
+        "weight": 2
+      },
+      {
+        "item": "base:sheet",
+        "weight": 1
       }
     ],
     "buildingKey": 0.15
@@ -162,7 +170,7 @@
       {
         "item": "base:venison-steak",
         "weight": 1,
-        "rarity": "uncommon"
+        "rarity": "rare"
       },
       {
         "item": "base:raw-fish",
