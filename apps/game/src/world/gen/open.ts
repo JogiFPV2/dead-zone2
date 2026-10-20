@@ -19,7 +19,12 @@ export async function openGeneratedWorld(
 ): Promise<GeneratedWorld | undefined> {
   const raw = generatedMap(name);
   if (!raw) return undefined;
-  const spec = resolveSpec(raw, baseUrl, new URLSearchParams(query).get('osmUrl'));
+  const spec = resolveSpec(
+    raw,
+    baseUrl,
+    new URLSearchParams(query).get('osmUrl'),
+    document.baseURI,
+  );
   const source = await GeneratedWorldSource.open(spec, new ChunkWorker());
   return { spec, source };
 }

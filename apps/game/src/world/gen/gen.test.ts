@@ -80,6 +80,16 @@ describe('generated map registry', () => {
     expect(generatedMap('constructor')).toBeUndefined();
     const spec = resolveSpec(GENERATED_MAPS['osm-stw']!, '/deadzone-play/');
     expect(spec.kind === 'osm-tiles' && spec.url).toBe('/deadzone-play/osm/stw-16km/manifest.json');
+    // Relative base (public build, `--base ./`): absolute against the page, not the worker script.
+    const live = resolveSpec(
+      GENERATED_MAPS['osm-stw']!,
+      './',
+      null,
+      'https://jogifpv2.github.io/deadzone-play/?style=real',
+    );
+    expect(live.kind === 'osm-tiles' && live.url).toBe(
+      'https://jogifpv2.github.io/deadzone-play/osm/stw-16km/manifest.json',
+    );
     const crop = resolveSpec(GENERATED_MAPS['osm-okulickiego']!, '/deadzone-play/');
     expect(crop.kind === 'osm' && crop.url).toBe(
       '/deadzone-play/osm/stw-okulickiego.deadzone-osm-1.json',

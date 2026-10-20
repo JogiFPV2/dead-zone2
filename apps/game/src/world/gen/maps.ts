@@ -43,13 +43,15 @@ export function resolveSpec(
   spec: GeneratedMapSpec,
   baseUrl: string,
   override?: string | null,
+  /** Page URL: a relative base (`vite build --base ./`) is made absolute against it, because the
+   * URL is fetched inside a worker, where relative URLs resolve against the worker script
+   * (`assets/`), not the page. */
+  pageUrl?: string,
 ): GeneratedMapSpec {
   if (spec.kind === 'plan-4') return spec;
   const url = override || spec.url;
-  return {
-    ...spec,
-    url: /^(https?:)?\/\//.test(url) || url.startsWith('/') ? url : `${baseUrl}${url}`,
-  };
+  const joined = /^(https?:)?\/\//.test(url) || url.startsWith('/') ? url : `${baseUrl}${url}`;
+  return { ...spec, url: pageUrl ? new URL(joined, pageUrl).href : joined };
 }
 
 /** Nearest named place (big map „location”, save summary). */
