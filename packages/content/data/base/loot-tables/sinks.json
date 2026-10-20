@@ -35,6 +35,10 @@
       {
         "item": "base:towel",
         "weight": 1
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 1
       }
     ]
   }

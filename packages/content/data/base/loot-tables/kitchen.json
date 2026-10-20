@@ -61,6 +61,14 @@
       {
         "item": "base:soda",
         "weight": 1
+      },
+      {
+        "item": "base:can-opener",
+        "weight": 1
+      },
+      {
+        "item": "base:bottle",
+        "weight": 1
       }
     ]
   },
@@ -132,6 +140,14 @@
       },
       {
         "item": "base:sheet",
+        "weight": 1
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 1
+      },
+      {
+        "item": "base:rubber-hose",
         "weight": 1
       }
     ],

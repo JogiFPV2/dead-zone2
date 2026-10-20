@@ -81,6 +81,10 @@
       {
         "item": "base:rag",
         "weight": 1
+      },
+      {
+        "item": "base:gloves",
+        "weight": 1
       }
     ],
     "buildingKey": 0.1

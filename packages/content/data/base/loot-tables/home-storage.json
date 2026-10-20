@@ -52,6 +52,10 @@
       {
         "item": "base:towel",
         "weight": 1
+      },
+      {
+        "item": "base:gloves",
+        "weight": 2
       }
     ]
   },
@@ -129,6 +133,18 @@
       },
       {
         "item": "base:scrap-metal",
+        "weight": 1
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 2
+      },
+      {
+        "item": "base:battery",
+        "weight": 2
+      },
+      {
+        "item": "base:electronics-scrap",
         "weight": 1
       }
     ]

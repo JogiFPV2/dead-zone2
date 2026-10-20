@@ -188,6 +188,10 @@
       {
         "item": "base:cleaning-supplies",
         "weight": 1
+      },
+      {
+        "item": "base:towel",
+        "weight": 1
       }
     ]
   },
@@ -321,6 +325,36 @@
       {
         "item": "base:flashlight",
         "weight": 1
+      },
+      {
+        "item": "base:can-opener",
+        "weight": 1
+      },
+      {
+        "item": "base:towel",
+        "weight": 1
+      },
+      {
+        "item": "base:bottle",
+        "weight": 1
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 1
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:vitamins",
+        "weight": 1
+      },
+      {
+        "item": "base:mag-home-cooking",
+        "weight": 1,
+        "rarity": "uncommon"
       }
     ]
   },
