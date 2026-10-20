@@ -10,6 +10,7 @@ import {
   TagListSchema,
   TilesSchema,
 } from './common/index.js';
+import { ZombieAttackReachSchema, ZombieWindupMsSchema } from './zombie-attack.js';
 
 export const ZombieTypeSchema = z.strictObject({
   id: ContentIdSchema,
@@ -23,6 +24,10 @@ export const ZombieTypeSchema = z.strictObject({
   }),
   damage: NumberRangeSchema,
   attackCooldownSec: RealSecondsSchema,
+  /** Zasięg ciosu (m) od krawędzi ciał; brak = DEFAULT_ZOMBIE_ATTACK_REACH_M. */
+  attackReachM: ZombieAttackReachSchema.optional(),
+  /** Czas zamachu (ms); brak = DEFAULT_ZOMBIE_WINDUP_MS. */
+  windupMs: ZombieWindupMsSchema.optional(),
   /** Szansa na ugryzienie przy udanym ataku (reszta to zadrapania/rany szarpane). */
   biteChance: FractionSchema,
   /** Zasięg zmysłów. */

@@ -34,6 +34,9 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   `ContentBundle` (Recordy po id: `items`, `recipes`, `skills`, `traits`, `professions`, `moodles`,
   `lootTables`, `zombieTypes`, `containers`, `tiles`, `gameModes`, `stations`, `appearanceParts`, `palettes` oraz `worldSettings`). Mapy są w wyniku walidacji
   (`validatePacks(…).maps`), nie w bundlu.
+- Zombie (`zombieTypes`): opcjonalne `attackReachM` (m, >0, ≤1.5, odstęp od krawędzi ciał; domyślnie
+  `DEFAULT_ZOMBIE_ATTACK_REACH_M` = 0.3) i `windupMs` (`{ min, max }`, całkowite ms, min ≤ max; domyślnie
+  `DEFAULT_ZOMBIE_WINDUP_MS` = 500–800). Brak pola = sim bierze wartość domyślną.
 
 ## Miejsca
 
