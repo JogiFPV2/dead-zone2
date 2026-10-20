@@ -1,5 +1,6 @@
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from '../input/bindings.js';
 import { UI_SCALE_DEFAULT, snapUiScale } from '../ui/ui-scale.js';
+import { RENDER_STYLES, type RenderStyle } from '../render/real/options.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
 export const SETTINGS_VERSION = 4;
@@ -29,6 +30,12 @@ export interface GraphicsSettings {
    * without a version bump: older files lack it and get the default.
    */
   uiScale: number;
+  /**
+   * „Styl grafiki” (Realistyczny, one row with `style`): `default` = Klasyczny (low-poly, today's look), `real` = Realistyczny (PBR
+   * pilot, render/real). Read at game start; `?style=real|classic` overrides it. Added without a
+   * version bump: older files lack it and get the classic look.
+   */
+  renderStyle: RenderStyle;
 }
 
 export const VIEW_DISTANCE_SETTINGS = ['low', 'medium', 'high'] as const;
@@ -136,6 +143,7 @@ export const DEFAULT_SETTINGS: Settings = {
     showFps: false,
     viewDistance: 'medium',
     uiScale: UI_SCALE_DEFAULT,
+    renderStyle: 'default',
   },
   audio: {
     master: 0.8,
@@ -212,6 +220,7 @@ export function sanitizeSettings(raw: unknown): Settings {
         ? (g.viewDistance as ViewDistance)
         : dg.viewDistance,
       uiScale: typeof g.uiScale === 'number' ? snapUiScale(g.uiScale) : dg.uiScale,
+      renderStyle: oneOf(RENDER_STYLES, g.renderStyle, dg.renderStyle),
     },
     audio: {
       master: range(a.master, 0, 1, da.master),

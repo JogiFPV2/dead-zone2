@@ -186,14 +186,16 @@ container.appendChild(renderer.domElement);
 
 /** The character from the menu (its world, its save slot); none for dev/test URLs. */
 const session = takeSession();
-const parsedBoot = parseBootOptions(window.location.search);
+const settings = createSettingsStore();
+// „Styl grafiki: Realistyczny” (Ustawienia › Grafika) picks the render style; `?style=real|classic` wins.
+const parsedBoot = parseBootOptions(window.location.search, settings.get().graphics.renderStyle);
 // A character plays in its own world: its map and seed.
 const boot = session ? { ...parsedBoot, map: session.character.worldSettings.map } : parsedBoot;
 // Shader info logs force a synchronous compile wait on every new program: dev builds only.
 renderer.debug.checkShaderErrors = import.meta.env.DEV && !boot.perf;
 const simSeed = session?.character.worldSeed ?? SIM_SEED;
-// `?style=real` (render.style = 'real'): realistic PBR pilot. Off by default: nothing of it loads
-// and the frame goes through `stylePass` exactly as before.
+// `?style=real` or „Styl grafiki: Realistyczny” (render.style = 'real'): realistic PBR pilot.
+// Off by default: nothing of it loads and the frame goes through `stylePass` exactly as before.
 const realStyle =
   boot.render.style === 'real'
     ? await import('./render/real/real-style.js')
@@ -320,7 +322,6 @@ const floating = new FloatingOrigin();
 const worldRoot = floating.root;
 scene.add(worldRoot);
 for (const o of [...scene.children]) if (o !== worldRoot) worldRoot.add(o);
-const settings = createSettingsStore();
 // Whole settings object (`hud` = the HUD editor layout, deadzone.hudLayout; cloud copy via
 // account/settings-sync.ts when signed in).
 const playerSettings = new LocalPlayerSettingsStore(settings, localStorageOrUndefined());
@@ -431,7 +432,13 @@ settings.subscribe((next, prev) => {
 // Generated maps with the town kit: kit terrain / walls / roofs / doors per streamed chunk.
 const genLayers = genWorld ? await import('./world/gen/streamed-town.js') : undefined;
 const streamedTown =
-  genLayers && townKit ? new genLayers.StreamedTown(streaming.streamer.loaded, townKit) : undefined;
+  genLayers && townKit
+    ? new genLayers.StreamedTown(
+        streaming.streamer.loaded,
+        townKit,
+        realStyle ? (b) => realStyle.buildingShell(b) !== undefined : undefined,
+      )
+    : undefined;
 if (streamedTown) {
   streaming.lod.addNearLayer({
     loadChunk: (cx, cy, z) => streamedTown.loadChunk(cx, cy, z),
@@ -458,6 +465,23 @@ if (genWorld && !stressWorld) {
       });
     })
     .catch((e: unknown) => console.error('Infra models failed to load', e));
+}
+// Realistic style: Designer's blocks, houses, bin shelters and bushes per near chunk (one
+// InstancedMesh per model); shelled buildings hide their kit pieces until the cutaway opens them.
+const realMap = realStyle && townKit && !stressWorld ? realStyle.mapLayer() : undefined;
+if (realStyle && realMap) {
+  const loaded = streaming.streamer.loaded;
+  streaming.lod.addNearLayer({
+    loadChunk: (cx, cy, z) => {
+      const col = z === 0 ? loaded.column(cx, cy) : undefined;
+      if (col) realMap.loadChunk(cx, cy, realStyle.chunkModels(col));
+      return { bytes: 0, triangles: 0 };
+    },
+    unloadChunk: (cx, cy, z) => {
+      if (z === 0) realMap.unloadChunk(cx, cy);
+    },
+  });
+  worldRoot.add(realMap.root);
 }
 const streamedOpenings = genLayers
   ? new genLayers.StreamedOpenings(streaming.streamer.loaded, streamedTown, townKit)
@@ -526,6 +550,8 @@ const worldCamera = camera.clone();
 floating.set(...chunkCorner(startPoint.x, startPoint.y));
 floating.onShift((o) => streaming.mapObjects.setOrigin(o.x, o.z));
 streaming.mapObjects.setOrigin(floating.x, floating.z);
+// Realistic style: dumpsters stand under Designer's bin shelters (their markers stay).
+if (realMap && realStyle?.hasShelters) streaming.mapObjects.setHiddenKinds(['base:dumpster']);
 // „Styl grafiki” (#71): post-process on the same scene, switched live from the settings.
 const stylePass = new GraphicsStylePass(renderer);
 stylePass.setStyle(settings.get().graphics.style);
@@ -780,10 +806,15 @@ worldRoot.add(crowdView.mesh);
 const player = new PlayerView();
 worldRoot.add(player.root);
 // Cars (PLACEHOLDER boxes until models): vehicle snapshot block, interpolated per frame.
-const vehicleView = new VehicleView((variant) => {
-  const types = hudContent.vehicleTypes;
-  return types ? [...types.values()][variant] : undefined;
-}, TICK_MS);
+const vehicleView = new VehicleView(
+  (variant) => {
+    const types = hudContent.vehicleTypes;
+    return types ? [...types.values()][variant] : undefined;
+  },
+  TICK_MS,
+  // Realistic style: Designer's sedan (PBR) instead of the placeholder boxes.
+  realStyle?.sedan(),
+);
 worldRoot.add(vehicleView.root);
 /** Interpolated car poses of this frame (vehicle UI targets and anchors). */
 let carPoses: SnapshotVehicle[] = [];
@@ -1723,7 +1754,12 @@ if (realStyle) {
   floating.onShift((o) => realStyle.setOrigin(o.x, o.z));
   if (boot.pbrDemo) worldRoot.add(realStyle.demo(boot.pbrDemo.x, boot.pbrDemo.z));
   Object.assign(window, {
-    __dzReal: { quality: realStyle.quality, budget: () => realStyle.budget() },
+    __dzReal: {
+      quality: realStyle.quality,
+      budget: () => realStyle.budget(),
+      /** Model instances on the map (blocks, houses, shelters, bushes). */
+      map: () => realMap?.counts(),
+    },
   });
 }
 /** One frame to the screen: the realistic pipeline when on, else the graphics style pass. */
@@ -1942,6 +1978,7 @@ renderer.setAnimationLoop((time) => {
     for (const l of upperTown) l.setCutaway(cut);
     openings.setCutaway(cut);
     mapObjects.setCutaway(cut);
+    realMap?.setCutaway(cut);
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
     if (step) audio.play('sfx', step.id, step.volume);
   }
@@ -1979,6 +2016,7 @@ renderer.setAnimationLoop((time) => {
   lighting.applyCompiled(look, dayCycle.lampLevel(lightMinute));
   realStyle?.afterLighting();
   streamedTown?.setMinute(lightMinute);
+  realMap?.update();
   if (townKit && townStructures) {
     townStructures.setMinute(lightMinute);
     for (const l of upperTown) l.setMinute(lightMinute);

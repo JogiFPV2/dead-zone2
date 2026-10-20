@@ -64,6 +64,11 @@ export interface WorldChunk {
   readonly under?: Uint16Array;
   /** Power lines, railway, catenary (generated maps, render only, world metres). */
   readonly infra?: GenInfra;
+  /**
+   * Scrub and hedges (the sim's `bushes` cover zone, generated maps): rectangles in global
+   * tiles; the realistic style plants bushes there.
+   */
+  readonly bushes?: readonly { x: number; y: number; w: number; h: number }[];
 }
 
 /** One run of a road polyline touching a chunk (chunk-local tiles, flat x, y pairs). */

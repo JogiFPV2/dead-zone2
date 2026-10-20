@@ -1,7 +1,7 @@
 import { DEBUG_STATS, type DebugStat, type SimVehicleSpawn } from '@deadzone/protocol';
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
-import { parseRenderOptions, type RenderOptions } from './render/real/options.js';
+import { parseRenderOptions, type RenderOptions, type RenderStyle } from './render/real/options.js';
 
 /**
  * `test` = generated test map; a generated world (`world/gen/maps.ts`: `osm-stw` = OSM map of
@@ -149,7 +149,7 @@ export function parseTileListParam(value: string | null): { x: number; y: number
 }
 
 /** Parses the URL query (`?map=<base map>`, e.g. `demo-house`, `?crowd=N`, `?spawn=inside`, `?zones=1`). */
-export function parseBootOptions(search: string): BootOptions {
+export function parseBootOptions(search: string, storedStyle?: RenderStyle): BootOptions {
   const q = new URLSearchParams(search);
   const crowd = parseCrowdParam(search);
   const spawnInside = q.get('spawn') === 'inside';
@@ -199,7 +199,8 @@ export function parseBootOptions(search: string): BootOptions {
     stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
     perf: q.get('perf') === '1',
     ...(q.get('footprint') === '1' ? { footprint: true as const } : {}),
-    render: parseRenderOptions(search),
+    // „Styl grafiki: Realistyczny” from the settings unless the URL names a style.
+    render: parseRenderOptions(search, storedStyle),
     ...(demo ? { pbrDemo: { x: Number(demo[1]), z: Number(demo[2]) } } : {}),
   };
 }

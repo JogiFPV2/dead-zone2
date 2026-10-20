@@ -20,6 +20,13 @@ export const KIT_PROP_MODELS: Readonly<Record<string, string>> = {
   'prop-tree-large': 'drzewo-lisciaste',
   'prop-tree-small': 'drzewo-lisciaste',
   'prop-tree-tall': 'drzewo-lisciaste',
+  // Grass tufts of the town decor: Designer's bush in the realistic style.
+  'prop-grass-large': 'krzak',
+};
+
+/** Height (m) a replacing model is fitted to instead of the old prop's height. */
+export const KIT_PROP_HEIGHT: Readonly<Record<string, number>> = {
+  'prop-grass-large': 0.85,
 };
 
 /** Palette cell standing in for a model layer when a model joins the kit batches. */
@@ -57,7 +64,8 @@ export function realTownKit(
   for (const [name, id] of Object.entries(KIT_PROP_MODELS)) {
     const src = models.get(id);
     if (!src || !geometries.has(name)) continue;
-    geometries.set(name, toKitGeometry(src, cellUv, boxHeight(geometries.get(name))));
+    const height = KIT_PROP_HEIGHT[name] ?? boxHeight(geometries.get(name));
+    geometries.set(name, toKitGeometry(src, cellUv, height));
   }
   return {
     geometries,

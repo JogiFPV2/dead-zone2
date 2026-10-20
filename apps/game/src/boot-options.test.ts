@@ -106,6 +106,13 @@ it('parses dev cars (`?car=`) and pumps (`?pump=`)', () => {
   });
 });
 
+it('render style (Styl grafiki: Realistyczny): the stored setting applies unless the URL names one', () => {
+  expect(parseBootOptions('', 'real').render.style).toBe('real');
+  expect(parseBootOptions('?style=classic', 'real').render.style).toBe('default');
+  expect(parseBootOptions('?style=real').render.style).toBe('real');
+  expect(parseBootOptions('').render.style).toBe('default');
+});
+
 it('the newest map is the OSM map of Stalowa Wola (osm-stw)', () => {
   expect(LATEST_MAP).toBe('osm-stw');
   expect(isOldMap('osm-stw')).toBe(false);

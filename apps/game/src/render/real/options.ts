@@ -19,11 +19,20 @@ export const DEFAULT_RENDER: RenderOptions = { style: 'default', quality: 'mediu
 const pick = <T extends string>(list: readonly T[], v: string | null, fallback: T): T =>
   (list as readonly string[]).includes(v ?? '') ? (v as T) : fallback;
 
-/** `?style=real&quality=low|medium|high`; anything else keeps the default look. */
-export function parseRenderOptions(search: string): RenderOptions {
+/** `?style=` values: the render styles plus `classic` for the default look (settings label). */
+function urlStyle(v: string | null): RenderStyle | undefined {
+  if (v === 'classic') return 'default';
+  return (RENDER_STYLES as readonly string[]).includes(v ?? '') ? (v as RenderStyle) : undefined;
+}
+
+/**
+ * `?style=real|classic&quality=low|medium|high`. The URL wins; without `?style=` the stored
+ * setting (Ustawienia › Grafika › Styl grafiki: Realistyczny) decides; anything else keeps the default look.
+ */
+export function parseRenderOptions(search: string, stored?: RenderStyle): RenderOptions {
   const q = new URLSearchParams(search);
   return {
-    style: pick(RENDER_STYLES, q.get('style'), DEFAULT_RENDER.style),
+    style: urlStyle(q.get('style')) ?? stored ?? DEFAULT_RENDER.style,
     quality: pick(REAL_QUALITIES, q.get('quality'), DEFAULT_RENDER.quality),
   };
 }

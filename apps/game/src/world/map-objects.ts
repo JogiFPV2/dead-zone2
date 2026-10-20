@@ -193,6 +193,8 @@ export class MapObjects {
   private readonly markerBatch = new MarkerBatch(this.root, 'map-object-markers');
   /** Furniture footprints (`worldSettings.furniture.footprint`); off = one tile each, as before. */
   private footprints: FurnitureFootprints = FOOTPRINTS_OFF;
+  /** Kinds drawn by another layer (realistic style: dumpsters under bin shelters); markers stay. */
+  private hiddenKinds: ReadonlySet<string> = new Set();
   /** Fitted model tops per model key (fallback surface height when content has none). */
   private readonly tops = new Map<string, number>();
   /** Furniture moved by the sim, over the map data of every chunk loaded later. */
@@ -857,16 +859,24 @@ export class MapObjects {
     for (const o of this.objects) this.applyCutaway(o);
   }
 
+  /** Content ids whose own mesh is not drawn (another layer draws them); markers stay. */
+  setHiddenKinds(ids: readonly string[]): void {
+    this.hiddenKinds = new Set(ids);
+    for (const o of this.objects) this.applyCutaway(o);
+    this.instancesDirty = true;
+  }
+
   private applyCutaway(o: Obj): void {
     const c = this.cutaway;
     o.hidden = isLevelHidden(c, o.building, o.z);
+    const drawn = !o.hidden && !this.hiddenKinds.has(o.contentId);
     if (o.moving) {
       if (o.slots) setSlotsVisible(o.slots, false);
       o.mesh.visible = false;
-      o.moving.view.visible = !o.hidden;
+      o.moving.view.visible = drawn;
     } else if (o.slots) {
-      if (!o.xray) setSlotsVisible(o.slots, !o.hidden);
-    } else o.mesh.visible = !o.hidden;
+      if (!o.xray) setSlotsVisible(o.slots, drawn);
+    } else o.mesh.visible = drawn;
     if (o.xray) o.xray.visible = !o.hidden;
     if (o.hidden) o.marker.visible = false;
   }
@@ -930,7 +940,7 @@ export class MapObjects {
     if (!on && o.xray) {
       this.root.remove(o.xray);
       delete o.xray;
-      if (o.slots) setSlotsVisible(o.slots, !o.hidden);
+      if (o.slots) setSlotsVisible(o.slots, !o.hidden && !this.hiddenKinds.has(o.contentId));
     }
   }
 

@@ -1,4 +1,5 @@
 import {
+  DepthTexture,
   HalfFloatType,
   PMREMGenerator,
   Vector2,
@@ -34,7 +35,8 @@ class ScaledGtaoPass extends GTAOPass {
   }
 
   override render(...args: Parameters<GTAOPass['render']>): void {
-    // The AO G-buffer pass is a second scene render: keep it from redrawing the shadow maps.
+    // Without an external depth the AO G-buffer pass is a second scene render: keep it from
+    // redrawing the shadow maps.
     const r = args[0];
     const auto = r.shadowMap.autoUpdate;
     r.shadowMap.autoUpdate = false;
@@ -63,6 +65,7 @@ export function applyShadowQuality(light: DirectionalLight, q: RealQualityPreset
  */
 export class RealPipeline {
   private composer: EffectComposer | undefined;
+  private ao: ScaledGtaoPass | undefined;
   private env: Texture | undefined;
   private readonly size = new Vector2();
   private lastCalls = 0;
@@ -89,12 +92,17 @@ export class RealPipeline {
         Math.max(1, this.size.y * renderer.getPixelRatio()),
         { type: HalfFloatType, samples: q.msaa },
       );
+      // The RenderPass depth feeds GTAO (normals rebuilt from depth): no second scene render for
+      // the AO G-buffer, which was about a third of the frame's draw calls on medium.
+      target.depthTexture = new DepthTexture(target.width, target.height);
       const c = new EffectComposer(renderer, target);
       c.addPass(new RenderPass(scene, camera));
       const ao = new ScaledGtaoPass(scene, camera, q.ssao.resolutionScale);
+      ao.setGBuffer(target.depthTexture);
       ao.updateGtaoMaterial({ samples: q.ssao.samples, radius: 0.6, distanceFallOff: 1 });
       ao.blendIntensity = 1;
       c.addPass(ao);
+      this.ao = ao;
       c.addPass(new OutputPass());
       this.composer = c;
     }
@@ -114,8 +122,13 @@ export class RealPipeline {
     const auto = r.info.autoReset;
     r.info.autoReset = false;
     r.info.reset();
-    if (this.composer) this.composer.render();
-    else {
+    const c = this.composer;
+    if (c) {
+      // The RenderPass draws into the read buffer: GTAO must sample that buffer's depth.
+      const depth = c.readBuffer.depthTexture;
+      if (this.ao && depth && this.ao.depthTexture !== depth) this.ao.setGBuffer(depth);
+      c.render();
+    } else {
       r.setRenderTarget(null);
       r.render(this.scene, this.camera);
     }

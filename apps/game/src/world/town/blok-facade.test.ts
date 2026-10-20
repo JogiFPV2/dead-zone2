@@ -29,6 +29,10 @@ describe('blok facade', () => {
     const ground = blokBoxes(edges, [], 0, 0, info, out, all);
     expect(ground.filter((b) => b.box.cell === 'blok-canopy').length).toBe(3);
     expect(ground.filter((b) => b.box.cell === 'blok-slab').length).toBe(1); // the step only
+    // The entrance (canopy, step, sign) is flagged: it stays on a block drawn as a model.
+    const entrance = ground.filter((b) => b.entrance);
+    expect(entrance.length).toBe(5);
+    expect(ground.filter((b) => b.box.cell === 'blok-canopy').every((b) => b.entrance)).toBe(true);
     const first = blokBoxes(edges, [], 1, 3, info, out, all);
     const slabs = first.filter((b) => b.box.cell === 'blok-slab');
     expect(slabs.length).toBe(10);

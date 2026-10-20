@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from '../settings/schema.js';
 import {
   activateRow,
   adjustRow,
+  chooseRow,
   isDirty,
   isFocusable,
   setSlider,
@@ -13,8 +14,8 @@ import { SETTINGS_TABS } from './settings-tabs.js';
 
 const ctx = { trackTitle: 'EmptyCity', viewport: { width: 1280, height: 720 } };
 const d = DEFAULT_SETTINGS;
-const row = (tab: Parameters<typeof settingsRows>[0], id: string): FocusableRow =>
-  settingsRows(tab, d, ctx)
+const row = (tab: Parameters<typeof settingsRows>[0], id: string, s = d): FocusableRow =>
+  settingsRows(tab, s, ctx)
     .filter(isFocusable)
     .find((r) => r.id === id)!;
 
@@ -30,12 +31,29 @@ describe('settings rows', () => {
   it('Grafika: style choice cycles and the resolution shows the viewport', () => {
     const style = row('graphics', 'style');
     expect(adjustRow(d, style, 'ArrowRight', false).graphics.style).toBe('outline');
-    expect(adjustRow(d, style, 'ArrowLeft', false).graphics.style).toBe('pixel-fine');
+    expect(adjustRow(d, style, 'ArrowLeft', false).graphics.renderStyle).toBe('real');
     expect(JSON.stringify(settingsRows('graphics', d, ctx))).toContain('Pikselowy ostry');
     expect(activateRow(d, style).graphics.style).toBe('outline');
     const q = row('graphics', 'quality');
     expect(adjustRow(d, q, 'ArrowLeft', false).graphics.pixelRatioCap).toBe(1.5);
     expect(JSON.stringify(settingsRows('graphics', d, ctx))).toContain('1280 × 720');
+  });
+
+  it('Grafika: Styl grafiki also holds Realistyczny (graphics.renderStyle), one row', () => {
+    const rows = settingsRows('graphics', d, ctx);
+    expect(JSON.stringify(rows)).not.toContain('Wygląd świata');
+    const r = row('graphics', 'style');
+    expect(r).toMatchObject({ kind: 'choice', label: 'Styl grafiki', value: 'classic' });
+    expect(JSON.stringify(r)).toContain('Realistyczny');
+    const real = chooseRow(d, 'style', 'real');
+    expect(real.graphics.renderStyle).toBe('real');
+    expect(real.graphics.style).toBe('classic');
+    expect(isDirty(real, d)).toBe(true);
+    expect(row('graphics', 'style', real)).toMatchObject({ value: 'real' });
+    // A low-poly look again switches the realistic style off.
+    const pixel = chooseRow(real, 'style', 'pixel');
+    expect(pixel.graphics).toMatchObject({ style: 'pixel', renderStyle: 'default' });
+    expect(adjustRow(real, r, 'ArrowRight', false).graphics.renderStyle).toBe('default');
   });
 
   it('Grafika: Zasięg widzenia steps Niski / Średni / Wysoki (the ?view= presets)', () => {

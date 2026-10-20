@@ -31,6 +31,17 @@ import { REAL_QUALITY, type RealQualityPreset } from './quality.js';
 import { realTownKit } from './real-kit.js';
 import { loadPbrTextures, pbrTextureFiles } from './textures.js';
 import { DEMO_LAYOUT, type DemoPlacement } from './demo-layout.js';
+import { CHUNK_SIZE } from '../../world/chunk.js';
+import type { WorldChunk } from '../../world/streaming/source.js';
+import {
+  buildingPlacements,
+  bushPlacements,
+  shelterPlacements,
+  type BuildingInfo,
+  type ModelPlacement,
+} from './map-models.js';
+import { RealMapLayer, type ChunkModels } from './real-map-layer.js';
+import { realSedan, type RealCarModel } from './real-car.js';
 
 async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url);
@@ -111,6 +122,50 @@ export class RealStyle {
   /** The town kit in the real style (same geometry Map shape; input untouched). */
   townKit(kit: TownKit): TownKit {
     return realTownKit(kit, this.uniforms, this.models);
+  }
+
+  /** Placements of a building's models when every model it needs is loaded (else the kit). */
+  buildingShell(b: BuildingInfo): ModelPlacement[] | undefined {
+    const list = buildingPlacements(b);
+    return list?.every((p) => this.models.has(p.id)) ? list : undefined;
+  }
+
+  /** The models a streamed chunk column puts on the map (buildings, bin shelters, bushes). */
+  chunkModels(col: WorldChunk): ChunkModels {
+    const buildings = new Map<number, readonly ModelPlacement[]>();
+    for (const b of (col.buildings ?? []) as BuildingInfo[]) {
+      const list = this.buildingShell(b);
+      if (list) buildings.set(b.id, list);
+    }
+    const ox = col.cx * CHUNK_SIZE;
+    const oy = col.cy * CHUNK_SIZE;
+    const objects = (col.levels.get(0)?.objects ?? []).map((o) => ({
+      contentId: o.contentId,
+      tx: ox + o.x,
+      ty: oy + o.y,
+      rot: o.rot,
+    }));
+    const props = [
+      ...shelterPlacements(objects),
+      ...bushPlacements(col.bushes ?? [], this.quality),
+    ];
+    return { buildings, props: props.filter((p) => this.models.has(p.id)) };
+  }
+
+  /** Map layer of the models (one InstancedMesh per model over the near chunks). */
+  mapLayer(): RealMapLayer {
+    return new RealMapLayer(this.models, this.modelMaterial, this.quality !== 'low');
+  }
+
+  /** Whether the bin shelter model is loaded (dumpster grey boxes hide under it). */
+  get hasShelters(): boolean {
+    return this.models.has('smietnik');
+  }
+
+  /** Designer's sedan for the vehicle view, fitted to a car type (undefined: model missing). */
+  sedan(): RealCarModel | undefined {
+    const g = this.models.get('sedan');
+    return g ? realSedan(g, this.modelMaterial) : undefined;
   }
 
   /** Builds the frame pipeline once the scene, camera and sun / moon light exist. */

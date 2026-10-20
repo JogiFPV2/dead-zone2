@@ -85,6 +85,14 @@ const STYLES: readonly ChoiceOption[] = GRAPHICS_STYLES.map((id) => ({
   id,
   label: STYLE_LABELS[id],
 }));
+/**
+ * „Styl grafiki”: the four looks of the low-poly world (post-process, switched live) and the
+ * realistic PBR pilot (render/real, its own pipeline without that pass; applied on reload).
+ * One choice over two fields: `graphics.style` and `graphics.renderStyle`.
+ */
+const STYLE_OPTIONS: readonly ChoiceOption[] = [...STYLES, { id: 'real', label: 'Realistyczny' }];
+const styleValue = (g: Settings['graphics']): string =>
+  g.renderStyle === 'real' ? 'real' : g.style;
 /** „Profil renderowania” = devicePixelRatio cap. */
 const QUALITY: readonly (ChoiceOption & { cap: number })[] = [
   { id: 'low', label: 'Niski', cap: 1 },
@@ -170,9 +178,9 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           kind: 'choice',
           id: 'style',
           label: 'Styl grafiki',
-          hint: 'Zmień wygląd świata bez zmiany zapisu.',
-          options: STYLES,
-          value: d.graphics.style,
+          hint: 'Realistyczny: tekstury PBR (pilot) · działa po ponownym wczytaniu gry',
+          options: STYLE_OPTIONS,
+          value: styleValue(d.graphics),
         },
         {
           kind: 'choice',
@@ -341,8 +349,9 @@ export function toggleRow(d: Settings, id: ToggleId): Settings {
 /** Sets choice `id` to option `value` (unknown options are ignored). */
 export function chooseRow(d: Settings, id: ChoiceId, value: string): Settings {
   if (id === 'style') {
+    if (value === 'real') return { ...d, graphics: { ...d.graphics, renderStyle: 'real' } };
     const style = GRAPHICS_STYLES.find((s) => s === value);
-    return style ? { ...d, graphics: { ...d.graphics, style } } : d;
+    return style ? { ...d, graphics: { ...d.graphics, style, renderStyle: 'default' } } : d;
   }
   if (id === 'noiseDisplay') {
     const noiseDisplay = NOISE_DISPLAYS.find((v) => v === value);

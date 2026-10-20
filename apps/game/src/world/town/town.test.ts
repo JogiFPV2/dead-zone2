@@ -316,4 +316,36 @@ describe('kit opening pieces', () => {
     expect(Math.abs(dir(closed).dot(dir(open)))).toBeLessThan(1e-6);
     expect(new Vector3().applyMatrix4(closed).x).toBeCloseTo(13);
   });
+
+  it('shelled buildings (realistic style) hide their kit pieces until the cutaway opens them', () => {
+    const source = createTestMap();
+    const s = new TownStructures(source, stubKit(), { shelled: (b) => b === TEST_BUILDING_ID });
+    s.loadRange(TEST_MAP_RANGE);
+    const mesh = s.root.children[0] as unknown as {
+      getVisibleAt(i: number): boolean;
+      instanceCount: number;
+    };
+    const visible = () =>
+      Array.from({ length: mesh.instanceCount }, (_, i) => mesh.getVisibleAt(i)).filter(Boolean)
+        .length;
+    const plain = new TownStructures(source, stubKit());
+    plain.loadRange(TEST_MAP_RANGE);
+    const all = (plain.root.children[0] as unknown as { instanceCount: number }).instanceCount;
+    const shut = visible();
+    expect(shut).toBeLessThan(all);
+    // Player inside: the model hides, the kit building shows (cut as usual).
+    s.setCutaway({ building: TEST_BUILDING_ID, tx: 13, ty: 15, side: { sx: 1, sz: 1 } });
+    expect(visible()).toBeGreaterThan(shut);
+    // An occluder opens it too; leaving hides it again.
+    s.setCutaway({ building: 0, tx: 0, ty: 0, side: { sx: 1, sz: 1 } });
+    expect(visible()).toBe(shut);
+    s.setCutaway({
+      building: 0,
+      tx: 0,
+      ty: 0,
+      side: { sx: 1, sz: 1 },
+      occluders: new Set([TEST_BUILDING_ID]),
+    });
+    expect(visible()).toBeGreaterThan(shut);
+  });
 });

@@ -37,6 +37,8 @@ export interface BlokPiece {
   geo: BufferGeometry;
   /** On the roof (hidden with the roof), else hidden with the level. */
   roof: boolean;
+  /** Entrance canopy / step / sign over a real door (kept on a building drawn as a model). */
+  entrance?: true;
 }
 
 /** Klatka module along the block (Designer: 14.4 m per stairwell). */
@@ -181,7 +183,7 @@ export function boxesGeometry(
   return g;
 }
 
-type Out = { building: BuildingId; roof: boolean; box: FrameBox }[];
+type Out = { building: BuildingId; roof: boolean; box: FrameBox; entrance?: true }[];
 
 /** Long axis of a building: unit direction (x, z), its start and length along it, centre. */
 function longAxis(b: BlokInfo): {
@@ -324,6 +326,7 @@ export function blokBoxes(
       nz: e.axis === 'N' ? dir : 0,
     });
     if (e.kind === 'door' && z === 0) {
+      const first = out.length;
       // Entrance: canopy on two posts, step, klatka number.
       put({ u0: -1.2, u1: 2.2, y0: 2.55, y1: 2.7, n0: 0, n1: 1.6, cell: 'blok-canopy' });
       put({ u0: -1.15, u1: -1.0, y0: 0, y1: 2.55, n0: 1.4, n1: 1.55, cell: 'blok-canopy' });
@@ -334,6 +337,7 @@ export function blokBoxes(
         const accent = ACCENTS[(b.seed + e.tx + e.ty) % ACCENTS.length]!;
         put({ u0: -0.8, u1: 1.8, y0: 2.72, y1: WALL_HEIGHT, n0: 0, n1: 0.02, cell: accent });
       }
+      for (let i = first; i < out.length; i++) out[i]!.entrance = true;
     }
     if (b.outline) continue; // slanted: walls, joints and balconies follow the outline below
     const ax = longAxis(b);
@@ -449,15 +453,25 @@ export function blokFacade(
 ): BlokPiece[] {
   const groups = new Map<
     string,
-    { building: BuildingId; roof: boolean; x: number; z: number; boxes: FrameBox[] }
+    {
+      building: BuildingId;
+      roof: boolean;
+      x: number;
+      z: number;
+      boxes: FrameBox[];
+      entrance: true | undefined;
+    }
   >();
   for (const it of blokBoxes(edges, segments, z, baseY, info, outward, inRange)) {
     const [x, zz] = boxCentre(it.box);
     const cx = Math.floor(x / CHUNK_SIZE);
     const cz = Math.floor(zz / CHUNK_SIZE);
-    const k = `${it.building},${it.roof ? 1 : 0},${cx},${cz}`;
+    const k = `${it.building},${it.roof ? 1 : 0},${it.entrance ? 1 : 0},${cx},${cz}`;
     let g = groups.get(k);
-    if (!g) groups.set(k, (g = { building: it.building, roof: it.roof, x, z: zz, boxes: [] }));
+    if (!g) {
+      g = { building: it.building, roof: it.roof, x, z: zz, boxes: [], entrance: it.entrance };
+      groups.set(k, g);
+    }
     g.boxes.push(it.box);
   }
   return [...groups.values()].map((g) => ({
@@ -466,5 +480,6 @@ export function blokFacade(
     x: g.x,
     z: g.z,
     geo: boxesGeometry(g.boxes, uv),
+    ...(g.entrance ? { entrance: true as const } : {}),
   }));
 }

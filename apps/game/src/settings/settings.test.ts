@@ -36,6 +36,7 @@ describe('sanitizeSettings', () => {
       showFps: false,
       viewDistance: 'medium',
       uiScale: 0.9,
+      renderStyle: 'default',
     });
     expect(s.audio).toEqual({
       master: 0,
@@ -239,5 +240,34 @@ describe('Skala interfejsu (graphics.uiScale)', () => {
     expect(ui(2)).toBe(1.2);
     expect(ui(0.83)).toBe(0.85);
     expect(ui(1.0000001)).toBe(1);
+  });
+});
+
+describe('Styl grafiki: Realistyczny (graphics.renderStyle)', () => {
+  it('defaults to the classic look; bad values fall back, files without it load', () => {
+    expect(DEFAULT_SETTINGS.graphics.renderStyle).toBe('default');
+    expect(sanitizeSettings({ graphics: { renderStyle: 'ultra' } }).graphics.renderStyle).toBe(
+      'default',
+    );
+    expect(sanitizeSettings({ graphics: { renderStyle: 'real' } }).graphics.renderStyle).toBe(
+      'real',
+    );
+    const old = { ...DEFAULT_SETTINGS, graphics: { ...DEFAULT_SETTINGS.graphics } } as Record<
+      string,
+      unknown
+    >;
+    delete (old.graphics as Record<string, unknown>).renderStyle;
+    expect(loadSettings(JSON.stringify(old)).settings.graphics.renderStyle).toBe('default');
+  });
+
+  it('persists in localStorage and a new store reads it back', () => {
+    const storage = memoryStorage();
+    new SettingsStore(storage).update((s) => ({
+      ...s,
+      graphics: { ...s.graphics, renderStyle: 'real' },
+    }));
+    const saved = JSON.parse(storage.data.get(SETTINGS_STORAGE_KEY)!) as Settings;
+    expect(saved.graphics.renderStyle).toBe('real');
+    expect(new SettingsStore(storage).get().graphics.renderStyle).toBe('real');
   });
 });

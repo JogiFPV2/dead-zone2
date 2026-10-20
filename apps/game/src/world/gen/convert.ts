@@ -67,12 +67,17 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     pts: r.pts,
     d0: r.d0,
   }));
+  const bushes = col.levels
+    .find((l) => l.z === 0)
+    ?.zones?.filter((zn) => zn.role === 'bushes')
+    .flatMap((zn) => zn.rects);
   return {
     cx: col.cx,
     cy: col.cy,
     levels,
     decor,
     buildings,
+    ...(bushes?.length ? { bushes } : {}),
     ...(roads?.length ? { roads } : {}),
     ...(col.under ? { under: col.under } : {}),
     ...(col.infra ? { infra: col.infra } : {}),

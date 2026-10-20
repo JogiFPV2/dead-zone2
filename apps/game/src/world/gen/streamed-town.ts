@@ -43,6 +43,8 @@ export class StreamedTown {
   constructor(
     private readonly loaded: LoadedChunks,
     private readonly kit: TownKit,
+    /** Realistic style: buildings drawn as a model from outside (kit pieces hidden until cut). */
+    private readonly shellOf?: (b: GenBuildingInfo) => boolean,
   ) {
     this.root.name = 'streamed-town';
     this.lookup = new BuildingLookup(loaded, false);
@@ -109,6 +111,7 @@ export class StreamedTown {
     }
     column.levels++;
     const shared = column.batch;
+    const shellOf = this.shellOf;
     const level = new TownStructures(this.loaded, this.kit, {
       lookup: this.lookup,
       // Every piece of this level (also one poking over the chunk edge) goes into this column.
@@ -121,6 +124,12 @@ export class StreamedTown {
         const m = metas.get(b);
         return m?.outline ? { outline: m.outline, floors: m.floors } : undefined;
       },
+      shelled: shellOf
+        ? (b) => {
+            const m = metas.get(b);
+            return !!m && shellOf(m);
+          }
+        : undefined,
       blokOf: (b) => {
         const m = metas.get(b);
         if (!m || m.kind !== 'block' || m.floors < 3) return undefined;

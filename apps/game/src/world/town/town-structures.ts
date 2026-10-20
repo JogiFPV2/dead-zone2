@@ -22,6 +22,7 @@ import {
   cutawayKey,
   isLevelHidden,
   isEdgeLowered,
+  isOccluder,
   isRoofHidden,
   type Cutaway,
 } from '../cutaway.js';
@@ -67,6 +68,12 @@ export interface TownStructuresOptions {
     ((b: BuildingId) => { outline: readonly number[]; floors: number } | undefined) | undefined;
   /** Streamed worlds: blocks of flats get the Designer's facade (balconies, canopies, roof). */
   blokOf?: ((b: BuildingId) => BlokInfo | undefined) | undefined;
+  /**
+   * Realistic style: buildings drawn as one of Designer's models from outside
+   * (`render/real/map-models.ts`). Their kit pieces stay hidden until the cutaway opens them (the
+   * player's building, an occluder), when the model hides instead.
+   */
+  shelled?: ((b: BuildingId) => boolean) | undefined;
 }
 
 /** A BatchedMesh shared by several `TownStructures` (grown on demand). */
@@ -136,7 +143,10 @@ export class TownStructures {
   private readonly windowIndex = new Map<string, EdgeItem>();
   private readonly roofsByBuilding = new Map<BuildingId, { batch: Batch; instance: number }[]>();
   /** Floor slabs and stair runs of upper levels (hidden with the level). */
-  private readonly slabsByBuilding = new Map<BuildingId, { batch: Batch; instance: number }[]>();
+  private readonly slabsByBuilding = new Map<
+    BuildingId,
+    { batch: Batch; instance: number; keep?: true }[]
+  >();
   /** Level of the loaded range (0 = ground). */
   z = 0;
   private cut: Cutaway = NO_CUTAWAY;
@@ -146,6 +156,8 @@ export class TownStructures {
   private dimmed: BuildingId = NO_BUILDING;
   private key = '-';
   private litMinute = -1;
+  /** Buildings of this level drawn as a model from outside (`opts.shelled`). */
+  private readonly shells = new Set<BuildingId>();
   /** Windows of rooms with the light switched on (`tx,ty,axis`; sim `lightsOn`). */
   private roomLit: ReadonlySet<string> = new Set();
 
@@ -172,6 +184,8 @@ export class TownStructures {
       edge?: TownEdge;
       roof?: BuildingId;
       slab?: BuildingId;
+      /** Kept when the building is drawn as a model (`opts.shelled`): blok entrances. */
+      keep?: true;
     };
     const perChunk = new Map<string, Item[]>();
     const push = (x: number, z: number, item: Item) => {
@@ -357,7 +371,12 @@ export class TownStructures {
           p.z,
           p.roof
             ? { geo: p.geo, m: new Matrix4(), roof: p.building }
-            : { geo: p.geo, m: new Matrix4(), slab: p.building },
+            : {
+                geo: p.geo,
+                m: new Matrix4(),
+                slab: p.building,
+                ...(p.entrance ? { keep: true as const } : {}),
+              },
         );
       }
     }
@@ -449,7 +468,7 @@ export class TownStructures {
         if (it.slab !== undefined) {
           let list = this.slabsByBuilding.get(it.slab);
           if (!list) this.slabsByBuilding.set(it.slab, (list = []));
-          list.push({ batch, instance });
+          list.push({ batch, instance, ...(it.keep ? { keep: true as const } : {}) });
         }
         if (it.roof !== undefined) {
           let list = this.roofsByBuilding.get(it.roof);
@@ -466,6 +485,30 @@ export class TownStructures {
     }
     this.key = '-';
     this.cut = NO_CUTAWAY;
+    this.shells.clear();
+    const shelled = this.opts.shelled;
+    if (shelled) {
+      const all = new Set([
+        ...this.edgesByBuilding.keys(),
+        ...this.roofsByBuilding.keys(),
+        ...this.slabsByBuilding.keys(),
+      ]);
+      for (const b of all) if (b !== NO_BUILDING && shelled(b)) this.shells.add(b);
+      for (const b of this.shells) this.setBuildingVisible(b, false);
+    }
+  }
+
+  /** Every kit piece of building `b` on this level shown / hidden (shelled buildings). */
+  private setBuildingVisible(b: BuildingId, on: boolean): void {
+    for (const it of this.edgesByBuilding.get(b) ?? []) it.batch.mesh.setVisibleAt(it.instance, on);
+    for (const r of this.roofsByBuilding.get(b) ?? []) r.batch.mesh.setVisibleAt(r.instance, on);
+    for (const r of this.slabsByBuilding.get(b) ?? [])
+      if (!r.keep) r.batch.mesh.setVisibleAt(r.instance, on);
+  }
+
+  /** Whether building `b` is drawn by its model (shelled and not opened by the cutaway). */
+  private shellShown(c: Cutaway, b: BuildingId): boolean {
+    return this.shells.has(b) && b !== c.building && !isOccluder(c, b);
   }
 
   /** Lowers the walls / hides the roof of the player's building (only touched buildings). */
@@ -498,7 +541,7 @@ export class TownStructures {
     for (const b of touched) {
       // Levels above the player's are not drawn in the player's building (spec 3.1).
       // Occluders too: cut down to the player's floor.
-      const hidden = isLevelHidden(c, b, this.z);
+      const hidden = isLevelHidden(c, b, this.z) || this.shellShown(c, b);
       const here = this.z === level;
       for (const it of this.edgesByBuilding.get(b) ?? []) {
         it.batch.mesh.setVisibleAt(it.instance, !hidden);
@@ -512,8 +555,10 @@ export class TownStructures {
       for (const r of this.roofsByBuilding.get(b) ?? []) {
         r.batch.mesh.setVisibleAt(r.instance, !hidden && !isRoofHidden(c, b));
       }
+      // Blok entrances stay over the real doors on a building drawn as a model.
+      const levelHidden = isLevelHidden(c, b, this.z);
       for (const r of this.slabsByBuilding.get(b) ?? []) {
-        r.batch.mesh.setVisibleAt(r.instance, !hidden);
+        r.batch.mesh.setVisibleAt(r.instance, r.keep ? !levelHidden : !hidden);
       }
     }
   }

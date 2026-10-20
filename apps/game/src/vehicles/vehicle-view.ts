@@ -22,6 +22,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { SnapshotVehicle } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { HudVehicleType } from '../hud/content-index.js';
+import type { RealCarModel } from '../render/real/real-car.js';
 
 /**
  * PLACEHOLDER cars (no car models yet; Designer sends them later): a low body box, a cabin, four
@@ -58,29 +59,42 @@ wheelGeo.rotateX(Math.PI / 2);
 const wheelMat = new MeshStandardMaterial({ color: 0x1b1d1f, roughness: 0.9 });
 const glassMat = new MeshStandardMaterial({ color: 0x23323b, roughness: 0.2, metalness: 0.3 });
 
-function buildCar(t: HudVehicleType, id: number): CarMesh {
+/** Marks a mesh whose geometry / material belong to someone else (the realistic style's car). */
+const SHARED = 'dzSharedCar';
+
+function buildCar(t: HudVehicleType, id: number, real?: RealCarModel): CarMesh {
   const root = new Group();
   root.name = `car-${id}`;
   const body = new Group();
   root.add(body);
-  const paint = new MeshStandardMaterial({
-    color: PAINT[id % PAINT.length] ?? 0x7a3b2e,
-    roughness: 0.55,
-    metalness: 0.15,
-  });
   const L = t.length;
   const W = t.width;
-  const lower = new Mesh(new BoxGeometry(L, 0.55, W), paint);
-  lower.position.y = WHEEL_R + 0.22;
-  const cabin = new Mesh(new BoxGeometry(L * 0.5, 0.48, W * 0.86), paint);
-  cabin.position.set(-L * 0.06, WHEEL_R + 0.74, 0);
-  const glass = new Mesh(new BoxGeometry(L * 0.52, 0.36, W * 0.88), glassMat);
-  glass.position.copy(cabin.position);
-  glass.position.y -= 0.02;
-  body.add(lower, glass, cabin);
-  for (const m of [lower, cabin]) {
-    m.castShadow = true;
-    m.receiveShadow = true;
+  if (real) {
+    // Realistic style: Designer's sedan (wheels modelled in), shared geometry and material.
+    const car = new Mesh(real.geometryFor(t), real.material);
+    car.name = 'car-pbr';
+    car.castShadow = true;
+    car.receiveShadow = true;
+    car.userData[SHARED] = true;
+    body.add(car);
+  } else {
+    const paint = new MeshStandardMaterial({
+      color: PAINT[id % PAINT.length] ?? 0x7a3b2e,
+      roughness: 0.55,
+      metalness: 0.15,
+    });
+    const lower = new Mesh(new BoxGeometry(L, 0.55, W), paint);
+    lower.position.y = WHEEL_R + 0.22;
+    const cabin = new Mesh(new BoxGeometry(L * 0.5, 0.48, W * 0.86), paint);
+    cabin.position.set(-L * 0.06, WHEEL_R + 0.74, 0);
+    const glass = new Mesh(new BoxGeometry(L * 0.52, 0.36, W * 0.88), glassMat);
+    glass.position.copy(cabin.position);
+    glass.position.y -= 0.02;
+    body.add(lower, glass, cabin);
+    for (const m of [lower, cabin]) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
   }
   const head = new MeshStandardMaterial({
     color: 0xe8e2c8,
@@ -102,12 +116,15 @@ function buildCar(t: HudVehicleType, id: number): CarMesh {
   const wheels: Mesh[] = [];
   const wx = L / 2 - 0.75;
   // FL, FR, RL, RR (nose +x, left = −z in sim terms is +y… local −z is the car's left side).
-  for (const [x, z] of [
-    [wx, -W / 2 + 0.12],
-    [wx, W / 2 - 0.12],
-    [-wx, -W / 2 + 0.12],
-    [-wx, W / 2 - 0.12],
-  ] as const) {
+  // The realistic sedan has its own wheels (no spin / flat tyre in that pilot).
+  for (const [x, z] of real
+    ? []
+    : ([
+        [wx, -W / 2 + 0.12],
+        [wx, W / 2 - 0.12],
+        [-wx, -W / 2 + 0.12],
+        [-wx, W / 2 - 0.12],
+      ] as const)) {
     const wh = new Mesh(wheelGeo, wheelMat);
     wh.position.set(x, WHEEL_R, z);
     wh.castShadow = true;
@@ -127,7 +144,7 @@ function buildCar(t: HudVehicleType, id: number): CarMesh {
 /** Frees a car's own geometry and materials (wheel / glass geometry and materials are shared). */
 function disposeCar(m: CarMesh): void {
   m.root.traverse((o) => {
-    if (!(o instanceof Mesh)) return;
+    if (!(o instanceof Mesh) || o.userData[SHARED]) return;
     const mesh = o as Mesh<BufferGeometry, MeshStandardMaterial>;
     if (mesh.geometry !== wheelGeo) mesh.geometry.dispose();
     const mat = mesh.material;
@@ -238,6 +255,8 @@ export class VehicleView {
   constructor(
     private readonly typeOf: (variant: number) => HudVehicleType | undefined,
     private readonly tickMs: number,
+    /** Realistic style: Designer's sedan instead of the placeholder boxes. */
+    private readonly real?: RealCarModel,
   ) {
     this.root.name = 'vehicles';
     this.root.add(this.target);
@@ -252,7 +271,7 @@ export class VehicleView {
       const t = this.typeOf(v.variant);
       if (!t) continue;
       if (!m) {
-        m = buildCar(t, v.stableId);
+        m = buildCar(t, v.stableId, this.real);
         m.prev = v;
         this.cars.set(v.stableId, m);
         this.root.add(m.root);
@@ -310,6 +329,10 @@ export class VehicleView {
     const pos = new Vector3();
     const color = new Color();
     for (const [variant, cars] of byVariant) {
+      if (this.real) {
+        this.addParkedReal(variant, cars);
+        continue;
+      }
       let g = this.merged.get(variant);
       if (!g) this.merged.set(variant, (g = mergedCar(this.typeOf(variant)!)));
       // Instances relative to the first car: small float32 offsets far from (0, 0).
@@ -339,6 +362,39 @@ export class VehicleView {
         this.parkedMeshes.push(im);
       }
     }
+  }
+
+  /** Realistic style: parked cars of a type as one InstancedMesh of the PBR sedan. */
+  private addParkedReal(variant: number, cars: readonly CarMesh[]): void {
+    const real = this.real;
+    const t = this.typeOf(variant);
+    if (!real || !t) return;
+    const w = { x: 0, y: 0, z: 0 };
+    simToWorld(cars[0]!.cur.x, cars[0]!.cur.y, cars[0]!.cur.z, w);
+    const origin = { ...w };
+    const im = new InstancedMesh(real.geometryFor(t), real.material, cars.length);
+    const mat = new Matrix4();
+    const q = new Quaternion();
+    const up = new Vector3(0, 1, 0);
+    const one = new Vector3(1, 1, 1);
+    const pos = new Vector3();
+    cars.forEach((m, i) => {
+      const p = m.cur;
+      simToWorld(p.x, p.y, p.z, w);
+      mat.compose(
+        pos.set(w.x - origin.x, w.y - origin.y, w.z - origin.z),
+        q.setFromAxisAngle(up, -p.facingRad),
+        one,
+      );
+      im.setMatrixAt(i, mat);
+    });
+    im.name = `parked-cars-pbr-${variant}`;
+    im.position.set(origin.x, origin.y, origin.z);
+    im.castShadow = true;
+    im.receiveShadow = true;
+    im.computeBoundingSphere();
+    this.root.add(im);
+    this.parkedMeshes.push(im);
   }
 
   /** Interpolated pose of car `m` at `now`. */
