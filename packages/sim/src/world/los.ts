@@ -14,16 +14,21 @@ import { stairStepAllowed } from './levels.js';
  * - `sound`: returns the number of muffling edges crossed (walls, closed doors / windows),
  *   capped at `cap`; open doors and broken windows do not count.
  * - Exact walls (`SimChunk.wallSegments`) also block `sight` and `walk` (`crossesSegment`).
+ * - `melee`: a blow from body to body (zombie attacks): any edge that blocks movement or sight
+ *   blocks (walls, closed doors, windows in any state incl. open / broken, fences, barricades),
+ *   also through a corner in either order; tiles do not. Open doorways let it through.
  * - `walk`: an edge blocking movement, a void tile, a furniture tile (footprint flag) or stepping onto / off a flight of stairs
  *   other than along it through the entrance blocks (straight-line walkability for AI).
  */
 
-const Mode = { Sight: 0, Sound: 1, Walk: 2 } as const;
+const Mode = { Sight: 0, Sound: 1, Walk: 2, Melee: 3 } as const;
 type Mode = (typeof Mode)[keyof typeof Mode];
 
 let crossed = 0;
 
 function edgeBlocks(f: number, mode: Mode): boolean {
+  // Melee: open / broken windows are `slow` (climb through), so they block a blow too.
+  if (mode === Mode.Melee) return (f & (EF.blocksSight | EF.blocksMove | EF.slow)) !== 0;
   return (f & (mode === Mode.Sight ? EF.blocksSight : EF.blocksMove)) !== 0;
 }
 
@@ -58,6 +63,7 @@ function step(
     return false;
   }
   if (edgeBlocks(f, mode)) return true;
+  if (mode === Mode.Melee) return false;
   if (mode !== Mode.Walk) return grid.blocksSightTile(tx + sx, ty + sy, z);
   if (grid.isBlocked(tx + sx, ty + sy, z)) return true;
   // Flights of stairs: only along them through the entrance (physics blocks the sides).
@@ -115,7 +121,7 @@ function trace(
       } else {
         const a = step(grid, z, tx, ty, sx, 0, mode) || step(grid, z, tx + sx, ty, 0, sy, mode);
         const b = step(grid, z, tx, ty, 0, sy, mode) || step(grid, z, tx, ty + sy, sx, 0, mode);
-        if (mode === Mode.Walk ? a || b : a && b) return false;
+        if (mode === Mode.Walk || mode === Mode.Melee ? a || b : a && b) return false;
       }
       tx += sx;
       ty += sy;
@@ -149,6 +155,17 @@ export const walkableLine = (
   y1: number,
 ): boolean =>
   trace(grid, z, x0, y0, x1, y1, Mode.Walk, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+
+/** A melee blow can land along this line (no wall, window, closed door or exact wall). */
+export const meleeLine = (
+  grid: TileGrid,
+  z: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): boolean =>
+  trace(grid, z, x0, y0, x1, y1, Mode.Melee, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
 
 const orient = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number): number =>
   (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);

@@ -270,6 +270,8 @@ export function despawnZombie(w: SimWorld, eid: number): void {
   const qi = ai.pathQueue.indexOf(eid);
   if (qi >= 0) ai.pathQueue.splice(qi, 1);
   ai.combat.zombieReady[eid] = 0;
+  ai.combat.zombieHitAt[eid] = 0;
+  ai.combat.zombieNext[eid] = 0;
   ai.zombieCount--;
   for (const comp of Object.values(w.c)) {
     if (hasComponent(w.ecs, eid, comp)) removeComponent(w.ecs, eid, comp);

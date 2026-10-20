@@ -127,7 +127,7 @@ describe('combat: zombie attacks', () => {
   it('a zombie in reach wounds the player; death by zombie reports days survived and kills', () => {
     const sim = aiSim({ zombies: [{ x: 11.2, y: 10.5 }], clock: { day: 3, hour: 12, minute: 0 } });
     runTicks(sim, 5);
-    send(sim, { type: 'debugStat', stat: 'health', value: 30 });
+    send(sim, { type: 'debugStat', stat: 'health', value: 5 });
     const all: SimEvent[] = [];
     for (let i = 0; i < 2000 && sim.getSurvival()!.alive; i++) {
       sim.step();

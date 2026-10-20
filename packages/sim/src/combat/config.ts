@@ -27,8 +27,11 @@ export interface CombatConfig {
   };
   /** `combat.attackNoise`: noise of a swing when the weapon has no `hitNoise`. */
   attackNoise: { radiusTiles: number; volume: number };
-  /** `combat.zombie`: hit chance of a zombie attack and reach beyond the colliders. */
-  zombie: { hitChance: number; reachTiles: number; windupSec: number };
+  /**
+   * `combat.zombie`: hit chance of a zombie attack and the reach to a car's box when the target
+   * sits in it (0.9). Contact gap and wind-up come per zombie type (`attackReachM`, `windupMs`).
+   */
+  zombie: { hitChance: number; carReachTiles: number };
   /** `combat.zombieWoundWeights`: non-bite wound kinds of a successful zombie hit. */
   zombieWoundWeights: { scratch: number; laceration: number };
   /** Snapshot `anim = attack` this long after a swing. */
@@ -71,7 +74,7 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   critMul: 2,
   shove: { rangeTiles: 1.2, cooldownSec: 0.8, staminaCost: 4 },
   attackNoise: { radiusTiles: 4, volume: 0.3 },
-  zombie: { hitChance: 0.7, reachTiles: 0.9, windupSec: 0.5 },
+  zombie: { hitChance: 0.7, carReachTiles: 0.9 },
   zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },
   attackAnimSec: 0.4,
   meleeXpPerHit: 1,

@@ -13,6 +13,8 @@ export function hashCombat(w: SimWorld, h: HashWriter): void {
       .u32(cb.readyTick[eid] ?? 0)
       .u32(cb.swingTick[eid] ?? 0)
       .u32(cb.zombieReady[eid] ?? 0)
+      .u32(cb.zombieHitAt[eid] ?? 0)
+      .u32(cb.zombieNext[eid] ?? 0)
       .u32(cb.kills[eid] ?? 0)
       .f32(Zombie.hp[eid] ?? 0)
       .f32(w.c.Position.x[eid] ?? 0)

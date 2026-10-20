@@ -1,3 +1,4 @@
+import { DEFAULT_ZOMBIE_ATTACK_REACH_M } from '@deadzone/content';
 import { describe, expect, it } from 'vitest';
 import { send } from '../test/content-fixtures.js';
 import { findItem, rejectedReasons } from '../test/item-fixtures.js';
@@ -43,8 +44,9 @@ describe('ai: chase and losing the target', () => {
     const p = sim.getPlayer()!;
     const d = Math.sqrt((z.x - p.x) ** 2 + (z.y - p.y) ** 2);
     expect(z.state).toBe('chase');
-    expect(d).toBeLessThan(DEFAULT_STAGE4_CONFIG.ai.reachTiles + 0.35);
-    expect(d).toBeGreaterThan(0.5);
+    // Stops in contact: body gap (centres minus 2 × 0.3 radius) ≥ 0 and ≤ the attack gap 0.3.
+    expect(d - 0.6).toBeGreaterThanOrEqual(-0.05);
+    expect(d - 0.6).toBeLessThanOrEqual(DEFAULT_ZOMBIE_ATTACK_REACH_M);
     expect(sim.getSurvival()!.stats.health).toBeLessThan(100);
   });
 });

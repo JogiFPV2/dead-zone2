@@ -20,8 +20,12 @@ export interface CombatWorld {
   readonly readyTick: Uint32Array;
   /** Player or zombie: tick of the last swing (snapshot `anim = attack`). */
   readonly swingTick: Uint32Array;
-  /** Zombie: tick of its next attack while in reach (0 = not in reach). */
+  /** Zombie: tick it got into contact with its target (0 = not in contact; target card). */
   readonly zombieReady: Uint32Array;
+  /** Zombie: tick its current swing lands (wind-up running; 0 = no swing). */
+  readonly zombieHitAt: Uint32Array;
+  /** Zombie: earliest tick of its next swing (`attackCooldownSec` after the last one). */
+  readonly zombieNext: Uint32Array;
   /** Player: zombies killed (`zombies-killed` counter for traits). */
   readonly kills: Uint32Array;
   /** Player: reload / magazine loading ends at this tick (0 = none), of item `reloadItem`. */
@@ -71,6 +75,8 @@ export function createCombatWorld(
     readyTick: new Uint32Array(capacity),
     swingTick: new Uint32Array(capacity),
     zombieReady: new Uint32Array(capacity),
+    zombieHitAt: new Uint32Array(capacity),
+    zombieNext: new Uint32Array(capacity),
     kills: new Uint32Array(capacity),
     reloadUntil: new Uint32Array(capacity),
     reloadItem: new Uint32Array(capacity),

@@ -11,7 +11,7 @@ import { secToTicks } from './zombies.js';
 import { damageOpening, edgeCentre } from '../openings/actions.js';
 import { EF, openingKey, unpackKey } from '../openings/state.js';
 import { physicsBashMul, physicsPress } from '../physics/crowd.js';
-import { physicsCanMove } from '../physics/system.js';
+import { bodyOf, physicsCanMove } from '../physics/system.js';
 import { floorZ } from '../world/levels.js';
 
 /**
@@ -91,7 +91,12 @@ export function aiLocomotionSystem(w: SimWorld, grid: TileGrid): void {
           const py = Position.y[p] ?? 0;
           const rx = px - x;
           const ry = py - y;
-          const reach = cfg.reachTiles + (Collider.radius[p] ?? 0);
+          // A player seated in a car: stop by the seat as before (`carReachTiles`, centres), so the
+          // zombie stands at the car instead of walking into its box (combat uses the box).
+          const reach =
+            bodyOf(w, p)?.state === 'driving'
+              ? cfg.carReachTiles + (Collider.radius[p] ?? 0)
+              : cfg.reachTiles + (Collider.radius[p] ?? 0) + (Collider.radius[eid] ?? 0);
           if (rx * rx + ry * ry <= reach * reach) {
             // In reach: stop and face the player (attacks come with combat).
             AimIntent.x[eid] = Math.fround(px);

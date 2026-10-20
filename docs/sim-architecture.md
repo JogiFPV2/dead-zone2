@@ -1646,3 +1646,14 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 - Bez wpisów: zbiorniki wody (stan na kaflu, docs 9.59), obiekty, które nie są meblem (`invalid-target`), oraz wszystko, gdy `physicsConfig.furniture.enabled` jest wyłączone. Armatura (`fixed`) ma wpisy wyszarzone „Przymocowane”.
 - `useFurniture {furnitureId, actionId: 'push' | 'pull' | 'rotate'}` startuje tę samą akcję co `sim.pushFurniture` / `pullFurniture` / `rotateFurniture`, tylko przez kolejkę komend (deterministycznie, hasz). Mebel bez innych akcji dostaje `typeId: 'other'`.
 - Nowe id akcji w menu, więc protokół 39 (38 to #286). Zapis bez zmian (`SAVE_VERSION` 3).
+
+### 9.65 Atak zombie tylko przy kontakcie, widoczny zamach, bez trafień przez ściany i okna (protokół bez zmian)
+
+- **Zasięg mierzony od krawędzi ciał** (odległość środków minus oba promienie, po 0,3): `combat.zombie.reachTiles` 0,9 → **0,3**. Teraz to pole typu zombie `attackReachM` (#287), a domyślnie `DEFAULT_ZOMBIE_ATTACK_REACH_M` 0,3 z `@deadzone/content`. Przy samochodzie bez zmian: kontakt z boxem auta to `carReachTiles` 0,9.
+- **Zatrzymanie pościgu** (`ai.reachTiles`) też od krawędzi: 0,15. Wcześniej było 0,75 od środka gracza, czyli szczelina 0,45 m, a atak ruszał już przy 0,9 m. Przy graczu w aucie zostaje stara odległość od siedzenia (`ai.carReachTiles` 0,75).
+- **Zamach:** zaczyna się od razu przy kontakcie, gdy minie cooldown poprzedniego ciosu (`attackCooldownSec`). Od początku zamachu jest `anim = attack` / `attackStart`. Cios ląduje po czasie zamachu: wcześniej stałe 0,5 s bez animacji, teraz pole typu `windupMs` {min, max} (#287), losowane `rng.combat` przy każdym zamachu. Domyślnie `DEFAULT_ZOMBIE_WINDUP_MS` **500–800 ms** (10–16 ticków). Cios ląduje tylko wtedy, gdy cel nadal jest w kontakcie. Inaczej to pudło, więc można uciec.
+  - Wcześniej zamach liczył się bez animacji, a każdy kolejny cios lądował w tym samym ticku co animacja.
+  - Zachwianie zombie (stagger itp.) przerywa zamach.
+- **Linia ciosu** (`meleeLine`, `world/los.ts`): blokują ściany, zamknięte drzwi, płoty, barykady, okna w każdym stanie (także otwarte i rozbite) oraz `wallSegments`. Blokuje też przejście przez narożnik w dowolnej kolejności. Otwarte drzwi przepuszczają. Wcześniej był to `lineOfSight`, więc cios przechodził przez okna.
+- **Stan:** `CombatWorld.zombieHitAt` (koniec zamachu) i `zombieNext` (najwcześniejszy następny zamach) są w haszu. `zombieReady` = tick wejścia w kontakt (dla karty celu „attacking”). Goldeny hasza zaktualizowane świadomie. Zapis bez zmian (`SAVE_VERSION` 3), widok bez zmian, protokół zostaje 39.
+- **Content:** zasięg i zamach są w `zombieTypes` (#287). Bez zmian w simie zostają `combat.zombie.hitChance` 0,7 i `carReachTiles` 0,9 oraz `ai.reachTiles` (luka zatrzymania) 0,15. Jeśli mają iść do contentu, Modules musi dodać `worldSettings.combat.zombie` {`hitChance`, `carReachM`} i `worldSettings.ai.stopGapM`.

@@ -19,7 +19,9 @@ import {
 import { createCorpse } from '../items/search.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
-import { lineOfSight } from '../world/los.js';
+import { lineOfSight, meleeLine } from '../world/los.js';
+import { DEFAULT_ZOMBIE_ATTACK_REACH_M, DEFAULT_ZOMBIE_WINDUP_MS } from '@deadzone/content';
+import type { ZombieTypeDef } from '../content/adapter.js';
 import type { TileGrid } from '../world/grid.js';
 import { noteHit, type CombatWorld } from './state.js';
 import { fire, firearmOf, reloadSystem } from './firearms.js';
@@ -391,9 +393,18 @@ function killZombie(
   });
 }
 
-/** Chasing zombies in reach of their target attack after a wind-up, then every cooldown. */
+/**
+ * Chasing zombies attack only in contact with their target: body gap (centre distance minus
+ * both collider radii) ≤ the type's `attackReachM` (default `DEFAULT_ZOMBIE_ATTACK_REACH_M` 0.3),
+ * same floor, and a melee line between them
+ * (no wall, window, closed door or exact wall, `meleeLine`). A swing starts at once in contact
+ * (after the last swing's `attackCooldownSec`), shows its wind-up (`anim = attack`) for
+ * the type's `windupMs` (rolled in {min, max}, default `DEFAULT_ZOMBIE_WINDUP_MS` 500–800 ms, `rng.combat`)
+ * and lands only if the target is still in contact then; otherwise it
+ * misses (the target stepped away).
+ */
 function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid): void {
-  const { Position, Collider, Zombie, StableId, Facing } = w.c;
+  const { Position, Zombie, StableId, Facing } = w.c;
   const s = w.survival;
   const zc = cb.cfg.zombie;
   for (const zid of sortedQuery(w, 'zombies', [Zombie])) {
@@ -401,42 +412,38 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     const pid = target ? playerBySid(w, target) : undefined;
     if (pid === undefined || s?.dead[pid] || !physicsCanAct(w, zid)) {
       cb.zombieReady[zid] = 0;
+      cb.zombieHitAt[zid] = 0;
       continue;
     }
-    const z = floorZ(w, zid);
     const dx = (Position.x[pid] ?? 0) - (Position.x[zid] ?? 0);
     const dy = (Position.y[pid] ?? 0) - (Position.y[zid] ?? 0);
-    const reach = zc.reachTiles + (Collider.radius[pid] ?? 0) + (Collider.radius[zid] ?? 0);
-    // A player in a car: in reach when the zombie stands at the car (its edge within
-    // `reachTiles` of the box), not by the distance to the seat (`vehicles/windows.ts`).
+    // A player in a car: in contact when the zombie stands at the car (its edge within
+    // `carReachTiles` of the box), not by the distance to the seat (`vehicles/windows.ts`).
     const seated = bodyOf(w, pid)?.state === 'driving';
-    const car = seated ? carContact(w, zid, target, zc.reachTiles) : undefined;
-    const inReach = seated
+    const car = seated ? carContact(w, zid, target, zc.carReachTiles) : undefined;
+    const def = ai.types[Zombie.type[zid] ?? 0]!.def;
+    const contact = seated
       ? car !== undefined
-      : floorZ(w, pid) === z &&
-        dx * dx + dy * dy <= reach * reach &&
-        lineOfSight(
-          grid,
-          z,
-          Position.x[zid] ?? 0,
-          Position.y[zid] ?? 0,
-          Position.x[pid] ?? 0,
-          Position.y[pid] ?? 0,
-        );
-    if (!inReach) {
-      cb.zombieReady[zid] = 0;
+      : zombieInContact(w, grid, zid, pid, zombieReachM(def));
+    cb.zombieReady[zid] = contact ? cb.zombieReady[zid] || w.tick : 0;
+    const hitAt = cb.zombieHitAt[zid] ?? 0;
+    if (hitAt === 0) {
+      // Start a swing: in contact and the cooldown of the last one is over.
+      if (!contact || w.tick < (cb.zombieNext[zid] ?? 0)) continue;
+      const wu = def.windupMs ?? DEFAULT_ZOMBIE_WINDUP_MS;
+      const ms = wu.max > wu.min ? w.rng.combat.int(wu.min, wu.max) : wu.min;
+      cb.zombieHitAt[zid] = w.tick + Math.max(1, secToTicks(ms / 1000));
+      cb.zombieNext[zid] = w.tick + secToTicks(def.attackCooldownSec);
+      cb.swingTick[zid] = w.tick;
+      if (dx !== 0 || dy !== 0) Facing.angle[zid] = atan2Bam(dy, dx);
+      physicsBeginAttack(w, zid);
       continue;
     }
-    if (cb.zombieReady[zid] === 0) {
-      cb.zombieReady[zid] = w.tick + secToTicks(zc.windupSec);
-      continue;
-    }
-    if (w.tick < (cb.zombieReady[zid] ?? 0)) continue;
-    const t = ai.types[Zombie.type[zid] ?? 0]!.def;
-    cb.zombieReady[zid] = w.tick + secToTicks(t.attackCooldownSec);
-    cb.swingTick[zid] = w.tick;
-    if (dx !== 0 || dy !== 0) Facing.angle[zid] = atan2Bam(dy, dx);
-    physicsBeginAttack(w, zid);
+    if (w.tick < hitAt) continue;
+    cb.zombieHitAt[zid] = 0;
+    // The blow lands now: only when the target is still in contact (else a miss).
+    if (!contact) continue;
+    const t = def;
     // A player sitting in a car is out of reach: the blow hits the window on the zombie's side
     // (`zombieWindowDmg`, broken at 0), unless the zombie stands at a broken window on the
     // player's side (`vehicles/windows.ts`): then a normal hit.
@@ -471,6 +478,31 @@ function zombieAttacks(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid
     physicsHit(w, zid, pid, 'zombie', undefined, killed);
     void StableId;
   }
+}
+
+/** Contact gap of a zombie type (`attackReachM`, metres = tiles), else the content default. */
+export const zombieReachM = (def: ZombieTypeDef): number =>
+  def.attackReachM ?? DEFAULT_ZOMBIE_ATTACK_REACH_M;
+
+/** Body gap (centres minus both radii) ≤ `gap`, same floor, and a melee line between them. */
+export function zombieInContact(
+  w: SimWorld,
+  grid: TileGrid,
+  zid: number,
+  pid: number,
+  gap: number,
+): boolean {
+  const { Position, Collider } = w.c;
+  const z = floorZ(w, zid);
+  if (floorZ(w, pid) !== z) return false;
+  const zx = Position.x[zid] ?? 0;
+  const zy = Position.y[zid] ?? 0;
+  const px = Position.x[pid] ?? 0;
+  const py = Position.y[pid] ?? 0;
+  const reach = gap + (Collider.radius[pid] ?? 0) + (Collider.radius[zid] ?? 0);
+  const dx = px - zx;
+  const dy = py - zy;
+  return dx * dx + dy * dy <= reach * reach && meleeLine(grid, z, zx, zy, px, py);
 }
 
 function playerBySid(w: SimWorld, sid: number): number | undefined {

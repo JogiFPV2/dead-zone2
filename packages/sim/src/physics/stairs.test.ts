@@ -1,5 +1,6 @@
 import type { SimEvent } from '@deadzone/protocol';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_STAGE4_CONFIG, type Stage4Config } from '../ai/config.js';
 import { sortedQuery } from '../core/world.js';
 import { createSim, type Sim } from '../sim.js';
 import { eventsOf, NOON } from '../test/ai-fixtures.js';
@@ -166,7 +167,12 @@ describe('stairs: falling', () => {
 });
 
 /** Player walks up flight A to along ≈ 3 (x ≈ 23) and stops; zombies wait on level 0. */
-function crowdOnStairs(n: number, physicsConfig?: PhysicsConfig, seed = 7) {
+function crowdOnStairs(
+  n: number,
+  physicsConfig?: PhysicsConfig,
+  seed = 7,
+  aiConfig?: Stage4Config,
+) {
   const zombies = Array.from({ length: n }, (_, i) => ({
     x: 12.5 - (i % 3),
     y: 18.5 + Math.floor(i / 3),
@@ -174,6 +180,7 @@ function crowdOnStairs(n: number, physicsConfig?: PhysicsConfig, seed = 7) {
   const sim = levelSim(mapA(), { x: 18.5, y: 20.5 }, zombies, {
     seed,
     ...(physicsConfig ? { physicsConfig } : {}),
+    ...(aiConfig ? { aiConfig } : {}),
   });
   const c = commander(sim);
   // Runs up (3.75 m/s) so the crowd starts queueing behind a player already holding the top.
@@ -230,7 +237,12 @@ describe('stairs: crowds', () => {
     };
     const run = (dominoChance: number) => {
       const cfg = { ...sure, stairs: { ...sure.stairs, dominoChance, dominoDecay: 1 } };
-      const { sim, c } = crowdOnStairs(6, cfg);
+      // The crowd stops 0.45 m short of the player (the stop gap before contact attacks), so
+      // the shove reaches only the first zombie and the rest is the domino.
+      const { sim, c } = crowdOnStairs(6, cfg, 7, {
+        ...DEFAULT_STAGE4_CONFIG,
+        ai: { ...DEFAULT_STAGE4_CONFIG.ai, reachTiles: 0.45 },
+      });
       for (let i = 0; i < 300; i++) sim.step();
       // Turn to face down the flight (the facing turns smoothly).
       c.aim(20, 20.5);

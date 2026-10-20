@@ -80,8 +80,13 @@ export interface AiConfig {
   wanderPauseSec: { min: number; max: number };
   /** Speed spread per zombie at spawn (± fraction of the type's speeds). */
   speedSpread: number;
-  /** Stops this close to the chased player (centre distance; attacks come with combat). */
+  /**
+   * Stops at this gap to the chased player (edge to edge: centre distance minus both radii),
+   * inside the type's `attackReachM` (0.3) so the attack can start (combat).
+   */
   reachTiles: number;
+  /** Stop distance to a player seated in a car (centres; the car box keeps the zombie out). */
+  carReachTiles: number;
   /** Neighbour separation radius (soft push, zombies do not collide with each other). */
   separationTiles: number;
   zombieRadius: number;
@@ -159,7 +164,8 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     wanderRadiusTiles: 6,
     wanderPauseSec: { min: 2, max: 8 },
     speedSpread: 0.1,
-    reachTiles: 0.75,
+    reachTiles: 0.15,
+    carReachTiles: 0.75,
     separationTiles: 0.7,
     zombieRadius: 0.3,
     navBudgetPerTick: 2000,
