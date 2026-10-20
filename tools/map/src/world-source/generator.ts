@@ -1,3 +1,4 @@
+import { clearingMask } from './clearing.js';
 import { coverZones } from './cover.js';
 import { chunkInfra, type GenInfra } from './infra.js';
 import { CHUNK_SIZE } from '@deadzone/content';
@@ -398,7 +399,20 @@ export class PlanChunkGenerator {
       levels.push(level);
     }
     const ground = levels[0]!;
-    const trees = this.trees(r, M, occ, ground, X0, Y0);
+    // HV line clearings (przecinki): no trees and no woods cover, grass and scrub stay.
+    const lines = this.index.power.query({
+      x0: X0 - 30,
+      y0: Y0 - 30,
+      x1: X0 + C + 30,
+      y1: Y0 + C + 30,
+    });
+    const cut = clearingMask(
+      lines.map((i) => this.index.power.items[i]!),
+      X0,
+      Y0,
+      C,
+    );
+    const trees = this.trees(r, M, occ, ground, X0, Y0, cut);
     const buildings: GenBuildingMeta[] = list
       .filter((s) => s.bx1 >= X0 && s.by1 >= Y0 && s.bx0 < X0 + C && s.by0 < Y0 + C)
       .map((s) => ({
@@ -422,7 +436,7 @@ export class PlanChunkGenerator {
     for (let i = 0; i < CT; i++) {
       const j = ri(i % C, (i / C) | 0);
       const a = r.area[j]!;
-      const v = a === SCRUB_RANK ? 1 : a === FOREST_RANK ? 2 : 0;
+      const v = a === SCRUB_RANK ? 1 : a === FOREST_RANK && !cut?.[i] ? 2 : 0;
       if (!v || occ[j] || owner[i] || r.deck[j]) continue;
       const g = r.g[j]!;
       if (g !== G_GRASS && g !== G_DIRT) continue;
@@ -703,6 +717,7 @@ export class PlanChunkGenerator {
     ground: GenLevel,
     X0: number,
     Y0: number,
+    cut?: Uint8Array,
   ): number[] {
     const objAt = new Set(ground.objects.map((o) => o.y * C + o.x));
     const ok = (x: number, y: number) => {
@@ -717,6 +732,7 @@ export class PlanChunkGenerator {
         }
       const lx = x - X0;
       const ly = y - Y0;
+      if (cut?.[ly * C + lx]) return false;
       return !objAt.has(ly * C + lx);
     };
     const out: number[] = [];

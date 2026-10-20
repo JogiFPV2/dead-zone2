@@ -19,7 +19,7 @@ beforeAll(async () => {
 describe('osm-stw: the whole 16 km square', () => {
   it('opens with the tiles around the start only, versioned by the data hash', () => {
     const g = tiles.generator;
-    expect(g.version).toMatch(/^osm-stw-[0-9a-f]{12}-all-g15$/);
+    expect(g.version).toMatch(/^osm-stw-[0-9a-f]{12}-all-g16$/);
     expect(g.bounds).toEqual({ cx0: 0, cy0: 0, cx1: 703, cy1: 703 });
     // Manifest + 3 × 3 tiles, not 449.
     expect(fetched.length).toBeLessThanOrEqual(10);
@@ -203,6 +203,64 @@ describe('osm-stw: the whole 16 km square', () => {
     expect(bareMasts / masts).toBeLessThan(0.1);
     expect(bareTowers.length / towers, bareTowers.join('; ')).toBeLessThan(0.01);
     console.log(`towers ${towers} (bare ${bareTowers.length}), masts ${masts} (bare ${bareMasts})`);
+    expect(issues.slice(0, 20)).toEqual([]);
+  }, 1_800_000);
+
+  it('HV lines run in clearings: no trees or woods cover in the strip (przecinki)', async () => {
+    const g = tiles.generator;
+    await tiles.ensureAll();
+    const world = generatorWorldSource(g, 48, tiles);
+    const W = { hv110: 30, hv220: 40, hv400: 60 } as const;
+    const issues: string[] = [];
+    let checked = 0;
+    for (const w of g.index.power.items) {
+      if (w.kind === 'lv') continue;
+      const h = W[w.kind] / 2;
+      /** Distance to this line's axis. */
+      const dist = (x: number, y: number) => {
+        let best = Infinity;
+        for (let k = 0; k + 3 < w.pts.length; k += 2) {
+          const [ax, ay, dx, dy] = [
+            w.pts[k]!,
+            w.pts[k + 1]!,
+            w.pts[k + 2]! - w.pts[k]!,
+            w.pts[k + 3]! - w.pts[k + 1]!,
+          ];
+          const t = Math.max(
+            0,
+            Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)),
+          );
+          best = Math.min(best, Math.hypot(ax + t * dx - x, ay + t * dy - y));
+        }
+        return best;
+      };
+      // Every 4th segment midpoint: its chunk.
+      for (let k = 0; k + 3 < w.pts.length; k += 8) {
+        const cx = Math.floor((w.pts[k]! + w.pts[k + 2]!) / 2 / CHUNK_SIZE);
+        const cy = Math.floor((w.pts[k + 1]! + w.pts[k + 3]!) / 2 / CHUNK_SIZE);
+        const col = g.column(cx, cy);
+        if (!col) continue;
+        checked++;
+        const X0 = cx * CHUNK_SIZE;
+        const Y0 = cy * CHUNK_SIZE;
+        for (let i = 0; i + 1 < col.trees.length; i += 2) {
+          const d = dist(X0 + col.trees[i]!, Y0 + col.trees[i + 1]!);
+          if (d < h - 1)
+            issues.push(
+              `${w.kind} tree ${d.toFixed(1)} m from the line at ${X0 + col.trees[i]!},${Y0 + col.trees[i + 1]!}`,
+            );
+        }
+        for (const zn of world.getChunk(cx, cy, 0)?.zones ?? []) {
+          if (zn.role !== 'cover') continue;
+          for (const r of zn.rects)
+            for (let y = r.y; y < r.y + r.h; y++)
+              for (let x = r.x; x < r.x + r.w; x++)
+                if (dist(x + 0.5, y + 0.5) < h - 1)
+                  issues.push(`${w.kind} woods cover at ${x},${y}`);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(100);
     expect(issues.slice(0, 20)).toEqual([]);
   }, 1_800_000);
 });

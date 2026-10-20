@@ -77,8 +77,9 @@ export interface WorldPlanInput {
  * 13: cover zones and HV tower / catenary mast feet per chunk (`SimChunk.zones` / `blockers`).
  * 14: main #257 merged in: #254 kits (tables with chairs, lamps, switches), toilet, seats a tile apart.
  * 15: #267 TV, VCR and radio stand on a worktop (TV stand, table), never on a bare tile.
+ * 16: HV line clearings (przecinki): no trees and no woods cover within 15 / 20 / 30 m of 110 / 220 / 400 kV lines.
  */
-export const GENERATOR_REV = 15;
+export const GENERATOR_REV = 16;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {
