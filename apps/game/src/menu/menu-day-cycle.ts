@@ -64,6 +64,17 @@ export function sunOffset(azimuthDeg: number, elevationDeg: number, distance = 8
   return { x: Math.cos(az) * h, y: Math.sin(el) * distance, z: Math.sin(az) * h };
 }
 
+/**
+ * Designer's sun intensity is read as brightness on the ground: a sun lower than the day's 35°
+ * lights flat ground with sin(elevation), so a low warm sun is scaled up to keep the sunset /
+ * sunrise street lit (and brighter than the night) while the shadows stay long. 1 at ≥ 35°,
+ * at most ×2.
+ */
+export function lowSunCompensation(elevationDeg: number): number {
+  const s = Math.sin((Math.max(1, elevationDeg) * Math.PI) / 180);
+  return Math.min(2, Math.max(1, Math.sin((35 * Math.PI) / 180) / s));
+}
+
 interface Look {
   sun: Hex;
   /** Relative (Designer) intensity, ×MENU_LIGHT_SCALE. */
@@ -95,7 +106,7 @@ function look(l: Look): LightingPreset {
     },
     directional: {
       color: l.sun,
-      intensity: l.sunIntensity * MENU_LIGHT_SCALE,
+      intensity: l.sunIntensity * MENU_LIGHT_SCALE * lowSunCompensation(l.elevation),
       offset: sunOffset(l.azimuth, l.elevation),
       shadowRadius: l.shadowRadius,
       shadowIntensity: l.shadowIntensity,
@@ -130,8 +141,8 @@ const SUNSET = {
   fogNear: 70,
   fogFar: 160,
   // Low sun: a little more fill and exposure so the street does not sink into the vignette.
-  ambientIntensity: 0.75,
-  exposure: 1.4,
+  ambientIntensity: 0.9,
+  exposure: 1.6,
   shadowRadius: 3,
   shadowIntensity: 0.9,
 } as const;
@@ -150,7 +161,7 @@ const NIGHT = {
   sky: '#0d1214',
   fogNear: NIGHT_PRESET.fog.near,
   fogFar: NIGHT_PRESET.fog.far,
-  exposure: 1.25,
+  exposure: 1.4,
   shadowRadius: 4,
   shadowIntensity: 1,
 } as const;
@@ -195,21 +206,21 @@ export const MENU_CYCLE: MenuCycleConfig = {
     { at: S.sunset, preset: look({ ...DAY, azimuth: 140 }) },
     {
       at: S.sunset + 2.5,
-      preset: look({ ...SUNSET, sunIntensity: 0.8, azimuth: 160, elevation: 24 }),
+      preset: look({ ...SUNSET, sunIntensity: 0.8, azimuth: 160, elevation: 30 }),
     },
     {
       at: S.sunset + 8.5,
-      preset: look({ ...SUNSET, sunIntensity: 0.3, azimuth: 170, elevation: 12 }),
+      preset: look({ ...SUNSET, sunIntensity: 0.3, azimuth: 170, elevation: 18 }),
     },
     { at: S.night + 1, preset: look(NIGHT) },
     { at: S.sunrise, preset: look(NIGHT) },
     {
       at: S.sunrise + 2.5,
-      preset: look({ ...SUNRISE, sunIntensity: 0.3, azimuth: -10, elevation: 12 }),
+      preset: look({ ...SUNRISE, sunIntensity: 0.3, azimuth: -10, elevation: 18 }),
     },
     {
       at: S.sunrise + 8,
-      preset: look({ ...SUNRISE, sunIntensity: 0.8, azimuth: 15, elevation: 24 }),
+      preset: look({ ...SUNRISE, sunIntensity: 0.8, azimuth: 15, elevation: 30 }),
     },
   ],
   lamps: {

@@ -7,6 +7,7 @@ import {
   MENU_LIGHT_SCALE,
   MENU_PHASE_START,
   MenuDayCycle,
+  lowSunCompensation,
   menuClock,
   parseMenuCycleQuery,
   phaseAt,
@@ -24,6 +25,9 @@ const snap = (p: CompiledPreset) => ({
 
 describe('menu day cycle', () => {
   const cycle = new MenuDayCycle();
+  // Sunset / sunrise keyframes: high sun 30°, low sun 18° (compensated to light the ground).
+  const HIGH = 0.8 * MENU_LIGHT_SCALE * lowSunCompensation(30);
+  const LOW = 0.3 * MENU_LIGHT_SCALE * lowSunCompensation(18);
 
   it('loops 55 s: day 20, sunset 10, night 15, sunrise 10', () => {
     expect(MENU_CYCLE_SECONDS).toBe(55);
@@ -47,9 +51,9 @@ describe('menu day cycle', () => {
 
     const sunsetHigh = cycle.sample(22.5);
     expect(hex(sunsetHigh.directional.color)).toBe('ff9a4a');
-    expect(sunsetHigh.directional.intensity).toBeCloseTo(0.8 * MENU_LIGHT_SCALE);
+    expect(sunsetHigh.directional.intensity).toBeCloseTo(HIGH);
     expect(hex(sunsetHigh.hemisphere.sky)).toBe('8a5a6a');
-    expect(cycle.sample(28.5).directional.intensity).toBeCloseTo(0.3 * MENU_LIGHT_SCALE);
+    expect(cycle.sample(28.5).directional.intensity).toBeCloseTo(LOW);
 
     const night = cycle.sample(37.5);
     expect(hex(night.directional.color)).toBe('7f9cc8');
@@ -57,8 +61,8 @@ describe('menu day cycle', () => {
     expect(hex(night.hemisphere.sky)).toBe('1c2233');
 
     expect(hex(cycle.sample(47.5).directional.color)).toBe('ffc89a');
-    expect(cycle.sample(47.5).directional.intensity).toBeCloseTo(0.3 * MENU_LIGHT_SCALE);
-    expect(cycle.sample(53).directional.intensity).toBeCloseTo(0.8 * MENU_LIGHT_SCALE);
+    expect(cycle.sample(47.5).directional.intensity).toBeCloseTo(LOW);
+    expect(cycle.sample(53).directional.intensity).toBeCloseTo(HIGH);
     expect(hex(cycle.sample(53).hemisphere.sky)).toBe('a08a9a');
   });
 
@@ -82,10 +86,10 @@ describe('menu day cycle', () => {
   it('interpolates colours in linear space with smoothstep', () => {
     // Halfway between the two sunset keyframes (22.5 → 28.5): smoothstep(0.5) = 0.5 linear mix.
     const mid = cycle.sample(25.5).directional.intensity;
-    expect(mid).toBeCloseTo(((0.8 + 0.3) / 2) * MENU_LIGHT_SCALE);
+    expect(mid).toBeCloseTo((HIGH + LOW) / 2);
     // A quarter in: smoothstep(0.25) = 0.15625, not 0.25.
     const q = cycle.sample(22.5 + 1.5).directional.intensity;
-    expect(q).toBeCloseTo((0.8 - 0.5 * 0.15625) * MENU_LIGHT_SCALE);
+    expect(q).toBeCloseTo(HIGH + (LOW - HIGH) * 0.15625);
   });
 
   it('lights the lamps mid-sunset and puts them out in the first third of sunrise', () => {
@@ -119,6 +123,19 @@ describe('menu day cycle', () => {
     expect(parseMenuCycleQuery('?menuTime=abc&menuSpeed=0')).toEqual({});
     expect(parseMenuCycleQuery('?menuTime=99')).toEqual({});
     expect(parseMenuCycleQuery('')).toEqual({});
+  });
+
+  it('scales a low sun up so it still lights the ground (1 at ≥ 35°, at most ×2)', () => {
+    expect(lowSunCompensation(35)).toBe(1);
+    expect(lowSunCompensation(54)).toBe(1);
+    expect(lowSunCompensation(18)).toBeGreaterThan(1.5);
+    expect(lowSunCompensation(2)).toBe(2);
+    // Mid sunset is lit by the sun more than the night by the moon.
+    const ground = (t: number) => {
+      const d = cycle.sample(t).directional;
+      return d.intensity * (d.offset.y / d.offset.length());
+    };
+    expect(ground(25)).toBeGreaterThan(ground(37.5) * 2);
   });
 
   it('rejects unsorted keyframes', () => {

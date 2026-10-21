@@ -23,10 +23,10 @@
   background:
     linear-gradient(
       90deg,
-      rgba(8, 10, 11, 0.95) 0%,
-      rgba(8, 10, 11, 0.9) 24%,
-      rgba(8, 10, 11, 0.55) 40%,
-      transparent 58%
+      rgba(8, 10, 11, 0.97) 0%,
+      rgba(8, 10, 11, 0.96) 26%,
+      rgba(8, 10, 11, 0.63) 42%,
+      transparent 60%
     ),
     radial-gradient(ellipse at 70% 45%, transparent 40%, var(--color-overlay-vignette-night) 100%);
 }
@@ -413,4 +413,16 @@
 }
 .dzm > .dza-toast {
   z-index: 700;
+}
+/* ODbL attribution over an OpenStreetMap background (menu-scene.ts): small, under the music chips. */
+.dzm-attribution {
+  position: absolute;
+  right: 12px;
+  bottom: 3px;
+  z-index: 2;
+  font: 10px/1.2 var(--font-family-sans);
+  letter-spacing: 0.02em;
+  color: rgba(220, 226, 230, 0.55);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
 }
