@@ -38,3 +38,9 @@ describe('touch layout: zoom slider', () => {
     expect(css).toContain(`bottom: calc(${TOUCH_ZOOM.bottom}px + var(--dz-safe-b))`);
   });
 });
+
+describe('touch layout: full map', () => {
+  it('moves the map bar right of the ZAMKNIJ pill', () => {
+    expect(css).toMatch(/html\.is-touch \.dz-bm__bar \{\s*padding-left: calc\(140px/);
+  });
+});

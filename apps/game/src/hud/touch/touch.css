@@ -341,3 +341,9 @@ html.is-touch .dz-hud .dz-floor {
 .dz-touch__zoom[data-down] .dz-touch__zoomtrack i {
   background: var(--dz-touch-accent);
 }
+
+/* Full map on touch: the bar starts right of the ZAMKNIJ pill (left 8, ~120 wide) so the pill
+   never covers the MAPA title. */
+html.is-touch .dz-bm__bar {
+  padding-left: calc(140px + var(--dz-safe-l));
+}
