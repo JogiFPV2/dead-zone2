@@ -57,7 +57,7 @@ describe('looting: range and a clear line', () => {
     );
   });
 
-  it('closed door blocks, open door lets through; windows block in any state', () => {
+  it('closed door / window blocks, open door / window lets through', () => {
     const d = sim(edge('door'));
     expect(tryOpen(d)).toEqual(['wall']);
     open(d, OpeningKind.door);
@@ -65,7 +65,7 @@ describe('looting: range and a clear line', () => {
     const w = sim(edge('window'));
     expect(tryOpen(w)).toEqual(['wall']);
     open(w, OpeningKind.window);
-    expect(tryOpen(w)).toEqual(['wall']);
+    expect(tryOpen(w)).toEqual([]);
   });
 
   it('a searched container behind a new wall closes and refuses takeAll', () => {

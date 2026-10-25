@@ -21,7 +21,7 @@ import { stairStepAllowed } from './levels.js';
  *   other than along it through the entrance blocks (straight-line walkability for AI).
  */
 
-const Mode = { Sight: 0, Sound: 1, Walk: 2, Melee: 3 } as const;
+const Mode = { Sight: 0, Sound: 1, Walk: 2, Melee: 3, Reach: 4 } as const;
 type Mode = (typeof Mode)[keyof typeof Mode];
 
 let crossed = 0;
@@ -29,6 +29,8 @@ let crossed = 0;
 function edgeBlocks(f: number, mode: Mode): boolean {
   // Melee: open / broken windows are `slow` (climb through), so they block a blow too.
   if (mode === Mode.Melee) return (f & (EF.blocksSight | EF.blocksMove | EF.slow)) !== 0;
+  // Reach (looting, docs 9.69): an open / broken window lets the hand through (PZ).
+  if (mode === Mode.Reach) return (f & (EF.blocksSight | EF.blocksMove)) !== 0;
   return (f & (mode === Mode.Sight ? EF.blocksSight : EF.blocksMove)) !== 0;
 }
 
@@ -63,7 +65,7 @@ function step(
     return false;
   }
   if (edgeBlocks(f, mode)) return true;
-  if (mode === Mode.Melee) return false;
+  if (mode === Mode.Melee || mode === Mode.Reach) return false;
   if (mode !== Mode.Walk) return grid.blocksSightTile(tx + sx, ty + sy, z);
   if (grid.isBlocked(tx + sx, ty + sy, z)) return true;
   // Flights of stairs: only along them through the entrance (physics blocks the sides).
@@ -121,7 +123,8 @@ function trace(
       } else {
         const a = step(grid, z, tx, ty, sx, 0, mode) || step(grid, z, tx + sx, ty, 0, sy, mode);
         const b = step(grid, z, tx, ty, 0, sy, mode) || step(grid, z, tx, ty + sy, sx, 0, mode);
-        if (mode === Mode.Walk || mode === Mode.Melee ? a || b : a && b) return false;
+        if (mode === Mode.Walk || mode === Mode.Melee || mode === Mode.Reach ? a || b : a && b)
+          return false;
       }
       tx += sx;
       ty += sy;
@@ -166,6 +169,20 @@ export const meleeLine = (
   y1: number,
 ): boolean =>
   trace(grid, z, x0, y0, x1, y1, Mode.Melee, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+
+/**
+ * A hand can reach along this line (looting, docs 9.69): like `meleeLine`, but open / broken
+ * windows do not block; walls, closed windows / doors, fences, planks, corners, exact walls do.
+ */
+export const reachLine = (
+  grid: TileGrid,
+  z: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): boolean =>
+  trace(grid, z, x0, y0, x1, y1, Mode.Reach, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
 
 const orient = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number): number =>
   (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);

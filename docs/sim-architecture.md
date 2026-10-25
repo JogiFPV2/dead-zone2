@@ -1687,8 +1687,9 @@ Każdy dostęp do schowka świata, kupki na ziemi i zwłok (`openContainer`, `se
 `takeItem`, `takeAll`, `putItem`/`moveItem`, `pickUp`, `placeStorage`, trwająca akcja `search`,
 zamykanie panelu w `inventorySystem`) wymaga zasięgu (1,5 kafla, footprint mebla jak w 9.49) **oraz**
 czystej linii od pozycji gracza do najbliższego punktu celu (prostokąt kafla / footprintu, margines
-0,01). Linia to reguła walki wręcz `meleeLine` (`world/los.ts`, jak w 9.65): ściany, okna w każdym
-stanie, zamknięte drzwi, płoty, barykady, rogi i `wallSegments` blokują; otwarte drzwi przepuszczają.
+0,01). Linia to `reachLine` (`world/los.ts`, wariant `meleeLine` z 9.65): ściany, zamknięte okna,
+zamknięte drzwi, płoty, barykady, rogi i `wallSegments` blokują; otwarte / wybite okna i otwarte
+drzwi przepuszczają (jak w PZ, decyzja Szefa sztabu). Walka zombie zostaje na `meleeLine`.
 Cel w tym samym kaflu zawsze przechodzi. Kontenery pojazdów bez zmian (`vehicleContainerBlock`).
 
 Powód odrzucenia: istniejący `wall` (za ścianą), `out-of-range` (za daleko / inne piętro / nie

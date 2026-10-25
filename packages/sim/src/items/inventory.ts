@@ -24,7 +24,7 @@ import { floorZ } from '../world/levels.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { anchorRect, rectInReach } from '../furniture/footprint.js';
 import { gridOf } from '../ai/commands.js';
-import { meleeLine } from '../world/los.js';
+import { reachLine } from '../world/los.js';
 import type { TileRect } from '../world/furniture.js';
 
 /** Reach for containers and items (docs 2.4: ≤ 1.5 tiles, same floor). */
@@ -51,8 +51,8 @@ export type ReachBlock = 'out-of-range' | 'wall';
 
 /**
  * Nothing blocks the line from the player to the nearest point of tile rectangle `r` (docs 9.69):
- * the melee rule (`meleeLine`: walls, windows in any state, closed doors, fences, barricades,
- * corners, exact walls `wallSegments`). Same tile always passes.
+ * `reachLine`: walls, closed windows, closed doors, fences, barricades, corners, exact walls
+ * `wallSegments` block; open / broken windows and open doors let through. Same tile always passes.
  */
 export function lineToRect(w: SimWorld, eid: number, r: TileRect, z: number): boolean {
   const px = w.c.Position.x[eid] ?? 0;
@@ -61,7 +61,7 @@ export function lineToRect(w: SimWorld, eid: number, r: TileRect, z: number): bo
   const tx = Math.min(Math.max(px, r.x + m), r.x + r.w - m);
   const ty = Math.min(Math.max(py, r.y + m), r.y + r.h - m);
   if (Math.floor(tx) === Math.floor(px) && Math.floor(ty) === Math.floor(py)) return true;
-  return meleeLine(gridOf(w), z, px, py, tx, ty);
+  return reachLine(gridOf(w), z, px, py, tx, ty);
 }
 
 /** Tile (x, y, z) reachable: in range and not behind a wall. */
