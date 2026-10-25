@@ -16,7 +16,7 @@ import { OsmTiles, type OsmTileManifest } from './tiles.js';
  */
 const KNOWN_VIOLATIONS: Record<string, Omit<PoleStats, 'poles' | 'lines'>> = {
   'osm-okulickiego': { road: 0, sidewalk: 0, crossing: 0, building: 0, uneven: 0 },
-  'osm-stw': { road: 65, sidewalk: 75, crossing: 13, building: 14, uneven: 145 },
+  'osm-stw': { road: 0, sidewalk: 0, crossing: 0, building: 0, uneven: 133 },
   'plan-4': { road: 0, sidewalk: 0, crossing: 0, building: 0, uneven: 0 },
 };
 

@@ -1,12 +1,25 @@
 import { footBlockers } from './infra.js';
 import { describe, expect, it } from 'vitest';
-import type { OsmPower, OsmRail, OsmRailNode } from '../osm/types.js';
-import { chunkInfra, MAST_TRACK_X, sideOf, type GenInfra } from './infra.js';
+import type { OsmBuilding, OsmPower, OsmRail, OsmRailNode, OsmRoad } from '../osm/types.js';
+import {
+  chunkInfra,
+  MAST_TRACK_X,
+  poleSpotFree,
+  POLE_CLEAR,
+  sideOf,
+  type GenInfra,
+} from './infra.js';
 import { PlanIndex } from './plan-index.js';
 import type { WorldPlanInput } from './plan.js';
 
 const d = (pts: number[]) => pts.map((v) => v * 10);
-function index(f: { power?: OsmPower[]; rails?: OsmRail[]; railNodes?: OsmRailNode[] }) {
+function index(f: {
+  power?: OsmPower[];
+  rails?: OsmRail[];
+  railNodes?: OsmRailNode[];
+  roads?: OsmRoad[];
+  buildings?: OsmBuilding[];
+}) {
   const plan: WorldPlanInput = {
     id: 't',
     version: 't',
@@ -14,13 +27,13 @@ function index(f: { power?: OsmPower[]; rails?: OsmRail[]; railNodes?: OsmRailNo
     size: 1024,
     bounds: { cx0: 0, cy0: 0, cx1: 31, cy1: 31 },
     features: {
-      roads: [],
+      roads: f.roads ?? [],
       rails: f.rails ?? [],
       power: f.power ?? [],
       railNodes: f.railNodes ?? [],
       waterways: [],
       areas: [],
-      buildings: [],
+      buildings: f.buildings ?? [],
       trees: [],
       treeRows: [],
       pois: [],
@@ -139,5 +152,30 @@ describe('footBlockers (SimChunk.blockers, #256)', () => {
     expect(footBlockers({ m: 'przejazd-kat-a', x: 16, y: 16, rot: 0 }, 0, 0, 32)).toEqual([]);
     expect(footBlockers({ m: 'lv-zerdz', x: 16, y: 16, rot: 0 }, 0, 0, 32)).toEqual([]);
     expect(footBlockers({ m: 'catenary-mast-a', x: 16, y: 16, rot: 0 }, 0, 0, 32)).toHaveLength(1);
+  });
+});
+
+describe('power poles off the road', () => {
+  it('a line drawn on the road axis gets its poles on the verge, evenly spaced, none on the road', () => {
+    const road: OsmRoad = {
+      id: 9,
+      kind: 'residential',
+      width: 7,
+      sidewalk: 2,
+      pts: d([0, 100, 300, 100]),
+    };
+    const idx = index({
+      roads: [road],
+      power: [{ id: 1, kind: 'lv', circuits: 1, pts: d([40, 100, 220, 100]) }],
+    });
+    const g = all(idx);
+    expect(g.poles.length).toBeGreaterThanOrEqual(4);
+    for (const p of g.poles) {
+      expect(Math.abs(p.y - 100)).toBeGreaterThan(5.5);
+      expect(poleSpotFree(idx, p, POLE_CLEAR.lv)).toBe(true);
+    }
+    const xs = g.poles.map((p) => p.x).sort((a, b) => a - b);
+    const gaps = xs.slice(1).map((x, i) => x - xs[i]!);
+    expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThan(1);
   });
 });

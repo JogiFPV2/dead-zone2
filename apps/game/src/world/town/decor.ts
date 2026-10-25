@@ -17,7 +17,8 @@ export const TREE_DENSITY = 0.009;
 /**
  * Procedural, deterministic decor derived from the map (the map format has no decor layer yet):
  * street lamps on the curb side of sidewalks every 18 m (alternating sides, arm over the road,
- * ~1 in 4 broken), power poles on the outer sidewalk edge every 24 m, trees and grass tufts on
+ * ~1 in 4 broken), power poles every 30 m on the verge just behind the outer sidewalk edge (skipped where there is
+ * none: medians, lots, buildings), trees and grass tufts on
  * open grass away from roads, buildings and walls (or the given trees, e.g. from OpenStreetMap).
  * Visual only: the sim does not collide with it.
  */
@@ -36,6 +37,13 @@ export function townDecor(
   const f = (x: number, z: number) => tiles.floor(x, z);
   const road = (x: number, z: number) => f(x, z) === 'base:asphalt';
   const walk = (x: number, z: number) => f(x, z) === 'base:sidewalk';
+  /** Free verge tile for a power pole: grass / dirt, no building, not right by a road. */
+  const verge = (x: number, z: number, dx: number, dz: number) => {
+    const t = f(x, z);
+    if (t !== 'base:grass' && t !== 'base:dirt') return false;
+    if (tiles.building(x, z) !== NO_BUILDING) return false;
+    return !road(x + dx, z + dz) && !walk(x + dx, z + dz);
+  };
   const busy = (x: number, z: number, r: number) => {
     for (let dz = -r; dz <= r; dz++) {
       for (let dx = -r; dx <= r; dx++) {
@@ -52,17 +60,14 @@ export function townDecor(
       const t = f(x, z);
       if (t === 'base:sidewalk') {
         lampsAt(f, x, z, lamps);
-        // Power poles on the outer edge (sidewalk next to the lots).
-        const outerN = !walk(x, z - 1) && !road(x, z - 1) && walk(x, z + 1);
-        const outerS = false;
-        const outerW = !walk(x - 1, z) && !road(x - 1, z) && walk(x + 1, z);
-        const outerE = false;
+        // Power poles just off the outer edge of the sidewalk, on the verge / lawn behind it:
+        // never on the sidewalk or the road, never in a narrow median by the carriageway.
         const mx = ((x % POLE_SPACING) + POLE_SPACING) % POLE_SPACING;
         const mz = ((z % POLE_SPACING) + POLE_SPACING) % POLE_SPACING;
-        if ((outerN || outerS) && mx === 7)
-          props.push({ name: 'prop-electricity-pole', x: x + 0.5, z: z + 0.5, rotY: 0 });
-        if ((outerW || outerE) && mz === 19)
-          props.push({ name: 'prop-electricity-pole', x: x + 0.5, z: z + 0.5, rotY: Math.PI / 2 });
+        if (mx === 7 && walk(x, z + 1) && verge(x, z - 1, 0, -1) && !tiles.edge('N', x, z))
+          props.push({ name: 'prop-electricity-pole', x: x + 0.5, z: z - 0.5, rotY: 0 });
+        if (mz === 19 && walk(x + 1, z) && verge(x - 1, z, -1, 0) && !tiles.edge('W', x, z))
+          props.push({ name: 'prop-electricity-pole', x: x - 0.5, z: z + 0.5, rotY: Math.PI / 2 });
         continue;
       }
       if (t !== 'base:grass' && t !== 'base:dirt') continue;

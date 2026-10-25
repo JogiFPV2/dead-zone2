@@ -103,6 +103,64 @@ function cumulative(p: V[]): number[] {
   return cum;
 }
 
+/** Clearance (m) of a pole / tower centre from roads, sidewalks and buildings. */
+export const POLE_CLEAR = { lv: 0.6, hv: 4 } as const;
+/** How far (m) a blocked pole may move along its line, then sideways, before it is dropped. */
+export const POLE_SHIFT_ALONG = 12;
+export const POLE_SHIFT_SIDE = 12;
+
+function inRings(x: number, y: number, rings: readonly Float64Array[]): boolean {
+  let inside = false;
+  for (const r of rings)
+    for (let i = 0, j = r.length - 2; i + 1 < r.length; j = i, i += 2) {
+      const yi = r[i + 1]!;
+      const yj = r[j + 1]!;
+      if (yi > y !== yj > y && x < ((r[j]! - r[i]!) * (y - yi)) / (yj - yi) + r[i]!)
+        inside = !inside;
+    }
+  return inside;
+}
+
+/**
+ * True when a pole at p stands clear of every carriageway, sidewalk / footway (zebras are on the
+ * carriageway) and building, with `clear` metres to spare.
+ */
+export function poleSpotFree(idx: PlanIndex, p: V, clear: number): boolean {
+  const q = { x0: p.x - 1, y0: p.y - 1, x1: p.x + 1, y1: p.y + 1 };
+  for (const i of idx.roads.query(q)) {
+    const r = idx.roads.items[i]!;
+    if (r.bridge) continue;
+    if (distToLine(p, r.pts) < Math.max(r.r, r.rs) + clear) return false;
+  }
+  for (const i of idx.buildings.query(q)) {
+    const b = idx.buildings.items[i]!;
+    if (inRings(p.x, p.y, b.rings)) return false;
+  }
+  return true;
+}
+
+/**
+ * Nearest free spot for a pole at arc length s of a line: first along the line (keeps the wires
+ * straight), then sideways onto the verge; undefined = drop the pole.
+ */
+function freeSpot(idx: PlanIndex, p: V[], cum: number[], s: number, clear: number) {
+  const L = cum[cum.length - 1]!;
+  for (let k = 0; k <= POLE_SHIFT_ALONG; k++)
+    for (const sg of k ? [1, -1] : [1]) {
+      const t = s + sg * k;
+      if (t < 0 || t > L) continue;
+      const a = at(p, cum, t);
+      if (poleSpotFree(idx, a.pt, clear)) return a.pt;
+    }
+  const a = at(p, cum, s);
+  for (let k = 1; k <= POLE_SHIFT_SIDE; k++)
+    for (const sg of [1, -1]) {
+      const pt = { x: a.pt.x - a.d.y * sg * k, y: a.pt.y + a.d.x * sg * k };
+      if (poleSpotFree(idx, pt, clear)) return pt;
+    }
+  return undefined;
+}
+
 /** An oriented rectangle where no plain track tile goes (switch, buffer stop, crossing). */
 interface Hole {
   c: V;
@@ -182,6 +240,20 @@ export function chunkInfra(
         dense.push(b);
       }
       p = dense;
+    }
+    // Poles off carriageways, sidewalks and buildings: slide along the line, else to the verge,
+    // else drop (the wire then spans the gap). OSM puts many street lines on the road axis.
+    {
+      const cum = cumulative(p);
+      const clear = w.kind === 'lv' ? POLE_CLEAR.lv : POLE_CLEAR.hv;
+      const moved: V[] = [];
+      p.forEach((_, k) => {
+        const f = freeSpot(idx, p, cum, cum[k]!, clear);
+        const last = moved[moved.length - 1];
+        if (f && (!last || Math.hypot(f.x - last.x, f.y - last.y) > 3)) moved.push(f);
+      });
+      p = moved;
+      if (p.length < 2) continue;
     }
     const list: GenPole[] = p.map((pt, k) => {
       const din = k > 0 ? norm(pt.x - p[k - 1]!.x, pt.y - p[k - 1]!.y) : undefined;
