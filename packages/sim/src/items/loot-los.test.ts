@@ -6,6 +6,7 @@ import { OBJECTS, itemsSim, rejectedReasons, worldContainer } from '../test/item
 import { OpeningKind, OS, openingKey, setOpening, sideIndex } from '../openings/state.js';
 import { createCorpse } from './search.js';
 import { canReachTarget, reachTarget } from './inventory.js';
+import { nearbyView } from './views.js';
 
 /**
  * Looting never through walls (docs 9.69): the cabinet at (11, 10) next to the spawn
@@ -110,5 +111,16 @@ describe('looting: range and a clear line', () => {
     send(s, { type: 'search', x: 11, y: 10 });
     s.step();
     expect(rejectedReasons(s)).toEqual(['wall']);
+  });
+
+  it('nearby (the client prompt) lists only reachable targets: no hint through a wall', () => {
+    const s = sim({ wallW: (x: number, y: number) => x === 11 && (y === 10 || y === 11) });
+    const here = createCorpse(s.world, 903, 10, 11, 0, undefined)!;
+    const behind = createCorpse(s.world, 904, 11, 11, 0, undefined)!;
+    const ids = nearbyView(s.world, pe(s)).map((n) => n.id);
+    expect(ids).toContain(here.id);
+    expect(ids).not.toContain(behind.id);
+    expect(ids).not.toContain(worldContainer(s, 11, 10).id);
+    for (const id of ids) expect(canReachTarget(s.world, pe(s), { container: id })).toBe(true);
   });
 });

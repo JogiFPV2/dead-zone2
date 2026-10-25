@@ -242,7 +242,13 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
       for (const id of ids) {
         const c = st.containers.get(id);
         if (!c) continue;
-        if (!(c.kind === 'world' ? containerInReach(w, eid, c) : tileOk)) continue;
+        // Line of sight too (docs 9.69): no prompt for piles behind a wall.
+        if (
+          !(c.kind === 'world'
+            ? containerInReach(w, eid, c)
+            : tileOk && containerInReach(w, eid, c))
+        )
+          continue;
         const v: NearbyContainerView = {
           id,
           kind: viewKind(c),
@@ -260,7 +266,7 @@ export function nearbyView(w: SimWorld, eid: number): NearbyContainerView[] {
   // Zombie corpses in reach (searched like storage; contents only after the search).
   for (const [zsid, id] of st.corpses) {
     const c = st.containers.get(id);
-    if (!c || !tileInReach(w, eid, c.x, c.y, c.z)) continue;
+    if (!c || !containerInReach(w, eid, c)) continue;
     out.push({
       id,
       kind: 'corpse',
