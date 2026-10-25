@@ -171,7 +171,10 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
   const above = document.createElement('div');
   above.className = 'dz-touch-top';
   above.append(close, rotate);
-  el.append(moveZone, aimZone, ring, top);
+  // Full map toggle next to the mini minimap (same `map` action as the top bar pin).
+  const mapFull = button('map', 'dz-touch__pill dz-touch__mapfull', 'expand', 'Pełna mapa', 44);
+  bindPress(mapFull, 'press', 'map');
+  el.append(moveZone, aimZone, ring, top, mapFull);
   root.append(el);
   document.body.append(above);
 

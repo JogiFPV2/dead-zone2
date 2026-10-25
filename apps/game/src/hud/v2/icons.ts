@@ -17,6 +17,7 @@ const PATHS = {
   run: '<circle cx="14" cy="4.5" r="1.8"/><path d="M10 21l2.5-5.5L10 12l3-4 3 3h3M7 10l3-2M12.5 15.5L16 18v3"/>',
   sneak: '<circle cx="15" cy="6" r="1.8"/><path d="M5 20l4-4 3 1 1-5-4-1-3 3M13 12l4 2 2 4"/>',
   pause: '<path d="M9 6v12M15 6v12"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   rotate:
     '<path d="M4 12a8 8 0 0113.7-5.6L20 9M20 4v5h-5"/><rect x="7" y="11" width="10" height="7" rx="1"/>',

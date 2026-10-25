@@ -35,7 +35,8 @@ html.is-touch canvas {
   left: 0;
   bottom: 0;
   width: 44%;
-  height: 62%;
+  /* Under the minimap (touch-layout.ts TOUCH_MOVE_TOP). */
+  top: calc(172px + var(--dz-safe-t));
   touch-action: none;
 }
 .dz-touch__aim {
@@ -145,10 +146,9 @@ html.is-touch canvas {
   }
 }
 
-/* The desktop HUD on a phone: no key hints, no minimap / long top bar; HP and moodles go to the
+/* The desktop HUD on a phone: no key hints, no long top bar; HP and moodles go to the
    top-left, quick slots 1–3 to the top bar (44 px), the context menu gets 44 px rows. */
 html.is-touch .dz-topbar,
-html.is-touch .dz-g--minimap,
 html.is-touch .dz-g--hints,
 html.is-touch .dz-lowres,
 html.is-touch .dz-g--weapon {
@@ -247,4 +247,53 @@ html.is-touch .dz-i3__tile {
 /* Car menu on touch: finger-sized rows (48 px, mockup tap target). */
 html.is-touch .dz-vh__row {
   height: 48px;
+}
+
+/* Mini minimap on touch (touch-layout.ts TOUCH_MINIMAP): top-left under the HP bar, −/+ 32 px,
+   the floor badge (#195) under it instead of left of it (the screen edge is there). */
+html.is-touch .dz-g--minimap {
+  left: calc(8px + var(--dz-safe-l)) !important;
+  top: calc(40px + var(--dz-safe-t)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 120px;
+  height: 120px;
+  transform: none !important;
+}
+html.is-touch .dz-hud .dz-minimap,
+html.is-touch .dz-hud .dz-noise-ring {
+  width: 120px;
+  height: 120px;
+}
+html.is-touch .dz-hud .dz-mmzoom__row {
+  left: 50%;
+  bottom: 4px;
+  gap: 6px;
+}
+html.is-touch .dz-hud .dz-mmzoom__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 18px;
+  touch-action: none;
+}
+html.is-touch .dz-hud .dz-mmzoom__level {
+  top: 6px;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+html.is-touch .dz-hud .dz-floor {
+  right: auto;
+  left: 0;
+  top: calc(100% + 6px);
+  transform: none;
+}
+/* Full map button (touch-layout.ts TOUCH_MAP_FULL). */
+.dz-touch__mapfull {
+  position: absolute;
+  left: calc(134px + var(--dz-safe-l));
+  top: calc(40px + var(--dz-safe-t));
+  width: 44px;
 }
