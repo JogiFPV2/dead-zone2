@@ -125,3 +125,7 @@ export function dragDecision(
   if (!touch) return 'drag';
   return heldMs >= TOUCH_DRAG_HOLD_MS ? 'drag' : 'scroll';
 }
+
+/** Inventory long press: held ≥ LONG_PRESS_MS with the finger still (< TAP_MAX_PX). */
+export const longPressHolds = (heldMs: number, movedPx: number): boolean =>
+  heldMs >= LONG_PRESS_MS && movedPx < TAP_MAX_PX;

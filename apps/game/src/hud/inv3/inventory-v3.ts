@@ -1,5 +1,5 @@
 import './inventory-v3.css';
-import { dragDecision } from '../../input/touch/gestures.js';
+import { dragDecision, LONG_PRESS_MS, longPressHolds } from '../../input/touch/gestures.js';
 import type { ContainerId } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { InventorySortSetting, InventoryViewMode } from '../../settings/schema.js';
@@ -408,6 +408,9 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     if (cmd) opts.send(cmd);
   };
 
+  /** Last pointer position (long-press stillness check). */
+  const lastPt = { x: 0, y: 0 };
+
   // ── rendering ─────────────────────────────────────────────────────────────
   const bindItem = (node: HTMLElement, side: InvSide, r: InvRowVM, grid: boolean): void => {
     node.dataset.key = r.key;
@@ -435,13 +438,34 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         pointer: e.pointerId,
         ...(e.pointerType === 'touch' ? { touch: { at: e.timeStamp, y: e.clientY } } : {}),
       };
+      if (e.pointerType !== 'touch') return;
+      // Long press (finger resting, no drag): the desktop right-click action.
+      lastPt.x = e.clientX;
+      lastPt.y = e.clientY;
+      const pid = e.pointerId;
+      const x0 = e.clientX;
+      const y0 = e.clientY;
+      window.setTimeout(() => {
+        const d = drag;
+        if (!d || d.pointer !== pid || d.active || d.row.key !== r.key) return;
+        if (!longPressHolds(LONG_PRESS_MS, Math.hypot(lastPt.x - x0, lastPt.y - y0))) return;
+        drag = undefined;
+        lastClick = undefined;
+        if (navigator.vibrate) navigator.vibrate(15);
+        contextAction();
+      }, LONG_PRESS_MS);
     });
-    node.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
+    const contextAction = (): void => {
       const id = r.itemIds[0];
       if (id === undefined) return;
       if (!r.context && r.combine) combine(id);
       else send([contextCommand(opts.state(), opts.content(), id)]);
+    };
+    node.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      // Touch: the long-press timer below already ran it (browsers also fire contextmenu).
+      if (isTouchUi()) return;
+      contextAction();
     });
   };
 
@@ -916,6 +940,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     !!drag && drag.ids.every((id) => t.rows.some((r) => r.itemIds.includes(id)));
 
   const onMove = (e: PointerEvent): void => {
+    lastPt.x = e.clientX;
+    lastPt.y = e.clientY;
     if (!drag || e.pointerId !== drag.pointer) return;
     if (!drag.active) {
       const moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_ZOOM_LIMITS, zoomFromWheel } from '../../camera/zoom.js';
 import {
   LONG_PRESS_MS,
+  longPressHolds,
   TAP_MAX_MS,
   TAP_MAX_PX,
   TOUCH_DRAG_HOLD_MS,
@@ -88,5 +89,13 @@ describe('touch gestures', () => {
     expect(dragDecision(true, 100, 10, 6)).toBe('scroll');
     expect(dragDecision(true, 150, 10, 6)).toBe('drag');
     expect(dragDecision(false, 0, 6, 6)).toBe('drag');
+  });
+});
+
+describe('longPressHolds', () => {
+  it('needs the hold and a still finger', () => {
+    expect(longPressHolds(LONG_PRESS_MS, 0)).toBe(true);
+    expect(longPressHolds(LONG_PRESS_MS - 1, 0)).toBe(false);
+    expect(longPressHolds(LONG_PRESS_MS, TAP_MAX_PX)).toBe(false);
   });
 });
