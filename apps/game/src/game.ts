@@ -18,6 +18,7 @@ import {
 } from './input/touch/touch-settings.js';
 import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
+import { createTouchZoomSlider } from './hud/touch/zoom-slider.js';
 import { InteractController } from './hud/v2/interact-controller.js';
 import { createBigMap } from './bigmap/bigmap-view.js';
 import { renderPaper } from './bigmap/paper.js';
@@ -1754,6 +1755,11 @@ const touch = touchMode.touch
   : undefined;
 if (touch) playerInput.setStick(() => touch.vector());
 const touchHud = touch ? createTouchHud(container, touch) : undefined;
+const touchZoom = touchHud
+  ? createTouchZoomSlider(touchHud.el, DEFAULT_ZOOM_LIMITS, (z) => {
+      if (!container.dataset.modal) rig.zoomTo(z);
+    })
+  : undefined;
 if (touch && (import.meta.env.DEV || touchMode.debug))
   Object.assign(window, {
     __dzTouch: { controls: touch, mode: touchMode, landscapeLocked: () => landscapeLocked },
@@ -2064,6 +2070,7 @@ renderer.setAnimationLoop((time) => {
   // In a car WASD drive (`drive`, vehicle controller), no `move` / `aim`.
   if (!vehicles.seated) playerInput.update(time, rig.targetYaw, worldCamera);
   touchHud?.update({ sneaking: sneak.sneaking(time) });
+  touchZoom?.update(rig.zoomTarget);
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
   if (state) {

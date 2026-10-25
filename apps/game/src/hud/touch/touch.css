@@ -297,3 +297,47 @@ html.is-touch .dz-hud .dz-floor {
   top: calc(40px + var(--dz-safe-t));
   width: 44px;
 }
+
+/* Camera zoom slider (touch-layout.ts TOUCH_ZOOM): right edge, between the top bar and SKRAD. */
+.dz-touch__zoom {
+  position: absolute;
+  right: calc(8px + var(--dz-safe-r));
+  top: calc(60px + var(--dz-safe-t));
+  bottom: calc(196px + var(--dz-safe-b));
+  width: 44px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border-radius: 22px;
+  background: rgba(21, 25, 28, 0.45);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  touch-action: none;
+}
+.dz-touch__zoom b {
+  font-size: 14px;
+  line-height: 14px;
+}
+.dz-touch__zoomtrack {
+  position: relative;
+  flex: 1;
+  width: 4px;
+  margin: 11px 0;
+  border-radius: 2px;
+  background: var(--dz-touch-line);
+}
+.dz-touch__zoomtrack i {
+  position: absolute;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin: 0 0 -11px -11px;
+  border-radius: 50%;
+  background: #dfe3e5;
+  box-shadow: 0 1px 4px #000;
+}
+.dz-touch__zoom[data-down] .dz-touch__zoomtrack i {
+  background: var(--dz-touch-accent);
+}

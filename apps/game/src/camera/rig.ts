@@ -63,6 +63,12 @@ export class CameraRig {
     this.onZoomTarget?.(this.zoomGoal);
   }
 
+  /** Moves the zoom target to `zoom` (clamped, eased in `update`): the touch zoom slider. */
+  zoomTo(zoom: number): void {
+    this.zoomGoal = clamp(zoom, this.zoomLimits.min, this.zoomLimits.max);
+    this.onZoomTarget?.(this.zoomGoal);
+  }
+
   /** Sets the zoom (clamped) right away, e.g. restored from settings. */
   setZoom(zoom: number): void {
     this.zoomGoal = clamp(zoom, this.zoomLimits.min, this.zoomLimits.max);
