@@ -304,6 +304,22 @@ export interface CrowdConfig {
   /** A player within this distance of the edge centre on the other side holds it. */
   holdReachTiles: number;
   holdForce: number;
+  /**
+   * Active hold (`holdDoor`, `hold-door.ts`): the holder resists with `holdUnitsPerKg` × the
+   * furniture push strength (`furnitureStrengthKg`: skill, fatigue, wounds, load, endurance;
+   * average 105 kg ≈ 4 units) instead of `holdForce`. Endurance drains `holdEndurancePerSec` +
+   * `holdEndurancePerUnit` × pressing units per second; below `holdMinEndurance` the hold ends
+   * (`exhausted`). Net pressure ≥ `holdStaggerUnits` staggers the holder, ≥ `holdKnockUnits`
+   * knocks them down (the hold ends, `overpowered`). The hold lasts at most `holdMaxTicks`.
+   */
+  holdEnabled: boolean;
+  holdUnitsPerKg: number;
+  holdEndurancePerSec: number;
+  holdEndurancePerUnit: number;
+  holdMinEndurance: number;
+  holdStaggerUnits: number;
+  holdKnockUnits: number;
+  holdMaxTicks: number;
   barricadeResist: number;
   /** Excess units at which the client level (`openingPressure`) is 2 / 3. */
   levelUnits: readonly [number, number];
@@ -405,6 +421,14 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     gateBarMul: 1.8,
     holdReachTiles: 1,
     holdForce: 2.5,
+    holdEnabled: true,
+    holdUnitsPerKg: 0.038,
+    holdEndurancePerSec: 0.4,
+    holdEndurancePerUnit: 0.6,
+    holdMinEndurance: 5,
+    holdStaggerUnits: 0.5,
+    holdKnockUnits: 1.5,
+    holdMaxTicks: sec(120),
     barricadeResist: 3,
     levelUnits: [2, 4],
     separation: { stiffness: 0.3, slop: 0.02, maxStep: perTick(1) },

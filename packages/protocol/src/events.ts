@@ -193,7 +193,13 @@ export type ActionKind =
    * Push / pull a piece of furniture one tile, or rotate it 90° (protocol 37, Physics
    * `physics/furniture.ts`, `sim.pushFurniture` / `pullFurniture` / `rotateFurniture`).
    */
-  | 'moveFurniture';
+  | 'moveFurniture'
+  /**
+   * Hold a closed door / gate shut from the inside against crowd pressure (protocol 41, Physics
+   * `physics/hold-door.ts`, `sim.holdDoor` / `releaseDoor`); runs until released, exhausted,
+   * overpowered, moved or hit (`doorHeld`).
+   */
+  | 'holdDoor';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */
@@ -205,6 +211,8 @@ export type ActionInterruptReason =
   | 'threat'
   | 'asleep'
   | 'died'
+  /** Hit / staggered / knocked down while the action runs (protocol 41, `holdDoor`). */
+  | 'hit'
   /** The item or container is gone or out of reach when the action should complete. */
   | 'target-lost';
 
@@ -702,6 +710,24 @@ export type SimEvent =
       y: number;
       z: number;
       broke: boolean;
+    }
+  /**
+   * Player `playerId` holds / stopped holding a door or gate (protocol 41, `physics/hold-door.ts`).
+   * `state`: `holding` (started), `released` (`releaseDoor`, the hold timed out or the door was
+   * opened / broken), `exhausted` (endurance ran out), `overpowered` (the crowd pushed through:
+   * the player is staggered or knocked down), `interrupted` (moved, hit, died, asleep).
+   * `units` = net crowd pressure on the door at that moment (zombie units, − = held).
+   */
+  | {
+      type: 'doorHeld';
+      tick: number;
+      playerId: PlayerId;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      state: 'holding' | 'released' | 'exhausted' | 'overpowered' | 'interrupted';
+      units: number;
     }
   /**
    * A piece of furniture moved (protocol 37, `physics/furniture.ts`): pushed / pulled one tile or

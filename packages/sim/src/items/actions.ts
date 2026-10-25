@@ -13,6 +13,7 @@ import { disinfectPart, registerWoundCareActions } from '../survival/wound-care.
 import { registerHygieneActions } from '../survival/hygiene.js';
 import { registerWaterActions } from '../furniture/water.js';
 import { registerFurnitureMoveActions } from '../physics/furniture.js';
+import { registerHoldDoorAction } from '../physics/hold-door.js';
 import { rollPoisoning, rollSpoiledFood } from '../survival/poisoning.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
@@ -188,6 +189,7 @@ export function registerItemActions(): void {
   registerWaterActions();
   registerVehicleActions();
   registerFurnitureMoveActions();
+  registerHoldDoorAction();
 
   registerAction('search', {
     validate(w, eid, a) {

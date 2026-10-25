@@ -13,6 +13,7 @@ import {
   physicsSpeedMul,
 } from './modifiers.js';
 import { crowdPressureSystem, separateZombies } from './crowd.js';
+import { holdDoorSystem } from './hold-door.js';
 import {
   fallSystem,
   knockbackMove,
@@ -298,5 +299,6 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   emit(w, events);
   separateZombies(w);
   crowdPressureSystem(w, grid);
+  holdDoorSystem(w);
   stairPushSystem(w, eidBySid, (z, p, force) => physicsHit(w, z, p, 'zombie', force));
 }

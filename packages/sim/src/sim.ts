@@ -1,4 +1,12 @@
 import {
+  checkHoldDoor,
+  doorKey,
+  releaseDoor,
+  startHoldDoor,
+  type DoorRef,
+  type HoldDoorCheck,
+} from './physics/hold-door.js';
+import {
   applyMarkerCommand,
   createPlayerMapWorld,
   DEFAULT_PLAYER_MAP,
@@ -397,6 +405,18 @@ export interface Sim {
     mode: FurnitureMoveMode,
     playerId?: PlayerId,
   ): FurnitureMoveCheck;
+  /**
+   * Hold a closed door / gate shut from the inside (Physics, docs 9.65): starts the timed
+   * `holdDoor` action of `playerId` on the edge (`openingKey` or {tx, ty, side, z?}). The
+   * holder's push strength resists crowd pressure; endurance drains with the pressure; a crowd
+   * stronger than the hold staggers / knocks the holder down. Events `doorHeld`. Undefined =
+   * started; else the reason (`invalid-target`, `invalid-state`, `out-of-range`, `tired`, ...).
+   */
+  holdDoor(edge: DoorRef, playerId?: PlayerId): CommandRejectReason | undefined;
+  /** Stop holding (`doorHeld released`); `invalid-state` when not holding. */
+  releaseDoor(playerId?: PlayerId): CommandRejectReason | undefined;
+  /** Would `holdDoor` start now? Reason, the holder's strength (kg) and resistance (units). */
+  canHoldDoor(edge: DoorRef, playerId?: PlayerId): HoldDoorCheck;
   /** Escape hatch for tests and tools; systems' internals, not a stable API. */
   readonly world: SimWorld;
   /** Whole sim state as a versioned save (UTF-8 JSON bytes); `createSim({ load })` restores it. */
@@ -923,6 +943,20 @@ export function createSim(input: SimOptions): Sim {
             dy: 0,
           }
         : canMoveFurniture(w, eid, id, mode);
+    },
+    holdDoor(edge, playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? 'unknown-player' : startHoldDoor(w, eid, edge);
+    },
+    releaseDoor(playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? 'unknown-player' : releaseDoor(w, eid);
+    },
+    canHoldDoor(edge, playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined
+        ? { ok: false, reason: 'unknown-player', edge: -1, strengthKg: 0, units: 0 }
+        : checkHoldDoor(w, eid, doorKey(w, eid, edge));
     },
     getPlayer(playerId = 0) {
       const eid = w.players.get(playerId);

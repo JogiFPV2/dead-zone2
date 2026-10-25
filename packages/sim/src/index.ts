@@ -189,3 +189,4 @@ export {
   type SaveWorldHeader,
 } from './save/save.js';
 export type { FurnitureMoveCheck, FurnitureMoveMode } from './physics/furniture.js';
+export type { DoorRef, HoldDoorCheck } from './physics/hold-door.js';

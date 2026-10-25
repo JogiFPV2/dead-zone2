@@ -8,6 +8,7 @@ import { canAct, canMove } from './modifiers.js';
 import { PHYS_TICKS_PER_SECOND } from './constants.js';
 import type { PhysicsBody } from './types.js';
 import { floorZ } from '../world/levels.js';
+import { holdersOf, holdPulse, holdUnits } from './hold-door.js';
 import { crowdPushFurniture, furnitureDoorResist, movedPieceOn } from './furniture.js';
 
 /**
@@ -89,8 +90,10 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
   });
   const s = w.survival;
   const hold2 = cc.holdReachTiles * cc.holdReachTiles;
+  const active = cc.holdEnabled ? holdersOf(w, key) : [];
   for (const eid of [...w.players.values()].sort((a, b) => a - b)) {
     if (floorZ(w, eid) !== k.z || s?.dead[eid] || s?.asleep[eid]) continue;
+    const holding = active.includes(eid);
     const b = body(w, eid);
     if (b && !canAct(b.state)) continue;
     const x = Position.x[eid] ?? 0;
@@ -98,6 +101,11 @@ export function edgePressure(w: SimWorld, key: number, sign: number, state: numb
     if (sign * ((side === 0 ? y : x) - edge) >= 0) continue;
     const dx = c.x - x;
     const dy = c.y - y;
+    // Actively holding (`holdDoor`): their push strength instead of the passive lean.
+    if (holding) {
+      out.resist += holdUnits(w, eid);
+      continue;
+    }
     if (dx * dx + dy * dy > hold2) continue;
     out.resist += (cc.holdForce * (b?.bodyMassKg ?? w.physics.cfg.bodyMassKg.player)) / ref;
   }
@@ -166,6 +174,7 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
     side === 0 ? (w.c.Position.y[first] ?? 0) - k.ty : (w.c.Position.x[first] ?? 0) - k.tx;
   const p = edgePressure(w, key, pos >= 0 ? 1 : -1, state);
   const net = p.units - p.resist;
+  if (cc.holdEnabled) holdPulse(w, key, pos >= 0 ? 1 : -1, p.units, net);
   // Enough pressure shoves the furniture behind the door one tile into the room (it then no
   // longer holds the door; the push uses the same placement checks as a player's).
   if (p.furniture > 0 && net >= w.physics.cfg.furniture.pushBackUnits) {
