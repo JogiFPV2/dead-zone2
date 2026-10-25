@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AiStopGapSchema } from './ai-stop-gap.js';
 import { RealSecondsSchema, TilesSchema } from './common/index.js';
 
 /**
@@ -23,6 +24,8 @@ export const AiSettingsSchema = z
       .strictObject({ min: RealSecondsSchema, max: RealSecondsSchema })
       .refine((r) => r.min <= r.max, { message: 'searchSec.min > max' })
       .default({ min: 2, max: 5 }),
+    /** Odstęp zatrzymania przed celem (m); brak = `DEFAULT_AI_STOP_GAP_M`. */
+    stopGapM: AiStopGapSchema.optional(),
   })
   .prefault({});
 

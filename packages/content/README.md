@@ -41,6 +41,9 @@ Główne wejście (`@deadzone/content`) nie używa API Node, więc działa w prz
   minuty gry >0; domyślnie `DEFAULT_MEDICINE_REDUCE_SICKNESS` = 30 i `DEFAULT_MEDICINE_DURATION_MIN` = 60).
 - Zepsute jedzenie: w `food` opcjonalne `spoiledSicknessChance` (0–1, domyślnie `DEFAULT_FOOD_SPOILED_SICKNESS_CHANCE` = 0.25)
   i `spoiledPoisonLoad` (≥0, skala jak zatrucie wodą, domyślnie `DEFAULT_FOOD_SPOILED_POISON_LOAD` = 15). Schemat nie wstawia domyślnych.
+- Walka i AI zombie (`worldSettings`, opcjonalne, bez domyślnych w schemacie): `combat.zombie.hitChance` (0–1,
+  `DEFAULT_ZOMBIE_HIT_CHANCE` = 0.7), `combat.zombie.carReachM` (m, >0, `DEFAULT_ZOMBIE_CAR_REACH_M` = 0.9) i
+  `ai.stopGapM` (m, ≥0, odstęp zatrzymania od krawędzi ciał, `DEFAULT_AI_STOP_GAP_M` = 0.15).
 
 ## Miejsca
 

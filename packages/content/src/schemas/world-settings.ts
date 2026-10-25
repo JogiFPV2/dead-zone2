@@ -6,6 +6,7 @@ import { LootSettingsSchema } from './loot-rarity.js';
 import { FirearmsSettingsSchema } from './firearms-settings.js';
 import { OpeningsSettingsSchema } from './openings-settings.js';
 import { NoiseSettingsSchema } from './noise-settings.js';
+import { CombatSettingsSchema } from './combat-settings.js';
 import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
 import { MovementSettingsSchema } from './movement-settings.js';
@@ -65,6 +66,8 @@ export const WorldSettingsSchema = z.strictObject({
   noise: NoiseSettingsSchema,
   /** Zombie: gubienie tropu (czas bez wzroku i słuchu, dystans). */
   ai: AiSettingsSchema,
+  /** Walka zombie: szansa trafienia, zasięg w auto (opcjonalne, `DEFAULT_*`). */
+  combat: CombatSettingsSchema.optional(),
   /** Drzwi i okna: wytrzymałość, hałas, przechodzenie przez okno. */
   openings: OpeningsSettingsSchema,
   /** Broń palna: spadek celności z odległością, rozrzut, ładowanie magazynków. */

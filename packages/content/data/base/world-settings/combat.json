@@ -1,0 +1,5 @@
+{
+  "combat": {
+    "zombie": { "hitChance": 0.7, "carReachM": 0.9 }
+  }
+}

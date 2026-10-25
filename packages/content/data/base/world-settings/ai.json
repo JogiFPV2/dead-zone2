@@ -4,6 +4,7 @@
     "lostTrackSpread": 0.2,
     "lostTrackDistM": 3,
     "lostTrackCoverMul": 0.6,
-    "searchSec": { "min": 2, "max": 5 }
+    "searchSec": { "min": 2, "max": 5 },
+    "stopGapM": 0.15
   }
 }
