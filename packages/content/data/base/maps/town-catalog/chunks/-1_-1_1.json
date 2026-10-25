@@ -942,8 +942,8 @@
   ],
   "objects": [
     {
-      "contentId": "base:bookshelf",
-      "x": 7,
+      "contentId": "base:locker",
+      "x": 0,
       "y": 19,
       "rot": 1
     },
@@ -954,40 +954,28 @@
       "rot": 3
     },
     {
-      "contentId": "base:chair",
-      "x": 10,
-      "y": 19,
-      "rot": 3
-    },
-    {
       "contentId": "base:table",
       "x": 11,
       "y": 19,
       "rot": 1
     },
     {
-      "contentId": "base:bathtub",
-      "x": 12,
-      "y": 19,
-      "rot": 3
-    },
-    {
-      "contentId": "base:desk",
-      "x": 30,
-      "y": 19,
-      "rot": 3
+      "contentId": "base:table",
+      "x": 0,
+      "y": 20,
+      "rot": 1
     },
     {
       "contentId": "base:desk-lamp",
-      "x": 30,
-      "y": 19,
-      "rot": 3
+      "x": 0,
+      "y": 20,
+      "rot": 1
     },
     {
-      "contentId": "base:chair",
-      "x": 31,
-      "y": 19,
-      "rot": 1
+      "contentId": "base:bookshelf",
+      "x": 1,
+      "y": 20,
+      "rot": 3
     },
     {
       "contentId": "base:locker",
@@ -1008,8 +996,20 @@
       "rot": 3
     },
     {
+      "contentId": "base:bathroom-cabinet",
+      "x": 12,
+      "y": 20,
+      "rot": 3
+    },
+    {
       "contentId": "base:ceiling-lamp",
       "x": 13,
+      "y": 20,
+      "rot": 0
+    },
+    {
+      "contentId": "base:chair",
+      "x": 31,
       "y": 20,
       "rot": 0
     },
@@ -1038,10 +1038,22 @@
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:desk",
       "x": 30,
       "y": 21,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:desk-lamp",
+      "x": 30,
+      "y": 21,
+      "rot": 2
+    },
+    {
+      "contentId": "base:locker",
+      "x": 0,
+      "y": 22,
+      "rot": 1
     },
     {
       "contentId": "base:light-switch",
@@ -1093,12 +1105,6 @@
     },
     {
       "contentId": "base:light-switch",
-      "x": 13,
-      "y": 22,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bathroom-cabinet",
       "x": 15,
       "y": 22,
       "rot": 2
@@ -1170,28 +1176,22 @@
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 0,
-      "y": 25,
-      "rot": 1
-    },
-    {
       "contentId": "base:table",
       "x": 1,
       "y": 25,
-      "rot": 3
+      "rot": 0
     },
     {
       "contentId": "base:desk-lamp",
       "x": 1,
       "y": 25,
-      "rot": 3
+      "rot": 0
     },
     {
-      "contentId": "base:chair",
-      "x": 2,
+      "contentId": "base:locker",
+      "x": 3,
       "y": 25,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:light-switch",
@@ -1200,34 +1200,40 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
-      "x": 10,
+      "contentId": "base:table",
+      "x": 8,
       "y": 25,
-      "rot": 0
+      "rot": 3
     },
     {
-      "contentId": "base:locker",
-      "x": 0,
-      "y": 26,
-      "rot": 1
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 7,
-      "y": 26,
-      "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": 1,
-      "y": 27,
+      "contentId": "base:desk-lamp",
+      "x": 8,
+      "y": 25,
       "rot": 3
     },
     {
       "contentId": "base:chair",
       "x": 9,
+      "y": 25,
+      "rot": 1
+    },
+    {
+      "contentId": "base:chair",
+      "x": 1,
+      "y": 26,
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 1,
       "y": 27,
-      "rot": 0
+      "rot": 3
+    },
+    {
+      "contentId": "base:locker",
+      "x": 8,
+      "y": 27,
+      "rot": 3
     },
     {
       "contentId": "base:light-switch",
@@ -1248,28 +1254,10 @@
       "rot": 3
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": 8,
       "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:table",
-      "x": 9,
-      "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:desk-lamp",
-      "x": 9,
-      "y": 28,
-      "rot": 2
-    },
-    {
-      "contentId": "base:bookshelf",
-      "x": 15,
-      "y": 28,
-      "rot": 1
+      "rot": 3
     }
   ],
   "rooms": {

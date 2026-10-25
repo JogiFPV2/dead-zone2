@@ -66,6 +66,9 @@ export interface WallSegment {
 const OPENING_GAP = 1.2;
 /** Max distance (m) from an opening's tile edge to the outline for the gap to apply. */
 const OPENING_REACH = 1.6;
+/** Extra gap (m) on both sides of an opening's corridor; longest corridor gap (m). */
+const GAP_MARGIN = 0.1;
+const MAX_GAP = 3;
 
 /** Outline left slanted at runtime: single ring, off the axes by more than the snap tolerance. */
 export function isSlanted(ib: IBuilding): boolean {
@@ -104,7 +107,44 @@ function outlineSegments(
     const gaps: [number, number][][] = edges.map(() => []);
     const roomAt = (gx: number, gy: number) =>
       gx < 0 || gy < 0 || gx >= W || gy * W + gx >= L.room.length ? 0 : L.room[gy * W + gx]!;
-    const opening = (mx: number, my: number) => {
+    /**
+     * Opening on the tile edge (x0, y0)–(x1, y1): a gap on every outline edge crossing the
+     * edge's perpendicular corridor (one tile wide, OPENING_REACH deep on both sides), covering
+     * the corridor plus GAP_MARGIN (Fizyka 25.10: a slanted wall's gap lined up with the raster
+     * window, corner walls next to it opened too). Falls back to a centred OPENING_GAP on the
+     * nearest edge when no edge crosses the corridor.
+     */
+    const opening = (x0: number, y0: number, x1: number, y1: number) => {
+      const mx = (x0 + x1) / 2;
+      const my = (y0 + y1) / 2;
+      const nx = -(y1 - y0);
+      const ny = x1 - x0;
+      let hit = false;
+      edges.forEach(([ax, ay, bx, by], k) => {
+        const dx = bx - ax;
+        const dy = by - ay;
+        const len = Math.hypot(dx, dy);
+        // p + s·n = a + t·(b − a): solve for t (metres along the edge) and s.
+        const det = dx * ny - dy * nx;
+        if (Math.abs(det) < 1e-6 * len) return;
+        const ts: number[] = [];
+        let near = false;
+        for (const [px, py] of [
+          [x0, y0],
+          [x1, y1],
+        ] as const) {
+          const t = ((px - ax) * ny - (py - ay) * nx) / det;
+          const sv = ((px - ax) * dy - (py - ay) * dx) / det;
+          if (Math.abs(sv) <= OPENING_REACH) near = true;
+          ts.push(t * len);
+        }
+        const t0 = Math.min(...ts) - GAP_MARGIN;
+        const t1 = Math.max(...ts) + GAP_MARGIN;
+        if (!near || t1 < 0 || t0 > len || t1 - t0 > MAX_GAP) return;
+        gaps[k]!.push([t0, t1]);
+        hit = true;
+      });
+      if (hit) return;
       let best = -1;
       let bd = OPENING_REACH;
       let bt = 0;
@@ -132,8 +172,8 @@ function outlineSegments(
         const a = roomAt(gx, gy);
         const b = axis === 'N' ? roomAt(gx, gy - 1) : roomAt(gx - 1, gy);
         if ((a === 0) === (b === 0)) continue;
-        if (axis === 'N') opening(fx + gx + 0.5, fy + gy);
-        else opening(fx + gx, fy + gy + 0.5);
+        if (axis === 'N') opening(fx + gx, fy + gy, fx + gx + 1, fy + gy);
+        else opening(fx + gx, fy + gy, fx + gx, fy + gy + 1);
       }
     }
     edges.forEach(([ax, ay, bx, by], k) => {

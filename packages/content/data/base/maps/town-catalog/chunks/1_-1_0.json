@@ -365,12 +365,6 @@
       "rot": 1
     },
     {
-      "contentId": "base:shop-counter",
-      "x": 2,
-      "y": 21,
-      "rot": 3
-    },
-    {
       "contentId": "base:ceiling-lamp",
       "x": 7,
       "y": 21,

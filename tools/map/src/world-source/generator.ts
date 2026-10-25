@@ -3,7 +3,7 @@ import { coverZones } from './cover.js';
 import { chunkInfra, type GenInfra } from './infra.js';
 import { CHUNK_SIZE } from '@deadzone/content';
 import { occupiedTiles } from '@deadzone/content/footprint';
-import { OVERLAY_OBJECTS, baseFootprint } from '../furnish.js';
+import { OVERLAY_OBJECTS, WINDOW_CLEAR, baseFootprint } from '../furnish.js';
 import { solveBuilding, type SolvedBuilding } from './building.js';
 import {
   EDGE_PALETTE,
@@ -333,6 +333,47 @@ export class PlanChunkGenerator {
         }
       }
       if (!any) continue;
+      // Exterior windows / doors keep their tile in front and behind free of every wall segment
+      // (Fizyka 25.10): corner walls and neighbouring buildings' slanted walls are cut there.
+      if (walls.length) {
+        // From every nearby building's own edge grid: a window on the chunk border (x = 0 of the
+        // next chunk) still cuts this chunk's walls.
+        const boxes: [number, number, number, number][] = [];
+        for (const s of list) {
+          const L = s.levels.get(z);
+          if (!L) continue;
+          const W = s.w + 1;
+          const rm = (gx: number, gy: number) =>
+            gx < 0 || gy < 0 || gx >= s.w || gy >= s.h ? 0 : L.room[gy * W + gx]!;
+          const gx0 = Math.max(0, X0 - 1 - s.x0);
+          const gy0 = Math.max(0, Y0 - 1 - s.y0);
+          const gx1 = Math.min(s.w, X0 + C + 1 - s.x0);
+          const gy1 = Math.min(s.h, Y0 + C + 1 - s.y0);
+          for (let gy = gy0; gy <= gy1; gy++)
+            for (let gx = gx0; gx <= gx1; gx++) {
+              for (const axis of ['N', 'W'] as const) {
+                const v = (axis === 'N' ? L.edgeN : L.edgeW)[gy * W + gx];
+                const k = v ? EDGE_PALETTE[v]?.kind : undefined;
+                if (k !== 'window' && k !== 'door') continue;
+                const a = rm(gx, gy);
+                const b = axis === 'N' ? rm(gx, gy - 1) : rm(gx - 1, gy);
+                if (a !== 0 && b !== 0) continue;
+                const wx = s.x0 + gx;
+                const wy = s.y0 + gy;
+                boxes.push(
+                  axis === 'N'
+                    ? [wx + CUT_M, wy - CUT_DEPTH, wx + 1 - CUT_M, wy + CUT_DEPTH]
+                    : [wx - CUT_DEPTH, wy + CUT_M, wx + CUT_DEPTH, wy + 1 - CUT_M],
+                );
+              }
+            }
+        }
+        if (boxes.length) {
+          const cut = cutSegments(walls, boxes);
+          walls.length = 0;
+          walls.push(...cut);
+        }
+      }
       /** Tile (x, y) of level 0 is a door tile or in front of a door of any nearby building. */
       const doorAt = (x: number, y: number): boolean => {
         for (const b of list) {
@@ -355,8 +396,39 @@ export class PlanChunkGenerator {
         }
         return false;
       };
+      /** Tile (x, y) of level z has a window edge of any nearby building. */
+      const windowAt = (x: number, y: number, z: number): boolean => {
+        for (const b of list) {
+          const L = b.levels.get(z);
+          if (!L) continue;
+          const W = b.w + 1;
+          const at = (ex: number, ey: number, a: Uint16Array) => {
+            const gx = ex - b.x0;
+            const gy = ey - b.y0;
+            if (gx < 0 || gy < 0 || gx >= W || gy > b.h) return false;
+            return EDGE_PALETTE[a[gy * W + gx]!]?.kind === 'window';
+          };
+          if (
+            at(x, y, L.edgeN) ||
+            at(x, y + 1, L.edgeN) ||
+            at(x, y, L.edgeW) ||
+            at(x + 1, y, L.edgeW)
+          )
+            return true;
+        }
+        return false;
+      };
       // Objects of this level: furniture inside, props outside (first building wins a tile).
       const objects: GenLevel['objects'] = [];
+      // Tiles of pieces dropped by a window: what stood on them (TV, lamp, radio) goes too.
+      const dropped = new Set<string>();
+      for (const s of list)
+        for (const o of s.objects) {
+          if (o.z !== z || !WINDOW_CLEAR.has(o.contentId)) continue;
+          const tiles = occupiedTiles(o.x, o.y, o.rot, baseFootprint(o.contentId));
+          if (tiles.some((t) => windowAt(t.x, t.y, z)))
+            for (const t of tiles) dropped.add(`${t.x},${t.y}`);
+        }
       const taken = new Set<number>();
       for (const s of list) {
         for (const o of s.objects) {
@@ -372,6 +444,17 @@ export class PlanChunkGenerator {
           if (!overlay && cells.some((j) => taken.has(j))) continue;
           // Never in a doorway of any building (both sides of every door stay free).
           if (z === 0 && doorAt(o.x, o.y)) continue;
+          // Yard props never in front of any building's window (Fizyka 25.10).
+          if (
+            WINDOW_CLEAR.has(o.contentId) &&
+            occupiedTiles(o.x, o.y, o.rot, baseFootprint(o.contentId)).some((t) =>
+              windowAt(t.x, t.y, z),
+            )
+          )
+            continue;
+          // ...and nothing that stood on such a piece (TV on its stand, lamp on a desk).
+          if (overlay && o.contentId !== 'base:ceiling-lamp' && dropped.has(`${o.x},${o.y}`))
+            continue;
           // An outdoor prop never stands in another building.
           if (z === 0 && !room[i] && occ[ri(o.x - X0, o.y - Y0)]) continue;
           if (z === 0 && cells.some((j) => room[j] && owner[j] !== s.gid)) continue;
@@ -931,3 +1014,48 @@ export const CHUNK_KINDS = [
 ] as const;
 
 void G_WATER;
+
+/** Window / door corridor cut into wall segments: depth (m) each side, inset along the edge. */
+const CUT_DEPTH = 0.95;
+const CUT_M = 0.02;
+
+/** `walls` minus the parts inside any of `boxes` ([x0, y0, x1, y1]). Pure (tests). */
+export function cutSegments<S extends { x0: number; y0: number; x1: number; y1: number }>(
+  walls: readonly S[],
+  boxes: readonly [number, number, number, number][],
+): S[] {
+  let cur: S[] = [...walls];
+  for (const [bx0, by0, bx1, by1] of boxes) {
+    const next: S[] = [];
+    for (const w of cur) {
+      const dx = w.x1 - w.x0;
+      const dy = w.y1 - w.y0;
+      let t0 = 0;
+      let t1 = 1;
+      let inside = true;
+      for (const [p, q] of [
+        [-dx, w.x0 - bx0],
+        [dx, bx1 - w.x0],
+        [-dy, w.y0 - by0],
+        [dy, by1 - w.y0],
+      ] as const) {
+        if (Math.abs(p) < 1e-12) {
+          if (q < 0) inside = false;
+          continue;
+        }
+        const r = q / p;
+        if (p < 0) t0 = Math.max(t0, r);
+        else t1 = Math.min(t1, r);
+      }
+      if (!inside || t0 >= t1) {
+        next.push(w);
+        continue;
+      }
+      const len = Math.hypot(dx, dy);
+      if (t0 * len > 1e-3) next.push({ ...w, x1: w.x0 + dx * t0, y1: w.y0 + dy * t0 });
+      if ((1 - t1) * len > 1e-3) next.push({ ...w, x0: w.x0 + dx * t1, y0: w.y0 + dy * t1 });
+    }
+    cur = next;
+  }
+  return cur;
+}

@@ -439,6 +439,7 @@ export function furnishView(
   const seed = opt.seed ?? 1;
   const taken = new Set<string>(occupied);
   const keepFree = reservedTiles(view);
+  const byWindow = windowTiles(view);
   const out: PlacedObject[] = [];
   const rotAt = new Map<string, number>();
   const idAt = new Map<string, string>();
@@ -697,6 +698,7 @@ export function furnishView(
             : candidates(item, fpOf(item.id));
       for (const c of spots) {
         if (!keepsConnected(c.keys)) continue;
+        if (WINDOW_CLEAR.has(item.id) && [...c.keys].some((k) => byWindow.has(k))) continue;
         const o = { contentId: item.id, x: c.x, y: c.y, z, rot: c.rot };
         put(o);
         const added = c.front.filter((k) => !fronts.has(k));
@@ -710,6 +712,7 @@ export function furnishView(
           for (const seat of seatSpots(c, own)) {
             if (chairs.length >= want) break;
             if (!free(seat.x, seat.y) || !keepsConnected(seat.keys)) continue;
+            if (WINDOW_CLEAR.has(s.id) && byWindow.has(key(seat.x, seat.y, z))) continue;
             const ch = { contentId: s.id, x: seat.x, y: seat.y, z, rot: seat.rot };
             put(ch);
             chairs.push(ch);
@@ -838,6 +841,11 @@ export function furnishView(
       const street = !STREET_PROPS.has(id) && opt.streetFloor;
       const c = sideTiles
         .filter(([x, y]) => !taken.has(key(x, y, 0)))
+        .filter(
+          ([x, y, rot]) =>
+            !WINDOW_CLEAR.has(id) ||
+            !occupiedTiles(x, y, rot, fpOf(id)).some((t) => byWindow.has(key(t.x, t.y, 0))),
+        )
         .filter(([x, y]) => !street || !street(view.floor(x, y, 0) ?? ''))
         .map(([x, y, rot]) => ({ x, y, rot, s: score(x, y) + rand() * 0.5 }))
         .filter((c) => Number.isFinite(c.s))
@@ -1005,6 +1013,56 @@ const STREET_PROPS: ReadonlySet<string> = new Set([
 ]);
 
 const opposite = (s: Side): Side => ({ n: 's', s: 'n', e: 'w', w: 'e' })[s] as Side;
+
+/**
+ * Kept off the tile just inside / just outside every window (Fizyka 25.10: windows must stay
+ * climbable, like doors): furniture in front of a window inside, yard props outside. Kitchen
+ * units, sinks, wardrobes etc. are not listed (they stand under windows or need a solid wall).
+ */
+export const WINDOW_CLEAR: ReadonlySet<string> = new Set([
+  'base:dresser',
+  'base:desk',
+  'base:table',
+  'base:sofa',
+  'base:armchair',
+  'base:chair',
+  'base:bed',
+  'base:shop-counter',
+  'base:tv-stand',
+  'base:trash-bin',
+  'base:dumpster',
+  'base:crate',
+  'base:firewood-pile',
+  // Fizyka 25.10 (2): kitchen, shelving and bathroom fittings, inside only.
+  'base:fridge',
+  'base:freezer',
+  'base:fridge-freezer',
+  'base:kitchen-counter',
+  'base:kitchen-cabinet',
+  'base:kitchen-sink',
+  'base:gas-stove',
+  'base:range',
+  'base:bookshelf',
+  'base:metal-shelf',
+  'base:bathroom-cabinet',
+  'base:bathroom-sink',
+  'base:bathtub',
+  'base:shower',
+  'base:toilet',
+]);
+
+/** Tiles on both sides of every window edge (`x,y,z` keys). */
+function windowTiles(view: FurnishView): Set<string> {
+  const res = new Set<string>();
+  for (const z of view.levels)
+    for (const [x, y] of view.tiles(z))
+      for (const sd of SIDES) {
+        if (view.edge(x, y, z, sd.s) !== 'window') continue;
+        res.add(key(x, y, z));
+        res.add(key(x + sd.dx, y + sd.dy, z));
+      }
+  return res;
+}
 
 /** Door tiles (both sides), stair runs, their foot and their landing: never furnished. */
 function reservedTiles(view: FurnishView): Set<string> {

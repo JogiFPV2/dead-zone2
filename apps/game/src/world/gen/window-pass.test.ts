@@ -120,8 +120,8 @@ const summary = (issues: WindowIssue[]) => {
  * in front of a window, slanted-wall gaps off the raster window. Lower these as it is fixed; any
  * other cause (wall, no floor, blocker) is a sim regression and must stay 0.
  */
-const OKULICKIEGO_MAX = { furniture: 17834, segment: 274 };
-const STW_MAX = { furniture: 6655, segment: 38 };
+const OKULICKIEGO_MAX = { furniture: 504, segment: 0 };
+const STW_MAX = { furniture: 150, segment: 0 };
 
 function ratchet(issues: WindowIssue[], max: { furniture: number; segment: number }) {
   const furniture = issues.filter((i) => i.issue.endsWith('-furniture')).length;

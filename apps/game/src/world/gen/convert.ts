@@ -118,7 +118,15 @@ export function levelToSimChunk(l: GenLevel, waterTile: TileId): SimChunk {
       ? { buildingKinds: Object.fromEntries(l.buildingKinds.map(([b, k]) => [String(b), k])) }
       : {}),
     ...(l.objects.length
-      ? { objects: l.objects.map(({ contentId, x, y }) => ({ contentId, x, y })) }
+      ? {
+          // rot too: a rotated bed / table takes its turned footprint in the sim (window-pass).
+          objects: l.objects.map(({ contentId, x, y, rot }) => ({
+            contentId,
+            x,
+            y,
+            ...(rot ? { rot } : {}),
+          })),
+        }
       : {}),
     ...(l.stairs.length ? { stairs: l.stairs } : {}),
     ...(l.vehicles?.length ? { vehicles: l.vehicles } : {}),

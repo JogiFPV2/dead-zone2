@@ -196,6 +196,8 @@ describe('footprint mebli na mapach contentu', () => {
             ([s, dx, dy]) =>
               free(x, y, z) &&
               !fronts.has(`${x},${y},${z}`) &&
+              // The tile just inside a window stays free (Fizyka 25.10).
+              !SIDES.some(([w]) => view.edge(x, y, z, w) === 'window') &&
               components(view, xy, z, r, new Set([...occ, `${x},${y},${z}`]), indoor) <= before &&
               view.edge(x, y, z, s) === 'wall' &&
               view.open(x, y, z, OPP[s]) &&

@@ -1057,12 +1057,6 @@
       "rot": 3
     },
     {
-      "contentId": "base:crate",
-      "x": 12,
-      "y": 19,
-      "rot": 3
-    },
-    {
       "contentId": "base:metal-shelf",
       "x": 14,
       "y": 19,
@@ -1123,6 +1117,12 @@
       "rot": 3
     },
     {
+      "contentId": "base:crate",
+      "x": 14,
+      "y": 22,
+      "rot": 1
+    },
+    {
       "contentId": "base:metal-shelf",
       "x": 15,
       "y": 23,
@@ -1171,40 +1171,40 @@
       "rot": 0
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:desk",
       "x": 3,
       "y": 25,
       "rot": 3
     },
     {
-      "contentId": "base:light-switch",
-      "x": 4,
-      "y": 25,
-      "rot": 0
-    },
-    {
-      "contentId": "base:chair",
-      "x": 6,
+      "contentId": "base:desk-lamp",
+      "x": 3,
       "y": 25,
       "rot": 3
     },
     {
-      "contentId": "base:desk",
-      "x": 7,
+      "contentId": "base:chair",
+      "x": 4,
       "y": 25,
       "rot": 1
     },
     {
-      "contentId": "base:desk-lamp",
-      "x": 7,
+      "contentId": "base:light-switch",
+      "x": 6,
       "y": 25,
-      "rot": 1
+      "rot": 0
     },
     {
       "contentId": "base:bench",
       "x": 8,
       "y": 25,
       "rot": 3
+    },
+    {
+      "contentId": "base:trash-bin",
+      "x": 11,
+      "y": 25,
+      "rot": 1
     },
     {
       "contentId": "base:light-switch",
@@ -1232,32 +1232,8 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": 3,
+      "x": 7,
       "y": 26,
-      "rot": 3
-    },
-    {
-      "contentId": "base:chair",
-      "x": 6,
-      "y": 27,
-      "rot": 3
-    },
-    {
-      "contentId": "base:desk",
-      "x": 7,
-      "y": 27,
-      "rot": 1
-    },
-    {
-      "contentId": "base:desk-lamp",
-      "x": 7,
-      "y": 27,
-      "rot": 1
-    },
-    {
-      "contentId": "base:trash-bin",
-      "x": 11,
-      "y": 27,
       "rot": 1
     },
     {
@@ -1268,9 +1244,15 @@
     },
     {
       "contentId": "base:dresser",
-      "x": 3,
+      "x": 4,
       "y": 28,
-      "rot": 3
+      "rot": 2
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": 6,
+      "y": 28,
+      "rot": 2
     },
     {
       "contentId": "base:desk",
