@@ -263,6 +263,8 @@ export function createAiWorld(
         lostTrackSpread: a.lostTrackSpread,
         lostTrackCoverMul: a.lostTrackCoverMul,
         searchSec: { ...a.searchSec },
+        // `stopGapM` (#298): stop gap to the chased player; absent = `DEFAULT_AI_STOP_GAP_M`.
+        ...(a.stopGapM !== undefined ? { reachTiles: a.stopGapM } : {}),
       },
     };
   return {
@@ -297,12 +299,7 @@ export function createAiWorld(
     animalSpawnWeights: content.animalTypes.map((t) => Math.round((t.spawnWeight ?? 1) * 1000)),
     animalCount: 0,
     animalsSpawned: 0,
-    combat: createCombatWorld(
-      capacity,
-      content.firearms
-        ? { ...(combatCfg ?? DEFAULT_COMBAT_CONFIG), firearms: content.firearms }
-        : combatCfg,
-    ),
+    combat: createCombatWorld(capacity, combatWithContent(content, combatCfg)),
   };
 }
 
@@ -368,4 +365,25 @@ function collectLights(content: ContentIndex, map: SimMap): StaticLight[] {
     }
   }
   return out;
+}
+
+/**
+ * Combat config with content: `worldSettings.firearms` and `worldSettings.combat.zombie`
+ * {hitChance, carReachM} (#298); absent fields keep `cfg` (defaults = content `DEFAULT_*`).
+ */
+function combatWithContent(
+  content: ContentIndex,
+  cfg: CombatConfig | undefined,
+): CombatConfig | undefined {
+  const z = content.combatSettings?.zombie;
+  if (!content.firearms && z?.hitChance === undefined && z?.carReachM === undefined) return cfg;
+  const base = cfg ?? DEFAULT_COMBAT_CONFIG;
+  return {
+    ...base,
+    ...(content.firearms ? { firearms: content.firearms } : {}),
+    zombie: {
+      hitChance: z?.hitChance ?? base.zombie.hitChance,
+      carReachTiles: z?.carReachM ?? base.zombie.carReachTiles,
+    },
+  };
 }

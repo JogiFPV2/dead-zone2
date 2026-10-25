@@ -1,3 +1,4 @@
+import { DEFAULT_ZOMBIE_CAR_REACH_M, DEFAULT_ZOMBIE_HIT_CHANCE } from '@deadzone/content';
 /**
  * Stage 4 combat tuning without data fields yet (docs 9.8). Weapon stats come from
  * `melee` of the item in `hand_primary`, zombie damage / cooldown / bite chance from
@@ -74,7 +75,7 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   critMul: 2,
   shove: { rangeTiles: 1.2, cooldownSec: 0.8, staminaCost: 4 },
   attackNoise: { radiusTiles: 4, volume: 0.3 },
-  zombie: { hitChance: 0.7, carReachTiles: 0.9 },
+  zombie: { hitChance: DEFAULT_ZOMBIE_HIT_CHANCE, carReachTiles: DEFAULT_ZOMBIE_CAR_REACH_M },
   zombieWoundWeights: { scratch: 0.6, laceration: 0.4 },
   attackAnimSec: 0.4,
   meleeXpPerHit: 1,

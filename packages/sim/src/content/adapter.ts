@@ -128,6 +128,8 @@ export interface ContentIndex {
   noise: ContentBundle['worldSettings']['noise'] | undefined;
   /** `worldSettings.ai` (losing the track; optional for older bundles). */
   aiSettings: ContentBundle['worldSettings']['ai'] | undefined;
+  /** `worldSettings.combat` (#298; optional, sim falls back to `DEFAULT_*`). */
+  combatSettings: ContentBundle['worldSettings']['combat'] | undefined;
   /** `worldSettings.movement` (walk speed, gait multipliers; optional for older bundles). */
   movement: ContentBundle['worldSettings']['movement'] | undefined;
   /** `worldSettings.simLod` (big-map LOD; optional for older bundles). */
@@ -310,6 +312,7 @@ export function compileContent(content: SimContent): ContentIndex {
     firearms: content.worldSettings.firearms,
     noise: content.worldSettings.noise,
     aiSettings: (content.worldSettings as { ai?: ContentBundle['worldSettings']['ai'] }).ai,
+    combatSettings: content.worldSettings.combat,
     movement: (content.worldSettings as { movement?: ContentBundle['worldSettings']['movement'] })
       .movement,
     simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,

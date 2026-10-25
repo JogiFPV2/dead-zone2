@@ -1,3 +1,4 @@
+import { DEFAULT_AI_STOP_GAP_M } from '@deadzone/content';
 /**
  * Stage 4 tuning that has no fields in `worldSettings` yet (docs/sim-architecture.md 9.7). All
  * defaults live here, in one place, until Modules adds the data; the proposed field names are in
@@ -164,7 +165,7 @@ export const DEFAULT_STAGE4_CONFIG: Stage4Config = {
     wanderRadiusTiles: 6,
     wanderPauseSec: { min: 2, max: 8 },
     speedSpread: 0.1,
-    reachTiles: 0.15,
+    reachTiles: DEFAULT_AI_STOP_GAP_M,
     carReachTiles: 0.75,
     separationTiles: 0.7,
     zombieRadius: 0.3,

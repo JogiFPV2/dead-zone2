@@ -1671,3 +1671,7 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 - `useItem` na leku z samym `reduce_sickness` (9.66) wysyła teraz `itemUsed` z `action: 'pill'`, np. pod dźwięk połykania w kliencie.
 - Kształt: `{ type: 'itemUsed', tick, playerId, action: 'pill', itemId }`, gdzie `itemId` to id z contentu, np. `base:antibiotics`. Pola `freshness` brak.
 - `pill` nie jest czynnością czasową: rozszerza tylko typ pola `action` w evencie (`ActionKind | 'pill'`). `ACTION_KINDS`, zapis i hasz bez zmian.
+### 9.68 Walka zombie i odstęp zatrzymania z contentu (protokół i zapis bez zmian)
+
+- `worldSettings.combat.zombie {hitChance, carReachM}` (#298) nadpisuje `CombatConfig.zombie` (`hitChance`, `carReachTiles`). `worldSettings.ai.stopGapM` (#295) nadpisuje `ai.reachTiles`.
+- Brak pola = `DEFAULT_ZOMBIE_HIT_CHANCE` 0,7, `DEFAULT_ZOMBIE_CAR_REACH_M` 0,9, `DEFAULT_AI_STOP_GAP_M` 0,15 z @deadzone/content. Wartości bez zmian, więc goldeny hasza też.
