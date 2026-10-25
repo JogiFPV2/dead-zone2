@@ -73,7 +73,7 @@ describe('sanitizeSettings', () => {
         view: {
           cameraZoom: 1.4,
           minimapZoom: 99,
-          bigMapZoom: 0.1,
+          bigMapZoom: 0.01,
           bigMapLayers: { grid: true },
           inventoryView: 'grid',
           inventorySort: { player: { by: 'weight', desc: true }, container: { by: 'bogus' } },
@@ -83,7 +83,7 @@ describe('sanitizeSettings', () => {
     ).toEqual({
       cameraZoom: 1.4,
       minimapZoom: 4,
-      bigMapZoom: 0.25,
+      bigMapZoom: 0.05,
       bigMapLayers: { ...layers, grid: true },
       inventoryView: 'grid',
       inventorySort: {

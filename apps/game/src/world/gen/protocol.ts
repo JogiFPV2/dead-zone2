@@ -14,6 +14,11 @@ export interface GenWorldInfo {
   zombies: { x: number; y: number; heading: number }[];
   /** Named places (saveSummary.place, big map). */
   places: { name: string; kind: string; x: number; y: number }[];
+  /**
+   * Edge of the playable map in world metres (big map „GRANICA MAPY”, whole-map zoom), e.g. the
+   * 16 km OSM square rotated inside a bigger world. Optional: default = the chunk bounds.
+   */
+  boundary?: { x: number; y: number }[] | undefined;
   attribution?: string | undefined;
   /** Plan load + index time (ms). */
   loadMs: number;

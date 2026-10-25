@@ -67,6 +67,8 @@ export interface BootOptions {
    * `worldSettings.furniture.footprint` (render only; the sim follows its own settings).
    */
   footprint?: true;
+  /** `?bigmap16=1`: big map zooms out to the whole 16 km map (names, edge, overview terrain). */
+  bigmap16?: true;
   /**
    * `?style=real&quality=low|medium|high`: realistic PBR pilot (`render.style = 'real'`); the
    * default look is untouched when absent.
@@ -199,6 +201,7 @@ export function parseBootOptions(search: string, storedStyle?: RenderStyle): Boo
     stressLatencyMs: Math.max(0, Math.min(2000, Number(q.get('latency')) || 0)),
     perf: q.get('perf') === '1',
     ...(q.get('footprint') === '1' ? { footprint: true as const } : {}),
+    ...(q.get('bigmap16') === '1' ? { bigmap16: true as const } : {}),
     // „Styl grafiki: Realistyczny” from the settings unless the URL names a style.
     render: parseRenderOptions(search, storedStyle),
     ...(demo ? { pbrDemo: { x: Number(demo[1]), z: Number(demo[2]) } } : {}),

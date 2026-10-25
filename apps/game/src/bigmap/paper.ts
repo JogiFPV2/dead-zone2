@@ -12,13 +12,18 @@ export const PAPER = {
   roadEdge: [142, 74, 37],
   building: [94, 85, 75],
   floor: [120, 110, 98],
+  water: [146, 172, 176],
+  rail: [70, 64, 58],
 } as const;
 
-type Kind = keyof typeof PAPER;
+export type PaperKind = keyof typeof PAPER;
+type Kind = PaperKind;
 
 /** Floor tile id → paper class (unknown / indoor tiles read as building floor). */
 export function paperKind(id: string | null | undefined): Kind | undefined {
   if (!id) return undefined;
+  if (/water/.test(id)) return 'water';
+  if (/rail/.test(id)) return 'rail';
   if (/asphalt|road/.test(id)) return 'road';
   if (/parking/.test(id)) return 'parking';
   if (/sidewalk|path/.test(id)) return 'path';

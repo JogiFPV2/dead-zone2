@@ -10,6 +10,7 @@ import {
   MARKER_TEXT_MAX,
   ZOOM_MAX,
   ZOOM_MIN,
+  minZoomFor,
   clampMarkerText,
   cursorText,
   discoveredCount,
@@ -32,13 +33,23 @@ import {
 const vp = { width: 1280, height: 720 };
 
 describe('zoom', () => {
-  it('steps ×1.25 and clamps to 0.25–4', () => {
+  it('steps ×1.25 and clamps to 0.1–4', () => {
     expect(stepZoom(1, 1)).toBeCloseTo(1.25);
     expect(stepZoom(1, -1)).toBeCloseTo(0.8);
     expect(stepZoom(3.9, 1)).toBe(ZOOM_MAX);
     expect(stepZoom(ZOOM_MIN * 1.04, -1)).toBe(ZOOM_MIN);
     expect(zoomText(1)).toBe('1,0×');
     expect(zoomText(0.5)).toBe('0,50×');
+  });
+
+  it('whole map fits 1280×720: 16 km at 0,1×, a bigger box below that', () => {
+    expect(ZOOM_MIN).toBe(0.1);
+    expect(minZoomFor({ x0: 0, y0: 0, x1: 16384, y1: 16384 })).toBe(0.1);
+    // The 16 km square rotated 27° (22 036 m box) needs ≈ 0,076×.
+    const z = minZoomFor({ x0: 246, y0: 246, x1: 22282, y1: 22282 });
+    expect(z).toBeLessThan(0.1);
+    expect(22036 * 0.3466796875 * z).toBeLessThanOrEqual(720 - 52 - 38 - 48);
+    expect(stepZoom(z * 1.1, -1, z)).toBe(z);
   });
 
   it('keeps the world point under the cursor', () => {

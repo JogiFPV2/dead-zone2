@@ -1159,6 +1159,22 @@ const bigMap = createBigMap({
       genWorld ? genStartRange(genWorld.source.bounds, bigMapPlayer(), 20) : world.range,
       (x, y) => structures.lookup.at(x, y, world.range.z) !== NO_BUILDING,
     ),
+  // Far zooms: towns / villages over the fog, the map's edge, low-res terrain of every chunk seen.
+  // Behind `?bigmap16=1` until Paweł OKs it; off = the classic big map.
+  overview: !!boot.bigmap16,
+  places: () => (boot.bigmap16 ? (genWorld?.source.info.places ?? []) : []),
+  boundary: () => (boot.bigmap16 ? genWorld?.source.info.boundary : undefined),
+  ...(boot.bigmap16 && {
+    terrain: {
+      palette: world.source.tilePalette,
+      loaded: (cx, cy) => world.source.getChunk(cx, cy, world.range.z),
+      // Discovered chunks that are not loaded (a save): generated maps ask the chunk worker.
+      fetch: (cx, cy) =>
+        genWorld
+          ? genWorld.source.getChunk(cx, cy).then((c) => c?.levels.get(0))
+          : Promise.resolve(world.source.getChunk(cx, cy, world.range.z)),
+    },
+  }),
   zoom: settings.get().view.bigMapZoom,
   layers: settings.get().view.bigMapLayers,
   onView: debounced(400, (bigMapZoom: number, bigMapLayers) =>

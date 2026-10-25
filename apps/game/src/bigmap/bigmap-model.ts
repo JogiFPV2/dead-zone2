@@ -138,18 +138,44 @@ export function decodeBase64(b64: string): Uint8Array {
 /** 1,0× = 0.347 px/m (1 km ≈ 347 px). */
 export const PX_PER_M = 0.3466796875;
 /**
- * Spec: 0,25× shows the whole 8 km world (≈ 710 px). A bigger world keeps that: the minimum
- * scales down so the whole world still fits (16 km → 0,125×).
+ * Whole-map view: 0,1× shows a 16 km square (≈ 570 px) inside the 1280×720 map area. A bigger
+ * map (or a rotated square's bounding box) gets a smaller minimum (`minZoomFor`) so it still
+ * fits.
  */
-export const ZOOM_MIN = Math.min(0.25, 0.25 * (8192 / WORLD_M));
+export const ZOOM_MIN = 0.1;
+/** Smallest zoom without the 16 km overview (`?bigmap16=1` off): the old 8 km view. */
+export const CLASSIC_ZOOM_MIN = Math.min(0.25, 0.25 * (8192 / WORLD_M));
 export const ZOOM_MAX = 4;
 export const ZOOM_STEP = 1.25;
 export const ZOOM_ANIM_MS = 120;
-/** Labels hide below this zoom (icons stay, tooltip on hover). */
+/** Marker labels hide below this zoom (icons stay, tooltip on hover). */
 export const LABEL_MIN_ZOOM = 0.5;
+/**
+ * Below this zoom the big map draws the cheap overview (cached low-res terrain + chunk fog mask)
+ * instead of the per-pixel torn-paper fog: the whole 16 km view pans at full frame rate.
+ */
+export const OVERVIEW_ZOOM = 0.25;
 
-export const clampZoom = (z: number): number => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
-export const stepZoom = (z: number, dir: number): number => clampZoom(z * ZOOM_STEP ** dir);
+/** Map area of the big map at 1280×720: under the 52 px top bar, over the 38 px footer. */
+export const MAP_AREA_MARGIN = { top: 52 + 24, bottom: 38 + 24, side: 24 } as const;
+
+/**
+ * Smallest zoom of a map: `ZOOM_MIN`, or less when the map's extent (`b`, metres) would not fit
+ * in the map area of `vp` (default 1280×720) at `ZOOM_MIN`.
+ */
+export function minZoomFor(b: Bounds, vp: Viewport = { width: 1280, height: 720 }): number {
+  const w = Math.max(1, b.x1 - b.x0);
+  const h = Math.max(1, b.y1 - b.y0);
+  const aw = vp.width - 2 * MAP_AREA_MARGIN.side;
+  const ah = vp.height - MAP_AREA_MARGIN.top - MAP_AREA_MARGIN.bottom;
+  const fit = Math.min(aw / (w * PX_PER_M), ah / (h * PX_PER_M));
+  return Math.min(ZOOM_MIN, fit);
+}
+
+export const clampZoom = (z: number, min = ZOOM_MIN): number =>
+  Math.min(ZOOM_MAX, Math.max(min, z));
+export const stepZoom = (z: number, dir: number, min = ZOOM_MIN): number =>
+  clampZoom(z * ZOOM_STEP ** dir, min);
 
 /** `1,0×`, `0,64×` (Polish decimal comma). */
 export const zoomText = (z: number): string =>
@@ -203,7 +229,9 @@ export const clampCenter = (c: { x: number; y: number }, b: Bounds) => ({
 /** Scale bar: a round length (100 / 150 / … m, 1 / 1,5 / 2 km) drawn 120–200 px long. */
 export function scaleBar(zoom: number): { meters: number; px: number; labels: string[] } {
   const k = ppm(zoom);
-  const steps = [50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000];
+  const steps = [
+    50, 75, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000, 6000,
+  ];
   let best = steps[0]!;
   for (const m of steps) {
     const px = m * k;

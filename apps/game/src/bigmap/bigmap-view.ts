@@ -1,10 +1,13 @@
 import './bigmap.css';
 import './floor-panel.css';
 import {
+  FOG_CHUNK_M,
   LABEL_MIN_ZOOM,
   MARKER_LIMIT,
+  OVERVIEW_ZOOM,
   ZOOM_ANIM_MS,
   clampCenter,
+  clampZoom,
   cursorText,
   discoveredText,
   distanceText,
@@ -12,7 +15,10 @@ import {
   gridCell,
   gridCells,
   gridOrigin,
+  isDiscovered,
   markerHex,
+  minZoomFor,
+  CLASSIC_ZOOM_MIN,
   metres,
   panelPosition,
   placeLabels,
@@ -26,6 +32,7 @@ import {
   zoomText,
   type BigMapLayers,
   type Bounds,
+  type FogGrid as FogGridT,
   type Marker,
   type MarkerDraft,
   type View,
@@ -34,6 +41,20 @@ import {
 import type { BigMapSource } from './bigmap-source.js';
 import { createFooter, createLegend, createNorth, createTopBar } from './bigmap-chrome.js';
 import { renderFog } from './fog-render.js';
+import {
+  PLACE_FONT,
+  PLACE_TRACKING,
+  boundaryBounds,
+  boundarySizeText,
+  boundaryTagCorner,
+  layoutPlaces,
+  rectBoundary,
+  type MapBoundary,
+  type MapPlace,
+  type PlaceTier,
+} from './map-features.js';
+import { FogMask, OverviewAtlas } from './overview.js';
+import type { ChunkData } from '../world/chunk.js';
 import { bmIcon, markerGlyph } from './icons.js';
 import { createMarkerEdit } from './marker-edit.js';
 import { createFloorPanel, floorClick, pickDiscovered, type BigMapFloors } from './floor-panel.js';
@@ -52,10 +73,48 @@ export interface BigMapOptions {
   onOpenChange?: (open: boolean) => void;
   /** Short message (marker limit, outside the map). */
   toast?: (text: string) => void;
+  /** Whole-map 16 km overview (`?bigmap16=1`); off = classic minimum zoom (`CLASSIC_ZOOM_MIN`). */
+  overview?: boolean;
+  /** Named places (towns, villages, districts): labelled at every zoom, also over the fog. */
+  places?: () => readonly MapPlace[];
+  /**
+   * Edge of the playable map („GRANICA MAPY”, world metres); default: the sim's chunk bounds.
+   * Also the pan limits and the whole-map zoom.
+   */
+  boundary?: () => MapBoundary | undefined;
+  /**
+   * Terrain of the far zooms (`overview.ts`): every chunk seen is painted once into a low-res
+   * atlas. `loaded` = the synchronous view of the streamed chunks (ground floor); `fetch`
+   * (optional) loads a discovered chunk that is not loaded (e.g. after loading a save).
+   */
+  terrain?: {
+    palette: readonly (string | null)[];
+    loaded: (cx: number, cy: number) => ChunkData | undefined;
+    fetch?: (cx: number, cy: number) => Promise<ChunkData | undefined>;
+  };
   /** Building floors (LPM on a building: floor selector and plan); absent = no floor panel. */
   floors?: BigMapFloors;
   /** Sim tick now (floor panel: „widziane 3 h temu”). */
   tick?: () => number;
+}
+
+/** Loaded chunks around the player painted into the overview atlas (radius, chunks). */
+const ATLAS_RADIUS = 10;
+const ATLAS_PUMP_MS = 500;
+/** Discovered chunks fetched at once for the atlas while the map is open. */
+const ATLAS_FETCHES = 2;
+/** Newly painted terrain shows at most this often (painting a save's chunks redraws the map). */
+const ATLAS_REDRAW_MS = 250;
+const FOG_CSS = 'rgb(92,83,68)';
+const PAPER_CSS = 'rgb(230,216,180)';
+
+/** Frame timing of the big map's own drawing (dev perf hook `__dzBigMap`). */
+export interface BigMapStats {
+  /** Last draw() times (ms), newest last (ring of 240). */
+  drawMs: number[];
+  frames: number;
+  mode: 'far' | 'near';
+  atlasChunks: number;
 }
 
 export interface BigMapPlayer {
@@ -74,6 +133,10 @@ export interface BigMap {
   /** Esc: closes the edit panel first, then the map. */
   escape(): void;
   frame(now: number, player: BigMapPlayer): void;
+  /** Dev / perf: own draw times. */
+  stats(): BigMapStats;
+  /** Dev / tests: set the view directly (world centre, zoom). */
+  setView(center: { x: number; y: number }, zoom: number): void;
 }
 
 const INERTIA_MS = 200;
@@ -109,7 +172,17 @@ export function createBigMap(o: BigMapOptions): BigMap {
   let layers = { ...o.layers };
   let view: View = { center: { x: 0, y: 0 }, zoom: o.zoom };
   let zoomGoal = o.zoom;
-  let anim: { from: number; to: number; sx: number; sy: number; start: number } | undefined;
+  let anim:
+    | {
+        from: number;
+        to: number;
+        sx: number;
+        sy: number;
+        start: number;
+        c0: { x: number; y: number };
+        home: { x: number; y: number } | undefined;
+      }
+    | undefined;
   let drag: { x: number; y: number; t: number; vx: number; vy: number; moved: boolean } | undefined;
   let inertia: { vx: number; vy: number; start: number; last: number } | undefined;
   let cursor: { x: number; y: number } | undefined;
@@ -128,13 +201,32 @@ export function createBigMap(o: BigMapOptions): BigMap {
   let pinsFor: readonly Marker[] | undefined;
   let pinsKey = '';
   const fogCanvas = document.createElement('canvas');
+  let atlas: OverviewAtlas | undefined;
+  const fogMask = new FogMask();
+  let atlasPumpAt = -Infinity;
+  let atlasFetching = 0;
+  /** fogVersion · atlas version of the last search that found no discovered chunk to fetch. */
+  let fetchIdleKey = '';
+  let drawnAtlas = -1;
+  let drawnAt = -Infinity;
+  const stats: BigMapStats = { drawMs: [], frames: 0, mode: 'near', atlasChunks: 0 };
+  let grain: CanvasPattern | null | undefined;
+  let hatch: CanvasPattern | null | undefined;
 
   const vp = (): Viewport => ({
     width: root.clientWidth || 1280,
     height: root.clientHeight || 720,
   });
-  /** Pan limits: the paper map inside the sim's map bounds (or just the bounds). */
+  const boundary = (): MapBoundary => o.boundary?.() ?? rectBoundary(gridBounds(o.source.fog()));
+  /** Smallest zoom: the whole boundary fits the 1280×720 map area (0,1× for 16 km). */
+  const minZoom = () =>
+    o.overview ? minZoomFor(boundaryBounds(boundary()), vp()) : CLASSIC_ZOOM_MIN;
+  /**
+   * Pan limits: the boundary's box when the map has one, else the paper map inside the sim's
+   * map bounds (or just the bounds).
+   */
   const bounds = (): Bounds => {
+    if (o.boundary?.()) return boundaryBounds(boundary());
     const g = gridBounds(o.source.fog());
     const b = paper?.bounds;
     return b
@@ -153,10 +245,14 @@ export function createBigMap(o: BigMapOptions): BigMap {
   const save = () => o.onView(zoomGoal, layers);
 
   const zoomTo = (dir: number, sx: number, sy: number, now = performance.now()) => {
-    const to = stepZoom(zoomGoal, dir);
+    const to = stepZoom(zoomGoal, dir, minZoom());
     if (to === zoomGoal) return;
     zoomGoal = to;
-    anim = { from: view.zoom, to, sx, sy, start: now };
+    // Zooming out to the whole map also glides to the map's centre (the square fits whole).
+    const b = boundaryBounds(boundary());
+    const home =
+      to <= minZoom() * 1.0001 ? { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 } : undefined;
+    anim = { from: view.zoom, to, sx, sy, start: now, c0: { ...view.center }, home };
     save();
   };
   const centerOnPlayer = () => {
@@ -348,20 +444,135 @@ export function createBigMap(o: BigMapOptions): BigMap {
   window.addEventListener('keyup', onKey, true);
 
   // --- drawing --------------------------------------------------------------------------
-  const draw = (busy: boolean) => {
-    const v = vp();
-    if (canvas.width !== v.width || canvas.height !== v.height) {
-      canvas.width = v.width;
-      canvas.height = v.height;
+  /** Atlas over the sim's chunk bounds (rebuilt if the bounds change). */
+  const ensureAtlas = (): OverviewAtlas | undefined => {
+    if (!o.terrain) return undefined;
+    const g = o.source.fog();
+    const b = atlas?.bounds;
+    if (
+      !b ||
+      b.cx0 !== g.cx0 ||
+      b.cy0 !== g.cy0 ||
+      b.cx1 !== g.cx0 + g.width - 1 ||
+      b.cy1 !== g.cy0 + g.height - 1
+    ) {
+      atlas = new OverviewAtlas(
+        { cx0: g.cx0, cy0: g.cy0, cx1: g.cx0 + g.width - 1, cy1: g.cy0 + g.height - 1 },
+        o.terrain.palette,
+      );
     }
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const k = ppm(view.zoom);
-    ctx.fillStyle = 'rgb(230,216,180)';
+    return atlas;
+  };
+  /** Paints the loaded chunks around the player; with the map open also fetches discovered ones. */
+  const pumpAtlas = (now: number, p: BigMapPlayer) => {
+    if (!o.terrain || now - atlasPumpAt < ATLAS_PUMP_MS) return;
+    atlasPumpAt = now;
+    const a = ensureAtlas();
+    if (!a) return;
+    const cx = Math.floor(p.x / FOG_CHUNK_M);
+    const cy = Math.floor(p.y / FOG_CHUNK_M);
+    const r = ATLAS_RADIUS;
+    a.pump({ cx0: cx - r, cy0: cy - r, cx1: cx + r, cy1: cy + r }, o.terrain.loaded);
+    const fetch = o.terrain.fetch;
+    if (!fetch || root.hidden || atlasFetching >= ATLAS_FETCHES) return;
+    const key = `${o.source.fogVersion}`;
+    if (key === fetchIdleKey) return;
+    const want = a.nextMissing(
+      o.source.fog(),
+      o.source.fogVersion,
+      p.x,
+      p.y,
+      ATLAS_FETCHES - atlasFetching,
+    );
+    if (want.length === 0 && atlasFetching === 0) fetchIdleKey = key;
+    for (const c of want) {
+      atlasFetching++;
+      fetch(c.cx, c.cy)
+        .then((d) => {
+          if (d && atlas === a) a.paint(c.cx, c.cy, d);
+          else if (!d) {
+            a.unrequest(c.cx, c.cy);
+            fetchIdleKey = '';
+          }
+        })
+        .catch(() => {
+          a.unrequest(c.cx, c.cy);
+          fetchIdleKey = '';
+        })
+        .finally(() => {
+          atlasFetching--;
+          atlasPumpAt = -Infinity; // next chunk right away
+        });
+    }
+  };
+
+  const makePatterns = (ctx: CanvasRenderingContext2D) => {
+    if (grain !== undefined) return;
+    // Paper grain (light / dark specks), drawn over the far-zoom map.
+    const g = document.createElement('canvas');
+    g.width = g.height = 96;
+    const gc = g.getContext('2d');
+    if (gc) {
+      const img = gc.createImageData(96, 96);
+      let s = 987654321;
+      for (let i = 0; i < 96 * 96; i++) {
+        s = (Math.imul(s, 1103515245) + 12345) >>> 0;
+        const v = s / 4294967295;
+        const light = v > 0.5;
+        img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = light ? 255 : 0;
+        img.data[i * 4 + 3] = Math.abs(v - 0.5) * 30;
+      }
+      gc.putImageData(img, 0, 0);
+    }
+    grain = ctx.createPattern(g, 'repeat');
+    // „Poza mapą”: dark diagonal hatch outside the boundary (mockup legend).
+    const h = document.createElement('canvas');
+    h.width = h.height = 10;
+    const hc = h.getContext('2d');
+    if (hc) {
+      hc.fillStyle = 'rgba(14,17,19,.38)';
+      hc.fillRect(0, 0, 10, 10);
+      hc.strokeStyle = 'rgba(0,0,0,.45)';
+      hc.lineWidth = 2;
+      hc.beginPath();
+      hc.moveTo(-2, 12);
+      hc.lineTo(12, -2);
+      hc.moveTo(-2, 2);
+      hc.lineTo(2, -2);
+      hc.moveTo(8, 12);
+      hc.lineTo(12, 8);
+      hc.stroke();
+    }
+    hatch = ctx.createPattern(h, 'repeat');
+  };
+
+  /**
+   * The map itself for view `vw` in a `v`-sized canvas: paper / terrain, 1 km grid, fog, the
+   * boundary and the place names (everything but the grid labels and the trail).
+   */
+  const paintScene = (
+    ctx: CanvasRenderingContext2D,
+    vw: View,
+    v: Viewport,
+    far: boolean,
+    busy: boolean,
+  ) => {
+    const k = ppm(vw.zoom);
+    const fogGrid = o.source.fog();
+    const gb = gridBounds(fogGrid);
+    const a = ensureAtlas();
+    // Far zooms: fog outside the sim's map, paper inside it (the mask fogs the undiscovered).
+    ctx.fillStyle = far ? FOG_CSS : PAPER_CSS;
     ctx.fillRect(0, 0, v.width, v.height);
-    if (paper) {
-      const p = worldToScreen(view, v, paper.bounds.x0, paper.bounds.y0);
-      ctx.imageSmoothingEnabled = view.zoom * 0.347 < paper.scale * 1.5;
+    if (far) {
+      const g0 = worldToScreen(vw, v, gb.x0, gb.y0);
+      ctx.fillStyle = PAPER_CSS;
+      ctx.fillRect(g0.x, g0.y, (gb.x1 - gb.x0) * k, (gb.y1 - gb.y0) * k);
+    }
+    a?.draw(ctx, vw, v, k);
+    if (paper && !far) {
+      const p = worldToScreen(vw, v, paper.bounds.x0, paper.bounds.y0);
+      ctx.imageSmoothingEnabled = vw.zoom * 0.347 < paper.scale * 1.5;
       ctx.drawImage(
         paper.canvas,
         p.x,
@@ -371,7 +582,120 @@ export function createBigMap(o: BigMapOptions): BigMap {
       );
     }
     // 1 km grid: faint print on the paper, stronger with SIATKA.
+    const org = gridOrigin(fogGrid);
+    const w0 = screenToWorld(vw, v, 0, 0);
+    const w1 = screenToWorld(vw, v, v.width, v.height);
+    const gridLines = (alpha: number, width: number) => {
+      ctx.strokeStyle = `rgba(58,48,38,${alpha})`;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      for (let g = Math.ceil((w0.x - org.x) / 1000); g <= Math.floor((w1.x - org.x) / 1000); g++) {
+        const s = worldToScreen(vw, v, org.x + g * 1000, 0).x;
+        ctx.moveTo(Math.round(s) + 0.5, 0);
+        ctx.lineTo(Math.round(s) + 0.5, v.height);
+      }
+      for (let g = Math.ceil((w0.y - org.y) / 1000); g <= Math.floor((w1.y - org.y) / 1000); g++) {
+        const s = worldToScreen(vw, v, 0, org.y + g * 1000).y;
+        ctx.moveTo(0, Math.round(s) + 0.5);
+        ctx.lineTo(v.width, Math.round(s) + 0.5);
+      }
+      ctx.stroke();
+    };
+    if (!far || layers.grid) gridLines(0.16, 1);
+    if (far) {
+      // Chunk fog mask (1 px per chunk, smoothed) + paper grain: no per-pixel work.
+      fogMask.update(fogGrid, o.source.fogVersion);
+      fogMask.draw(ctx, fogGrid, vw, v, k);
+      if (grain) {
+        ctx.fillStyle = grain;
+        ctx.fillRect(0, 0, v.width, v.height);
+      }
+    } else {
+      // Fog (soft, torn edge) at 1/2 resolution, 1/4 while panning / zooming.
+      const down = busy ? 4 : 2;
+      const fog = renderFog(fogGrid, vw, v, down);
+      fogCanvas.width = fog.width;
+      fogCanvas.height = fog.height;
+      fogCanvas
+        .getContext('2d')
+        ?.putImageData(new ImageData(fog.data, fog.width, fog.height), 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(fogCanvas, 0, 0, fog.width * down, fog.height * down);
+    }
+    if (layers.grid) gridLines(0.42, 1.5);
+    drawBoundary(ctx, vw, v);
+    drawPlaces(ctx, vw, v, fogGrid);
+  };
+
+  /** Far zooms: the whole map pre-painted at one zoom; a frame is one blit (+ trail, labels). */
+  let farCache:
+    | { canvas: HTMLCanvasElement; zoom: number; x0: number; y0: number; key: string; at: number }
+    | undefined;
+  const farKey = (v: Viewport) =>
+    `${zoomGoal}|${v.width}x${v.height}|${o.source.fogVersion}|${layers.grid}|${boundary()
+      .map((q) => `${q.x},${q.y}`)
+      .join(';')}|${o.places?.().length ?? 0}`;
+  const buildFarCache = (v: Viewport, now: number) => {
+    const zoom = zoomGoal;
+    const k = ppm(zoom);
+    const gb = gridBounds(o.source.fog());
+    const bb = boundaryBounds(boundary());
+    // The map plus half a screen around it (the pan limit keeps the centre on the map).
+    const x0 = Math.min(gb.x0, bb.x0) - v.width / 2 / k;
+    const y0 = Math.min(gb.y0, bb.y0) - v.height / 2 / k;
+    const x1 = Math.max(gb.x1, bb.x1) + v.width / 2 / k;
+    const y1 = Math.max(gb.y1, bb.y1) + v.height / 2 / k;
+    const cv: Viewport = { width: Math.ceil((x1 - x0) * k), height: Math.ceil((y1 - y0) * k) };
+    const c = farCache?.canvas ?? document.createElement('canvas');
+    c.width = cv.width;
+    c.height = cv.height;
+    const cctx = c.getContext('2d');
+    if (!cctx) return;
+    const cview: View = { zoom, center: { x: x0 + cv.width / 2 / k, y: y0 + cv.height / 2 / k } };
+    paintScene(cctx, cview, cv, true, false);
+    farCache = { canvas: c, zoom, x0, y0, key: farKey(v), at: now };
+    drawnAtlas = atlas?.version ?? -1;
+  };
+
+  const draw = (busy: boolean, now = performance.now()) => {
+    const t0 = performance.now();
+    const v = vp();
+    if (canvas.width !== v.width || canvas.height !== v.height) {
+      canvas.width = v.width;
+      canvas.height = v.height;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    makePatterns(ctx);
+    const k = ppm(view.zoom);
     const fogGrid = o.source.fog();
+    const far = view.zoom < OVERVIEW_ZOOM;
+    stats.mode = far ? 'far' : 'near';
+    if (far) {
+      const stale =
+        !farCache ||
+        farCache.key !== farKey(v) ||
+        (atlas !== undefined && drawnAtlas !== atlas.version && now - farCache.at > 1000);
+      // Rebuild when settled (or when there is nothing to scale yet); moving = scale the cache.
+      if (stale && (!busy || !farCache || farCache.zoom >= OVERVIEW_ZOOM)) buildFarCache(v, now);
+      const fc = farCache!;
+      const s = fc.zoom ? view.zoom / fc.zoom : 1;
+      const p = worldToScreen(view, v, fc.x0, fc.y0);
+      ctx.fillStyle = FOG_CSS;
+      ctx.fillRect(0, 0, v.width, v.height);
+      ctx.imageSmoothingEnabled = s !== 1;
+      ctx.drawImage(
+        fc.canvas,
+        s === 1 ? Math.round(p.x) : p.x,
+        s === 1 ? Math.round(p.y) : p.y,
+        fc.canvas.width * s,
+        fc.canvas.height * s,
+      );
+    } else {
+      paintScene(ctx, view, v, false, busy);
+      drawnAtlas = atlas?.version ?? -1;
+    }
+    // Grid labels (also visible over the fog).
     const org = gridOrigin(fogGrid);
     const cells = gridCells(fogGrid);
     const w0 = screenToWorld(view, v, 0, 0);
@@ -380,42 +704,16 @@ export function createBigMap(o: BigMapOptions): BigMap {
     const gx1 = Math.floor((w1.x - org.x) / 1000);
     const gy0 = Math.ceil((w0.y - org.y) / 1000);
     const gy1 = Math.floor((w1.y - org.y) / 1000);
-    const gridLines = (alpha: number, width: number) => {
-      ctx.strokeStyle = `rgba(58,48,38,${alpha})`;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      for (let g = gx0; g <= gx1; g++) {
-        const s = worldToScreen(view, v, org.x + g * 1000, 0).x;
-        ctx.moveTo(Math.round(s) + 0.5, 0);
-        ctx.lineTo(Math.round(s) + 0.5, v.height);
-      }
-      for (let g = gy0; g <= gy1; g++) {
-        const s = worldToScreen(view, v, 0, org.y + g * 1000).y;
-        ctx.moveTo(0, Math.round(s) + 0.5);
-        ctx.lineTo(v.width, Math.round(s) + 0.5);
-      }
-      ctx.stroke();
-    };
-    gridLines(0.16, 1);
-    // Fog (soft, torn edge) at 1/2 resolution, 1/4 while panning / zooming.
-    const down = busy ? 4 : 2;
-    const fog = renderFog(fogGrid, view, v, down);
-    fogCanvas.width = fog.width;
-    fogCanvas.height = fog.height;
-    fogCanvas.getContext('2d')?.putImageData(new ImageData(fog.data, fog.width, fog.height), 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(fogCanvas, 0, 0, fog.width * down, fog.height * down);
-    if (layers.grid) gridLines(0.42, 1.5);
-    // Grid labels (also visible over the fog).
     ctx.font = '700 11px "JetBrains Mono", ui-monospace, monospace';
     ctx.fillStyle = 'rgba(228,230,227,.55)';
+    const every = k * 1000 < 22 ? 2 : 1;
     for (let g = gx0 - 1; g <= gx1; g++) {
-      if (g < 0 || g >= cells.cols) continue;
+      if (g < 0 || g >= cells.cols || g % every) continue;
       const s = worldToScreen(view, v, org.x + (g + 0.5) * 1000, 0).x;
       if (s > 0 && s < v.width) ctx.fillText(String.fromCharCode(65 + g), s - 4, 70);
     }
     for (let g = gy0 - 1; g <= gy1; g++) {
-      if (g < 0 || g >= cells.rows) continue;
+      if (g < 0 || g >= cells.rows || g % every) continue;
       const s = worldToScreen(view, v, 0, org.y + (g + 0.5) * 1000).y;
       if (s > 60 && s < v.height - 40) ctx.fillText(String(g + 1), 8, s + 4);
     }
@@ -443,6 +741,129 @@ export function createBigMap(o: BigMapOptions): BigMap {
     }
     drawnFog = o.source.fogVersion;
     drawnTrail = o.source.trailVersion;
+    stats.atlasChunks = atlas?.paintedCount ?? 0;
+    stats.frames++;
+    stats.drawMs.push(performance.now() - t0);
+    if (stats.drawMs.length > 240) stats.drawMs.shift();
+  };
+
+  /** „GRANICA MAPY”: hatch outside, gold 2 px frame (dark outline), tag at the SW corner. */
+  const drawBoundary = (ctx: CanvasRenderingContext2D, vw: View, v: Viewport) => {
+    const poly = boundary().map((q) => worldToScreen(vw, v, q.x, q.y));
+    if (poly.length < 3) return;
+    const path = () => {
+      ctx.beginPath();
+      poly.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+      ctx.closePath();
+    };
+    if (hatch) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-10, -10, v.width + 20, v.height + 20);
+      poly.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+      ctx.closePath();
+      ctx.fillStyle = hatch;
+      ctx.fill('evenodd');
+      ctx.restore();
+    }
+    ctx.lineJoin = 'miter';
+    path();
+    ctx.strokeStyle = 'rgba(14,17,19,.8)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    path();
+    ctx.strokeStyle = '#E0A23A';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    const c = boundaryTagCorner(boundary());
+    if (!c) return;
+    const s = worldToScreen(vw, v, c.x, c.y);
+    const text = `GRANICA MAPY · ${boundarySizeText(boundary())}`;
+    ctx.font = '600 10px "JetBrains Mono", ui-monospace, monospace';
+    const w = Math.ceil(ctx.measureText(text).width) + 14;
+    const h = 19;
+    // Left of the corner, just above it (mockup); kept on screen while the corner is near.
+    const x = Math.min(v.width - w - 8, Math.max(8, s.x - 8 - w));
+    const y = Math.min(v.height - 46 - h, Math.max(60, s.y - 6 - h));
+    if (Math.abs(x + w - (s.x - 8)) > 240 || Math.abs(y + h - (s.y - 6)) > 160) return;
+    ctx.fillStyle = 'rgba(21,25,28,.88)';
+    ctx.strokeStyle = '#C78B2A';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x + 0.5, y + 0.5, w, h, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#F0C06A';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + 7.5, y + h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+  };
+
+  const placeWidths = new Map<string, number>();
+  const setFont = (ctx: CanvasRenderingContext2D, tier: PlaceTier) => {
+    ctx.font = PLACE_FONT[tier];
+    ctx.letterSpacing = `${PLACE_TRACKING[tier]}px`;
+  };
+  const drawPlaces = (ctx: CanvasRenderingContext2D, vw: View, v: Viewport, fog: FogGridT) => {
+    const places = o.places?.() ?? [];
+    if (places.length === 0) return;
+    const labels = layoutPlaces(
+      places,
+      vw.zoom,
+      (x, y) => worldToScreen(vw, v, x, y),
+      (text, tier) => {
+        const key = `${tier}|${text}`;
+        let w = placeWidths.get(key);
+        if (w === undefined) {
+          setFont(ctx, tier);
+          w = ctx.measureText(text).width;
+          placeWidths.set(key, w);
+        }
+        return w;
+      },
+      v,
+    );
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    for (const l of labels) {
+      const onPaper = isDiscovered(
+        fog,
+        Math.floor(l.place.x / FOG_CHUNK_M),
+        Math.floor(l.place.y / FOG_CHUNK_M),
+      );
+      setFont(ctx, l.tier);
+      // On paper: dark ink with a paper halo; over the fog: light ink with a dark halo.
+      ctx.strokeStyle = onPaper ? 'rgba(236,226,200,.92)' : 'rgba(14,12,9,.75)';
+      ctx.lineWidth = l.tier === 'town' ? 5 : 3.5;
+      ctx.strokeText(l.text, l.x, l.y);
+      ctx.fillStyle = onPaper
+        ? l.tier === 'town'
+          ? '#2b241c'
+          : l.tier === 'village'
+            ? '#2f281f'
+            : '#3d3428'
+        : l.tier === 'town'
+          ? 'rgba(236,226,200,.95)'
+          : 'rgba(214,204,182,.85)';
+      ctx.fillText(l.text, l.x, l.y);
+      if (l.tier === 'town') {
+        ctx.font = '600 10px "JetBrains Mono", ui-monospace, monospace';
+        ctx.letterSpacing = '0.6px';
+        const t = 'miasto';
+        const tw = ctx.measureText(t).width + 12;
+        const py = l.y + 20;
+        ctx.fillStyle = onPaper ? 'rgba(236,226,200,.88)' : 'rgba(21,25,28,.85)';
+        ctx.beginPath();
+        ctx.roundRect(l.x - tw / 2, py - 7.5, tw, 15, 3);
+        ctx.fill();
+        ctx.fillStyle = onPaper ? '#4a3f33' : 'rgba(214,204,182,.9)';
+        ctx.fillText(t, l.x, py + 0.5);
+      }
+    }
+    ctx.letterSpacing = '0px';
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
   };
 
   const measure = document.createElement('canvas').getContext('2d');
@@ -528,6 +949,7 @@ export function createBigMap(o: BigMapOptions): BigMap {
       paper ??= o.paper();
       player = p;
       root.hidden = false;
+      zoomGoal = clampZoom(zoomGoal, minZoom());
       view = { zoom: zoomGoal, center: { x: p.x, y: p.y } };
       setView(view);
       o.root.dataset.modal = 'map';
@@ -554,13 +976,21 @@ export function createBigMap(o: BigMapOptions): BigMap {
       else api.hide();
     },
     frame(now, p) {
+      pumpAtlas(now, p);
       if (root.hidden) return;
       player = p;
       let busy = !!drag;
       if (anim) {
         const t = Math.min(1, (now - anim.start) / ZOOM_ANIM_MS);
         const e = 1 - (1 - t) ** 3;
-        setView(zoomAround(view, vp(), anim.sx, anim.sy, anim.from + (anim.to - anim.from) * e));
+        const z = zoomAround(view, vp(), anim.sx, anim.sy, anim.from + (anim.to - anim.from) * e);
+        if (anim.home) {
+          z.center = {
+            x: anim.c0.x + (anim.home.x - anim.c0.x) * e,
+            y: anim.c0.y + (anim.home.y - anim.c0.y) * e,
+          };
+        }
+        setView(z);
         if (t >= 1) anim = undefined;
         busy = true;
       }
@@ -587,8 +1017,14 @@ export function createBigMap(o: BigMapOptions): BigMap {
         delHold = undefined;
         hover = undefined;
       }
-      if (dirty || drawnFog !== o.source.fogVersion || drawnTrail !== o.source.trailVersion) {
-        draw(busy);
+      if (
+        dirty ||
+        drawnFog !== o.source.fogVersion ||
+        drawnTrail !== o.source.trailVersion ||
+        (atlas && drawnAtlas !== atlas.version && !busy && now - drawnAt > ATLAS_REDRAW_MS)
+      ) {
+        drawnAt = now;
+        draw(busy, now);
         dirty = busy; // redraw sharp once the motion stops
       }
       layoutPins();
@@ -618,6 +1054,13 @@ export function createBigMap(o: BigMapOptions): BigMap {
       });
       const cw = cursor ? screenToWorld(view, v, cursor.x, cursor.y) : { x: p.x, y: p.y };
       footer.update(cursorText(o.source.fog(), cw.x, cw.y), discoveredText(o.source.fog()));
+    },
+    stats: () => stats,
+    setView(center, zoom) {
+      anim = undefined;
+      inertia = undefined;
+      zoomGoal = clampZoom(zoom, minZoom());
+      setView({ center, zoom: zoomGoal });
     },
   };
   return api;

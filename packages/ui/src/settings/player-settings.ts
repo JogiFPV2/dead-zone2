@@ -62,7 +62,8 @@ export const viewSettingsSchema = z.object({
   cameraZoom: range(0.25, 4, 1),
   /** Minimap zoom multiplier. */
   minimapZoom: range(0.25, 4, 1),
-  bigMapZoom: range(0.25, 4, 1),
+  /** Big map zoom: 0,05× and up (a 16 km map fits whole at ≈ 0,08–0,1×). */
+  bigMapZoom: range(0.05, 4, 1),
   bigMapLayers: z
     .object({ markers: bool(true), trail: bool(true), grid: bool(false) })
     .prefault({}),
