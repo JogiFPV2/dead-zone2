@@ -52,7 +52,7 @@
       "uses": 30
     },
     "medicine": {
-      "reduceSickness": 30,
+      "reduceSickness": 5,
       "durationMin": 60
     }
   }
