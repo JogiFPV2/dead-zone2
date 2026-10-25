@@ -1,0 +1,311 @@
+/* Big map: building floors (deadzone-hud-v2-spec „Duża mapa: piętra budynku”, floor-bigmap.png). */
+
+/* Selected building: accent outline 2 px with glow, tag `BLOK · P+4`, dashed line to the panel. */
+.dz-fp-ov {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dz-fp-ov[hidden] {
+  display: none;
+}
+.dz-fp-ov__box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: 2px solid var(--bm-acc);
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 4px rgba(224, 162, 58, 0.2),
+    0 0 18px rgba(224, 162, 58, 0.33);
+}
+.dz-fp-ov .dz-fp-ov__tag {
+  left: 0;
+  top: 0;
+  color: var(--bm-acc-hi);
+  border-color: var(--bm-acc-lo);
+}
+.dz-fp-ov__line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.dz-fp-ov__line path {
+  fill: none;
+  stroke: var(--bm-acc);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+
+/* Panel 562 × 604 at the right. */
+.dz-fp {
+  position: absolute;
+  right: 18px;
+  top: 66px;
+  width: 562px;
+  height: 604px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(21, 25, 28, 0.96);
+  border: 1px solid var(--bm-n700);
+  border-radius: 8px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.58);
+  cursor: default;
+  z-index: 3;
+}
+.dz-fp[hidden] {
+  display: none;
+}
+.dz-bm.floors-open .dz-bm__legend {
+  display: none;
+}
+.dz-fp__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dz-fp__ico {
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid var(--bm-acc-lo);
+  background: rgba(224, 162, 58, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-fp__title {
+  flex: 1;
+  min-width: 0;
+}
+.dz-fp__kind {
+  font: 700 14px var(--bm-mono);
+  letter-spacing: 0.06em;
+}
+.dz-fp__addr {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--bm-n300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dz-fp__x {
+  display: flex;
+}
+.dz-fp__chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 11px;
+}
+.dz-fp__chips .dz-bm__chip {
+  height: 26px;
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: 1px;
+}
+.dz-fp__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+.dz-fp__floors {
+  width: 96px;
+  flex: none;
+}
+.dz-fp__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 7px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.dz-bm .dz-fp__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0 9px;
+  border: 1px solid var(--bm-n700);
+  border-radius: 5px;
+  color: var(--bm-n500);
+}
+.dz-bm .dz-fp__row.visited {
+  color: var(--bm-n100);
+}
+.dz-bm .dz-fp__row.sel {
+  border-color: var(--bm-acc);
+  background: rgba(224, 162, 58, 0.14);
+  color: var(--bm-n100);
+  box-shadow: 0 0 0 1px rgba(224, 162, 58, 0.15);
+}
+.dz-fp__row b {
+  width: 26px;
+  text-align: center;
+  font: 700 17px var(--bm-mono);
+}
+.dz-fp__row.sel b {
+  color: var(--bm-acc-hi);
+}
+.dz-fp__ri {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex: 1;
+}
+.dz-fp__none {
+  font: 500 10px var(--bm-mono);
+  color: var(--bm-n500);
+}
+.dz-fp__zd {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c8453c;
+}
+.dz-fp__item .dz-fp__zd {
+  width: 8px;
+  height: 8px;
+}
+.dz-fp__keys {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 10px;
+}
+.dz-fp__plan {
+  flex: none;
+  max-width: 260px;
+}
+.dz-fp__canvas {
+  position: relative;
+  margin-top: 7px;
+}
+.dz-fp__svg {
+  display: block;
+  overflow: visible;
+}
+.dz-fp__rl {
+  fill: var(--bm-n300);
+  font: 400 11px var(--bm-mono);
+}
+.dz-fp__well {
+  fill: var(--bm-acc-hi);
+  font: 700 11px var(--bm-mono);
+}
+.dz-fp__pin {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #15191c;
+  border: 2px solid var(--c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-fp__zp {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #c8453c;
+  border: 1.5px solid #0e1113;
+  box-shadow: 0 0 6px #c8453c;
+}
+.dz-fp__cap {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--bm-n500);
+}
+.dz-fp__info {
+  flex: 1;
+  min-width: 0;
+  font: 500 11px var(--bm-mono);
+  color: var(--bm-n300);
+}
+.dz-fp__stats {
+  margin-top: 7px;
+  line-height: 1.75;
+}
+.dz-fp__stats b {
+  color: var(--bm-n100);
+}
+.dz-fp__stats b.ok {
+  color: #a9c07a;
+}
+.dz-fp__stats b.dim {
+  color: var(--bm-n500);
+}
+.dz-fp__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  color: var(--bm-n100);
+}
+.dz-fp__sub {
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: var(--bm-n500);
+}
+.dz-fp__info .dz-bm__h6 + .dz-fp__lrow {
+  margin-top: 5px;
+}
+.dz-fp__lrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+}
+.dz-fp__sw {
+  display: inline-block;
+  width: 16px;
+  height: 12px;
+  box-sizing: border-box;
+}
+.dz-fp__sw--stairs {
+  background: rgba(224, 162, 58, 0.15);
+  border: 1.2px solid #e0a23a;
+}
+.dz-fp__sw--searched {
+  background: #3a4146;
+  border: 1.2px solid #9aa3a7;
+}
+.dz-fp__sw--seen {
+  background: #2c3337;
+  border: 1.2px solid #9aa3a7;
+}
+.dz-fp__sw--fog {
+  background: repeating-linear-gradient(45deg, #2c3337 0 2px, #15191c 2px 6px);
+  border: 1px dashed #5b6469;
+}
+.dz-fp__sw--window {
+  height: 3px;
+  background: #4fa8c8;
+}
+.dz-fp__sw--zombie {
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: #c8453c;
+}

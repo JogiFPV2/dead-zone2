@@ -1,4 +1,5 @@
 import './bigmap.css';
+import './floor-panel.css';
 import {
   LABEL_MIN_ZOOM,
   MARKER_LIMIT,
@@ -35,6 +36,7 @@ import { createFooter, createLegend, createNorth, createTopBar } from './bigmap-
 import { renderFog } from './fog-render.js';
 import { bmIcon, markerGlyph } from './icons.js';
 import { createMarkerEdit } from './marker-edit.js';
+import { createFloorPanel, floorClick, pickDiscovered, type BigMapFloors } from './floor-panel.js';
 import type { PaperMap } from './paper.js';
 
 export interface BigMapOptions {
@@ -50,6 +52,10 @@ export interface BigMapOptions {
   onOpenChange?: (open: boolean) => void;
   /** Short message (marker limit, outside the map). */
   toast?: (text: string) => void;
+  /** Building floors (LPM on a building: floor selector and plan); absent = no floor panel. */
+  floors?: BigMapFloors;
+  /** Sim tick now (floor panel: „widziane 3 h temu”). */
+  tick?: () => number;
 }
 
 export interface BigMapPlayer {
@@ -99,7 +105,7 @@ export function createBigMap(o: BigMapOptions): BigMap {
   stage.append(canvas, edge, pins, playerEl, dim, temp);
   const north = createNorth();
   const legend = createLegend();
-  const footer = createFooter();
+  const footer = createFooter({ floors: !!o.floors });
   let layers = { ...o.layers };
   let view: View = { center: { x: 0, y: 0 }, zoom: o.zoom };
   let zoomGoal = o.zoom;
@@ -210,7 +216,18 @@ export function createBigMap(o: BigMapOptions): BigMap {
     dirty = true;
   };
 
+  const floorPanel = o.floors
+    ? createFloorPanel({
+        floors: o.floors,
+        markers: () => o.source.markers(),
+        tick: () => o.tick?.() ?? 0,
+        location: () => o.info().location,
+        onClose: () => root.classList.remove('floors-open'),
+      })
+    : undefined;
+  if (floorPanel) stage.insertBefore(floorPanel.overlay, pins);
   root.append(stage, north, legend, top.el, footer.el, editPanel.el);
+  if (floorPanel) root.append(floorPanel.el);
   o.root.append(root);
 
   // --- pointer: pan with inertia, wheel zoom around the cursor, RMB new marker -------------
@@ -226,7 +243,17 @@ export function createBigMap(o: BigMapOptions): BigMap {
   stage.addEventListener('pointermove', (e) => {
     const r = root.getBoundingClientRect();
     cursor = { x: e.clientX - r.left, y: e.clientY - r.top };
-    if (!drag) return;
+    if (!drag) {
+      // Pointer cursor only over a building in the discovered part of the map.
+      if (o.floors) {
+        const w = screenToWorld(view, vp(), cursor.x, cursor.y);
+        stage.classList.toggle(
+          'dz-bm__stage--building',
+          !!pickDiscovered(o.floors, o.source.fog(), w.x, w.y),
+        );
+      }
+      return;
+    }
     const now = performance.now();
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
@@ -248,9 +275,25 @@ export function createBigMap(o: BigMapOptions): BigMap {
     }
     drag = undefined;
   };
-  stage.addEventListener('pointerup', endDrag);
+  // LPM click (no drag) on a building: its floors (selector + plan) in the panel.
+  stage.addEventListener('pointerup', (e) => {
+    const click = !!drag && !drag.moved && e.button === 0;
+    endDrag();
+    if (!click || !o.floors || !floorPanel) return;
+    const r = root.getBoundingClientRect();
+    const w = screenToWorld(view, vp(), e.clientX - r.left, e.clientY - r.top);
+    const hit = floorClick(o.floors, o.source.fog(), w.x, w.y);
+    if (hit === 'close') floorPanel.close();
+    else if (hit !== 'none') {
+      floorPanel.open(hit.open);
+      root.classList.add('floors-open');
+    }
+  });
   stage.addEventListener('pointercancel', endDrag);
-  stage.addEventListener('pointerleave', () => (cursor = drag ? cursor : undefined));
+  stage.addEventListener('pointerleave', () => {
+    cursor = drag ? cursor : undefined;
+    stage.classList.remove('dz-bm__stage--building');
+  });
   stage.addEventListener(
     'wheel',
     (e) => {
@@ -292,6 +335,10 @@ export function createBigMap(o: BigMapOptions): BigMap {
       if (e.type === 'keydown' && hover !== undefined && !delHold) {
         delHold = { id: hover, start: performance.now() };
       } else if (e.type === 'keyup') delHold = undefined;
+    } else if ((e.code === 'PageUp' || e.code === 'PageDown') && floorPanel?.isOpen) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.type === 'keydown') floorPanel.step(e.code === 'PageUp' ? 1 : -1);
     } else if (e.code === 'Enter' && e.type === 'keydown' && editPanel.isOpen && !typing) {
       e.preventDefault();
       editPanel.save();
@@ -489,6 +536,7 @@ export function createBigMap(o: BigMapOptions): BigMap {
     hide() {
       if (root.hidden) return;
       closeEdit();
+      floorPanel?.close();
       root.hidden = true;
       drag = undefined;
       inertia = undefined;
@@ -502,6 +550,7 @@ export function createBigMap(o: BigMapOptions): BigMap {
     },
     escape() {
       if (editPanel.isOpen) closeEdit();
+      else if (floorPanel?.isOpen) floorPanel.close();
       else api.hide();
     },
     frame(now, p) {
@@ -545,6 +594,7 @@ export function createBigMap(o: BigMapOptions): BigMap {
       layoutPins();
       placeTemp();
       const v = vp();
+      floorPanel?.frame(view, v);
       const ps = worldToScreen(view, v, p.x, p.y);
       playerEl.style.transform = `translate(${ps.x}px, ${ps.y}px)`;
       playerEl

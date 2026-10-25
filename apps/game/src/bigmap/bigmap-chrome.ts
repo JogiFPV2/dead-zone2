@@ -117,7 +117,7 @@ export interface BigMapFooter {
 }
 
 /** Footer 1280×38: controls on the left, cursor cell / metres and discovery on the right. */
-export function createFooter(): BigMapFooter {
+export function createFooter(opts: { floors?: boolean } = {}): BigMapFooter {
   const foot = el('div', 'dz-bm__foot');
   const k = (icon: string, keys: string[], label: string) =>
     `<div class="dz-bm__k">${icon}${keys.map((x) => `<span class="dz-bm__key">${x}</span>`).join('')}<span>${label}</span></div>`;
@@ -126,6 +126,7 @@ export function createFooter(): BigMapFooter {
     k(bmIcon('wheel', 'var(--bm-n100)', 16), ['KÓŁKO'], 'zoom') +
     k(bmIcon('mouseR', 'var(--bm-n100)', 16), ['PPM'], 'dodaj znacznik') +
     k('', ['LPM'], 'na znaczniku: edytuj') +
+    (opts.floors ? k('', ['LPM'], 'na budynku: piętra') : '') +
     k('', ['SPACJA'], 'do gracza') +
     k('', ['M', 'ESC'], 'zamknij') +
     '<div class="dz-bm__flex"></div><span>kursor <b class="dz-bm__cur"></b></span><span class="dz-bm__dot">·</span><span>odkryto <b class="dz-bm__disc"></b><span class="dz-bm__disc-rest"></span></span>';

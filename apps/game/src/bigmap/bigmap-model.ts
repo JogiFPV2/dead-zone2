@@ -46,6 +46,8 @@ export interface Marker {
   text: string;
   /** Client-side only (the sim does not store it): pin also on the minimap. */
   showOnMinimap: boolean;
+  /** Floor (protocol 22, `MapMarkerView.z`); a new marker without it goes on the player's floor. */
+  z?: number;
 }
 
 export type MarkerDraft = Omit<Marker, 'id'>;

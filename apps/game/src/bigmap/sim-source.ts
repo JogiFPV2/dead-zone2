@@ -40,7 +40,8 @@ const colorOf = (c: string): MarkerColor =>
  * - `worldMap.bounds` + `discovered` (base64 bitmap, first view / load / new character) reset the
  *   fog, `chunksDiscovered` events add cells;
  * - `worldMap.trail` replaces the trail, `trailAdd` appends;
- * - `worldMap.markers` / `markersChanged` replace the marker list.
+ * - `worldMap.markers` / `markersChanged` replace the marker list (with the floor `z`); new
+ *   markers go on the player's current floor.
  * Marker commands go to the sim (applied at once, also in pause), `showOnMinimap` included (the
  * sim keeps it with the marker and saves it). Rejections are recognised by `commandRejected.command`.
  */
@@ -59,6 +60,8 @@ export class SimBigMapSource implements BigMapSource {
     private readonly playerId: () => number | undefined = () => undefined,
     /** Toast for a rejected marker command. */
     private readonly onRejected: (text: string) => void = () => {},
+    /** The player's current floor: new markers go there (`AddMarkerCommand.z`). */
+    private readonly playerFloor: () => number = () => 0,
   ) {}
 
   fog(): FogGrid {
@@ -123,6 +126,7 @@ export class SimBigMapSource implements BigMapSource {
       type: 'addMarker',
       x: m.x,
       y: m.y,
+      z: m.z ?? this.playerFloor(),
       icon: m.icon,
       color: m.color,
       text: clampMarkerText(m.text),
@@ -140,6 +144,7 @@ export class SimBigMapSource implements BigMapSource {
       color: m.color,
       text: clampMarkerText(m.text),
       showOnMinimap: m.showOnMinimap,
+      ...(m.z !== undefined ? { z: m.z } : {}),
     });
   }
 
@@ -161,6 +166,7 @@ export class SimBigMapSource implements BigMapSource {
       color: colorOf(m.color),
       text: m.text,
       showOnMinimap: m.showOnMinimap ?? true,
+      z: m.z,
     }));
     this.markersVersion++;
   }

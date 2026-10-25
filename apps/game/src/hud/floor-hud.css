@@ -1,0 +1,243 @@
+/* Floors in the HUD (deadzone-hud-v2-spec „Piętra (UI)”, mockups floor-hud.png / floor-stairs.png). */
+
+/* Badge 80 × ~54 at the minimap's left edge, centred on its vertical axis, 8 px gap. Part of the
+   minimap group: it moves and scales with `minimap` in the HUD editor. */
+.dz-hud .dz-floor {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  width: 80px;
+  box-sizing: border-box;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid rgba(91, 100, 105, 0.5);
+  border-radius: 5px;
+  background: rgba(21, 25, 28, 0.77);
+  color: #e4e6e3;
+  pointer-events: none;
+  transition:
+    border-color 220ms ease-out,
+    box-shadow 220ms ease-out;
+}
+.dz-hud .dz-floor[hidden] {
+  display: none;
+}
+.dz-floor__up,
+.dz-floor__down {
+  display: block;
+  line-height: 0;
+  color: #e4e6e3;
+  transition: color 220ms ease-out;
+}
+.dz-floor__chev {
+  display: block;
+}
+.dz-floor__up.off,
+.dz-floor__down.off {
+  opacity: 0.22;
+}
+.dz-floor__names {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 14px;
+  overflow: hidden;
+}
+.dz-floor__names b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  text-align: center;
+  font: 700 11px/14px var(--font-family-mono);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.dz-floor__prev {
+  visibility: hidden;
+}
+/* Level change: accent frame with glow, the old name slides out, the new one in (220 ms), the
+   arrow towards the move lit for 600 ms. */
+.dz-hud .dz-floor--change {
+  border-color: #e0a23a;
+  box-shadow: 0 0 12px rgba(224, 162, 58, 0.25);
+}
+.dz-floor--change .dz-floor__name {
+  color: #f0c06a;
+  animation: dz-floor-in 220ms ease-out both;
+}
+.dz-floor--change .dz-floor__prev {
+  visibility: visible;
+  color: #9aa3a7;
+  animation: dz-floor-out 220ms ease-out both;
+}
+.dz-floor--change[data-change='down'] .dz-floor__name {
+  animation-name: dz-floor-in-down;
+}
+.dz-floor--change[data-change='down'] .dz-floor__prev {
+  animation-name: dz-floor-out-down;
+}
+.dz-floor--change[data-change='up'] .dz-floor__up,
+.dz-floor--change[data-change='down'] .dz-floor__down {
+  color: #f0c06a;
+  opacity: 1;
+}
+@keyframes dz-floor-in {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes dz-floor-out {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-14px);
+    opacity: 0.35;
+  }
+}
+@keyframes dz-floor-in-down {
+  from {
+    transform: translateY(-14px);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes dz-floor-out-down {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translateY(14px);
+    opacity: 0.35;
+  }
+}
+
+/* Toast at the top centre (top 92): arrow + `1 PIĘTRO` 15 px, accent top line. */
+.dz-g--floortoast {
+  left: 50%;
+  top: calc(92px * var(--_s));
+  transform: translateX(-50%) scale(var(--_s));
+  transform-origin: top center;
+  pointer-events: none;
+}
+.dz-floortoast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid rgba(91, 100, 105, 0.5);
+  border-top: 2px solid #e0a23a;
+  border-radius: 5px;
+  background: rgba(14, 17, 19, 0.8);
+  backdrop-filter: blur(5px);
+  color: #e4e6e3;
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+.dz-floortoast[hidden] {
+  display: none;
+}
+.dz-floortoast[data-phase='in'] {
+  opacity: 0;
+  transition: none;
+}
+.dz-floortoast[data-phase='hold'] {
+  opacity: 1;
+  transition: opacity 150ms ease-out;
+}
+.dz-floortoast[data-phase='out'] {
+  opacity: 0;
+}
+.dz-floortoast__chev {
+  color: #f0c06a;
+  line-height: 0;
+}
+.dz-floortoast__text {
+  font: 700 15px/1 var(--font-family-mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* Minimap in a building: the current floor (rooms, walls, accent stairs), crossfade 220 ms. */
+.dz-mmfloor__plan {
+  transition: opacity 220ms ease-out;
+}
+.dz-mmfloor__plan.in,
+.dz-mmfloor__plan.out {
+  opacity: 0;
+}
+.dz-mmfloor__rooms {
+  fill: #2c3337;
+}
+.dz-mmfloor__outer,
+.dz-mmfloor__inner,
+.dz-mmfloor__windows,
+.dz-mmfloor__treads {
+  fill: none;
+  stroke-linecap: square;
+}
+.dz-mmfloor__outer {
+  stroke: #9aa3a7;
+  stroke-width: 2.6;
+}
+.dz-mmfloor__inner {
+  stroke: #9aa3a7;
+  stroke-width: 2;
+}
+.dz-mmfloor__windows {
+  stroke: #9aa3a7;
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.dz-mmfloor__stairs {
+  fill: rgba(224, 162, 58, 0.14);
+  stroke: #e0a23a;
+  stroke-width: 1.6;
+}
+.dz-mmfloor__treads {
+  stroke: #e0a23a;
+  stroke-width: 1.2;
+  stroke-linecap: butt;
+}
+/* Zombies: on your floor red as before; ±1 floor dimmed with ▲ / ▼. */
+.dz-mmfloor__z {
+  fill: #c8453c;
+  stroke: #0e1113;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.dz-mmfloor__z--other {
+  opacity: 0.55;
+}
+.dz-mmfloor__z--other circle {
+  fill: #9a6a64;
+  stroke: #0e1113;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.dz-mmfloor__tri {
+  fill: #e4e6e3;
+  stroke: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dz-floor--change .dz-floor__name,
+  .dz-floor--change .dz-floor__prev {
+    animation: none;
+  }
+  .dz-mmfloor__plan {
+    transition: none;
+  }
+}

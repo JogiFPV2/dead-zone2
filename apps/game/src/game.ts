@@ -90,6 +90,8 @@ import {
   type DoorEdge,
 } from './world/door-target.js';
 import { BuildingLookup } from './world/building-lookup.js';
+import { SimFloorIntel } from './floors/floor-intel.js';
+import { createFloors } from './floors/floors-controller.js';
 import { TEST_BUILDING_INSIDE } from './world/test-building.js';
 import { CrowdBuffer } from './crowd/crowd-buffer.js';
 import { startAnimalCount } from './animals/animal-count.js';
@@ -681,12 +683,20 @@ if (boot.sim === 'worker') {
 }
 // Big map (M) data: the sim's player map (fog bitmap, trail, markers). Subscribed right after the
 // sim starts so the first view (bounds + discovered + trail + markers) is not missed.
+/** The player's floor (body level), updated every frame: new map markers go there. */
+let playerFloor = 0;
 const bigMapSource = new SimBigMapSource(
   (cmd) => sendBody(cmd),
   () => PLAYER_ID,
   (text) => hud.toast(text),
+  () => playerFloor,
 );
-simWorker?.onView((view) => bigMapSource.applyView(view.worldMap));
+// Floor intel (protocol 22): rooms seen / searched, sensed zombies, sightings; marker floors.
+const floorIntel = new SimFloorIntel((id) => bigMapSource.markers().find((m) => m.id === id)?.z);
+simWorker?.onView((view) => {
+  bigMapSource.applyView(view.worldMap);
+  floorIntel.applyView(view);
+});
 simWorker?.onEvents((events) => bigMapSource.applyEvents(events));
 // The character's single save slot: exit, daily autosave and after-sleep saves all go there.
 let saver: CharacterSaver | undefined;
@@ -834,6 +844,7 @@ sim.onSnapshot(({ tick, buf }) => {
   phys.pushSnapshot(tick, buf);
   crowd.push(buf, 1);
   animalBuffer.push(buf, 1);
+  floorIntel.applySnapshot(buf, tick);
   crowdArrivedMs = performance.now();
 });
 const crowdView = new CrowdView(crowd, (next, prev) => {
@@ -872,6 +883,12 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).get('arrow') ===
     );
 }
 
+// Floors (deadzone-hud-v2-spec „Piętra (UI)”): building plans from the map, room discovery
+// (`SimFloorIntel` from the sim, protocol 22, floors/floor-intel.ts); `?floorsDemo=1` = review data.
+const floors = createFloors(world.source, structures.lookup, {
+  demo: new URLSearchParams(location.search).get('floorsDemo') === '1',
+  intel: floorIntel,
+});
 // HUD A (@deadzone/ui): DOM over the canvas, fed from the game state (spec deadzone-hud-spec §5).
 const openingFeedback = new OpeningFeedback(PLAYER_ID);
 let minimapGeo = minimapGeometry(world.source, follow?.range ?? world.range);
@@ -1147,6 +1164,8 @@ const bigMap = createBigMap({
   onView: debounced(400, (bigMapZoom: number, bigMapLayers) =>
     settings.update((s) => ({ ...s, view: { ...s.view, bigMapZoom, bigMapLayers } })),
   ),
+  floors,
+  tick: () => stamper.tick,
   info: () => ({
     day: gameState.get().clock?.day,
     minuteOfDay: gameState.get().clock ? lightMinute : undefined,
@@ -2163,6 +2182,8 @@ renderer.setAnimationLoop((time) => {
       cameraZoom: rig.zoomTarget,
       sneaking: sneak.sneaking(performance.now()),
     });
+    playerFloor = Math.floor(state.z + 1e-3);
+    hud.setFloor(floors.frame({ x: state.x, y: state.y, z: playerFloor, tick: simTick }));
     const basePrompt = interaction.frame(performance.now(), simTick);
     const veh = vehicles.frame(performance.now(), simTick);
     vehicleHud.update(veh.hud);

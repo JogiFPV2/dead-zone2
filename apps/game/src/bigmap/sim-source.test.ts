@@ -51,6 +51,7 @@ describe('SimBigMapSource (protocol)', () => {
       type: 'addMarker',
       x: 10,
       y: 20,
+      z: 0,
       icon: 'base:marker-food',
       color: 'green',
       text: 'x'.repeat(40),
@@ -72,8 +73,8 @@ describe('SimBigMapSource (protocol)', () => {
     ]);
     // Missing field (older sim) = shown.
     expect(s.markers()).toEqual([
-      { ...m, showOnMinimap: false },
-      { ...m, id: 8, showOnMinimap: true },
+      { ...m, z: 0, showOnMinimap: false },
+      { ...m, z: 0, id: 8, showOnMinimap: true },
     ]);
     s.editMarker(7, { ...m, showOnMinimap: true });
     expect(sent[1]).toMatchObject({ type: 'editMarker', id: 7, showOnMinimap: true });
@@ -89,6 +90,40 @@ describe('SimBigMapSource (protocol)', () => {
     // Another command's invalid-target and another player's rejection are not ours.
     s.applyEvents([reject('removeMarker'), reject('move'), reject('removeMarker', 1)]);
     expect(toasts).toEqual(['Ten znacznik już nie istnieje']);
+  });
+});
+
+describe('SimBigMapSource marker floors (protocol 22)', () => {
+  it("new markers go on the player's current floor, edits keep the marker's floor", () => {
+    const sent: { type: string; z?: number | undefined }[] = [];
+    let floor = 2;
+    const s = new SimBigMapSource(
+      (c) => sent.push({ type: c.type, z: 'z' in c ? c.z : undefined }),
+      () => 0,
+      () => {},
+      () => floor,
+    );
+    const d = {
+      x: 1,
+      y: 2,
+      icon: 'base:marker-food',
+      color: 'blue' as const,
+      text: '',
+      showOnMinimap: true,
+    };
+    s.addMarker(d);
+    floor = -1;
+    s.addMarker(d);
+    s.editMarker(5, { ...d, z: 3 });
+    s.editMarker(6, d);
+    expect(sent.map((c) => [c.type, c.z])).toEqual([
+      ['addMarker', 2],
+      ['addMarker', -1],
+      ['editMarker', 3],
+      ['editMarker', undefined],
+    ]);
+    s.applyView({ markers: [{ id: 5, x: 1, y: 2, z: 3, icon: 'x', color: 'red', text: '' }] });
+    expect(s.markers()[0]?.z).toBe(3);
   });
 });
 

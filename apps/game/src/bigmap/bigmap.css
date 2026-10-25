@@ -42,7 +42,11 @@
   inset: 0;
   cursor: grab;
 }
-.dz-bm__stage:active {
+.dz-bm__stage--building {
+  cursor: pointer;
+}
+.dz-bm__stage:active,
+.dz-bm__stage--building:active {
   cursor: grabbing;
 }
 .dz-bm__canvas {

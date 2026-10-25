@@ -63,6 +63,7 @@ import type { LeisureSpot } from './leisure-spots.js';
 import type { Feedback } from './sleep-feedback.js';
 import { createSleepNotice } from './sleep-notice.js';
 import { createMinimapZoomControls } from './minimap-zoom-controls.js';
+import { createFloorHud, type FloorHudVM } from './floor-hud.js';
 import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
 import { createHud2Parts } from './v2/hud2.js';
 import type { PromptVM } from './v2/interact-prompt.js';
@@ -154,6 +155,8 @@ export interface Hud {
   onPromptMenu(fn: (i: number, kind: 'pick' | 'hover') => void): void;
   /** Info toast (e.g. „wkrótce” for screens that do not exist yet). */
   toast(text: string): void;
+  /** Floor badge, level-change toast and the floor plan on the minimap („Piętra (UI)”). */
+  setFloor(vm: FloorHudVM): void;
   /** HUD editor: the DOM element(s) each layout slot moves (`weapon` without the car panel). */
   layoutTargets(): Partial<Record<HudLayoutSlot, HTMLElement[]>>;
   /**
@@ -256,8 +259,13 @@ export function createHud(opts: HudOptions): Hud {
   noiseRing.append(noiseCircle);
   noiseRing.setAttribute('hidden', '');
   minimapGroup.append(noiseRing);
+  // Floors: badge at the minimap's left edge (moves with `minimap` in the HUD editor), plan of
+  // the current floor inside the minimap's world layer, toast at the top centre.
+  const floors = createFloorHud(minimap.el.querySelector('.dz-minimap__world'));
+  minimapGroup.append(floors.badge);
   const toasts = createToastStack();
   group('toasts', toasts.el);
+  group('floortoast', floors.toast);
   const v2 = createHud2Parts({
     root,
     group,
@@ -546,6 +554,9 @@ export function createHud(opts: HudOptions): Hud {
     setPrompt: (vm) => v2.setPrompt(vm),
     onPromptMenu: (fn) => v2.onPromptMenu(fn),
     toast: (text) => toasts.push({ kind: 'info', text }),
+    // CSS px per metre on the Ø136 minimap (dot sizes of the mockup are in CSS px).
+    setFloor: (vm) =>
+      floors.update(vm, performance.now(), MINIMAP_PX_PER_M * minimapZoom.get() * MINIMAP_FIT),
     layoutTargets: () => ({
       topbar: [v2.topbar],
       status: [statusGroup],
@@ -558,6 +569,7 @@ export function createHud(opts: HudOptions): Hud {
     }),
     setEditPreview(on) {
       hud.toggleAttribute('data-hud-edit', on);
+      floors.setEditPreview(on);
       v2.setEditPreview(on, performance.now());
       if (on) {
         threat.update({ level: 'medium' });
