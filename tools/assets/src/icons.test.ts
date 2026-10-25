@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { iconFile, iconIndex, type IconJob } from './icons.js';
+import { iconFile, iconIndex, jobsToRender, type IconJob } from './icons.js';
 
 const ICONS_DIR = new URL('../icons/', import.meta.url);
 const OUT = new URL('../../../apps/game/public/icons/', import.meta.url);
@@ -29,6 +29,19 @@ describe('icons', () => {
       'base:a': 'a.png',
       'base:b': 'b.png',
     });
+  });
+
+  it('never re-renders pre-rendered ids (Designer swaps), drops emptied jobs', () => {
+    const jobs: IconJob[] = [
+      { items: ['base:pistol', 'base:compact-pistol'], src: 'p.glb' },
+      { items: ['base:ammo-9mm'], src: 'a.glb' },
+      { items: ['base:hammer'], src: 'h.glb' },
+    ];
+    expect(jobsToRender(jobs, ['base:compact-pistol', 'base:ammo-9mm'])).toEqual([
+      { items: ['base:pistol'], src: 'p.glb' },
+      { items: ['base:hammer'], src: 'h.glb' },
+    ]);
+    expect(iconIndex(jobs, ['base:ammo-9mm'])['base:ammo-9mm']).toBe('ammo-9mm.png');
   });
 
   it('the shipped index is exactly items.json + prerendered.json, every file present', () => {

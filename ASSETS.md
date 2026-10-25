@@ -110,6 +110,21 @@ modele własne z `generate-batch6.html` (three.js, eksport do `/workspace/assets
 | frying-pan, rolling-pin (`rollingPin`)                                                                                                                                       | Food Kit (kenney.nl/assets/food-kit)                                | Kenney   | CC0-1.0  |
 | pozostałe 84 (książki, czasopisma, VHS, torby, plecaki, hoodie, jeans, broń biała, magazynki, latarki, lampa sufitowa, generator, akumulator, bak, dystrybutor, zapalniczka) | modele własne Deadzone (Designer, `generate-batch6.html`, three.js) | Deadzone | CC0-1.0  |
 
+### Ikony, partia 7: podmiany duplikatów (gotowe PNG od Designera, 11.10.2026)
+
+24 ikony 128 px zastępują PNG, które były wspólne dla kilku przedmiotów (jedna amunicja, jeden pistolet,
+jeden rewolwer, jeden bandaż, jedna butelka) oraz kolidującą okładkę VHS. Te same modele i rig co wcześniej
+(licencje jak w tabelach powyżej), różnią się kolorem i znaczkiem w rogu (kaliber, C / H / MAG, BOX, ×1,
+BRUD, SD, zielony krzyż). Lista podmian: `/workspace/deadzone-icons/atlas-swap.md` (poza repo).
+
+Wszystkie 24 id są w `tools/assets/icons/prerendered.json`. Pistolety, rewolwery i amunicja zostają w
+`items.json` (model broni w dłoni), ale `assets icons` ich już nie renderuje (`jobsToRender`), więc
+ponowny render nie nadpisze ikon Designera.
+
+| Ikony                                                                                                                                                                                                                                                              | Źródło                                                                          | Autor                | Licencja |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- | -------------------- | -------- |
+| ammo-9mm / -45 / -38 / -44 / -308 / -556 i ammo-box-\* (kolor pudełka + kaliber), ammo-box-shells, shotgun-shell, pistol, compact-pistol, heavy-pistol, revolver, magnum-revolver, bandage, sterilized-bandage, water-bottle, dirty-water-bottle, vhs-self-defense | modele jak w tabelach powyżej, przemalowane, znaczki własne Deadzone (Designer) | jak wyżej / Deadzone | CC0-1.0  |
+
 ### Ikony, partia 8 (gotowe PNG od Designera, 11.10.2026)
 
 29 ikon 128 px z tego samego rigu (`render/icons.html`), lista w `tools/assets/icons/prerendered.json`: klucz do

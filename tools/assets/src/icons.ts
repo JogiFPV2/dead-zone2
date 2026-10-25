@@ -28,6 +28,21 @@ export function iconIndex(
   return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
 }
 
+/**
+ * Jobs the pipeline actually renders: ids listed in `prerendered` keep the Designer's PNG
+ * (e.g. batch 7 swaps of pistols / ammo / bandages that still need their model in `items.json`
+ * for the weapon in hand), jobs left without ids are skipped.
+ */
+export function jobsToRender(
+  jobs: readonly IconJob[],
+  prerendered: readonly string[] = [],
+): IconJob[] {
+  const pre = new Set(prerendered);
+  return jobs
+    .map((j) => ({ ...j, items: j.items.filter((id) => !pre.has(id)) }))
+    .filter((j) => j.items.length > 0);
+}
+
 interface Page {
   goto(url: string): Promise<unknown>;
   waitForFunction(fn: string): Promise<unknown>;
@@ -78,7 +93,7 @@ export async function renderIcons(opts: {
     await page.goto(pathToFileURL(join(iconsDir, 'rig.html')).href);
     await page.waitForFunction('window.__ready');
     await mkdir(opts.outDir, { recursive: true });
-    for (const job of jobs) {
+    for (const job of jobsToRender(jobs, prerendered)) {
       const file = pathToFileURL(resolve(iconsDir, 'src', job.src)).href;
       const dataUrl = await page.evaluate(
         ([f, rot, size]) =>
