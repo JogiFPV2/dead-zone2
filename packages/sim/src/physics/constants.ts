@@ -533,3 +533,10 @@ export const SPRINT_MIN_ENDURANCE = 25;
 export const SPRINT_ENDURANCE_MUL = 2;
 /** Sprint footsteps: the run noise radius × this. */
 export const SPRINT_NOISE_MUL = 1.3;
+
+/**
+ * A closed / locked door or gate with edge hp at or below this share of its max hp is
+ * `cracked` (protocol 42: `OpeningView.cracked`, event `doorCracked` once on the way down).
+ * Planks do not count; open / broken edges are never cracked.
+ */
+export const DOOR_CRACKED_FRAC = 0.5;

@@ -780,7 +780,24 @@ export type SimEvent =
       barricade: number;
       /** Window: glass in the frame (false after `removeGlass`). */
       glass: boolean;
+      /** Door / gate at ≤ half edge hp (protocol 42, as `OpeningView.cracked`). */
+      cracked?: boolean;
       by: 'player' | 'zombie' | 'crowd' | 'debug' | 'vehicle';
+    }
+  /**
+   * A closed door / gate just became cracked (protocol 42): its edge hp fell to ≤ half (blows,
+   * crowd pressure, vehicle). Once per crossing (a repaired / new door can crack again); the
+   * `openingChanged` of the same hit carries `cracked: true`. Client: cracking sound + sprite.
+   */
+  | {
+      type: 'doorCracked';
+      tick: number;
+      tx: number;
+      ty: number;
+      z: number;
+      side: EdgeSide;
+      kind: 'door' | 'gate';
+      by: 'player' | 'zombie' | 'crowd' | 'vehicle';
     }
   /**
    * The character's map markers changed (`addMarker` / `editMarker` / `removeMarker`, also in

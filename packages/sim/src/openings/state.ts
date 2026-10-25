@@ -17,7 +17,7 @@ import {
   type ContentBundle,
 } from '@deadzone/content';
 import { deriveSeed, Rng } from '../core/rng.js';
-import { FENCE_HP } from '../physics/constants.js';
+import { DOOR_CRACKED_FRAC, FENCE_HP } from '../physics/constants.js';
 
 /** `worldSettings.openings` (defaults = the schema defaults in packages/content). */
 export type OpeningsConfig = ContentBundle['worldSettings']['openings'];
@@ -320,7 +320,16 @@ export function openingView(o: OpeningsWorld, key: number, kind: number): Openin
     barricade: planks,
     glass: kind === OpeningKind.window && !(state === OS.broken && e?.cleared),
     ...(o.curtains.has(key) ? { curtains: true } : {}),
+    ...(isCracked(o, kind, state, edgeHp) ? { cracked: true } : {}),
   };
+}
+
+/** Door / gate, not open or broken, edge hp ≤ `DOOR_CRACKED_FRAC` × max (planks ignored). */
+export function isCracked(o: OpeningsWorld, kind: number, state: number, edgeHp: number): boolean {
+  if (kind !== OpeningKind.door && kind !== OpeningKind.gate) return false;
+  if (state === OS.open || state === OS.broken) return false;
+  const max = maxHp(o.cfg, kind, state);
+  return max > 0 && edgeHp <= max * DOOR_CRACKED_FRAC;
 }
 
 /** Kind of the edge `key` from the map (0 = wall / unknown / chunk not loaded). */

@@ -933,6 +933,11 @@ export interface OpeningView {
   glass: boolean;
   /** Window with drawn curtains (protocol 32): hides the light inside from zombies. */
   curtains?: boolean;
+  /**
+   * Door / gate (closed or locked) at or below half of its edge hp (protocol 42): renderer shows
+   * the cracked / splintered sprite. Absent = intact. Planks do not count.
+   */
+  cracked?: boolean;
 }
 
 /** Edge kinds with a state (`openings`). */

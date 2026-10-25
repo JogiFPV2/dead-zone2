@@ -12,6 +12,7 @@ import type { SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
 import {
   baseState,
+  isCracked,
   isDoorLike,
   maxHp,
   openingKey,
@@ -107,8 +108,22 @@ export function damageOpening(
   }
   if (state === OS.open || state === OS.broken) return;
   const left = hp - dmg;
-  if (left > 0) setOpening(o, key, kind, state, left);
-  else {
+  if (left > 0) {
+    setOpening(o, key, kind, state, left);
+    if (!isCracked(o, kind, state, hp) && isCracked(o, kind, state, left)) {
+      const k = unpackKey(key);
+      w.events.push({
+        type: 'doorCracked',
+        tick: w.tick,
+        tx: k.tx,
+        ty: k.ty,
+        z: k.z,
+        side: k.side,
+        kind: kind === OpeningKind.gate ? 'gate' : 'door',
+        by,
+      });
+    }
+  } else {
     setOpening(o, key, kind, OS.broken, 0, { cleared: 0 });
     if (kind === OpeningKind.window) windowSmashed(w, key, by, undefined, byEid);
     else if (kind === OpeningKind.fence || kind === OpeningKind.gate) {

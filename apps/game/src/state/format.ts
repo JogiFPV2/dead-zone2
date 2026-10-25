@@ -61,6 +61,8 @@ export function describeEvent(e: SimEvent): string {
       return `discovered ${e.cells.length} chunk(s)`;
     case 'fellFromHeight':
       return `entity ${e.entity} fell ${e.levels} level(s), ${e.damage} damage${e.killed ? ' (killed)' : ''}`;
+    case 'doorCracked':
+      return `${e.kind} ${e.tx},${e.ty}${e.side} cracked by ${e.by}`;
     case 'doorHeld':
       return `door ${e.tx},${e.ty}${e.side} ${e.state} (${e.units} u)`;
     case 'openingPressure':
