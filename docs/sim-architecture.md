@@ -1675,3 +1675,8 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 
 - `worldSettings.combat.zombie {hitChance, carReachM}` (#298) nadpisuje `CombatConfig.zombie` (`hitChance`, `carReachTiles`). `worldSettings.ai.stopGapM` (#295) nadpisuje `ai.reachTiles`.
 - Brak pola = `DEFAULT_ZOMBIE_HIT_CHANCE` 0,7, `DEFAULT_ZOMBIE_CAR_REACH_M` 0,9, `DEFAULT_AI_STOP_GAP_M` 0,15 z @deadzone/content. Wartości bez zmian, więc goldeny hasza też.
+
+### 9.64 Przejście przez każde okno (25.10)
+
+- `startVault` przez okno ląduje tylko tam, gdzie ciało się mieści: podłoga, brak mebla (footprint), ściany kafla, dokładnego segmentu ściany (`wallSegments`) i blokera w promieniu. Gdy prosty punkt lądowania nie pasuje (luka w skośnej ścianie lekko obok rastrowego okna), sim szuka w stałej kolejności głębiej (+0,15 / +0,3) i w bok (±0,15 / ±0,3); prosta droga nie może przeciąć segmentu. Bez miejsca: `invalid-target` (wcześniej gracz lądował w meblu albo za ścianą).
+- `windowPassIssue(w, grid, side, ex, ey, z, fromLow)` (eksport) sprawdza jedną stronę okna; `apps/game/src/world/gen/window-pass.test.ts` przechodzi wszystkie okna osm-okulickiego (osm-stw z `WINDOW_SCAN_STW=1`, raport JSON z `WINDOW_REPORT=<prefiks>`). Okna na piętrach bez podłogi na zewnątrz to skok, nie przejście, i są pomijane. Zablokowane przez meble / luki segmentów to sprawa generatora (tools/map); test trzyma ich liczbę jako górny limit, każda inna przyczyna musi być 0.

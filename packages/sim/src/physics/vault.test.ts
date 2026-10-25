@@ -286,3 +286,39 @@ describe('vault: zombies', () => {
     expect(down.x).toBeGreaterThan(21);
   });
 });
+
+describe('vault: windows next to slanted walls (all-windows map test, docs 9.63)', () => {
+  const segMap = (segs: { x0: number; y0: number; x1: number; y1: number }[]) =>
+    buildMap({
+      wallW: (x) => x === 20,
+      edgeId: (x, y) => (x === 20 && y >= 20 && y < 30 ? 2 : x === 20 && y === 32 ? 3 : 1),
+      edgeKinds: [null, 'wall', 'fence', 'window'] as (SimEdgeKind | null)[],
+      wallSegments: segs,
+    });
+  const climb = (segs: { x0: number; y0: number; x1: number; y1: number }[]) => {
+    const sim = vaultSim({ x: 19.7, y: 32.5 }, { map: segMap(segs) });
+    const c = cmds(sim);
+    c.opening(20, 32, 'open');
+    sim.step();
+    c.vault();
+    sim.step();
+    const rejected = rejectedReasons(sim);
+    const ev = run(sim, DEFAULT_PHYSICS_CONFIG.vault.windowTicks + 2);
+    return { sim, rejected, vaulted: physKinds(ev).includes('vaulted') };
+  };
+
+  it('lands beside a segment end that covers the straight landing spot (gap off the raster)', () => {
+    const { sim, rejected, vaulted } = climb([{ x0: 20.55, y0: 32.32, x1: 20.9, y1: 32.0 }]);
+    expect(rejected).toEqual([]);
+    expect(vaulted).toBe(true);
+    expect(player(sim).x).toBeGreaterThan(20.3);
+    expect(player(sim).y).toBeCloseTo(32.65, 4);
+  });
+
+  it('rejects when an exact wall seals the window (no gap), instead of landing through it', () => {
+    const { sim, rejected, vaulted } = climb([{ x0: 20.2, y0: 31.5, x1: 20.2, y1: 33.5 }]);
+    expect(rejected).toEqual(['invalid-target']);
+    expect(vaulted).toBe(false);
+    expect(player(sim).x).toBeLessThan(20);
+  });
+});

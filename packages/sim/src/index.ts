@@ -144,6 +144,9 @@ export {
   type PhysicsStepInput,
   type PhysicsWorld,
 } from './physics/index.js';
+export { gridOf } from './ai/commands.js';
+export { spotIssue, windowPassIssue } from './physics/vault.js';
+export type { VaultSpotIssue, WindowPassIssue } from './physics/vault.js';
 export {
   checkCharacter,
   skillCost,
