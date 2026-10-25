@@ -14,7 +14,7 @@ import { deriveSeed, Rng } from '../core/rng.js';
 import type { SimWorld } from '../core/world.js';
 import { floorZ } from '../world/levels.js';
 import { newAction, startAction } from '../actions/queue.js';
-import { moveItem, stableIdOf, tileInReach } from './inventory.js';
+import { moveItem, stableIdOf, tileReachBlock } from './inventory.js';
 import { lootWeight } from './loot.js';
 import { isVehicleContainer } from '../vehicles/containers.js';
 import { giveZombieKey } from '../vehicles/chunk-spawn.js';
@@ -70,7 +70,8 @@ export function applySearchCommand(
   }
   if (cmd.x === undefined || cmd.y === undefined) return 'invalid-target';
   const z = floorZ(w, eid);
-  if (!tileInReach(w, eid, cmd.x, cmd.y, z)) return 'out-of-range';
+  const tb = tileReachBlock(w, eid, cmd.x, cmd.y, z);
+  if (tb) return tb;
   const a = newAction('search');
   a.spot = { x: cmd.x, y: cmd.y, z };
   return startAction(w, eid, a);

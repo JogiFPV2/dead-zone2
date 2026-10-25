@@ -1680,3 +1680,20 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
 
 - `startVault` przez okno ląduje tylko tam, gdzie ciało się mieści: podłoga, brak mebla (footprint), ściany kafla, dokładnego segmentu ściany (`wallSegments`) i blokera w promieniu. Gdy prosty punkt lądowania nie pasuje (luka w skośnej ścianie lekko obok rastrowego okna), sim szuka w stałej kolejności głębiej (+0,15 / +0,3) i w bok (±0,15 / ±0,3); prosta droga nie może przeciąć segmentu. Bez miejsca: `invalid-target` (wcześniej gracz lądował w meblu albo za ścianą).
 - `windowPassIssue(w, grid, side, ex, ey, z, fromLow)` (eksport) sprawdza jedną stronę okna; `apps/game/src/world/gen/window-pass.test.ts` przechodzi wszystkie okna osm-okulickiego (osm-stw z `WINDOW_SCAN_STW=1`, raport JSON z `WINDOW_REPORT=<prefiks>`). Okna na piętrach bez podłogi na zewnątrz to skok, nie przejście, i są pomijane. Zablokowane przez meble / luki segmentów to sprawa generatora (tools/map); test trzyma ich liczbę jako górny limit, każda inna przyczyna musi być 0.
+
+### 9.69 Looting nie przez ściany (protokół i zapis bez zmian)
+
+Każdy dostęp do schowka świata, kupki na ziemi i zwłok (`openContainer`, `search` kontenera i kafla,
+`takeItem`, `takeAll`, `putItem`/`moveItem`, `pickUp`, `placeStorage`, trwająca akcja `search`,
+zamykanie panelu w `inventorySystem`) wymaga zasięgu (1,5 kafla, footprint mebla jak w 9.49) **oraz**
+czystej linii od pozycji gracza do najbliższego punktu celu (prostokąt kafla / footprintu, margines
+0,01). Linia to reguła walki wręcz `meleeLine` (`world/los.ts`, jak w 9.65): ściany, okna w każdym
+stanie, zamknięte drzwi, płoty, barykady, rogi i `wallSegments` blokują; otwarte drzwi przepuszczają.
+Cel w tym samym kaflu zawsze przechodzi. Kontenery pojazdów bez zmian (`vehicleContainerBlock`).
+
+Powód odrzucenia: istniejący `wall` (za ścianą), `out-of-range` (za daleko / inne piętro / nie
+przeszukany) — bez nowego kodu, więc `PROTOCOL_VERSION` zostaje 40, `SAVE_VERSION` 3.
+
+Dla klienta (ukrycie podpowiedzi): `@deadzone/sim` eksportuje czyste funkcje
+`reachTarget(world, eid, { container } | { x, y, z }): 'out-of-range' | 'wall' | undefined` i
+`canReachTarget(...)`: boolean. Test: `items/loot-los.test.ts`.

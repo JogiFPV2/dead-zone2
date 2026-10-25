@@ -17,7 +17,13 @@ import { rollPoisoning, rollSpoiledFood } from '../survival/poisoning.js';
 import { registerOpeningActions } from '../openings/timed.js';
 import { clampStat, modded } from '../survival/state.js';
 import { bandagePart } from '../survival/wounds.js';
-import { canReach, containerInReach, playerItems, stableIdOf, tileInReach } from './inventory.js';
+import {
+  canReach,
+  containerReachBlock,
+  playerItems,
+  stableIdOf,
+  tileReachBlock,
+} from './inventory.js';
 import { generateLoot } from './loot.js';
 import { revealHidden, searchable, searchSecMin } from './search.js';
 import { freshness } from './spoilage.js';
@@ -185,13 +191,12 @@ export function registerItemActions(): void {
 
   registerAction('search', {
     validate(w, eid, a) {
-      if (a.spot)
-        return tileInReach(w, eid, a.spot.x, a.spot.y, a.spot.z) ? undefined : 'out-of-range';
+      if (a.spot) return tileReachBlock(w, eid, a.spot.x, a.spot.y, a.spot.z);
       const st = w.items!;
       const c = st.containers.get(a.container);
       if (!c || !searchable(c)) return 'no-item';
       if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c);
-      return containerInReach(w, eid, c) ? undefined : 'out-of-range';
+      return containerReachBlock(w, eid, c);
     },
     durationMin(w, eid, a) {
       const st = w.items!;

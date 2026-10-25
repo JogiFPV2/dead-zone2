@@ -9,14 +9,14 @@ import { takeMedicine } from '../survival/poisoning.js';
 import { addPieces, carriedItems, consumeUse } from './actions.js';
 import {
   allowedSlots,
-  canReach,
   carriedLoad,
   checkFits,
   equip,
   hardLimit,
   moveItem,
   playerItems,
-  tileInReach,
+  tileReachBlock,
+  reachBlock,
 } from './inventory.js';
 import { applySearchCommand, needsSearch, viewKind } from './search.js';
 import {
@@ -134,12 +134,13 @@ export function applyItemCommand(
   const reachable = (id: number): ItemInstance | CommandRejectReason => {
     const item = st.items.get(id);
     if (!item) return 'no-item';
-    return canReach(w, eid, item.loc) ? item : 'out-of-range';
+    return reachBlock(w, eid, item.loc) ?? item;
   };
   const move = (item: ItemInstance, to: number, count: number | undefined) => {
     const target = st.containers.get(to);
     if (!target) return 'no-item';
-    if (!canReach(w, eid, to)) return 'out-of-range';
+    const rb = reachBlock(w, eid, to);
+    if (rb) return rb;
     const n = Math.min(count ?? item.count, item.count);
     if (n < item.count && item.inner) return 'invalid-target';
     const reason = checkFits(w, eid, item, n, target);
@@ -174,7 +175,8 @@ export function applyItemCommand(
     case 'takeAll': {
       const c = st.containers.get(cmd.container);
       if (!c || c.kind === 'hidden' || needsSearch(w, eid, c)) return 'no-item';
-      if (!canReach(w, eid, c.id)) return 'out-of-range';
+      const rb = reachBlock(w, eid, c.id);
+      if (rb) return rb;
       if (c.id === p.inventory || isInside(st, c.id, p.inventory)) return 'invalid-target';
       if (c.items.length === 0) return 'no-item';
       const inv = st.containers.get(p.inventory)!;
@@ -290,7 +292,8 @@ export function applyItemCommand(
       if (typeof item === 'string') return item;
       if (placeableType(st, defOf(st, item)) < 0) return 'invalid-target';
       const z = playerTile(w, eid).z;
-      if (!tileInReach(w, eid, cmd.x, cmd.y, z)) return 'out-of-range';
+      const tb = tileReachBlock(w, eid, cmd.x, cmd.y, z);
+      if (tb) return tb;
       const pile = groundPile(st, cmd.x, cmd.y, z);
       if (item.loc !== pile.id) moveWithEvents(w, eid, p, item, pile, 1);
       item.placed = true;
@@ -333,7 +336,8 @@ function openContainer(
   if (needsSearch(w, eid, c)) {
     return startAction(w, eid, newAction('search', { container: id }));
   }
-  if (!canReach(w, eid, id)) return 'out-of-range';
+  const rb = reachBlock(w, eid, id);
+  if (rb) return rb;
   p.open = id;
   st.version++;
   w.events.push({
@@ -363,7 +367,8 @@ function pickUpStorage(
   const pickup = st.content.containerTypes[c.type]?.pickupItem;
   const def = pickup === undefined ? undefined : st.content.itemIndex.get(pickup);
   if (def === undefined) return 'invalid-target';
-  if (!canReach(w, eid, id)) return 'out-of-range';
+  const rb = reachBlock(w, eid, id);
+  if (rb) return rb;
   const weight = st.content.items[def]!.weightKg + containerWeight(st, c.id);
   if (carriedLoad(st, p) + weight > hardLimit(w, eid) + 1e-6) return 'no-space';
   const minute = gameMinuteAt(w.clock, w.tick);

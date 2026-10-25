@@ -101,7 +101,7 @@ export type CommandRejectReason =
    * or overlapping it), so there is no push / pull direction.
    */
   | 'wrong-side'
-  /** Moving furniture (protocol 38): a wall, a door / window frame or a closed opening is in the way. */
+  /** A wall, a door / window frame or a closed opening is in the way (moving furniture, protocol 38; looting, docs 9.69). */
   | 'wall';
 
 /**

@@ -35,7 +35,12 @@ export { inflictWound } from './survival/wounds.js';
 export { nextMoodleLevel } from './systems/moodles.js';
 export { ACTION_KINDS, MAX_QUEUED_ACTIONS } from './actions/queue.js';
 export { DRINK_USE_MIN, EAT_PORTION_MIN, UNPACK_MIN } from './items/actions.js';
-export { INTERACT_RANGE_TILES } from './items/inventory.js';
+export {
+  INTERACT_RANGE_TILES,
+  canReachTarget,
+  reachTarget,
+  type ReachBlock,
+} from './items/inventory.js';
 export { lootTableFor, lootWeight } from './items/loot.js';
 export type { ItemContainer, ItemInstance, ItemStore } from './items/store.js';
 export { DEFAULT_AMBIENT_C } from './systems/survival.js';

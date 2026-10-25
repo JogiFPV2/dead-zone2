@@ -23,6 +23,9 @@ import {
 import { floorZ } from '../world/levels.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { anchorRect, rectInReach } from '../furniture/footprint.js';
+import { gridOf } from '../ai/commands.js';
+import { meleeLine } from '../world/los.js';
+import type { TileRect } from '../world/furniture.js';
 
 /** Reach for containers and items (docs 2.4: ≤ 1.5 tiles, same floor). */
 export const INTERACT_RANGE_TILES = 1.5;
@@ -43,23 +46,60 @@ export function tileInReach(w: SimWorld, eid: number, x: number, y: number, z: n
   return dx * dx + dy * dy <= INTERACT_RANGE_TILES * INTERACT_RANGE_TILES;
 }
 
+/** Why a reach target fails: too far / other floor (`out-of-range`) or behind a wall (`wall`). */
+export type ReachBlock = 'out-of-range' | 'wall';
+
+/**
+ * Nothing blocks the line from the player to the nearest point of tile rectangle `r` (docs 9.69):
+ * the melee rule (`meleeLine`: walls, windows in any state, closed doors, fences, barricades,
+ * corners, exact walls `wallSegments`). Same tile always passes.
+ */
+export function lineToRect(w: SimWorld, eid: number, r: TileRect, z: number): boolean {
+  const px = w.c.Position.x[eid] ?? 0;
+  const py = w.c.Position.y[eid] ?? 0;
+  const m = 0.01;
+  const tx = Math.min(Math.max(px, r.x + m), r.x + r.w - m);
+  const ty = Math.min(Math.max(py, r.y + m), r.y + r.h - m);
+  if (Math.floor(tx) === Math.floor(px) && Math.floor(ty) === Math.floor(py)) return true;
+  return meleeLine(gridOf(w), z, px, py, tx, ty);
+}
+
+/** Tile (x, y, z) reachable: in range and not behind a wall. */
+export function tileReachBlock(
+  w: SimWorld,
+  eid: number,
+  x: number,
+  y: number,
+  z: number,
+): ReachBlock | undefined {
+  if (!tileInReach(w, eid, x, y, z)) return 'out-of-range';
+  return lineToRect(w, eid, { x, y, w: 1, h: 1 }, z) ? undefined : 'wall';
+}
+
 /**
  * The player may look into / take from container `id`: own inventory (and bags in it), or world
  * storage / ground pile / corpse in reach (and bags or placed storage lying there). World storage
  * and corpses must be searched by this player first; hidden caches are never reachable.
  */
 export function canReach(w: SimWorld, eid: number, id: number): boolean {
+  return reachBlock(w, eid, id) === undefined;
+}
+
+/** `canReach` with the reason (`out-of-range` also for "not searched yet" / hidden). */
+export function reachBlock(w: SimWorld, eid: number, id: number): ReachBlock | undefined {
   const st = w.items;
-  if (!st) return false;
+  if (!st) return 'out-of-range';
   const root = rootContainer(st, id);
-  if (!root) return false;
-  if (root.kind === 'inventory') return root.owner === stableIdOf(w, eid);
+  if (!root) return 'out-of-range';
+  if (root.kind === 'inventory')
+    return root.owner === stableIdOf(w, eid) ? undefined : 'out-of-range';
   // Hidden caches are found by a spot search only (they become ground piles then).
-  if (root.kind === 'hidden') return false;
-  if (!containerInReach(w, eid, root)) return false;
+  if (root.kind === 'hidden') return 'out-of-range';
+  const b = containerReachBlock(w, eid, root);
+  if (b) return b;
   const searchable =
     root.kind === 'world' || root.kind === 'corpse' || isVehicleContainer(root.kind);
-  return !searchable || root.searchedBy.includes(stableIdOf(w, eid));
+  return !searchable || root.searchedBy.includes(stableIdOf(w, eid)) ? undefined : 'out-of-range';
 }
 
 /**
@@ -67,12 +107,54 @@ export function canReach(w: SimWorld, eid: number, id: number): boolean {
  * trunk from behind the unlocked car, a glovebox from a front seat (`vehicles/containers.ts`).
  */
 export function containerInReach(w: SimWorld, eid: number, c: ItemContainer): boolean {
-  if (isVehicleContainer(c.kind)) return vehicleContainerBlock(w, eid, c) === undefined;
-  // Furniture footprint: world storage from any tile next to the piece (docs 9.49).
-  if (c.kind === 'world' && w.furniture)
-    return rectInReach(w, eid, anchorRect(w, c.x, c.y, c.z), c.z);
-  return tileInReach(w, eid, c.x, c.y, c.z);
+  return containerReachBlock(w, eid, c) === undefined;
 }
+
+/** `containerInReach` with the reason; placed containers also need a clear line (docs 9.69). */
+export function containerReachBlock(
+  w: SimWorld,
+  eid: number,
+  c: ItemContainer,
+): ReachBlock | undefined {
+  if (isVehicleContainer(c.kind))
+    return vehicleContainerBlock(w, eid, c) === undefined ? undefined : 'out-of-range';
+  // Furniture footprint: world storage from any tile next to the piece (docs 9.49).
+  const r =
+    c.kind === 'world' && w.furniture
+      ? anchorRect(w, c.x, c.y, c.z)
+      : { x: c.x, y: c.y, w: 1, h: 1 };
+  const inRange =
+    c.kind === 'world' && w.furniture
+      ? rectInReach(w, eid, r, c.z)
+      : tileInReach(w, eid, c.x, c.y, c.z);
+  if (!inRange) return 'out-of-range';
+  return lineToRect(w, eid, r, c.z) ? undefined : 'wall';
+}
+
+/**
+ * For the client (hide the loot hint): container `container` or tile `{x, y, z}` reachable by
+ * player entity `eid` — `undefined` when yes, else `out-of-range` / `wall`. Read-only.
+ */
+export function reachTarget(
+  w: SimWorld,
+  eid: number,
+  target: { container: number } | { x: number; y: number; z: number },
+): ReachBlock | undefined {
+  if ('container' in target) {
+    const c = w.items?.containers.get(target.container);
+    if (!c || c.kind === 'hidden') return 'out-of-range';
+    if (c.kind === 'inventory') return reachBlock(w, eid, c.id);
+    return containerReachBlock(w, eid, rootContainer(w.items!, c.id) ?? c);
+  }
+  return tileReachBlock(w, eid, target.x, target.y, target.z);
+}
+
+/** `reachTarget(...) === undefined`. */
+export const canReachTarget = (
+  w: SimWorld,
+  eid: number,
+  target: { container: number } | { x: number; y: number; z: number },
+): boolean => reachTarget(w, eid, target) === undefined;
 
 /** Carry capacity in kg (`worldSettings.carry.baseCapacityKg` × / + `carry-capacity-kg` mods). */
 export function carryCapacity(w: SimWorld, eid: number): number {
