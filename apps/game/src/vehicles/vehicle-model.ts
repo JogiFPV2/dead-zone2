@@ -83,6 +83,13 @@ export function fillerPoint(c: CarPose, t: HudVehicleType): { x: number; y: numb
   return { x: c.x + hx * back - hy * lat, y: c.y + hy * back + hx * lat };
 }
 
+/** Touch: a tap this close to the car body (m) still counts as on the car (finger slop). */
+export const TAP_PAD_M = 0.6;
+
+/** Touch tap at a floor point (sim m) lands on the car body (oriented box + TAP_PAD_M). */
+export const tapHitsCar = (c: CarPose, t: HudVehicleType, px: number, py: number): boolean =>
+  distToBody(c, t, px, py) <= TAP_PAD_M;
+
 /** Distance (m) from (px, py) to the car body (oriented box, 0 inside). */
 export function distToBody(c: CarPose, t: HudVehicleType, px: number, py: number): number {
   const { hx, hy } = axes(c);

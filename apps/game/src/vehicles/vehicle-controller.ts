@@ -27,6 +27,7 @@ import {
   rejectToast,
   repairRows,
   skillLevel,
+  tapHitsCar,
   trunkPoint,
   VEHICLE_COMMANDS,
   vehicleTypeName,
@@ -218,11 +219,12 @@ export class VehicleController {
 
   /**
    * Touch tap / long press at a floor point (sim m): the car menu when the targeted car is under
-   * the finger (within `reach` m of its centre), like RMB on desktop.
+   * the finger (its oriented body + finger slop, so bonnet and boot ends count), like RMB.
    */
-  pressSecondaryAt(x: number, y: number, reach = 2.6): boolean {
+  pressSecondaryAt(x: number, y: number): boolean {
     const car = this.target?.car;
-    if (!car || Math.hypot(car.x - x, car.y - y) > reach) return false;
+    const t = car && this.typeOf(car);
+    if (!car || !t || !tapHitsCar(car, t, x, y)) return false;
     return this.pressSecondary();
   }
 

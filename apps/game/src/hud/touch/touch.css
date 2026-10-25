@@ -243,3 +243,8 @@ html.is-touch .dz-i3__tile {
   height: 48px;
   touch-action: none;
 }
+
+/* Car menu on touch: finger-sized rows (48 px, mockup tap target). */
+html.is-touch .dz-vh__row {
+  height: 48px;
+}

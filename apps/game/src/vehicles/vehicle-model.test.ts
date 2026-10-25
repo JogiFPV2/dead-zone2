@@ -6,6 +6,7 @@ import {
   damageCount,
   defaultItem,
   distToBody,
+  tapHitsCar,
   doorPoint,
   fullTankPlan,
   fuelVM,
@@ -184,6 +185,12 @@ describe('vehicle geometry', () => {
     expect(distToBody(car(), T, 10, 8)).toBeCloseTo(1.1);
     const r = car({ facingRad: Math.PI / 2 });
     expect(trunkPoint(r, T).y).toBeCloseTo(7.4);
+  });
+
+  it('touch tap hits the car body with finger slop', () => {
+    expect(tapHitsCar(car(), T, 10, 10)).toBe(true);
+    expect(tapHitsCar(car(), T, 10, 8.5)).toBe(true);
+    expect(tapHitsCar(car(), T, 10, 8)).toBe(false);
   });
 
   it('targets the closest car on the same floor within reach', () => {
