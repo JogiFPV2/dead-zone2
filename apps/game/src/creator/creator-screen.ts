@@ -180,11 +180,17 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
   }
 
   function layout(): void {
-    const w = o.root.clientWidth || window.innerWidth;
-    const h = o.root.clientHeight || window.innerHeight;
-    const s = menuScale(w, h);
+    const short = isShortViewport();
+    el.classList.toggle('dzc--short', short);
+    const w = el.clientWidth || o.root.clientWidth || window.innerWidth;
+    const h = el.clientHeight || o.root.clientHeight || window.innerHeight;
+    // Short (phone landscape) screens: fit the 1920-wide stage to the width and stretch its
+    // virtual height to the screen; panels scroll on their own (creator.css, .dzc--short).
+    const s = short ? Math.min(2, w / 1920) : menuScale(w, h);
     stage.style.transform = `scale(${s})`;
     el.style.setProperty('--dzc-s', String(s));
+    if (short) stage.style.setProperty('--dzc-vh', `${Math.max(600, Math.floor(h / s))}px`);
+    else stage.style.removeProperty('--dzc-vh');
     const r = view.getBoundingClientRect();
     o.preview?.resize(Math.round(r.width), Math.round(r.height));
   }
@@ -393,4 +399,10 @@ export function createCreatorScreen(o: CreatorScreenOptions): { dispose(): void 
     el.remove();
   }
   return { dispose };
+}
+
+/** Phone landscape and other short screens get the compact creator layout. */
+function isShortViewport(): boolean {
+  return window.matchMedia('(max-height: 520px), (pointer: coarse) and (max-height: 640px)')
+    .matches;
 }

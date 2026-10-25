@@ -977,3 +977,74 @@
     transition: none !important;
   }
 }
+
+/* --- short screens (phone landscape): stage keeps 1920 width, height = --dzc-vh --- */
+.dzc--short {
+  inset: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0)
+    env(safe-area-inset-left, 0);
+}
+.dzc--short .dzc-stage {
+  height: var(--dzc-vh, 1080px);
+}
+.dzc--short .dzc-head {
+  top: 12px;
+  height: 64px;
+}
+.dzc--short .dzc-title {
+  font-size: 30px;
+}
+.dzc--short .dzc-esc {
+  font-size: 22px !important;
+  min-height: 88px;
+  padding: 0 12px !important;
+}
+.dzc--short .dzc-step {
+  min-height: 88px;
+}
+.dzc--short .dzc-sn {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+.dzc--short .dzc-st {
+  font-size: 20px;
+}
+.dzc--short .dzc-rule {
+  top: 84px;
+}
+.dzc--short .dzc-panel {
+  top: 100px;
+  max-height: calc(var(--dzc-vh) - 100px - 108px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dzc-n700) transparent;
+}
+.dzc--short .dzc-foot {
+  top: calc(var(--dzc-vh) - 96px);
+  height: 88px;
+}
+.dzc--short .dzc-btn--lg,
+.dzc--short .dzc-btn--xl {
+  height: 84px;
+  font-size: 22px !important;
+}
+.dzc--short .dzc-preview,
+.dzc--short[data-step='1'] .dzc-preview {
+  top: 110px;
+  height: calc(var(--dzc-vh) - 110px - 150px);
+}
+.dzc--short .dzc-rot {
+  top: 40%;
+}
+.dzc--short .dzc-rothint {
+  top: calc(100% + 4px);
+}
+.dzc--short[data-step='2'] .dzc-preview {
+  top: 100px;
+  height: calc((var(--dzc-vh) - 220px) * 0.45);
+}
+.dzc--short[data-step='2'] .dzc-p3 {
+  top: calc(110px + (var(--dzc-vh) - 220px) * 0.45 + 40px);
+  max-height: calc((var(--dzc-vh) - 220px) * 0.55 - 40px);
+}
