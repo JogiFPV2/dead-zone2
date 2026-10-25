@@ -246,6 +246,14 @@ export function applyItemCommand(
           if (!w.survival || item.uses <= 0) return 'invalid-state';
           const med = (def as unknown as { medicine?: unknown }).medicine;
           takeMedicine(w.survival, eid, med, def.medical.potency);
+          // Before consumeUse: the last pill destroys the instance.
+          w.events.push({
+            type: 'itemUsed',
+            tick: w.tick,
+            playerId: w.c.Player.id[eid] ?? 0,
+            action: 'pill',
+            itemId: def.id,
+          });
           consumeUse(w, item, undefined);
           return undefined;
         }

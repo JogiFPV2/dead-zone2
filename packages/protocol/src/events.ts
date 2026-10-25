@@ -1039,7 +1039,8 @@ export type SimEvent =
       type: 'itemUsed';
       tick: number;
       playerId: PlayerId;
-      action: ActionKind;
+      /** `pill`: took medicine at once (`useItem` on a `reduce_sickness` pill, protocol 40). */
+      action: ActionKind | 'pill';
       itemId: string;
       freshness?: Freshness;
     };

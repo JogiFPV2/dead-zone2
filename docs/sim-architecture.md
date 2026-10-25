@@ -1665,3 +1665,9 @@ Fizyka (`physics/furniture.ts`, `physics/furniture-overlay.ts`, ustawienia `phys
   - Co minutę (`poisonMinute`) lek zmniejsza najpierw `poisonLoad`, potem `poison`. Nie leczy wirusa zombie.
 - **Zepsute jedzenie:** po zjedzeniu porcji `rotten` rzut `w.rng.health` z `food.spoiledSicknessChance` (fallback 0,25) × modyfikator `food-sickness-chance`; trafienie dodaje `food.spoiledPoisonLoad` (fallback 15) do `poisonLoad`. Każde jedzenie rzuca też `nutrition.sicknessChance` z pełną dawką (`POISONING.dose`), jak picie.
 - **Stan:** `SurvivalWorld.medicine` i `medicineRate` są w zapisie (sekcja survival, stare zapisy = 0) i w haszu tylko gdy niezerowe.
+
+### 9.67 Event `itemUsed` przy braniu tabletki (protokół 40)
+
+- `useItem` na leku z samym `reduce_sickness` (9.66) wysyła teraz `itemUsed` z `action: 'pill'`, np. pod dźwięk połykania w kliencie.
+- Kształt: `{ type: 'itemUsed', tick, playerId, action: 'pill', itemId }`, gdzie `itemId` to id z contentu, np. `base:antibiotics`. Pola `freshness` brak.
+- `pill` nie jest czynnością czasową: rozszerza tylko typ pola `action` w evencie (`ActionKind | 'pill'`). `ACTION_KINDS`, zapis i hasz bez zmian.

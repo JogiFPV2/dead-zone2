@@ -182,8 +182,13 @@ describe('spoiled food and medicine (docs 9.66)', () => {
     s.step();
     const pill = findItem(s, 'base:antibiotics')!;
     const uses = pill.uses;
+    s.drainEvents();
     send(s, { type: 'useItem', item: pill.id });
     s.step();
+    const ev = s.drainEvents().filter((e) => e.type === 'itemUsed');
+    expect(ev.map(({ tick: _t, ...e }) => e)).toEqual([
+      { type: 'itemUsed', playerId: 0, action: 'pill', itemId: 'base:antibiotics' },
+    ]);
     expect(findItem(s, 'base:antibiotics')!.uses).toBe(uses! - 1);
     // Content `medicine.reduceSickness` (#291), else the default × potency / 0.5.
     const def = content.items['base:antibiotics']!;
