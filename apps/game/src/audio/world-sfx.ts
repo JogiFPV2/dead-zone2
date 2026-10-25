@@ -17,12 +17,15 @@ export const STEP_WOOD = [
 export const HITS = ['sfx-hit0', 'sfx-hit1', 'sfx-hit2'] as const;
 export const DOOR_OPEN = 'sfx-door-open';
 export const DOOR_CLOSE = 'sfx-door-close';
+/** Pill taken (`itemUsed` action `pill`, protocol 40): procedural, `synth.ts`. */
+export const SWALLOW = 'sfx-swallow';
 export const WORLD_SOUNDS: readonly SoundId[] = [
   ...STEP_CONCRETE,
   ...STEP_WOOD,
   ...HITS,
   DOOR_OPEN,
   DOOR_CLOSE,
+  SWALLOW,
 ];
 
 /** Beyond this distance (tiles) world sounds are silent; linear falloff to it. */
@@ -48,10 +51,15 @@ export function eventCues(
   px: number,
   py: number,
   pick = Math.random,
+  /** Local player: only their own pill is heard. */
+  localId?: number,
 ): Cue[] {
   const out: Cue[] = [];
   for (const e of events) {
-    if (e.type === 'hit' && e.source !== 'shot') {
+    if (e.type === 'itemUsed') {
+      if (e.action === 'pill' && localId !== undefined && e.playerId === localId)
+        out.push({ id: SWALLOW, volume: 0.8 });
+    } else if (e.type === 'hit' && e.source !== 'shot') {
       const v = falloff(e.x - px, e.y - py) * (e.source === 'shove' ? 0.55 : 1);
       if (v > 0) out.push({ id: HITS[Math.floor(pick() * HITS.length)] ?? HITS[0], volume: v });
     } else if (

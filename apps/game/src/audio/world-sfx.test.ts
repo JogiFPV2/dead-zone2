@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { SimEvent } from '@deadzone/protocol';
+import { swallowSamples } from './synth.js';
 import {
   DOOR_CLOSE,
   DOOR_OPEN,
+  SWALLOW,
   Footsteps,
   HEARING_TILES,
   STEP_TILES,
@@ -65,5 +67,23 @@ describe('world sfx', () => {
     let c;
     for (let i = 1; i <= 10 && !c; i++) c = f.update(50 + i * 0.1, 0, true);
     expect(c?.id).toMatch(/^sfx-step-wood/);
+  });
+});
+
+describe('pill swallow cue (itemUsed, protocol 40)', () => {
+  const pill = (playerId: number, action: 'pill' | 'eat' = 'pill') =>
+    ({ type: 'itemUsed', tick: 1, playerId, action, itemId: 'base:antibiotics' }) as SimEvent;
+  it('plays only for the local player and only for a pill', () => {
+    expect(eventCues([pill(0)], 0, 0, () => 0, 0)).toEqual([{ id: SWALLOW, volume: 0.8 }]);
+    expect(eventCues([pill(1)], 0, 0, () => 0, 0)).toEqual([]);
+    expect(eventCues([pill(0, 'eat')], 0, 0, () => 0, 0)).toEqual([]);
+    expect(eventCues([pill(0)], 0, 0)).toEqual([]);
+  });
+  it('synth swallow: short, audible, no clipping', () => {
+    const s = swallowSamples(48000);
+    expect(s.length).toBe(21600);
+    const peak = s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    expect(peak).toBeGreaterThan(0.3);
+    expect(peak).toBeLessThanOrEqual(1);
   });
 });

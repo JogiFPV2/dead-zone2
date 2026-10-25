@@ -1871,7 +1871,9 @@ gameState.subscribe((_next, _prev, action) => {
     vehicles.events(action.events);
     hud.events(action.events);
     const p = snapshots.sample(performance.now(), TICK_MS);
-    if (p) for (const c of eventCues(action.events, p.x, p.y)) audio.play('sfx', c.id, c.volume);
+    if (p)
+      for (const c of eventCues(action.events, p.x, p.y, Math.random, PLAYER_ID))
+        audio.play('sfx', c.id, c.volume);
     phys.pushEvents(action.events);
   }
 });

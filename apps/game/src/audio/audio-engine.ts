@@ -1,6 +1,7 @@
 import type { AudioSettings } from '../settings/schema.js';
 import type { SettingsStore } from '../settings/store.js';
 import { busGains, masterGain, type AudioBus } from './mix.js';
+import { SYNTH_SOUNDS, type SynthSoundId } from './synth.js';
 
 /** CC0 sounds in `public/audio` (licences: ASSETS.md). Each has an .ogg and an .mp3 fallback. */
 export type SoundId =
@@ -13,7 +14,9 @@ export type SoundId =
   | `sfx-step-wood${0 | 1 | 2 | 3}`
   | `sfx-hit${0 | 1 | 2}`
   | 'sfx-door-open'
-  | 'sfx-door-close';
+  | 'sfx-door-close'
+  /** Procedural (`synth.ts`), no file. */
+  | SynthSoundId;
 
 interface Loop {
   readonly gain: GainNode;
@@ -146,6 +149,13 @@ export class AudioEngine {
     const ctx = this.ctx;
     if (!ctx) return Promise.resolve(null);
     let p = this.buffers.get(id);
+    if (!p && id in SYNTH_SOUNDS) {
+      const data = SYNTH_SOUNDS[id as SynthSoundId](ctx.sampleRate);
+      const buf = ctx.createBuffer(1, data.length, ctx.sampleRate);
+      buf.getChannelData(0).set(data);
+      p = Promise.resolve(buf);
+      this.buffers.set(id, p);
+    }
     if (!p) {
       p = fetch(`${this.baseUrl}audio/${id}.${this.ext}`)
         .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
