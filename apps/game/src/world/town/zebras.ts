@@ -90,6 +90,31 @@ function along(
 }
 
 /**
+ * A footway really crosses the carriageway at (jx, jz) (direction d, half width r): it has points
+ * beyond the carriageway on both sides. A path that only ends at the road (sidewalk link, yard
+ * path) gets no zebra.
+ */
+function crossesBoth(
+  pts: readonly number[],
+  jx: number,
+  jz: number,
+  d: { ux: number; uz: number },
+  r: number,
+): boolean {
+  let left = false;
+  let right = false;
+  for (let i = 0; i + 1 < pts.length; i += 2) {
+    const side = (pts[i]! - jx) * -d.uz + (pts[i + 1]! - jz) * d.ux;
+    if (side > r) left = true;
+    else if (side < -r) right = true;
+  }
+  return left && right;
+}
+
+/** Zebras on the same road closer than this (tiles, along it) are merged: the first one stays. */
+export const MIN_ZEBRA_SPACING = 25;
+
+/**
  * Zebra crossings of a chunk's vector roads (all coordinates chunk-local). A junction is a vertex
  * of a carriageway that lies on another road (OSM ways share nodes there):
  * - another carriageway: a zebra on every leg of the road, just past the crossing road's
@@ -103,6 +128,8 @@ export function zebraSpots(
 ): Zebra[] {
   const out: Zebra[] = [];
   const seen = new Set<string>();
+  /** Junction of each zebra in `out` (legs of one junction do not thin each other). */
+  const from: string[] = [];
   for (let a = 0; a < roads.length; a++) {
     const A = roads[a]!;
     if (!isCarriageway(A)) continue;
@@ -123,12 +150,28 @@ export function zebraSpots(
         if (isCarriageway(B)) {
           const side = B.rs > B.r ? (B.r + B.rs) / 2 : B.r + 1.5;
           offset = Math.max(offset, side + LENGTH / 2);
-        } else if (B.surface === 'base:sidewalk' && B.rs === 0) foot = true;
+        } else if (
+          B.surface === 'base:sidewalk' &&
+          B.rs === 0 &&
+          crossesBoth(B.pts, jx, jz, da, A.r)
+        )
+          foot = true;
       }
+      const junction = `${Math.round(jx * 4)},${Math.round(jz * 4)}`;
       const add = (p: { x: number; z: number; ux: number; uz: number }) => {
         const key = `${Math.round(p.x * 4)},${Math.round(p.z * 4)}`;
         if (seen.has(key)) return;
         seen.add(key);
+        // One zebra per MIN_ZEBRA_SPACING on a road: skip a parallel one close along the road.
+        for (const [k, q] of out.entries()) {
+          if (from[k] === junction) continue;
+          if (Math.abs(q.ux * p.uz - q.uz * p.ux) > 0.26) continue;
+          const dx = p.x - q.x;
+          const dz = p.z - q.z;
+          const across = Math.abs(dx * -p.uz + dz * p.ux);
+          if (across < A.r + 1 && Math.hypot(dx, dz) < MIN_ZEBRA_SPACING) return;
+        }
+        from.push(junction);
         out.push({
           x: p.x,
           z: p.z,

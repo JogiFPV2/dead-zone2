@@ -56,3 +56,21 @@ describe('zebraSpots', () => {
     expect(zebraSpots(roads, (x) => x < 10)).toHaveLength(0);
   });
 });
+
+describe('zebraSpots: no stray crosswalks (Paweł 25.10)', () => {
+  const foot = (pts: number[]) => road(pts, { surface: 'base:sidewalk', r: 1, rs: 0 });
+  it('a path that only ends at the road gets no zebra', () => {
+    expect(zebraSpots([road([0, 16, 32, 16]), foot([10, 4, 10, 16])], all)).toHaveLength(0);
+  });
+  it('footway crossings closer than MIN_ZEBRA_SPACING on one road: one zebra', () => {
+    const z = zebraSpots(
+      [
+        road([0, 16, 10, 16, 18, 16, 60, 16]),
+        foot([10, 4, 10, 16, 10, 28]),
+        foot([18, 4, 18, 16, 18, 28]),
+      ],
+      all,
+    );
+    expect(z).toHaveLength(1);
+  });
+});
