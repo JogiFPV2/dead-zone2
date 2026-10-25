@@ -1,3 +1,4 @@
+import { withFade } from '../../world/wall-fade.js';
 import {
   DataTexture,
   MeshStandardMaterial,
@@ -104,7 +105,7 @@ export function makeKitMaterial(
   m.name = 'deadzone-pbr/kit';
   m.roughness = 1;
   m.metalness = 0;
-  return attach(m, u, 'kit', { tLut: { value: lut } });
+  return withFade(attach(m, u, 'kit', { tLut: { value: lut } }));
 }
 
 /** Town terrain (vertex colours + `dmask`) in the real style. */

@@ -2124,6 +2124,9 @@ renderer.setAnimationLoop((time) => {
     };
     structures.setCutaway(cut);
     for (const l of upperTown) l.setCutaway(cut);
+    const fade = { px: state.x, py: state.y, yaw: rig.targetYaw, z: level };
+    if ('setFade' in structures) structures.setFade(fade, dt);
+    for (const l of upperTown) l.setFade(fade, dt);
     openings.setCutaway(cut);
     mapObjects.setCutaway(cut);
     realMap?.setCutaway(cut);

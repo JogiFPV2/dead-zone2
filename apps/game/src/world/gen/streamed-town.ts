@@ -1,3 +1,4 @@
+import type { FadeView } from '../wall-fade.js';
 import type { EdgeSide, OpeningView, SimEvent } from '@deadzone/protocol';
 import { Group, Mesh, type MeshStandardMaterial } from 'three';
 import { BuildingLookup } from '../building-lookup.js';
@@ -196,6 +197,11 @@ export class StreamedTown {
   setCutaway(c: Cutaway): void {
     this.cut = c;
     for (const l of this.levels.values()) l.setCutaway(c);
+  }
+
+  /** Wall fade (every frame), see `TownStructures.setFade`. */
+  setFade(v: FadeView | undefined, dtMs: number): void {
+    for (const l of this.levels.values()) l.setFade(v, dtMs);
   }
 
   setMinute(minute: number): void {

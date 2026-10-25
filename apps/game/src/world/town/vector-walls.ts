@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   Group,
+  InstancedBufferAttribute,
   InstancedMesh,
   Matrix4,
   Quaternion,
@@ -13,6 +14,31 @@ import { CUT_NEAR, isLevelHidden, isOccluder, type Cutaway } from '../cutaway.js
 import { LOWERED_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from '../structure-instances.js';
 import type { TownCells } from './kit.js';
 import { WALL_CELL, type Skin } from './modules.js';
+import {
+  FADE_MIN,
+  FADE_POST,
+  occludesPlayer,
+  stepFade,
+  unfaded,
+  withFade,
+  type FadeView,
+} from '../wall-fade.js';
+
+/** Kit material → its clone reading the `instanceFade` attribute (one per kit material). */
+const fadeMaterials = new WeakMap<Material, Material>();
+function fadeMaterial(m: Material): Material {
+  let f = fadeMaterials.get(m);
+  if (!f) {
+    f = m.clone();
+    // clone() drops onBeforeCompile: copy the original's (PBR patch etc.), then add the fade.
+    const base = unfaded(m);
+    f.onBeforeCompile = base.onBeforeCompile;
+    f.customProgramCacheKey = base.customProgramCacheKey;
+    withFade(f, true);
+    fadeMaterials.set(m, f);
+  }
+  return f;
+}
 
 /** Corner post (decoration only, no collision: not a wall segment): side length (m). */
 export const POST_SIZE = 0.26;
@@ -78,6 +104,8 @@ interface Item {
   seg?: SimWallSegment;
   post?: [number, number];
   height: number;
+  /** Wall fade: current opacity / fading in. */
+  fade?: { cur: number; on: boolean } | undefined;
   /** Uncut height: the storey height below the top level (no slot at the slab), else walls. */
   full: number;
 }
@@ -121,7 +149,11 @@ export class VectorWalls {
       const uv = g.getAttribute('uv');
       for (let i = 0; i < uv.count; i++) uv.setXY(i, u, v);
       this.geometries.push(g);
-      const mesh = new InstancedMesh(g, material, list.length * 3);
+      const mesh = new InstancedMesh(g, fadeMaterial(material), list.length * 3);
+      g.setAttribute(
+        'instanceFade',
+        new InstancedBufferAttribute(new Float32Array(list.length * 3).fill(1), 1),
+      );
       mesh.name = 'vector-walls';
       mesh.castShadow = true;
       mesh.receiveShadow = true;
@@ -167,6 +199,36 @@ export class VectorWalls {
       dirty.add(it.mesh);
     }
     for (const mesh of dirty) mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Wall fade (every frame), see `wall-fade.ts`. */
+  setFade(v: FadeView | undefined, dtMs: number): void {
+    const dirty = new Set<InstancedMesh>();
+    const here = v !== undefined && v.z === this.z;
+    for (const it of this.items) {
+      if (!here && !it.fade) continue;
+      let on = false;
+      if (here && it.height > LOWERED_HEIGHT) {
+        const [x0, y0, x1, y1] = it.seg
+          ? [it.seg.x0, it.seg.y0, it.seg.x1, it.seg.y1]
+          : [it.post![0], it.post![1], it.post![0], it.post![1]];
+        on = occludesPlayer(v, x0, y0, x1, y1, it.fade?.on ?? false);
+      }
+      if (!it.fade) {
+        if (!on) continue;
+        it.fade = { cur: 1, on };
+      }
+      it.fade.on = on;
+      const next = stepFade(it.fade.cur, on ? (it.post ? FADE_POST : FADE_MIN) : 1, dtMs);
+      if (next !== it.fade.cur) {
+        it.fade.cur = next;
+        const a = it.mesh.geometry.getAttribute('instanceFade') as InstancedBufferAttribute;
+        a.setX(it.index, next);
+        dirty.add(it.mesh);
+      }
+      if (!on && next === 1) it.fade = undefined;
+    }
+    for (const m of dirty) m.geometry.getAttribute('instanceFade').needsUpdate = true;
   }
 
   dispose(): void {

@@ -1,3 +1,4 @@
+import { withFade } from '../wall-fade.js';
 import type { Mesh } from 'three';
 import {
   BufferAttribute,
@@ -190,6 +191,7 @@ export async function loadTownKit(
     side: DoubleSide,
   });
   material.name = 'deadzone-town/palette';
+  withFade(material);
   return { geometries, material, cells, detail, cellIndex: index.cells };
 }
 

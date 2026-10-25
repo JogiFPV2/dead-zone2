@@ -1,3 +1,12 @@
+import { Vector4 } from 'three';
+import {
+  FADE_MIN,
+  FADE_POST,
+  FADE_RADIUS,
+  occludesPlayer,
+  stepFade,
+  type FadeView,
+} from '../wall-fade.js';
 import { isLightNight } from '../lit-windows.js';
 import {
   BatchedMesh,
@@ -121,6 +130,7 @@ interface Batch {
 }
 
 const Y_AXIS = new Vector3(0, 1, 0);
+const FADE_RGBA = new Vector4();
 
 /** Levels below the player's floor in the player's building are dimmed (spec §3.3, uDim). */
 export const LOWER_LEVEL_DIM = 0.38;
@@ -561,6 +571,64 @@ export class TownStructures {
         r.batch.mesh.setVisibleAt(r.instance, r.keep ? !levelHidden : !hidden);
       }
     }
+  }
+
+  /** Fading edges (wall fade): current opacity and whether it is fading in. */
+  private readonly fades = new Map<EdgeItem, { cur: number; on: boolean }>();
+  private fadeKey = '';
+  private fadeCandidates: EdgeItem[] = [];
+
+  /**
+   * Walls between the camera and the player fade (`wall-fade.ts`); call every frame. Only edges
+   * of buildings around the player on this level are tested.
+   */
+  setFade(v: FadeView | undefined, dtMs: number): void {
+    const here = v !== undefined && v.z === this.z;
+    if (here) {
+      const tx = Math.floor(v.px);
+      const ty = Math.floor(v.py);
+      const key = `${tx},${ty}`;
+      if (key !== this.fadeKey) {
+        this.fadeKey = key;
+        const bs = new Set<BuildingId>();
+        const r = FADE_RADIUS + 1;
+        for (let y = ty - r; y <= ty + r; y++)
+          for (let x = tx - r; x <= tx + r; x++) {
+            const b = this.lookup.at(x, y, this.z);
+            if (b !== NO_BUILDING) bs.add(b);
+          }
+        this.fadeCandidates = [];
+        for (const b of bs)
+          for (const it of this.edgesByBuilding.get(b) ?? []) {
+            const e = it.edge;
+            if (Math.abs(e.tx - tx) <= r && Math.abs(e.ty - ty) <= r) this.fadeCandidates.push(it);
+          }
+      }
+      for (const it of this.fadeCandidates) {
+        const st = this.fades.get(it);
+        const e = it.edge;
+        const [x1, y1] = e.axis === 'N' ? [e.tx + 1, e.ty] : [e.tx, e.ty + 1];
+        const on = !it.lowered && occludesPlayer(v, e.tx, e.ty, x1, y1, st?.on ?? false);
+        if (on && !st) this.fades.set(it, { cur: 1, on });
+        else if (st) st.on = on;
+      }
+    }
+    for (const [it, st] of this.fades) {
+      if (!here) st.on = false;
+      const min = it.edge.kind === 'door' || it.edge.kind === 'window' ? FADE_POST : FADE_MIN;
+      const next = stepFade(st.cur, st.on ? min : 1, dtMs);
+      if (next === st.cur) {
+        if (!st.on) this.fades.delete(it);
+        continue;
+      }
+      st.cur = next;
+      const mesh = it.batch.mesh;
+      mesh.getColorAt(it.instance, FADE_RGBA);
+      FADE_RGBA.w = next;
+      mesh.setColorAt(it.instance, FADE_RGBA);
+      if (next === 1 && !st.on) this.fades.delete(it);
+    }
+    this.vector?.setFade(here ? v : undefined, dtMs);
   }
 
   /** Night windows: lit ones switch to the `-lit` module (emission from the material). */
