@@ -13,7 +13,7 @@ import {
   saveMapRoomsSchema,
   saveMarkersSchema,
   saveUtilitiesSchema,
-  saveWaterTanksSchema,
+  saveWaterTanksRawSchema,
 } from '@deadzone/protocol/schema';
 import { SAVE_FORMAT, SAVE_READABLE_VERSIONS, decodeTrail, zeroRleStats } from '@deadzone/sim';
 import { z } from 'zod';
@@ -186,14 +186,13 @@ const savedItemSchema = z.looseObject({
  * (protocol 25, `saveUtilitiesSchema`) checked when present. Wound care (protocol 27,
  * `saveWoundCareSchema`), sleep alarms and dirt (protocols 29/33) live in the opaque `survival`
  * section and lighting (protocol 32, `saveLightingSchema`) in the opaque `openings` section; none
- * of them is checked here. Furniture water tanks (protocol 36, `saveWaterTanksSchema`) are checked;
+ * of them is checked here. Furniture water tanks (protocol 36, `saveWaterTanksRawSchema`) are checked;
  * the action `fixture` (protocol 36) lives in the opaque `queue` section.
  */
 const itemsSectionSchema = z.looseObject({
   ...saveUtilitiesSchema.shape,
-  // Protocol 36: furniture water tanks that are not full. The sim saves the Map as
-  // `{ $m: [[key, litres], …] }`; `saveWaterTanksSchema` describes the entry list.
-  waterTanks: z.looseObject({ $m: saveWaterTanksSchema.shape.waterTanks.unwrap() }).optional(),
+  // Protocol 36: furniture water tanks that are not full, as on disk (`{ $m: [[key, litres], …] }`).
+  ...saveWaterTanksRawSchema.shape,
   items: z
     .looseObject({ $m: z.array(z.tuple([nat, savedItemSchema])).max(MAX_CAPACITY) })
     .optional(),
