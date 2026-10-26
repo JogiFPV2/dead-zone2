@@ -1,6 +1,9 @@
 import type { ZoomLimits } from '../../camera/zoom.js';
 import { sliderAt, sliderFromZoom, zoomFromSlider } from './zoom-slider-model.js';
 
+/** Back to the 0.2 rest opacity this long after the last use (CSS fades it in 300 ms). */
+export const ZOOM_SLIDER_IDLE_MS = 2000;
+
 export interface TouchZoomSlider {
   readonly el: HTMLElement;
   /** Per frame: follow the zoom target (pinch changes it too). */
@@ -32,9 +35,17 @@ export function createTouchZoomSlider(
   track.append(thumb);
   el.append(plus, track, minus);
 
+  // Spec: rest 0.2, active 1.0 at once (touch, drag, pinch), back 2 s after the last use.
+  let fade: ReturnType<typeof setTimeout> | undefined;
+  const activate = (): void => {
+    el.dataset.active = 'true';
+    clearTimeout(fade);
+    fade = setTimeout(() => delete el.dataset.active, ZOOM_SLIDER_IDLE_MS);
+  };
   let finger: number | undefined;
   const drag = (e: PointerEvent): void => {
     const r = track.getBoundingClientRect();
+    activate();
     set(zoomFromSlider(sliderAt(e.clientY, r.top, r.height), limits));
   };
   const down = (e: PointerEvent): void => {
@@ -70,11 +81,14 @@ export function createTouchZoomSlider(
     update(zoom) {
       const t = sliderFromZoom(zoom, limits);
       if (Math.abs(t - shown) < 1e-3) return;
+      // A change not from the finger (pinch) lights the slider too; not the first draw.
+      if (shown >= 0) activate();
       shown = t;
       thumb.style.bottom = `${(t * 100).toFixed(1)}%`;
       el.setAttribute('aria-valuenow', zoom.toFixed(2));
     },
     dispose() {
+      clearTimeout(fade);
       el.remove();
     },
   };

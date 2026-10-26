@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { TOUCH_BUTTONS } from './touch-hud.js';
-import { TOUCH_MAP_FULL, TOUCH_MINIMAP, TOUCH_MOVE_TOP, TOUCH_ZOOM } from './touch-layout.js';
+import {
+  TOUCH_CENTER_FREE,
+  TOUCH_MAP_FULL,
+  TOUCH_MINIMAP,
+  TOUCH_MOVE_TOP,
+  TOUCH_SAFE_MIN,
+  TOUCH_ZOOM,
+} from './touch-layout.js';
 
 const css = readFileSync(new URL('./touch.css', import.meta.url), 'utf8');
 
@@ -42,5 +49,37 @@ describe('touch layout: zoom slider', () => {
 describe('touch layout: full map', () => {
   it('moves the map bar right of the ZAMKNIJ pill', () => {
     expect(css).toMatch(/html\.is-touch \.dz-bm__bar \{\s*padding-left: calc\(140px/);
+  });
+});
+
+describe('touch layout: mobile HUD spec', () => {
+  it('safe-area floors give 47 L/R, 8 top, 21 bottom with the 8 / 6 / 18 px offsets', () => {
+    expect(8 + TOUCH_SAFE_MIN.l).toBe(47);
+    expect(8 + TOUCH_SAFE_MIN.r).toBe(47);
+    expect(6 + TOUCH_SAFE_MIN.t).toBe(8);
+    expect(18 + TOUCH_SAFE_MIN.b).toBe(21);
+    expect(css).toContain(`--dz-safe-l: max(${TOUCH_SAFE_MIN.l}px`);
+    expect(css).toContain(`--dz-safe-b: max(${TOUCH_SAFE_MIN.b}px`);
+  });
+  it('minimap at screen (47, 28), 96×96', () => {
+    expect(TOUCH_MINIMAP.left + TOUCH_SAFE_MIN.l).toBe(47);
+    expect(TOUCH_MINIMAP.top + TOUCH_SAFE_MIN.t).toBe(28);
+    expect(TOUCH_MINIMAP.size).toBe(96);
+  });
+  it('zoom slider spans screen y 62–186 on 844×390', () => {
+    expect(TOUCH_ZOOM.top + TOUCH_SAFE_MIN.t).toBe(62);
+    expect(390 - TOUCH_ZOOM.bottom - TOUCH_SAFE_MIN.b).toBe(186);
+  });
+  it('no thumb button in the free centre rectangle (40–60 % × 30–75 %)', () => {
+    const W = 844;
+    const H = 390;
+    for (const b of TOUCH_BUTTONS) {
+      const x0 = W - (b.right + TOUCH_SAFE_MIN.r) - b.size;
+      const y1 = H - (b.bottom + TOUCH_SAFE_MIN.b);
+      const y0 = y1 - b.size;
+      const inX = x0 < W * TOUCH_CENTER_FREE.x1 && x0 + b.size > W * TOUCH_CENTER_FREE.x0;
+      const inY = y0 < H * TOUCH_CENTER_FREE.y1 && y1 > H * TOUCH_CENTER_FREE.y0;
+      expect(inX && inY, b.id).toBe(false);
+    }
   });
 });

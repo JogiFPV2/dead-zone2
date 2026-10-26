@@ -1,10 +1,12 @@
 /* Touch controls (mockup mobile-controls.png, spec dz-html/mobile/m.html). Everything here is
    scoped to html.is-touch: the desktop never gets the class, so its look is unchanged. */
 html.is-touch {
-  --dz-safe-l: env(safe-area-inset-left, 0px);
-  --dz-safe-r: env(safe-area-inset-right, 0px);
-  --dz-safe-t: env(safe-area-inset-top, 0px);
-  --dz-safe-b: env(safe-area-inset-bottom, 0px);
+  /* Mobile HUD spec: insets at least 47 L/R, 8 top, 21 bottom with the usual 8 / 6 / 18 px
+     element offsets added on top (touch-layout.ts TOUCH_SAFE_MIN). */
+  --dz-safe-l: max(39px, env(safe-area-inset-left, 0px));
+  --dz-safe-r: max(39px, env(safe-area-inset-right, 0px));
+  --dz-safe-t: max(2px, env(safe-area-inset-top, 0px));
+  --dz-safe-b: max(3px, env(safe-area-inset-bottom, 0px));
   --dz-touch-bg: rgba(21, 25, 28, 0.55);
   --dz-touch-line: rgba(220, 225, 228, 0.35);
   --dz-touch-accent: #d9b64a;
@@ -161,11 +163,12 @@ html.is-touch .dz-g--status {
   bottom: auto !important;
 }
 html.is-touch .dz-g--hotbar {
-  left: auto !important;
-  right: calc(8px + 3 * 50px + 10px + var(--dz-safe-r)) !important;
+  /* Spec: hotbar top centre. */
+  left: 50% !important;
+  right: auto !important;
   top: calc(6px + var(--dz-safe-t)) !important;
   bottom: auto !important;
-  transform: none !important;
+  transform: translateX(-50%) !important;
 }
 html.is-touch .dz-hotbar > :nth-child(n + 4) {
   display: none !important;
@@ -249,36 +252,47 @@ html.is-touch .dz-vh__row {
   height: 48px;
 }
 
-/* Mini minimap on touch (touch-layout.ts TOUCH_MINIMAP): top-left under the HP bar, −/+ 32 px,
-   the floor badge (#195) under it instead of left of it (the screen edge is there). */
+/* Mini minimap on touch (mobile HUD spec, touch-layout.ts TOUCH_MINIMAP): 96×96 rounded square
+   under the HP bar, column +, −, ⛶ beside it (28 visible, 44 hit), floor badge (#195) under it. */
 html.is-touch .dz-g--minimap {
   left: calc(8px + var(--dz-safe-l)) !important;
-  top: calc(40px + var(--dz-safe-t)) !important;
+  top: calc(26px + var(--dz-safe-t)) !important;
   right: auto !important;
   bottom: auto !important;
-  width: 120px;
-  height: 120px;
+  width: 96px;
+  height: 96px;
   transform: none !important;
 }
 html.is-touch .dz-hud .dz-minimap,
 html.is-touch .dz-hud .dz-noise-ring {
-  width: 120px;
-  height: 120px;
+  width: 96px;
+  height: 96px;
+}
+html.is-touch .dz-hud .dz-minimap {
+  border-radius: 14px;
 }
 html.is-touch .dz-hud .dz-mmzoom__row {
-  left: 50%;
-  bottom: 4px;
-  gap: 6px;
+  left: calc(100% + 4px);
+  top: 0;
+  bottom: auto;
+  /* Spec column order: + on top, then −. */
+  flex-direction: column-reverse;
+  gap: 0;
+  transform: none;
 }
-html.is-touch .dz-hud .dz-mmzoom__btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  font-size: 18px;
+html.is-touch .dz-hud .dz-mmzoom__btn,
+.dz-touch__mapfull {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: linear-gradient(rgba(21, 25, 28, 0.66), rgba(21, 25, 28, 0.66)) center / 28px 28px
+    no-repeat;
+  border-radius: 0;
+  font-size: 16px;
   touch-action: none;
 }
 html.is-touch .dz-hud .dz-mmzoom__level {
-  top: 6px;
+  top: 4px;
   right: auto;
   bottom: auto;
   left: 50%;
@@ -290,12 +304,13 @@ html.is-touch .dz-hud .dz-floor {
   top: calc(100% + 6px);
   transform: none;
 }
-/* Full map button (touch-layout.ts TOUCH_MAP_FULL). */
+/* Full map button (touch-layout.ts TOUCH_MAP_FULL): third in the column. */
 .dz-touch__mapfull {
   position: absolute;
-  left: calc(134px + var(--dz-safe-l));
-  top: calc(40px + var(--dz-safe-t));
-  width: 44px;
+  left: calc(108px + var(--dz-safe-l));
+  top: calc(114px + var(--dz-safe-t));
+  min-width: 0;
+  padding: 0;
 }
 
 /* Camera zoom slider (touch-layout.ts TOUCH_ZOOM): right edge, between the top bar and SKRAD. */
@@ -303,7 +318,10 @@ html.is-touch .dz-hud .dz-floor {
   position: absolute;
   right: calc(8px + var(--dz-safe-r));
   top: calc(60px + var(--dz-safe-t));
-  bottom: calc(196px + var(--dz-safe-b));
+  bottom: calc(201px + var(--dz-safe-b));
+  /* Spec: rest 0.2, active 1.0 at once, back 2 s after the last touch with a 300 ms fade. */
+  opacity: 0.2;
+  transition: opacity 300ms ease;
   width: 44px;
   box-sizing: border-box;
   display: flex;
@@ -315,6 +333,10 @@ html.is-touch .dz-hud .dz-floor {
   background: rgba(21, 25, 28, 0.45);
   border: 1px solid rgba(91, 100, 105, 0.48);
   touch-action: none;
+}
+.dz-touch__zoom[data-active] {
+  opacity: 1;
+  transition: none;
 }
 .dz-touch__zoom b {
   font-size: 14px;
