@@ -1,4 +1,5 @@
 import type { Material, WebGLProgramParametersWithUniforms } from 'three';
+import { WALL_HEIGHT } from './structure-instances.js';
 
 /**
  * Walls between the camera and the player fade (Designer spec 25.10): only walls within
@@ -6,12 +7,18 @@ import type { Material, WebGLProgramParametersWithUniforms } from 'three';
  * to FADE_MIN (posts by doors / windows to FADE_POST), FADE_MS both ways, FADE_HYST hysteresis.
  * Opacity is per instance (BatchedMesh colour alpha / `instanceFade` attribute) and drawn as
  * screen-door dithering, so no sorting, no new draw calls and shadows (depth material) unchanged.
+ * The top band of a faded wall (from FADE_EDGE_FROM m above its floor) stays at FADE_EDGE, so the
+ * building outline stays readable.
  */
 export const FADE_MIN = 0.15;
 export const FADE_POST = 0.5;
 export const FADE_RADIUS = 3;
 export const FADE_HYST = 0.5;
 export const FADE_MS = 200;
+/** Opacity kept by the top band of a fading wall (building outline). */
+export const FADE_EDGE = 0.5;
+/** Height (m above the wall's floor) where the top band starts. */
+export const FADE_EDGE_FROM = WALL_HEIGHT - 0.25;
 /** Half width (m) of the player's silhouette corridor toward the camera. */
 export const FADE_HALF_WIDTH = 0.8;
 
@@ -60,8 +67,15 @@ export function stepFade(cur: number, target: number, dtMs: number): number {
   return cur < target ? Math.min(target, cur + k) : Math.max(target, cur - k);
 }
 
+/** Opacity of a fading wall fragment `h` m above the wall's floor (mirrors the shader). Pure. */
+export function edgeFade(fade: number, h: number): number {
+  return fade < 0.999 && h >= FADE_EDGE_FROM ? Math.max(fade, FADE_EDGE) : fade;
+}
+
+const f1 = (n: number): string => n.toFixed(3);
+
 const VERT_DECL =
-  'varying float vDzFade;\n#ifdef DZ_FADE_ATTR\nattribute float instanceFade;\n#endif\n';
+  'varying float vDzFade;\nvarying float vDzH;\n#ifdef DZ_FADE_ATTR\nattribute float instanceFade;\n#endif\n';
 const VERT_BODY = `
 #if defined( USE_BATCHING_COLOR )
   vDzFade = getBatchingColor( getIndirectIndex( gl_DrawID ) ).a;
@@ -71,7 +85,18 @@ const VERT_BODY = `
   vDzFade = 1.0;
 #endif
 `;
+// Height above the instance origin (the wall's floor), in metres after the instance scale.
+const VERT_H = `
+#if defined( USE_BATCHING )
+  vDzH = ( batchingMatrix * vec4( transformed, 1.0 ) ).y - batchingMatrix[3].y;
+#elif defined( USE_INSTANCING )
+  vDzH = ( instanceMatrix * vec4( transformed, 1.0 ) ).y - instanceMatrix[3].y;
+#else
+  vDzH = transformed.y;
+#endif
+`;
 const FRAG_DECL = `varying float vDzFade;
+varying float vDzH;
 float dzBayer( vec2 p ) {
   ivec2 q = ivec2( mod( p, 4.0 ) );
   int i = q.x + q.y * 4;
@@ -79,7 +104,10 @@ float dzBayer( vec2 p ) {
   return ( float( m[i] ) + 0.5 ) / 16.0;
 }
 `;
-const FRAG_BODY = '\nif ( vDzFade < 0.999 && dzBayer( gl_FragCoord.xy ) >= vDzFade ) discard;\n';
+const FRAG_BODY = `
+float dzFade = vDzFade < 0.999 && vDzH >= ${f1(FADE_EDGE_FROM)} ? max( vDzFade, ${f1(FADE_EDGE)} ) : vDzFade;
+if ( dzFade < 0.999 && dzBayer( gl_FragCoord.xy ) >= dzFade ) discard;
+`;
 
 /** Patches a program for the per-instance fade (`onBeforeCompile`). */
 export function patchFadeShader(sh: WebGLProgramParametersWithUniforms, attr: boolean): void {
@@ -87,6 +115,10 @@ export function patchFadeShader(sh: WebGLProgramParametersWithUniforms, attr: bo
   sh.vertexShader = sh.vertexShader.replace(
     '#include <color_vertex>',
     `#include <color_vertex>\n${VERT_BODY}`,
+  );
+  sh.vertexShader = sh.vertexShader.replace(
+    '#include <begin_vertex>',
+    `#include <begin_vertex>\n${VERT_H}`,
   );
   sh.fragmentShader = FRAG_DECL + sh.fragmentShader;
   sh.fragmentShader = sh.fragmentShader.replace(
