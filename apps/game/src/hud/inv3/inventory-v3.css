@@ -706,3 +706,33 @@
 .dz-i3__vnote b {
   color: var(--color-text-primary);
 }
+
+/* Touch item info window: ✕ close (≥44×44), the window takes taps. Desktop: hidden. */
+.dz-i3__tip-x {
+  display: none;
+}
+html.is-touch .dz-i3 .dz-i3__tip[data-visible],
+html.is-touch .dz-i3 .dz-ct {
+  pointer-events: auto;
+}
+html.is-touch .dz-i3__tip-x {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+html.is-touch .dz-i3__tip .dz-tooltip__head,
+html.is-touch .dz-i3 .dz-ct {
+  padding-right: 44px;
+}

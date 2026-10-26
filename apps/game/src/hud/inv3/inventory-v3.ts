@@ -1,3 +1,4 @@
+import { createInfoDismiss } from './info-dismiss.js';
 import './inventory-v3.css';
 import {
   dragDecision,
@@ -277,6 +278,27 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   const tipIcon = h('span', 'dz-i3__tip-ic');
   tooltip.el.querySelector('.dz-tooltip__head')?.prepend(tipIcon);
   const comboTip = createCombineTooltip();
+  // Touch: the tooltip is an info window opened by a tap; ✕ / tap outside / Escape / Back close it.
+  const tipCloseBtn = (): HTMLButtonElement => {
+    const b = h('button', 'dz-i3__tip-x');
+    b.type = 'button';
+    b.textContent = '✕';
+    b.setAttribute('aria-label', 'Zamknij');
+    b.addEventListener('pointerdown', (e) => e.stopPropagation());
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      info.dismiss();
+    });
+    return b;
+  };
+  tooltip.el.append(tipCloseBtn());
+  comboTip.el.append(tipCloseBtn());
+  const info = createInfoDismiss(() => {
+    hovered = undefined;
+    tooltip.hide();
+    comboTip.hide();
+    tipKey = undefined;
+  });
   // Inventory v2 (phone): category filter rail left of the backpack, filters both grids.
   const rail = div('dz-i3__rail');
   rail.hidden = true;
@@ -359,6 +381,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   };
   const showTip = (target: HTMLElement, r: InvRowVM, grid: boolean): void => {
     if (drag?.active) return;
+    if (isTouchUi()) info.shown();
     tipKey = r.key;
     const s = opts.state();
     const first = r.itemIds[0];
@@ -567,6 +590,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       showTip(node, r, grid);
     });
     node.addEventListener('pointerleave', () => {
+      // Touch: no hover; the info window stays until ✕ / tap outside / Escape / Back.
+      if (isTouchUi()) return;
       if (hovered?.key === r.key) hovered = undefined;
       hideTips();
     });
@@ -1239,6 +1264,12 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   // ── keys ──────────────────────────────────────────────────────────────────
   const onKey = (e: KeyboardEvent): void => {
     if (!isOpen) return;
+    if (e.key === 'Escape' && e.type === 'keydown' && info.escape()) {
+      // Escape closes the info window first, not the inventory.
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (e.key === 'Control') {
       ctrlHeld = e.type === 'keydown';
       if (e.type === 'keydown' && !e.repeat) ctrlAlone = true;
@@ -1289,6 +1320,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   // A click anywhere but the sort menu / its button closes the menu.
   el.addEventListener('pointerdown', (e) => {
     const t = e.target as HTMLElement;
+    // Touch info window: a tap outside it (not on another item, which replaces it) closes it.
+    if (info.open && !t.closest('.dz-i3__tip, .dz-ct, [data-key]')) info.dismiss();
     if (menuFor && !t.closest('.dz-i3__menu, .dz-i3__sort')) {
       menuFor = undefined;
       menu.hidden = true;
@@ -1341,6 +1374,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         selected.box.clear();
         render();
       } else {
+        info.dismiss();
         hideTips();
         menuFor = undefined;
         actFor = undefined;
