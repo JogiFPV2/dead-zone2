@@ -18,6 +18,7 @@ import {
 } from './input/touch/touch-settings.js';
 import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
+import { MINIMAP_TOUCH_STEPS, radiusLabel, touchMinimapZoom } from './hud/touch/minimap-levels.js';
 import { INV2_CLASS, inventoryV2Enabled } from './hud/inv3/inv2-flag.js';
 import { createTouchZoomSlider } from './hud/touch/zoom-slider.js';
 import { InteractController } from './hud/v2/interact-controller.js';
@@ -916,7 +917,11 @@ const hud = createHud({
   send: (cmd) => sim.send(stamper.stamp(cmd)),
   playerId: PLAYER_ID,
   tickMs: TICK_MS,
-  minimapZoom: settings.get().view.minimapZoom,
+  // Phone: 4 radius levels (480 / 240 / 120 / 60 m, default 120 m); desktop: 0.6×–1.6×.
+  minimapZoom: touchMode.touch
+    ? touchMinimapZoom(settings.get().view.minimapZoom)
+    : settings.get().view.minimapZoom,
+  ...(touchMode.touch ? { minimapSteps: MINIMAP_TOUCH_STEPS, minimapLabel: radiusLabel } : {}),
   onMinimapZoom: (minimapZoom) =>
     settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
   onQuickAccess: (id) => quickAccess(id),

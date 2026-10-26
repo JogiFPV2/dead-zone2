@@ -204,7 +204,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     },
     view: {
       cameraZoom: range(v.cameraZoom, 0.25, 4, dv.cameraZoom),
-      minimapZoom: range(v.minimapZoom, 0.25, 4, dv.minimapZoom),
+      // 0.05: the phone's 480 m level (minimap-levels.ts) is ≈ 0.06.
+      minimapZoom: range(v.minimapZoom, 0.05, 4, dv.minimapZoom),
       bigMapZoom: range(v.bigMapZoom, 0.05, 4, dv.bigMapZoom),
       bigMapLayers: {
         markers: bool(obj(v.bigMapLayers).markers, dv.bigMapLayers.markers),

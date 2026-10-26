@@ -11,23 +11,28 @@ export const zoomLabel = (zoom: number): string => `${zoom.toFixed(1).replace('.
 export const MINIMAP_WHEEL_STEP_PX = 100;
 
 /** Index of the step closest to `zoom` (any persisted value snaps to a step). */
-export function nearestStep(zoom: number): number {
+export function nearestStep(zoom: number, steps: readonly number[] = MINIMAP_ZOOM_STEPS): number {
   let best = 0;
-  MINIMAP_ZOOM_STEPS.forEach((s, i) => {
-    if (Math.abs(s - zoom) < Math.abs(MINIMAP_ZOOM_STEPS[best]! - zoom)) best = i;
+  steps.forEach((s, i) => {
+    if (Math.abs(s - zoom) < Math.abs(steps[best]! - zoom)) best = i;
   });
   return best;
 }
 
 /** Next zoom one step in (`+1`) or out (`-1`) from `zoom`, clamped to the step list. */
-export function stepMinimapZoom(zoom: number, direction: 1 | -1): number {
-  const i = Math.min(MINIMAP_ZOOM_STEPS.length - 1, Math.max(0, nearestStep(zoom) + direction));
-  return MINIMAP_ZOOM_STEPS[i]!;
+export function stepMinimapZoom(
+  zoom: number,
+  direction: 1 | -1,
+  steps: readonly number[] = MINIMAP_ZOOM_STEPS,
+): number {
+  const i = Math.min(steps.length - 1, Math.max(0, nearestStep(zoom, steps) + direction));
+  return steps[i]!;
 }
 
-export const canZoomIn = (zoom: number): boolean =>
-  nearestStep(zoom) < MINIMAP_ZOOM_STEPS.length - 1;
-export const canZoomOut = (zoom: number): boolean => nearestStep(zoom) > 0;
+export const canZoomIn = (zoom: number, steps: readonly number[] = MINIMAP_ZOOM_STEPS): boolean =>
+  nearestStep(zoom, steps) < steps.length - 1;
+export const canZoomOut = (zoom: number, steps: readonly number[] = MINIMAP_ZOOM_STEPS): boolean =>
+  nearestStep(zoom, steps) > 0;
 
 /**
  * Accumulates wheel deltas into whole steps: returns the step direction once |acc| reaches
@@ -38,4 +43,11 @@ export function wheelSteps(acc: number, deltaY: number): { acc: number; step: 1 
   if (next <= -MINIMAP_WHEEL_STEP_PX) return { acc: 0, step: 1 };
   if (next >= MINIMAP_WHEEL_STEP_PX) return { acc: 0, step: -1 };
   return { acc: next, step: 0 };
+}
+
+/** Pinch: finger distance ratio past ±25 % = one step in (spread) or out (squeeze), else 0. */
+export function pinchStep(ratio: number): 1 | -1 | 0 {
+  if (ratio >= 1.25) return 1;
+  if (ratio <= 0.8) return -1;
+  return 0;
 }

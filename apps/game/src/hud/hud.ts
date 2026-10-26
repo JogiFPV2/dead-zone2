@@ -109,6 +109,9 @@ export interface HudOptions {
   /** Minimap zoom (steps in minimap-zoom.ts) and its change (persist). */
   minimapZoom?: number;
   onMinimapZoom?: (zoom: number) => void;
+  /** Minimap zoom steps and level label (touch: 4 radius levels, minimap-levels.ts). */
+  minimapSteps?: readonly number[];
+  minimapLabel?: (zoom: number) => string;
   /** Top bar quick access clicked (HUD v2). */
   onQuickAccess: (id: QuickAccessId) => void;
 }
@@ -246,6 +249,8 @@ export function createHud(opts: HudOptions): Hud {
   const minimapZoom = createMinimapZoomControls(minimap.el, opts.minimapZoom ?? 1, {
     apply: (z) => minimap.setZoom(z * MINIMAP_FIT),
     change: (z) => opts.onMinimapZoom?.(z),
+    ...(opts.minimapSteps ? { steps: opts.minimapSteps } : {}),
+    ...(opts.minimapLabel ? { label: opts.minimapLabel } : {}),
   });
   minimapGroup.append(minimapZoom.el);
   // Shot noise radius while aiming a firearm (spec §4): dashed ring around the player.
