@@ -322,3 +322,26 @@ describe('vault: windows next to slanted walls (all-windows map test, docs 9.63)
     expect(player(sim).x).toBeLessThan(20);
   });
 });
+
+describe('vault: windows blocked by furniture (docs 9.64)', () => {
+  it('rejects when a piece of furniture stands right behind the window', () => {
+    const blocked = buildMap({
+      wallW: (x) => x === 20,
+      edgeId: (x, y) => (x === 20 && y >= 20 && y < 30 ? 2 : x === 20 && y === 32 ? 3 : 1),
+      edgeKinds: [null, 'wall', 'fence', 'window'] as (SimEdgeKind | null)[],
+      objects: [{ contentId: 'fixture:cabinet', x: 20, y: 32 }],
+    });
+    const sim = vaultSim(
+      { x: 19.7, y: 32.5 },
+      { map: blocked, content: fixtureContent({ furnitureFootprint: true }) },
+    );
+    const c = cmds(sim);
+    c.opening(20, 32, 'open');
+    sim.step();
+    c.vault();
+    sim.step();
+    expect(rejectedReasons(sim)).toEqual(['invalid-target']);
+    run(sim, DEFAULT_PHYSICS_CONFIG.vault.windowTicks + 2);
+    expect(player(sim).x).toBeLessThan(20);
+  });
+});

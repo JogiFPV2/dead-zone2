@@ -161,6 +161,54 @@ describe('openings: zombies', () => {
   });
 });
 
+describe('openings: windows open / close (toggleDoor)', () => {
+  it('a window opens and closes like a door: view state, open passes slowly, closed blocks', () => {
+    const sim = aiSim({ map: roomSpec, spawn: { x: 21, y: 22.5 } });
+    send(sim, { type: 'toggleDoor', ...WINDOW });
+    sim.step();
+    expect(eventsOf(sim.drainEvents(), 'openingChanged')[0]).toMatchObject({
+      kind: 'window',
+      state: 'open',
+      by: 'player',
+    });
+    expect(sim.drainView()?.openings).toMatchObject([{ ...WINDOW, state: 'open' }]);
+    send(sim, { type: 'toggleDoor', ...WINDOW });
+    sim.step();
+    expect(eventsOf(sim.drainEvents(), 'openingChanged')[0]).toMatchObject({ state: 'closed' });
+    // Closed: the player cannot walk out.
+    send(sim, { type: 'move', dx: -1, dy: 0 });
+    runTicks(sim, 60);
+    expect(sim.getPlayer()!.x).toBeGreaterThan(20);
+    // Open again: walks out (slowly, `slow` edge).
+    send(sim, { type: 'move', dx: 0, dy: 0 });
+    send(sim, { type: 'toggleDoor', ...WINDOW });
+    sim.step();
+    send(sim, { type: 'move', dx: -1, dy: 0 });
+    expect(runUntil(sim, () => sim.getPlayer()!.x < 19, 400)).toBeGreaterThan(0);
+  });
+
+  it('a broken window cannot be toggled; an open window survives save / load', () => {
+    const opts = {
+      seed: 3,
+      map: buildMap(roomSpec),
+      spawn: { x: 21, y: 22.5 },
+      content: fixtureContent(),
+    };
+    const a = createSim(opts);
+    send(a, { type: 'toggleDoor', ...WINDOW });
+    a.step();
+    const b = createSim({ ...opts, load: a.save() });
+    expect(b.hash()).toBe(a.hash());
+    expect(b.drainView()?.openings).toMatchObject([{ ...WINDOW, state: 'open' }]);
+    const k = openingKey(1, 20, 22, 0);
+    setOpening(b.world.openings, k, OpeningKind.window, OS.broken);
+    b.drainEvents();
+    send(b, { type: 'toggleDoor', ...WINDOW });
+    b.step();
+    expect(rejectedReasons(b)).toEqual(['invalid-state']);
+  });
+});
+
 describe('openings: save', () => {
   it('door state and bashing survive save / load (same hash)', () => {
     const opts = {
