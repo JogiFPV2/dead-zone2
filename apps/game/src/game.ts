@@ -10,6 +10,7 @@ import { followStep } from './camera/follow.js';
 import { bindCameraInput } from './input/camera-input.js';
 import { TouchControls } from './input/touch/touch-controls.js';
 import { DEFAULT_ZOOM_LIMITS } from './camera/zoom.js';
+import { TOUCH_ZOOM_LIMITS, createMobileViewStore } from './hud/touch/mobile-view-store.js';
 import {
   browserTouchEnv,
   lockLandscape,
@@ -588,7 +589,16 @@ if (import.meta.env.DEV && boot.zones) {
   );
 }
 const camera = createIsometricCamera({ aspect: 1, viewHeight: VIEW_HEIGHT });
-const rig = new CameraRig(camera);
+// Phone: own zoom range (0.6×–2.0×) and view state in dz.mobile.* keys (migrated from settings).
+const mobileView = touchMode.touch
+  ? createMobileViewStore(globalThis.localStorage, {
+      cameraZoom: settings.get().view.cameraZoom,
+      minimapZoom: settings.get().view.minimapZoom,
+      bigMapZoom: settings.get().view.bigMapZoom,
+    })
+  : undefined;
+const zoomLimits = mobileView ? TOUCH_ZOOM_LIMITS : DEFAULT_ZOOM_LIMITS;
+const rig = new CameraRig(camera, undefined, zoomLimits);
 rig.origin = floating;
 // The render camera moved by +origin: picking, HUD anchors and culling in world coordinates.
 const worldCamera = camera.clone();
@@ -613,10 +623,16 @@ const input = new InputMap(settings.get().input.bindings, {
 });
 settings.subscribe((next) => input.setBindings(next.input.bindings));
 // Wheel zoom (smooth, 0.6×–1.6×), remembered in settings; not while a window is open.
-rig.setZoom(settings.get().view.cameraZoom);
-rig.onZoomTarget = debounced(400, (cameraZoom: number) =>
-  settings.update((s) => ({ ...s, view: { ...s.view, cameraZoom } })),
-);
+if (mobileView) {
+  rig.setZoom(mobileView.get('cameraZoom'));
+  rig.onZoomTarget = (z) => mobileView.set('cameraZoom', z);
+  window.addEventListener('pagehide', () => mobileView.flush());
+} else {
+  rig.setZoom(settings.get().view.cameraZoom);
+  rig.onZoomTarget = debounced(400, (cameraZoom: number) =>
+    settings.update((s) => ({ ...s, view: { ...s.view, cameraZoom } })),
+  );
+}
 const cameraInput = bindCameraInput(rig, input, () => !!container.dataset.modal);
 
 // Real sim in a Web Worker. TEMPORARY: the mock stays for `?crowd=N` (no NPCs in the sim yet;
@@ -918,12 +934,14 @@ const hud = createHud({
   playerId: PLAYER_ID,
   tickMs: TICK_MS,
   // Phone: 4 radius levels (480 / 240 / 120 / 60 m, default 120 m); desktop: 0.6×–1.6×.
-  minimapZoom: touchMode.touch
-    ? touchMinimapZoom(settings.get().view.minimapZoom)
+  minimapZoom: mobileView
+    ? touchMinimapZoom(mobileView.get('minimapZoom'))
     : settings.get().view.minimapZoom,
   ...(touchMode.touch ? { minimapSteps: MINIMAP_TOUCH_STEPS, minimapLabel: radiusLabel } : {}),
   onMinimapZoom: (minimapZoom) =>
-    settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
+    mobileView
+      ? mobileView.set('minimapZoom', minimapZoom)
+      : settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
   onQuickAccess: (id) => quickAccess(id),
 });
 // Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
@@ -1184,11 +1202,15 @@ const bigMap = createBigMap({
           : Promise.resolve(world.source.getChunk(cx, cy, world.range.z)),
     },
   }),
-  zoom: settings.get().view.bigMapZoom,
+  zoom: mobileView ? mobileView.get('bigMapZoom') : settings.get().view.bigMapZoom,
   layers: settings.get().view.bigMapLayers,
-  onView: debounced(400, (bigMapZoom: number, bigMapLayers) =>
-    settings.update((s) => ({ ...s, view: { ...s.view, bigMapZoom, bigMapLayers } })),
-  ),
+  onView: debounced(400, (bigMapZoom: number, bigMapLayers) => {
+    mobileView?.set('bigMapZoom', bigMapZoom);
+    settings.update((s) => ({
+      ...s,
+      view: { ...s.view, bigMapLayers, ...(mobileView ? {} : { bigMapZoom }) },
+    }));
+  }),
   floors,
   tick: () => stamper.tick,
   info: () => ({
@@ -1756,7 +1778,7 @@ const touch = touchMode.touch
       zoom: (d) => {
         if (!container.dataset.modal) rig.zoomByWheel(d);
       },
-      zoomStep: DEFAULT_ZOOM_LIMITS.step,
+      zoomStep: zoomLimits.step,
       debug: touchMode.debug,
       blocked: () => input.isSuspended || !!gameState.get().death,
     })
@@ -1764,7 +1786,7 @@ const touch = touchMode.touch
 if (touch) playerInput.setStick(() => touch.vector());
 const touchHud = touch ? createTouchHud(container, touch) : undefined;
 const touchZoom = touchHud
-  ? createTouchZoomSlider(touchHud.el, DEFAULT_ZOOM_LIMITS, (z) => {
+  ? createTouchZoomSlider(touchHud.el, zoomLimits, (z) => {
       if (!container.dataset.modal) rig.zoomTo(z);
     })
   : undefined;
