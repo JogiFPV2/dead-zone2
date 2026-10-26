@@ -98,3 +98,15 @@ export function characterSlots(equipped: Partial<Record<EquipSlot, number>>): In
     };
   });
 }
+
+/**
+ * Inventory v2 tap on panel `to` (spec, mobile: „tap na drugi panel lub pusty slot przenosi
+ * zaznaczony”): the side to move from, or undefined (nothing selected there → a plain select).
+ */
+export function tapMoveFrom(
+  to: 'own' | 'box',
+  selectedCount: Readonly<Record<'own' | 'box', number>>,
+): 'own' | 'box' | undefined {
+  const from = to === 'own' ? 'box' : 'own';
+  return selectedCount[from] > 0 ? from : undefined;
+}

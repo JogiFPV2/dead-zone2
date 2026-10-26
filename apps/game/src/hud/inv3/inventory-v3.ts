@@ -40,6 +40,7 @@ import {
   categoryCounts,
   characterSlots,
   filterRows,
+  tapMoveFrom,
   INV2_CATEGORIES,
   type Inv2Category,
 } from './inv2-model.js';
@@ -428,6 +429,15 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     } else send(moveCommands(s, opts.content(), ids, to, whole));
     selected[side].clear();
   };
+  /** Inventory v2: tap on panel `to` (an item, an empty cell or its background) moves the selection. */
+  const tapMove = (to: InvSide): boolean => {
+    const from = tapMoveFrom(to, { own: selected.own.size, box: selected.box.size });
+    if (!from) return false;
+    lastClick = undefined;
+    transfer(from, [...selected[from]], true);
+    render();
+    return true;
+  };
   const moveSelected = (): void => {
     const side: InvSide = selected.box.size ? 'box' : 'own';
     if (selected[side].size) transfer(side, [...selected[side]], true);
@@ -747,7 +757,9 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const inv = s.inventory;
     const p = s.characterProfile;
     const name = p ? `${p.firstName} ${p.lastName}` : '';
-    const parts: HTMLElement[] = [panelHead('own', ICON.bag, 'EKWIPUNEK', name)];
+    const parts: HTMLElement[] = [
+      panelHead('own', ICON.bag, isInv2() ? 'PLECAK' : 'EKWIPUNEK', name),
+    ];
     if (inv) parts.push(loadRow('Obciążenie', inv.loadKg, inv.capacityKg, inv.hardLimitKg, false));
     if (view === 'list') parts.push(colHeads('own'));
     // Inventory v2 (phone): POSTAĆ as a 44 px strip of character slots instead of „W rękach”.
@@ -793,8 +805,11 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
           : c?.kind === 'vehicle-glovebox'
             ? ICON.glovebox
             : ICON.cabinet,
-        c ? containerName(c.type, c.kind).toUpperCase() : 'POJEMNIK',
-        vehicleSub,
+        // Inventory v2 columns: POSTAĆ · PLECAK · OTOCZENIE (the container name moves to the sub).
+        isInv2() ? 'OTOCZENIE' : c ? containerName(c.type, c.kind).toUpperCase() : 'POJEMNIK',
+        isInv2() && c
+          ? `${containerName(c.type, c.kind)}${vehicleSub ? ` · ${vehicleSub}` : ''}`
+          : vehicleSub,
       ),
     ];
     const tabs = lootTabs(s);
@@ -876,6 +891,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       );
       parts.push(note);
     }
+    if (isInv2()) parts.push(div('dz-i3__hint', 'tap = zaznacz · tap w drugim panelu = przenieś'));
     const foot = div('dz-i3__foot');
     foot.append(
       button('WEŹ WSZYSTKO', 'R', () => api.takeAll(), !c?.items.length),
@@ -1086,6 +1102,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       if (e.ctrlKey || e.metaKey) {
         ctrlAlone = false;
         transfer(d.side, d.row.itemIds, true);
+      } else if (isInv2() && tapMove(d.side)) {
+        // Inventory v2 (phone): a tap on the other panel moved the selected item(s) there.
       } else if (lastClick?.key === d.row.key && now - lastClick.at < DOUBLE_MS) {
         lastClick = undefined;
         transfer(d.side, d.row.itemIds, false);
@@ -1161,6 +1179,19 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       menu.hidden = true;
     }
   });
+  // Inventory v2 (phone): a tap on an empty cell or the background of the other panel moves the
+  // selected item(s) there (items, buttons, tabs and the sort menu keep their own taps).
+  for (const [panel, side] of [
+    [own, 'own'],
+    [box, 'box'],
+  ] as const) {
+    panel.addEventListener('click', (e) => {
+      if (!isInv2() || drag) return;
+      const t = e.target as HTMLElement;
+      if (t.closest('[data-key], button, .dz-i3__sec-h')) return;
+      tapMove(side);
+    });
+  }
   document.addEventListener('keydown', onKey, true);
   document.addEventListener('keyup', onKey, true);
   window.addEventListener('pointermove', onMove);

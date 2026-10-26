@@ -5,6 +5,7 @@ import {
   characterSlots,
   filterRows,
   INV2_CATEGORIES,
+  tapMoveFrom,
 } from './inv2-model.js';
 import type { InvRowVM } from './inv3-model.js';
 
@@ -59,5 +60,13 @@ describe('inventory v2 character strip', () => {
     });
     expect(s.map((x) => x.key)).toEqual(['P', 'L', 'back', 'torso', 'legs', 'hands']);
     expect(s.map((x) => x.itemId)).toEqual([7, 7, undefined, 4, undefined, undefined]);
+  });
+});
+
+describe('inventory v2 tap to move', () => {
+  it('moves from the other side only when it has a selection', () => {
+    expect(tapMoveFrom('box', { own: 2, box: 0 })).toBe('own');
+    expect(tapMoveFrom('own', { own: 2, box: 0 })).toBeUndefined();
+    expect(tapMoveFrom('own', { own: 0, box: 1 })).toBe('box');
   });
 });

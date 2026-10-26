@@ -122,3 +122,11 @@ html.is-touch.dz-inv2 .dz-i3__slots-l {
   font-size: 10px;
   line-height: 1.2;
 }
+/* Tap-to-move hint above the surroundings buttons (mockup). */
+html.is-touch.dz-inv2 .dz-i3__hint {
+  flex: none;
+  padding: 4px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+}
