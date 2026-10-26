@@ -73,4 +73,20 @@ describe('zebraSpots: no stray crosswalks (Paweł 25.10)', () => {
     );
     expect(z).toHaveLength(1);
   });
+  it('zebras of neighbouring ways and junction legs stay 10 m apart (Szef sztabu 26.10)', () => {
+    const z = zebraSpots(
+      [
+        road([0, 16, 20, 16]),
+        road([20, 16, 40, 16]),
+        road([20, 0, 20, 16, 20, 32]),
+        foot([14, 4, 14, 16, 14, 28]),
+        foot([26, 4, 26, 16, 26, 28]),
+      ],
+      all,
+    );
+    for (let i = 0; i < z.length; i++)
+      for (let j = i + 1; j < z.length; j++)
+        expect(Math.hypot(z[i]!.x - z[j]!.x, z[i]!.z - z[j]!.z)).toBeGreaterThanOrEqual(10);
+    expect(z.length).toBeGreaterThan(0);
+  });
 });

@@ -111,25 +111,51 @@ function crossesBoth(
   return left && right;
 }
 
-/** Zebras on the same road closer than this (tiles, along it) are merged: the first one stays. */
-export const MIN_ZEBRA_SPACING = 25;
+/**
+ * Minimum distance between any two zebra centres (tiles = metres, Euclidean): legs of one
+ * junction and neighbouring ways of the same carriageway included (Szef sztabu 26.10).
+ */
+export const MIN_ZEBRA_SPACING = 10;
+/** Stripes at most this far off the carriageway direction (crossing ⟂ to the road). */
+const MAX_SIN = Math.sin((20 * Math.PI) / 180);
+
+const polyLength = (pts: readonly number[]): number => {
+  let l = 0;
+  for (let i = 0; i + 3 < pts.length; i += 2)
+    l += Math.hypot(pts[i + 2]! - pts[i]!, pts[i + 3]! - pts[i + 1]!);
+  return l;
+};
+
+interface Candidate {
+  zebra: Zebra;
+  /** Junction that made it (`owns` is asked about this point). */
+  jx: number;
+  jz: number;
+  /** Distance from the junction (closer wins) and the crossing path's length (longer wins). */
+  dist: number;
+  path: number;
+  key: string;
+  /** Footways it carries (one zebra per footway crossing, Szef sztabu 26.10). */
+  feet: number[];
+}
 
 /**
  * Zebra crossings of a chunk's vector roads (all coordinates chunk-local). A junction is a vertex
  * of a carriageway that lies on another road (OSM ways share nodes there):
  * - another carriageway: a zebra on every leg of the road, just past the crossing road's
  *   carriageway (in line with its sidewalk), like the tile renderer drew them;
- * - a footway (sidewalk surface, no sidewalks of its own): a zebra right on the junction.
- * `owns(x, z)` picks the chunk that draws a junction (its own square), so each zebra is drawn once.
+ * - a footway (sidewalk surface, no sidewalks of its own) that really crosses: a zebra on it.
+ * All candidates of the given roads are thinned together, deterministically: one per crossing,
+ * centres at least `MIN_ZEBRA_SPACING` apart (the one nearer its junction, then the longer path,
+ * stays), stripes ⟂ (±20°) to the carriageway under them, centre on it. `owns(x, z)` picks the
+ * chunk that draws a junction (its own square), so each zebra is drawn once.
  */
 export function zebraSpots(
   roads: readonly VectorRoad[],
   owns: (x: number, z: number) => boolean,
 ): Zebra[] {
-  const out: Zebra[] = [];
+  const cands: Candidate[] = [];
   const seen = new Set<string>();
-  /** Junction of each zebra in `out` (legs of one junction do not thin each other). */
-  const from: string[] = [];
   for (let a = 0; a < roads.length; a++) {
     const A = roads[a]!;
     if (!isCarriageway(A)) continue;
@@ -137,9 +163,9 @@ export function zebraSpots(
     for (let i = 0; i < n; i++) {
       const jx = A.pts[2 * i]!;
       const jz = A.pts[2 * i + 1]!;
-      if (!owns(jx, jz)) continue;
       let offset = -1;
-      let foot = false;
+      let crossLen = 0;
+      let footLen = 0;
       const da = dirAt(A.pts, i);
       for (let b = 0; b < roads.length; b++) {
         const B = roads[b]!;
@@ -150,48 +176,87 @@ export function zebraSpots(
         if (isCarriageway(B)) {
           const side = B.rs > B.r ? (B.r + B.rs) / 2 : B.r + 1.5;
           offset = Math.max(offset, side + LENGTH / 2);
+          crossLen = Math.max(crossLen, polyLength(B.pts));
         } else if (
           B.surface === 'base:sidewalk' &&
           B.rs === 0 &&
           crossesBoth(B.pts, jx, jz, da, A.r)
-        )
-          foot = true;
+        ) {
+          footLen = Math.max(footLen, polyLength(B.pts));
+        }
       }
-      const junction = `${Math.round(jx * 4)},${Math.round(jz * 4)}`;
-      const add = (p: { x: number; z: number; ux: number; uz: number }) => {
+      const add = (
+        p: { x: number; z: number; ux: number; uz: number },
+        dist: number,
+        path: number,
+      ) => {
         const key = `${Math.round(p.x * 4)},${Math.round(p.z * 4)}`;
         if (seen.has(key)) return;
-        seen.add(key);
-        // One zebra per MIN_ZEBRA_SPACING on a road: skip a parallel one close along the road.
-        for (const [k, q] of out.entries()) {
-          if (from[k] === junction) continue;
-          if (Math.abs(q.ux * p.uz - q.uz * p.ux) > 0.26) continue;
-          const dx = p.x - q.x;
-          const dz = p.z - q.z;
-          const across = Math.abs(dx * -p.uz + dz * p.ux);
-          if (across < A.r + 1 && Math.hypot(dx, dz) < MIN_ZEBRA_SPACING) return;
+        // Centre on this carriageway and stripes along it; no other carriageway closer.
+        const own = distToLine(A.pts, p.x, p.z);
+        if (own.d > A.r - 0.2) return;
+        if (Math.abs(own.ux * p.uz - own.uz * p.ux) > MAX_SIN) return;
+        for (let b = 0; b < roads.length; b++) {
+          const B = roads[b]!;
+          if (b === a || B.bridge !== A.bridge || !isCarriageway(B)) continue;
+          if (distToLine(B.pts, p.x, p.z).d - B.r < own.d - A.r) return;
         }
-        from.push(junction);
-        out.push({
-          x: p.x,
-          z: p.z,
-          ux: p.ux,
-          uz: p.uz,
-          halfWidth: A.r - 0.2,
-          halfLength: LENGTH / 2,
-          bridge: A.bridge,
+        seen.add(key);
+        cands.push({
+          zebra: {
+            x: p.x,
+            z: p.z,
+            ux: own.ux,
+            uz: own.uz,
+            halfWidth: A.r - 0.2,
+            halfLength: LENGTH / 2,
+            bridge: A.bridge,
+          },
+          jx,
+          jz,
+          dist,
+          path,
+          key,
+          feet: roads.flatMap((F, f) =>
+            F.surface === 'base:sidewalk' &&
+            F.rs === 0 &&
+            F.bridge === A.bridge &&
+            distToLine(F.pts, p.x, p.z).d < 2
+              ? [f]
+              : [],
+          ),
         });
       };
       if (offset > 0) {
+        // Legs of a right-angled crossroads stay MIN_ZEBRA_SPACING apart (2·o·sin 45°).
+        offset = Math.max(offset, MIN_ZEBRA_SPACING / Math.SQRT2 + 0.05);
         for (const dir of [1, -1] as const) {
           const p = along(A.pts, i, dir, offset);
-          if (p) add(p);
+          if (p) add(p, offset, crossLen);
         }
-      } else if (foot) {
+      } else if (footLen > 0) {
         const p = along(A.pts, i, i + 1 < n ? 1 : -1, 0);
-        if (p) add(p);
+        if (p) add(p, 0, footLen);
       }
     }
   }
-  return out;
+  cands.sort(
+    (p, q) => p.dist - q.dist || q.path - p.path || (p.key < q.key ? -1 : p.key > q.key ? 1 : 0),
+  );
+  const kept: Candidate[] = [];
+  const S2 = MIN_ZEBRA_SPACING * MIN_ZEBRA_SPACING;
+  for (const c of cands) {
+    if (
+      kept.some(
+        (k) =>
+          k.zebra.bridge === c.zebra.bridge &&
+          ((k.zebra.x - c.zebra.x) ** 2 + (k.zebra.z - c.zebra.z) ** 2 < S2 ||
+            (k.feet.some((f) => c.feet.includes(f)) &&
+              (k.zebra.x - c.zebra.x) ** 2 + (k.zebra.z - c.zebra.z) ** 2 < 9 * S2)),
+      )
+    )
+      continue;
+    kept.push(c);
+  }
+  return kept.filter((c) => owns(c.jx, c.jz)).map((c) => c.zebra);
 }
