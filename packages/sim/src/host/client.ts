@@ -60,6 +60,8 @@ export interface SimWorkerClient {
       spawn?: SimSpawn;
       content?: SimContentSource;
       dev?: boolean;
+      /** Single-player only: allow `debugRevealMap` outside dev. */
+      allowRevealMap?: boolean;
       zombies?: readonly SimZombieSpawn[];
       /** Animals at given points (`type` omitted = weighted). */
       animals?: readonly SimAnimalSpawn[];
@@ -231,6 +233,8 @@ export interface SimWorkerClient {
   pickUpStorage(container: ContainerId): void;
   /** Dev only (init `dev: true`). */
   debugGiveItem(itemId: string, count?: number): void;
+  /** Dev only: reveal the whole map, or `radiusChunks` around the player (protocol 46). */
+  debugRevealMap(radiusChunks?: number): void;
   /** Dev: spawns zombies around a point (free tiles). */
   debugSpawnZombie(x: number, y: number, count?: number, zombieType?: string): void;
   /** Dev: spawns animals around a point (free tiles); `animalType` = content id. */
@@ -325,6 +329,7 @@ export function createSimWorkerClient(
         ...(opts?.spawn ? { spawn: opts.spawn } : {}),
         ...(opts?.content ? { content: opts.content } : {}),
         ...(opts?.dev ? { dev: true } : {}),
+        ...(opts?.allowRevealMap ? { allowRevealMap: true } : {}),
         ...(opts?.zombies ? { zombies: opts.zombies } : {}),
         ...(opts?.animals ? { animals: opts.animals } : {}),
         ...(opts?.vehicles ? { vehicles: opts.vehicles } : {}),
@@ -445,6 +450,8 @@ export function createSimWorkerClient(
       }),
     editMarker: (id, patch) => cmd({ type: 'editMarker', id, ...patch }),
     removeMarker: (id) => cmd({ type: 'removeMarker', id }),
+    debugRevealMap: (radiusChunks) =>
+      cmd({ type: 'debugRevealMap', ...(radiusChunks !== undefined ? { radiusChunks } : {}) }),
     debugGiveItem: (itemId, count) =>
       cmd({ type: 'debugGiveItem', itemId, ...(count ? { count } : {}) }),
     debugSpawnZombie: (x, y, count, zombieType) =>

@@ -423,6 +423,11 @@ export const removeMarkerCommandSchema = z.strictObject({
   type: z.literal('removeMarker'),
   id: z.number().int().min(1).max(0x7fffffff),
 });
+export const debugRevealMapCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('debugRevealMap'),
+  radiusChunks: z.number().int().min(0).max(4096).optional(),
+});
 export const debugOpeningCommandSchema = z.strictObject({
   ...header,
   type: z.literal('debugOpening'),
@@ -590,6 +595,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   breakWindowCommandSchema,
   ...openingActionCommandSchemas,
   debugOpeningCommandSchema,
+  debugRevealMapCommandSchema,
   placeLureCommandSchema,
   triggerLureCommandSchema,
   throwCommandSchema,
@@ -797,6 +803,7 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
       .optional(),
     content: simContentSourceSchema.optional(),
     dev: z.boolean().optional(),
+    allowRevealMap: z.boolean().optional(),
     character: characterSpecSchema.optional(),
   }),
   z.object({ kind: z.literal('cmd'), cmd: commandSchema }),

@@ -1737,3 +1737,16 @@ Klient (Silnik 2), protokół 45: `CommandRejectReason` += `'blocked-by-furnitur
 ### 9.76 Hałas silnika zależy też od prędkości
 
 Promień hałasu pracującego silnika (`emitNoise`, źródło `vehicle`, co `noiseEveryTicks`) rośnie od `noiseIdleTiles` do `noiseFullTiles` wg większej z wartości: |gaz| albo prędkość / `noiseFullSpeed` (15 m/s). Auto toczące się szybko bez gazu nadal wabi zombie; wsteczny bieg jest tak głośny jak jazda w przód. Bez zmiany protokołu.
+
+### 9.77 Debug: odsłonięcie mapy gracza (protokół 46)
+
+Komenda `debugRevealMap { radiusChunks? }` (przy `init.dev` albo `init.allowRevealMap`; inaczej `dev-only`)
+odkrywa chunki w mgle wojny gracza (`PlayerMap.bits`, 9.29): bez `radiusChunks` cały świat w
+granicach źródła (`bounds`), z nim kwadrat ±`radiusChunks` chunków wokół chunka gracza (przycięty do
+granic). Pokoje (plan pięter) nie są odkrywane. Widok `worldMap` wysyła wtedy całość (`sendAll`:
+`bounds`, `discovered` …), bez zdarzenia `chunksDiscovered` (cała mapa to za dużo komórek). Bity są
+już w zapisie, `SAVE_VERSION` bez zmian. Klient: `SimClient.debugRevealMap(radiusChunks?)`.
+Flaga `allowRevealMap` (domyślnie `false`, poza stanem/zapisem) wpuszcza poza dev wyłącznie tę komendę;
+pozostałe `debug*` zostają dev-only. Ustawia ją tylko klient jednoosobowy (np. gh-pages, gdzie
+`dev=false`); serwer/multiplayer jej nie ustawia, więc tam komenda jest odrzucana (`dev-only`).
+Do porównań mapy ze Stalową Wolą w czasie testów. Test: `map/reveal.test.ts`.

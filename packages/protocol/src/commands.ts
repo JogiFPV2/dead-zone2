@@ -750,6 +750,16 @@ export interface RemoveMarkerCommand extends CommandHeader {
 }
 
 /** Dev only (`init.dev`): sets the state of a door / window edge (hp resets to the state's max). */
+/**
+ * Dev only (`init.dev`, protocol 46, docs 9.77): discovers chunks of the player's map (fog of
+ * war). Without `radiusChunks` the whole world (`bounds`); with it the chunks within that many
+ * chunks (Chebyshev) of the player's chunk. Rooms are not revealed.
+ */
+export interface DebugRevealMapCommand extends CommandHeader {
+  type: 'debugRevealMap';
+  radiusChunks?: number | undefined;
+}
+
 export interface DebugOpeningCommand extends CommandHeader {
   type: 'debugOpening';
   tx: number;
@@ -961,6 +971,7 @@ export type Command =
   | BreakWindowCommand
   | OpeningActionCommand
   | DebugOpeningCommand
+  | DebugRevealMapCommand
   | PlaceLureCommand
   | TriggerLureCommand
   | ThrowCommand

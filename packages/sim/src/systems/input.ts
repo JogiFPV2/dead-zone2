@@ -18,7 +18,7 @@ import { applyOpeningCommand, isOpeningCommand } from '../openings/actions.js';
 import { applyUseFurniture } from '../furniture/menu.js';
 import { applySurvivalCommand } from '../survival/commands.js';
 import type { TileGrid } from '../world/grid.js';
-import { applyMarkerCommand, isMarkerCommand } from '../map/player-map.js';
+import { applyMarkerCommand, isMarkerCommand, revealPlayerMap } from '../map/player-map.js';
 import { startVault } from '../physics/vault.js';
 import { applyVehicleCommand, isVehicleCommand } from '../vehicles/commands.js';
 
@@ -50,6 +50,11 @@ export function inputSystem(w: SimWorld, grid: TileGrid): void {
     }
     if (w.survival?.dead[eid]) {
       reject(w, cmd, 'dead');
+      continue;
+    }
+    if (cmd.type === 'debugRevealMap') {
+      const reason = revealPlayerMap(w, eid, cmd.radiusChunks);
+      if (reason) reject(w, cmd, reason);
       continue;
     }
     if (cmd.type === 'move') {

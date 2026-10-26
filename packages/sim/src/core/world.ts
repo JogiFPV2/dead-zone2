@@ -89,6 +89,8 @@ export interface SimWorld {
   readonly physics: PhysicsWorld;
   /** Debug commands allowed (dev builds, tests). Not part of the state. */
   readonly dev: boolean;
+  /** Allows only `debugRevealMap` outside dev (single-player client sets it; servers/multiplayer never). Default false. */
+  readonly allowRevealMap: boolean;
   events: SimEvent[];
   readonly sortedCache: Map<string, { version: number; eids: number[] }>;
 }
@@ -105,6 +107,7 @@ export function createSimWorld(opts: {
   items?: ((survival: SurvivalWorld) => ItemStore) | undefined;
   ai?: ((survival: SurvivalWorld) => AiWorld) | undefined;
   dev?: boolean | undefined;
+  allowRevealMap?: boolean | undefined;
   physicsConfig?: PhysicsConfig | undefined;
 }): SimWorld {
   const clock = createClock(opts.dayLengthMinutes, opts.clockStart);
@@ -144,6 +147,7 @@ export function createSimWorld(opts: {
     furniture: createFurnitureIndex(map, survival?.content),
     physics,
     dev: opts.dev ?? false,
+    allowRevealMap: opts.allowRevealMap ?? false,
     events: [],
     sortedCache: new Map(),
   };

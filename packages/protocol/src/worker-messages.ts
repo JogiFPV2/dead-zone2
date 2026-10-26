@@ -78,6 +78,8 @@ export type MainToWorker =
       save?: ArrayBuffer | undefined;
       /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugSpawnAnimal`, `debugNoise`). */
       dev?: boolean | undefined;
+      /** Allows only `debugRevealMap` outside dev (single-player client sets it; servers/multiplayer never). Default false. */
+      allowRevealMap?: boolean | undefined;
       /** New game: the creator's character, sent as `newCharacter` for player 0 (ignored with `save`). */
       character?: CharacterSpec | undefined;
     }

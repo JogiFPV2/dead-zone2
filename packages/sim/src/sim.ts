@@ -158,6 +158,8 @@ export interface SimOptions {
   namesPl?: Readonly<Record<string, string>> | undefined;
   /** Allows debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugNoise`). Default false. */
   dev?: boolean | undefined;
+  /** Allows only `debugRevealMap` outside dev (single-player client sets it; servers/multiplayer never). Default false. */
+  allowRevealMap?: boolean | undefined;
   /**
    * Zombies at start (game modes, tests); needs content. `type` = zombie type id, omitted =
    * weighted by `spawnWeight`. Positions are used as given (pick free tiles).
@@ -479,6 +481,7 @@ export function createSim(input: SimOptions): Sim {
     dayLengthMinutes: opts.content?.worldSettings.dayLengthMinutes,
     clockStart: opts.clockStart,
     dev: opts.dev,
+    allowRevealMap: opts.allowRevealMap,
     physicsConfig,
     survival: content
       ? (clock) =>

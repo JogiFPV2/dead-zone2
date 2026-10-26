@@ -152,6 +152,7 @@ export function startSimWorkerHost(
           content,
           ...(msg.content ? { namesPl: namesPlOf(msg.content) } : {}),
           dev: msg.dev ?? false,
+          allowRevealMap: msg.allowRevealMap ?? false,
           floorLoot: msg.floorLoot ?? true,
           ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
           ...(msg.character && !msg.save ? { character: msg.character } : {}),

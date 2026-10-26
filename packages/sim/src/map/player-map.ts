@@ -452,6 +452,38 @@ export function sensedZombiesPatch(w: SimWorld, sid: number): number[] | undefin
 const sightingViews = (m: PlayerMap): ZombieSightingView[] =>
   [...m.sightings.values()].reverse().map((v) => ({ ...v }));
 
+/**
+ * `debugRevealMap` (dev or init `allowRevealMap`, docs 9.77): discovers every chunk of the world, or the square of
+ * `radiusChunks` around the player's chunk. No rooms. The whole map view is resent (`sendAll`).
+ */
+export function revealPlayerMap(
+  w: SimWorld,
+  eid: number,
+  radiusChunks: number | undefined,
+): CommandRejectReason | undefined {
+  if (!w.dev && !w.allowRevealMap) return 'dev-only';
+  const pm = w.playerMap;
+  if (!pm) return 'invalid-state';
+  const m = playerMapOf(pm, w.c.StableId.value[eid] ?? 0);
+  let x0 = pm.cx0;
+  let y0 = pm.cy0;
+  let x1 = pm.cx0 + pm.width - 1;
+  let y1 = pm.cy0 + pm.height - 1;
+  if (radiusChunks !== undefined) {
+    const pcx = Math.floor((w.c.Position.x[eid] ?? 0) / CHUNK_SIZE);
+    const pcy = Math.floor((w.c.Position.y[eid] ?? 0) / CHUNK_SIZE);
+    x0 = Math.max(x0, pcx - radiusChunks);
+    y0 = Math.max(y0, pcy - radiusChunks);
+    x1 = Math.min(x1, pcx + radiusChunks);
+    y1 = Math.min(y1, pcy + radiusChunks);
+  }
+  let n = 0;
+  for (let cy = y0; cy <= y1; cy++)
+    for (let cx = x0; cx <= x1; cx++) if (discover(pm, m, cx, cy)) n++;
+  if (n > 0) m.sendAll = true;
+  return undefined;
+}
+
 // --- markers -------------------------------------------------------------------------------
 
 type MarkerCommand = Extract<Command, { type: 'addMarker' | 'editMarker' | 'removeMarker' }>;
