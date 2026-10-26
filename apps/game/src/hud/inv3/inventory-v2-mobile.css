@@ -2,11 +2,63 @@
    with 50 px cells on the left, surroundings 310 px on the right, 44 px buttons, tabs 32 px with a
    44 px touch field, action menu 210 px wide with 44 px rows. Only html.is-touch.dz-inv2. */
 html.is-touch.dz-inv2 .dz-i3__panel--own {
-  width: 398px;
+  /* Right of the 52 px filter rail; 398 px, narrower when the safe areas need it (844 px: 394). */
+  left: calc(var(--dz-safe-l) + 56px);
+  width: min(398px, calc(100% - var(--dz-safe-l) - var(--dz-safe-r) - 56px - 310px - 6px));
 }
 html.is-touch.dz-inv2 .dz-i3__panel--box {
+  right: var(--dz-safe-r);
   width: 310px;
 }
+/* Filter rail (spec §4, mobile): 52 px wide, 7 chips of 44 px height with counters. */
+html.is-touch.dz-inv2 .dz-i3__rail {
+  position: absolute;
+  left: var(--dz-safe-l);
+  top: calc(56px + var(--dz-safe-t));
+  bottom: calc(8px + var(--dz-safe-b));
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: rgba(21, 25, 28, 0.9);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  border-radius: 8px;
+  overflow: hidden auto;
+}
+html.is-touch.dz-inv2 .dz-i3__rail[hidden] {
+  display: none;
+}
+html.is-touch.dz-inv2 .dz-i3__chip {
+  position: relative;
+  flex: none;
+  width: 50px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 9px var(--font-family-sans);
+}
+html.is-touch.dz-inv2 .dz-i3__chip[data-on] {
+  background: var(--acc);
+  color: #15191c;
+}
+html.is-touch.dz-inv2 .dz-i3__chip-n {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font:
+    700 8px 'JetBrains Mono',
+    ui-monospace,
+    monospace;
+}
+
 html.is-touch.dz-inv2 .dz-i3__grid {
   grid-template-columns: repeat(auto-fill, 50px);
 }

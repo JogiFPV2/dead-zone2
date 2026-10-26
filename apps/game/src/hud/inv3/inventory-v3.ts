@@ -34,6 +34,14 @@ import {
   type InvSide,
   type InvSort,
 } from './inv3-model.js';
+import { INV2_CLASS } from './inv2-flag.js';
+import { categoryCounts, filterRows, INV2_CATEGORIES, type Inv2Category } from './inv2-model.js';
+
+/** Inventory v2 phone layout (`?inv=v2` on a touch device, inv2-flag.ts). */
+const isInv2 = (): boolean =>
+  typeof document !== 'undefined' &&
+  document.documentElement.classList.contains('is-touch') &&
+  document.documentElement.classList.contains(INV2_CLASS);
 
 const isTouchUi = (): boolean =>
   typeof document !== 'undefined' && document.documentElement.classList.contains('is-touch');
@@ -128,6 +136,21 @@ const ICON = {
   ),
   ground: SV('<path d="M2 17l10-5 10 5-10 5z"/>', 14),
   box: SV('<rect x="3" y="5" width="18" height="15" rx="1"/><path d="M3 10h18"/>', 14),
+};
+
+/** Filter rail icons (stroke, 24 box). */
+const CAT_ICON: Record<Inv2Category, string> = {
+  all: SV('<path d="m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
+  weapon: SV('<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/>'),
+  food: SV('<path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 2-2 6 0 8v10"/>'),
+  medical: SV('<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>'),
+  tools: SV(
+    '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  ),
+  clothing: SV('<path d="m8 3-5 3 2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0z"/>'),
+  other: SV(
+    '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+  ),
 };
 
 const key = (k: string): HTMLElement => h('span', 'dz-i3__key', k);
@@ -238,7 +261,13 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   const tipIcon = h('span', 'dz-i3__tip-ic');
   tooltip.el.querySelector('.dz-tooltip__head')?.prepend(tipIcon);
   const comboTip = createCombineTooltip();
-  stage.append(own, box, keys, ghost, badge, menu, tooltip.el, comboTip.el);
+  // Inventory v2 (phone): category filter rail left of the backpack, filters both grids.
+  const rail = div('dz-i3__rail');
+  rail.hidden = true;
+  rail.setAttribute('role', 'toolbar');
+  rail.setAttribute('aria-label', 'Filtry');
+  let filter: Inv2Category = 'all';
+  stage.append(rail, own, box, keys, ghost, badge, menu, tooltip.el, comboTip.el);
   el.append(div('dz-i3__scrim'), stage);
   opts.root.append(el);
 
@@ -575,7 +604,9 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       if (!sec.rows.length && !sec.freeHands?.length) wrap.append(div('dz-i3__empty', 'Pusto'));
     } else {
       const grid = div('dz-i3__grid');
-      for (const r of sec.rows) {
+      const rows =
+        isInv2() && sec.kind !== 'hands' ? filterRows(sec.rows, filter, kindOf) : sec.rows;
+      for (const r of rows) {
         order[side].push(r);
         grid.append(tile(side, r));
       }
@@ -586,7 +617,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
           grid.append(t);
         }
       } else {
-        const n = sec.rows.length;
+        const n = rows.length;
         const total = side === 'box' ? Math.max(gridSlots(n), 27) : gridSlots(n);
         for (let i = n; i < total; i++) grid.append(div('dz-i3__tile dz-i3__tile--empty'));
       }
@@ -855,6 +886,37 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     menu.hidden = false;
   };
 
+  const kindOf = (def: string): string | undefined => opts.content().items.get(def)?.kind;
+  const renderRail = (): void => {
+    rail.hidden = !isInv2();
+    if (rail.hidden) return;
+    const rows = [
+      ...sections.filter((x) => x.kind !== 'hands').flatMap((x) => x.rows),
+      ...(boxSection?.rows ?? []),
+    ];
+    const counts = categoryCounts(rows, kindOf);
+    rail.replaceChildren(
+      ...INV2_CATEGORIES.map((c) => {
+        const b = h('button', 'dz-i3__chip');
+        b.type = 'button';
+        b.dataset.cat = c.id;
+        b.setAttribute('aria-label', `${c.label} (${counts[c.id]})`);
+        b.setAttribute('aria-pressed', String(filter === c.id));
+        if (filter === c.id) b.dataset.on = 'true';
+        b.append(
+          svgEl(CAT_ICON[c.id], 'dz-i3__chip-ic'),
+          h('span', 'dz-i3__chip-t', c.short),
+          h('span', 'dz-i3__chip-n', String(counts[c.id])),
+        );
+        b.addEventListener('click', () => {
+          filter = c.id;
+          render();
+        });
+        return b;
+      }),
+    );
+  };
+
   function render(): void {
     const s = opts.state();
     const content = opts.content();
@@ -873,6 +935,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     el.dataset.view = p.view;
     renderOwn(s, p.view);
     renderBox(s, p.view);
+    renderRail();
     renderMenu();
     const hit = keep ? rowEls.get(keep.key) : undefined;
     if (hit?.el.isConnected && !drag?.active) {
