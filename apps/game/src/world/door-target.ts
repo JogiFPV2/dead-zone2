@@ -1,4 +1,10 @@
-import type { EdgeSide, OpeningActionType, OpeningState, SimEvent } from '@deadzone/protocol';
+import type {
+  EdgeSide,
+  OpeningActionType,
+  OpeningState,
+  SimEvent,
+  WindowCoverView,
+} from '@deadzone/protocol';
 
 /**
  * Opening targeting for the interact key (F): which door / gate / window edge, if any, the
@@ -29,6 +35,8 @@ export interface OpeningInfo {
   state: OpeningState;
   barricade?: number;
   glass?: boolean;
+  /** Window cover (protocol 47); absent = not covered. */
+  cover?: WindowCoverView;
 }
 
 export interface DoorTarget extends DoorEdge {
@@ -40,6 +48,8 @@ export interface DoorTarget extends DoorEdge {
   barricade: number;
   /** Window: glass (pane or shards) in the frame. */
   glass: boolean;
+  /** Window cover (protocol 47); absent = not covered. */
+  cover?: WindowCoverView;
 }
 
 /** Max planks over an edge (`worldSettings.openings.barricade.maxPlanks`). */
@@ -83,6 +93,7 @@ export function nearestDoor(
       state: info.state,
       barricade: info.barricade ?? 0,
       glass: info.glass ?? kind === 'window',
+      ...(kind === 'window' && info.cover ? { cover: info.cover } : {}),
     };
   }
   return best;
@@ -93,12 +104,17 @@ export const doorWins = (door: DoorTarget | undefined, hasContainer: boolean): b
   door !== undefined && (!hasContainer || door.dist < DOOR_FIRST_TILES);
 
 /** A sim command on an opening edge. */
-export type OpeningCmd = 'toggleDoor' | OpeningActionType;
+export type OpeningCmd = 'toggleDoor' | OpeningActionType | 'coverWindow' | 'uncoverWindow';
 
 export interface OpeningOption {
   cmd: OpeningCmd;
   label: string;
+  /** `coverWindow` from the item picker: the carried item instance to hang. */
+  item?: number;
 }
+
+/** Menu entry that opens the cover item picker (`coverWindow` without an item). */
+export const COVER_PICK_LABEL = 'Zasłoń…';
 
 const opt = (cmd: OpeningCmd, label: string): OpeningOption => ({ cmd, label });
 
@@ -115,6 +131,16 @@ export function openingPrimary(t: DoorTarget): OpeningOption | undefined {
 
 /** Hold F (or a tap without a main use): the timed actions that fit the edge's state. */
 export function openingMenu(t: DoorTarget): OpeningOption[] {
+  const out = timedMenu(t);
+  // Window covers (protocol 47): any window state, planks or not; one cover per window. Last, so
+  // the numbers of the older entries stay.
+  if (t.kind === 'window') {
+    out.push(t.cover ? opt('uncoverWindow', 'Zdejmij') : opt('coverWindow', COVER_PICK_LABEL));
+  }
+  return out;
+}
+
+function timedMenu(t: DoorTarget): OpeningOption[] {
   const out: OpeningOption[] = [];
   const more = t.barricade < MAX_PLANKS;
   if (t.barricade > 0) {
@@ -157,6 +183,8 @@ export const OPENING_ACTION_TITLES: Readonly<Record<string, string>> = {
   barricade: 'Barykadowanie',
   removeBarricade: 'Zdejmowanie deski',
   forceDoor: 'Wyważanie',
+  coverWindow: 'Zasłanianie',
+  uncoverWindow: 'Zdejmowanie',
 };
 
 /** Toast for a `toggleDoor` rejected with `locked`. */
@@ -189,6 +217,7 @@ export class OpeningFeedback {
     if (e.reason === 'missing-tool') return 'Brak narzędzia';
     if (e.reason === 'missing-parts') return 'Brak materiałów';
     if (e.reason === 'invalid-state') return t.barricade > 0 ? 'Zabarykadowane' : 'Nie da się';
+    if (e.reason === 'invalid-target' && t.kind === 'window') return 'Tym nie zasłonisz';
     if (e.reason === 'out-of-range') return 'Za daleko';
     return undefined;
   }

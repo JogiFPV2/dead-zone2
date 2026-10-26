@@ -1,3 +1,4 @@
+import { coverChoices } from './hud/window-cover-items.js';
 import { ArrowHelper, Group, Vector3, WebGLRenderer } from 'three';
 import { computeUiScale } from '@deadzone/ui';
 import {
@@ -1555,8 +1556,13 @@ const targetEdges = () => {
 const doorInReach = (x: number, y: number, z: number): DoorTarget | undefined =>
   nearestDoor(targetEdges(), (e) => openings.info(e.tx, e.ty, e.z, e.side), x, y, z);
 /** Sim command on an opening edge (`toggleDoor`, `barricade`, `forceDoor` …). */
-const openingCommand = (door: DoorTarget, cmd: OpeningCmd): void => {
-  const c = stamper.stamp({ type: cmd, tx: door.tx, ty: door.ty, side: door.side });
+const openingCommand = (door: DoorTarget, cmd: OpeningCmd, item?: number): void => {
+  if (cmd === 'coverWindow' && item === undefined) return;
+  const at = { tx: door.tx, ty: door.ty, side: door.side };
+  const c =
+    cmd === 'coverWindow'
+      ? stamper.stamp({ type: cmd, ...at, item: item! })
+      : stamper.stamp({ type: cmd, ...at });
   openingFeedback.sent(c.seq, door);
   sim.send(c);
 };
@@ -1607,6 +1613,9 @@ const interaction = new InteractController({
     return p ? doorInReach(p.x, p.y, p.z) : undefined;
   },
   opening: openingCommand,
+  coverItems: () =>
+    coverChoices(gameState.get().inventory, (d) => !!hudContent.items.get(d)?.windowCover),
+  toast: (text) => hud.toast(text),
   held: () => input.isDown('interact'),
   interrupted: () =>
     (['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const).some((a) => input.isDown(a)) ||
@@ -2007,6 +2016,10 @@ if (boot.perf || boot.stress) {
       walk: (dx: number, dy: number) => mock?.setAutoMove(dx || dy ? { dx, dy } : undefined),
     },
   });
+}
+if (import.meta.env.DEV) {
+  // Dev / screenshots: window edges F can act on (find one to stand at with ?spawn=x,y).
+  Object.assign(window, { __dzWindows: () => openings.edges('window') });
 }
 if (import.meta.env.DEV && !boot.perf) {
   void Promise.all([import('./dev/stats-overlay.js'), import('./dev/crowd-bench.js')]).then(

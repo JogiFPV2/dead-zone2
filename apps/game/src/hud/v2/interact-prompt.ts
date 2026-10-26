@@ -152,6 +152,7 @@ export function createInteractPrompt(): InteractPrompt {
             return row;
           }),
         );
+        fitMenuOnTouch(menu);
         return;
       }
       const p = Math.min(1, Math.max(0, vm.progress));
@@ -166,4 +167,17 @@ export function createInteractPrompt(): InteractPrompt {
     },
   };
   return api;
+}
+
+/**
+ * Touch (phone landscape, 390 px tall): the taller 44 px rows can run off the bottom of the
+ * screen; lift the menu so it stays inside the viewport. Desktop keeps the fixed offset.
+ */
+function fitMenuOnTouch(menu: HTMLElement): void {
+  menu.style.removeProperty('translate');
+  if (!document.documentElement.classList.contains('is-touch')) return;
+  const r = menu.getBoundingClientRect();
+  const k = r.height / Math.max(1, menu.offsetHeight);
+  const over = r.bottom - (window.innerHeight - 8);
+  if (over > 0) menu.style.translate = `0 ${(-over / k).toFixed(1)}px`;
 }

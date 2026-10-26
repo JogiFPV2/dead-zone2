@@ -1,4 +1,10 @@
-import type { EdgeSide, OpeningState, OpeningView, SimEvent } from '@deadzone/protocol';
+import type {
+  EdgeSide,
+  OpeningState,
+  OpeningView,
+  SimEvent,
+  WindowCoverView,
+} from '@deadzone/protocol';
 import {
   BatchedMesh,
   BoxGeometry,
@@ -296,6 +302,8 @@ export class OpeningsView {
   private readonly planks = new Map<string, number>();
   /** Windows whose frame has lost its glass (`removeGlass`); default: glass in the frame. */
   private readonly noGlass = new Set<string>();
+  /** Window covers (protocol 47) by edge key, from the full `view.openings` list. */
+  private readonly covers = new Map<string, WindowCoverView>();
   /** Every door / window / gate / fence edge (planks); windows (shards). */
   private plankMesh: InstancedMesh | undefined;
   private shardMesh: InstancedMesh | undefined;
@@ -448,12 +456,14 @@ export class OpeningsView {
     ty: number,
     z: number,
     side: EdgeSide,
-  ): { state: OpeningState; barricade: number; glass: boolean } {
+  ): { state: OpeningState; barricade: number; glass: boolean; cover?: WindowCoverView } {
     const key = openingKey(tx, ty, z, side);
+    const cover = this.covers.get(key);
     return {
       state: this.states.get(key) ?? 'closed',
       barricade: this.planks.get(key) ?? 0,
       glass: !this.noGlass.has(key),
+      ...(cover ? { cover } : {}),
     };
   }
 
@@ -473,9 +483,11 @@ export class OpeningsView {
     this.states.clear();
     this.planks.clear();
     this.noGlass.clear();
+    this.covers.clear();
     for (const o of list) {
       const key = openingKey(o.tx, o.ty, o.z, o.side);
       this.states.set(key, o.state);
+      if (o.cover) this.covers.set(key, o.cover);
       this.setExtras(key, o.barricade, o.glass);
     }
     this.dirty = true;

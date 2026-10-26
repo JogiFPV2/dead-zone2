@@ -369,3 +369,11 @@ html.is-touch .dz-hud .dz-floor {
 html.is-touch .dz-bm__bar {
   padding-left: calc(140px + var(--dz-safe-l));
 }
+
+/* Opening action menu (window „Zasłoń…” / „Zdejmij”, item picker): finger-sized rows. */
+html.is-touch .dz-ip__menu-item {
+  /* The prompt group is scaled by --hud2-s: 44 px on screen. */
+  min-height: calc(44px / var(--hud2-s, 1));
+  padding: 8px 10px;
+  font-size: 13px;
+}

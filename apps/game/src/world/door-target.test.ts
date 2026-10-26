@@ -4,6 +4,7 @@ import {
   DOOR_FIRST_TILES,
   OpeningFeedback,
   openingMenu,
+  OPENING_ACTION_TITLES,
   openingPrimary,
   type DoorTarget,
   doorCentre,
@@ -119,14 +120,22 @@ describe('gates and windows (F targeting, #106)', () => {
       'toggleDoor',
       'smashWindow',
       'barricade',
+      'coverWindow',
     ]);
     expect(cmds(target({ kind: 'window', state: 'broken', glass: true }))).toEqual([
       'removeGlass',
       'barricade',
+      'coverWindow',
     ]);
-    expect(cmds(target({ kind: 'window', state: 'broken', glass: false }))).toEqual(['barricade']);
+    expect(cmds(target({ kind: 'window', state: 'broken', glass: false }))).toEqual([
+      'barricade',
+      'coverWindow',
+    ]);
     expect(cmds(target({ barricade: 2 }))).toEqual(['removeBarricade', 'barricade']);
-    expect(cmds(target({ kind: 'window', barricade: 4 }))).toEqual(['removeBarricade']);
+    expect(cmds(target({ kind: 'window', barricade: 4 }))).toEqual([
+      'removeBarricade',
+      'coverWindow',
+    ]);
   });
 
   it('prompt verbs', () => {
@@ -152,5 +161,38 @@ describe('gates and windows (F targeting, #106)', () => {
     const forced = { type: 'doorForced', tick: 1, playerId: 0, tx: 1, ty: 2, z: 0, side: 'n' };
     expect(fb.toast({ ...forced, method: 'kick', success: false } as never)).toBe('Nie puściło');
     expect(fb.toast({ ...forced, method: 'pry', success: true } as never)).toBe('Wyważone');
+  });
+});
+
+describe('window covers (protocol 47)', () => {
+  const cover = { item: 'base:blanket', lightPass: 0.1, blocksSight: true };
+  it('uncovered window: „Zasłoń…” last; covered: „Zdejmij” (planks or not); doors never', () => {
+    expect(openingMenu(target({ kind: 'window', state: 'closed', glass: true })).at(-1)).toEqual({
+      cmd: 'coverWindow',
+      label: 'Zasłoń…',
+    });
+    expect(cmds(target({ kind: 'window', state: 'closed', glass: true, cover }))).toEqual([
+      'toggleDoor',
+      'smashWindow',
+      'barricade',
+      'uncoverWindow',
+    ]);
+    expect(cmds(target({ kind: 'window', barricade: 2, cover }))).toEqual([
+      'removeBarricade',
+      'barricade',
+      'uncoverWindow',
+    ]);
+    expect(cmds(target({ state: 'closed' }))).toEqual(['barricade']);
+  });
+  it('nearestDoor carries the cover of windows only', () => {
+    const win: DoorEdge = { tx: 8, ty: 6, z: 0, side: 'w', kind: 'window' };
+    const door: DoorEdge = { tx: 8, ty: 6, z: 0, side: 'w' };
+    const info = () => ({ state: 'closed' as const, cover });
+    expect(nearestDoor([win], info, 7.6, 6.5, 0)?.cover).toEqual(cover);
+    expect(nearestDoor([door], info, 7.6, 6.5, 0)?.cover).toBeUndefined();
+  });
+  it('ring titles of the cover actions', () => {
+    expect(OPENING_ACTION_TITLES.coverWindow).toBe('Zasłanianie');
+    expect(OPENING_ACTION_TITLES.uncoverWindow).toBe('Zdejmowanie');
   });
 });

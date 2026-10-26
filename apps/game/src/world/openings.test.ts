@@ -142,4 +142,22 @@ describe('gates, planks and shards (#106)', () => {
     ]);
     expect(view.info(1, 2, 0, 'w').barricade).toBe(0);
   });
+
+  it('info carries the window cover from the view list (protocol 47); a new list clears it', () => {
+    const view = new OpeningsView({} as never, {} as never);
+    const cover = { item: 'base:blanket', lightPass: 0.1, blocksSight: true };
+    const base = {
+      tx: 4,
+      ty: 5,
+      z: 0,
+      side: 'n' as const,
+      kind: 'window' as const,
+      hp: 0,
+      maxHp: 0,
+    };
+    view.setStates([{ ...base, state: 'closed', barricade: 0, glass: true, cover }]);
+    expect(view.info(4, 5, 0, 'n').cover).toEqual(cover);
+    view.setStates([{ ...base, state: 'closed', barricade: 0, glass: true }]);
+    expect(view.info(4, 5, 0, 'n').cover).toBeUndefined();
+  });
 });

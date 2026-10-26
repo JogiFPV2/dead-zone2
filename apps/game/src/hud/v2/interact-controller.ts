@@ -9,6 +9,7 @@ import {
   edgeKey,
   openingMenu,
   openingPrimary,
+  COVER_PICK_LABEL,
   OPENING_ACTION_TITLES,
   type DoorTarget,
   type OpeningCmd,
@@ -22,6 +23,10 @@ import {
   type SearchTarget,
 } from './interact-hold.js';
 import type { PromptVM } from './interact-prompt.js';
+import type { CoverChoice } from '../window-cover-items.js';
+
+/** „Zasłoń…” with no carried item that can cover a window. */
+export const NO_COVER_TOAST = 'Nie masz czym zasłonić';
 
 /** Height (m) above the floor where the prompt / ring is anchored. */
 const ANCHOR_HEIGHT = 0.9;
@@ -40,8 +45,12 @@ export interface InteractHost {
   player(): { x: number; y: number } | undefined;
   /** Nearest door / gate / window in reach (`world/door-target.ts`), undefined when none. */
   door(): DoorTarget | undefined;
-  /** Sends the sim command `cmd` (`toggleDoor`, `barricade` …) for this edge. */
-  opening(door: DoorTarget, cmd: OpeningCmd): void;
+  /** Sends the sim command `cmd` (`toggleDoor`, `barricade` …) for this edge (`item`: coverWindow). */
+  opening(door: DoorTarget, cmd: OpeningCmd, item?: number): void;
+  /** Carried items that can cover a window (the „Zasłoń…” picker). */
+  coverItems?(): readonly CoverChoice[];
+  /** Short message (picker with nothing to hang). */
+  toast?(text: string): void;
   /** Interact key still down. */
   held(): boolean;
   /** Moved or attacked this frame (cancels before the search starts, spec §6). */
@@ -68,7 +77,8 @@ export interface InteractHost {
 export class InteractController {
   private readonly hold = new InteractHold();
   /** Open opening menu (hold F at a door / gate / window, or a tap without a main use). */
-  private menu: { door: DoorTarget; options: OpeningOption[]; sel: number } | undefined;
+  private menu:
+    { door: DoorTarget; options: OpeningOption[]; sel: number; title?: string } | undefined;
 
   constructor(private readonly host: InteractHost) {}
 
@@ -97,7 +107,22 @@ export class InteractController {
     const o = m?.options[i];
     if (!m || !o) return false;
     this.menu = undefined;
-    this.host.opening(m.door, o.cmd);
+    if (o.cmd === 'coverWindow' && o.item === undefined) {
+      // „Zasłoń…”: second step, which carried item to hang.
+      const items = this.host.coverItems?.() ?? [];
+      if (!items.length) {
+        this.host.toast?.(NO_COVER_TOAST);
+        return true;
+      }
+      this.menu = {
+        door: m.door,
+        title: COVER_PICK_LABEL,
+        sel: 0,
+        options: items.map((c) => ({ cmd: 'coverWindow', label: c.label, item: c.id })),
+      };
+      return true;
+    }
+    this.host.opening(m.door, o.cmd, o.item);
     return true;
   }
 
@@ -187,7 +212,7 @@ export class InteractController {
           mode: 'menu',
           ...at,
           key,
-          title: doorVerb(door),
+          title: this.menu.title ?? doorVerb(door),
           items: this.menu.options.map((o) => o.label),
           sel: this.menu.sel,
         };

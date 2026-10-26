@@ -40,6 +40,8 @@ export interface HudItemDef {
   containerType?: string;
   /** Content tags (`base:tool-wrench`, `base:tool-hose` …): vehicle tools and parts. */
   tags?: readonly string[];
+  /** Can cover a window (`windowCover`, protocol 47): the „Zasłoń…” picker. */
+  windowCover?: boolean;
 }
 
 export interface HudRangedDef {
@@ -294,6 +296,7 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(magazine ? { magazine } : {}),
           ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),
           ...(tv ? { tv: true } : {}),
+          ...(isObj(i.windowCover) ? { windowCover: true } : {}),
           ...(isObj(i.vhs) ? { vhs: readVhs(i.vhs) } : {}),
           ...(typeof placeable?.containerType === 'string'
             ? { containerType: placeable.containerType }

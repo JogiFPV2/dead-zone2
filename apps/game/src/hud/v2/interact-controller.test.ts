@@ -4,6 +4,7 @@ import { INITIAL_GAME_STATE, type GameState } from '../../state/game-state.js';
 import { InteractController, SPOT_NAME } from './interact-controller.js';
 import { TAP_MS } from './interact-hold.js';
 import type { DoorTarget } from '../../world/door-target.js';
+import type { CoverChoice } from '../window-cover-items.js';
 
 const fridge: NearbyContainerView = {
   id: 5,
@@ -15,7 +16,7 @@ const fridge: NearbyContainerView = {
   searched: false,
 };
 
-function setup(nearby: NearbyContainerView[], door?: DoorTarget) {
+function setup(nearby: NearbyContainerView[], door?: DoorTarget, covers: CoverChoice[] = []) {
   const calls: string[] = [];
   let state: GameState = { ...INITIAL_GAME_STATE, nearby };
   let held = true;
@@ -23,10 +24,14 @@ function setup(nearby: NearbyContainerView[], door?: DoorTarget) {
     state: () => state,
     player: () => ({ x: 2.5, y: 2.5 }),
     door: () => door,
-    opening: (d: DoorTarget, cmd: string) =>
+    opening: (d: DoorTarget, cmd: string, item?: number) =>
       calls.push(
-        cmd === 'toggleDoor' ? `door ${d.tx},${d.ty},${d.side}` : `${cmd} ${d.tx},${d.ty}`,
+        cmd === 'toggleDoor'
+          ? `door ${d.tx},${d.ty},${d.side}`
+          : `${cmd} ${d.tx},${d.ty}${item === undefined ? '' : ` #${item}`}`,
       ),
+    coverItems: () => covers,
+    toast: (text) => calls.push(`toast ${text}`),
     held: () => held,
     interrupted: () => false,
     windowOpen: () => false,
@@ -159,7 +164,7 @@ describe('InteractController', () => {
     expect(t.calls).toEqual([]);
     expect(t.c.frame(120, 0)).toMatchObject({
       mode: 'menu',
-      items: ['Otwórz', 'Rozbij', 'Zabarykaduj'],
+      items: ['Otwórz', 'Rozbij', 'Zabarykaduj', 'Zasłoń…'],
     });
     const u = setup([], door(0.6, 'broken', { kind: 'window' }));
     u.c.press(0);
@@ -211,5 +216,49 @@ describe('InteractController', () => {
     expect(t.c.frame(1000, 35)).toMatchObject({ mode: 'search', progress: 0.5, threat: true });
     t.c.frame(1500, 45);
     expect(t.calls).toEqual(['search {"container":5}']);
+  });
+
+  it('„Zasłoń…” opens the item picker; picking sends coverWindow with the item', () => {
+    const covers = [
+      { id: 41, label: 'Koc' },
+      { id: 42, label: 'Kurtka' },
+    ];
+    const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }), covers);
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    expect(t.c.choose(3)).toBe(true);
+    expect(t.calls).toEqual([]);
+    expect(t.c.frame(120, 0)).toMatchObject({
+      mode: 'menu',
+      title: 'Zasłoń…',
+      items: ['Koc', 'Kurtka'],
+    });
+    expect(t.c.choose(1)).toBe(true);
+    expect(t.calls).toEqual(['coverWindow 2,3 #42']);
+    expect(t.c.menuOpen).toBe(false);
+  });
+
+  it('„Zasłoń…” with nothing to hang: a toast, no command', () => {
+    const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }));
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    t.c.choose(3);
+    expect(t.calls).toEqual(['toast Nie masz czym zasłonić']);
+    expect(t.c.menuOpen).toBe(false);
+  });
+
+  it('a covered window offers „Zdejmij” (uncoverWindow)', () => {
+    const cover = { item: 'base:blanket', lightPass: 0.1, blocksSight: true };
+    const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true, cover }));
+    t.c.press(0);
+    t.release();
+    t.c.frame(100, 0);
+    expect(t.c.frame(120, 0)).toMatchObject({
+      items: ['Otwórz', 'Rozbij', 'Zabarykaduj', 'Zdejmij'],
+    });
+    t.c.choose(3);
+    expect(t.calls).toEqual(['uncoverWindow 2,3']);
   });
 });
