@@ -987,6 +987,7 @@ let mapObjectList = objectsIn(follow?.range ?? world.range);
 function updateRoomLit(): void {
   const keys = litWindowKeys(gameState.get().litWindows);
   streamedTown?.setRoomLit(keys);
+  openings.setLitWindows?.(keys);
   townStructures?.setRoomLit(levelWindowKeys(keys, world.range.z));
   for (const l of upperTown) l.setRoomLit(levelWindowKeys(keys, l.z));
 }

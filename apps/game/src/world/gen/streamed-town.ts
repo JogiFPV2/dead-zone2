@@ -269,6 +269,8 @@ export interface OpeningsLike {
   applyEvents(events: readonly SimEvent[]): void;
   setCutaway(c: Cutaway): void;
   update(nowS: number): void;
+  /** Lit room windows (`litWindowKeys`): covered ones glow by their `lightPass`. */
+  setLitWindows?(keys: ReadonlySet<string>): void;
 }
 
 /**
@@ -284,6 +286,7 @@ export class StreamedOpenings implements OpeningsLike {
   private lastStates: readonly OpeningView[] = [];
   private eventsSince: SimEvent[] = [];
   private cut: Cutaway | undefined;
+  private lit: ReadonlySet<string> = new Set();
 
   constructor(
     private readonly loaded: LoadedChunks,
@@ -315,6 +318,7 @@ export class StreamedOpenings implements OpeningsLike {
     view.setStates(this.lastStates);
     if (this.eventsSince.length) view.applyEvents(this.eventsSince);
     if (this.cut) view.setCutaway(this.cut);
+    view.setLitWindows(this.lit);
     this.views.set(key(cx, cy, z), view);
     this.root.add(view.root);
     this.revision++;
@@ -366,6 +370,11 @@ export class StreamedOpenings implements OpeningsLike {
 
   update(nowS: number): void {
     for (const v of this.views.values()) v.update(nowS);
+  }
+
+  setLitWindows(keys: ReadonlySet<string>): void {
+    this.lit = keys;
+    for (const v of this.views.values()) v.setLitWindows(keys);
   }
 
   /** Loaded per-chunk views (tests). */

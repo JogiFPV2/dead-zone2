@@ -8,7 +8,9 @@ import type {
 import {
   BatchedMesh,
   BoxGeometry,
+  Color,
   Group,
+  InstancedBufferAttribute,
   InstancedMesh,
   Matrix4,
   Quaternion,
@@ -16,6 +18,7 @@ import {
 } from 'three';
 import type { TownKit } from './town/kit.js';
 import { placeholderMaterial } from '../lighting/materials.js';
+import { coverLook, coverMaterial, coverMatrix } from './window-cover-look.js';
 import type { BuildingLookup } from './building-lookup.js';
 import type { ChunkRange, ChunkSource } from './chunk.js';
 import { NO_CUTAWAY, isEdgeLowered, isLevelHidden, type Cutaway } from './cutaway.js';
@@ -307,11 +310,17 @@ export class OpeningsView {
   /** Every door / window / gate / fence edge (planks); windows (shards). */
   private plankMesh: InstancedMesh | undefined;
   private shardMesh: InstancedMesh | undefined;
+  /** Covered windows (protocol 47): one panel per window edge, hidden when none is covered. */
+  private coverMesh: InstancedMesh | undefined;
+  private coverFx: InstancedBufferAttribute | undefined;
+  /** Window edges (`openingKey`) whose room light is on (`view.litWindows`): covers glow. */
+  private litKeys: ReadonlySet<string> = new Set();
   private plankEdges: OpeningEdge[] = [];
   private shardEdges: OpeningEdge[] = [];
   private readonly pressure = new Map<string, number>();
   private cutaway: Cutaway = NO_CUTAWAY;
   private readonly m = new Matrix4();
+  private readonly coverColor = new Color();
   private dirty = true;
 
   private batch: BatchedMesh | undefined;
@@ -399,6 +408,16 @@ export class OpeningsView {
       m.frustumCulled = false;
       this.shardMesh = m;
       this.root.add(m);
+      const c = new InstancedMesh(this.geometry, coverMaterial(), this.shardEdges.length);
+      c.name = 'openings:covers';
+      c.frustumCulled = false;
+      c.visible = false;
+      this.coverFx = new InstancedBufferAttribute(new Float32Array(this.shardEdges.length * 2), 2);
+      c.geometry = this.geometry.clone();
+      c.geometry.setAttribute('coverFx', this.coverFx);
+      c.setColorAt(0, new Color());
+      this.coverMesh = c;
+      this.root.add(c);
     }
   }
 
@@ -592,6 +611,41 @@ export class OpeningsView {
       this.shardMesh.instanceMatrix.needsUpdate = true;
       this.shardMesh.visible = any;
     }
+    this.updateCovers(lowered);
+  }
+
+  /** Lit room windows (`litWindowKeys`: `tx,ty,z,N|W`): their covers let `lightPass` glow out. */
+  setLitWindows(keys: ReadonlySet<string>): void {
+    const out = new Set<string>();
+    for (const k of keys) {
+      const [tx, ty, z, axis] = k.split(',');
+      out.add(`${tx},${ty},${z},${axis === 'N' ? 'n' : 'w'}`);
+    }
+    this.litKeys = out;
+    this.dirty = true;
+  }
+
+  private updateCovers(lowered: (e: OpeningEdge) => boolean): void {
+    const mesh = this.coverMesh;
+    const fx = this.coverFx;
+    if (!mesh || !fx) return;
+    let any = false;
+    this.shardEdges.forEach((e, j) => {
+      const key = openingKey(e.tx, e.ty, e.z, e.side);
+      const cover = this.covers.get(key);
+      const show = !!cover && !lowered(e);
+      const look = cover ? coverLook(cover) : undefined;
+      if (show) any = true;
+      mesh.setMatrixAt(j, coverMatrix(this.m, e, look?.coverage ?? 0, show));
+      if (look) {
+        mesh.setColorAt(j, this.coverColor.setHex(look.color));
+        fx.setXY(j, look.alpha, this.litKeys.has(key) ? look.glow : 0);
+      }
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    fx.needsUpdate = true;
+    mesh.visible = any;
   }
 
   dispose(): void {
@@ -603,6 +657,8 @@ export class OpeningsView {
     ]) {
       if (mesh) (mesh.material as { dispose(): void }).dispose();
     }
+    // The cover material is shared by every view: only its per-view geometry goes.
+    this.coverMesh?.geometry.dispose();
     this.batch?.dispose();
     this.root.clear();
   }
