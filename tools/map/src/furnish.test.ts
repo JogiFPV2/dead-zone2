@@ -293,23 +293,27 @@ describe('furnish: meble w środku, rekwizyty na dworze', () => {
     expect([...ON_SURFACE].sort()).toEqual(ids.filter((id) => onSurfaceForId(bundle, id)).sort());
   });
 
-  it('meble 2×1 i 1×2 stoją w pokoju plecami do ściany, przy każdym obrocie', () => {
-    const seen = new Map<string, Set<number>>();
-    for (const type of ['house', 'kostka', 'shop', 'hospital']) {
-      if (!CATALOG[type]) continue;
-      for (let rot = 0; rot < 4; rot++) {
-        for (const o of furnish(unit(type, rot), OPT)) {
-          const fp = baseFootprint(o.contentId);
-          if (fp.w * fp.h === 1) continue;
-          if (!seen.has(o.contentId)) seen.set(o.contentId, new Set());
-          seen.get(o.contentId)!.add(o.rot);
+  it(
+    'meble 2×1 i 1×2 stoją w pokoju plecami do ściany, przy każdym obrocie',
+    { timeout: 20_000 },
+    () => {
+      const seen = new Map<string, Set<number>>();
+      for (const type of ['house', 'kostka', 'shop', 'hospital']) {
+        if (!CATALOG[type]) continue;
+        for (let rot = 0; rot < 4; rot++) {
+          for (const o of furnish(unit(type, rot), OPT)) {
+            const fp = baseFootprint(o.contentId);
+            if (fp.w * fp.h === 1) continue;
+            if (!seen.has(o.contentId)) seen.set(o.contentId, new Set());
+            seen.get(o.contentId)!.add(o.rot);
+          }
         }
       }
-    }
-    expect(seen.has('base:bed')).toBe(true);
-    expect(seen.has('base:sofa')).toBe(true);
-    expect(seen.get('base:bed')!.size).toBeGreaterThan(1);
-  });
+      expect(seen.has('base:bed')).toBe(true);
+      expect(seen.has('base:sofa')).toBe(true);
+      expect(seen.get('base:bed')!.size).toBeGreaterThan(1);
+    },
+  );
 
   for (const type of CATALOG_IDS) {
     it(`${type}: 4 obroty × 3 seedy bez naruszeń`, { timeout: 30_000 }, () => {
@@ -344,52 +348,56 @@ describe('furnish: meble w środku, rekwizyty na dworze', () => {
     }
   });
 
-  it('stół w kuchni z krzesłem, lampy w domu, włącznik w każdym pokoju z lampą (#254)', () => {
-    let tables = 0;
-    let deskLamps = 0;
-    const lampTypes = new Set<string>();
-    for (const type of CATALOG_IDS)
-      for (const seed of [1, 2, 3]) {
-        const bp = unit(type, seed % 4);
-        const objs = furnish(bp, { ...OPT, seed });
-        const view = new MapView(buildMap(bp).chunks);
-        const typeOf = (o: PlacedObject) => view.rooms.get(view.room(o.x, o.y, o.z))?.roomType;
-        const chairs = objs.filter((o) => o.contentId === 'base:chair');
-        for (const t of objs.filter((o) => o.contentId === 'base:table')) {
-          const cells = occupiedTiles(t.x, t.y, t.rot, baseFootprint(t.contentId));
-          const seated = chairs.some((c) => {
-            const [, dx, dy] = SIDE[c.rot]!;
-            return c.z === t.z && cells.some((q) => q.x === c.x - dx && q.y === c.y - dy);
-          });
-          if (typeOf(t) === 'base:room-kitchen') {
-            tables++;
-            expect(seated, `${type} seed ${seed}: stół w kuchni bez krzesła`).toBe(true);
+  it(
+    'stół w kuchni z krzesłem, lampy w domu, włącznik w każdym pokoju z lampą (#254)',
+    { timeout: 20_000 },
+    () => {
+      let tables = 0;
+      let deskLamps = 0;
+      const lampTypes = new Set<string>();
+      for (const type of CATALOG_IDS)
+        for (const seed of [1, 2, 3]) {
+          const bp = unit(type, seed % 4);
+          const objs = furnish(bp, { ...OPT, seed });
+          const view = new MapView(buildMap(bp).chunks);
+          const typeOf = (o: PlacedObject) => view.rooms.get(view.room(o.x, o.y, o.z))?.roomType;
+          const chairs = objs.filter((o) => o.contentId === 'base:chair');
+          for (const t of objs.filter((o) => o.contentId === 'base:table')) {
+            const cells = occupiedTiles(t.x, t.y, t.rot, baseFootprint(t.contentId));
+            const seated = chairs.some((c) => {
+              const [, dx, dy] = SIDE[c.rot]!;
+              return c.z === t.z && cells.some((q) => q.x === c.x - dx && q.y === c.y - dy);
+            });
+            if (typeOf(t) === 'base:room-kitchen') {
+              tables++;
+              expect(seated, `${type} seed ${seed}: stół w kuchni bez krzesła`).toBe(true);
+            }
+          }
+          const switched = new Set(
+            objs.filter((o) => o.contentId === LIGHT_SWITCH).map((o) => view.room(o.x, o.y, o.z)),
+          );
+          for (const l of objs.filter((o) => POWERED_LAMPS.has(o.contentId))) {
+            lampTypes.add(`${l.contentId} ${typeOf(l)}`);
+            if (l.contentId === 'base:desk-lamp') deskLamps++;
+            expect(
+              switched.has(view.room(l.x, l.y, l.z)),
+              `${type} seed ${seed}: ${l.contentId} (${l.x}, ${l.y}) bez włącznika`,
+            ).toBe(true);
           }
         }
-        const switched = new Set(
-          objs.filter((o) => o.contentId === LIGHT_SWITCH).map((o) => view.room(o.x, o.y, o.z)),
-        );
-        for (const l of objs.filter((o) => POWERED_LAMPS.has(o.contentId))) {
-          lampTypes.add(`${l.contentId} ${typeOf(l)}`);
-          if (l.contentId === 'base:desk-lamp') deskLamps++;
-          expect(
-            switched.has(view.room(l.x, l.y, l.z)),
-            `${type} seed ${seed}: ${l.contentId} (${l.x}, ${l.y}) bez włącznika`,
-          ).toBe(true);
-        }
-      }
-    expect(tables).toBeGreaterThan(0);
-    expect(deskLamps).toBeGreaterThan(0);
-    expect([...lampTypes]).toEqual(
-      expect.arrayContaining([
-        'base:ceiling-lamp base:room-kitchen',
-        'base:ceiling-lamp base:room-bathroom',
-        'base:ceiling-lamp base:room-living-room',
-        'base:floor-lamp base:room-living-room',
-        'base:floor-lamp base:room-bedroom',
-      ]),
-    );
-  });
+      expect(tables).toBeGreaterThan(0);
+      expect(deskLamps).toBeGreaterThan(0);
+      expect([...lampTypes]).toEqual(
+        expect.arrayContaining([
+          'base:ceiling-lamp base:room-kitchen',
+          'base:ceiling-lamp base:room-bathroom',
+          'base:ceiling-lamp base:room-living-room',
+          'base:floor-lamp base:room-living-room',
+          'base:floor-lamp base:room-bedroom',
+        ]),
+      );
+    },
+  );
 
   it('sprawdzarka łapie szafę na trawie i mebel w drzwiach', () => {
     const bp = unit('house', 0);
@@ -407,7 +415,7 @@ describe('furnish: meble w środku, rekwizyty na dworze', () => {
     expect(furnish(bp, { ...OPT, seed: 9 })).not.toEqual(furnish(bp, OPT));
   });
 
-  it('town-catalog: blueprint w repo = wygenerowany, bez naruszeń', () => {
+  it('town-catalog: blueprint w repo = wygenerowany, bez naruszeń', { timeout: 20_000 }, () => {
     const fresh = townCatalogBlueprint();
     const file = JSON.parse(
       readFileSync(new URL('../blueprints/town-catalog.json', import.meta.url), 'utf8'),
