@@ -386,6 +386,22 @@ export const openingActionCommandSchemas = OPENING_ACTION_COMMANDS.map((type) =>
     side: edgeSide,
   }),
 );
+/** `coverWindow` / `uncoverWindow` (protocol 47). */
+export const coverWindowCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('coverWindow'),
+  tx: tileCoord,
+  ty: tileCoord,
+  side: edgeSide,
+  item: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+});
+export const uncoverWindowCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('uncoverWindow'),
+  tx: tileCoord,
+  ty: tileCoord,
+  side: edgeSide,
+});
 
 const markerCoord = z.number().finite().min(-MAX_WORLD_COORD).max(MAX_WORLD_COORD);
 /** Marker floor (`z`), the int16 range of the other tile commands. */
@@ -594,6 +610,8 @@ export const commandSchema = z.discriminatedUnion('type', [
   useFurnitureCommandSchema,
   breakWindowCommandSchema,
   ...openingActionCommandSchemas,
+  coverWindowCommandSchema,
+  uncoverWindowCommandSchema,
   debugOpeningCommandSchema,
   debugRevealMapCommandSchema,
   placeLureCommandSchema,

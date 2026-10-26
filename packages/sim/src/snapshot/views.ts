@@ -431,7 +431,7 @@ export class ViewTracker {
     if (w.openings.version !== this.openingsVersion) {
       this.openingsVersion = w.openings.version;
       const o = w.openings;
-      patch.openings = [...new Set([...o.states.keys(), ...o.curtains])]
+      patch.openings = [...new Set([...o.states.keys(), ...o.curtains, ...o.covers.keys()])]
         .sort((a, b) => a - b)
         .map((k) => openingView(o, k, o.states.has(k) ? 0 : edgeKindOf(o, k)));
       // Light switches turned on (docs 9.53): when the set changed.
@@ -449,9 +449,15 @@ export class ViewTracker {
       const r = LIT_WINDOWS_RANGE_TILES;
       const lit: LitWindowView[] = litWindows(w)
         .filter((l) => Math.abs(l.wx - px) <= r && Math.abs(l.wy - py) <= r)
-        .map((l) => ({ edge: l.key, x: l.wx, y: l.wy, z: l.z }))
+        .map((l) => ({
+          edge: l.key,
+          x: l.wx,
+          y: l.wy,
+          z: l.z,
+          ...(l.pass < 1 ? { lightPass: l.pass } : {}),
+        }))
         .sort((a, b) => a.edge - b.edge);
-      const key = lit.map((l) => l.edge).join(',');
+      const key = lit.map((l) => `${l.edge}:${l.lightPass ?? 1}`).join(',');
       if (key !== this.litKey) {
         this.litKey = key;
         patch.litWindows = lit;

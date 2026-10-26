@@ -1750,3 +1750,37 @@ Flaga `allowRevealMap` (domyślnie `false`, poza stanem/zapisem) wpuszcza poza d
 pozostałe `debug*` zostają dev-only. Ustawia ją tylko klient jednoosobowy (np. gh-pages, gdzie
 `dev=false`); serwer/multiplayer jej nie ustawia, więc tam komenda jest odrzucana (`dev-only`).
 Do porównań mapy ze Stalową Wolą w czasie testów. Test: `map/reveal.test.ts`.
+
+### 9.78 Zasłanianie okien (protokół 47)
+
+Przedmiot z polem contentu `windowCover { blocksSight = true, lightPass = 0, setupSec = 10 }`
+(`DEFAULT_WINDOW_COVER_*`; w bazie `base:sheet`, `hoodie`, `curtain`, `jacket`, `blanket`, `tarp`)
+można zawiesić na oknie.
+
+- Komendy: `coverWindow { tx, ty, side, item }` (`item` = id instancji niesionej w ekwipunku) i
+  `uncoverWindow { tx, ty, side }`; krawędź okna jak w innych komendach okien (`side` `n` / `w`,
+  piętro gracza). Akcje czasowe `coverWindow` / `uncoverWindow` (czas `setupSec` przedmiotu, zombie
+  nie przerywają). Zasięg: `reachTarget` do kafla okna po stronie gracza (ściana / zamknięte drzwi
+  między = `wall`, daleko = `out-of-range`), potem zwykły `reachTiles` krawędzi.
+- Zawieszenie zabiera sztukę z ekwipunku; zdjęcie oddaje jedną sztukę tego samego przedmiotu (do
+  ekwipunku albo na ziemię, gdy za ciężko). Stan przedmiotu (zużycie, brud) nie jest pamiętany.
+- Odrzucenia: `invalid-target` (nie okno, przedmiot bez `windowCover`), `missing-parts` (przedmiot
+  nie w ekwipunku), `invalid-state` (już zasłonięte / nie ma czego zdjąć), `wall`, `out-of-range`.
+- Stan: `OpeningsWorld.covers: Map<openingKey, { item, lightPass, blocksSight }>`, niezależny od
+  stanu okna i desek. Decyzja: zasłonić można okno w każdym stanie (zamknięte, otwarte, wybite,
+  z deskami); wybicie okna nie zdejmuje zasłony.
+- Wzrok: zasłona z `blocksSight` daje krawędzi flagę `EF.covered`, która blokuje tylko ślad `Sight`
+  (widoczność gracza i zombie, `lineOfSight`). Ruch (`Walk`), sięganie (`Reach`), ciosy (`Melee`)
+  i dźwięk przechodzą jak bez zasłony: otwarte / wybite okno dalej da się przejść (wolno), zamknięte
+  dalej blokuje ruch.
+- Światło: okno z zasłoną wypuszcza `lightPass` światła lampy (`litWindows.pass`). `lightPass` 0 =
+  nie świeci i nie wabi; > 0 = wabienie zombie z promieniem i głośnością × `lightPass`, a widok
+  `litWindows[].lightPass` (brak = 1).
+- Widok: `OpeningView.cover?: { item, lightPass, blocksSight }` w `openings` (wysyłane też dla
+  okien bez innych zmian stanu).
+- Zapis (`SAVE_VERSION` 3): pole `covers` w sekcji `openings` (Map, na dysku
+  `{ "$m": [[openingKey, { item, lightPass, blocksSight }], …] }`, `saveWindowCoversRawSchema` w
+  `protocol/api-schema`); starsze zapisy go nie mają. Po wczytaniu `pruneStaleWindows` usuwa
+  zasłony i wpisy `states` okien, których krawędź po przebudowie mapy nie jest już oknem. Hash
+  stanu obejmuje zasłony tylko gdy są (stare golden hashe bez zmian).
+- Test: `openings/cover.test.ts`.

@@ -694,6 +694,32 @@ export interface OpeningActionCommand extends CommandHeader {
   side: EdgeSide;
 }
 
+/**
+ * Window covers (protocol 47, docs 9.78): hang a carried item with `windowCover` content
+ * (`base:sheet`, `base:curtain`, …) on a window edge on the player's floor, or take it down.
+ * Timed (`windowCover.setupSec`, default 10 s): `coverWindow` takes the item out of the inventory,
+ * `uncoverWindow` puts it back (on the ground when too heavy). A covered window blocks sight
+ * (`blocksSight`) and lets `lightPass` (0–1) of the lamp light out; it never changes movement.
+ * Any window state works (closed / open / broken, planks or not). Rejects: `out-of-range` /
+ * `wall` (`reachTarget`), `invalid-target` (not a window, item without `windowCover`),
+ * `missing-parts` (item not carried), `invalid-state` (already covered / not covered), `busy`.
+ */
+export interface CoverWindowCommand extends CommandHeader {
+  type: 'coverWindow';
+  tx: number;
+  ty: number;
+  side: EdgeSide;
+  /** Item instance id (carried). */
+  item: number;
+}
+
+export interface UncoverWindowCommand extends CommandHeader {
+  type: 'uncoverWindow';
+  tx: number;
+  ty: number;
+  side: EdgeSide;
+}
+
 export const OPENING_ACTION_COMMANDS = [
   'smashWindow',
   'climbThrough',
@@ -970,6 +996,8 @@ export type Command =
   | UseFurnitureCommand
   | BreakWindowCommand
   | OpeningActionCommand
+  | CoverWindowCommand
+  | UncoverWindowCommand
   | DebugOpeningCommand
   | DebugRevealMapCommand
   | PlaceLureCommand

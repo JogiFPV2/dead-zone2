@@ -211,6 +211,10 @@ export interface SimWorkerClient {
   climbThrough(tx: number, ty: number, side: EdgeSide): void;
   /** Timed: clear the shards from a broken window. */
   removeGlass(tx: number, ty: number, side: EdgeSide): void;
+  /** Hang carried item `item` (instance id, `windowCover` content) on a window (protocol 47). */
+  coverWindow(tx: number, ty: number, side: EdgeSide, item: number): void;
+  /** Take the cover down; the item comes back to the inventory. */
+  uncoverWindow(tx: number, ty: number, side: EdgeSide): void;
   /** Timed: nail one plank (hammer + plank + nails) over a door / window / gate. */
   barricade(tx: number, ty: number, side: EdgeSide): void;
   /** Timed: pull the top plank off (hammer or crowbar). */
@@ -429,6 +433,8 @@ export function createSimWorkerClient(
     smashWindow: (tx, ty, side) => cmd({ type: 'smashWindow', tx, ty, side }),
     climbThrough: (tx, ty, side) => cmd({ type: 'climbThrough', tx, ty, side }),
     removeGlass: (tx, ty, side) => cmd({ type: 'removeGlass', tx, ty, side }),
+    coverWindow: (tx, ty, side, item) => cmd({ type: 'coverWindow', tx, ty, side, item }),
+    uncoverWindow: (tx, ty, side) => cmd({ type: 'uncoverWindow', tx, ty, side }),
     barricade: (tx, ty, side) => cmd({ type: 'barricade', tx, ty, side }),
     removeBarricade: (tx, ty, side) => cmd({ type: 'removeBarricade', tx, ty, side }),
     forceDoor: (tx, ty, side) => cmd({ type: 'forceDoor', tx, ty, side }),

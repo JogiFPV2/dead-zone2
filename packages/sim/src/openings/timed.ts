@@ -1,3 +1,8 @@
+import {
+  DEFAULT_WINDOW_COVER_BLOCKS_SIGHT,
+  DEFAULT_WINDOW_COVER_LIGHT_PASS,
+  DEFAULT_WINDOW_COVER_SETUP_SEC,
+} from '@deadzone/content';
 import { windowBlocker } from './window-blocker.js';
 import type { CommandRejectReason } from '@deadzone/protocol';
 import { registerAction } from '../actions/queue.js';
@@ -7,7 +12,7 @@ import { TICKS_PER_SECOND } from '../core/constants.js';
 import { gameMinuteAt, ticksPerGameMinute } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces, carriedItems, hasToolTag } from '../items/actions.js';
-import { carriedLoad, hardLimit, playerItems } from '../items/inventory.js';
+import { carriedLoad, hardLimit, playerItems, reachTarget } from '../items/inventory.js';
 import {
   defOf,
   destroyItem,
@@ -31,6 +36,7 @@ import {
 import {
   isBarricadable,
   isDoorLike,
+  edgeTiles,
   OpeningKind,
   OS,
   setOpening,
@@ -59,6 +65,48 @@ function target(w: SimWorld, eid: number, a: ActionState): Target | CommandRejec
   if (t.kind === OpeningKind.wall) return 'invalid-target';
   if (!edgeInReach(w, eid, a.edge)) return 'out-of-range';
   return t;
+}
+
+/**
+ * Window cover reach (docs 9.78): `reachTarget` to the edge's tile on the player's side (walls,
+ * closed doors between block it), then the usual edge reach.
+ */
+function coverTarget(w: SimWorld, eid: number, a: ActionState): Target | CommandRejectReason {
+  if (a.edge === undefined) return 'invalid-target';
+  const k = unpackKey(a.edge);
+  const [t0, t1] = edgeTiles(a.edge);
+  const px = w.c.Position.x[eid] ?? 0;
+  const py = w.c.Position.y[eid] ?? 0;
+  const d = (t: { x: number; y: number }) => (t.x + 0.5 - px) ** 2 + (t.y + 0.5 - py) ** 2;
+  const near = d(t0) <= d(t1) ? t0 : t1;
+  const block = reachTarget(w, eid, { x: near.x, y: near.y, z: k.z });
+  if (block) return block;
+  const t = target(w, eid, a);
+  if (typeof t === 'string') return t;
+  return t.kind === OpeningKind.window ? t : 'invalid-target';
+}
+
+/** `windowCover` of item def index `def` with the content defaults, or undefined. */
+function coverOf(
+  w: SimWorld,
+  def: number,
+): { lightPass: number; blocksSight: boolean; setupSec: number } | undefined {
+  const d = w.items?.content.items[def];
+  const c = d?.windowCover;
+  if (!c) return undefined;
+  return {
+    lightPass: c.lightPass ?? DEFAULT_WINDOW_COVER_LIGHT_PASS,
+    blocksSight: c.blocksSight ?? DEFAULT_WINDOW_COVER_BLOCKS_SIGHT,
+    setupSec: c.setupSec ?? DEFAULT_WINDOW_COVER_SETUP_SEC,
+  };
+}
+
+/** Item id → `setupSec` of its cover (defaults when the item lost `windowCover`). */
+function coverSecOfId(w: SimWorld, id: string | undefined): number {
+  const def = id === undefined ? undefined : w.items?.content.itemIndex.get(id);
+  return (
+    (def === undefined ? undefined : coverOf(w, def)?.setupSec) ?? DEFAULT_WINDOW_COVER_SETUP_SEC
+  );
 }
 
 /** Real seconds (at ×1) → game minutes (the queue converts back with the wound slowdown). */
@@ -284,6 +332,61 @@ export function registerOpeningActions(): void {
       give(w, eid, b.plankItem, 1);
       give(w, eid, b.nailsItem, nails);
       addXp(w, eid, b.skill, b.xpPerRemove);
+      emitOpeningChanged(w, t.key, t.kind, 'player');
+    },
+  });
+
+  // Window covers (protocol 47, docs 9.78): hang / take down; no movement change.
+  registerAction('coverWindow', {
+    validate(w, eid, a) {
+      const t = coverTarget(w, eid, a);
+      if (typeof t === 'string') return t;
+      if (w.openings.covers.has(t.key)) return 'invalid-state';
+      const st = w.items;
+      const p = playerItems(w, eid);
+      const item = st?.items.get(a.item);
+      if (!st || !p || !item) return 'missing-parts';
+      if (!coverOf(w, item.def)) return 'invalid-target';
+      if (!carriedItems(st, p.inventory).includes(item)) return 'missing-parts';
+      return undefined;
+    },
+    durationMin: (w, _eid, a) => {
+      const item = w.items?.items.get(a.item);
+      return secMin(w, (item && coverOf(w, item.def)?.setupSec) ?? DEFAULT_WINDOW_COVER_SETUP_SEC);
+    },
+    ignore: ['threat'],
+    complete(w, eid, a) {
+      const t = coverTarget(w, eid, a) as Target;
+      const st = w.items!;
+      const item = st.items.get(a.item)!;
+      const c = coverOf(w, item.def)!;
+      const id = defOf(st, item).id;
+      consume(w, [item], 1);
+      w.openings.covers.set(t.key, {
+        item: id,
+        lightPass: c.lightPass,
+        blocksSight: c.blocksSight,
+      });
+      w.openings.version++;
+      emitOpeningChanged(w, t.key, t.kind, 'player');
+    },
+  });
+
+  registerAction('uncoverWindow', {
+    validate(w, eid, a) {
+      const t = coverTarget(w, eid, a);
+      if (typeof t === 'string') return t;
+      return w.openings.covers.has(t.key) ? undefined : 'invalid-state';
+    },
+    durationMin: (w, _eid, a) =>
+      secMin(w, coverSecOfId(w, w.openings.covers.get(a.edge ?? -1)?.item)),
+    ignore: ['threat'],
+    complete(w, eid, a) {
+      const t = coverTarget(w, eid, a) as Target;
+      const c = w.openings.covers.get(t.key)!;
+      w.openings.covers.delete(t.key);
+      w.openings.version++;
+      give(w, eid, c.item, 1);
       emitOpeningChanged(w, t.key, t.kind, 'player');
     },
   });

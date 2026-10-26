@@ -739,6 +739,18 @@ export function createSim(input: SimOptions): Sim {
       for (const k of [...o.lightsOn].sort((a, b) => a - b))
         h.u32(k % 0x1_0000_0000).u32(Math.floor(k / 0x1_0000_0000));
     }
+    // Window covers (docs 9.78): only when any (older goldens).
+    if (o.covers.size > 0) {
+      h.u32(0xc0_7e75).u32(o.covers.size);
+      for (const k of [...o.covers.keys()].sort((a, b) => a - b)) {
+        const c = o.covers.get(k)!;
+        h.u32(k % 0x1_0000_0000).u32(Math.floor(k / 0x1_0000_0000));
+        h.f32(c.lightPass)
+          .u32(c.blocksSight ? 1 : 0)
+          .u32(c.item.length);
+        for (let i = 0; i < c.item.length; i++) h.u32(c.item.charCodeAt(i));
+      }
+    }
     return h.digest();
   };
 

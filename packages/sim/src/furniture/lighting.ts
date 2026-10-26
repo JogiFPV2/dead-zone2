@@ -51,6 +51,8 @@ export interface LitWindow {
   /** Middle of the window edge (the glow, `SimViewPatch.litWindows`). */
   wx: number;
   wy: number;
+  /** Share of the light let out (window cover `lightPass`, docs 9.78; 1 = uncovered). */
+  pass: number;
 }
 
 export function litWindows(w: SimWorld): LitWindow[] {
@@ -82,8 +84,11 @@ export function litWindows(w: SimWorld): LitWindow[] {
           if (edgeKindOf(o, key) !== OpeningKind.window) continue;
           if (roomSig(map, ox, oy, z) !== undefined) continue;
           if ((o.states.get(key)?.planks ?? 0) >= o.cfg.barricade.maxPlanks) continue;
+          // Window cover (docs 9.78): `lightPass` 0 hides the lamp completely.
+          const pass = o.covers.get(key)?.lightPass ?? 1;
+          if (pass <= 0) continue;
           seen.add(key);
-          out.push({ key, x: ox + 0.5, y: oy + 0.5, z, wx, wy });
+          out.push({ key, x: ox + 0.5, y: oy + 0.5, z, wx, wy, pass });
         }
       }
     }
@@ -99,5 +104,14 @@ export function lightLureSystem(w: SimWorld): void {
   if (w.tick % Math.max(1, ai.cfg.ai.farThinkEveryTicks) !== 0) return;
   if (sunState(gameMinuteAt(w.clock, w.tick)).sky > lure.maxSky) return;
   for (const win of litWindows(w))
-    emitNoise(w, win.x, win.y, win.z, lure.radiusTiles, lure.volume, 'light', lure.lingerSec);
+    emitNoise(
+      w,
+      win.x,
+      win.y,
+      win.z,
+      lure.radiusTiles * win.pass,
+      lure.volume * win.pass,
+      'light',
+      lure.lingerSec,
+    );
 }

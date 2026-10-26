@@ -204,7 +204,10 @@ export type ActionKind =
    * `physics/hold-door.ts`, `sim.holdDoor` / `releaseDoor`); runs until released, exhausted,
    * overpowered, moved or hit (`doorHeld`).
    */
-  | 'holdDoor';
+  | 'holdDoor'
+  /** Hang / take down a window cover (protocol 47, docs 9.78). */
+  | 'coverWindow'
+  | 'uncoverWindow';
 
 export type ActionInterruptReason =
   /** Movement intent while the action runs. */

@@ -83,6 +83,15 @@ export interface LitWindowView {
   x: number;
   y: number;
   z: number;
+  /** Covered window (protocol 47): share of the light let through (0–1); absent = 1. */
+  lightPass?: number;
+}
+
+/** `OpeningView.cover` (protocol 47). */
+export interface WindowCoverView {
+  item: string;
+  lightPass: number;
+  blocksSight: boolean;
 }
 
 /** Range of `SimViewPatch.litWindows` around the player (tiles, Chebyshev). */
@@ -933,6 +942,11 @@ export interface OpeningView {
   glass: boolean;
   /** Window with drawn curtains (protocol 32): hides the light inside from zombies. */
   curtains?: boolean;
+  /**
+   * Window cover (protocol 47, docs 9.78): item id hung on it, the share of lamp light it lets
+   * out (0–1) and whether it blocks sight. Absent = not covered.
+   */
+  cover?: WindowCoverView;
   /**
    * Door / gate (closed or locked) at or below half of its edge hp (protocol 42): renderer shows
    * the cracked / splintered sprite. Absent = intact. Planks do not count.

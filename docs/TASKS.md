@@ -106,6 +106,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Gotowanie: kuchenki gaz/prąd (`placeable.cooking`, `station.appliance`, `base:range`), menu `cook:<recipeId>`, przypalanie (`crafting.burn`) (Symulacja, etap 6) — [sim-architecture.md 9.52](sim-architecture.md)
 - [x] `base:gas-stove` jako placeable z `cooking` (Modules, #246; ikona — wpis Designera niżej) — [sim-architecture.md 9.52](sim-architecture.md)
 - [x] Włączniki światła w pokojach (`base:light-switch`), zasłony, zapalone okno w nocy wabi zombie (`lighting.lure`, hałas `light`) (Symulacja, etap 7) — [sim-architecture.md 9.53](sim-architecture.md)
+- [x] Zasłanianie okien przedmiotem (`windowCover`: prześcieradło, kurtka, zasłona, koc, plandeka): `coverWindow` / `uncoverWindow`, blokuje wzrok i część światła, nie ruch; widok `OpeningView.cover`, zapis `openings.covers` (Symulacja, protokół 47) — [sim-architecture.md 9.78](sim-architecture.md)
 - [x] Placeable włącznika światła z tagiem `base:light-switch` + ikona (Modules), po jednym w pokoju z lampą (Silnik 2, `ROOM_KITS`) — [sim-architecture.md 9.53](sim-architecture.md)
 - [x] Łazienka i woda z sieci: brud (`PlayerView.dirt`), `useWater` (picie z kranu, mycie, prysznic, wanna), tagi `base:water-tap` / `base:shower` / `base:bath` (Symulacja, etap 8) — [sim-architecture.md 9.54](sim-architecture.md)
 - [x] Magnetowid `base:vcr` obok telewizora i radio `base:radio-set` w salonach (Silnik 2, `ROOM_KITS`); krzesła/fotele z `placeable.seat` (Modules)

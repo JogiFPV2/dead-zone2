@@ -169,6 +169,26 @@ export const saveLightingSchema = z.object({
 });
 
 /**
+ * Window covers in the saved openings section (protocol 47, docs 9.78): `covers` = Map window edge
+ * key (`openingKey`) → `{ item, lightPass, blocksSight }` (item id hung on the window). Absent in
+ * older saves (no covers). On disk the save codec encodes the Map as `{ "$m": [[key, cover], …] }`.
+ */
+export const saveWindowCoverSchema = z.strictObject({
+  item: z.string().min(1).max(128),
+  lightPass: z.number().min(0).max(1),
+  blocksSight: z.boolean(),
+});
+export const saveWindowCoversRawSchema = z.object({
+  covers: z
+    .looseObject({
+      $m: z.array(
+        z.tuple([z.number().int().min(0).max(Number.MAX_SAFE_INTEGER), saveWindowCoverSchema]),
+      ),
+    })
+    .optional(),
+});
+
+/**
  * Burnt food field in the saved item map (protocol 31): `burnt` = cooked food that came out
  * burnt (`crafting.burn`); written only when true.
  */

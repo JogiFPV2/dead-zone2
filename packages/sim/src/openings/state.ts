@@ -172,6 +172,40 @@ export interface OpeningsWorld {
   readonly curtains: Set<number>;
   /** Light switches turned on (`switchKeyOf`; saved, docs 9.53). */
   readonly lightsOn: Set<number>;
+  /** Window covers (edge key → cover; saved, protocol 47, docs 9.78). */
+  readonly covers: Map<number, WindowCoverState>;
+}
+
+/** A cover hung on a window (`coverWindow`, docs 9.78). */
+export interface WindowCoverState {
+  /** Item id (content) that comes back on `uncoverWindow`. */
+  item: string;
+  /** Share of the lamp light let out (0–1). */
+  lightPass: number;
+  blocksSight: boolean;
+}
+
+/** Sight-blocking cover on window edge `key` (planks / state do not matter). */
+export const coverBlocksSight = (o: OpeningsWorld, key: number): boolean =>
+  o.covers.size > 0 && !!o.covers.get(key)?.blocksSight;
+
+/**
+ * After a load (docs 9.78): drops covers and window entries whose edge is no longer a window in
+ * the (rebuilt) map. Bumps `version` when anything went.
+ */
+export function pruneStaleWindows(o: OpeningsWorld): void {
+  let n = 0;
+  for (const key of [...o.covers.keys()])
+    if (edgeKindOf(o, key) !== OpeningKind.window) {
+      o.covers.delete(key);
+      n++;
+    }
+  for (const [key, e] of [...o.states])
+    if (e.kind === OpeningKind.window && edgeKindOf(o, key) !== OpeningKind.window) {
+      o.states.delete(key);
+      n++;
+    }
+  if (n > 0) o.version++;
 }
 
 export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0): OpeningsWorld {
@@ -203,6 +237,7 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0):
     buildingRooms: undefined,
     curtains: new Set(),
     lightsOn: new Set(),
+    covers: new Map(),
   };
 }
 
@@ -254,6 +289,8 @@ export const EF = {
   opening: 16,
   /** Open / broken window: passable, but slows movement. */
   slow: 32,
+  /** Window with a sight-blocking cover (docs 9.78): blocks `Sight` traces only. */
+  covered: 64,
 } as const;
 
 /**
@@ -334,8 +371,14 @@ export function openingView(o: OpeningsWorld, key: number, kind: number): Openin
     barricade: planks,
     glass: kind === OpeningKind.window && !(state === OS.broken && e?.cleared),
     ...(o.curtains.has(key) ? { curtains: true } : {}),
+    ...coverView(o, key),
     ...(isCracked(o, kind, state, edgeHp) ? { cracked: true } : {}),
   };
+}
+
+function coverView(o: OpeningsWorld, key: number): Pick<OpeningView, 'cover'> {
+  const c = o.covers.get(key);
+  return c ? { cover: { item: c.item, lightPass: c.lightPass, blocksSight: c.blocksSight } } : {};
 }
 
 /** Door / gate, not open or broken, edge hp ≤ `DOOR_CRACKED_FRAC` × max (planks ignored). */

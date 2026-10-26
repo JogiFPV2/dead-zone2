@@ -28,13 +28,23 @@ import { floorZ } from '../world/levels.js';
 
 type OpeningCommand = Extract<
   Command,
-  { type: 'toggleDoor' | 'breakWindow' | 'debugOpening' | OpeningActionType }
+  {
+    type:
+      | 'toggleDoor'
+      | 'breakWindow'
+      | 'debugOpening'
+      | 'coverWindow'
+      | 'uncoverWindow'
+      | OpeningActionType;
+  }
 >;
 
 export const isOpeningCommand = (cmd: Command): cmd is OpeningCommand =>
   cmd.type === 'toggleDoor' ||
   cmd.type === 'breakWindow' ||
   cmd.type === 'debugOpening' ||
+  cmd.type === 'coverWindow' ||
+  cmd.type === 'uncoverWindow' ||
   (OPENING_ACTION_COMMANDS as readonly string[]).includes(cmd.type);
 
 /** Centre of an edge: north edge (tx + 0.5, ty), west edge (tx, ty + 0.5). */
@@ -201,6 +211,8 @@ export function applyOpeningCommand(
     emitOpeningChanged(w, key, kind, 'debug');
     return undefined;
   }
+  if (cmd.type === 'coverWindow')
+    return startAction(w, eid, newAction('coverWindow', { edge: key, item: cmd.item }));
   if (cmd.type !== 'toggleDoor') {
     const action = cmd.type === 'breakWindow' ? 'smashWindow' : cmd.type;
     return startAction(w, eid, newAction(action, { edge: key }));

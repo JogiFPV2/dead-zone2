@@ -31,7 +31,9 @@ function edgeBlocks(f: number, mode: Mode): boolean {
   if (mode === Mode.Melee) return (f & (EF.blocksSight | EF.blocksMove | EF.slow)) !== 0;
   // Reach (looting, docs 9.69): an open / broken window lets the hand through (PZ).
   if (mode === Mode.Reach) return (f & (EF.blocksSight | EF.blocksMove)) !== 0;
-  return (f & (mode === Mode.Sight ? EF.blocksSight : EF.blocksMove)) !== 0;
+  // A window cover (docs 9.78) hides the view only: reach, blows, movement and sound pass.
+  if (mode === Mode.Sight) return (f & (EF.blocksSight | EF.covered)) !== 0;
+  return (f & EF.blocksMove) !== 0;
 }
 
 /** Flags of the edge crossed when stepping from tile (tx, ty) by (sx, 0) or (0, sy). */

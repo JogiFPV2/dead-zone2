@@ -1,6 +1,7 @@
 import { buildingIdAt, CHUNK_SIZE, roomIdAt, type SimChunk, type SimMap } from '@deadzone/protocol';
 import {
   baseState,
+  coverBlocksSight,
   createOpeningsWorld,
   DEFAULT_OPENINGS_CONFIG,
   EF,
@@ -272,11 +273,13 @@ export class TileGrid {
     if (kind === 0) return WALL;
     const key = openingKey(side, tx, ty, z);
     const e = this.openings.states.get(key);
-    return openingFlags(
+    const f = openingFlags(
       kind,
       e?.state ?? baseState(this.openings, key),
       e?.planks ?? 0,
       this.openings.cfg.barricade.sightBlockPlanks,
     );
+    // Window cover (docs 9.78): blocks sight only, never movement.
+    return coverBlocksSight(this.openings, key) ? f | EF.covered : f;
   }
 }

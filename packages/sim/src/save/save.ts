@@ -1,3 +1,4 @@
+import { pruneStaleWindows } from '../openings/state.js';
 import { PROTOCOL_VERSION, type WorldSource } from '@deadzone/protocol';
 import { furnitureLoaded } from '../physics/furniture.js';
 import { decodePlayerMaps, encodePlayerMaps, type PlayerMapSave } from '../map/player-map.js';
@@ -303,7 +304,11 @@ export function loadWorld(w: SimWorld, bytes: Uint8Array): void {
     restoreInto(w.ai, decode(f.ai));
     if (f.combat) restoreInto(w.ai.combat, decode(f.combat));
   }
-  if (f.openings) restoreInto(w.openings, decode(f.openings));
+  if (f.openings) {
+    restoreInto(w.openings, decode(f.openings));
+    // Map rebuilt since the save (docs 9.78): drop covers / window entries of vanished windows.
+    pruneStaleWindows(w.openings);
+  }
   if (f.physics) restoreInto(w.physics, decode(f.physics), SKIP_PHYSICS);
   w.physics.rng = w.rng.physics;
   w.physics.orderSize = -1;
