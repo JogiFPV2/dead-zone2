@@ -18,6 +18,7 @@ import {
 } from './input/touch/touch-settings.js';
 import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
+import { INV2_CLASS, inventoryV2Enabled } from './hud/inv3/inv2-flag.js';
 import { createTouchZoomSlider } from './hud/touch/zoom-slider.js';
 import { InteractController } from './hud/v2/interact-controller.js';
 import { createBigMap } from './bigmap/bigmap-view.js';
@@ -202,6 +203,8 @@ const touchMode = touchSettings(
     .touchMode,
 );
 document.documentElement.classList.toggle('is-touch', touchMode.touch);
+// Inventory v2 phone layout (`?inv=v2`, default off until approved).
+document.documentElement.classList.toggle(INV2_CLASS, inventoryV2Enabled(window.location.search));
 const renderer = new WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(
   pixelRatioFor(

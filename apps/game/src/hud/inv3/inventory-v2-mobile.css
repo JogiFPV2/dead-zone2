@@ -1,0 +1,35 @@
+/* Inventory v2 on a phone (inventory-v2-spec „Mobile 844×390”), behind ?inv=v2: backpack 398 px
+   with 50 px cells on the left, surroundings 310 px on the right, 44 px buttons, tabs 32 px with a
+   44 px touch field, action menu 210 px wide with 44 px rows. Only html.is-touch.dz-inv2. */
+html.is-touch.dz-inv2 .dz-i3__panel--own {
+  width: 398px;
+}
+html.is-touch.dz-inv2 .dz-i3__panel--box {
+  width: 310px;
+}
+html.is-touch.dz-inv2 .dz-i3__grid {
+  grid-template-columns: repeat(auto-fill, 50px);
+}
+html.is-touch.dz-inv2 .dz-i3__tile {
+  width: 50px;
+  height: 50px;
+}
+html.is-touch.dz-inv2 .dz-i3__tab {
+  position: relative;
+  height: 32px;
+}
+html.is-touch.dz-inv2 .dz-i3__tab::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
+}
+html.is-touch.dz-inv2 .dz-i3__btn {
+  height: 44px;
+  min-width: 44px;
+}
+html.is-touch.dz-inv2 .dz-i3__menu {
+  width: 210px;
+}
+html.is-touch.dz-inv2 .dz-i3__mi {
+  height: 44px;
+}
