@@ -94,6 +94,11 @@ export type CommandRejectReason =
   | 'too-heavy'
   /** The target place is taken. */
   | 'blocked'
+  /**
+   * Window climb (protocol 45): a piece of furniture stands in front of the window; the menu
+   * asks `windowBlocker(edge)` for its id and whether it can be moved ("Przesuń mebel").
+   */
+  | 'blocked-by-furniture'
   /** Moving furniture (protocol 38): a fixture bolted to the floor / plumbing (toilet, bath …). */
   | 'fixed'
   /**

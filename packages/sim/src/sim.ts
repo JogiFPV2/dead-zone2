@@ -1,3 +1,4 @@
+import { windowBlocker, type WindowBlocker } from './openings/window-blocker.js';
 import {
   checkHoldDoor,
   doorKey,
@@ -413,6 +414,13 @@ export interface Sim {
    * started; else the reason (`invalid-target`, `invalid-state`, `out-of-range`, `tired`, ...).
    */
   holdDoor(edge: DoorRef, playerId?: PlayerId): CommandRejectReason | undefined;
+  /**
+   * Furniture in front of window `edge` (`openingKey` or {tx, ty, side, z?}; docs 9.75): its
+   * `furnitureId`, side (`near` / `far` of `playerId`) and whether that player can move it
+   * (`canMove`, else `reason` `fixed` / `too-heavy`). Undefined = clear. `climbThrough` is
+   * rejected with `blocked-by-furniture` while a piece stands there (menu: "Przesuń mebel").
+   */
+  windowBlocker(edge: DoorRef, playerId?: PlayerId): WindowBlocker | undefined;
   /** Stop holding (`doorHeld released`); `invalid-state` when not holding. */
   releaseDoor(playerId?: PlayerId): CommandRejectReason | undefined;
   /** Would `holdDoor` start now? Reason, the holder's strength (kg) and resistance (units). */
@@ -943,6 +951,10 @@ export function createSim(input: SimOptions): Sim {
             dy: 0,
           }
         : canMoveFurniture(w, eid, id, mode);
+    },
+    windowBlocker(edge, playerId = 0) {
+      const eid = w.players.get(playerId);
+      return eid === undefined ? undefined : windowBlocker(w, eid, doorKey(w, eid, edge));
     },
     holdDoor(edge, playerId = 0) {
       const eid = w.players.get(playerId);

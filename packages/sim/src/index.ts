@@ -190,3 +190,4 @@ export {
 } from './save/save.js';
 export type { FurnitureMoveCheck, FurnitureMoveMode } from './physics/furniture.js';
 export type { DoorRef, HoldDoorCheck } from './physics/hold-door.js';
+export type { WindowBlocker } from './openings/window-blocker.js';

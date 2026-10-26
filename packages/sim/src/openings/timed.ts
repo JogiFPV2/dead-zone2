@@ -1,3 +1,4 @@
+import { windowBlocker } from './window-blocker.js';
 import type { CommandRejectReason } from '@deadzone/protocol';
 import { registerAction } from '../actions/queue.js';
 import { emitNoise, type PlayerNoiseBy } from '../ai/noise.js';
@@ -186,6 +187,8 @@ export function registerOpeningActions(): void {
       if (typeof t === 'string') return t;
       if (t.kind !== OpeningKind.window) return 'invalid-target';
       if (t.planks > 0 || (t.state !== OS.open && t.state !== OS.broken)) return 'invalid-state';
+      // A piece in front of the window: the menu offers to move it (`sim.windowBlocker`).
+      if (windowBlocker(w, eid, a.edge!)) return 'blocked-by-furniture';
       return canVault(w, gridOf(w), eid, vaultTarget(a.edge!));
     },
     durationMin: () => 0,

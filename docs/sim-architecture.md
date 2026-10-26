@@ -1728,3 +1728,8 @@ Klient (Silnik 2), protokół 44: `VehicleImpactTarget` += `'furniture'`; `furni
 Każdy cios zombie w auto z graczem w środku (ta sama ścieżka co `zombieWindowDmg` #281, `zombieHitsWindow`) odejmuje też `physics.vehicle.zombieBodyDmg` (domyślnie 1 hp, 0 = wył.) ze strefy karoserii po stronie zombie (`bodyFront/Rear/Left/Right`, #128) przez `damageVehiclePart` → `vehiclePartBroken` przy 0. Wybór: gdy przód jest na 0, ciosy z przodu idą w silnik (gaśnie przy 0, `stopBroken`); zniszczony bok/tył dalej nic nie traci. Opony nigdy od ciosów.
 
 Klient (Silnik 2): brak zmian protokołu — istniejące `vehiclePartBroken` i hp stref w snapshocie pojazdu.
+### 9.75 Okno zastawione meblem (protokół 45)
+
+Zasada: okno zastawione szafą / skrzynią / szafką zostaje zablokowane, dopóki mebla nie przesuniesz (#279). Mebel, którego footprint zajmuje kratkę po którejkolwiek stronie okna (mebel z mapy lub przesunięty), blokuje `climbThrough` z nowym powodem `blocked-by-furniture` (sprawdzane przed geometrią wspinaczki). `sim.windowBlocker(edge, playerId?)` (`openings/window-blocker.ts`, edge = `openingKey` lub {tx, ty, side, z?}) zwraca `{furnitureId, contentId, side: 'near'|'far', canMove, reason?: 'fixed'|'too-heavy', weightKg, strengthKg}` (najpierw strona gracza) albo undefined. `canMove` = nie `furnitureFixed` i waga ≤ siła pchania gracza. Po `pushFurniture` / `pullFurniture` okno jest znowu przejezdne.
+
+Klient (Silnik 2), protokół 45: `CommandRejectReason` += `'blocked-by-furniture'`; menu okna pyta `windowBlocker(edge)` i oferuje „Przesuń mebel” (push/pull z `furnitureId`) gdy `canMove`, inaczej pokazuje powód (`fixed` / `too-heavy`).
