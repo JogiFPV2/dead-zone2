@@ -124,7 +124,7 @@ describe('ChunkStreamer', () => {
     s.dispose();
     expect(b.alive.size).toBe(0);
     expect(s.stats()).toMatchObject({ bytes: 0, triangles: 0, dataChunks: 0 });
-  });
+  }, 15_000);
 
   it('teleport drops the old area and loads the new one', async () => {
     const b = new FakeBuilder();

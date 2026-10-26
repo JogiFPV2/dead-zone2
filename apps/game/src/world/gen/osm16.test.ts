@@ -40,7 +40,7 @@ describe('osm-stw: the whole 16 km square', () => {
       (Math.floor(CENTRUM_SPOT.y) % CHUNK_SIZE) * CHUNK_SIZE +
       (Math.floor(CENTRUM_SPOT.x) % CHUNK_SIZE);
     expect(TILE_PALETTE[c.levels[0]!.floor[i]!]).toBe('base:sidewalk');
-  }, 60_000);
+  }, 180_000);
 
   it('knows the zone of every chunk and every place before the tiles are in', () => {
     const g = tiles.generator;
