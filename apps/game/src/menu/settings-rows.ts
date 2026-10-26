@@ -71,7 +71,8 @@ export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 
 type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice' | 'uiScale';
 type VolumeId = Exclude<SliderId, 'uiScale'>;
-type ToggleId = 'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp';
+type ToggleId =
+  'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp' | 'revealMap';
 type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay' | 'touchMode';
 /** Rows with a button: the screen runs them (Edytuj HUD, Przywróć domyślny układ). */
 export type ButtonId = 'editHud' | 'resetHud';
@@ -321,6 +322,13 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           hint: 'Shift + LPM na zombie pokazuje dymek z jego życiem',
           on: d.interface.targetZombieHp,
         },
+        {
+          kind: 'toggle',
+          id: 'revealMap',
+          label: 'Odkryj całą mapę (test)',
+          hint: 'Odsłania mgłę na dużej mapie (M). Tylko do testów; zapis zostaje odkryty.',
+          on: d.interface.revealMap,
+        },
       ];
     }
   }
@@ -358,6 +366,8 @@ export function toggleRow(d: Settings, id: ToggleId): Settings {
       return { ...d, interface: { ...d.interface, showZombieHp: !d.interface.showZombieHp } };
     case 'targetZombieHp':
       return { ...d, interface: { ...d.interface, targetZombieHp: !d.interface.targetZombieHp } };
+    case 'revealMap':
+      return { ...d, interface: { ...d.interface, revealMap: !d.interface.revealMap } };
   }
 }
 

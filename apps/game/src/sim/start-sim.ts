@@ -22,6 +22,8 @@ export interface StartSimOptions {
   content?: SimContentSource | undefined;
   /** Enables debug commands (`debugWound`, `debugStat`). */
   dev?: boolean;
+  /** Single-player only: lets `debugRevealMap` run outside dev (test map reveal, ?reveal=1). */
+  allowRevealMap?: boolean;
   /** Places START_ZOMBIES zombies around the map, away from this point (player start). */
   zombiesAwayFrom?: { x: number; y: number; z?: number } | undefined;
   /** Extra zombies at fixed spots (OSM scenes: framed around the start), before the picked ones. */
@@ -69,6 +71,7 @@ export function startSimWorker(
     ...(opts.spawn ? { spawn: opts.spawn } : {}),
     ...(opts.content ? { content: opts.content } : {}),
     ...(opts.dev ? { dev: true } : {}),
+    ...(opts.allowRevealMap ? { allowRevealMap: true } : {}),
     ...(zombies.length ? { zombies } : {}),
     ...(opts.populateAnimals && !opts.save ? { populateAnimals: opts.populateAnimals } : {}),
     ...(opts.vehicles?.length ? { vehicles: opts.vehicles } : {}),

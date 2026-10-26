@@ -21,6 +21,7 @@ import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
 import { MINIMAP_TOUCH_STEPS, radiusLabel, touchMinimapZoom } from './hud/touch/minimap-levels.js';
 import { INV2_CLASS, inventoryV2Enabled } from './hud/inv3/inv2-flag.js';
+import { MapRevealer, revealFlag } from './bigmap/reveal-flag.js';
 import { createTouchZoomSlider } from './hud/touch/zoom-slider.js';
 import { InteractController } from './hud/v2/interact-controller.js';
 import { createBigMap } from './bigmap/bigmap-view.js';
@@ -680,6 +681,8 @@ if (boot.sim === 'worker') {
     save: session?.save?.data,
     onWorkerError: (message) => loadFailed(message),
     dev: import.meta.env.DEV,
+    // Local single-player sim: the test map reveal (?reveal=1 / settings) may run in prod.
+    allowRevealMap: true,
     // Dev `?car=x,y,…`: parked cars (no map has cars yet).
     ...(import.meta.env.DEV && boot.cars.length ? { vehicles: boot.cars } : {}),
   });
@@ -714,8 +717,15 @@ const bigMapSource = new SimBigMapSource(
 );
 // Floor intel (protocol 22): rooms seen / searched, sensed zombies, sightings; marker floors.
 const floorIntel = new SimFloorIntel((id) => bigMapSource.markers().find((m) => m.id === id)?.z);
+// Test: `?reveal=1` / `?reveal=all` / settings toggle → sim debugRevealMap once (whole map).
+const mapRevealer = new MapRevealer(
+  () => sendBody({ type: 'debugRevealMap' }),
+  revealFlag(window.location.search) || settings.get().interface.revealMap,
+);
+settings.subscribe((next) => mapRevealer.setWanted(next.interface.revealMap));
 simWorker?.onView((view) => {
   bigMapSource.applyView(view.worldMap);
+  if (view.worldMap) mapRevealer.worldReady();
   floorIntel.applyView(view);
 });
 simWorker?.onEvents((events) => bigMapSource.applyEvents(events));

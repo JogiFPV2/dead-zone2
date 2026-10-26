@@ -142,6 +142,7 @@ describe('loadSettings', () => {
       noiseDisplay: 'loud',
       showZombieHp: false,
       targetZombieHp: true,
+      revealMap: false,
     });
   });
 
