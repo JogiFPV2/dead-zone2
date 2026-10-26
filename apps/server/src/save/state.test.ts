@@ -8,7 +8,7 @@ import {
 import { SAVE_VERSION, decodeTrail, encodeTrail, encodeZeroRle } from '@deadzone/sim';
 import { describe, expect, it } from 'vitest';
 import { HttpError } from '../errors.js';
-import { realSave, realSaveWithTankJson } from '../test/sim-save.js';
+import { realSave, realSaveWithCoverJson, realSaveWithTankJson } from '../test/sim-save.js';
 import { validateState } from './state.js';
 
 const SEED = 4242;
@@ -329,6 +329,73 @@ describe('protocol 36 additions (water tanks; action fixture stays opaque)', () 
   it('the action fixture stays in the opaque queue section', () => {
     const s = save();
     s.queue = { anything: [{ fixture: 'not checked' }] };
+    expect(() => check(s)).not.toThrow();
+  });
+});
+
+describe('protocol 47 additions (window covers in openings)', () => {
+  const cover = { item: 'base:blanket', lightPass: 0.2, blocksSight: true };
+  const withCovers = (covers: unknown): Json => {
+    const s = save();
+    s.openings = { ...(s.openings ?? {}), covers };
+    return s;
+  };
+
+  it('the real save (empty covers) passes; an old save without covers or openings passes', () => {
+    const s = save();
+    expect((s.openings as Json).covers).toEqual({ $m: [] });
+    expect(() => check(s)).not.toThrow();
+    delete (s.openings as Json).covers;
+    expect(() => check(s)).not.toThrow();
+    delete s.openings;
+    expect(() => check(s)).not.toThrow();
+  });
+
+  it('a real sim save with a window cover carries covers as a Map and passes', () => {
+    const s: Json = { ...(JSON.parse(realSaveWithCoverJson()) as Json), seed: SEED };
+    expect((s.openings as Json).covers).toEqual({
+      $m: [[4242, { item: 'base:blanket', lightPass: 0.25, blocksSight: true }]],
+    });
+    expect(() => check(s)).not.toThrow();
+  });
+
+  it('accepts covers as an encoded Map', () => {
+    expect(() => check(withCovers({ $m: [[123_456, cover]] }))).not.toThrow();
+    expect(() =>
+      check(
+        withCovers({
+          $m: [
+            [0, { item: 'base:sheet', lightPass: 1, blocksSight: false }],
+            [7, { ...cover, lightPass: 0 }],
+          ],
+        }),
+      ),
+    ).not.toThrow();
+    expect(() => check(withCovers({ $m: [] }))).not.toThrow();
+  });
+
+  it('refuses bad covers', () => {
+    for (const bad of [
+      [[[1, cover]]],
+      { $m: [['1', cover]] },
+      { $m: [[-1, cover]] },
+      { $m: [[1.5, cover]] },
+      { $m: [[1, { ...cover, item: '' }]] },
+      { $m: [[1, { ...cover, item: 'x'.repeat(129) }]] },
+      { $m: [[1, { ...cover, lightPass: 1.5 }]] },
+      { $m: [[1, { ...cover, lightPass: -0.1 }]] },
+      { $m: [[1, { ...cover, blocksSight: 'yes' }]] },
+      { $m: [[1, { item: 'base:blanket', lightPass: 0.2 }]] },
+      { $m: [[1, { ...cover, extra: 1 }]] },
+      'covers',
+    ]) {
+      rejects(withCovers(bad), /openings/);
+    }
+  });
+
+  it('lighting in openings stays unchecked', () => {
+    const s = withCovers({ $m: [[1, cover]] });
+    Object.assign(s.openings as Json, { curtains: 'not checked', lightsOn: [-1] });
     expect(() => check(s)).not.toThrow();
   });
 });

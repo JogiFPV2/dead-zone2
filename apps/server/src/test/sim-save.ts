@@ -51,6 +51,20 @@ export function realSaveWithTankJson(): string {
   });
 }
 
+/**
+ * Real save with one window cover (protocol 47): the sim writes `openings.covers` (a Map) as
+ * `{ $m: [[openingKey, cover], …] }`.
+ */
+export function realSaveWithCoverJson(): string {
+  return generate((sim) => {
+    sim.world.openings.covers.set(4242, {
+      item: 'base:blanket',
+      lightPass: 0.25,
+      blocksSight: true,
+    });
+  });
+}
+
 function generate(beforeSave?: (sim: ReturnType<typeof createSim>) => void): string {
   const seed = BASE_SEED;
   const src = world(seed);

@@ -14,6 +14,7 @@ import {
   saveMarkersSchema,
   saveUtilitiesSchema,
   saveWaterTanksRawSchema,
+  saveWindowCoversRawSchema,
 } from '@deadzone/protocol/schema';
 import { SAVE_FORMAT, SAVE_READABLE_VERSIONS, decodeTrail, zeroRleStats } from '@deadzone/sim';
 import { z } from 'zod';
@@ -23,7 +24,7 @@ import { invalidState } from '../errors.js';
  * Server checks of the sim save inside a DZSV envelope (`saveWorld` in packages/sim/src/save,
  * format v1–v3; docs/backend.md §4.2). The map limits come from `packages/protocol`, the codecs
  * (zero-run varints, trail) from `packages/sim`. Opaque sim sections (components, survival, AI,
- * vehicles, openings, physics) are only bounded by the state size: a full `loadWorld` needs the
+ * vehicles, openings apart from window covers, physics) are only bounded by the state size: a full `loadWorld` needs the
  * content and the world generator on the server.
  */
 
@@ -198,6 +199,15 @@ const itemsSectionSchema = z.looseObject({
     .optional(),
 });
 
+/**
+ * Openings section (`openings` of the save): opaque apart from the window covers (protocol 47,
+ * `saveWindowCoversRawSchema`, on disk `{ $m: [[openingKey, { item, lightPass, blocksSight }], …] }`).
+ * Older saves lack `covers` (no covers). Lighting (`curtains`, `lightsOn`) stays unchecked.
+ */
+const openingsSectionSchema = z.looseObject({
+  ...saveWindowCoversRawSchema.shape,
+});
+
 const stateSchema = z.looseObject({
   format: z.literal(SAVE_FORMAT),
   version: int.refine((v) => SAVE_READABLE_VERSIONS.includes(v), {
@@ -219,6 +229,7 @@ const stateSchema = z.looseObject({
     .optional(),
   components: z.record(z.string(), z.unknown()).optional(),
   items: itemsSectionSchema.optional(),
+  openings: openingsSectionSchema.optional(),
   rng: z.record(z.string(), rngState).optional(),
   world: z
     .looseObject({ seed: nat, generatorVersion: nat, contentVersion: z.string().max(256) })
