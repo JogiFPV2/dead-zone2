@@ -9,6 +9,18 @@
     },
     "entries": [
       {
+        "item": "base:blanket",
+        "weight": 3
+      },
+      {
+        "item": "base:curtain",
+        "weight": 2
+      },
+      {
+        "item": "base:jacket",
+        "weight": 3
+      },
+      {
         "item": "base:t-shirt",
         "weight": 5
       },
