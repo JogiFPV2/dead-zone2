@@ -1711,3 +1711,9 @@ Dla klienta (ukrycie podpowiedzi): `@deadzone/sim` eksportuje czyste funkcje
 Uderzenie pojazdu w ścianę, płot lub inny pojazd (`vehicleImpact.targetKind` ∈ wall/fence/vehicle) rani każdego pasażera wg prędkości uderzenia (`VehicleConfig`): `crashInjurySpeed` 6 m/s → scratch, `crashLacerationSpeed` 11 → laceration, `crashDeepSpeed` 17 → deep + laceration; maks. `crashMaxWounds` (2) ran na osobę. Część ciała losowana z `rng.health` (głowa, szyja, tułów, przedramiona, uda) — deterministycznie. Taranowanie zombie nie rani pasażerów.
 
 Klient (Silnik 2): brak zmian protokołu — używa istniejących zdarzeń `wounded` (po `vehicleImpact`).
+
+### 9.72 Samochód przebija cienką ścianę (`partition`)
+
+Stojąca krawędź `partition` uderzona szybciej niż `VehicleConfig.partitionBreakSpeed` (5 m/s, prędkość normalna) pęka (`damageOpening` → `openingChanged` by 'vehicle', `chunkChanged`), auto traci `partitionSlow` (40%) prędkości normalnej i jedzie dalej. Wolniej — zatrzymuje się jak na murze. Mur/ściany nośne nadal niezniszczalne.
+
+Klient (Silnik 2): brak zmian protokołu; `vehicleImpact.targetKind` = 'wall' przy przebiciu ścianki działowej (rozpoznaj po `openingChanged.kind === 'partition'`).

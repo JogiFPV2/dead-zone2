@@ -6,10 +6,10 @@ import type { MapSpec } from '../test/fixtures.js';
 import { car, seatedSim, type VehicleSimOptions } from '../test/vehicle-fixtures.js';
 
 /** Column x = 60: a wall (edge 1) or a low fence (edge 2) for every y. */
-const column = (kind: 'wall' | 'fence'): MapSpec => ({
+const column = (kind: 'wall' | 'fence' | 'partition'): MapSpec => ({
   wallW: (x) => x === 60,
-  edgeId: () => (kind === 'fence' ? 2 : 1),
-  edgeKinds: [null, 'wall', 'fence'] as (SimEdgeKind | null)[],
+  edgeId: () => (kind === 'fence' ? 2 : kind === 'partition' ? 3 : 1),
+  edgeKinds: [null, 'wall', 'fence', 'partition'] as (SimEdgeKind | null)[],
 });
 
 /** Drives at full throttle to `speed`, then coasts for `ticks`; returns all events. */
@@ -53,6 +53,23 @@ describe('vehicles: collisions', () => {
     expect(broken.every((e) => e.by === 'vehicle' && e.kind === 'fence')).toBe(true);
     expect(car(fast.sim).x).toBeGreaterThan(62);
     expect(eventsOf(fast.events, 'vehicleImpact').map((e) => e.targetKind)).toContain('fence');
+  });
+
+  it('a thin partition wall stops a slow car; a fast one breaks through (brick never)', () => {
+    const slow = ram({ map: column('partition') }, 3.5, 300);
+    expect(car(slow.sim).x + 2.3).toBeLessThanOrEqual(60.001);
+    expect(eventsOf(slow.events, 'openingChanged')).toEqual([]);
+
+    const fast = ram({ map: column('partition') }, 10, 100);
+    const broken = eventsOf(fast.events, 'openingChanged');
+    expect(broken.length).toBeGreaterThan(0);
+    expect(broken.every((e) => e.by === 'vehicle' && e.kind === 'partition')).toBe(true);
+    expect(car(fast.sim).x).toBeGreaterThan(62);
+    expect(eventsOf(fast.events, 'vehicleImpact')[0]!.targetKind).toBe('wall');
+
+    const brick = ram({ map: column('wall') }, 10, 100);
+    expect(eventsOf(brick.events, 'openingChanged')).toEqual([]);
+    expect(car(brick.sim).x + 2.3).toBeLessThanOrEqual(60.001);
   });
 
   it('at walking pace it shoves a zombie ahead (no tunnelling, no reaction)', () => {

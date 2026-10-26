@@ -53,7 +53,8 @@ function bounce(v: Vehicle, n: Mtv, e: number): number {
 
 /**
  * Walls, closed doors / windows and standing fences around the car (tile edges under its
- * bounds). A standing fence hit faster than `fenceBreakSpeed` is knocked over (`openingChanged`
+ * bounds). A standing fence hit faster than `fenceBreakSpeed` (a thin partition wall:
+ * `partitionBreakSpeed`) is knocked over (`openingChanged`
  * by `vehicle`) and only slows the car; everything else stops it (pushed out, normal velocity
  * bounced with `restitution`).
  */
@@ -80,19 +81,22 @@ function collideStatic(
         if (!(n ? grid.hasWallN(tx, ty, z) : grid.hasWallW(tx, ty, z))) continue;
         const m = obbVsEdge(obbOf(v, t), tx, ty, n);
         if (!m) continue;
-        const fence =
-          grid.kindOf(n ? grid.edgeN(tx, ty, z) : grid.edgeW(tx, ty, z)) === OpeningKind.fence;
+        const kind = grid.kindOf(n ? grid.edgeN(tx, ty, z) : grid.edgeW(tx, ty, z));
+        const fence = kind === OpeningKind.fence;
+        const partition = kind === OpeningKind.partition;
+        const breakSpeed = partition ? cfg.partitionBreakSpeed : cfg.fenceBreakSpeed;
+        const slowFrac = partition ? cfg.partitionSlow : cfg.fenceSlow;
         const cx = n ? Math.max(tx, Math.min(tx + 1, v.x)) : tx;
         const cy = n ? ty : Math.max(ty, Math.min(ty + 1, v.y));
         const vn = -(v.vx * m.nx + v.vy * m.ny);
-        if (fence && vn > cfg.fenceBreakSpeed) {
+        if ((fence || partition) && vn > breakSpeed) {
           const driver = v.occupants[0] ? playerEidOf(w, v.occupants[0]) : undefined;
-          damageOpening(w, openingKey(side, tx, ty, z), OpeningKind.fence, 1e9, 'vehicle', driver);
-          v.vx = f(v.vx + vn * cfg.fenceSlow * m.nx);
-          v.vy = f(v.vy + vn * cfg.fenceSlow * m.ny);
-          const lost = vn * cfg.fenceSlow;
+          damageOpening(w, openingKey(side, tx, ty, z), kind, 1e9, 'vehicle', driver);
+          v.vx = f(v.vx + vn * slowFrac * m.nx);
+          v.vy = f(v.vy + vn * slowFrac * m.ny);
+          const lost = vn * slowFrac;
           const energy = 0.5 * t.mass * (vn * vn - (vn - lost) * (vn - lost));
-          out.push(impact(v, o, 'fence', 0, -1, energy, vn, cx, cy, m));
+          out.push(impact(v, o, fence ? 'fence' : 'wall', 0, -1, energy, vn, cx, cy, m));
           continue;
         }
         v.x = f(v.x + m.nx * m.depth);

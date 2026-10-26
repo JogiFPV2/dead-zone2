@@ -52,6 +52,10 @@ export interface VehicleConfig {
   fenceBreakSpeed: number;
   /** Speed lost when breaking through a fence (fraction of the normal speed). */
   fenceSlow: number;
+  /** A standing thin partition wall (plywood) hit faster than this (normal speed) breaks. */
+  partitionBreakSpeed: number;
+  /** Speed lost when breaking through a partition wall (fraction of the normal speed). */
+  partitionSlow: number;
   /** Impacts below this energy send no `vehicleImpact`. */
   minImpactJ: number;
   /** Mass of a person / zombie / animal body hit by a car when it has no physics mass. */
@@ -164,6 +168,8 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   restitution: 0.2,
   fenceBreakSpeed: 2.5,
   fenceSlow: 0.25,
+  partitionBreakSpeed: 5,
+  partitionSlow: 0.4,
   minImpactJ: 150,
   bodyMassKg: 75,
   enterRange: 1.5,
