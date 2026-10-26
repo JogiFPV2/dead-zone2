@@ -5,8 +5,11 @@ import {
   characterSlots,
   filterRows,
   INV2_CATEGORIES,
+  INV2_LONG_PRESS_MS,
+  itemActions,
   tapMoveFrom,
 } from './inv2-model.js';
+import { LONG_PRESS_MS } from '../../input/touch/gestures.js';
 import type { InvRowVM } from './inv3-model.js';
 
 const row = (def: string, count = 1) => ({ key: def, def, count }) as unknown as InvRowVM;
@@ -68,5 +71,27 @@ describe('inventory v2 tap to move', () => {
     expect(tapMoveFrom('box', { own: 2, box: 0 })).toBe('own');
     expect(tapMoveFrom('own', { own: 2, box: 0 })).toBeUndefined();
     expect(tapMoveFrom('own', { own: 0, box: 1 })).toBe('box');
+  });
+});
+
+describe('inventory v2 long-press menu', () => {
+  it('400 ms, shared long press unchanged', () => {
+    expect(INV2_LONG_PRESS_MS).toBe(400);
+    expect(LONG_PRESS_MS).toBe(450);
+  });
+  it('default action first, then combine, move, drop', () => {
+    expect(itemActions({ side: 'own', context: 'use', combine: true, boxName: 'Szafka' })).toEqual([
+      { id: 'context', label: 'Użyj' },
+      { id: 'combine', label: 'Połącz…' },
+      { id: 'move', label: 'Przenieś: Szafka' },
+      { id: 'drop', label: 'Upuść' },
+    ]);
+  });
+  it('box side: take; no container: no move', () => {
+    expect(itemActions({ side: 'box' }).map((x) => x.id)).toEqual(['move']);
+    expect(itemActions({ side: 'own', context: 'equip' }).map((x) => x.label)).toEqual([
+      'Załóż',
+      'Upuść',
+    ]);
   });
 });

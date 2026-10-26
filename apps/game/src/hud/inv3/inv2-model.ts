@@ -110,3 +110,40 @@ export function tapMoveFrom(
   const from = to === 'own' ? 'box' : 'own';
   return selectedCount[from] > 0 ? from : undefined;
 }
+
+/** Inventory v2 long press (spec, mobile: 400 ms; the shared LONG_PRESS_MS stays 450 elsewhere). */
+export const INV2_LONG_PRESS_MS = 400;
+
+export type Inv2ActionId = 'context' | 'combine' | 'move' | 'drop';
+export interface Inv2Action {
+  id: Inv2ActionId;
+  label: string;
+}
+
+const CONTEXT_LABEL: Readonly<Record<string, string>> = {
+  equip: 'Załóż',
+  unequip: 'Zdejmij',
+  use: 'Użyj',
+  watch: 'Oglądaj',
+};
+
+/**
+ * Long-press menu of an item (mockup: Użyj · Załóż · Połącz… · Przenieś do … · Upuść); the first
+ * entry is the default action.
+ */
+export function itemActions(o: {
+  side: 'own' | 'box';
+  context?: string;
+  combine?: boolean;
+  /** Name of the opened container (own side) — undefined: nothing to move into. */
+  boxName?: string;
+}): Inv2Action[] {
+  const a: Inv2Action[] = [];
+  if (o.context && CONTEXT_LABEL[o.context])
+    a.push({ id: 'context', label: CONTEXT_LABEL[o.context]! });
+  if (o.combine) a.push({ id: 'combine', label: 'Połącz…' });
+  if (o.side === 'box') a.push({ id: 'move', label: 'Weź do plecaka' });
+  else if (o.boxName) a.push({ id: 'move', label: `Przenieś: ${o.boxName}` });
+  if (o.side === 'own') a.push({ id: 'drop', label: 'Upuść' });
+  return a;
+}

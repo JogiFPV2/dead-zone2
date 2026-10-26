@@ -130,3 +130,39 @@ html.is-touch.dz-inv2 .dz-i3__hint {
   color: var(--muted);
   font-size: 10px;
 }
+/* Long press (400 ms): a gold progress ring around the pressed cell (--dz-press 0 → 1, JS). */
+html.is-touch.dz-inv2 [data-pressing]::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 10px;
+  padding: 3px;
+  background: conic-gradient(var(--acc) calc(var(--dz-press, 0) * 360deg), transparent 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* Action menu: header (name, weight), 44 px rows, the default action highlighted. */
+html.is-touch.dz-inv2 .dz-i3__amenu {
+  position: absolute;
+  z-index: 5;
+}
+html.is-touch.dz-inv2 .dz-i3__amenu-h {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+html.is-touch.dz-inv2 .dz-i3__amenu-h b {
+  color: var(--color-text-primary);
+}
+html.is-touch.dz-inv2 .dz-i3__amenu .dz-i3__mi[data-default] {
+  background: var(--acc);
+  color: #15191c;
+  font-weight: 700;
+}

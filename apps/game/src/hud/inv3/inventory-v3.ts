@@ -1,5 +1,10 @@
 import './inventory-v3.css';
-import { dragDecision, LONG_PRESS_MS, longPressHolds } from '../../input/touch/gestures.js';
+import {
+  dragDecision,
+  LONG_PRESS_MS,
+  longPressHolds,
+  TAP_MAX_PX,
+} from '../../input/touch/gestures.js';
 import type { ContainerId } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { InventorySortSetting, InventoryViewMode } from '../../settings/schema.js';
@@ -43,6 +48,9 @@ import {
   tapMoveFrom,
   INV2_CATEGORIES,
   type Inv2Category,
+  INV2_LONG_PRESS_MS,
+  itemActions,
+  type Inv2ActionId,
 } from './inv2-model.js';
 
 /** Inventory v2 phone layout (`?inv=v2` on a touch device, inv2-flag.ts). */
@@ -275,7 +283,11 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   rail.setAttribute('role', 'toolbar');
   rail.setAttribute('aria-label', 'Filtry');
   let filter: Inv2Category = 'all';
-  stage.append(rail, own, box, keys, ghost, badge, menu, tooltip.el, comboTip.el);
+  // Inventory v2: long-press action menu of an item (same look as the sort menu).
+  const actMenu = div('dz-i3__menu dz-i3__amenu');
+  actMenu.setAttribute('role', 'menu');
+  actMenu.hidden = true;
+  stage.append(rail, own, box, keys, ghost, badge, menu, actMenu, tooltip.el, comboTip.el);
   el.append(div('dz-i3__scrim'), stage);
   opts.root.append(el);
 
@@ -457,6 +469,92 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   /** Last pointer position (long-press stillness check). */
   const lastPt = { x: 0, y: 0 };
 
+  /** Progress ring around a pressed cell (`--dz-press` 0 → 1 over `ms`) while `still()`. */
+  const pressRing = (node: HTMLElement, t0: number, ms: number, still: () => boolean): void => {
+    const step = (): void => {
+      const p = (performance.now() - t0) / ms;
+      if (!node.isConnected || !still() || p >= 1) {
+        delete node.dataset.pressing;
+        node.style.removeProperty('--dz-press');
+        return;
+      }
+      node.dataset.pressing = 'true';
+      node.style.setProperty('--dz-press', p.toFixed(3));
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  /** Inventory v2 long-press action menu (`actFor`), first entry = default action. */
+  let actFor: { side: InvSide; row: InvRowVM; at: { x: number; y: number } } | undefined;
+  const openActions = (side: InvSide, r: InvRowVM, node: HTMLElement): void => {
+    const host = stage.getBoundingClientRect();
+    const k = host.width / Math.max(1, stage.offsetWidth);
+    const rr = node.getBoundingClientRect();
+    actFor = {
+      side,
+      row: r,
+      at: { x: (rr.right - host.left) / k + 6, y: (rr.top - host.top) / k },
+    };
+    hideTips();
+    render();
+  };
+  const runAction = (id: Inv2ActionId, side: InvSide, r: InvRowVM): void => {
+    const ids = isSelected(side, r) ? [...selected[side]] : r.itemIds;
+    const first = r.itemIds[0];
+    if (id === 'context' && first !== undefined)
+      send([contextCommand(opts.state(), opts.content(), first)]);
+    else if (id === 'combine') combine(first);
+    else if (id === 'move') transfer(side, ids, true);
+    else if (id === 'drop') {
+      send(moveCommands(opts.state(), opts.content(), ids, 'ground', true));
+      selected.own.clear();
+    }
+  };
+  const renderActions = (s: GameState): void => {
+    const a = actFor;
+    if (!a || !isInv2()) {
+      actMenu.hidden = true;
+      return;
+    }
+    const c = s.container;
+    const list = itemActions({
+      side: a.side,
+      ...(a.row.context ? { context: a.row.context } : {}),
+      combine: !!a.row.combine,
+      ...(c && boxSection ? { boxName: containerName(c.type, c.kind) } : {}),
+    });
+    const head = div('dz-i3__amenu-h');
+    head.append(
+      h('b', '', a.row.name),
+      h('span', '', `${formatKg(a.row.weightKg)} kg${a.row.count > 1 ? ` · ×${a.row.count}` : ''}`),
+    );
+    actMenu.replaceChildren(
+      head,
+      ...list.map((x, i) => {
+        const b = h('button', 'dz-i3__mi');
+        b.type = 'button';
+        b.setAttribute('role', 'menuitem');
+        if (i === 0) b.dataset.default = 'true';
+        b.append(h('span', '', x.label));
+        b.addEventListener('click', () => {
+          actFor = undefined;
+          runAction(x.id, a.side, a.row);
+          render();
+        });
+        return b;
+      }),
+    );
+    actMenu.hidden = false;
+    const W = stage.offsetWidth;
+    const H = stage.offsetHeight;
+    const w = actMenu.offsetWidth || 210;
+    const hh = actMenu.offsetHeight || 44 * (list.length + 1);
+    const left = a.at.x + w > W - 8 ? a.at.x - w - 70 : a.at.x;
+    actMenu.style.left = `${Math.max(8, left)}px`;
+    actMenu.style.top = `${Math.max(8, Math.min(H - 8 - hh, a.at.y))}px`;
+  };
+
   // ── rendering ─────────────────────────────────────────────────────────────
   const bindItem = (node: HTMLElement, side: InvSide, r: InvRowVM, grid: boolean): void => {
     node.dataset.key = r.key;
@@ -491,15 +589,31 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       const pid = e.pointerId;
       const x0 = e.clientX;
       const y0 = e.clientY;
+      // Inventory v2: 400 ms with a progress ring, then the action menu (spec, mobile).
+      const v2 = isInv2();
+      const holdMs = v2 ? INV2_LONG_PRESS_MS : LONG_PRESS_MS;
+      const still = (): boolean => {
+        const d = drag;
+        return (
+          !!d &&
+          d.pointer === pid &&
+          !d.active &&
+          d.row.key === r.key &&
+          Math.hypot(lastPt.x - x0, lastPt.y - y0) < TAP_MAX_PX
+        );
+      };
+      if (v2) pressRing(node, performance.now(), holdMs, still);
       window.setTimeout(() => {
         const d = drag;
         if (!d || d.pointer !== pid || d.active || d.row.key !== r.key) return;
-        if (!longPressHolds(LONG_PRESS_MS, Math.hypot(lastPt.x - x0, lastPt.y - y0))) return;
+        const moved = Math.hypot(lastPt.x - x0, lastPt.y - y0);
+        if (v2 ? moved >= TAP_MAX_PX : !longPressHolds(LONG_PRESS_MS, moved)) return;
         drag = undefined;
         lastClick = undefined;
         if (navigator.vibrate) navigator.vibrate(15);
-        contextAction();
-      }, LONG_PRESS_MS);
+        if (v2) openActions(side, r, node);
+        else contextAction();
+      }, holdMs);
     });
     const contextAction = (): void => {
       const id = r.itemIds[0];
@@ -994,6 +1108,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     renderBox(s, p.view);
     renderRail();
     renderMenu();
+    renderActions(s);
     const hit = keep ? rowEls.get(keep.key) : undefined;
     if (hit?.el.isConnected && !drag?.active) {
       hovered = keep;
@@ -1178,6 +1293,10 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       menuFor = undefined;
       menu.hidden = true;
     }
+    if (actFor && !t.closest('.dz-i3__amenu')) {
+      actFor = undefined;
+      actMenu.hidden = true;
+    }
   });
   // Inventory v2 (phone): a tap on an empty cell or the background of the other panel moves the
   // selected item(s) there (items, buttons, tabs and the sort menu keep their own taps).
@@ -1224,6 +1343,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       } else {
         hideTips();
         menuFor = undefined;
+        actFor = undefined;
+        actMenu.hidden = true;
         drag = undefined;
         ghost.hidden = true;
         badge.hidden = true;
