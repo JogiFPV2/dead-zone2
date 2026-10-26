@@ -11,6 +11,7 @@ import { windowGrabStep } from './windows.js';
 import { applyImpactDamage, applyRollDamage, driveMods } from './damage.js';
 import { playerEidOf, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
+import type { VehicleConfig } from './config.js';
 import { tankLeak } from './fuel.js';
 import { crashInjuries } from './crash.js';
 
@@ -40,6 +41,13 @@ function checkOccupants(w: SimWorld, v: Vehicle): void {
       }
     }
   }
+}
+
+/** Engine noise radius (tiles): idle → full by the larger of throttle and speed / `noiseFullSpeed`. */
+export function engineNoiseRadius(v: Vehicle, cfg: VehicleConfig): number {
+  const speed = Math.sqrt(v.vx * v.vx + v.vy * v.vy);
+  const load = Math.max(Math.abs(v.throttle), Math.min(1, speed / cfg.noiseFullSpeed));
+  return cfg.noiseIdleTiles + (cfg.noiseFullTiles - cfg.noiseIdleTiles) * load;
 }
 
 /**
@@ -82,7 +90,7 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
       if (v.doorTicks[s]! > 0 && --v.doorTicks[s]! === 0) v.doorsOpen &= ~(1 << s);
     }
     if (v.engineOn && (w.tick + v.id) % cfg.noiseEveryTicks === 0) {
-      const r = cfg.noiseIdleTiles + (cfg.noiseFullTiles - cfg.noiseIdleTiles) * v.throttle;
+      const r = engineNoiseRadius(v, cfg);
       const driver = v.occupants[0] ? playerEidOf(w, v.occupants[0]) : undefined;
       const by = driver === undefined ? undefined : { eid: driver, kind: 'vehicle' as const };
       emitNoise(w, v.x, v.y, v.z, r, cfg.noiseVolume, 'vehicle', 0, by);

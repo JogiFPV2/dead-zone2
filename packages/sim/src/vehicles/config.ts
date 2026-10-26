@@ -79,6 +79,8 @@ export interface VehicleConfig {
   noiseIdleTiles: number;
   noiseFullTiles: number;
   noiseVolume: number;
+  /** Speed (m/s) at which the engine is as loud as at full throttle (coasting fast still roars). */
+  noiseFullSpeed: number;
   /** Collision passes per tick (walls, bodies, vehicles). */
   passes: number;
   /**
@@ -196,6 +198,7 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   noiseIdleTiles: 10,
   noiseFullTiles: 35,
   noiseVolume: 0.8,
+  noiseFullSpeed: 15,
   passes: 3,
   ramStaggerSpeed: 1.5,
   ramKnockdownSpeed: 4,

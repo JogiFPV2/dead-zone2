@@ -1733,3 +1733,7 @@ Klient (Silnik 2): brak zmian protokołu — istniejące `vehiclePartBroken` i h
 Zasada: okno zastawione szafą / skrzynią / szafką zostaje zablokowane, dopóki mebla nie przesuniesz (#279). Mebel, którego footprint zajmuje kratkę po którejkolwiek stronie okna (mebel z mapy lub przesunięty), blokuje `climbThrough` z nowym powodem `blocked-by-furniture` (sprawdzane przed geometrią wspinaczki). `sim.windowBlocker(edge, playerId?)` (`openings/window-blocker.ts`, edge = `openingKey` lub {tx, ty, side, z?}) zwraca `{furnitureId, contentId, side: 'near'|'far', canMove, reason?: 'fixed'|'too-heavy', weightKg, strengthKg}` (najpierw strona gracza) albo undefined. `canMove` = nie `furnitureFixed` i waga ≤ siła pchania gracza. Po `pushFurniture` / `pullFurniture` okno jest znowu przejezdne.
 
 Klient (Silnik 2), protokół 45: `CommandRejectReason` += `'blocked-by-furniture'`; menu okna pyta `windowBlocker(edge)` i oferuje „Przesuń mebel” (push/pull z `furnitureId`) gdy `canMove`, inaczej pokazuje powód (`fixed` / `too-heavy`).
+
+### 9.76 Hałas silnika zależy też od prędkości
+
+Promień hałasu pracującego silnika (`emitNoise`, źródło `vehicle`, co `noiseEveryTicks`) rośnie od `noiseIdleTiles` do `noiseFullTiles` wg większej z wartości: |gaz| albo prędkość / `noiseFullSpeed` (15 m/s). Auto toczące się szybko bez gazu nadal wabi zombie; wsteczny bieg jest tak głośny jak jazda w przód. Bez zmiany protokołu.
