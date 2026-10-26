@@ -9,6 +9,7 @@ import {
 import { LootCategorySchema } from '../loot-category.js';
 import { ImprovisedWeaponSchema } from './improvised-weapon.js';
 import { MedicineSchema } from './medicine.js';
+import { WindowCoverSchema } from './window-cover.js';
 import { ThrowableSchema } from './throwable.js';
 import { WaterContainerSchema } from './water-container.js';
 
@@ -37,5 +38,7 @@ export const itemBaseShape = {
   waterContainer: WaterContainerSchema.optional(),
   /** Lek na chorobę (`item/medicine.ts`); domyślne w `DEFAULT_MEDICINE_*`. */
   medicine: MedicineSchema.optional(),
+  /** Można nim zasłonić okno (`item/window-cover.ts`); domyślne w `DEFAULT_WINDOW_COVER_*`. */
+  windowCover: WindowCoverSchema.optional(),
   ext: ExtSchema,
 } as const;

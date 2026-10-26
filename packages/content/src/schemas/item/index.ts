@@ -13,6 +13,7 @@ export * from './magazine.js';
 export * from './food-spoiled.js';
 export * from './food.js';
 export * from './medicine.js';
+export * from './window-cover.js';
 export * from './drink.js';
 export * from './container.js';
 export * from './clothing.js';

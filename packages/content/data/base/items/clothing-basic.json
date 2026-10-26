@@ -22,7 +22,8 @@
       "insulation": 0.35,
       "protection": { "scratch": 0.1, "bite": 0.02 },
       "durability": { "max": 45, "repairable": true }
-    }
+    },
+    "windowCover": {}
   },
   {
     "id": "base:jeans",

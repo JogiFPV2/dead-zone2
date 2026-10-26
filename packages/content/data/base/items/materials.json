@@ -4,7 +4,8 @@
     "name": "item.base.sheet.name",
     "kind": "material",
     "weightKg": 0.6,
-    "tags": ["base:fabric"]
+    "tags": ["base:fabric"],
+    "windowCover": { "setupSec": 15 }
   },
   {
     "id": "base:rag",
