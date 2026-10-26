@@ -1706,3 +1706,8 @@ Dla klienta (ukrycie podpowiedzi): `@deadzone/sim` eksportuje czyste funkcje
 - Tylko tłum: pojedyncze ciosy zombie × `physics.crowd.partitionBashMul` (0: tylko hałas), tłum dopiero przy nacisku netto ≥ `partitionMinUnits` (3), obrażenia × `partitionDamageMul` (1). Ściany `wall` (cegła, nośne) i dokładne `wallSegments` są niezniszczalne jak wcześniej.
 - Klient (Silnik 2): rysować `partition` jak ścianę, a w stanie `broken` jako dziurę; `OpeningView.kind` może być `'partition'`. Auta traktują ją dziś jak ścianę.
 - Test: `physics/crowd.test.ts` (1 / 8 / 30 zombie, ściana z cegły stoi, płot pada, determinizm, zapis/odczyt).
+### 9.71 Obrażenia pasażerów przy zderzeniu (bez pasów)
+
+Uderzenie pojazdu w ścianę, płot lub inny pojazd (`vehicleImpact.targetKind` ∈ wall/fence/vehicle) rani każdego pasażera wg prędkości uderzenia (`VehicleConfig`): `crashInjurySpeed` 6 m/s → scratch, `crashLacerationSpeed` 11 → laceration, `crashDeepSpeed` 17 → deep + laceration; maks. `crashMaxWounds` (2) ran na osobę. Część ciała losowana z `rng.health` (głowa, szyja, tułów, przedramiona, uda) — deterministycznie. Taranowanie zombie nie rani pasażerów.
+
+Klient (Silnik 2): brak zmian protokołu — używa istniejących zdarzeń `wounded` (po `vehicleImpact`).

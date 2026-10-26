@@ -12,6 +12,7 @@ import { applyImpactDamage, applyRollDamage, driveMods } from './damage.js';
 import { playerEidOf, vehicleTypes } from './seats.js';
 import type { Vehicle } from './types.js';
 import { tankLeak } from './fuel.js';
+import { crashInjuries } from './crash.js';
 
 /** Vehicles in StableId order (deterministic). */
 export function sortedVehicles(w: SimWorld): Vehicle[] {
@@ -100,6 +101,7 @@ export function vehicleSystem(w: SimWorld, grid: TileGrid): void {
   for (const u of under) rollOver(w, grid, u, cfg);
   // Damage after the reactions (impact order = deterministic contact order).
   for (const hit of impacts) applyImpactDamage(w, hit, cfg);
+  for (const hit of impacts) crashInjuries(w, hit, cfg);
   for (const u of under) applyRollDamage(w, u, cfg);
   // Zombies at broken windows (after the damage of this tick: a window broken now counts).
   for (const v of sortedVehicles(w)) if (v.frozenAt < 0) windowGrabStep(w, grid, v);

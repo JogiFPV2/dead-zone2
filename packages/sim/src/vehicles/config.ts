@@ -4,6 +4,16 @@
  * walking speed, which Symulacja is retuning).
  */
 export interface VehicleConfig {
+  /**
+   * Occupant injuries in a crash against a hard obstacle (wall, fence, another car; no
+   * seatbelts): closing speed (m/s) ≥ `crashInjurySpeed` → a scratch, ≥ `crashLacerationSpeed`
+   * → a laceration, ≥ `crashDeepSpeed` → a deep wound plus a laceration. At most
+   * `crashMaxWounds` wounds per occupant per crash (the cap). Body part from `rng.health`.
+   */
+  crashInjurySpeed: number;
+  crashLacerationSpeed: number;
+  crashDeepSpeed: number;
+  crashMaxWounds: number;
   /** Full steering lock (front wheel angle, rad) at standstill; less at speed (`steerFalloffMs`). */
   maxSteerRad: number;
   steerFalloffMs: number;
@@ -128,6 +138,10 @@ export interface VehicleConfig {
 }
 
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
+  crashInjurySpeed: 6,
+  crashLacerationSpeed: 11,
+  crashDeepSpeed: 17,
+  crashMaxWounds: 2,
   maxSteerRad: 0.6,
   steerFalloffMs: 25,
   steerRatePerSec: 4,
