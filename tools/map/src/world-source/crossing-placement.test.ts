@@ -14,9 +14,9 @@ import { OsmTiles, type OsmTileManifest } from './tiles.js';
  * the generator) — lower `KNOWN_VIOLATIONS` to the new value when it does.
  */
 const KNOWN_VIOLATIONS: Record<string, Omit<CrossingStats, 'crossings'>> = {
-  'osm-okulickiego': { duplicate: 350, spacing: 2847, angle: 41, offRoad: 0 },
-  'osm-stw': { duplicate: 767, spacing: 7795, angle: 80, offRoad: 0 },
-  'plan-4': { duplicate: 0, spacing: 35, angle: 1, offRoad: 0 },
+  'osm-okulickiego': { duplicate: 9, spacing: 455, angle: 11, offRoad: 0 },
+  'osm-stw': { duplicate: 27, spacing: 2447, angle: 26, offRoad: 0 },
+  'plan-4': { duplicate: 0, spacing: 26, angle: 1, offRoad: 0 },
 };
 
 const OSM = fileURLToPath(new URL('../../../../apps/game/public/osm/', import.meta.url));
