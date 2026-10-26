@@ -148,7 +148,10 @@ export const impactDamage = (energy: number, cfg: VehicleConfig): number =>
 export function applyImpactDamage(w: SimWorld, hit: Impact, cfg: VehicleConfig): void {
   const v = hit.vehicle;
   const soft =
-    hit.targetKind !== 'wall' && hit.targetKind !== 'fence' && hit.targetKind !== 'vehicle';
+    hit.targetKind !== 'wall' &&
+    hit.targetKind !== 'fence' &&
+    hit.targetKind !== 'vehicle' &&
+    hit.targetKind !== 'furniture';
   const dmg = impactDamage(hit.energy, cfg) * (soft ? cfg.softDmgMul : 1);
   if (dmg <= 0) return;
   const z = hit.zone;

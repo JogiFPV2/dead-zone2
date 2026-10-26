@@ -419,7 +419,7 @@ function applyMove(
   p: Piece,
   to: TileRect,
   rot: number,
-  cause: 'push' | 'pull' | 'rotate' | 'crowd',
+  cause: 'push' | 'pull' | 'rotate' | 'crowd' | 'vehicle',
   playerId: PlayerId | undefined,
 ): void {
   const pw = w.physics;
@@ -688,6 +688,38 @@ export function crowdPushFurniture(w: SimWorld, p: Piece, dx: number, dy: number
   const to = { ...p.rect, x: p.rect.x + dx, y: p.rect.y + dy };
   if (placementBlocked(w, gridOf(w), p, to, dx, dy, -1)) return false;
   applyMove(w, p, to, p.rot, 'crowd', undefined);
+  return true;
+}
+
+// ── Vehicles ─────────────────────────────────────────────────────────────────────────────
+
+/** A furniture piece (map or moved) covering tile (tx, ty, z); undefined without one. */
+export function furnitureCovering(w: SimWorld, tx: number, ty: number, z: number) {
+  const f = w.furniture;
+  if (!f || (f.flags(tx, ty, z) & 1) === 0) return undefined;
+  // Footprints reach at most 3 tiles past the anchor (north-west tile).
+  for (let ay = ty; ay >= ty - 3; ay--)
+    for (let ax = tx; ax >= tx - 3; ax--) {
+      const objs = onTile(w, ax, ay, z);
+      for (let n = 0; n < objs.length; n++) {
+        const p = pieceAt(w, ax, ay, z, n);
+        if (p && inRect(p.rect, tx, ty)) return p;
+      }
+    }
+  return undefined;
+}
+
+/** A car shoves `p` one tile by (dx, dy) when nothing blocks it (`furnitureMoved` cause `vehicle`). */
+export function vehiclePushFurniture(
+  w: SimWorld,
+  p: Piece,
+  dx: number,
+  dy: number,
+  playerId: PlayerId | undefined,
+): boolean {
+  const to = { ...p.rect, x: p.rect.x + dx, y: p.rect.y + dy };
+  if (placementBlocked(w, gridOf(w), p, to, dx, dy, -1)) return false;
+  applyMove(w, p, to, p.rot, 'vehicle', playerId);
   return true;
 }
 

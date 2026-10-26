@@ -56,6 +56,12 @@ export interface VehicleConfig {
   partitionBreakSpeed: number;
   /** Speed lost when breaking through a partition wall (fraction of the normal speed). */
   partitionSlow: number;
+  /** Furniture up to this weight (kg, incl. contents; not a fixture) can be knocked aside. */
+  furnitureLightKg: number;
+  /** A light piece hit faster than this (normal speed, m/s) is shoved one tile aside. */
+  furnitureKnockSpeed: number;
+  /** Speed lost when knocking a piece aside (fraction of the normal speed). */
+  furnitureSlow: number;
   /** Impacts below this energy send no `vehicleImpact`. */
   minImpactJ: number;
   /** Mass of a person / zombie / animal body hit by a car when it has no physics mass. */
@@ -170,6 +176,9 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   fenceSlow: 0.25,
   partitionBreakSpeed: 5,
   partitionSlow: 0.4,
+  furnitureLightKg: 80,
+  furnitureKnockSpeed: 3,
+  furnitureSlow: 0.35,
   minImpactJ: 150,
   bodyMassKg: 75,
   enterRange: 1.5,

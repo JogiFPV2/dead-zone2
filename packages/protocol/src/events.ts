@@ -739,7 +739,8 @@ export type SimEvent =
   | {
       type: 'furnitureMoved';
       tick: number;
-      cause: 'push' | 'pull' | 'rotate' | 'crowd';
+      /** `vehicle` (protocol 44): a car knocked a light piece aside. */
+      cause: 'push' | 'pull' | 'rotate' | 'crowd' | 'vehicle';
       playerId?: PlayerId;
       contentId: string;
       fromId: number;

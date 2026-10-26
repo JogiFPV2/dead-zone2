@@ -1717,3 +1717,9 @@ Klient (Silnik 2): brak zmian protokołu — używa istniejących zdarzeń `woun
 Stojąca krawędź `partition` uderzona szybciej niż `VehicleConfig.partitionBreakSpeed` (5 m/s, prędkość normalna) pęka (`damageOpening` → `openingChanged` by 'vehicle', `chunkChanged`), auto traci `partitionSlow` (40%) prędkości normalnej i jedzie dalej. Wolniej — zatrzymuje się jak na murze. Mur/ściany nośne nadal niezniszczalne.
 
 Klient (Silnik 2): brak zmian protokołu; `vehicleImpact.targetKind` = 'wall' przy przebiciu ścianki działowej (rozpoznaj po `openingChanged.kind === 'partition'`).
+
+### 9.73 Samochód kontra meble (protokół 44)
+
+Footprinty mebli (`w.furniture`: meble z mapy i przesunięte, `furnitureMoves` #279) blokują teraz auto (`vehicles/furniture-hit.ts`). Lekki ruchomy mebel (≤ `VehicleConfig.furnitureLightKg` 80 kg z zawartością, nie `furnitureFixed`) uderzony szybciej niż `furnitureKnockSpeed` (3 m/s) zostaje odepchnięty o 1 kratkę (`furnitureMoved` cause `'vehicle'`), auto traci `furnitureSlow` (35%) prędkości normalnej. Ciężki, przytwierdzony, wolne uderzenie albo brak miejsca na odepchnięcie — auto staje jak na murze. Oba przypadki: `vehicleImpact` targetKind `'furniture'` (twarde uszkodzenia karoserii; obrażenia pasażerów #324 wg prędkości straconej). Drzewa / propy: brak takich obiektów w contencie (nic do kolizji).
+
+Klient (Silnik 2), protokół 44: `VehicleImpactTarget` += `'furniture'`; `furnitureMoved.cause` += `'vehicle'` (bez `playerId`).

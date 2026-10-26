@@ -97,6 +97,8 @@ export const VEHICLE_IMPACT_TARGETS = [
   'player',
   'animal',
   'vehicle',
+  /** Furniture (protocol 44): knocked aside (light) or stops the car (heavy / fixed). */
+  'furniture',
 ] as const;
 export type VehicleImpactTarget = (typeof VEHICLE_IMPACT_TARGETS)[number];
 

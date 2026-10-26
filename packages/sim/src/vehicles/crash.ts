@@ -26,7 +26,12 @@ export function crashWounds(speed: number, cfg: VehicleConfig): number[] {
  * tick, so a crash wounds once. Draws `rng.health` per wound (body part).
  */
 export function crashInjuries(w: SimWorld, hit: Impact, cfg: VehicleConfig): void {
-  if (hit.targetKind !== 'wall' && hit.targetKind !== 'fence' && hit.targetKind !== 'vehicle')
+  if (
+    hit.targetKind !== 'wall' &&
+    hit.targetKind !== 'fence' &&
+    hit.targetKind !== 'vehicle' &&
+    hit.targetKind !== 'furniture'
+  )
     return;
   const kinds = crashWounds(hit.closing, cfg);
   if (!kinds.length || !w.survival) return;

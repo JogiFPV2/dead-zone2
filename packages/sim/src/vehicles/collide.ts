@@ -7,6 +7,7 @@ import { damageOpening } from '../openings/actions.js';
 import { OpeningKind, openingKey } from '../openings/state.js';
 import { moveCircle } from '../world/collision.js';
 import { playerEidOf } from './seats.js';
+import { collideFurniture } from './furniture-hit.js';
 import type { TileGrid } from '../world/grid.js';
 import type { VehicleConfig } from './config.js';
 import {
@@ -353,6 +354,7 @@ export function collideVehicle(
   v.contacts = touching.sort((a, b) => a - b);
   collideVehicles(w, v, t, types, cfg, out);
   for (let pass = 0; pass < cfg.passes; pass++) {
-    if (!collideStatic(w, grid, v, t, cfg, out)) break;
+    const walls = collideStatic(w, grid, v, t, cfg, out);
+    if (!collideFurniture(w, v, t, cfg, out) && !walls) break;
   }
 }
