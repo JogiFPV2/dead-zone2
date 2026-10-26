@@ -1698,3 +1698,11 @@ przeszukany) — bez nowego kodu, więc `PROTOCOL_VERSION` zostaje 40, `SAVE_VER
 Dla klienta (ukrycie podpowiedzi): `@deadzone/sim` eksportuje czyste funkcje
 `reachTarget(world, eid, { container } | { x, y, z }): 'out-of-range' | 'wall' | undefined` i
 `canReachTarget(...)`: boolean. Test: `items/loot-los.test.ts`.
+
+### 9.70 Tłum łamie cienkie ściany (krawędź `partition`, protokół 43)
+
+- Nowy rodzaj krawędzi `partition` (`SIM_EDGE_KINDS`, content `EDGE_TYPES` / kategoria kafla `partition`, kafel `base:plywood-wall`): cienka, słaba ściana (sklejka, ścianka działowa, ściana z desek). Stoi = jak ściana (blokuje ruch, wzrok, tłumi dźwięk); `broken` = dziura z gruzem (`slow`). Drzwiowe komendy na niej: `invalid-target`.
+- Sim: `OpeningKind.partition` (5), hp `PARTITION_HP` 120, ta sama ścieżka `damageOpening` co drzwi, więc `openingChanged` (`kind: 'partition'`, `by: 'crowd'`) i `chunkChanged` (`opening`) jak dotąd. Szum `break` przy rozbiciu.
+- Tylko tłum: pojedyncze ciosy zombie × `physics.crowd.partitionBashMul` (0: tylko hałas), tłum dopiero przy nacisku netto ≥ `partitionMinUnits` (3), obrażenia × `partitionDamageMul` (1). Ściany `wall` (cegła, nośne) i dokładne `wallSegments` są niezniszczalne jak wcześniej.
+- Klient (Silnik 2): rysować `partition` jak ścianę, a w stanie `broken` jako dziurę; `OpeningView.kind` może być `'partition'`. Auta traktują ją dziś jak ścianę.
+- Test: `physics/crowd.test.ts` (1 / 8 / 30 zombie, ściana z cegły stoi, płot pada, determinizm, zapis/odczyt).

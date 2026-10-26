@@ -126,7 +126,11 @@ export function damageOpening(
   } else {
     setOpening(o, key, kind, OS.broken, 0, { cleared: 0 });
     if (kind === OpeningKind.window) windowSmashed(w, key, by, undefined, byEid);
-    else if (kind === OpeningKind.fence || kind === OpeningKind.gate) {
+    else if (
+      kind === OpeningKind.fence ||
+      kind === OpeningKind.gate ||
+      kind === OpeningKind.partition
+    ) {
       const k = unpackKey(key);
       const c = edgeCentre(key % 2, k.tx, k.ty);
       const n = o.cfg.breakNoise;
@@ -201,7 +205,8 @@ export function applyOpeningCommand(
     const action = cmd.type === 'breakWindow' ? 'smashWindow' : cmd.type;
     return startAction(w, eid, newAction(action, { edge: key }));
   }
-  if (kind === OpeningKind.wall || kind === OpeningKind.fence) return 'invalid-target';
+  if (kind === OpeningKind.wall || kind === OpeningKind.fence || kind === OpeningKind.partition)
+    return 'invalid-target';
   if (!edgeInReach(w, eid, key)) return 'out-of-range';
   if (w.survival?.asleep[eid]) return 'invalid-state';
   if (state === OS.barricaded || state === OS.broken || planks > 0) return 'invalid-state';

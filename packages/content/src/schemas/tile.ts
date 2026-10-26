@@ -10,6 +10,8 @@ export const TILE_CATEGORIES = [
   'door',
   'fence',
   'gate',
+  /** Thin weak wall (plywood, partition, board wall): a crowd breaks it (sim `partition`). */
+  'partition',
 ] as const;
 export const TileCategorySchema = z.enum(TILE_CATEGORIES);
 

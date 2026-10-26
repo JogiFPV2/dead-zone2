@@ -941,7 +941,10 @@ export interface OpeningView {
 }
 
 /** Edge kinds with a state (`openings`). */
-export type OpeningEdgeKind = Extract<SimEdgeKind, 'door' | 'window' | 'fence' | 'gate'>;
+export type OpeningEdgeKind = Extract<
+  SimEdgeKind,
+  'door' | 'window' | 'fence' | 'gate' | 'partition'
+>;
 
 /**
  * Melee stats of what is in `hand_primary` (PROTOCOL_VERSION 21): any item is a weapon (catalogue

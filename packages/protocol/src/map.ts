@@ -161,7 +161,7 @@ export interface SimChunkAddress {
  * locks like a door, zombies bash and force it, it can be barricaded; closed it blocks movement,
  * not sight or sound.
  */
-export const SIM_EDGE_KINDS = ['wall', 'window', 'door', 'fence', 'gate'] as const;
+export const SIM_EDGE_KINDS = ['wall', 'window', 'door', 'fence', 'gate', 'partition'] as const;
 export type SimEdgeKind = (typeof SIM_EDGE_KINDS)[number];
 
 /**

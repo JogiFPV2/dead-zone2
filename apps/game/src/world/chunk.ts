@@ -83,7 +83,7 @@ export interface RoomInfo {
 }
 
 /** How the renderer draws an edge type; the kind itself comes from content. */
-export type EdgeKind = 'wall' | 'window' | 'door' | 'fence' | 'gate';
+export type EdgeKind = 'wall' | 'window' | 'door' | 'fence' | 'gate' | 'partition';
 
 export interface EdgeDef {
   readonly id: ContentId;

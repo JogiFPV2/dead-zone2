@@ -35,7 +35,12 @@ export function physicsPress(w: SimWorld, eid: number, key: number): void {
 
 /** Multiplier of a lone zombie's blow on an edge kind (fences: they mostly just bang on it). */
 export function physicsBashMul(w: SimWorld, kind: number): number {
-  return kind === OpeningKind.fence ? w.physics.cfg.crowd.fenceBashMul : 1;
+  const cc = w.physics.cfg.crowd;
+  return kind === OpeningKind.fence
+    ? cc.fenceBashMul
+    : kind === OpeningKind.partition
+      ? cc.partitionBashMul
+      : 1;
 }
 
 const planksOf = (w: SimWorld, key: number): number => w.openings.states.get(key)?.planks ?? 0;
@@ -207,6 +212,8 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
     damageOpening(w, key, kind, e?.hp ?? maxHp(w.openings.cfg, kind, state), 'crowd');
     return level;
   }
+  // Thin partitions give way only to a real crowd.
+  if (kind === OpeningKind.partition && net < cc.partitionMinUnits) return level;
   // One excess unit = `bashesPerUnit` × the blows per second of the first presser's type.
   const def = w.ai?.types[w.c.Zombie.type[first] ?? 0]?.def;
   const bashDps = def
@@ -215,7 +222,11 @@ function pulse(w: SimWorld, grid: TileGrid, key: number, eids: readonly number[]
     : 0;
   const dmg =
     ((excess * cc.bashesPerUnit * bashDps * cc.pulseTicks) / PHYS_TICKS_PER_SECOND) *
-    (kind === OpeningKind.fence ? cc.fenceDamageMul : 1) *
+    (kind === OpeningKind.fence
+      ? cc.fenceDamageMul
+      : kind === OpeningKind.partition
+        ? cc.partitionDamageMul
+        : 1) *
     (1 + cc.damageJitter * (2 * u - 1));
   damageOpening(w, key, kind, Math.fround(dmg), 'crowd');
   return level;

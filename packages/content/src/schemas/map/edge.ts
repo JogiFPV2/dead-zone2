@@ -7,7 +7,7 @@ import { LocalTileSchema } from './address.js';
  * `gate`: brama w ogrodzeniu (kompleksy: szpital, policja, wojsko) — otwierana, zamykana na klucz,
  * wyważana i barykadowana jak drzwi; zamknięta blokuje ruch, nie wzrok ani dźwięk.
  */
-export const EDGE_TYPES = ['wall', 'window', 'door', 'fence', 'gate'] as const;
+export const EDGE_TYPES = ['wall', 'window', 'door', 'fence', 'gate', 'partition'] as const;
 
 /**
  * Krawędź kafla (rzadka lista, tylko istniejące krawędzie). Każdy kafel ma własne krawędzie

@@ -23,6 +23,7 @@ const KIND_INDEX: Record<SimEdgeKind, number> = {
   window: OpeningKind.window,
   fence: OpeningKind.fence,
   gate: OpeningKind.gate,
+  partition: OpeningKind.partition,
 } as Record<SimEdgeKind, number>;
 
 const noCrowd: PhysicsConfig = {
@@ -344,5 +345,68 @@ describe('physics: crowd pressure on barricades and gates', () => {
     expect(run({ n: 6, kind: 'gate', locked: true, seed: 5 })).toEqual(
       run({ n: 6, kind: 'gate', locked: true, seed: 5 }),
     );
+  });
+});
+
+describe('physics: crowd on thin walls (partition, protocol 43)', () => {
+  it('standing partition blocks like a wall; broken = slow hole; no door commands', () => {
+    const sim = aiSim({ map: room('partition'), spawn: { x: 20.5, y: 25.5 } });
+    const g = new TileGrid(buildMap(room('partition')), sim.world.openings);
+    const all = EF.blocksMove | EF.blocksSight | EF.muffles;
+    expect(g.flagsW(20, 25, 0) & all).toBe(all);
+    send(sim, { type: 'toggleDoor', ...EDGE });
+    send(sim, { type: 'debugOpening', ...EDGE, state: 'broken' });
+    sim.step();
+    expect(rejectedReasons(sim)).toEqual(['invalid-target']);
+    expect(g.flagsW(20, 25, 0) & (EF.blocksMove | EF.slow)).toBe(EF.slow);
+  });
+
+  it('1 zombie only bangs on it; 8 break it; 30 break it faster', () => {
+    const one = run({ n: 1, kind: 'partition', limit: 2400 });
+    expect(one.broken).toBe(-1);
+    const eight = run({ n: 8, kind: 'partition', limit: 6000 });
+    expect(eight.broken).toBeGreaterThan(0);
+    expect(eight.byCrowd).toBeGreaterThan(0);
+    const thirty = run({ n: 30, kind: 'partition', limit: 6000 });
+    expect(thirty.broken).toBeGreaterThan(0);
+    expect(thirty.broken).toBeLessThan(eight.broken);
+  });
+
+  it('a brick wall holds against 30 zombies; a wooden fence falls', () => {
+    expect(run({ n: 30, kind: 'wall', limit: 2400 }).first).toBe(-1);
+    expect(run({ n: 30, kind: 'fence', limit: 2400 }).broken).toBeGreaterThan(0);
+  });
+
+  it('is deterministic and survives save / load', () => {
+    expect(run({ n: 8, kind: 'partition', seed: 11, limit: 1500 })).toEqual(
+      run({ n: 8, kind: 'partition', seed: 11, limit: 1500 }),
+    );
+    const opts = {
+      seed: 4,
+      map: buildMap(room('partition')),
+      spawn: { x: 28.5, y: 28.5 },
+      dev: true,
+      content: fixtureContent(),
+      clockStart: NOON,
+      spawnZombies: crowd(8),
+    };
+    const a = createSim(opts);
+    a.enqueue({
+      type: 'debugNoise',
+      x: 25.5,
+      y: 25.5,
+      radiusTiles: 40,
+      tick: 0,
+      playerId: 0,
+      seq: 0,
+    });
+    for (let i = 0; i < 300; i++) a.step();
+    const b = createSim({ ...opts, load: a.save() });
+    expect(b.hash()).toBe(a.hash());
+    for (let i = 0; i < 300; i++) {
+      a.step();
+      b.step();
+    }
+    expect(b.hash()).toBe(a.hash());
   });
 });

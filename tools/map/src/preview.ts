@@ -24,6 +24,7 @@ const EDGE_GLYPH: Record<EdgeType, readonly [string, string]> = {
   door: ['d', 'd'],
   fence: ['~', '!'],
   gate: ['g', 'g'],
+  partition: [':', ':'],
 };
 const STAIR_GLYPH: Record<StairDir, string> = { N: '^', E: '>', S: 'v', W: '<' };
 

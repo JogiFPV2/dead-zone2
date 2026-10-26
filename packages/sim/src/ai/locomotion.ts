@@ -268,7 +268,7 @@ function bash(
   const c = edgeCentre(key % 2, k.tx, k.ty);
   const n = o.cfg.bashNoise;
   emitNoise(w, c.x, c.y, k.z, n.radiusTiles, n.volume, 'impact');
-  damageOpening(w, key, kind, dmg, 'zombie');
+  if (dmg > 0) damageOpening(w, key, kind, dmg, 'zombie');
 }
 
 /**

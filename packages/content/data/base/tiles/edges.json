@@ -40,6 +40,11 @@
     "category": "gate"
   },
   {
+    "id": "base:plywood-wall",
+    "name": "tile.base.plywood-wall.name",
+    "category": "partition"
+  },
+  {
     "id": "base:railing",
     "name": "tile.base.railing.name",
     "category": "fence"

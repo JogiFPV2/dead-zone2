@@ -17,7 +17,7 @@ import {
   type ContentBundle,
 } from '@deadzone/content';
 import { deriveSeed, Rng } from '../core/rng.js';
-import { DOOR_CRACKED_FRAC, FENCE_HP } from '../physics/constants.js';
+import { DOOR_CRACKED_FRAC, FENCE_HP, PARTITION_HP } from '../physics/constants.js';
 
 /** `worldSettings.openings` (defaults = the schema defaults in packages/content). */
 export type OpeningsConfig = ContentBundle['worldSettings']['openings'];
@@ -96,7 +96,15 @@ export const DEFAULT_OPENINGS_CONFIG: OpeningsConfig = {
  * `broken` = knocked over by a crowd, `physics/crowd.ts`), 4 = gate in a fence (states like a
  * door; closed it blocks movement, not sight or sound).
  */
-export const OpeningKind = { wall: 0, door: 1, window: 2, fence: 3, gate: 4 } as const;
+export const OpeningKind = {
+  wall: 0,
+  door: 1,
+  window: 2,
+  fence: 3,
+  gate: 4,
+  /** Thin weak wall (protocol 43): blocks like a wall until a crowd breaks it (`broken`). */
+  partition: 5,
+} as const;
 
 /** Doors and gates: open / close / lock / force (`toggleDoor lock`, `forceDoor`). */
 export const isDoorLike = (kind: number): boolean =>
@@ -179,7 +187,9 @@ export function createOpeningsWorld(map: SimMap, cfg: OpeningsConfig, seed = 0):
             ? OpeningKind.fence
             : k === 'gate'
               ? OpeningKind.gate
-              : 0;
+              : k === 'partition'
+                ? OpeningKind.partition
+                : 0;
   });
   return {
     cfg,
@@ -218,6 +228,7 @@ export function unpackKey(key: number): { side: EdgeSide; tx: number; ty: number
 export function maxHp(cfg: OpeningsConfig, kind: number, state: number): number {
   if (state === OS.broken) return 0;
   if (kind === OpeningKind.fence) return FENCE_HP;
+  if (kind === OpeningKind.partition) return PARTITION_HP;
   if (kind === OpeningKind.gate) return cfg.gateHp;
   return kind === OpeningKind.door ? cfg.doorHp : cfg.windowHp;
 }
@@ -254,6 +265,9 @@ export function openingFlags(kind: number, state: number, planks = 0, sightPlank
   const passable = state === OS.open || state === OS.broken;
   // Low fence: blocks movement while standing (not sight or sound); knocked over = slow.
   if (kind === OpeningKind.fence) return f | (passable ? EF.slow : EF.blocksMove);
+  // Thin partition: a wall while standing; broken = a hole with debris (slow).
+  if (kind === OpeningKind.partition)
+    return f | (passable ? EF.slow : EF.blocksMove | EF.blocksSight | EF.muffles);
   // Legacy state `barricaded` (old saves): as fully planked.
   if (state === OS.barricaded) planks = Math.max(planks, sightPlanks);
   if (planks > 0) {
@@ -299,7 +313,7 @@ export function setOpening(
   o.version++;
 }
 
-const KIND_NAMES = ['window', 'door', 'window', 'fence', 'gate'] as const;
+const KIND_NAMES = ['window', 'door', 'window', 'fence', 'gate', 'partition'] as const;
 
 export function openingView(o: OpeningsWorld, key: number, kind: number): OpeningView {
   const e = o.states.get(key);

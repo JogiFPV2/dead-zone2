@@ -296,6 +296,15 @@ export interface CrowdConfig {
   /** A closed window breaks at once at this net pressure (units). */
   windowBreakUnits: number;
   /**
+   * Thin weak walls (edge kind `partition`: plywood, partition, board wall; brick / load-bearing
+   * walls are `wall` and never break): only a crowd with net pressure ≥ `partitionMinUnits`
+   * damages one (× `partitionDamageMul`, same `damageOpening` path, hp `PARTITION_HP`); lone
+   * zombie blows × `partitionBashMul` (0: they only bang on it).
+   */
+  partitionMinUnits: number;
+  partitionDamageMul: number;
+  partitionBashMul: number;
+  /**
    * A closed gate without planks falls over at once at this net pressure (units); a locked
    * (barred) gate needs `gateBarMul` × that. Below it the crowd only damages it (like a door).
    */
@@ -332,6 +341,8 @@ export interface CrowdConfig {
 
 /** Hit points of a standing low fence (`openings`: `closed` → `broken` = knocked over). */
 export const FENCE_HP = 40;
+/** Hit points of a thin partition / plywood wall (`openings` kind `partition`). */
+export const PARTITION_HP = 120;
 
 export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
   vehicle: DEFAULT_VEHICLE_CONFIG,
@@ -417,6 +428,9 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     fenceDamageMul: 2,
     fenceBashMul: 0.25,
     windowBreakUnits: 3,
+    partitionMinUnits: 3,
+    partitionDamageMul: 1,
+    partitionBashMul: 0,
     gateFallUnits: 5,
     gateBarMul: 1.8,
     holdReachTiles: 1,

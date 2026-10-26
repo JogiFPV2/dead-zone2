@@ -21,6 +21,7 @@ export const STRUCTURE_GREYS: Readonly<Record<EdgeKind | 'roof', string>> = {
   door: '#6b7178',
   fence: '#7a6146',
   gate: '#5f646b',
+  partition: '#9a8f7e',
   roof: '#50565e',
 };
 
