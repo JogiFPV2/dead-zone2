@@ -23,7 +23,7 @@
       "protection": { "scratch": 0.1, "bite": 0.02 },
       "durability": { "max": 45, "repairable": true }
     },
-    "windowCover": {}
+    "windowCover": { "lightPass": 0.3, "setupSec": 10 }
   },
   {
     "id": "base:jeans",
@@ -50,6 +50,29 @@
       "insulation": 0.05,
       "protection": { "scratch": 0.3, "bite": 0.05 },
       "durability": { "max": 40, "repairable": true }
+    }
+  },
+  {
+    "id": "base:jacket",
+    "name": "item.base.jacket.name",
+    "kind": "clothing",
+    "weightKg": 1.2,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.5,
+      "protection": {
+        "scratch": 0.2,
+        "bite": 0.05
+      },
+      "durability": {
+        "max": 60,
+        "repairable": true
+      }
+    },
+    "windowCover": {
+      "lightPass": 0.3,
+      "setupSec": 10
     }
   }
 ]

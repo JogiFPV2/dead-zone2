@@ -5,7 +5,7 @@
     "kind": "material",
     "weightKg": 0.6,
     "tags": ["base:fabric"],
-    "windowCover": { "setupSec": 15 }
+    "windowCover": { "lightPass": 0.1, "setupSec": 15 }
   },
   {
     "id": "base:rag",
@@ -37,5 +37,38 @@
     "weightKg": 0.005,
     "maxStack": 100,
     "tags": ["base:fastener"]
+  },
+  {
+    "id": "base:curtain",
+    "name": "item.base.curtain.name",
+    "kind": "material",
+    "weightKg": 0.8,
+    "tags": ["base:fabric"],
+    "windowCover": {
+      "lightPass": 0.15,
+      "setupSec": 5
+    }
+  },
+  {
+    "id": "base:blanket",
+    "name": "item.base.blanket.name",
+    "kind": "material",
+    "weightKg": 1.5,
+    "tags": ["base:fabric"],
+    "windowCover": {
+      "lightPass": 0.1,
+      "setupSec": 15
+    }
+  },
+  {
+    "id": "base:tarp",
+    "name": "item.base.tarp.name",
+    "kind": "material",
+    "weightKg": 2.0,
+    "tags": [],
+    "windowCover": {
+      "lightPass": 0,
+      "setupSec": 20
+    }
   }
 ]
