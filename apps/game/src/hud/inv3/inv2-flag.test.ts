@@ -22,7 +22,14 @@ describe('inventory v2 flag', () => {
       for (const part of s.split(',')) expect(part.trim()).toMatch(/^html\.is-touch\.dz-inv2 /);
   });
   it('spec sizes: rail 52, backpack 398, surroundings 310, cells 50, buttons 44, menu 210 × 44', () => {
-    for (const v of ['width: 52px', 'width: min(398px', 'width: 310px', 'width: 50px', 'height: 44px', 'width: 210px'])
+    for (const v of [
+      'width: 52px',
+      'width: min(398px',
+      'width: 310px',
+      'width: 50px',
+      'height: 44px',
+      'width: 210px',
+    ])
       expect(css).toContain(v);
   });
 });

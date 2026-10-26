@@ -1,3 +1,4 @@
+import type { EquipSlot } from '@deadzone/protocol';
 import type { InvRowVM } from './inv3-model.js';
 
 /** Inventory v2 phone filter rail (inventory-v2-spec §4): category chips with counters. */
@@ -60,3 +61,40 @@ export const filterRows = (
   kindOf: KindOf,
 ): InvRowVM[] =>
   cat === 'all' ? [...rows] : rows.filter((r) => categoryOfKind(kindOf(r.def)) === cat);
+
+/**
+ * POSTAĆ strip (inventory-v2-spec §1, mobile: 44 px slots in a row): right / left hand, backpack,
+ * torso, legs, hands. A slot shows the first equipped item of its slots.
+ */
+export const INV2_SLOTS: readonly {
+  key: string;
+  label: string;
+  short: string;
+  slots: readonly EquipSlot[];
+}[] = [
+  { key: 'P', label: 'Prawa ręka', short: 'P', slots: ['hand_primary'] },
+  { key: 'L', label: 'Lewa ręka', short: 'L', slots: ['hand_secondary'] },
+  { key: 'back', label: 'Plecak', short: 'Plec.', slots: ['back'] },
+  { key: 'torso', label: 'Korpus', short: 'Korp.', slots: ['torso_outer', 'torso_inner'] },
+  { key: 'legs', label: 'Nogi', short: 'Nogi', slots: ['legs'] },
+  { key: 'hands', label: 'Dłonie', short: 'Dłon.', slots: ['hands'] },
+];
+
+export interface Inv2SlotVM {
+  key: string;
+  label: string;
+  short: string;
+  itemId?: number;
+}
+
+export function characterSlots(equipped: Partial<Record<EquipSlot, number>>): Inv2SlotVM[] {
+  return INV2_SLOTS.map((s) => {
+    const id = s.slots.map((k) => equipped[k]).find((x) => x !== undefined);
+    return {
+      key: s.key,
+      label: s.label,
+      short: s.short,
+      ...(id !== undefined ? { itemId: id } : {}),
+    };
+  });
+}

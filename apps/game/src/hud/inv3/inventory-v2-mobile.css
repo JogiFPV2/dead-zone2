@@ -85,3 +85,40 @@ html.is-touch.dz-inv2 .dz-i3__menu {
 html.is-touch.dz-inv2 .dz-i3__mi {
   height: 44px;
 }
+/* POSTAĆ strip (spec §1, mobile): six 44 px character slots in a row above the backpack grid. */
+html.is-touch.dz-inv2 .dz-i3__slots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  margin: 6px 0 4px;
+}
+html.is-touch.dz-inv2 .dz-i3__slot {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  touch-action: none;
+}
+html.is-touch.dz-inv2 .dz-i3__slot[data-empty] {
+  border-style: dashed;
+  color: var(--dim);
+  font: 600 9px var(--font-family-sans);
+}
+html.is-touch.dz-inv2 .dz-i3__slot[data-selected] {
+  border-color: var(--acc);
+  box-shadow: 0 0 0 1px var(--acc);
+}
+html.is-touch.dz-inv2 .dz-i3__slots-l {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+}

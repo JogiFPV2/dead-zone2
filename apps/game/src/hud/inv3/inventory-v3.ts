@@ -22,6 +22,7 @@ import {
   dropPreview,
   findAny,
   gridSlots,
+  itemRowV3,
   moveCommands,
   pieceKg,
   playerSections,
@@ -35,7 +36,13 @@ import {
   type InvSort,
 } from './inv3-model.js';
 import { INV2_CLASS } from './inv2-flag.js';
-import { categoryCounts, filterRows, INV2_CATEGORIES, type Inv2Category } from './inv2-model.js';
+import {
+  categoryCounts,
+  characterSlots,
+  filterRows,
+  INV2_CATEGORIES,
+  type Inv2Category,
+} from './inv2-model.js';
 
 /** Inventory v2 phone layout (`?inv=v2` on a touch device, inv2-flag.ts). */
 const isInv2 = (): boolean =>
@@ -706,6 +713,36 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     return b;
   };
 
+  const characterStrip = (
+    s: GameState,
+    equipped: Parameters<typeof characterSlots>[0],
+  ): HTMLElement => {
+    const strip = div('dz-i3__slots');
+    strip.setAttribute('aria-label', 'Postać');
+    const shown = new Set<number>();
+    for (const slot of characterSlots(equipped)) {
+      const cell = div('dz-i3__slot');
+      cell.dataset.slot = slot.key;
+      const it = slot.itemId === undefined ? undefined : findItem(s, slot.itemId);
+      if (it && !shown.has(it.id)) {
+        shown.add(it.id);
+        const hand = slot.key === 'P' || slot.key === 'L' ? slot.key : undefined;
+        const row = itemRowV3(it, s, opts.content(), hand);
+        cell.append(iconEl(row, 30, 'dz-i3__tic'));
+        cell.setAttribute('aria-label', `${slot.label}: ${row.name}`);
+        bindItem(cell, 'own', row, true);
+      } else {
+        if (it) cell.dataset.both = 'true';
+        cell.dataset.empty = 'true';
+        cell.setAttribute('aria-label', `${slot.label}: ${it ? 'oburęczne' : 'wolne'}`);
+        cell.append(h('span', 'dz-i3__slot-t', slot.short));
+      }
+      strip.append(cell);
+    }
+    strip.append(h('span', 'dz-i3__slots-l', 'ręce · plecak · ubranie'));
+    return strip;
+  };
+
   const renderOwn = (s: GameState, view: InventoryViewMode): void => {
     const inv = s.inventory;
     const p = s.characterProfile;
@@ -713,8 +750,12 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const parts: HTMLElement[] = [panelHead('own', ICON.bag, 'EKWIPUNEK', name)];
     if (inv) parts.push(loadRow('Obciążenie', inv.loadKg, inv.capacityKg, inv.hardLimitKg, false));
     if (view === 'list') parts.push(colHeads('own'));
+    // Inventory v2 (phone): POSTAĆ as a 44 px strip of character slots instead of „W rękach”.
+    const v2 = isInv2();
+    if (v2 && inv) parts.push(characterStrip(s, inv.equipped));
     const body = div('dz-i3__body');
-    for (const sec of sections) body.append(sectionBody('own', sec, view));
+    for (const sec of sections)
+      if (!(v2 && sec.kind === 'hands')) body.append(sectionBody('own', sec, view));
     parts.push(body);
     const foot = div('dz-i3__foot');
     const info = selectionInfo(s, selected.own);

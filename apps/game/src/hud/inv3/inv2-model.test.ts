@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { categoryCounts, categoryOfKind, filterRows, INV2_CATEGORIES } from './inv2-model.js';
+import {
+  categoryCounts,
+  categoryOfKind,
+  characterSlots,
+  filterRows,
+  INV2_CATEGORIES,
+} from './inv2-model.js';
 import type { InvRowVM } from './inv3-model.js';
 
 const row = (def: string, count = 1) => ({ key: def, def, count }) as unknown as InvRowVM;
@@ -40,5 +46,18 @@ describe('inventory v2 categories', () => {
     const rows = [row('base:axe'), row('base:canned-beans', 2)];
     expect(filterRows(rows, 'food', kindOf).map((r) => r.def)).toEqual(['base:canned-beans']);
     expect(filterRows(rows, 'all', kindOf)).toHaveLength(2);
+  });
+});
+
+describe('inventory v2 character strip', () => {
+  it('six slots in spec order; two-handed fills both hands; torso outer before inner', () => {
+    const s = characterSlots({
+      hand_primary: 7,
+      hand_secondary: 7,
+      torso_inner: 3,
+      torso_outer: 4,
+    });
+    expect(s.map((x) => x.key)).toEqual(['P', 'L', 'back', 'torso', 'legs', 'hands']);
+    expect(s.map((x) => x.itemId)).toEqual([7, 7, undefined, 4, undefined, undefined]);
   });
 });
