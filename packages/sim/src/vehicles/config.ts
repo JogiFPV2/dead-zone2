@@ -145,6 +145,12 @@ export interface VehicleConfig {
    * loses this hp (0..100; 0 = windows never break from blows). At 0 hp `vehiclePartBroken`.
    */
   zombieWindowDmg: number;
+  /**
+   * Every such zombie blow also dents the body zone on the zombie's side by this hp (0..100;
+   * 0 = off). Once the front zone is at 0, blows at the front go into the engine (stall at 0).
+   * Tyres are never hurt by blows.
+   */
+  zombieBodyDmg: number;
 }
 
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
@@ -219,4 +225,5 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   pullImpulse: 0.3,
   shakeOffSpeed: 3,
   zombieWindowDmg: 10,
+  zombieBodyDmg: 1,
 };

@@ -1723,3 +1723,8 @@ Klient (Silnik 2): brak zmian protokołu; `vehicleImpact.targetKind` = 'wall' pr
 Footprinty mebli (`w.furniture`: meble z mapy i przesunięte, `furnitureMoves` #279) blokują teraz auto (`vehicles/furniture-hit.ts`). Lekki ruchomy mebel (≤ `VehicleConfig.furnitureLightKg` 80 kg z zawartością, nie `furnitureFixed`) uderzony szybciej niż `furnitureKnockSpeed` (3 m/s) zostaje odepchnięty o 1 kratkę (`furnitureMoved` cause `'vehicle'`), auto traci `furnitureSlow` (35%) prędkości normalnej. Ciężki, przytwierdzony, wolne uderzenie albo brak miejsca na odepchnięcie — auto staje jak na murze. Oba przypadki: `vehicleImpact` targetKind `'furniture'` (twarde uszkodzenia karoserii; obrażenia pasażerów #324 wg prędkości straconej). Drzewa / propy: brak takich obiektów w contencie (nic do kolizji).
 
 Klient (Silnik 2), protokół 44: `VehicleImpactTarget` += `'furniture'`; `furnitureMoved.cause` += `'vehicle'` (bez `playerId`).
+### 9.74 Zombie niszczą karoserię auta (nie tylko szyby)
+
+Każdy cios zombie w auto z graczem w środku (ta sama ścieżka co `zombieWindowDmg` #281, `zombieHitsWindow`) odejmuje też `physics.vehicle.zombieBodyDmg` (domyślnie 1 hp, 0 = wył.) ze strefy karoserii po stronie zombie (`bodyFront/Rear/Left/Right`, #128) przez `damageVehiclePart` → `vehiclePartBroken` przy 0. Wybór: gdy przód jest na 0, ciosy z przodu idą w silnik (gaśnie przy 0, `stopBroken`); zniszczony bok/tył dalej nic nie traci. Opony nigdy od ciosów.
+
+Klient (Silnik 2): brak zmian protokołu — istniejące `vehiclePartBroken` i hp stref w snapshocie pojazdu.

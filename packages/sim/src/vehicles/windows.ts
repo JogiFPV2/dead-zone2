@@ -25,6 +25,8 @@ import type { Vehicle } from './types.js';
  */
 
 const f = Math.fround;
+/** Body zone parts by side (front, rear, left, right). */
+const BODY_PARTS: readonly VehiclePart[] = ['bodyFront', 'bodyRear', 'bodyLeft', 'bodyRight'];
 const WINDOW_PARTS: readonly VehiclePart[] = [
   'windowFront',
   'windowRear',
@@ -199,20 +201,22 @@ export function carContact(
 
 /**
  * A zombie blow at the car (target behind an intact window): the window on the side it stands
- * loses `zombieWindowDmg` (an already broken one: the blow lands on the body, nothing happens).
- * At 0 hp `vehiclePartBroken` at the zombie's position — the opening for `windowAccess`.
+ * loses `zombieWindowDmg`; at 0 hp `vehiclePartBroken` at the zombie's position — the opening for
+ * `windowAccess`. The body zone on that side loses `zombieBodyDmg` (a wrecked front: the engine).
  */
 export function zombieHitsWindow(w: SimWorld, zid: number, c: CarContact): void {
-  const dmg = w.physics.cfg.vehicle.zombieWindowDmg;
-  if (!(dmg > 0)) return;
-  damageVehiclePart(
-    w,
-    c.vehicle,
-    WINDOW_PARTS[c.side]!,
-    dmg,
-    w.c.Position.x[zid] ?? 0,
-    w.c.Position.y[zid] ?? 0,
-  );
+  const cfg = w.physics.cfg.vehicle;
+  const x = w.c.Position.x[zid] ?? 0;
+  const y = w.c.Position.y[zid] ?? 0;
+  if (cfg.zombieWindowDmg > 0)
+    damageVehiclePart(w, c.vehicle, WINDOW_PARTS[c.side]!, cfg.zombieWindowDmg, x, y);
+  if (!(cfg.zombieBodyDmg > 0)) return;
+  // The body zone on that side; a wrecked front exposes the engine (docs 9.74).
+  const zone = BODY_PARTS[c.side]!;
+  const wrecked = (c.vehicle.zones[c.side] ?? 100) <= 0;
+  const part: VehiclePart = wrecked && c.side === 0 ? 'engine' : zone;
+  if (wrecked && part === zone) return;
+  damageVehiclePart(w, c.vehicle, part, cfg.zombieBodyDmg, x, y);
 }
 
 /**
