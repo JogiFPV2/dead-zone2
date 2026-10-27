@@ -4,7 +4,7 @@ import type { IBuilding } from './plan-index.js';
 
 /**
  * Shape and window density of building outlines (Paweł 26.10: "krzaczki i zawijasy", too few
- * windows). Test helper (building-shape.test.ts). Counts are buildings, not edges.
+ * windows). Test helper (building-shape.suite.ts). Counts are buildings, not edges.
  */
 export interface BuildingStats {
   buildings: number;

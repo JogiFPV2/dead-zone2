@@ -79,8 +79,11 @@ export interface WorldPlanInput {
  * 15: #267 TV, VCR and radio stand on a worktop (TV stand, table), never on a bare tile.
  * 16: HV line clearings (przecinki): no trees and no woods cover within 15 / 20 / 30 m of 110 / 220 / 400 kV lines.
  * 17: window tiles kept clear (furniture, yard props, kitchen / bathroom fittings), wall segments cut out of window and door corridors.
+ * 18: building outlines cleaned (jogs < 1.5 m dropped, > 8 corners → box when it fits, odd
+ *     outlines boxed or Douglas–Peucker 0.7 m), windows every 2.25 m per wall run (+ one
+ *     per room), never at a corner or beside a door.
  */
-export const GENERATOR_REV = 17;
+export const GENERATOR_REV = 18;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

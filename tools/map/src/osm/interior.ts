@@ -1,6 +1,10 @@
 import type { BlueprintInput } from '../blueprint.js';
 import { autoDoors } from '../catalog.js';
 import type { BuildingKind } from './types.js';
+import { windowEdges, windowPerRoom } from './window-rhythm.js';
+
+/** Window rhythm (m of wall per window, per storey) of homes, blocks and offices. */
+export const WINDOW_EVERY = 2.25;
 
 type BuildingInput = NonNullable<BlueprintInput['buildings']>[number];
 type StairsInput = NonNullable<BlueprintInput['stairs']>[number];
@@ -545,8 +549,10 @@ function blockWithStairwells(inp: InteriorInput): InteriorResult | undefined {
         doors.push({ x: fp.x0 + x, y: fp.y0 + y, side });
       }
     }
+    const winAt = windowEdges(ext, WINDOW_EVERY, used);
+    windowPerRoom(ext, (x, y) => plan[y]![x]!, winAt, used);
     for (const e of ext) {
-      if (used.has(`${e.x},${e.y},${e.side}`) || e.along % 3 !== 1) continue;
+      if (used.has(`${e.x},${e.y},${e.side}`) || !winAt.has(`${e.x},${e.y},${e.side}`)) continue;
       openings.push({ at: [e.x, e.y], side: e.side, type: 'window' });
     }
     floorsOut.push({ plan, rooms, openings, gaps: [] });
@@ -705,8 +711,9 @@ function industrialHall(inp: InteriorInput, split = true): InteriorResult | unde
   // Odd footprints: a section may fall apart into pieces; every tile must reach a gate.
   if (halls.size > 1 && !allReach(plan, openings, doors[0]!.x - fp.x0, doors[0]!.y - fp.y0))
     return industrialHall(inp, false);
+  const winAt = windowEdges(ext, 6, used);
   for (const e of ext) {
-    if (used.has(`${e.x},${e.y},${e.side}`) || e.along % 6 !== 1) continue;
+    if (used.has(`${e.x},${e.y},${e.side}`) || !winAt.has(`${e.x},${e.y},${e.side}`)) continue;
     openings.push({ at: [e.x, e.y], side: e.side, type: 'window' });
   }
   return assemble(inp, lk, [{ plan, rooms, openings, gaps: [] }], [], doors, nextRoomId);
@@ -1074,19 +1081,21 @@ function genericInterior(inp: InteriorInput): InteriorResult {
         doors.push({ x: fp.x0 + o.e.x, y: fp.y0 + o.e.y, side: o.e.side });
       }
     }
+    const every =
+      kind === 'shed' || kind === 'garage' || kind === 'industrial'
+        ? 6
+        : kind === 'shop' && z === 0
+          ? 2
+          : WINDOW_EVERY;
+    const winAt = windowEdges(ext, every, used);
+    if (every === WINDOW_EVERY) windowPerRoom(ext, (x, y) => plan[y]![x]!, winAt, used);
     for (const e of ext) {
       if (used.has(`${e.x},${e.y},${e.side}`)) continue;
       if (kind === 'ruin' && (e.x * 7 + e.y * 13 + z) % 5 === 0) {
         gaps.push({ at: [e.x, e.y], side: e.side });
         continue;
       }
-      const every =
-        kind === 'shed' || kind === 'garage' || kind === 'industrial'
-          ? 6
-          : kind === 'shop' && z === 0
-            ? 2
-            : 3;
-      if (e.along % every !== 1) continue;
+      if (!winAt.has(`${e.x},${e.y},${e.side}`)) continue;
       const shopWin =
         (kind === 'shop' || kind === 'pharmacy' || kind === 'station' || kind === 'fuel') &&
         z === 0;

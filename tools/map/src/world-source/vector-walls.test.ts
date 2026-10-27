@@ -164,8 +164,9 @@ describe('vector walls of slanted buildings', () => {
     }
     expect(roomTiles).toBeGreaterThan(200);
     expect([...zs].sort()).toEqual([0, 1]);
-    // Perimeter 2 · (28 + 18) = 92 m, minus 1.2 m gaps at the doorway(s) and windows.
-    expect(total).toBeGreaterThan(30);
+    // Perimeter 2 · (28 + 18) = 92 m, minus 1.2 m gaps at the doorway(s) and windows (slanted
+    // walls get windows on their steps too since #351, so the floor is 25, not 30).
+    expect(total).toBeGreaterThan(25);
     expect(total).toBeLessThan(92 - 1);
   });
 });

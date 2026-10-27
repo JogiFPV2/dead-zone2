@@ -12,7 +12,13 @@ import { townDecor } from '../town/decor.js';
 import type { TownKit } from '../town/kit.js';
 import { doorLeaf, type Skin } from '../town/modules.js';
 import { buildTerrainGeometry } from '../town/terrain-mesh.js';
-import { TownStructures, sharedTownBatch, type SharedTownBatch } from '../town/town-structures.js';
+import {
+  TownStructures,
+  cardAtlasShared,
+  sharedTownBatch,
+  type SharedTownBatch,
+} from '../town/town-structures.js';
+import { WindowPanes } from '../town/window-panes.js';
 import { terrainMaterial } from '../town/town-terrain.js';
 import { MapTiles } from '../town/tiles.js';
 import type { GenBuildingInfo } from './convert.js';
@@ -31,6 +37,8 @@ export class StreamedTown {
   readonly lookup: BuildingLookup;
   private readonly terrainMat: MeshStandardMaterial;
   private readonly levels = new Map<string, TownStructures>();
+  /** Glass + interior cards of every loaded level: +2 draw calls in total (bld-spec §4). */
+  private readonly panes = new WindowPanes(1024, cardAtlasShared());
   private readonly terrain = new Map<string, Mesh>();
   /** One town BatchedMesh per chunk column (all its levels): fewer draw calls / shadow draws. */
   private readonly columns = new Map<string, { batch: SharedTownBatch; levels: number }>();
@@ -49,6 +57,7 @@ export class StreamedTown {
     private readonly shellOf?: (b: GenBuildingInfo) => boolean,
   ) {
     this.root.name = 'streamed-town';
+    this.root.add(this.panes.root);
     this.lookup = new BuildingLookup(loaded, false);
     this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail);
   }
@@ -117,6 +126,7 @@ export class StreamedTown {
     const shellOf = this.shellOf;
     const level = new TownStructures(this.loaded, this.kit, {
       lookup: this.lookup,
+      panes: this.panes,
       // Every piece of this level (also one poking over the chunk edge) goes into this column.
       sharedBatch: () => shared,
       footprintOf: (b) => {
@@ -257,6 +267,7 @@ export class StreamedTown {
       this.unloadChunk(cx!, cy!, z!);
     }
     this.terrainMat.dispose();
+    this.panes.dispose();
   }
 }
 

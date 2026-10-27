@@ -120,8 +120,12 @@ const summary = (issues: WindowIssue[]) => {
  * in front of a window, slanted-wall gaps off the raster window. Lower these as it is fixed; any
  * other cause (wall, no floor, blocker) is a sim regression and must stay 0.
  */
-const OKULICKIEGO_MAX = { furniture: 504, segment: 0 };
-const STW_MAX = { furniture: 150, segment: 0 };
+// rev 18 (#351): windows every 2.25 m + one per room (72 244 → 73 687 / 26 515 → 27 139 windows),
+// blocked share 0.70 % → 0.65 % / 0.57 % → 0.61 %; stw raised 150 → 166 with the denser windows.
+// Slanted walls get windows on their staircase steps too (fewWindows 0 in building-shape.test):
+// okulickiego ground-floor windows 11 360 (rev 17) → 13 120; raised 476 → 570 with them.
+const OKULICKIEGO_MAX = { furniture: 570, segment: 0 };
+const STW_MAX = { furniture: 166, segment: 0 };
 
 function ratchet(issues: WindowIssue[], max: { furniture: number; segment: number }) {
   const furniture = issues.filter((i) => i.issue.endsWith('-furniture')).length;

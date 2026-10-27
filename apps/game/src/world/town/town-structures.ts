@@ -55,6 +55,9 @@ import { churchTower } from './church-tower.js';
 import { bldKind, bldV2 } from './bld-v2.js';
 import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
+import { WindowPanes } from './window-panes.js';
+import { windowPaneSpec } from './window-pane-spec.js';
+import { cardAtlas } from './window-card-atlas.js';
 
 export interface TownStructuresOptions {
   /** Shared building lookup (streamed chunks: one over the loaded chunks). */
@@ -85,6 +88,11 @@ export interface TownStructuresOptions {
    * player's building, an occluder), when the model hides instead.
    */
   shelled?: ((b: BuildingId) => boolean) | undefined;
+  /**
+   * Window glass + interior cards (bld-spec §4): a shared `WindowPanes` (streamed worlds, the
+   * owner adds it to the scene and disposes it), `false` = none; default: this level's own.
+   */
+  panes?: WindowPanes | false | undefined;
 }
 
 /** A BatchedMesh shared by several `TownStructures` (grown on demand). */
@@ -122,6 +130,12 @@ interface EdgeItem {
   lowered: boolean;
   lit: boolean;
   broken: boolean;
+  /** Slot in `WindowPanes` (glass + interior card), undefined without a glass box. */
+  pane?: number;
+  /** Hidden by the cutaway / a shelled model. */
+  hidden?: boolean;
+  /** Fading out (wall fade): the card hides so the player stays visible. */
+  fading?: boolean;
 }
 
 interface Batch {
@@ -172,6 +186,10 @@ export class TownStructures {
   private readonly shells = new Set<BuildingId>();
   /** Windows of rooms with the light switched on (`tx,ty,axis`; sim `lightsOn`). */
   private roomLit: ReadonlySet<string> = new Set();
+  /** Semi-transparent glass + interior cards of this level's windows (bld-spec §4). */
+  private panes: WindowPanes | undefined;
+  /** Slots this level holds in a shared `WindowPanes`. */
+  private paneSlots: number[] = [];
 
   constructor(
     private readonly source: ChunkSource,
@@ -429,6 +447,7 @@ export class TownStructures {
       push(p.x, p.z, { geo: p.name, m: at(p.x, baseY + (p.y ?? 0), p.z, p.rotY, p.scale ?? 1) });
     }
 
+    const paneItems: { item: EdgeItem; m: Matrix4 }[] = [];
     for (const [k, items] of perChunk) {
       const geos = new Map<string | BufferGeometry, BufferGeometry>();
       const want = (g: string | BufferGeometry) => {
@@ -501,6 +520,7 @@ export class TownStructures {
             lit: false,
             broken: false,
           };
+          if (e.kind === 'window') paneItems.push({ item, m: it.m });
           let list = this.edgesByBuilding.get(e.building);
           if (!list) this.edgesByBuilding.set(e.building, (list = []));
           list.push(item);
@@ -527,6 +547,7 @@ export class TownStructures {
       this.batches.set(k, batch);
       if (!batch.shared) this.root.add(mesh);
     }
+    this.buildPanes(paneItems);
     this.key = '-';
     this.cut = NO_CUTAWAY;
     this.shells.clear();
@@ -542,9 +563,37 @@ export class TownStructures {
     }
   }
 
+  /** Glass + interior cards for the windows with a glass box in their module (off: no panes). */
+  private buildPanes(list: readonly { item: EdgeItem; m: Matrix4 }[]): void {
+    this.dropPanes();
+    if (this.opts.panes === false || list.length === 0) return;
+    const shared = this.opts.panes;
+    const panes = shared || new WindowPanes(list.length, cardAtlasShared());
+    this.panes = panes;
+    for (const { item, m } of list) {
+      const spec = windowPaneSpec(this.kit, this.source, this.lookup, item.edge, this.z);
+      if (!spec) continue;
+      const e = item.edge;
+      const [x, y] = e.axis === 'N' ? [e.tx + 0.5, e.ty] : [e.tx, e.ty + 0.5];
+      item.pane = panes.add(m, spec.box, spec.inward, spec.cell, x, y);
+      if (shared) this.paneSlots.push(item.pane);
+      this.apply(item);
+    }
+    if (!shared) this.root.add(panes.root);
+  }
+
+  /** Own panes disposed; slots in a shared one freed. */
+  private dropPanes(): void {
+    if (this.panes && this.panes === this.opts.panes) {
+      for (const i of this.paneSlots) this.panes.remove(i);
+    } else this.panes?.dispose();
+    this.paneSlots = [];
+    this.panes = undefined;
+  }
+
   /** Every kit piece of building `b` on this level shown / hidden (shelled buildings). */
   private setBuildingVisible(b: BuildingId, on: boolean): void {
-    for (const it of this.edgesByBuilding.get(b) ?? []) it.batch.mesh.setVisibleAt(it.instance, on);
+    for (const it of this.edgesByBuilding.get(b) ?? []) this.show(it, on);
     for (const r of this.roofsByBuilding.get(b) ?? []) r.batch.mesh.setVisibleAt(r.instance, on);
     for (const r of this.slabsByBuilding.get(b) ?? [])
       if (!r.keep) r.batch.mesh.setVisibleAt(r.instance, on);
@@ -588,7 +637,7 @@ export class TownStructures {
       const hidden = isLevelHidden(c, b, this.z) || this.shellShown(c, b);
       const here = this.z === level;
       for (const it of this.edgesByBuilding.get(b) ?? []) {
-        it.batch.mesh.setVisibleAt(it.instance, !hidden);
+        this.show(it, !hidden);
         const lowered =
           here && isEdgeLowered(c, it.edge.building, it.edge.axis, it.edge.tx, it.edge.ty);
         if (lowered !== it.lowered) {
@@ -617,6 +666,7 @@ export class TownStructures {
    * of buildings around the player on this level are tested.
    */
   setFade(v: FadeView | undefined, dtMs: number): void {
+    this.panes?.setNear(v?.px, v?.py);
     const here = v !== undefined && v.z === this.z;
     if (here) {
       const tx = Math.floor(v.px);
@@ -645,10 +695,18 @@ export class TownStructures {
         const on = !it.lowered && occludesPlayer(v, e.tx, e.ty, x1, y1, st?.on ?? false);
         if (on && !st) this.fades.set(it, { cur: 1, on });
         else if (st) st.on = on;
+        if (it.pane !== undefined && on !== !!it.fading) {
+          it.fading = on;
+          this.syncPane(it);
+        }
       }
     }
     for (const [it, st] of this.fades) {
       if (!here) st.on = false;
+      if (!st.on && it.fading) {
+        it.fading = false;
+        this.syncPane(it);
+      }
       const min = it.edge.kind === 'door' || it.edge.kind === 'window' ? FADE_POST : FADE_MIN;
       const next = stepFade(st.cur, st.on ? min : 1, dtMs);
       if (next === st.cur) {
@@ -727,7 +785,13 @@ export class TownStructures {
     return { batches: this.batches.size, instances };
   }
 
+  /** Window panes of this level (tests / dev overlay). */
+  windowPanes(): WindowPanes | undefined {
+    return this.panes;
+  }
+
   dispose(): void {
+    this.dropPanes();
     this.vector?.dispose();
     this.vector = undefined;
     for (const b of this.batches.values()) {
@@ -760,14 +824,31 @@ export class TownStructures {
     return this.dimmed;
   }
 
+  private show(it: EdgeItem, on: boolean): void {
+    it.batch.mesh.setVisibleAt(it.instance, on);
+    if (it.pane === undefined || it.hidden === !on) return;
+    it.hidden = !on;
+    this.syncPane(it);
+  }
+
+  /** Glass pane while unlit and whole; card while unlit (also behind a smashed pane). */
+  private syncPane(it: EdgeItem): void {
+    if (it.pane === undefined || !this.panes) return;
+    const open = !it.lit && !it.lowered && !it.hidden;
+    this.panes.set(it.pane, open && !it.broken, open && !it.fading);
+  }
+
   private apply(it: EdgeItem): void {
+    // A window with its own glass pane draws the frame only (the `-broken` module) while unlit.
+    const paned = it.pane !== undefined && !it.lit && !it.lowered;
     const name = edgeModule(it.edge.kind, it.edge.skin, it.edge.content, {
       lowered: it.lowered,
       lit: it.lit,
-      broken: it.broken,
+      broken: it.broken || paned,
     });
     const gid = it.batch.ids.get(name);
     if (gid !== undefined) it.batch.mesh.setGeometryIdAt(it.instance, gid);
+    this.syncPane(it);
   }
 }
 
@@ -795,4 +876,11 @@ export function loadUpperLevels(
     out.push(level);
   }
   return out;
+}
+
+let atlas: ReturnType<typeof cardAtlas> | null = null;
+/** One interior card atlas for every level (painted once). */
+export function cardAtlasShared(): ReturnType<typeof cardAtlas> {
+  if (atlas === null) atlas = cardAtlas();
+  return atlas;
 }
