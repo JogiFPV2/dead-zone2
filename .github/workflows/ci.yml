@@ -20,7 +20,8 @@ jobs:
   ci:
     name: lint, typecheck, test, build
     runs-on: [self-hosted, deadzone]
-    timeout-minutes: 20
+    # 20 min nie wystarcza: testy map (obrysy budynków na 3 mapach) na zajętym boxie trwają >20 min i job był anulowany.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
 
@@ -49,7 +50,8 @@ jobs:
       # Testy wydajności sima (packages/sim *.perf / *-perf) nie w równoległym `pnpm test`
       # (obciążenie współdzielonego boxa zawyża czasy), tylko osobno, na push do main i workflow_dispatch.
       # Najwyżej 2 pakiety naraz: na współdzielonym boxie pełna równoległość dawała losowe timeouty 5 s.
-      - run: pnpm turbo run test --concurrency=2
+      # maxWorkers=2: bez limitu każdy pakiet odpalał ~7 forków vitest (8 rdzeni), a 2 pakiety naraz to OOM (exit 137) na 16 GB współdzielonego boxa.
+      - run: pnpm turbo run test --concurrency=2 -- --maxWorkers=2
         env:
           SKIP_PERF: '1'
       - name: Testy wydajności sima (main / ręcznie)
