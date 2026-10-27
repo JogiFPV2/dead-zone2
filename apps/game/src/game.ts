@@ -22,7 +22,7 @@ import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
 import { MINIMAP_TOUCH_STEPS, radiusLabel, touchMinimapZoom } from './hud/touch/minimap-levels.js';
 import { INV2_CLASS, inventoryV2Enabled } from './hud/inv3/inv2-flag.js';
-import { MapRevealer, revealFlag } from './bigmap/reveal-flag.js';
+import { MapRevealer, bigMapOverview, revealFlag } from './bigmap/reveal-flag.js';
 import { createTouchZoomSlider } from './hud/touch/zoom-slider.js';
 import { InteractController } from './hud/v2/interact-controller.js';
 import { createBigMap } from './bigmap/bigmap-view.js';
@@ -1187,6 +1187,11 @@ const locationName = (): string => {
   const p = bigMapPlayer();
   return nearestPlace(genWorld.source.info.places, p.x, p.y) ?? boot.map;
 };
+const bigOverview = bigMapOverview(
+  boot.bigmap16,
+  window.location.search,
+  settings.get().interface.revealMap,
+);
 // Big map (M), HUD v2 spec §11. The world keeps running while it is open (no pause).
 const bigMap = createBigMap({
   root: container,
@@ -1199,11 +1204,12 @@ const bigMap = createBigMap({
       (x, y) => structures.lookup.at(x, y, world.range.z) !== NO_BUILDING,
     ),
   // Far zooms: towns / villages over the fog, the map's edge, low-res terrain of every chunk seen.
-  // Behind `?bigmap16=1` until Paweł OKs it; off = the classic big map.
-  overview: !!boot.bigmap16,
-  places: () => (boot.bigmap16 ? (genWorld?.source.info.places ?? []) : []),
-  boundary: () => (boot.bigmap16 ? genWorld?.source.info.boundary : undefined),
-  ...(boot.bigmap16 && {
+  // Behind `?bigmap16=1` until Paweł OKs it; off = the classic big map. The test reveal turns it
+  // on too: the classic map only paints a 20-chunk window, so a revealed city stayed blank paper.
+  overview: bigOverview,
+  places: () => (bigOverview ? (genWorld?.source.info.places ?? []) : []),
+  boundary: () => (bigOverview ? genWorld?.source.info.boundary : undefined),
+  ...(bigOverview && {
     terrain: {
       palette: world.source.tilePalette,
       loaded: (cx, cy) => world.source.getChunk(cx, cy, world.range.z),
@@ -2322,6 +2328,8 @@ renderer.setAnimationLoop((time) => {
 // Dev only: switch / freeze the graphics style for screenshots and measurements.
 if (import.meta.env.DEV) {
   Object.assign(window, {
+    /** Dev: big map frame stats (atlas chunks, mode, draw ms). */
+    __dzBigMap: { stats: () => bigMap.stats() },
     __dzStyle: {
       set: (style: GraphicsStyle) =>
         settings.update((s) => ({ ...s, graphics: { ...s.graphics, style } })),

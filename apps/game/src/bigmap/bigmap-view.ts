@@ -102,7 +102,7 @@ export interface BigMapOptions {
 const ATLAS_RADIUS = 10;
 const ATLAS_PUMP_MS = 500;
 /** Discovered chunks fetched at once for the atlas while the map is open. */
-const ATLAS_FETCHES = 2;
+const ATLAS_FETCHES = 4;
 /** Newly painted terrain shows at most this often (painting a save's chunks redraws the map). */
 const ATLAS_REDRAW_MS = 250;
 const FOG_CSS = 'rgb(92,83,68)';
@@ -501,7 +501,8 @@ export function createBigMap(o: BigMapOptions): BigMap {
         })
         .finally(() => {
           atlasFetching--;
-          atlasPumpAt = -Infinity; // next chunk right away
+          atlasPumpAt = -Infinity; // next chunk right away, not on the next frame (slow devices)
+          if (!root.hidden) pumpAtlas(performance.now(), player);
         });
     }
   };

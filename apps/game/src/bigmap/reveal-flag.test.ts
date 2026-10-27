@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MapRevealer, revealFlag } from './reveal-flag.js';
+import { MapRevealer, bigMapOverview, revealFlag } from './reveal-flag.js';
 
 describe('revealFlag', () => {
   it('accepts 1 and all only', () => {
@@ -28,5 +28,16 @@ describe('MapRevealer', () => {
     r.setWanted(true);
     expect(send).toHaveBeenCalledTimes(1);
     expect(r.done).toBe(true);
+  });
+});
+
+describe('bigMapOverview', () => {
+  it('is on with ?bigmap16=1, the reveal flag or the reveal setting', () => {
+    expect(bigMapOverview(undefined, '', false)).toBe(false);
+    expect(bigMapOverview(true, '', false)).toBe(true);
+    expect(bigMapOverview(undefined, '?reveal=all', false)).toBe(true);
+    expect(bigMapOverview(undefined, '?reveal=1', false)).toBe(true);
+    expect(bigMapOverview(undefined, '?reveal=0', false)).toBe(false);
+    expect(bigMapOverview(undefined, '', true)).toBe(true);
   });
 });

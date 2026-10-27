@@ -8,6 +8,19 @@ export function revealFlag(search: string): boolean {
   return v === '1' || v === 'all';
 }
 
+/**
+ * Far-zoom overview (whole-map terrain atlas, place names, edge) of the big map: `?bigmap16=1`,
+ * or on with the test reveal, which is pointless without it (the classic map paints only the
+ * chunks around the player). Read once at boot.
+ */
+export function bigMapOverview(
+  bigmap16: boolean | undefined,
+  search: string,
+  revealSetting: boolean,
+): boolean {
+  return !!bigmap16 || revealFlag(search) || revealSetting;
+}
+
 /** Sends the reveal command at most once, as soon as it is wanted and the sim is ready. */
 export class MapRevealer {
   private sent = false;
