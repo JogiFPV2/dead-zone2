@@ -14,9 +14,9 @@ import { OsmTiles, type OsmTileManifest } from './tiles.js';
  * the generator) — lower `KNOWN_VIOLATIONS` to the new value when it does.
  */
 const KNOWN_VIOLATIONS: Record<string, Omit<CrossingStats, 'crossings'>> = {
-  'osm-okulickiego': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0 },
-  'osm-stw': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0 },
-  'plan-4': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0 },
+  'osm-okulickiego': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0, farJunction: 0 },
+  'osm-stw': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0, farJunction: 0 },
+  'plan-4': { duplicate: 0, spacing: 0, angle: 0, offRoad: 0, farJunction: 0 },
 };
 
 const OSM = fileURLToPath(new URL('../../../../apps/game/public/osm/', import.meta.url));
@@ -46,12 +46,12 @@ const MAPS: Record<string, () => Promise<PlanIndex>> = {
 
 describe('przejścia dla pieszych na mapach', () => {
   for (const [id, load] of Object.entries(MAPS)) {
-    it(`${id}: jedno na przecięcie, co najmniej 10 m, prostopadle, na jezdni (ratchet)`, async () => {
+    it(`${id}: jedno na przecięcie, co najmniej 10 m, prostopadle, na jezdni, przy skrzyżowaniu (ratchet)`, async () => {
       const samples: string[] = [];
       const s = await crossingStats(await load(), samples);
       console.log(`[przejścia] ${id}`, JSON.stringify(s), samples.slice(0, 5));
       const known = KNOWN_VIOLATIONS[id]!;
-      for (const k of ['duplicate', 'spacing', 'angle', 'offRoad'] as const)
+      for (const k of ['duplicate', 'spacing', 'angle', 'offRoad', 'farJunction'] as const)
         expect(s[k], `${id}.${k} (przykłady: ${samples.join('; ')})`).toBeLessThanOrEqual(known[k]);
     }, 600_000);
   }

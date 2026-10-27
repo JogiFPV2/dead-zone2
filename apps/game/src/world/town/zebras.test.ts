@@ -30,18 +30,29 @@ describe('zebraSpots', () => {
     expect(z).toHaveLength(3);
   });
 
-  it('a footway crossing gets a zebra on the junction itself', () => {
+  it('a footway crossing near a junction gets a zebra on the footway', () => {
     const z = zebraSpots(
       [
-        road([0, 16, 10, 16, 32, 16]),
+        road([0, 16, 10, 16, 20, 16, 40, 16]),
+        road([20, 16, 20, 40]),
         road([10, 4, 10, 16, 10, 28], { surface: 'base:sidewalk', r: 1, rs: 0 }),
       ],
       all,
     );
-    expect(z).toHaveLength(1);
-    expect(z[0]!.x).toBeCloseTo(10);
-    expect(z[0]!.z).toBeCloseTo(16);
-    expect(Math.abs(z[0]!.ux)).toBeCloseTo(1);
+    const foot = z.find((s) => Math.abs(s.x - 10) < 0.01 && Math.abs(s.z - 16) < 0.01);
+    expect(foot).toBeDefined();
+    expect(Math.abs(foot!.ux)).toBeCloseTo(1);
+  });
+
+  it('a footway crossing mid-run (no junction within 15 m) gets none (Paweł 27.10)', () => {
+    const z = zebraSpots(
+      [
+        road([0, 16, 40, 16, 80, 16]),
+        road([40, 4, 40, 16, 40, 28], { surface: 'base:sidewalk', r: 1, rs: 0 }),
+      ],
+      all,
+    );
+    expect(z).toHaveLength(0);
   });
 
   it('a road split into two ways (straight on) is not a junction; narrow lanes get none', () => {
@@ -66,11 +77,12 @@ describe('zebraSpots: no stray crosswalks (Paweł 25.10)', () => {
     const z = zebraSpots(
       [
         road([0, 16, 10, 16, 18, 16, 60, 16]),
+        road([18, 16, 18, 40]),
         foot([10, 4, 10, 16, 10, 28]),
-        foot([18, 4, 18, 16, 18, 28]),
+        foot([14, 4, 14, 16, 14, 28]),
       ],
       all,
-    );
+    ).filter((s) => Math.abs(s.z - 16) < 0.01 && s.x < 18);
     expect(z).toHaveLength(1);
   });
   it('zebras of neighbouring ways and junction legs stay 10 m apart (Szef sztabu 26.10)', () => {

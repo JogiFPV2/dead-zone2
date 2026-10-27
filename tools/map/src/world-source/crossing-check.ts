@@ -8,7 +8,9 @@ import type { PlanIndex } from './plan-index.js';
  * - `spacing`: pairs of zebras on the same road closer than `MIN_SPACING_M`;
  * - `angle`: stripes off the road direction by more than `MAX_ANGLE_DEG` (crossing not
  *   perpendicular to the carriageway);
- * - `offRoad`: zebra centre farther than half a carriageway from every carriageway axis.
+ * - `offRoad`: zebra centre farther than half a carriageway from every carriageway axis;
+ * - `farJunction`: zebra centre farther than `MAX_JUNCTION_M` from every carriageway junction
+ *   (Paweł 27.10: crossings only at junctions, never mid-run).
  */
 /** The game's zebra (apps/game/src/world/town/zebras.ts), world metres here. */
 interface Zebra {
@@ -29,10 +31,12 @@ export interface CrossingStats {
   spacing: number;
   angle: number;
   offRoad: number;
+  farJunction: number;
 }
 
 export const MIN_SPACING_M = 10;
 export const MAX_ANGLE_DEG = 20;
+export const MAX_JUNCTION_M = 15;
 /** A footway counts as crossed by a zebra when it passes this close to the zebra centre. */
 const FOOT_M = 2;
 const SIN_MAX = Math.sin((MAX_ANGLE_DEG * Math.PI) / 180);
@@ -84,7 +88,9 @@ export async function crossingStats(
     spacing: 0,
     angle: 0,
     offRoad: 0,
+    farJunction: 0,
   };
+  const junctions = carriagewayJunctions(idx, roads);
   const note = (what: string, z: Zebra) => {
     if (samples.length < 10) samples.push(`${what} @ ${z.x.toFixed(1)},${z.z.toFixed(1)}`);
   };
@@ -106,6 +112,10 @@ export async function crossingStats(
     if (gap > 0) {
       s.offRoad++;
       note('poza jezdnią', z);
+    }
+    if (!junctions.some(([x, y]) => Math.hypot(x - z.x, y - z.z) <= MAX_JUNCTION_M)) {
+      s.farJunction++;
+      note('z dala od skrzyżowania', z);
     }
     if (host >= 0 && Math.abs(z.ux * dir.uy - z.uz * dir.ux) > SIN_MAX) {
       s.angle++;
@@ -141,4 +151,36 @@ function countPairs(spots: Spot[], s: CrossingStats, note: (w: string, z: Zebra)
           }
         }
   });
+}
+
+/**
+ * Vertices of a carriageway (asphalt, half width ≥ 2) lying on another carriageway at ≥ 30°:
+ * the junctions (OSM ways share nodes there).
+ */
+function carriagewayJunctions(
+  idx: PlanIndex,
+  roads: readonly { surface: string; r: number; bridge: boolean }[],
+): [number, number][] {
+  const items = idx.roads.items;
+  const isCw = (i: number) => roads[i]!.surface === 'base:asphalt' && roads[i]!.r >= 2;
+  const sin30 = 0.5;
+  const out: [number, number][] = [];
+  items.forEach((A, a) => {
+    if (!isCw(a)) return;
+    for (let k = 0; k + 1 < A.pts.length; k += 2) {
+      const [x, y] = [A.pts[k]!, A.pts[k + 1]!];
+      const kk = Math.min(k, A.pts.length - 4);
+      const dx = A.pts[kk + 2]! - A.pts[kk]!;
+      const dy = A.pts[kk + 3]! - A.pts[kk + 1]!;
+      const l = Math.hypot(dx, dy) || 1;
+      for (const b of idx.roads.query({ x0: x - 1, y0: y - 1, x1: x + 1, y1: y + 1 })) {
+        if (b === a || !isCw(b) || items[b]!.bridge !== A.bridge) continue;
+        const h = near(x, y, items[b]!.pts);
+        if (h.d > 0.05 || Math.abs((dx / l) * h.uy - (dy / l) * h.ux) < sin30) continue;
+        out.push([x, y]);
+        break;
+      }
+    }
+  });
+  return out;
 }

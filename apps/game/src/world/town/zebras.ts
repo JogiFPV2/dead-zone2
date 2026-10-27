@@ -137,7 +137,15 @@ interface Candidate {
   key: string;
   /** Footways it carries (one zebra per footway crossing, Szef sztabu 26.10). */
   feet: number[];
+  /** Made by a carriageway junction (leg zebra) rather than a lone footway crossing. */
+  leg: boolean;
 }
+
+/**
+ * A zebra lies at most this far (tiles = metres) from a carriageway junction; a footway crossing
+ * in the middle of a long run gets none (Paweł 27.10: crossings only at junctions).
+ */
+export const MAX_JUNCTION_DIST = 15;
 
 /**
  * Zebra crossings of a chunk's vector roads (all coordinates chunk-local). A junction is a vertex
@@ -155,6 +163,7 @@ export function zebraSpots(
   owns: (x: number, z: number) => boolean,
 ): Zebra[] {
   const cands: Candidate[] = [];
+  const junctions: number[] = [];
   const seen = new Set<string>();
   for (let a = 0; a < roads.length; a++) {
     const A = roads[a]!;
@@ -189,6 +198,7 @@ export function zebraSpots(
         p: { x: number; z: number; ux: number; uz: number },
         dist: number,
         path: number,
+        leg: boolean,
       ) => {
         const key = `${Math.round(p.x * 4)},${Math.round(p.z * 4)}`;
         if (seen.has(key)) return;
@@ -217,6 +227,7 @@ export function zebraSpots(
           dist,
           path,
           key,
+          leg,
           feet: roads.flatMap((F, f) =>
             F.surface === 'base:sidewalk' &&
             F.rs === 0 &&
@@ -230,13 +241,14 @@ export function zebraSpots(
       if (offset > 0) {
         // Legs of a right-angled crossroads stay MIN_ZEBRA_SPACING apart (2·o·sin 45°).
         offset = Math.max(offset, MIN_ZEBRA_SPACING / Math.SQRT2 + 0.05);
+        junctions.push(jx, jz);
         for (const dir of [1, -1] as const) {
           const p = along(A.pts, i, dir, offset);
-          if (p) add(p, offset, crossLen);
+          if (p) add(p, offset, crossLen, true);
         }
       } else if (footLen > 0) {
         const p = along(A.pts, i, i + 1 < n ? 1 : -1, 0);
-        if (p) add(p, 0, footLen);
+        if (p) add(p, 0, footLen, false);
       }
     }
   }
@@ -245,7 +257,15 @@ export function zebraSpots(
   );
   const kept: Candidate[] = [];
   const S2 = MIN_ZEBRA_SPACING * MIN_ZEBRA_SPACING;
+  const J2 = MAX_JUNCTION_DIST * MAX_JUNCTION_DIST;
+  const nearJunction = (c: Candidate): boolean => {
+    for (let j = 0; j + 1 < junctions.length; j += 2)
+      if ((junctions[j]! - c.zebra.x) ** 2 + (junctions[j + 1]! - c.zebra.z) ** 2 <= J2)
+        return true;
+    return false;
+  };
   for (const c of cands) {
+    if (!c.leg && !nearJunction(c)) continue;
     if (
       kept.some(
         (k) =>
