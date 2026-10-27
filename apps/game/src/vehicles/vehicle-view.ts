@@ -22,7 +22,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { SnapshotVehicle } from '@deadzone/protocol';
 import { simToWorld } from '../sim/coords.js';
 import type { HudVehicleType } from '../hud/content-index.js';
-import type { RealCarModel } from '../render/real/real-car.js';
+import { CAR_DRAW_LENGTH, type RealCarModel } from '../render/real/real-car.js';
 
 /**
  * PLACEHOLDER cars (no car models yet; Designer sends them later): a low body box, a cabin, four
@@ -67,7 +67,8 @@ function buildCar(t: HudVehicleType, id: number, real?: RealCarModel): CarMesh {
   root.name = `car-${id}`;
   const body = new Group();
   root.add(body);
-  const L = t.length;
+  // Drawn 4.3 m long for a 4.6 m type (render only; the hitbox is the type's size).
+  const L = t.length * CAR_DRAW_LENGTH;
   const W = t.width;
   if (real) {
     // Realistic style: Designer's sedan (wheels modelled in), shared geometry and material.

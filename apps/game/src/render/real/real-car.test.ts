@@ -1,6 +1,6 @@
 import { BoxGeometry, MeshStandardMaterial } from 'three';
 import { describe, expect, it } from 'vitest';
-import { carFit, realSedan } from './real-car.js';
+import { CAR_DRAW_LENGTH, carFit, realSedan } from './real-car.js';
 
 describe('realSedan', () => {
   it('fits the model to the car type: nose on +x, centred, wheels on the ground', () => {
@@ -9,7 +9,7 @@ describe('realSedan', () => {
     const car = realSedan(src, new MeshStandardMaterial());
     const g = car.geometryFor({ id: 'base:sedan', length: 4.6, width: 1.8 });
     const bb = g.boundingBox!;
-    expect(bb.max.x - bb.min.x).toBeCloseTo(4.6);
+    expect(bb.max.x - bb.min.x).toBeCloseTo(4.3);
     expect(bb.max.z - bb.min.z).toBeCloseTo(1.8);
     expect(bb.min.y).toBeCloseTo(0);
     expect(bb.min.x + bb.max.x).toBeCloseTo(0);
@@ -20,11 +20,13 @@ describe('realSedan', () => {
     expect(src.boundingBox!.max.z - src.boundingBox!.min.z).toBeCloseTo(4.3);
   });
 
-  it('height follows the length', () => {
-    expect(carFit({ length: 4, width: 2 }, { id: 'x', length: 5, width: 1.8 })).toEqual({
-      sx: 1.25,
-      sy: 1.25,
-      sz: 0.9,
-    });
+  it('full type width, 4.3 m of a 4.6 m type, height follows the width', () => {
+    const f = carFit({ length: 2.55, width: 1.5 }, { id: 'base:sedan', length: 4.6, width: 1.8 });
+    expect(f.sx * 2.55).toBeCloseTo(4.3);
+    expect(f.sz * 1.5).toBeCloseTo(1.8);
+    expect(f.sy).toBeCloseTo(f.sz);
+    // Kenney sedan is 1.3 m tall → about 1.56 m.
+    expect(f.sy * 1.3).toBeLessThan(1.6);
+    expect(CAR_DRAW_LENGTH).toBeLessThan(1);
   });
 });

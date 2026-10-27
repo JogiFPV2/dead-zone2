@@ -17,15 +17,24 @@ export interface RealCarModel {
 /** Kenney's sedan has its nose on model +z: a quarter turn puts it on the car's +x. */
 export const SEDAN_NOSE_ROT_Y = Math.PI / 2;
 
-/** Scale of a model `size` (x = length after the turn, z = width) onto a car type. */
+/**
+ * Drawn length of a car as a share of its type's length (render only; the hitbox stays the
+ * type's `length` × `width`): `base:sedan` 4.6 m → 4.3 m, the size of a real compact sedan.
+ */
+export const CAR_DRAW_LENGTH = 4.3 / 4.6;
+
+/**
+ * Scale of a model `size` (x = length after the turn, z = width) onto a car type: full type
+ * width, `CAR_DRAW_LENGTH` of its length; height follows the width (a car scaled up by its
+ * length came out 2.3 m tall and looked narrow).
+ */
 export function carFit(
   model: { length: number; width: number },
   t: CarSize,
 ): { sx: number; sy: number; sz: number } {
-  const sx = t.length / model.length;
+  const sx = (t.length * CAR_DRAW_LENGTH) / model.length;
   const sz = t.width / model.width;
-  // Height follows the length (keeps the silhouette; the type has no height).
-  return { sx, sy: sx, sz };
+  return { sx, sy: sz, sz };
 }
 
 /** Designer's sedan (`deadzone-pbr/sedan`) fitted per car type. */
