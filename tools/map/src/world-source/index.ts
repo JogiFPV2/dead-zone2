@@ -64,3 +64,20 @@ export {
 } from './tiles.js';
 export { columnFootprintIssues, type ColumnFootprintIssue } from './footprint-check.js';
 export { surfaceIssues } from '../footprint-check.js';
+export {
+  buildingLook,
+  clampColour,
+  ESTATE_CELL,
+  PUBLIC_MIN_AREA,
+  lookHash,
+  lookType,
+  type BuildingLook,
+} from './look.js';
+export {
+  CONDITION_STATES,
+  LOOK_PALETTE,
+  LOOK_TYPES,
+  type Condition,
+  type LookType,
+  type RoofShape,
+} from './look-palette.js';

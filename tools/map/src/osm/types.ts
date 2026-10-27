@@ -177,6 +177,16 @@ export interface OsmBuilding {
   /** Tall single storey (church nave, hall). */
   tall?: 1;
   name?: string;
+  /** OSM look tags (look-spec.md §A): building:colour, roof:colour, roof:shape, roof:levels, height (m). */
+  colour?: string;
+  roofColour?: string;
+  roofShape?: string;
+  roofLevels?: number;
+  height?: number;
+  /** Raw building:levels when tagged (`levels` above is clamped / defaulted). */
+  osmLevels?: number;
+  /** OSM way id when `id` is not one (procedural maps leave it out; OSM tiles: `id`). */
+  osmId?: number;
   /** Outer ring (closed), holes after it. */
   rings: number[][];
 }

@@ -291,6 +291,7 @@ export function convertOsm(raw: RawOsm): { map: OsmMap; stats: ConvertStats } {
       levelsFrom: tagged !== undefined && kind !== 'church' ? 'tag' : 'default',
       ...(kind === 'church' || (kind === 'gym' && area > 400) ? { tall: 1 as const } : {}),
       ...(own.name ? { name: own.name } : {}),
+      ...lookTags(own),
       rings: p.rings.map(flat),
     };
     buildings.push(b);
@@ -540,4 +541,23 @@ function nearRing(x: number, y: number, r: readonly P[], d: number): boolean {
     if (Math.hypot(x - ax - dx * t, y - ay - dy * t) <= d) return true;
   }
   return false;
+}
+
+/** Optional OSM look tags of a building (only the ones present). */
+export function lookTags(t: Record<string, string | undefined>): Partial<OsmBuilding> {
+  const num = (v: string | undefined): number | undefined => {
+    const n = v ? Number.parseFloat(v) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  };
+  const out: Partial<OsmBuilding> = {};
+  if (t['building:colour']) out.colour = t['building:colour'];
+  if (t['roof:colour']) out.roofColour = t['roof:colour'];
+  if (t['roof:shape']) out.roofShape = t['roof:shape'];
+  const rl = num(t['roof:levels']);
+  if (rl !== undefined) out.roofLevels = Math.round(rl);
+  const h = num(t.height);
+  if (h !== undefined) out.height = h;
+  const lv = num(t['building:levels']);
+  if (lv !== undefined) out.osmLevels = Math.round(lv);
+  return out;
 }

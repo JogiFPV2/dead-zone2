@@ -1,4 +1,7 @@
+import { buildingLook, lookType, type LookType } from '@deadzone/map/world-source';
 import { BLD_PALETTE, type BldType } from './bld-palette.js';
+
+type BuildingLookKind = Parameters<typeof buildingLook>[0]['b']['kind'];
 
 /**
  * Buildings v2 (`?bld=v2`): every building gets a wall and roof colour from the Designer's
@@ -16,7 +19,6 @@ import { BLD_PALETTE, type BldType } from './bld-palette.js';
 export const BLD_V2_DEFAULT = false;
 
 /** Estate grid for blocks of flats (tiles = metres). */
-export const ESTATE_CELL = 150;
 /** The kit paints the palette image at this scale (sub-cells need ≥ 2). */
 export const PALETTE_SCALE = 2;
 /** Darker wall cell (shaded side / plinth of the plaster modules). */
@@ -30,51 +32,27 @@ export const V2_ATLAS_SLOTS: readonly number[] = [
 
 const TYPES = Object.keys(BLD_PALETTE) as BldType[];
 
-/** Generator kind → palette type; undefined = keep the v1 look (ruins, unknown). */
-export function bldType(kind: string | undefined): BldType | undefined {
-  switch (kind) {
-    case 'block':
-      return 'block';
-    case 'house':
-      return 'house';
-    case 'shop':
-    case 'office':
-    case 'pharmacy':
-    case 'fuel':
-    case 'gas':
-    case 'gym':
-      return 'service';
-    case 'industrial':
-      return 'industrial';
-    case 'church':
-    case 'school':
-    case 'hospital':
-    case 'police':
-    case 'fire-station':
-    case 'station':
-      return 'public';
-    case 'shed':
-    case 'garage':
-      return 'outbuilding';
-    default:
-      return undefined;
-  }
+export { ESTATE_CELL, PUBLIC_MIN_AREA } from '@deadzone/map/world-source';
+
+/** Generator look type (`@deadzone/map` `LookType`) → client atlas type. */
+function toBld(t: LookType | undefined): BldType | undefined {
+  if (t === 'school' || t === 'police' || t === 'hospital') return 'public';
+  if (t === 'barn') return 'outbuilding';
+  return t;
 }
 
-/** Footprint area (m²) from which a 3+ floor office counts as a public building. */
-export const PUBLIC_MIN_AREA = 600;
+/** Generator kind → palette type; undefined = keep the v1 look (ruins, unknown). */
+export function bldType(kind: string | undefined): BldType | undefined {
+  return toBld(lookType(kind ?? '', 1, 0));
+}
 
 /**
- * Palette type of a building: the kind, refined by floors / footprint. Tenements (`tenement`
- * kind of the procedural maps, OSM houses with ≥ 3 floors) → `kamienica`; large 3+ floor
- * offices (OSM townhall / public / civic end up as `office`) → `public`.
+ * Palette type of a building: the chunk's `look` (generator rev 21+), else the generator rule
+ * (`lookType` in `@deadzone/map`) for old chunks.
  */
 export function bldTypeOf(b: BldInfo): BldType | undefined {
-  const floors = b.floors ?? 1;
-  if (b.kind === 'tenement' || (b.kind === 'house' && floors >= 3)) return 'kamienica';
-  const area = Math.abs((b.x1 - b.x0) * (b.y1 - b.y0));
-  if (b.kind === 'office' && floors >= 3 && area >= PUBLIC_MIN_AREA) return 'public';
-  return bldType(b.kind);
+  if (b.look) return toBld(b.look as LookType);
+  return toBld(lookType(b.kind ?? '', b.floors ?? 1, Math.abs((b.x1 - b.x0) * (b.y1 - b.y0))));
 }
 
 /** Unique wall / roof colours over all types, in palette order. */
@@ -180,6 +158,10 @@ export interface BldInfo {
   y1: number;
   /** Floor levels (1 = bungalow); absent = unknown. */
   floors?: number | undefined;
+  /** Look from the chunk data (generator rev 21+). */
+  look?: string | undefined;
+  wallColor?: string | undefined;
+  roofColor?: string | undefined;
 }
 const infos = new Map<number, BldInfo>();
 /** Streamed town hook: remember kind and footprint of the buildings of a chunk. */
@@ -202,43 +184,58 @@ export function bldHash(a: number, b: number, salt = 0): number {
   return (h >>> 0) / 4294967296;
 }
 
-/** Weighted pick in [0, n) by `r` in [0, 1). */
-export function weighted(weights: readonly number[], r: number): number {
-  const sum = weights.reduce((a, w) => a + w, 0) || 1;
-  let acc = 0;
-  for (let i = 0; i < weights.length; i++) {
-    acc += weights[i]! / sum;
-    if (r < acc) return i;
-  }
-  return Math.max(0, weights.length - 1);
+function rgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+/** Index of the atlas colour nearest to `hex` (data colours outside the atlas: OSM, palette v3). */
+export function nearestHex(list: readonly string[], hex: string): number {
+  const [r, g, b] = rgb(hex);
+  let best = 0;
+  let bd = Infinity;
+  list.forEach((h, i) => {
+    const [r2, g2, b2] = rgb(h);
+    const d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = i;
+    }
+  });
+  return best;
 }
 
-/** Wall-colour seed: the block's estate cell, otherwise the building. */
-export function wallSeed(b: BldInfo, type: BldType): number {
-  if (type !== 'block') return bldHash(b.id, 0, 1);
-  const cx = Math.floor((b.x0 + b.x1) / 2 / ESTATE_CELL);
-  const cy = Math.floor((b.y0 + b.y1) / 2 / ESTATE_CELL);
-  return bldHash(cx, cy, 2);
+/**
+ * Wall / roof colour of a building: from the chunk data (generator rev 21+, single source of
+ * truth), else — old chunks only — the same generator rule (`buildingLook`) run here.
+ */
+function colours(b: BldInfo): { wall: string; roof: string } | undefined {
+  if (b.wallColor && b.roofColor) return { wall: b.wallColor, roof: b.roofColor };
+  if (b.look) return undefined;
+  const l = buildingLook({
+    b: { id: b.id, kind: (b.kind ?? '') as BuildingLookKind },
+    floors: b.floors ?? 1,
+    x0: b.x0,
+    y0: b.y0,
+    x1: b.x1,
+    y1: b.y1,
+  });
+  return l && { wall: l.wallColor, roof: l.roofColor };
 }
 
 /** v2 wall skin of a building; undefined = keep the v1 skin (unknown building / kind). */
 export function v2WallSkin(building: number): V2Skin | undefined {
   const b = infos.get(building);
-  const type = b && bldTypeOf(b);
-  if (!b || !type) return undefined;
-  const p = BLD_PALETTE[type];
-  const hex = p.walls[weighted(p.weights, wallSeed(b, type))]!;
-  return V2_SKINS[WALL_HEX.indexOf(hex)];
+  if (!b || !bldTypeOf(b)) return undefined;
+  const c = colours(b);
+  return c && V2_SKINS[nearestHex(WALL_HEX, c.wall)];
 }
 
 /** v2 roof cell of a building; undefined = keep the v1 roof colour. */
 export function v2RoofCell(building: number): string | undefined {
   const b = infos.get(building);
-  const type = b && bldTypeOf(b);
-  if (!b || !type) return undefined;
-  const roofs = BLD_PALETTE[type].roofs;
-  const hex = roofs[Math.floor(bldHash(building, 0, 3) * roofs.length)]!;
-  return `v2r${ROOF_HEX.indexOf(hex)}`;
+  if (!b || !bldTypeOf(b)) return undefined;
+  const c = colours(b);
+  return c && `v2r${nearestHex(ROOF_HEX, c.roof)}`;
 }
 
 /** Skins v2 replaces; brick and catalogue skins (hospital, school…) keep theirs. */

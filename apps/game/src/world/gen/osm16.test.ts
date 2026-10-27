@@ -19,7 +19,7 @@ beforeAll(async () => {
 describe('osm-stw: the whole 16 km square', () => {
   it('opens with the tiles around the start only, versioned by the data hash', () => {
     const g = tiles.generator;
-    expect(g.version).toMatch(/^osm-stw-[0-9a-f]{12}-all-g18$/);
+    expect(g.version).toMatch(/^osm-stw-[0-9a-f]{12}-all-g21$/);
     expect(g.bounds).toEqual({ cx0: 0, cy0: 0, cx1: 703, cy1: 703 });
     // Manifest + 3 × 3 tiles, not 449.
     expect(fetched.length).toBeLessThanOrEqual(10);

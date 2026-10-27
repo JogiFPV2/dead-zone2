@@ -18,6 +18,8 @@ import {
   TILE_PALETTE,
   edgeId,
 } from './palette.js';
+import { buildingLook, lookPair, NEIGHBOUR_M, type BuildingLook } from './look.js';
+import type { Condition, LookType, RoofShape } from './look-palette.js';
 import { AREA_ORDER, PlanIndex, type IBuilding } from './plan-index.js';
 import { generatorVersionNumber, type WorldPlanInput } from './plan.js';
 import {
@@ -81,6 +83,20 @@ export interface GenBuildingMeta {
   kind: string;
   /** Slanted building with vector walls: outline (x, y pairs, world metres) for a flat roof. */
   outline?: number[];
+  /**
+   * Look (generator rev 21+, look-spec.md §A–C): palette type, colours `#rrggbb`, roof shape,
+   * condition. Absent on older chunks and on buildings without a palette type (ruins).
+   */
+  look?: LookType;
+  wallColor?: string;
+  roofColor?: string;
+  trimColor?: string;
+  roofShape?: RoofShape;
+  condition?: Condition;
+  /** OSM `height` (m) when tagged. */
+  heightM?: number;
+  /** Church with a tower. */
+  tower?: 1;
 }
 
 /**
@@ -209,6 +225,7 @@ export class PlanChunkGenerator {
 
   /** Solved building (memoised), undefined when the building is dropped. */
   building(ib: IBuilding): SolvedBuilding | undefined {
+    this.ibs.set(ib.gid, ib);
     const hit = this.solved.get(ib.gid);
     if (hit !== undefined) return hit ?? undefined;
     const t0 = performance.now();
@@ -222,6 +239,56 @@ export class PlanChunkGenerator {
     this.timings.solveMs += performance.now() - t0;
     this.solved.set(ib.gid, s ?? null);
     return s;
+  }
+
+  private ibs = new Map<number, IBuilding>();
+  private looks = new Map<number, BuildingLook | null>();
+  private baseLooks = new Map<number, BuildingLook | null>();
+
+  private baseLook(ib: IBuilding, floors: number, shift = 0): BuildingLook | undefined {
+    const bb = ib.box;
+    return buildingLook({ b: ib.b, floors, x0: bb.x0, y0: bb.y0, x1: bb.x1, y1: bb.y1, shift });
+  }
+
+  /**
+   * Look of a building for the chunk meta (memoised): palette pick, then the neighbour rule —
+   * a building does not repeat the wall + roof pair of any lower-gid building within 15 m.
+   */
+  private lookOf(gid: number, floors: number): Partial<GenBuildingMeta> {
+    let l = this.looks.get(gid);
+    if (l === undefined) {
+      const ib = this.ibs.get(gid);
+      l = null;
+      if (ib) {
+        const pairs = new Set<string>();
+        const bb = ib.box;
+        const N = NEIGHBOUR_M;
+        for (const j of this.index.buildings.query({
+          x0: bb.x0 - N,
+          y0: bb.y0 - N,
+          x1: bb.x1 + N,
+          y1: bb.y1 + N,
+        })) {
+          const o = this.index.buildings.items[j]!;
+          if (o.gid >= gid) continue;
+          let bl = this.baseLooks.get(o.gid);
+          if (bl === undefined) {
+            bl = this.baseLook(o, o.b.levels) ?? null;
+            this.baseLooks.set(o.gid, bl);
+          }
+          if (bl) pairs.add(lookPair(bl));
+        }
+        for (let k = 0; k < 8; k++) {
+          const c = this.baseLook(ib, floors, k);
+          if (!c) break;
+          l = c;
+          if (!pairs.has(lookPair(c))) break;
+        }
+      }
+      this.looks.set(gid, l);
+    }
+    const h = this.ibs.get(gid)?.b.height;
+    return { ...(l ?? {}), ...(h ? { heightM: h } : {}) };
   }
 
   /** Union of raw building fills on a raster (cars and trees keep off buildings). */
@@ -509,6 +576,7 @@ export class PlanChunkGenerator {
         type: s.type,
         kind: s.kind,
         ...(s.outline ? { outline: s.outline } : {}),
+        ...this.lookOf(s.gid, s.floors),
       }));
     const out: GenColumn = { cx, cy, levels, trees, buildings };
     const infra = chunkInfra(this.index, cx, cy, C);

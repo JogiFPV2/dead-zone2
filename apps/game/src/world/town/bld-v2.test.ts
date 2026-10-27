@@ -19,7 +19,6 @@ import {
   subCellUv,
   v2RoofCell,
   v2WallSkin,
-  weighted,
 } from './bld-v2.js';
 import { EXT_BASE, EXT_CELLS, remapCells, withExtCells } from './skins.js';
 import { WALL_CELL, roofColour, skinOfWall } from './modules.js';
@@ -73,11 +72,6 @@ describe("Designer's palette", () => {
     expect(bldType('garage')).toBe('outbuilding');
     expect(bldType('ruin')).toBeUndefined();
   });
-  it('weighted pick follows the weights', () => {
-    expect(weighted([0.25, 0.75], 0.1)).toBe(0);
-    expect(weighted([0.25, 0.75], 0.3)).toBe(1);
-    expect(weighted([0.25, 0.75], 0.9999)).toBe(1);
-  });
 });
 
 describe('atlas', () => {
@@ -124,11 +118,10 @@ describe('per-building look', () => {
     noteBuildings([house(5)]);
     const s = skinOfWall('base:plaster-wall', 5);
     expect(s).toBe(v2WallSkin(5));
-    expect(BLD_PALETTE.house.walls).toContain(V2_WALL_HEX[V2_SKINS.indexOf(s as never)]);
+    expect(V2_WALL_HEX[V2_SKINS.indexOf(s as never)]).toBeDefined();
     expect(WALL_CELL[s]).toBe(`${s}-wall`);
     const roof = roofColour(5, 'base:roof-flat');
     expect(V2_CELLS.some(([n]) => n === `${roof}-dark`)).toBe(true);
-    expect(BLD_PALETTE.house.roofs).toContain(V2_ROOF_HEX[Number(roof.slice(3))]);
     expect(skinOfWall('base:brick-wall', 5)).toBe('brick');
   });
   it('v2: unknown buildings and ruins keep the v1 look', () => {
@@ -164,6 +157,29 @@ describe('per-building look', () => {
     noteBuildings(houses);
     expect(new Set(houses.map((h) => v2WallSkin(h.id))).size).toBeGreaterThan(3);
     expect(new Set(houses.map((h) => v2RoofCell(h.id))).size).toBeGreaterThan(2);
+  });
+});
+
+describe('look from the chunk data (rev 21+)', () => {
+  it('uses wallColor / roofColor from the data, nearest atlas colour', () => {
+    setBldV2(true);
+    const wall = BLD_PALETTE.kamienica.walls[1]!;
+    const roof = BLD_PALETTE.house.roofs[2]!;
+    noteBuildings([
+      {
+        id: 501,
+        kind: 'house',
+        x0: 0,
+        y0: 0,
+        x1: 9,
+        y1: 9,
+        look: 'house',
+        wallColor: wall,
+        roofColor: roof,
+      },
+    ]);
+    expect(V2_WALL_HEX[V2_SKINS.indexOf(v2WallSkin(501)!)]).toBe(wall);
+    expect(V2_ROOF_HEX[Number(v2RoofCell(501)!.slice(3))]).toBe(roof);
   });
 });
 

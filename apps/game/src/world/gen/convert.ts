@@ -58,6 +58,14 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     rect: b.rect,
     kind: b.kind,
     ...(b.outline ? { outline: b.outline } : {}),
+    ...(b.look ? { look: b.look } : {}),
+    ...(b.wallColor ? { wallColor: b.wallColor } : {}),
+    ...(b.roofColor ? { roofColor: b.roofColor } : {}),
+    ...(b.trimColor ? { trimColor: b.trimColor } : {}),
+    ...(b.roofShape ? { roofShape: b.roofShape } : {}),
+    ...(b.condition ? { condition: b.condition } : {}),
+    ...(b.heightM ? { heightM: b.heightM } : {}),
+    ...(b.tower ? { tower: b.tower } : {}),
   }));
   const roads: VectorRoad[] | undefined = col.roads?.map((r) => ({
     surface: GROUND_TILES[r.ground] ?? 'base:asphalt',

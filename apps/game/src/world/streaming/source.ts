@@ -45,6 +45,20 @@ export interface BuildingMeta {
   readonly floors: number;
   /** Optional block / prefab id from the generator (e.g. `base:block-house-small`). */
   readonly block?: ContentId;
+  /**
+   * Look from the generator (rev 21+, `GenBuildingMeta`; absent on older chunks): palette type,
+   * colours `#rrggbb`, roof shape, condition (`ok` / `neglected` / `abandoned` / `ruin`).
+   */
+  readonly look?: string;
+  readonly wallColor?: string;
+  readonly roofColor?: string;
+  readonly trimColor?: string;
+  readonly roofShape?: string;
+  readonly condition?: string;
+  /** OSM height (m) when tagged. */
+  readonly heightM?: number;
+  /** Church with a tower. */
+  readonly tower?: 1;
 }
 
 /** One chunk column: all levels at (cx, cy) plus client-only decor and building metadata. */
