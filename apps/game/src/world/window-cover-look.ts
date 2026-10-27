@@ -1,5 +1,5 @@
 import type { WindowCoverView } from '@deadzone/protocol';
-import type { Matrix4} from 'three';
+import type { Matrix4 } from 'three';
 import { Color, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 import { LEVEL_HEIGHT } from './instances.js';
 import { WALL_HEIGHT, WINDOW_HEIGHT } from './structure-instances.js';
