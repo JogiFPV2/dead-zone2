@@ -6,6 +6,7 @@ import {
   Color,
   DoubleSide,
   MeshStandardMaterial,
+  LinearMipmapLinearFilter,
   NearestFilter,
   NoColorSpace,
   RepeatWrapping,
@@ -18,7 +19,8 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CanvasTexture } from 'three';
 import { deriveSkins, paintExtCells, withExtCells } from './skins.js';
-import { PALETTE_SCALE, paintV2Cells } from './bld-v2.js';
+import { PALETTE_SCALE, bldV2, paintV2Cells } from './bld-v2.js';
+import { paintDetailIndex, withFacadeDetail } from './bld-detail.js';
 import { shopWindowGeometry } from './levels.js';
 import { ALL_SKINS, WALL_CELL } from './modules.js';
 
@@ -195,8 +197,49 @@ export async function loadTownKit(
     side: DoubleSide,
   });
   material.name = 'deadzone-town/palette';
+  if (bldV2()) await addFacadeDetail(material, tl, baseUrl, canvas.width);
   withFade(material);
   return { geometries, material, cells, detail, cellIndex: index.cells };
+}
+
+/** bld v2: facade detail atlas in the same material (see bld-detail.ts); skipped on failure. */
+async function addFacadeDetail(
+  material: MeshStandardMaterial,
+  tl: TextureLoader,
+  baseUrl: string,
+  size: number,
+): Promise<void> {
+  try {
+    const [tex, meta] = await Promise.all([
+      tl.loadAsync(`${baseUrl}deadzone-town/facade-detail.webp`),
+      fetch(`${baseUrl}deadzone-town/facade-detail.json`).then(
+        (r) => r.json() as Promise<{ cells: { tileMeters: number }[] }>,
+      ),
+    ]);
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+    paintDetailIndex(ctx, size);
+    const index = new CanvasTexture(c);
+    index.colorSpace = NoColorSpace;
+    index.magFilter = index.minFilter = NearestFilter;
+    index.generateMipmaps = false;
+    index.flipY = false;
+    tex.colorSpace = NoColorSpace;
+    tex.flipY = false;
+    tex.minFilter = LinearMipmapLinearFilter;
+    tex.anisotropy = 4;
+    tex.needsUpdate = true;
+    withFacadeDetail(
+      material,
+      tex,
+      index,
+      meta.cells.map((x) => x.tileMeters),
+    );
+  } catch (e) {
+    console.warn('bld v2: facade detail not loaded', e);
+  }
 }
 
 /** Shop window modules `shopwin-<skin>` (+ `-lit`, `-broken`) for every wall skin. */

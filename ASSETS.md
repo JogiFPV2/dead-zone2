@@ -185,6 +185,11 @@ Designera z packów Kenney do jednego atlasu płaskich kolorów 128 px (`palette
 w jeden `town.glb` (meshopt, siatka na moduł) i zapisuje `town.json` (komórki atlasu, lista modułów).
 Tekstura detalu terenu `terrain-detail.webp` (512², R asfalt, G trawa, B chodnik, A ziemia; luminancja,
 webp q75) powstała z 4 tekstur ambientCG.
+Atlas detalu fasad bld v2 `facade-detail.webp` (2048², 4×4 komórki 512², luminancja, webp q80, `?bld=v2`)
+powstał skryptem `tools/assets/scripts/facade-detail.py` z 16 materiałów ambientCG (CC0 1.0): Plaster001,
+Plaster003, Concrete034, Bricks059, Bricks066, CorrugatedSteel002, SheetMetal001, MetalPlates006, Wood026,
+Concrete031, RoofingTiles006, RoofingTiles008, SheetMetal004, Asphalt010, Tiles074, Concrete046 (lista w
+`facade-detail.json`).
 
 | Źródło                | Autor     | URL                                           | Licencja | Zip (sha256, skrót)                                 | Do czego                                                   |
 | --------------------- | --------- | --------------------------------------------- | -------- | --------------------------------------------------- | ---------------------------------------------------------- |
