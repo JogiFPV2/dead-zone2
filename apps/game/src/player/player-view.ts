@@ -19,6 +19,7 @@ import { PoseTracker, newPose, type WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
+import type { Grip } from '../weapons/grip.js';
 import { createGripSockets, showSocketAxes, type GripSockets } from '../weapons/grip-sockets.js';
 import {
   GRIP_CATEGORY,
@@ -40,6 +41,14 @@ import {
 } from '../anim/locomotion-blend.js';
 import { LegPose } from '../anim/leg-pose.js';
 import { ArmPose, GRIP_SPECS, armBones } from '../anim/arm-pose.js';
+import {
+  addOffsets,
+  drawState,
+  reloadOffsets,
+  shotOffsets,
+  useOffsets,
+  type UseKind,
+} from '../anim/actions-v2.js';
 import type { BodyState } from '../anim/contract.js';
 import {
   FurnitureMoveAnim,
@@ -94,6 +103,12 @@ export class PlayerView {
   private attackStartMs = NaN;
   /** Anim v2: sim tick of this character's last landed hit (`hitLanded`, source = us). */
   private hitTick = NaN;
+  /** Anim v2 P2 actions: last shot (ms), reload window (sim ticks), item use, draw / holster. */
+  private shotMs = NaN;
+  private wasShooting = false;
+  private reloadV2: { start: number; until: number } | undefined;
+  private useV2: { kind: UseKind; startTick: number } | undefined;
+  private drawV2: { kind: 'draw' | 'holster'; startMs: number; grip: Grip | undefined } | undefined;
   /** Pushing / pulling / turning a piece of furniture (`moveFurniture`, `furnitureMoved`). */
   private readonly furnitureMove = new FurnitureMoveAnim();
   /** Animation v2 (`?anim=v2`, `ANIM_V2_DEFAULT`): grip sockets, items in hand, arm layer. */
@@ -182,11 +197,19 @@ export class PlayerView {
     models: WeaponModels,
   ): void {
     this.weapon = hand?.cls ?? 'unarmed';
+    const prevGrip = this.hand?.grip;
     this.hand = hand;
     const m = this.mounts;
     if (!m) return;
     const handKey = hand?.id ?? '';
     if (this.held?.key !== handKey) {
+      // Anim v2: draw (0.4 s) a new weapon, holster (0.35 s) when the hand empties.
+      if (this.animV2 && (this.held || hand))
+        this.drawV2 = {
+          kind: hand ? 'draw' : 'holster',
+          startMs: performance.now(),
+          grip: hand?.grip ?? prevGrip,
+        };
       this.held?.object.removeFromParent();
       this.held = undefined;
       if (hand) {
@@ -412,9 +435,51 @@ export class PlayerView {
     const sock =
       !grip && r && isPoolCategory(r) && r === 'plank' ? this.sockets?.socket(r) : undefined;
     if (sock && free && !this.dead) this.armLayer?.leftOnShaft(sock, this._down);
+    if (this.animV2 && !this.dead && this.rig)
+      this.applyActions(grip, pose.anim === 'shoot', nowMs, tickF);
   }
 
   private readonly _down = new Vector3(0, -1, 0);
+
+  /** P2 actions (anim/actions-v2.ts) after the grip pose and the left-hand IK. */
+  private applyActions(
+    grip: Grip | undefined,
+    shooting: boolean,
+    nowMs: number,
+    tickF: number,
+  ): void {
+    const rig = this.rig?.object;
+    const hips = rig?.getObjectByName('Hips');
+    if (!rig || !hips || !this.armLayer) return;
+    if (shooting && !this.wasShooting) this.shotMs = nowMs;
+    this.wasShooting = shooting;
+    const r = this.reloadV2;
+    const u = this.useV2;
+    const d = this.drawV2;
+    const ds = d ? drawState(d.kind, d.grip, (nowMs - d.startMs) / 1000) : undefined;
+    if (ds && ds.k >= 1) this.drawV2 = undefined;
+    // Draw: the new model shows from the midpoint (in the hand by the holster).
+    if (this.held) this.held.object.visible = d?.kind !== 'draw' || !ds || ds.swapped;
+    const o = addOffsets(
+      Number.isNaN(this.shotMs) ? {} : shotOffsets(grip, (nowMs - this.shotMs) / 1000),
+      r && r.until > r.start ? reloadOffsets((tickF - r.start) / (r.until - r.start)) : {},
+      u ? useOffsets(u.kind, (tickF - u.startTick) / TICKS_PER_SECOND) : {},
+      ds?.offsets ?? {},
+    );
+    this.armLayer.actions(o, this.root, hips, rig.getObjectByName('Head') ?? undefined);
+  }
+
+  /** Reload window from the sim `reload` event (`started` / `round`); undefined = ended. */
+  reloadAnim(start?: number, until?: number): void {
+    this.reloadV2 = start !== undefined && until !== undefined ? { start, until } : undefined;
+  }
+
+  /** Item use in progress (sim action `eat` / `drink` / `bandage`), undefined = none. */
+  useAnim(kind?: UseKind, startTick = 0): void {
+    if (!kind) this.useV2 = undefined;
+    else if (this.useV2?.kind !== kind || this.useV2.startTick !== startTick)
+      this.useV2 = { kind, startTick };
+  }
 
   /** Our blow connected at sim tick `tick` (`physics` `hitLanded`, `source` = this body). */
   attackHit(tick: number): void {

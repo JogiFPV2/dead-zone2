@@ -1956,6 +1956,12 @@ gameState.subscribe((_next, _prev, action) => {
       for (const ev of action.events)
         if (ev.type === 'physics' && ev.kind === 'hitLanded' && ev.source === phys.localId)
           player.attackHit(ev.tick);
+        else if (ev.type === 'reload' && ev.playerId === PLAYER_ID)
+          player.reloadAnim(
+            ...(ev.phase === 'started' || ev.phase === 'round'
+              ? ([ev.tick, ev.untilTick] as const)
+              : ([] as const)),
+          );
     phys.pushEvents(action.events);
   }
 });
@@ -2139,6 +2145,12 @@ const devHoldParam = devQuery?.get('hold') ?? null;
 const devAim = devQuery?.get('aim') === '1';
 /** Dev `?held=R,L` (anim v2): item ids or categories in the hands. */
 const devHeldParam = devQuery?.get('held') ?? null;
+/** Dev `?use=eat|drink|bandage` (anim v2): loop the item-use pose. */
+const devUseParam = devQuery?.get('use');
+const devUse =
+  devUseParam === 'eat' || devUseParam === 'drink' || devUseParam === 'bandage'
+    ? devUseParam
+    : undefined;
 const devSwing = Number(devQuery?.get('swing') ?? NaN);
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
@@ -2176,6 +2188,13 @@ renderer.setAnimationLoop((time) => {
       f ? { mode: f.mode, dirX: f.dirX, dirY: f.dirY, k, seconds } : undefined,
     );
     mapObjects.previewFurnitureMove(f, k);
+    if (player.animV2) {
+      const use = action?.kind;
+      player.useAnim(
+        use === 'eat' || use === 'drink' || use === 'bandage' ? use : devUse,
+        action?.startTick ?? 0,
+      );
+    }
     player.setWeapons(hand, back, weaponModels);
     if (heldPool) {
       // Hands from the sim: a non-weapon item in the right hand (`equippedPrimary`), the left

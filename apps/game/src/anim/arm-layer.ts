@@ -3,6 +3,7 @@ import { Vector3, type Object3D } from 'three';
 import type { Grip } from '../weapons/grip.js';
 import type { HeldCategory } from '../weapons/grip-sockets.js';
 import type { HeldHands } from '../weapons/held-items.js';
+import type { ActionOffsets } from './actions-v2.js';
 import { GRIP_SPECS, solveTwoBone, type ArmBones, type GripSpec } from './arm-pose.js';
 
 /**
@@ -135,4 +136,67 @@ export class ArmLayer {
     a.bones.upper.updateWorldMatrix(true, true);
     solveTwoBone(a.bones, target, pole);
   }
+
+  /**
+   * P2 actions (anim/actions-v2.ts) on top of the grip pose: recoil as bone rotations, the
+   * reload / use / draw reaches as two-bone IK towards body points. `frame` gives the body axes
+   * (+X left, +Y up, +Z forward), `hips` / `head` the anchor points.
+   */
+  actions(o: ActionOffsets, frame: Object3D, hips: Object3D, head: Object3D | undefined): void {
+    const R = this.arms.R?.bones;
+    const L = this.arms.L?.bones;
+    if (R) {
+      if (o.elbowR) R.lower.rotateX(-o.elbowR);
+      if (o.wristR) R.wrist.rotateX(-o.wristR);
+      if (o.shoulderBackR) R.upper.rotateX(o.shoulderBackR / UPPER_ARM);
+    }
+    if (o.torso && this.chest) this.chest.rotateX(-o.torso);
+    const reach = !!(o.leftToBelt || o.leftToMouth || o.wrap || o.holster);
+    if (!reach) return;
+    frame.updateWorldMatrix(true, false);
+    frame.matrixWorld.extractBasis(_x, _y, _z);
+    _x.normalize();
+    _y.normalize();
+    _z.normalize();
+    hips.updateWorldMatrix(true, false);
+    hips.getWorldPosition(_hips);
+    const at = (base: Vector3, left: number, up: number, fwd: number): Vector3 =>
+      _t.copy(base).addScaledVector(_x, left).addScaledVector(_y, up).addScaledVector(_z, fwd);
+    const headPos = head
+      ? (head.updateWorldMatrix(true, false), head.getWorldPosition(_head))
+      : undefined;
+    if (L && o.leftToBelt) this.reach(L, at(_hips, 0.17, 0, 0.06), o.leftToBelt);
+    if (L && o.leftToMouth && headPos) this.reach(L, at(headPos, 0.02, -0.04, 0.14), o.leftToMouth);
+    if (o.wrap) {
+      if (L) this.reach(L, at(_hips, 0.02, 0.3, 0.3), o.wrap);
+      if (R && L) {
+        L.lower.updateWorldMatrix(true, false);
+        this.reach(R, L.lower.getWorldPosition(_t2).addScaledVector(_y, 0.05), o.wrap);
+      }
+    }
+    if (R && o.holster) {
+      const back = o.holsterAt === 'back';
+      const p = back && headPos ? at(headPos, -0.12, -0.08, -0.12) : at(_hips, -0.18, 0, -0.02);
+      this.reach(R, p, o.holster);
+    }
+  }
+
+  /** Wrist from where the clip put it towards `target` by `w` (two-bone IK). */
+  private reach(b: ArmBones, target: Vector3, w: number): void {
+    b.upper.updateWorldMatrix(true, true);
+    b.wrist.getWorldPosition(_w).lerp(target, Math.min(1, w));
+    solveTwoBone(b, _w, _pole.copy(_y).negate());
+  }
 }
+
+/** Upper arm length (m): shoulder-back push (m) -> rotation (rad). */
+const UPPER_ARM = 0.28;
+const _x = new Vector3();
+const _y = new Vector3();
+const _z = new Vector3();
+const _t = new Vector3();
+const _t2 = new Vector3();
+const _w = new Vector3();
+const _hips = new Vector3();
+const _head = new Vector3();
+const _pole = new Vector3();
