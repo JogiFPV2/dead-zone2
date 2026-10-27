@@ -1784,3 +1784,11 @@ można zawiesić na oknie.
   zasłony i wpisy `states` okien, których krawędź po przebudowie mapy nie jest już oknem. Hash
   stanu obejmuje zasłony tylko gdy są (stare golden hashe bez zmian).
 - Test: `openings/cover.test.ts`.
+
+### 9.79 Lewa ręka w widoku postaci (protokół 48)
+
+`CharacterView.equippedSecondary: string | null` = content id przedmiotu w slocie `hand_secondary`
+(null = pusta ręka). Gdy przedmiot w `hand_primary` jest dwuręczny (`twoHanded`), pole jest zawsze
+null. Wypełniane w `characterView` (`snapshot/views.ts`) razem z resztą pól i wysyłane w
+`characters` przy zmianie, jak dotąd (animacje v2 z przedmiotem w lewej ręce). Zapis bez zmian
+(`SAVE_VERSION` 3). Test: `items/storage-window.test.ts`.

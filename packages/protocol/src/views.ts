@@ -896,6 +896,11 @@ export interface CharacterView {
   equippedPrimary: string | null;
   /** Content id in `back` (backpack, long gun), null = none. */
   equippedBack: string | null;
+  /**
+   * Content id in `hand_secondary` (left hand, protocol 48), null = empty; also null while the
+   * primary item is two-handed (`twoHanded`).
+   */
+  equippedSecondary: string | null;
   weaponKind: WeaponKind;
   /** The primary item takes both hands. */
   twoHanded: boolean;

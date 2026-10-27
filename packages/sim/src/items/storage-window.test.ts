@@ -90,6 +90,7 @@ describe('characters view: visible equipment', () => {
         stableId: 1,
         equippedPrimary: null,
         equippedBack: null,
+        equippedSecondary: null,
         weaponKind: 'unarmed',
         twoHanded: false,
         sneaking: false,
@@ -105,5 +106,25 @@ describe('characters view: visible equipment', () => {
     expect(ch.weaponKind).not.toBe('unarmed');
     sim.step();
     expect(sim.drainView()?.characters).toBeUndefined();
+  });
+
+  it('hand_secondary updates equippedSecondary (protocol 48); a two-handed primary → null', () => {
+    const sim = itemsSim();
+    send(sim, { type: 'debugGiveItem', itemId: 'fixture:flashlight' });
+    send(sim, { type: 'debugGiveItem', itemId: WEAPON });
+    sim.step();
+    sim.drainView();
+    send(sim, {
+      type: 'equip',
+      item: findItem(sim, 'fixture:flashlight')!.id,
+      slot: 'hand_secondary',
+    });
+    sim.step();
+    let ch = sim.drainView()!.characters![0]!;
+    expect(ch).toMatchObject({ equippedPrimary: null, equippedSecondary: 'fixture:flashlight' });
+    send(sim, { type: 'equip', item: findItem(sim, WEAPON)!.id, slot: 'hand_primary' });
+    sim.step();
+    ch = sim.drainView()!.characters![0]!;
+    expect(ch).toMatchObject({ equippedPrimary: WEAPON, twoHanded: true, equippedSecondary: null });
   });
 });

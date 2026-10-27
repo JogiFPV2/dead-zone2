@@ -132,12 +132,12 @@ function weaponKind(def: ItemDef | undefined): WeaponKind {
   return 'item';
 }
 
-/** Visible equipment of a player (hand_primary, back). */
+/** Visible equipment of a player (hand_primary, hand_secondary, back; docs 9.79). */
 export function characterView(w: SimWorld, eid: number): CharacterView | undefined {
   const st = w.items;
   const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
   if (!st || !p) return undefined;
-  const at = (slot: 'hand_primary' | 'back') => {
+  const at = (slot: 'hand_primary' | 'hand_secondary' | 'back') => {
     const id = slot === 'back' ? p.backWeapon || p.slots.get(slot) : p.slots.get(slot);
     const item = id === undefined ? undefined : st.items.get(id);
     return item ? defOf(st, item) : undefined;
@@ -145,12 +145,14 @@ export function characterView(w: SimWorld, eid: number): CharacterView | undefin
   const primary = at('hand_primary');
   const primaryId = p.slots.get('hand_primary');
   const primaryItem = primaryId === undefined ? undefined : st.items.get(primaryId);
+  const both = primaryItem ? twoHanded(st, primaryItem) : false;
   return {
     stableId: w.c.StableId.value[eid] ?? 0,
     equippedPrimary: primary?.id ?? null,
     equippedBack: at('back')?.id ?? null,
+    equippedSecondary: both ? null : (at('hand_secondary')?.id ?? null),
     weaponKind: weaponKind(primary),
-    twoHanded: primaryItem ? twoHanded(st, primaryItem) : false,
+    twoHanded: both,
     sneaking: isSneaking(w, eid),
     stepNoiseTiles: stepNoiseTiles(w, eid),
   };
