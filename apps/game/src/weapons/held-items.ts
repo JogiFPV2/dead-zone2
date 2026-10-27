@@ -21,7 +21,7 @@ import { HELD_CATEGORIES, isTwoHanded, type HeldCategory } from './grip-sockets.
  */
 
 /** Category of a held weapon by its grip. */
-const GRIP_CATEGORY: Record<Grip, HeldCategory> = {
+export const GRIP_CATEGORY: Record<Grip, HeldCategory> = {
   one_hand: 'melee1',
   two_hand: 'twoHanded',
   knife: 'knife',

@@ -2,7 +2,8 @@ import { AxesHelper, Group, Matrix4, Vector3, type Object3D } from 'three';
 
 /**
  * Grip sockets (anim-spec §4): an empty Object3D under each wrist bone in which a held item
- * sits. Socket space: metres (1.6 m character), +Y along the item, +Z out of the palm forward;
+ * sits. Hand frame: metres (1.6 m character), +Y along the fingers, +Z the thumb side of the
+ * fist (forward with the arm hanging); the item's +Y is its long axis;
  * the item's grip point is its origin. Per item category the table below gives the hand(s),
  * offset, rotation and length scale.
  */
@@ -66,7 +67,7 @@ export function wristBone(root: Object3D, side: 'R' | 'L'): Object3D | undefined
 }
 
 export interface GripSockets {
-  /** Base hand frames (+Y along the fingers, +Z out of the palm). */
+  /** Base hand frames (+Y along the fingers, +Z thumb side of the fist). */
   gripR: Group;
   gripL: Group | undefined;
   /** Socket of a category in its hand (child of gripR / gripL). */
@@ -88,9 +89,10 @@ function handFrame(root: Object3D, side: 'R' | 'L'): Group | undefined {
   if (middle && index && pinky) {
     const m = _p(middle);
     const y = m.clone().sub(w).normalize();
+    // +Z: thumb side of the fist (pinky → index knuckles, ⟂ the fingers): forward with the arm
+    // hanging, so the §4 rotations read as written (90° X: stick forward, knife −90°: back).
     const k = _p(index).sub(_p(pinky)).normalize();
-    // Palm normal: across the knuckles × along the fingers (mirrored on the left hand).
-    const z = new Vector3().crossVectors(side === 'R' ? k : k.negate(), y).normalize();
+    const z = k.addScaledVector(y, -k.dot(y)).normalize();
     const x = new Vector3().crossVectors(y, z);
     const world = new Matrix4().makeBasis(x, y, z).setPosition(w.lerp(m, 0.8));
     const local = new Matrix4().copy(wrist.matrixWorld).invert().multiply(world);
@@ -132,7 +134,7 @@ export function createGripSockets(root: Object3D): GripSockets | undefined {
   };
 }
 
-/** Dev `?anim=v2&sockets=1`: small axes on both hand frames (r = x, g = y item, b = z palm). */
+/** Dev `?anim=v2&sockets=1`: small axes on both hand frames (r = x, g = y item, b = z thumb side). */
 export function showSocketAxes(s: GripSockets): void {
   for (const g of [s.gripR, s.gripL]) g?.add(new AxesHelper(0.15));
 }

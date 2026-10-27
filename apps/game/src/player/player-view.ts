@@ -20,7 +20,13 @@ import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
 import { createGripSockets, showSocketAxes, type GripSockets } from '../weapons/grip-sockets.js';
-import { isPoolCategory, type HeldHands, type HeldInstance } from '../weapons/held-items.js';
+import {
+  GRIP_CATEGORY,
+  isPoolCategory,
+  type HeldHands,
+  type HeldInstance,
+} from '../weapons/held-items.js';
+import { ArmLayer, gripSpecV2 } from '../anim/arm-layer.js';
 import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
 import {
   LocoBlend,
@@ -78,6 +84,8 @@ export class PlayerView {
   private weapon: WeaponClass = 'unarmed';
   private hand: WeaponInfo | undefined;
   private arms: ArmPose | undefined;
+  /** Anim v2 arm layer (swing damping, bag lean, left hand on a shaft). */
+  private armLayer: ArmLayer | undefined;
   private attackStartMs = NaN;
   /** Pushing / pulling / turning a piece of furniture (`moveFurniture`, `furnitureMoved`). */
   private readonly furnitureMove = new FurnitureMoveAnim();
@@ -312,6 +320,11 @@ export class PlayerView {
       if (this.animV2) {
         this.sockets = createGripSockets(this.rig.object);
         if (this.sockets && this.showSockets) showSocketAxes(this.sockets);
+        this.armLayer = new ArmLayer(
+          armBones(this.rig.object, 'R'),
+          armBones(this.rig.object, 'L'),
+          this.rig.object.getObjectByName('Chest') ?? undefined,
+        );
       }
       const right = armBones(this.rig.object, 'R');
       const chest =
@@ -338,13 +351,28 @@ export class PlayerView {
     const grip = this.hand?.grip;
     this.lastBodyState = `${pose.state}/${pose.anim}`;
     this.root.updateMatrixWorld(true);
-    this.arms?.update(grip ? GRIP_SPECS[grip] : undefined, this.held?.parent, {
+    // Anim v2: what the hands hold (weapon by grip, else the held item) damps the clip swing.
+    const hands: HeldHands = grip ? { ...this.heldHands, R: GRIP_CATEGORY[grip] } : this.heldHands;
+    this.armLayer?.apply(free ? hands : {}, dt);
+    const spec = grip
+      ? this.animV2
+        ? gripSpecV2(grip, loco.run > 0.5)
+        : GRIP_SPECS[grip]
+      : undefined;
+    this.arms?.update(spec, this.held?.parent, {
       aim: aiming || pose.anim === 'aim' || pose.anim === 'shoot',
       attack,
       active: GRIP_STATES.has(pose.state) && !this.dead,
       dt,
     });
+    // Left hand onto the shaft of a two-handed item without a weapon model (plank).
+    const r = this.heldHands.R;
+    const sock =
+      !grip && r && isPoolCategory(r) && r === 'plank' ? this.sockets?.socket(r) : undefined;
+    if (sock && free && !this.dead) this.armLayer?.leftOnShaft(sock, this._down);
   }
+
+  private readonly _down = new Vector3(0, -1, 0);
 
   /**
    * Non-weapon items in the hands this frame for the shared pool (`weapons/held-items.ts`):
