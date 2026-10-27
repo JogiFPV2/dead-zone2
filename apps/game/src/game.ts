@@ -1952,6 +1952,10 @@ gameState.subscribe((_next, _prev, action) => {
     if (p)
       for (const c of eventCues(action.events, p.x, p.y, Math.random, PLAYER_ID))
         audio.play('sfx', c.id, c.volume);
+    if (player.animV2)
+      for (const ev of action.events)
+        if (ev.type === 'physics' && ev.kind === 'hitLanded' && ev.source === phys.localId)
+          player.attackHit(ev.tick);
     phys.pushEvents(action.events);
   }
 });
@@ -2135,6 +2139,7 @@ const devHoldParam = devQuery?.get('hold') ?? null;
 const devAim = devQuery?.get('aim') === '1';
 /** Dev `?held=R,L` (anim v2): item ids or categories in the hands. */
 const devHeldParam = devQuery?.get('held') ?? null;
+const devSwing = Number(devQuery?.get('swing') ?? NaN);
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
   sections.start();
@@ -2156,6 +2161,7 @@ renderer.setAnimationLoop((time) => {
     const hand = devHoldWeapon(devHoldParam, weaponIndex) ?? loadout.hand;
     const back = loadout.back;
     player.aiming = devAim || isAiming(performance.now());
+    player.devSwing = devSwing;
     const action = gameState.get().action;
     const span = action ? action.endTick - action.startTick : 0;
     const dev = devFurnitureAction;

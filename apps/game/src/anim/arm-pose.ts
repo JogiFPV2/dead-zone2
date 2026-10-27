@@ -242,7 +242,14 @@ export class ArmPose {
   update(
     spec: GripSpec | undefined,
     mount: Object3D | undefined,
-    o: { aim: boolean; attack: number; active: boolean; dt: number },
+    o: {
+      aim: boolean;
+      attack: number;
+      active: boolean;
+      dt: number;
+      /** Thrust share 0..1 overriding sin(π·attack) (anim v2 melee phases). */
+      reach?: number;
+    },
   ): void {
     const pose = spec ? (o.aim && spec.aim ? spec.aim : spec.rest) : undefined;
     const swing = spec?.swingByClip === true && !Number.isNaN(o.attack);
@@ -269,7 +276,9 @@ export class ArmPose {
       const snap = this.fresh;
       this.fresh = false;
       const thrust =
-        spec?.thrust && !Number.isNaN(o.attack) ? Math.sin(Math.PI * o.attack) * spec.thrust : 0;
+        spec?.thrust && !Number.isNaN(o.attack)
+          ? (o.reach ?? Math.sin(Math.PI * o.attack)) * spec.thrust
+          : 0;
       const hand = body(pose.hand, new Vector3()).addScaledVector(f, thrust);
       const dir = body(pose.dir, new Vector3()).normalize();
       const up = body(pose.up, new Vector3()).normalize();

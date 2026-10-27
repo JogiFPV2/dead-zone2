@@ -28,6 +28,7 @@ import {
 } from '../weapons/held-items.js';
 import { ArmLayer, gripSpecV2 } from '../anim/arm-layer.js';
 import { LocoV2 } from '../anim/loco-v2.js';
+import { meleeDuration, meleeExtension, meleeProgress } from '../anim/melee-v2.js';
 import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
 import {
   LocoBlend,
@@ -91,10 +92,14 @@ export class PlayerView {
   /** Anim v2 arm layer (swing damping, bag lean, left hand on a shaft). */
   private armLayer: ArmLayer | undefined;
   private attackStartMs = NaN;
+  /** Anim v2: sim tick of this character's last landed hit (`hitLanded`, source = us). */
+  private hitTick = NaN;
   /** Pushing / pulling / turning a piece of furniture (`moveFurniture`, `furnitureMoved`). */
   private readonly furnitureMove = new FurnitureMoveAnim();
   /** Animation v2 (`?anim=v2`, `ANIM_V2_DEFAULT`): grip sockets, items in hand, arm layer. */
   animV2 = false;
+  /** Dev `?swing=0..1` (anim v2): freeze the melee attack at this progress (screenshots). */
+  devSwing = NaN;
   /** Dev: draw the grip socket axes (`?anim=v2&sockets=1`). */
   showSockets = false;
   /** Grip sockets under the wrists (anim v2 only), placed with the weapon mounts. */
@@ -366,10 +371,25 @@ export class PlayerView {
     if (pose.state === 'attack') {
       if (Number.isNaN(this.attackStartMs)) this.attackStartMs = nowMs;
     } else this.attackStartMs = NaN;
-    const attack = Number.isNaN(this.attackStartMs)
+    const grip = this.hand?.grip;
+    let attack = Number.isNaN(this.attackStartMs)
       ? NaN
       : Math.min(1, (nowMs - this.attackStartMs) / 450);
-    const grip = this.hand?.grip;
+    let reach: number | undefined;
+    if (this.animV2 && pose.state === 'attack' && this.weapon !== 'firearm') {
+      // §2 phases from the sim attack start; a landed hit pins the end of the strike.
+      const elapsed = (tickF - p.stateStartTick) / TICKS_PER_SECOND;
+      const hit =
+        this.hitTick >= p.stateStartTick
+          ? (this.hitTick - p.stateStartTick) / TICKS_PER_SECOND
+          : undefined;
+      attack = meleeProgress(elapsed, meleeDuration(grip), hit);
+      reach = Math.max(0, meleeExtension(attack));
+    }
+    if (this.animV2 && !Number.isNaN(this.devSwing)) {
+      attack = this.devSwing;
+      reach = Math.max(0, meleeExtension(attack));
+    }
     this.lastBodyState = `${pose.state}/${pose.anim}`;
     this.root.updateMatrixWorld(true);
     // Anim v2: what the hands hold (weapon by grip, else the held item) damps the clip swing.
@@ -383,6 +403,7 @@ export class PlayerView {
     this.arms?.update(spec, this.held?.parent, {
       aim: aiming || pose.anim === 'aim' || pose.anim === 'shoot',
       attack,
+      ...(reach !== undefined ? { reach } : {}),
       active: GRIP_STATES.has(pose.state) && !this.dead,
       dt,
     });
@@ -394,6 +415,11 @@ export class PlayerView {
   }
 
   private readonly _down = new Vector3(0, -1, 0);
+
+  /** Our blow connected at sim tick `tick` (`physics` `hitLanded`, `source` = this body). */
+  attackHit(tick: number): void {
+    this.hitTick = tick;
+  }
 
   /**
    * Non-weapon items in the hands this frame for the shared pool (`weapons/held-items.ts`):
