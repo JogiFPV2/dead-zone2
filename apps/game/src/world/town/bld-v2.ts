@@ -61,6 +61,22 @@ export function bldType(kind: string | undefined): BldType | undefined {
   }
 }
 
+/** Footprint area (m²) from which a 3+ floor office counts as a public building. */
+export const PUBLIC_MIN_AREA = 600;
+
+/**
+ * Palette type of a building: the kind, refined by floors / footprint. Tenements (`tenement`
+ * kind of the procedural maps, OSM houses with ≥ 3 floors) → `kamienica`; large 3+ floor
+ * offices (OSM townhall / public / civic end up as `office`) → `public`.
+ */
+export function bldTypeOf(b: BldInfo): BldType | undefined {
+  const floors = b.floors ?? 1;
+  if (b.kind === 'tenement' || (b.kind === 'house' && floors >= 3)) return 'kamienica';
+  const area = Math.abs((b.x1 - b.x0) * (b.y1 - b.y0));
+  if (b.kind === 'office' && floors >= 3 && area >= PUBLIC_MIN_AREA) return 'public';
+  return bldType(b.kind);
+}
+
 /** Unique wall / roof colours over all types, in palette order. */
 const WALL_HEX: readonly string[] = [...new Set(TYPES.flatMap((t) => BLD_PALETTE[t].walls))];
 const ROOF_HEX: readonly string[] = [...new Set(TYPES.flatMap((t) => BLD_PALETTE[t].roofs))];
@@ -68,8 +84,8 @@ const ROOF_HEX: readonly string[] = [...new Set(TYPES.flatMap((t) => BLD_PALETTE
 type Idx<N extends number, A extends number[] = []> = A['length'] extends N
   ? A[number]
   : Idx<N, [...A, A['length']]>;
-/** Wall skins: one per unique wall colour (32 in the palette; the test pins the count). */
-export const V2_WALL_COUNT = 32;
+/** Wall skins: one per unique wall colour (37 in the palette; the test pins the count). */
+export const V2_WALL_COUNT = 37;
 export type V2Skin = `v2w${Idx<typeof V2_WALL_COUNT>}`;
 export const V2_SKINS: readonly V2Skin[] = Array.from(
   { length: V2_WALL_COUNT },
@@ -100,7 +116,7 @@ export function subCellUv(s: SubCell): [number, number] {
   ];
 }
 
-/** Cells of v2: [name, hex, sub-cell]. Walls `v2wN-wall` / `v2wN-dark`, roofs `v2rN`. */
+/** Cells of v2: [name, hex, sub-cell]. Walls `v2wN-wall` / `v2wN-dark`, roofs `v2rN` / `v2rN-dark`. */
 export const V2_CELLS: readonly (readonly [string, string, SubCell])[] = (() => {
   const out: [string, string, SubCell][] = [];
   let k = 0;
@@ -114,7 +130,11 @@ export const V2_CELLS: readonly (readonly [string, string, SubCell])[] = (() => 
     out.push([`${s}-wall`, hex, next()]);
     out.push([`${s}-dark`, darken(hex, V2_DARK), next()]);
   });
-  ROOF_HEX.forEach((hex, i) => out.push([`v2r${i}`, hex, next()]));
+  // Roofs need a `-dark` twin too (shaded slope of pitched roofs: `${colour}-dark`).
+  ROOF_HEX.forEach((hex, i) => {
+    out.push([`v2r${i}`, hex, next()]);
+    out.push([`v2r${i}-dark`, darken(hex, V2_DARK), next()]);
+  });
   return out;
 })();
 
@@ -158,12 +178,16 @@ export interface BldInfo {
   y0: number;
   x1: number;
   y1: number;
+  /** Floor levels (1 = bungalow); absent = unknown. */
+  floors?: number | undefined;
 }
 const infos = new Map<number, BldInfo>();
 /** Streamed town hook: remember kind and footprint of the buildings of a chunk. */
 export function noteBuildings(list: Iterable<BldInfo>): void {
   for (const b of list) infos.set(b.id, b);
 }
+/** Generator kind of a noted building. */
+export const bldKind = (id: number): string | undefined => infos.get(id)?.kind;
 /** Tests. */
 export function clearBuildings(): void {
   infos.clear();
@@ -200,7 +224,7 @@ export function wallSeed(b: BldInfo, type: BldType): number {
 /** v2 wall skin of a building; undefined = keep the v1 skin (unknown building / kind). */
 export function v2WallSkin(building: number): V2Skin | undefined {
   const b = infos.get(building);
-  const type = bldType(b?.kind);
+  const type = b && bldTypeOf(b);
   if (!b || !type) return undefined;
   const p = BLD_PALETTE[type];
   const hex = p.walls[weighted(p.weights, wallSeed(b, type))]!;
@@ -210,7 +234,7 @@ export function v2WallSkin(building: number): V2Skin | undefined {
 /** v2 roof cell of a building; undefined = keep the v1 roof colour. */
 export function v2RoofCell(building: number): string | undefined {
   const b = infos.get(building);
-  const type = bldType(b?.kind);
+  const type = b && bldTypeOf(b);
   if (!b || !type) return undefined;
   const roofs = BLD_PALETTE[type].roofs;
   const hex = roofs[Math.floor(bldHash(building, 0, 3) * roofs.length)]!;

@@ -3,7 +3,8 @@
  * 27.10.2026): wall / roof sRGB hex per type, weights of the walls. Data only — replace from the
  * JSON when it changes.
  */
-export type BldType = 'block' | 'house' | 'service' | 'industrial' | 'public' | 'outbuilding';
+export type BldType =
+  'block' | 'house' | 'service' | 'industrial' | 'public' | 'outbuilding' | 'kamienica';
 export interface BldTypePalette {
   walls: readonly string[];
   weights: readonly number[];
@@ -39,5 +40,11 @@ export const BLD_PALETTE: Readonly<Record<BldType, BldTypePalette>> = {
     walls: ['#8b7a63', '#a8a196', '#6f6656', '#b7aa8e', '#7f8a7a'],
     weights: [0.25, 0.25, 0.2, 0.15, 0.15],
     roofs: ['#2f3132', '#5f615c', '#6b4731', '#7a5a45'],
+  },
+  /** Tenement (look-spec.md §B table; not in the JSON). Equal-ish weights. */
+  kamienica: {
+    walls: ['#d8c49a', '#c9b08a', '#e2d6bd', '#b9a48a', '#cdbfa8'],
+    weights: [0.25, 0.2, 0.2, 0.15, 0.2],
+    roofs: ['#8e3b2c', '#5a4434', '#3c3f42'],
   },
 };

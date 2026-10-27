@@ -10,6 +10,8 @@ import {
   V2_WALL_COUNT,
   V2_WALL_HEX,
   bldType,
+  bldTypeOf,
+  PUBLIC_MIN_AREA,
   clearBuildings,
   initBldV2,
   noteBuildings,
@@ -54,9 +56,10 @@ describe("Designer's palette", () => {
       ),
     ) as Record<string, { walls: string[]; roofs: string[]; weights: number[] }>;
     for (const [t, p] of Object.entries(BLD_PALETTE)) {
-      expect(p.walls).toEqual(src[t]!.walls);
-      expect(p.roofs).toEqual(src[t]!.roofs);
-      expect(p.weights).toEqual(src[t]!.weights);
+      if (!src[t]) continue; // kamienica: from the spec table
+      expect(p.walls).toEqual(src[t].walls);
+      expect(p.roofs).toEqual(src[t].roofs);
+      expect(p.weights).toEqual(src[t].weights);
     }
   });
   it('one skin per unique wall colour', () => {
@@ -91,7 +94,7 @@ describe('atlas', () => {
     for (let k = 0; k < EXT_CELLS.length; k++) used.add(EXT_BASE + k);
     const keys = V2_CELLS.map(([, , s]) => `${s.cell}:${s.q}`);
     expect(new Set(keys).size).toBe(keys.length);
-    expect(V2_CELLS).toHaveLength(V2_WALL_COUNT * 2 + V2_ROOF_HEX.length);
+    expect(V2_CELLS).toHaveLength((V2_WALL_COUNT + V2_ROOF_HEX.length) * 2);
     for (const [, , s] of V2_CELLS) {
       expect(used.has(s.cell)).toBe(false);
       const [u, v] = subCellUv(s);
@@ -124,6 +127,7 @@ describe('per-building look', () => {
     expect(BLD_PALETTE.house.walls).toContain(V2_WALL_HEX[V2_SKINS.indexOf(s as never)]);
     expect(WALL_CELL[s]).toBe(`${s}-wall`);
     const roof = roofColour(5, 'base:roof-flat');
+    expect(V2_CELLS.some(([n]) => n === `${roof}-dark`)).toBe(true);
     expect(BLD_PALETTE.house.roofs).toContain(V2_ROOF_HEX[Number(roof.slice(3))]);
     expect(skinOfWall('base:brick-wall', 5)).toBe('brick');
   });
@@ -160,5 +164,34 @@ describe('per-building look', () => {
     noteBuildings(houses);
     expect(new Set(houses.map((h) => v2WallSkin(h.id))).size).toBeGreaterThan(3);
     expect(new Set(houses.map((h) => v2RoofCell(h.id))).size).toBeGreaterThan(2);
+  });
+});
+
+describe('kamienica / publiczny', () => {
+  const b = (kind: string, floors: number, side = 10) => ({
+    id: 1,
+    kind,
+    x0: 0,
+    y0: 0,
+    x1: side,
+    y1: side,
+    floors,
+  });
+  it('tenements and 3+ floor houses are kamienice', () => {
+    expect(bldTypeOf(b('tenement', 2))).toBe('kamienica');
+    expect(bldTypeOf(b('house', 3))).toBe('kamienica');
+    expect(bldTypeOf(b('house', 2))).toBe('house');
+  });
+  it('large 3+ floor offices are public, small ones service', () => {
+    const big = Math.ceil(Math.sqrt(PUBLIC_MIN_AREA));
+    expect(bldTypeOf(b('office', 3, big))).toBe('public');
+    expect(bldTypeOf(b('office', 3, 10))).toBe('service');
+    expect(bldTypeOf(b('office', 2, big))).toBe('service');
+  });
+  it('a kamienica gets a kamienica wall colour', () => {
+    setBldV2(true);
+    noteBuildings([{ ...b('tenement', 3), id: 77 }]);
+    const s = v2WallSkin(77)!;
+    expect(BLD_PALETTE.kamienica.walls).toContain(V2_WALL_HEX[V2_SKINS.indexOf(s)]);
   });
 });

@@ -51,6 +51,8 @@ import {
 } from './modules.js';
 import { blokFacade, type BlokInfo } from './blok-facade.js';
 import { outlineRoof, pitchedRoof } from './roof.js';
+import { churchTower } from './church-tower.js';
+import { bldKind, bldV2 } from './bld-v2.js';
 import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 
@@ -277,6 +279,38 @@ export class TownStructures {
       const at = geo?.boundingBox?.getCenter(new Vector3());
       if (geo && at && geo.getAttribute('position').count > 0)
         push(at.x, at.z, { geo, m: new Matrix4(), roof: b });
+    }
+    // bld v2: church towers (whole footprint; drawn by the chunk holding its centre).
+    if (bldV2()) {
+      const towers = new Set<BuildingId>();
+      for (const r of layout.roofs) {
+        if (towers.has(r.building) || bldKind(r.building) !== 'church') continue;
+        towers.add(r.building);
+        const o = this.opts.outlineOf?.(r.building);
+        if (o && range.z !== o.floors - 1) continue;
+        const fp = this.opts.footprintOf?.(r.building) ?? r.footprint;
+        const mx = Math.floor((fp.x0 + fp.x1 + 1) / 2 / CHUNK_SIZE);
+        const mz = Math.floor((fp.z0 + fp.z1 + 1) / 2 / CHUNK_SIZE);
+        if (
+          this.opts.footprintOf &&
+          (mx < range.cx0 || mx > range.cx1 || mz < range.cy0 || mz > range.cy1)
+        )
+          continue;
+        const skin: Skin = layout.skins.get(r.building) ?? 'plaster';
+        const geo = churchTower(
+          fp,
+          r.building,
+          WALL_CELL[skin],
+          roofColour(r.building, r.content),
+          this.kit.cells,
+          baseY + WALL_HEIGHT,
+        );
+        push((fp.x0 + fp.x1 + 1) / 2, (fp.z0 + fp.z1 + 1) / 2, {
+          geo,
+          m: new Matrix4(),
+          roof: r.building,
+        });
+      }
     }
     for (const r of layout.roofs) {
       if (outlined.has(r.building)) continue;

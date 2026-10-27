@@ -39,6 +39,7 @@ const WALL: Record<BldType, DetailCell> = {
   industrial: 'corrugated',
   public: 'plaster',
   outbuilding: 'planks',
+  kamienica: 'plaster-rough',
 };
 const ROOF: Record<BldType, DetailCell> = {
   block: 'felt',
@@ -47,6 +48,7 @@ const ROOF: Record<BldType, DetailCell> = {
   industrial: 'corrugated',
   public: 'sheet',
   outbuilding: 'felt',
+  kamienica: 'tiles-plain',
 };
 /** Colour overrides (brick walls, graphite / brown house roofs). */
 const BY_HEX: Readonly<Record<string, DetailCell>> = {
@@ -68,7 +70,7 @@ function detailOf(hex: string, roof: boolean): DetailCell {
 export const V2_DETAIL: ReadonlyMap<string, DetailCell> = new Map(
   V2_CELLS.map(([name]) => {
     const m = /^v2w(\d+)-/.exec(name);
-    const hex = m ? V2_WALL_HEX[Number(m[1])] : V2_ROOF_HEX[Number(name.slice(3))];
+    const hex = m ? V2_WALL_HEX[Number(m[1])] : V2_ROOF_HEX[parseInt(name.slice(3), 10)];
     return [name, detailOf(hex ?? '', !m)];
   }),
 );
