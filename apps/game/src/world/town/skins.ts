@@ -1,5 +1,6 @@
 import { BufferAttribute, type BufferGeometry } from 'three';
 import type { TownKitIndex } from './kit.js';
+import { V2_CELLS, V2_SKINS } from './bld-v2.js';
 
 /**
  * Catalogue skins of the building mockup (`deadzone-buildings-spec.md`, `palette-ext.json`):
@@ -79,6 +80,8 @@ export function withExtCells(index: TownKitIndex): TownKitIndex {
   EXT_CELLS.forEach(([name, hex], k) => {
     cells[name] ??= { uv: cellUv(EXT_BASE + k), hex };
   });
+  // Buildings v2 cells at explicit free atlas slots (bld-v2.ts).
+  for (const [name, hex, i] of V2_CELLS) cells[name] ??= { uv: cellUv(i), hex };
   return { ...index, cells };
 }
 
@@ -93,6 +96,10 @@ export function paintExtCells(
     ctx.fillStyle = hex;
     ctx.fillRect((i % GRID) * px, Math.floor(i / GRID) * px, px, px);
   });
+  for (const [, hex, i] of V2_CELLS) {
+    ctx.fillStyle = hex;
+    ctx.fillRect((i % GRID) * px, Math.floor(i / GRID) * px, px, px);
+  }
 }
 
 /** Copy of `g` with every vertex uv in a `from` cell moved to its `to` cell. */
@@ -133,7 +140,14 @@ export function deriveSkins(
   geometries: Map<string, BufferGeometry>,
   uv: (cell: string) => [number, number],
 ): void {
-  for (const [skin, c] of Object.entries(EXT_SKINS)) {
+  const skins: [string, { main: string; dark: string }][] = [
+    ...Object.entries(EXT_SKINS),
+    ...V2_SKINS.map((s): [string, { main: string; dark: string }] => [
+      s,
+      { main: `${s}-wall`, dark: `${s}-dark` },
+    ]),
+  ];
+  for (const [skin, c] of skins) {
     const map = [
       [uv('wall-plaster'), uv(c.main)],
       [uv('wall-plaster-dark'), uv(c.dark)],

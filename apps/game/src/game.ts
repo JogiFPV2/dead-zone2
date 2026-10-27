@@ -178,6 +178,10 @@ import { FloatingOrigin, chunkCorner } from './render/floating-origin.js';
 import { SaveRefusedError, handleEscape, type Closable } from './pause/pause-model.js';
 import type { WorkerSimClient } from './sim/worker-sim-client.js';
 import { bindUiScale, scaledUi } from './ui/ui-scale.js';
+import { initBldV2 } from './world/town/bld-v2.js';
+
+// Buildings v2 look (`?bld=v2`), before any town is built.
+initBldV2(location.search);
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;

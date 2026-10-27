@@ -1,3 +1,4 @@
+import { V2_REPLACES, V2_SKINS, bldV2, v2RoofCell, v2WallSkin, type V2Skin } from './bld-v2.js';
 import type { BuildingId, ContentId, EdgeKind } from '../chunk.js';
 
 /** Wall skins of the town kit (`wall-<skin>`, `window-<skin>`, `doorway-<skin>`, `stub-<skin>`). */
@@ -17,7 +18,9 @@ export type Skin =
   | 'plank'
   | 'gas'
   | 'pharmacy'
-  | 'burnt';
+  | 'burnt'
+  // Buildings v2 (`bld-v2.ts`): per-building plaster colours.
+  | V2Skin;
 
 /** Every wall skin (kit derivation of the catalogue skins, shop windows). */
 export const ALL_SKINS: readonly Skin[] = [
@@ -36,6 +39,7 @@ export const ALL_SKINS: readonly Skin[] = [
   'gas',
   'pharmacy',
   'burnt',
+  ...V2_SKINS,
 ];
 
 const SIDING: readonly Skin[] = ['green', 'beige', 'blue'];
@@ -53,6 +57,11 @@ export function hash01(a: number, b = 0, c = 0): number {
  * brick walls, `hash(buildingId)` siding for the generic `base:wall-plain`.
  */
 export function skinOfWall(wall: ContentId | undefined, building: BuildingId): Skin {
+  const s = skinOfWallV1(wall, building);
+  return bldV2() && V2_REPLACES.has(s) ? v2WallSkin(building) : s;
+}
+
+function skinOfWallV1(wall: ContentId | undefined, building: BuildingId): Skin {
   switch (wall) {
     case 'base:siding-green':
       return 'green';
@@ -164,11 +173,13 @@ export function roofStyle(roof: ContentId | undefined): RoofStyle {
 const ROOF_COLOURS = ['roof-a', 'roof-b', 'roof-c', 'roof-d'] as const;
 /** Roof colour cell: catalogue roofs by content, others by building. */
 export const roofColour = (building: BuildingId, roof?: ContentId): string =>
-  roof === 'base:roof-tile'
-    ? 'roof-tile'
-    : roof === 'base:roof-corrugated'
-      ? 'corrugated'
-      : (ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a');
+  bldV2() && roof !== 'base:roof-corrugated'
+    ? v2RoofCell(building)
+    : roof === 'base:roof-tile'
+      ? 'roof-tile'
+      : roof === 'base:roof-corrugated'
+        ? 'corrugated'
+        : (ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a');
 
 /** Wall colour cell of a skin (gable ends of pitched roofs). */
 export const WALL_CELL: Record<Skin, string> = {
@@ -187,6 +198,7 @@ export const WALL_CELL: Record<Skin, string> = {
   gas: 'gas-wall',
   pharmacy: 'pharm-wall',
   burnt: 'char',
+  ...(Object.fromEntries(V2_SKINS.map((s) => [s, `${s}-wall`])) as Record<V2Skin, string>),
 };
 
 /**
