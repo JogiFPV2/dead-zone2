@@ -486,14 +486,22 @@ settings.subscribe((next, prev) => {
 });
 // Generated maps with the town kit: kit terrain / walls / roofs / doors per streamed chunk.
 const genLayers = genWorld ? await import('./world/gen/streamed-town.js') : undefined;
+// Realistic style: leafy trees (instanced leaf cards, wind sway) instead of the kit tree props.
+const realTrees =
+  realStyle && genWorld ? new (await import('./world/trees/tree-layer.js')).TreeLayer() : undefined;
 const streamedTown =
   genLayers && townKit
     ? new genLayers.StreamedTown(
         streaming.streamer.loaded,
         townKit,
         realStyle ? (b) => realStyle.buildingShell(b) !== undefined : undefined,
+        realTrees,
       )
     : undefined;
+if (realTrees) {
+  worldRoot.add(realTrees.root);
+  (globalThis as { __dzTrees?: unknown }).__dzTrees = realTrees;
+}
 if (streamedTown) {
   streaming.lod.addNearLayer({
     loadChunk: (cx, cy, z) => streamedTown.loadChunk(cx, cy, z),
@@ -2154,6 +2162,7 @@ const devUse =
 const devSwing = Number(devQuery?.get('swing') ?? NaN);
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
+  realTrees?.update(time / 1000);
   sections.start();
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;

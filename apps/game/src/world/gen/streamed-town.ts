@@ -31,6 +31,13 @@ const key = (cx: number, cy: number, z: number) => `${cx},${cy},${z}`;
  * the ground one merged terrain mesh. The levels of a chunk share one BatchedMesh (column). Reads neighbours from the loaded chunks; buildings crossing
  * chunk borders get their pitched roof once, from the building metadata.
  */
+/** Receiver of a chunk's tree props (realistic trees, `world/trees/tree-layer.ts`). */
+export interface TreeSink {
+  isTree(propName: string): boolean;
+  load(key: string, trees: readonly { x: number; z: number; y: number }[]): void;
+  unload(key: string): void;
+}
+
 export class StreamedTown {
   readonly root = new Group();
   /** Building at a tile of the loaded chunks (cutaway, footsteps, big map). */
@@ -55,6 +62,8 @@ export class StreamedTown {
     private readonly kit: TownKit,
     /** Realistic style: buildings drawn as a model from outside (kit pieces hidden until cut). */
     private readonly shellOf?: (b: GenBuildingInfo) => boolean,
+    /** Realistic style: tree props go to this layer (world/trees) instead of the kit batch. */
+    private readonly trees?: TreeSink,
   ) {
     this.root.name = 'streamed-town';
     this.root.add(this.panes.root);
@@ -165,7 +174,15 @@ export class StreamedTown {
         if (d.kind === 'base:tree') trees.push([cx * CHUNK_SIZE + d.x, cy * CHUNK_SIZE + d.y]);
       }
     }
-    const props = z === 0 ? townDecor(new MapTiles(this.loaded, 0), range, trees).props : [];
+    let props = z === 0 ? townDecor(new MapTiles(this.loaded, 0), range, trees).props : [];
+    if (this.trees && z === 0) {
+      const sink = this.trees;
+      sink.load(
+        `${cx},${cy}`,
+        props.filter((p) => sink.isTree(p.name)).map((p) => ({ x: p.x, z: p.z, y: p.y ?? 0 })),
+      );
+      props = props.filter((p) => !sink.isTree(p.name));
+    }
     level.loadRange(range, props);
     level.root.position.y = 0;
     this.levels.set(key(cx, cy, z), level);
@@ -185,6 +202,7 @@ export class StreamedTown {
 
   unloadChunk(cx: number, cy: number, z: number): void {
     const k = key(cx, cy, z);
+    if (z === 0) this.trees?.unload(`${cx},${cy}`);
     const level = this.levels.get(k);
     if (level) {
       this.root.remove(level.root);
