@@ -120,3 +120,17 @@ export const KNOCKDOWN_FALL_TICKS = 7;
 export const GETUP_TICKS = 10;
 /** Length of a light hit reaction (ticks). */
 export const HIT_TICKS = 8;
+
+/**
+ * Animation v2 (Designer's anim-spec, 27.10): items in hand, arm layer, locomotion v2. Off by
+ * default; `?anim=v2` turns it on (`?anim=v1` off). Flip this one constant to make v2 the default.
+ */
+export const ANIM_V2_DEFAULT = false;
+
+/** Whether animation v2 is on for this page (`search` = `location.search`). */
+export function animV2Enabled(search: string): boolean {
+  const v = new URLSearchParams(search).get('anim');
+  if (v === 'v2') return true;
+  if (v === 'v1') return false;
+  return ANIM_V2_DEFAULT;
+}

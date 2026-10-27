@@ -171,6 +171,7 @@ import { PLAYER_HEIGHT } from './player/player-view.js';
 import { PhysAdapter } from './anim/phys-adapter.js';
 import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
+import { animV2Enabled } from './anim/contract.js';
 import { devHoldWeapon, weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
@@ -889,6 +890,9 @@ const crowdView = new CrowdView(crowd, (next, prev) => {
 });
 worldRoot.add(crowdView.mesh);
 const player = new PlayerView();
+player.animV2 = animV2Enabled(location.search);
+player.showSockets =
+  import.meta.env.DEV && new URLSearchParams(location.search).get('sockets') === '1';
 worldRoot.add(player.root);
 // Cars (PLACEHOLDER boxes until models): vehicle snapshot block, interpolated per frame.
 const vehicleView = new VehicleView(

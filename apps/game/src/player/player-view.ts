@@ -19,6 +19,7 @@ import { PoseTracker, newPose, type WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
+import { createGripSockets, showSocketAxes, type GripSockets } from '../weapons/grip-sockets.js';
 import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
 import {
   LocoBlend,
@@ -79,6 +80,12 @@ export class PlayerView {
   private attackStartMs = NaN;
   /** Pushing / pulling / turning a piece of furniture (`moveFurniture`, `furnitureMoved`). */
   private readonly furnitureMove = new FurnitureMoveAnim();
+  /** Animation v2 (`?anim=v2`, `ANIM_V2_DEFAULT`): grip sockets, items in hand, arm layer. */
+  animV2 = false;
+  /** Dev: draw the grip socket axes (`?anim=v2&sockets=1`). */
+  showSockets = false;
+  /** Grip sockets under the wrists (anim v2 only), placed with the weapon mounts. */
+  sockets: GripSockets | undefined;
   /** Aiming (set by the game from input): the body faces the cursor instead of the movement. */
   aiming = false;
   /** Fallback state when no physics state is passed (mock / tests). */
@@ -299,6 +306,10 @@ export class PlayerView {
     if (!this.mounts) {
       this.root.updateMatrixWorld(true);
       this.mounts = createWeaponMounts(this.rig.object);
+      if (this.animV2) {
+        this.sockets = createGripSockets(this.rig.object);
+        if (this.sockets && this.showSockets) showSocketAxes(this.sockets);
+      }
       const right = armBones(this.rig.object, 'R');
       const chest =
         this.rig.object.getObjectByName('Chest') ?? this.rig.object.getObjectByName('Torso');
