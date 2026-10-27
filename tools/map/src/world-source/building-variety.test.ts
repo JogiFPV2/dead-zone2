@@ -10,7 +10,8 @@ import { OsmTiles, type OsmTileManifest } from './tiles.js';
  * Variety of building looks (Paweł 27.10: buildings in different colours, not all alike). A look
  * = exterior wall content + roof content of the solved building (`SolvedBuilding.wall` /
  * `roofContent`, the renderer skin). Ratchet: `MIN_LOOKS` may only go up, the `MAX_*_SHARE`
- * only down (target: no wall or look on more than 30 % of buildings).
+ * only down (target: no wall or look on more than 30 % of buildings). Kind / ruin / floors
+ * shares measured on main 084ac113 (GENERATOR_REV 18) + ~0.01 margin.
  */
 interface Limits {
   /** Distinct wall|roof combinations, at least. */
@@ -21,11 +22,41 @@ interface Limits {
   wall: number;
   /** Share of the most common roof, at most. */
   roof: number;
+  /** Share of the most common building kind (`ib.b.kind`), at most. */
+  kind: number;
+  /** Share of ruins (OSM `ruins`/`collapsed`/`abandoned:building`), at most. */
+  ruin: number;
+  /** Share of the most common floor count, at most. */
+  floors: number;
 }
 const LIMITS: Record<string, Limits> = {
-  'osm-okulickiego': { looks: 22, look: 0.281, wall: 0.311, roof: 0.485 },
-  'osm-stw': { looks: 23, look: 0.144, wall: 0.172, roof: 0.344 },
-  'plan-4': { looks: 19, look: 0.168, wall: 0.205, roof: 0.309 },
+  'osm-okulickiego': {
+    looks: 22,
+    look: 0.281,
+    wall: 0.311,
+    roof: 0.485,
+    kind: 0.298,
+    ruin: 0.005,
+    floors: 0.423,
+  },
+  'osm-stw': {
+    looks: 23,
+    look: 0.144,
+    wall: 0.172,
+    roof: 0.344,
+    kind: 0.697,
+    ruin: 0.012,
+    floors: 0.621,
+  },
+  'plan-4': {
+    looks: 19,
+    look: 0.168,
+    wall: 0.205,
+    roof: 0.309,
+    kind: 0.412,
+    ruin: 0.005,
+    floors: 0.61,
+  },
 };
 /** Every n-th building (gid % n) is solved, to keep CI time down (as building-shape.test.ts). */
 const SAMPLE: Record<string, number> = { 'osm-okulickiego': 1, 'osm-stw': 8, 'plan-4': 8 };
@@ -65,7 +96,10 @@ describe('różnorodność wyglądu budynków na mapach', () => {
       const looks = new Map<string, number>();
       const walls = new Map<string, number>();
       const roofs = new Map<string, number>();
+      const kinds = new Map<string, number>();
+      const floors = new Map<string, number>();
       let n = 0;
+      let ruins = 0;
       for (const ib of g.index.buildings.items) {
         if (ib.gid % SAMPLE[id]!) continue;
         const b = g.building(ib);
@@ -75,6 +109,9 @@ describe('różnorodność wyglądu budynków na mapach', () => {
         inc(looks, `${b.wall}|${roof}`);
         inc(walls, b.wall);
         inc(roofs, roof);
+        inc(kinds, ib.b.kind);
+        inc(floors, String(b.floors));
+        if (/ruin/.test(ib.b.kind)) ruins++;
       }
       const s = {
         buildings: n,
@@ -82,6 +119,9 @@ describe('różnorodność wyglądu budynków na mapach', () => {
         look: topShare(looks, n),
         wall: topShare(walls, n),
         roof: topShare(roofs, n),
+        kind: topShare(kinds, n),
+        ruin: ruins / (n || 1),
+        floors: topShare(floors, n),
       };
       console.log(`[wygląd] ${id}`, JSON.stringify(s));
       const l = LIMITS[id]!;
@@ -90,6 +130,9 @@ describe('różnorodność wyglądu budynków na mapach', () => {
       expect(s.look, `${id}.look`).toBeLessThanOrEqual(l.look);
       expect(s.wall, `${id}.wall`).toBeLessThanOrEqual(l.wall);
       expect(s.roof, `${id}.roof`).toBeLessThanOrEqual(l.roof);
+      expect(s.kind, `${id}.kind`).toBeLessThanOrEqual(l.kind);
+      expect(s.ruin, `${id}.ruin`).toBeLessThanOrEqual(l.ruin);
+      expect(s.floors, `${id}.floors`).toBeLessThanOrEqual(l.floors);
     }, 1_800_000);
   }
 });
