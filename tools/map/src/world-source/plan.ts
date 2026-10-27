@@ -82,11 +82,13 @@ export interface WorldPlanInput {
  * 18: building outlines cleaned (jogs < 1.5 m dropped, > 8 corners → box when it fits, odd
  *     outlines boxed or Douglas–Peucker 0.7 m), windows every 2.25 m per wall run (+ one
  *     per room), never at a corner or beside a door.
- * 19–20: rail crossings / viaducts (#373, #376).
+ * 19–20: unused (reserved for #373 / #376, shipped as 22 / 23).
  * 21: building look in the chunk meta (`look`, `wallColor`, `roofColor`, `trimColor`,
  *     `roofShape`, `condition`, `heightM`, `tower`; look-palette.ts, look.ts).
+ * 22: level crossings span the carriageway, one set of signs per road side; no track under road
+ *     viaducts, no catenary mast on a road.
  */
-export const GENERATOR_REV = 21;
+export const GENERATOR_REV = 22;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

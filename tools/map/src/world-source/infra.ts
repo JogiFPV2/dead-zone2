@@ -1,4 +1,11 @@
 import type { IRail, PlanIndex } from './plan-index.js';
+import {
+  CROSSING_HALF,
+  crossingScale,
+  crossingSides,
+  onRoad,
+  underRoadDeck,
+} from './rail-crossing.js';
 
 /**
  * Infrastructure of a chunk from the plan (Designer's `assets-src/infra`, attach points in
@@ -16,6 +23,10 @@ export interface GenPole {
   rot: number;
   /** Mirrored in x (left-hand switch). */
   mirror?: 1;
+  /** Model z scale (level crossing stretched over a wide road); omitted = 1. */
+  len?: number;
+  /** Level crossing furniture sides (bit 1 = model −x, bit 2 = +x); omitted = both. */
+  furn?: 0 | 1 | 2;
 }
 
 /** Wires between two poles: every attach id present on both, sag as a fraction of the span. */
@@ -318,6 +329,10 @@ export function chunkInfra(
       return out;
     };
     const ends = new Set<string>();
+    const crossings = idx.railNodes
+      .query(q)
+      .map((i) => idx.railNodes.items[i]!)
+      .filter((n) => n.kind === 'level_crossing');
     for (const i of idx.railNodes.query(q)) {
       const n = idx.railNodes.items[i]!;
       const a = arms(n);
@@ -359,14 +374,21 @@ export function chunkInfra(
         if (a.length < 1) continue;
         const f = a[0]!;
         const d = { x: -f.x, y: -f.y };
-        holes.push({ c: n, d, hu: 6, hv: 2.4 });
-        if (inChunk(n))
+        const len = crossingScale(idx, n, d);
+        holes.push({ c: n, d, hu: CROSSING_HALF * len, hv: 2.4 });
+        if (inChunk(n)) {
+          const rot = Math.round(yawOf(d) * 1e4) / 1e4;
+          const others = crossings.filter((o) => o !== n);
+          const furn = crossingSides(n, d, sideOf(rot), others, len);
           poles.push({
             m: 'przejazd-kat-a',
             x: n.x,
             y: n.y,
-            rot: Math.round(yawOf(d) * 1e4) / 1e4,
+            rot,
+            ...(len !== 1 ? { len } : {}),
+            ...(furn !== 3 ? { furn } : {}),
           });
+        }
       }
     }
     // Sidings ending in nothing: buffer stops too (main lines run off the map instead).
@@ -423,6 +445,8 @@ export function chunkInfra(
         for (let j = 0; j < n; j++) {
           const c = { x: a.x + d.x * (j + 0.5) * step, y: a.y + d.y * (j + 0.5) * step };
           if (!inChunk(c) || holes.some((h) => inHole(h, c))) continue;
+          // Under a road viaduct the track runs below the deck: not drawn over it.
+          if (!r.bridge && underRoadDeck(idx, c)) continue;
           track.push(
             Math.round(c.x * 100) / 100,
             Math.round(c.y * 100) / 100,
@@ -457,7 +481,14 @@ export function chunkInfra(
           prev = undefined;
           continue;
         }
-        const mast = mastAt(pt, d, k % 2 === 0 ? 'catenary-mast-a' : 'catenary-mast-b', rails, r);
+        const mast = mastAt(
+          idx,
+          pt,
+          d,
+          k % 2 === 0 ? 'catenary-mast-a' : 'catenary-mast-b',
+          rails,
+          r,
+        );
         if (!mast) {
           prev = undefined;
           continue;
@@ -544,13 +575,21 @@ export function footBlockers(
 }
 
 /** A catenary mast beside the track at pt (direction d): the side clear of other tracks. */
-function mastAt(pt: V, d: V, m: string, rails: readonly IRail[], own: IRail): GenPole | undefined {
+function mastAt(
+  idx: PlanIndex,
+  pt: V,
+  d: V,
+  m: string,
+  rails: readonly IRail[],
+  own: IRail,
+): GenPole | undefined {
   for (const flip of [0, Math.PI]) {
     const rot = yawOf(d) + flip;
     const sx = sideOf(rot);
     // Track axis at model x = +3.2: the mast stands 3.2 m to the other side.
     const pos = { x: pt.x - sx.x * MAST_TRACK_X, y: pt.y - sx.y * MAST_TRACK_X };
-    const clear = rails.every((r) => r === own || distToLine(pos, r.pts) > 2.6);
+    const clear =
+      rails.every((r) => r === own || distToLine(pos, r.pts) > 2.6) && !onRoad(idx, pos, 0.5);
     if (clear)
       return {
         m,

@@ -3,6 +3,7 @@ import type { BufferGeometry } from 'three';
 import { Float32BufferAttribute, MeshStandardMaterial, type Mesh } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { CROSSING_MODEL, splitCrossing } from './crossing-parts.js';
 
 /** Infrastructure models (Designer's `assets-src/infra`, flat vertex colours, one material). */
 export const INFRA_MODELS = [
@@ -91,6 +92,7 @@ export async function loadInfraKit(baseUrl = import.meta.env.BASE_URL): Promise<
       merged.computeBoundingSphere();
       geometries.set(id, merged);
       if (id === 'tor-rozjazd-1-9') geometries.set(id + MIRROR_SUFFIX, mirrorX(merged));
+      if (id === CROSSING_MODEL) for (const [k, g] of splitCrossing(merged)) geometries.set(k, g);
     }),
     ...ATTACH_MODELS.map(async (id) => {
       const res = await fetch(`${dir}${id}.attach.json`);

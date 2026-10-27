@@ -30,3 +30,18 @@ it('lampsAt puts lamps on the curb side of an east-west street', () => {
   expect(out).toHaveLength(4);
   expect(out.every((l) => l.armZ === 1)).toBe(true);
 });
+
+it('lampsAt: no lamp on or right by the track bed (Paweł 27.10)', () => {
+  // Same street, a railway across it at x = 37..40 (the lamp at x = 36 stood 1 m from it).
+  const f = (x: number, z: number) =>
+    x >= 37 && x <= 40
+      ? 'base:rail'
+      : z === 1
+        ? 'base:asphalt'
+        : z === 0
+          ? 'base:sidewalk'
+          : 'base:grass';
+  const out: LampDef[] = [];
+  for (let x = 0; x < 72; x++) lampsAt(f, x, 0, out);
+  expect(out.map((l) => l.x)).toEqual([0.5, 18.5, 54.5]);
+});

@@ -123,6 +123,8 @@ export function lampsAt(
   z: number,
   lamps: LampDef[],
 ): void {
+  // No lamp on the track bed or right by it (level crossings, sidewalks along the railway).
+  if (nearRail(f, x, z)) return;
   const road = (x: number, z: number) => f(x, z) === 'base:asphalt';
   // Curb side of an east-west road: the road is right below (south) or above (north).
   const crossRoad = road(x - 1, z) || road(x + 1, z);
@@ -143,6 +145,16 @@ export function lampsAt(
     lamps.push(lamp(x + 0.45, z + 0.5, 1, 0));
   if (!alongRoad && road(x - 1, z) && ((z % LAMP_SPACING) + LAMP_SPACING) % LAMP_SPACING === 0)
     lamps.push(lamp(x + 0.55, z + 0.5, -1, 0));
+}
+
+/** Track bed this close (tiles) to a lamp's sidewalk tile keeps the lamp away. */
+export const LAMP_RAIL_CLEAR = 2;
+
+function nearRail(f: (x: number, z: number) => string | undefined, x: number, z: number): boolean {
+  for (let dz = -LAMP_RAIL_CLEAR; dz <= LAMP_RAIL_CLEAR; dz++)
+    for (let dx = -LAMP_RAIL_CLEAR; dx <= LAMP_RAIL_CLEAR; dx++)
+      if (f(x + dx, z + dz) === 'base:rail') return true;
+  return false;
 }
 
 /** Street lamps only (generated maps: the window around the player; no props, cheap). */

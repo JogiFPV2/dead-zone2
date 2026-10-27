@@ -12,6 +12,7 @@ import {
   Vector3,
 } from 'three';
 import { CHUNK_SIZE } from '../chunk.js';
+import { CROSSING_CORE, CROSSING_LEFT, CROSSING_MODEL, CROSSING_RIGHT } from './crossing-parts.js';
 import { MIRROR_SUFFIX, type InfraKit } from './kit.js';
 
 const Y = new Vector3(0, 1, 0);
@@ -30,6 +31,43 @@ export const BOOM_HINGES = [
   { x: -4.6, y: 1.25, z: 4.3, rot: 0 },
   { x: 4.6, y: 1.25, z: -4.3, rot: Math.PI },
 ] as const;
+
+/**
+ * Level crossing instances: plates + track stretched along the rail by `len` (wide roads), signs
+ * and a barrier with its raised arm on each side kept in `furn` (outer sides of a multi-track
+ * crossing). Pure (tests).
+ */
+export function addCrossing(p: GenPole, add: (id: string, m: Matrix4) => void): void {
+  const len = p.len ?? 1;
+  const furn = p.furn ?? 3;
+  const c = Math.cos(p.rot);
+  const sn = Math.sin(p.rot);
+  const q = new Quaternion().setFromAxisAngle(Y, p.rot);
+  add(CROSSING_CORE, new Matrix4().compose(new Vector3(p.x, 0, p.y), q, new Vector3(1, 1, len)));
+  const tilt = new Quaternion().setFromAxisAngle(X, Math.PI / 2);
+  BOOM_HINGES.forEach((h, k) => {
+    if (!(furn & (1 << k))) return;
+    // Furniture keeps its shape; only moved out to the stretched road edges.
+    const shift = h.z * (len - 1);
+    add(
+      k === 0 ? CROSSING_LEFT : CROSSING_RIGHT,
+      new Matrix4().compose(
+        new Vector3(p.x + shift * sn, 0, p.y + shift * c),
+        q,
+        new Vector3(1, 1, 1),
+      ),
+    );
+    // Barrier arms raised (open); a separate model so the sim can lower them later.
+    const z = h.z * len;
+    const wx = p.x + h.x * c + z * sn;
+    const wz = p.y - h.x * sn + z * c;
+    const qq = new Quaternion().setFromAxisAngle(Y, p.rot + h.rot).multiply(tilt);
+    add(
+      'przejazd-rogatka-ramie',
+      new Matrix4().compose(new Vector3(wx, h.y, wz), qq, new Vector3(1, 1, 1)),
+    );
+  });
+}
 
 /**
  * Wire polylines of a span (every attach id on both poles), parabolic sag `sag` × span; the
@@ -119,7 +157,6 @@ export class InfraLayer {
     g.name = `infra:${cx},${cy}`;
     const m = new Matrix4();
     const q = new Quaternion();
-    const tilt = new Quaternion();
     const v = new Vector3();
     const s = new Vector3(1, 1, 1);
     const byModel = new Map<string, Matrix4[]>();
@@ -129,24 +166,13 @@ export class InfraLayer {
       l.push(mat);
     };
     for (const p of infra.poles) {
-      const id = p.mirror ? p.m + MIRROR_SUFFIX : p.m;
       q.setFromAxisAngle(Y, p.rot);
-      add(id, new Matrix4().compose(v.set(p.x, 0, p.y), q, s.set(1, 1, 1)));
-      if (p.m === 'przejazd-kat-a') {
-        // Barrier arms raised (open); a separate model so the sim can lower them later.
-        for (const h of BOOM_HINGES) {
-          const c = Math.cos(p.rot);
-          const sn = Math.sin(p.rot);
-          const wx = p.x + h.x * c + h.z * sn;
-          const wz = p.y - h.x * sn + h.z * c;
-          tilt.setFromAxisAngle(X, Math.PI / 2);
-          const qq = new Quaternion().setFromAxisAngle(Y, p.rot + h.rot).multiply(tilt);
-          add(
-            'przejazd-rogatka-ramie',
-            new Matrix4().compose(new Vector3(wx, h.y, wz), qq, new Vector3(1, 1, 1)),
-          );
-        }
+      if (p.m === CROSSING_MODEL) {
+        addCrossing(p, add);
+        continue;
       }
+      const id = p.mirror ? p.m + MIRROR_SUFFIX : p.m;
+      add(id, new Matrix4().compose(v.set(p.x, 0, p.y), q, s.set(1, 1, 1)));
     }
     for (let i = 0; i + 3 < infra.track.length; i += 4) {
       q.setFromAxisAngle(Y, infra.track[i + 2]!);
