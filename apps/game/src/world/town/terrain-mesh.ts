@@ -1,5 +1,5 @@
 import type { Color } from 'three';
-import { BufferAttribute, BufferGeometry } from 'three';
+import { BufferAttribute, BufferGeometry, ShapeUtils, Vector2 } from 'three';
 import { CHUNK_SIZE, type ContentId } from '../chunk.js';
 import type { TownCells } from './kit.js';
 import { hash01 } from './modules.js';
@@ -83,12 +83,24 @@ export interface TerrainVectorRoads {
   roads: readonly VectorRoad[];
   /** Ground content under a road tile (world tile), undefined = not a road tile. */
   underAt: (x: number, z: number) => ContentId | undefined;
+  /**
+   * Paved areas (plazas, `area:highway`) touching the chunk: rings in chunk-local tiles (first
+   * outer, the rest holes), drawn as smooth polygons instead of stair-stepped sidewalk tiles.
+   */
+  paved?: readonly (readonly (readonly number[])[])[];
 }
 
 /** Indoor floor height (above every road ribbon, see RIBBON_Y). */
 export const INDOOR_Y = 0.02;
 /** Ribbon heights: dirt < sidewalk < curb < asphalt < paint, all under indoor floors (2 cm). */
-const RIBBON_Y = { dirt: 0.004, sidewalk: 0.008, curb: 0.011, asphalt: 0.014, paint: 0.017 };
+const RIBBON_Y = {
+  dirt: 0.004,
+  paved: 0.005,
+  sidewalk: 0.008,
+  curb: 0.011,
+  asphalt: 0.014,
+  paint: 0.017,
+};
 /** Bridges (decks over rails / water) above every ordinary road layer. */
 const BRIDGE_DY = 0.012;
 const CURB_BAND = 0.15;
@@ -520,6 +532,7 @@ export function buildTerrainGeometry(
       }
     }
   }
+  if (vector?.paved?.length) pavedPolygons(vector, tiles, x0, z0, col('sidewalk'), P, C, M, baseY);
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));
   g.setAttribute('color', new BufferAttribute(new Float32Array(C), 3));
@@ -528,4 +541,121 @@ export function buildTerrainGeometry(
   g.computeBoundingSphere();
   g.computeBoundingBox();
   return g;
+}
+
+/** Natural ground a paved polygon may cover past the tile outline of its area (smooth edge). */
+const SOFT_GROUND = new Set<ContentId>(['base:grass', 'base:dirt']);
+
+/**
+ * Paved areas as smooth polygons (triangulated rings), clipped to the tiles of the chunk where the
+ * area really lies: tiles it paved (`underAt` set) and natural ground along its outline. Tiles of
+ * buildings or of other areas painted over it keep their own floor.
+ */
+function pavedPolygons(
+  vector: TerrainVectorRoads,
+  tiles: MapTiles,
+  x0: number,
+  z0: number,
+  color: Color,
+  P: number[],
+  C: number[],
+  M: number[],
+  baseY: number,
+): void {
+  const y = RIBBON_Y.paved + baseY;
+  const ok = new Map<number, boolean>();
+  const allowed = (x: number, z: number): boolean => {
+    const k = (z - z0) * CHUNK_SIZE + (x - x0);
+    let v = ok.get(k);
+    if (v === undefined) {
+      if (tiles.roomType(x, z)) v = false;
+      else if (vector.underAt(x, z)) v = true;
+      else {
+        const f = tiles.floor(x, z);
+        v = f !== undefined && SOFT_GROUND.has(f);
+      }
+      ok.set(k, v);
+    }
+    return v;
+  };
+  const push = (poly: readonly (readonly [number, number])[]) => {
+    for (let i = 1; i + 1 < poly.length; i++) {
+      const a = poly[0]!;
+      const b = poly[i]!;
+      const c = poly[i + 1]!;
+      // Up-facing winding: (b − a) × (c − a) must point to +y (as the road ribbons).
+      const ny = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
+      for (const [px, pz] of ny >= 0 ? [a, b, c] : [a, c, b]) {
+        P.push(px, y, pz);
+        C.push(color.r, color.g, color.b);
+        M.push(0, 0, 0.7, 0);
+      }
+    }
+  };
+  for (const rings of vector.paved ?? []) {
+    const toV = (r: readonly number[]) => {
+      const out: Vector2[] = [];
+      for (let k = 0; k + 1 < r.length; k += 2) out.push(new Vector2(x0 + r[k]!, z0 + r[k + 1]!));
+      // Closed OSM rings repeat the first point.
+      if (out.length > 1 && out[0]!.equals(out[out.length - 1]!)) out.pop();
+      return out;
+    };
+    const outer = toV(rings[0] ?? []);
+    if (outer.length < 3) continue;
+    const holes = rings
+      .slice(1)
+      .map(toV)
+      .filter((h) => h.length >= 3);
+    const all = [outer, ...holes].flat();
+    for (const [a, b, c] of ShapeUtils.triangulateShape(outer, holes)) {
+      const tri = [all[a!]!, all[b!]!, all[c!]!];
+      const cx0 = Math.max(x0, Math.floor(Math.min(...tri.map((p) => p.x))));
+      const cx1 = Math.min(x0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.x))));
+      const cz0 = Math.max(z0, Math.floor(Math.min(...tri.map((p) => p.y))));
+      const cz1 = Math.min(z0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.y))));
+      for (let z = cz0; z <= cz1; z++)
+        for (let x = cx0; x <= cx1; x++) {
+          if (!allowed(x, z)) continue;
+          const poly = clipToCell(
+            tri.map((p) => [p.x, p.y] as [number, number]),
+            x,
+            z,
+          );
+          if (poly.length >= 3) push(poly);
+        }
+    }
+  }
+}
+
+/** Convex polygon clipped to the tile square [x, x + 1] × [z, z + 1] (Sutherland–Hodgman). */
+export function clipToCell(
+  poly: readonly (readonly [number, number])[],
+  x: number,
+  z: number,
+): [number, number][] {
+  let out = poly.map(([a, b]) => [a, b] as [number, number]);
+  const edges: [number, number, number][] = [
+    [0, 1, x],
+    [0, -1, -(x + 1)],
+    [1, 1, z],
+    [1, -1, -(z + 1)],
+  ];
+  for (const [axis, sign, lim] of edges) {
+    const inp = out;
+    out = [];
+    const inside = (p: [number, number]) => sign * p[axis]! >= lim;
+    for (let i = 0; i < inp.length; i++) {
+      const cur = inp[i]!;
+      const prev = inp[(i + inp.length - 1) % inp.length]!;
+      const ci = inside(cur);
+      const pi = inside(prev);
+      if (ci !== pi) {
+        const t = (lim - sign * prev[axis]!) / (sign * (cur[axis]! - prev[axis]!));
+        out.push([prev[0] + (cur[0] - prev[0]) * t, prev[1] + (cur[1] - prev[1]) * t]);
+      }
+      if (ci) out.push(cur);
+    }
+    if (!out.length) break;
+  }
+  return out;
 }

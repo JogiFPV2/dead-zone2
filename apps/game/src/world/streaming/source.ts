@@ -76,6 +76,11 @@ export interface WorldChunk {
    * stair-stepped road tiles.
    */
   readonly under?: Uint16Array;
+  /**
+   * Paved areas (plazas, `area:highway`) touching the chunk, render only: rings in chunk-local
+   * tiles (flat x, y pairs; first ring outer, the rest holes), drawn as smooth polygons.
+   */
+  readonly paved?: readonly (readonly (readonly number[])[])[];
   /** Power lines, railway, catenary (generated maps, render only, world metres). */
   readonly infra?: GenInfra;
   /**

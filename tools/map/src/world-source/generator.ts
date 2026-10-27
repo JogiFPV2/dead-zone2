@@ -127,6 +127,12 @@ export interface GenColumn {
    * draws it below the smooth roads instead of the stair-stepped road tiles.
    */
   under?: Uint16Array;
+  /**
+   * Paved areas (OSM pedestrian plazas, `area:highway`) touching the chunk, render only: rings
+   * (chunk-local tiles, flat x, y pairs; first ring outer, the rest holes) drawn as smooth
+   * polygons over `under` instead of the stair-stepped sidewalk tiles.
+   */
+  paved?: number[][][];
   /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
   trees: number[];
   buildings: GenBuildingMeta[];
@@ -614,6 +620,8 @@ export class PlanChunkGenerator {
     if (feet.length) ground.blockers = feet;
     const roads = this.vectorRoads(X0, Y0);
     if (roads.length) out.roads = roads;
+    const paved = this.pavedAreas(X0, Y0);
+    if (paved.length) out.paved = paved;
     const under = new Uint16Array(CT);
     let anyUnder = false;
     for (let i = 0; i < CT; i++) {
@@ -625,6 +633,28 @@ export class PlanChunkGenerator {
     if (anyUnder) out.under = under;
     this.timings.columns++;
     this.timings.columnMs += performance.now() - t0;
+    return out;
+  }
+
+  /** Rings of the paved areas whose bounds touch the chunk, chunk-local (0.01 tile). */
+  private pavedAreas(X0: number, Y0: number): number[][][] {
+    const out: number[][][] = [];
+    const idx = this.index.areas;
+    for (const i of idx.query({ x0: X0, y0: Y0, x1: X0 + C, y1: Y0 + C })) {
+      const a = idx.items[i]!;
+      if (a.kind !== 'paved') continue;
+      out.push(
+        a.rings.map((r) => {
+          const pts: number[] = [];
+          for (let k = 0; k + 1 < r.length; k += 2)
+            pts.push(
+              Math.round((r[k]! - X0) * 100) / 100,
+              Math.round((r[k + 1]! - Y0) * 100) / 100,
+            );
+          return pts;
+        }),
+      );
+    }
     return out;
   }
 

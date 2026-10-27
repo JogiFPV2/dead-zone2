@@ -56,8 +56,9 @@ export interface Raster {
   /** Area kind rank under the tile (+1; 0 = none) — chunk kinds. */
   area: Uint8Array;
   /**
-   * Ground class before the roads were painted, +1 (0 = no road on the tile): the renderer draws
-   * it under the smooth vector roads instead of the stair-stepped road tiles.
+   * Ground class before the roads / paved areas were painted, +1 (0 = no road or paved area on
+   * the tile): the renderer draws it under the smooth vector roads and paved-area polygons instead
+   * of the stair-stepped tiles.
    */
   under: Uint8Array;
 }
@@ -259,7 +260,13 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
     const a = idx.areas.items[i]!;
     const gi = AREA_GROUND[a.kind] ?? G_GRASS;
     const tr = AREA_TREES[a.kind] ?? 0;
+    const paved = a.kind === 'paved';
     fillRings(a.rings, x0, y0, w, h, (j) => {
+      // Paved areas (plazas, area:highway) are drawn as smooth polygons over the ground they
+      // cover (`GenColumn.paved`); an area painted later over them shows as its own tiles.
+      if (paved) {
+        if (!under[j]) under[j] = g[j]! + 1;
+      } else under[j] = 0;
       g[j] = gi;
       tree[j] = tr;
       area[j] = a.rank + 1;
@@ -270,6 +277,7 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
     stroke(wt.pts, wt.r, x0, y0, w, h, (j) => {
       g[j] = G_WATER;
       tree[j] = 0;
+      under[j] = 0;
     });
   }
   const roads = idx.roads.query(q);

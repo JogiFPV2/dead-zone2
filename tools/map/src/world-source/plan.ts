@@ -87,8 +87,12 @@ export interface WorldPlanInput {
  *     `roofShape`, `condition`, `heightM`, `tower`; look-palette.ts, look.ts).
  * 22: level crossings span the carriageway, one set of signs per road side; no track under road
  *     viaducts, no catenary mast on a road.
+ * 23–25: reserved for #376 / #385 / #387.
+ * 26: taken by #390 (level crossings where OSM marks none).
+ * 27: paved areas (plazas, `area:highway`) keep the ground under them (`under`) and ship their
+ *     rings (`GenColumn.paved`): drawn as smooth polygons, no stair-stepped sidewalk tiles.
  */
-export const GENERATOR_REV = 22;
+export const GENERATOR_REV = 27;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

@@ -88,6 +88,7 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     ...(bushes?.length ? { bushes } : {}),
     ...(roads?.length ? { roads } : {}),
     ...(col.under ? { under: col.under } : {}),
+    ...(col.paved?.length ? { paved: col.paved } : {}),
     ...(col.infra ? { infra: col.infra } : {}),
   };
 }

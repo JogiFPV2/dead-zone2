@@ -17,7 +17,7 @@ import {
   windowLit,
 } from './modules.js';
 import { pitchedRoof, ridgeHeight } from './roof.js';
-import { buildTerrainGeometry, floorLook } from './terrain-mesh.js';
+import { buildTerrainGeometry, clipToCell, floorLook } from './terrain-mesh.js';
 import { MapTiles } from './tiles.js';
 import { LOWER_LEVEL_DIM, TownStructures } from './town-structures.js';
 import { shopWindowGeometry } from './levels.js';
@@ -279,6 +279,62 @@ describe('town terrain', () => {
     expect(curbTop).toBeGreaterThanOrEqual(2 * 32 * 6);
     expect(paint).toBeGreaterThan(0);
     expect(buildTerrainGeometry(new MapTiles(roadMap(), 0), 1, 0, cells)).toBeUndefined();
+  });
+
+  it('paved areas are smooth polygons clipped to their tiles, not tile steps', () => {
+    // Diagonal plaza over grass (z ≥ 10), its corner reaching the sidewalk / road rows.
+    const vector = {
+      roads: [],
+      underAt: () => undefined,
+      paved: [[[2.3, 8, 20.7, 12.4, 4.1, 28.9]]],
+    };
+    const g = buildTerrainGeometry(new MapTiles(roadMap(), 0), 0, 0, cells, 0, vector)!;
+    const pos = g.getAttribute('position');
+    let n = 0;
+    let offGrid = 0;
+    let onRoad = 0;
+    for (let i = 0; i < pos.count; i++) {
+      if (Math.abs(pos.getY(i) - 0.005) > 1e-6) continue;
+      n++;
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      if (Math.abs(x - Math.round(x)) > 0.05 && Math.abs(z - Math.round(z)) > 0.05) offGrid++;
+      if (z < 9.999) onRoad++;
+    }
+    expect(n).toBeGreaterThan(0);
+    // Edges follow the outline (vertices between tile corners), never over the road / sidewalk.
+    expect(offGrid).toBeGreaterThan(0);
+    expect(onRoad).toBe(0);
+  });
+
+  it('clipToCell clips a triangle to one tile square', () => {
+    const p = clipToCell(
+      [
+        [0, 0],
+        [4, 0],
+        [0, 4],
+      ],
+      1,
+      1,
+    );
+    for (const [x, z] of p) {
+      expect(x).toBeGreaterThanOrEqual(1);
+      expect(x).toBeLessThanOrEqual(2);
+      expect(z).toBeGreaterThanOrEqual(1);
+      expect(z).toBeLessThanOrEqual(2);
+    }
+    expect(p.length).toBeGreaterThanOrEqual(3);
+    expect(
+      clipToCell(
+        [
+          [0, 0],
+          [0.5, 0],
+          [0, 0.5],
+        ],
+        3,
+        3,
+      ),
+    ).toEqual([]);
   });
 
   it('decor puts lamps on the curb side with the arm over the road', () => {
