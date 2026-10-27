@@ -6,3 +6,6 @@ dwururka.glb: derived from "Shotgun Sawed Off" by Quaternius, https://poly.pizza
 amunicja-9mm.glb: derived from "Pistol Ammo" by CreativeTrio, https://poly.pizza/m/Kh2hNjWMXA, CC0 1.0 (palette texture -> flat materials, box recoloured yellow #D9A62B). Built by build_ammo.py.
 amunicja-308.glb: derived from "Ammo Sniper" by CreativeTrio, https://poly.pizza/m/3OsqMhlfd7, CC0 1.0 (palette texture -> flat materials, box recoloured green #3F9A3C). Built by build_ammo.py.
 glass-shards.glb: original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Built by build_batch4.py (Blender, 01.10.2026).
+zaslona.glb: derived from "Curtains Double" by Quaternius, https://poly.pizza/m/kkeII96j9N, CC0 1.0 (recoloured: fabric #A8574A, rod #8A8A8A).
+kurtka.glb: derived from "Jacket" by Polygonal Mind, https://poly.pizza/m/eeKk3ObCbf, CC0 1.0 (texture removed, flat olive #5F6B3C).
+koc.glb, plandeka.glb: original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Built by build_cover.py (Python, 26.10.2026).

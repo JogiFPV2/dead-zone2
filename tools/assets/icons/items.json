@@ -102,5 +102,25 @@
     "items": ["base:nails"],
     "src": "custom/gwozdzie.glb",
     "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:curtain"],
+    "src": "custom/zaslona.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:jacket"],
+    "src": "custom/kurtka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:blanket"],
+    "src": "custom/koc.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:tarp"],
+    "src": "custom/plandeka.glb",
+    "rot": [0, 0, 0]
   }
 ]
