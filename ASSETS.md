@@ -152,6 +152,17 @@ kuchenka z piekarnikiem (`range`), wanna (`bathtub`), prysznic (`shower`), magne
 Partia 8, dorysowane: zestaw wytrychów (`lockpick`), wytrych z widelca (`lockpick-fork`), rękawice robocze
 (`gloves`) — modele `/workspace/assets-src/custom/batch8/`, ten sam rig.
 
+### Ikony przedmiotów do zasłaniania okien (gotowe PNG od Designera, 26.10.2026, #353)
+
+4 ikony z rigu Designera (`tools/assets/icons/rig.html`, 128 px), wpisy w `tools/assets/icons/items.json`, modele w
+`tools/assets/icons/src/custom/` (licencje w `LICENSE.txt` obok).
+
+| Ikony                                     | Źródło                                                                                   | Autor          | Licencja |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- | -------------- | -------- |
+| curtain (`zaslona.glb`)                   | Curtains Double, poly.pizza/m/kkeII96j9N (przemalowany: tkanina #A8574A, drążek #8A8A8A) | Quaternius     | CC0-1.0  |
+| jacket (`kurtka.glb`)                     | Jacket, poly.pizza/m/eeKk3ObCbf (bez tekstury, płaski oliwkowy #5F6B3C)                  | Polygonal Mind | CC0-1.0  |
+| blanket, tarp (`koc.glb`, `plandeka.glb`) | modele własne Deadzone (Designer, `build_cover.py`)                                      | Deadzone       | CC0-1.0  |
+
 ## Dźwięki (`apps/game/public/audio/`)
 
 Każdy plik jest w dwóch formatach: `.ogg` (Vorbis) i `.mp3` (fallback dla Safari). Przekodowane ffmpeg
