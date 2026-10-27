@@ -1,0 +1,281 @@
+{
+ "_doc": {
+  "opis": "Paleta wyglądu budynków Deadzone (Stalowa Wola). Klucze typów: block, house, service, industrial, public, outbuilding.",
+  "walls": "hex elewacji (tynk/okładzina), przygaszone, bez jaskrawych (S<=45% HSL, L 35-85%)",
+  "roofs": "hex pokrycia dachu",
+  "trim": "hex obróbek: cokół, gzyms, opaski okien, balustrady",
+  "wallTextures/roofTextures": "id materiałów ambientCG (CC0 1.0), wypalane do jednego atlasu detalu (skala szarości mnożona przez kolor z palety)",
+  "weights": "wagi losowania kolejnych pozycji walls (suma 1)",
+  "roofShapes": "kształty dachu z wagami (suma 1), gdy brak roof:shape w OSM",
+  "rules": "kolejność wyboru; seed = hash32(osm way id), dla bloków hash32(id osiedla)"
+ },
+ "rules": {
+  "osmFirst": "building:colour / roof:colour / roof:shape / building:material z OSM mają pierwszeństwo (dziś w danych: 0 / 0 / 84 / 0 budynków)",
+  "clampOsmColour": "kolor z OSM przycięty do S<=45%, L 30-85%",
+  "seed": "hash32(osmWayId) per budynek; stabilny między sesjami i kafelkami",
+  "blockSeed": "bloki: seed = hash32(id landuse=residential zawierającego blok, w braku: komórka 200x200 m); kolor bazowy wspólny na osiedle, akcent balkonów = (bazowy + hash(blok)%2) w trim",
+  "neighbourVariety": "dwa sąsiednie domy (<15 m) nie mają tej samej pary ściana+dach: przy kolizji następny indeks",
+  "noGaudy": "poza OSM tylko kolory z palety; zero neonów i czystych RGB",
+  "weathering": "brud/zacieki z atlasu detalu, siła 0-0.35 z seedu; ruiny dalej skin burnt"
+ },
+ "block": {
+  "walls": [
+   "#d9d2c3",
+   "#c9d3cf",
+   "#e0cfa9",
+   "#c7c2d0",
+   "#d6b8a6",
+   "#bfcab2"
+  ],
+  "weights": [
+   0.25,
+   0.18,
+   0.18,
+   0.12,
+   0.15,
+   0.12
+  ],
+  "roofs": [
+   "#5a5c5e",
+   "#6b6d6a",
+   "#4c4e50"
+  ],
+  "trim": [
+   "#8b6a4e",
+   "#7a7f84",
+   "#6c7a5c",
+   "#94886a",
+   "#5b7480",
+   "#a8704e"
+  ],
+  "wallTextures": [
+   "Plaster001",
+   "Plaster003",
+   "Concrete034",
+   "Facade001"
+  ],
+  "roofTextures": [
+   "Concrete031",
+   "Asphalt010"
+  ],
+  "roofShapes": {
+   "flat": 1.0
+  }
+ },
+ "house": {
+  "walls": [
+   "#e6dcc6",
+   "#e8d9a8",
+   "#efebe3",
+   "#bdb8ae",
+   "#d8c09a",
+   "#cfc6b4"
+  ],
+  "weights": [
+   0.24,
+   0.18,
+   0.18,
+   0.14,
+   0.14,
+   0.12
+  ],
+  "roofs": [
+   "#8e3b2c",
+   "#6e3426",
+   "#5a4434",
+   "#3c3f42",
+   "#2f3132"
+  ],
+  "trim": [
+   "#efe9df",
+   "#6e6458",
+   "#8a8178"
+  ],
+  "wallTextures": [
+   "Plaster002",
+   "Plaster004",
+   "Plaster005",
+   "Bricks059"
+  ],
+  "roofTextures": [
+   "RoofingTiles006",
+   "RoofingTiles008",
+   "RoofingTiles010",
+   "SheetMetal004"
+  ],
+  "roofShapes": {
+   "gabled": 0.5,
+   "hipped": 0.4,
+   "flat": 0.1
+  }
+ },
+ "service": {
+  "walls": [
+   "#d7d3cb",
+   "#b9bcbc",
+   "#cfc2a4",
+   "#c6cfd4",
+   "#a9a397"
+  ],
+  "weights": [
+   0.3,
+   0.2,
+   0.2,
+   0.15,
+   0.15
+  ],
+  "roofs": [
+   "#4c4e50",
+   "#6b6d6a",
+   "#3a3c3e"
+  ],
+  "trim": [
+   "#3f5a6e",
+   "#7d2f2a",
+   "#4e6a4b",
+   "#5a5a5a"
+  ],
+  "wallTextures": [
+   "Plaster006",
+   "Facade005",
+   "Tiles074",
+   "PaintedMetal004"
+  ],
+  "roofTextures": [
+   "Concrete033",
+   "Asphalt010"
+  ],
+  "roofShapes": {
+   "flat": 0.85,
+   "gabled": 0.15
+  }
+ },
+ "industrial": {
+  "walls": [
+   "#9aa0a3",
+   "#b4b2a8",
+   "#8a8f86",
+   "#a5998a",
+   "#7f878c"
+  ],
+  "weights": [
+   0.3,
+   0.2,
+   0.2,
+   0.15,
+   0.15
+  ],
+  "roofs": [
+   "#6f7376",
+   "#5f615c",
+   "#7a5a45"
+  ],
+  "trim": [
+   "#4a6b8a",
+   "#7d6b3c",
+   "#5b5f57"
+  ],
+  "wallTextures": [
+   "CorrugatedSteel001",
+   "CorrugatedSteel002",
+   "Concrete046",
+   "Bricks066",
+   "MetalPlates006"
+  ],
+  "roofTextures": [
+   "CorrugatedSteel003",
+   "SheetMetal001",
+   "MetalPlates009"
+  ],
+  "roofShapes": {
+   "flat": 0.5,
+   "gabled": 0.4,
+   "sawtooth": 0.1
+  }
+ },
+ "public": {
+  "walls": [
+   "#e4dcc8",
+   "#d9c7a3",
+   "#9e5a45",
+   "#cdd0cc",
+   "#b8a690"
+  ],
+  "weights": [
+   0.3,
+   0.2,
+   0.2,
+   0.15,
+   0.15
+  ],
+  "roofs": [
+   "#8e3b2c",
+   "#3c3f42",
+   "#4f6a5c",
+   "#6b6d6a"
+  ],
+  "trim": [
+   "#f0ebe0",
+   "#7a6a55",
+   "#5a5a5a"
+  ],
+  "wallTextures": [
+   "Plaster003",
+   "Bricks060",
+   "Bricks085",
+   "Facade002"
+  ],
+  "roofTextures": [
+   "RoofingTiles002",
+   "SheetMetal004",
+   "Concrete031"
+  ],
+  "roofShapes": {
+   "gabled": 0.4,
+   "hipped": 0.3,
+   "flat": 0.3
+  }
+ },
+ "outbuilding": {
+  "walls": [
+   "#8b7a63",
+   "#a8a196",
+   "#6f6656",
+   "#b7aa8e",
+   "#7f8a7a"
+  ],
+  "weights": [
+   0.25,
+   0.25,
+   0.2,
+   0.15,
+   0.15
+  ],
+  "roofs": [
+   "#2f3132",
+   "#5f615c",
+   "#6b4731",
+   "#7a5a45"
+  ],
+  "trim": [
+   "#4a3f33",
+   "#6a6a6a"
+  ],
+  "wallTextures": [
+   "Wood026",
+   "Bricks090",
+   "Concrete034",
+   "CorrugatedSteel002"
+  ],
+  "roofTextures": [
+   "SheetMetal001",
+   "Asphalt010",
+   "CorrugatedSteel001"
+  ],
+  "roofShapes": {
+   "shed": 0.5,
+   "gabled": 0.3,
+   "flat": 0.2
+  }
+ }
+}

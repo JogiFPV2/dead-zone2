@@ -1,6 +1,6 @@
 import { BufferAttribute, type BufferGeometry } from 'three';
 import type { TownKitIndex } from './kit.js';
-import { V2_CELLS, V2_SKINS } from './bld-v2.js';
+import { V2_CELLS, V2_SKINS, subCellUv } from './bld-v2.js';
 
 /**
  * Catalogue skins of the building mockup (`deadzone-buildings-spec.md`, `palette-ext.json`):
@@ -81,7 +81,7 @@ export function withExtCells(index: TownKitIndex): TownKitIndex {
     cells[name] ??= { uv: cellUv(EXT_BASE + k), hex };
   });
   // Buildings v2 cells at explicit free atlas slots (bld-v2.ts).
-  for (const [name, hex, i] of V2_CELLS) cells[name] ??= { uv: cellUv(i), hex };
+  for (const [name, hex, s] of V2_CELLS) cells[name] ??= { uv: subCellUv(s), hex };
   return { ...index, cells };
 }
 
@@ -96,16 +96,15 @@ export function paintExtCells(
     ctx.fillStyle = hex;
     ctx.fillRect((i % GRID) * px, Math.floor(i / GRID) * px, px, px);
   });
-  for (const [, hex, i] of V2_CELLS) {
-    ctx.fillStyle = hex;
-    ctx.fillRect((i % GRID) * px, Math.floor(i / GRID) * px, px, px);
-  }
 }
 
 /** Copy of `g` with every vertex uv in a `from` cell moved to its `to` cell. */
 export function remapCells(
   g: BufferGeometry,
-  map: readonly (readonly [[number, number], [number, number]])[],
+  map: readonly (
+    | readonly [[number, number], [number, number]]
+    | readonly [[number, number], [number, number], number]
+  )[],
   cellSize = 1 / GRID,
 ): BufferGeometry {
   const out = g.clone();
@@ -114,10 +113,11 @@ export function remapCells(
   for (let i = 0; i < uv.count; i++) {
     const u = a[i * 2]!;
     const v = a[i * 2 + 1]!;
-    for (const [from, to] of map) {
+    for (const [from, to, k = 1] of map) {
       if (Math.abs(u - from[0]) < cellSize / 2 && Math.abs(v - from[1]) < cellSize / 2) {
-        a[i * 2] = to[0] + (u - from[0]);
-        a[i * 2 + 1] = to[1] + (v - from[1]);
+        // `k` < 1: target is a sub-cell (bld v2), offsets shrink to stay inside it.
+        a[i * 2] = to[0] + (u - from[0]) * k;
+        a[i * 2 + 1] = to[1] + (v - from[1]) * k;
         break;
       }
     }
@@ -140,17 +140,22 @@ export function deriveSkins(
   geometries: Map<string, BufferGeometry>,
   uv: (cell: string) => [number, number],
 ): void {
-  const skins: [string, { main: string; dark: string }][] = [
-    ...Object.entries(EXT_SKINS),
-    ...V2_SKINS.map((s): [string, { main: string; dark: string }] => [
+  const skins: [string, { main: string; dark: string }, number][] = [
+    ...Object.entries(EXT_SKINS).map(([s, c]): [string, { main: string; dark: string }, number] => [
+      s,
+      c,
+      1,
+    ]),
+    ...V2_SKINS.map((s): [string, { main: string; dark: string }, number] => [
       s,
       { main: `${s}-wall`, dark: `${s}-dark` },
+      0.5,
     ]),
   ];
-  for (const [skin, c] of skins) {
+  for (const [skin, c, k] of skins) {
     const map = [
-      [uv('wall-plaster'), uv(c.main)],
-      [uv('wall-plaster-dark'), uv(c.dark)],
+      [uv('wall-plaster'), uv(c.main), k],
+      [uv('wall-plaster-dark'), uv(c.dark), k],
     ] as const;
     for (const t of SKIN_MODULES) {
       const src = geometries.get(t.replace('S', 'plaster'));

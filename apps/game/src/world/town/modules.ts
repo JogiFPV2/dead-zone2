@@ -58,7 +58,7 @@ export function hash01(a: number, b = 0, c = 0): number {
  */
 export function skinOfWall(wall: ContentId | undefined, building: BuildingId): Skin {
   const s = skinOfWallV1(wall, building);
-  return bldV2() && V2_REPLACES.has(s) ? v2WallSkin(building) : s;
+  return (bldV2() && V2_REPLACES.has(s) && v2WallSkin(building)) || s;
 }
 
 function skinOfWallV1(wall: ContentId | undefined, building: BuildingId): Skin {
@@ -173,13 +173,12 @@ export function roofStyle(roof: ContentId | undefined): RoofStyle {
 const ROOF_COLOURS = ['roof-a', 'roof-b', 'roof-c', 'roof-d'] as const;
 /** Roof colour cell: catalogue roofs by content, others by building. */
 export const roofColour = (building: BuildingId, roof?: ContentId): string =>
-  bldV2() && roof !== 'base:roof-corrugated'
-    ? v2RoofCell(building)
-    : roof === 'base:roof-tile'
-      ? 'roof-tile'
-      : roof === 'base:roof-corrugated'
-        ? 'corrugated'
-        : (ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a');
+  (bldV2() && v2RoofCell(building)) ||
+  (roof === 'base:roof-tile'
+    ? 'roof-tile'
+    : roof === 'base:roof-corrugated'
+      ? 'corrugated'
+      : (ROOF_COLOURS[((building % 4) + 4) % 4] ?? 'roof-a'));
 
 /** Wall colour cell of a skin (gable ends of pitched roofs). */
 export const WALL_CELL: Record<Skin, string> = {

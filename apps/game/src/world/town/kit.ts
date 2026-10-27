@@ -18,6 +18,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CanvasTexture } from 'three';
 import { deriveSkins, paintExtCells, withExtCells } from './skins.js';
+import { PALETTE_SCALE, paintV2Cells } from './bld-v2.js';
 import { shopWindowGeometry } from './levels.js';
 import { ALL_SKINS, WALL_CELL } from './modules.js';
 
@@ -145,13 +146,16 @@ export async function loadTownKit(
   // Catalogue cells (atlas 192+) painted into a copy of the palette.
   const img = paletteSrc.image;
   const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
+  // Painted at PALETTE_SCALE× (same 16 × 16 grid, nearest): bld v2 colours use quarter cells.
+  canvas.width = img.width * PALETTE_SCALE;
+  canvas.height = img.height * PALETTE_SCALE;
   const ctx = canvas.getContext('2d');
   let palette: Texture = paletteSrc;
   if (ctx) {
-    ctx.drawImage(img, 0, 0);
-    paintExtCells(ctx, img.width);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    paintExtCells(ctx, canvas.width);
+    paintV2Cells(ctx, canvas.width);
     palette = new CanvasTexture(canvas);
   }
   for (const t of [palette, emissive]) {

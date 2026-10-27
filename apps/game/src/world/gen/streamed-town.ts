@@ -1,4 +1,5 @@
 import type { FadeView } from '../wall-fade.js';
+import { noteBuildings } from '../town/bld-v2.js';
 import type { EdgeSide, OpeningView, SimEvent } from '@deadzone/protocol';
 import { Group, Mesh, type MeshStandardMaterial } from 'three';
 import { BuildingLookup } from '../building-lookup.js';
@@ -64,6 +65,7 @@ export class StreamedTown {
     if (!col) return { bytes: 0, triangles: 0 };
     const metas = new Map<BuildingId, GenBuildingInfo>();
     for (const b of (col.buildings ?? []) as GenBuildingInfo[]) metas.set(b.id, b);
+    noteBuildings(metas.values()); // bld v2: kind + footprint per building
     const range = { cx0: cx, cy0: cy, cx1: cx, cy1: cy, z };
     let bytes = 0;
     let triangles = 0;
