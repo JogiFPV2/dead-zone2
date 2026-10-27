@@ -55,7 +55,7 @@ const MAX_LEAN_BACK = 0.12;
 const TURN_BANK = 0.7;
 const MAX_BANK = 0.22;
 /** Extra forward pitch of the sprint pose (rad). */
-const SPRINT_PITCH = 0.16;
+export const SPRINT_PITCH = 0.16;
 
 export interface LocoInput {
   /** Real ground speed (m/s). */

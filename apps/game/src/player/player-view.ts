@@ -27,10 +27,12 @@ import {
   type HeldInstance,
 } from '../weapons/held-items.js';
 import { ArmLayer, gripSpecV2 } from '../anim/arm-layer.js';
+import { LocoV2 } from '../anim/loco-v2.js';
 import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
 import {
   LocoBlend,
   RUN_CLIP,
+  SPRINT_PITCH,
   WALK_CLIP,
   clipTime,
   type LocoPose,
@@ -73,6 +75,8 @@ export class PlayerView {
   private readonly tracker = new PoseTracker();
   private readonly animPose = newPose();
   private readonly loco = new LocoBlend();
+  /** Anim v2 locomotion layer (bob, hip roll, torso per gait, follow-through, pivot, turn steps). */
+  private readonly locoV2 = new LocoV2();
   private legs: LegPose | undefined;
   private lastFacing: number | undefined;
   private yawRate = 0;
@@ -288,16 +292,33 @@ export class PlayerView {
     this.loopTime += dt * PoseTracker.loopRate(pose.anim, loco.speed);
     // Height = z · floor height of the interpolated sim z (fractional on stairs / falling).
     const w = simToWorld(slide?.x ?? mo.x, slide?.y ?? mo.y, mo.z);
-    this.root.position.set(w.x, w.y + pose.lift, w.z);
+    const free = pose.loop && pose.state !== 'climb' && pose.state !== 'driving';
+    // Anim v2: bob / hip roll / torso per gait, follow-through, pivot and turn steps.
+    const v2 =
+      this.animV2 && free && !moving
+        ? this.locoV2.update(
+            loco,
+            p.gait ?? (p.state === 'run' ? 'run' : 'walk'),
+            Math.atan2(mo.vy, mo.vx),
+            mo.facing,
+            dt,
+          )
+        : undefined;
+    this.root.position.set(w.x, w.y + pose.lift + (v2?.bob ?? 0), w.z);
     this.root.rotation.y = facingToRotationY(mo.facing + pose.twist);
     // Body local +X is the facing: -Z rotation leans forward (accel lean, sprint), X rotation
     // rolls (into turns). Timed states (hits, falls, vaults) bring their own offsets.
-    const free = pose.loop && pose.state !== 'climb' && pose.state !== 'driving';
+    const v2Pitch = v2 ? v2.pitch - SPRINT_PITCH * loco.sprint : 0;
     this.body.rotation.set(
-      pose.roll + (free ? loco.roll : 0),
+      pose.roll + (free ? loco.roll + (v2?.roll ?? 0) : 0),
       0,
-      -(pose.pitch + (free ? loco.pitch : 0)),
+      -(pose.pitch + (free ? loco.pitch + v2Pitch : 0)),
     );
+    // Follow-through after stopping and turn steps keep the gait cycle going on the spot.
+    if (v2 && !forward && pose.anim === 'idle' && (v2.arms > 0 || v2.turning)) {
+      forward = true;
+      loco.phase = v2.phase;
+    }
     if (this.held) this.held.object.rotation.x = -pose.recoil * RECOIL_KICK;
     if (!this.rig) return;
     if (forward) {
