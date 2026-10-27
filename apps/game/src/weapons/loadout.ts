@@ -8,6 +8,8 @@ export interface Loadout {
   hand: WeaponInfo | undefined;
   /** Weapon slung on the back (PZ style). */
   back: WeaponInfo | undefined;
+  /** Item id in the left hand (`equippedSecondary`, protocol 48); undefined = empty. */
+  left?: string;
 }
 
 /** Drawn length of a weapon the content index doesn't know (world units). */
@@ -70,7 +72,7 @@ export function weaponLoadout(
         };
   }
   const back = c.equippedBack ? weapons.get(c.equippedBack) : undefined;
-  return { hand, back };
+  return { hand, back, ...(c.equippedSecondary ? { left: c.equippedSecondary } : {}) };
 }
 
 const GRIP_CLASS: Record<Grip, WeaponClass> = {

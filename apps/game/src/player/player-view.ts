@@ -20,6 +20,7 @@ import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
 import { createGripSockets, showSocketAxes, type GripSockets } from '../weapons/grip-sockets.js';
+import { isPoolCategory, type HeldHands, type HeldInstance } from '../weapons/held-items.js';
 import { gaitClip, targetYaw, wrapAngle } from './locomotion.js';
 import {
   LocoBlend,
@@ -86,6 +87,8 @@ export class PlayerView {
   showSockets = false;
   /** Grip sockets under the wrists (anim v2 only), placed with the weapon mounts. */
   sockets: GripSockets | undefined;
+  /** Items in the hands (anim v2; weapons still come through `setWeapons`). */
+  heldHands: HeldHands = {};
   /** Aiming (set by the game from input): the body faces the cursor instead of the movement. */
   aiming = false;
   /** Fallback state when no physics state is passed (mock / tests). */
@@ -341,6 +344,24 @@ export class PlayerView {
       active: GRIP_STATES.has(pose.state) && !this.dead,
       dt,
     });
+  }
+
+  /**
+   * Non-weapon items in the hands this frame for the shared pool (`weapons/held-items.ts`):
+   * the grip socket world matrix per item (anim v2 only, empty before the sockets exist).
+   */
+  heldInstances(out: HeldInstance[] = []): HeldInstance[] {
+    const s = this.sockets;
+    if (!s || this.dead) return out;
+    for (const side of ['R', 'L'] as const) {
+      const c = this.heldHands[side];
+      if (!isPoolCategory(c)) continue;
+      const sock = s.socket(c, side);
+      if (!sock) continue;
+      sock.updateWorldMatrix(true, false);
+      out.push({ category: c, matrix: sock.matrixWorld.clone() });
+    }
+    return out;
   }
 
   /**

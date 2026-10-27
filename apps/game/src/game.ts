@@ -172,6 +172,8 @@ import { PhysAdapter } from './anim/phys-adapter.js';
 import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
 import { animV2Enabled } from './anim/contract.js';
+import type { HeldCategory } from './weapons/grip-sockets.js';
+import { HeldItemPool, buildHeldIndex, devHeld, heldHands } from './weapons/held-items.js';
 import { devHoldWeapon, weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
@@ -840,6 +842,8 @@ const snapshots = new SnapshotBuffer();
 // Physics / animation state per entity: the snapshot physics body + `physics` events (sim #62),
 // derived on the client only for records without it (see anim/phys-adapter.ts). View only.
 let weaponIndex: ReadonlyMap<string, WeaponInfo> = new Map();
+/** Held category per item id (anim v2, `weapons/held-items.ts`). */
+let heldIndex: ReadonlyMap<string, HeldCategory> = new Map();
 const phys: PhysAdapter = new PhysAdapter({
   localPlayer: PLAYER_ID,
   knockbackOf: (attacker): number | undefined => {
@@ -894,6 +898,9 @@ player.animV2 = animV2Enabled(location.search);
 player.showSockets =
   import.meta.env.DEV && new URLSearchParams(location.search).get('sockets') === '1';
 worldRoot.add(player.root);
+// Anim v2: non-weapon items in hand, one instanced pool for every character (anim-spec §5).
+// In the scene, not the floating-origin root: instance matrices are the sockets' world matrices.
+const heldPool = player.animV2 ? new HeldItemPool(scene) : undefined;
 // Cars (PLACEHOLDER boxes until models): vehicle snapshot block, interpolated per frame.
 const vehicleView = new VehicleView(
   (variant) => {
@@ -1030,6 +1037,7 @@ if (boot.sim === 'worker') {
     }
     spots = leisureSpots(mapObjectList, hudContent);
     weaponIndex = buildWeaponIndex(m.baseFiles);
+    heldIndex = buildHeldIndex(m.baseFiles);
     hud.setContent(hudContent);
   });
 }
@@ -2125,6 +2133,8 @@ const devQuery = import.meta.env.DEV ? new URLSearchParams(location.search) : un
 const devHoldParam = devQuery?.get('hold') ?? null;
 /** Dev `?aim=1`: the player view keeps the aim pose (grip previews). */
 const devAim = devQuery?.get('aim') === '1';
+/** Dev `?held=R,L` (anim v2): item ids or categories in the hands. */
+const devHeldParam = devQuery?.get('held') ?? null;
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
   sections.start();
@@ -2161,9 +2171,26 @@ renderer.setAnimationLoop((time) => {
     );
     mapObjects.previewFurnitureMove(f, k);
     player.setWeapons(hand, back, weaponModels);
+    if (heldPool) {
+      // Hands from the sim: a non-weapon item in the right hand (`equippedPrimary`), the left
+      // hand's item (`equippedSecondary`, protocol 48); dev `?held=R,L` overrides.
+      const c = characters.get(phys.localId);
+      // `?hold=` (anim-spec) also takes non-weapon items / categories; `?held=R,L` for both hands.
+      const dev = devHeld(devHeldParam ?? (hand ? null : devHoldParam), heldIndex);
+      const primary =
+        dev?.primary ??
+        (hand?.grip
+          ? undefined
+          : c?.equippedPrimary
+            ? heldIndex.get(c.equippedPrimary)
+            : undefined);
+      const secondary = dev?.secondary ?? (loadout.left ? heldIndex.get(loadout.left) : undefined);
+      player.heldHands = heldHands(primary, secondary);
+    }
     player.apply(state, performance.now(), phys.get(phys.localId), simTick);
     // Seated: the body is inside the (placeholder) car.
     player.root.visible = gameState.get().seat === undefined;
+    heldPool?.update(player.root.visible ? player.heldInstances() : []);
     const goal = simToWorld(state.x, state.y, state.z);
     if (!cameraSnapped) rig.target.set(goal.x, goal.y, goal.z);
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
