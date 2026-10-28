@@ -1,0 +1,64 @@
+{
+  "id": "base:birch",
+  "name": "tree.base.birch.name",
+  "leafType": "broadleaf",
+  "heightM": {
+    "min": 10,
+    "max": 20
+  },
+  "crownRadiusM": {
+    "min": 2,
+    "max": 3.5
+  },
+  "crownDensity": 0.5,
+  "leafClusters": {
+    "min": 10,
+    "max": 16
+  },
+  "trunk": {
+    "radiusM": 0.12,
+    "color": "#d9d4c7",
+    "barkTexture": "Bark006"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#6e9a3c",
+        "weight": 3
+      },
+      {
+        "hex": "#5f8a35",
+        "weight": 2
+      },
+      {
+        "hex": "#7fa84a",
+        "weight": 1
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#d4b13a",
+        "weight": 3
+      },
+      {
+        "hex": "#c99a2e",
+        "weight": 2
+      },
+      {
+        "hex": "#9a8a3a",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "forest": 2,
+    "park": 3,
+    "street": 2,
+    "field": 1
+  },
+  "windSway": {
+    "amplitude": 0.08,
+    "frequencyHz": 0.6
+  }
+}

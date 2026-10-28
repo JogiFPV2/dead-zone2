@@ -66,6 +66,7 @@ export function collectRefs(def: IndexedDefinition): RefList {
     case 'skill':
     case 'tile':
     case 'palette':
+    case 'treeSpecies':
       break;
   }
   return r;

@@ -1,0 +1,68 @@
+{
+  "id": "base:pine",
+  "name": "tree.base.pine.name",
+  "leafType": "conifer",
+  "heightM": {
+    "min": 12,
+    "max": 25
+  },
+  "crownRadiusM": {
+    "min": 1.8,
+    "max": 3.2
+  },
+  "crownDensity": 0.6,
+  "leafClusters": {
+    "min": 6,
+    "max": 10
+  },
+  "trunk": {
+    "radiusM": 0.18,
+    "color": "#6b4a35",
+    "barkTexture": "Bark012"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#2f4a2a",
+        "weight": 3
+      },
+      {
+        "hex": "#3a5530",
+        "weight": 2
+      },
+      {
+        "hex": "#2a3f26",
+        "weight": 1
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#33502c",
+        "weight": 3
+      },
+      {
+        "hex": "#3d5a33",
+        "weight": 1
+      }
+    ],
+    "winter": [
+      {
+        "hex": "#2c4427",
+        "weight": 2
+      },
+      {
+        "hex": "#36502f",
+        "weight": 1
+      }
+    ]
+  },
+  "habitats": {
+    "forest": 5,
+    "park": 1,
+    "field": 0.5
+  },
+  "windSway": {
+    "amplitude": 0.03,
+    "frequencyHz": 0.3
+  }
+}

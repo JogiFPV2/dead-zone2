@@ -13,6 +13,7 @@ export * from './combat-settings.js';
 export * from './ai-stop-gap.js';
 export * from './zombie-type.js';
 export * from './animal-type.js';
+export * from './tree-species.js';
 export * from './vehicle-type.js';
 export * from './container-type.js';
 export * from './tile.js';

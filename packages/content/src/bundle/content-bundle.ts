@@ -16,6 +16,7 @@ import type { Trait } from '../schemas/trait/trait.js';
 import type { WorldSettings } from '../schemas/world-settings.js';
 import type { ZombieType } from '../schemas/zombie-type.js';
 import type { AnimalType } from '../schemas/animal-type.js';
+import type { TreeSpecies } from '../schemas/tree-species.js';
 import type { VehicleType } from '../schemas/vehicle-type.js';
 import type { DeepReadonly } from './deep-freeze.js';
 
@@ -34,6 +35,8 @@ export type ContentBundle = DeepReadonly<{
   zombieTypes: Record<string, ZombieType>;
   /** Zwierzęta (sim `animals/*`): dzikie i miejskie, łowne lub nie. */
   animalTypes: Record<string, AnimalType>;
+  /** Gatunki drzew i krzewów (render `?style=real`, przyszłe sadzenie w generatorze). */
+  treeSpecies: Record<string, TreeSpecies>;
   /** Pojazdy (sim `vehicles/*`): wymiary, masa, silnik, paliwo, miejsca. */
   vehicleTypes: Record<string, VehicleType>;
   containers: Record<string, ContainerType>;

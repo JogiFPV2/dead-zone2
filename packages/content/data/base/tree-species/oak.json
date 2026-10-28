@@ -1,0 +1,64 @@
+{
+  "id": "base:oak",
+  "name": "tree.base.oak.name",
+  "leafType": "broadleaf",
+  "heightM": {
+    "min": 15,
+    "max": 28
+  },
+  "crownRadiusM": {
+    "min": 4,
+    "max": 7
+  },
+  "crownDensity": 0.85,
+  "leafClusters": {
+    "min": 14,
+    "max": 22
+  },
+  "trunk": {
+    "radiusM": 0.45,
+    "color": "#5b4a3c",
+    "barkTexture": "Bark001"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#3f6a2a",
+        "weight": 3
+      },
+      {
+        "hex": "#4a7530",
+        "weight": 2
+      },
+      {
+        "hex": "#355d24",
+        "weight": 1
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#8a5a2a",
+        "weight": 3
+      },
+      {
+        "hex": "#a0682e",
+        "weight": 2
+      },
+      {
+        "hex": "#6e4a26",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "forest": 2,
+    "park": 3,
+    "street": 2,
+    "field": 2
+  },
+  "windSway": {
+    "amplitude": 0.03,
+    "frequencyHz": 0.3
+  }
+}

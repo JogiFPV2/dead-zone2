@@ -1,0 +1,55 @@
+{
+  "id": "base:linden",
+  "name": "tree.base.linden.name",
+  "leafType": "broadleaf",
+  "heightM": {
+    "min": 15,
+    "max": 25
+  },
+  "crownRadiusM": {
+    "min": 3.5,
+    "max": 6.5
+  },
+  "crownDensity": 0.85,
+  "leafClusters": {
+    "min": 14,
+    "max": 20
+  },
+  "trunk": {
+    "radiusM": 0.4,
+    "color": "#5a5048",
+    "barkTexture": "Bark002"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#557d2f",
+        "weight": 3
+      },
+      {
+        "hex": "#4a7029",
+        "weight": 2
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#c9a83a",
+        "weight": 3
+      },
+      {
+        "hex": "#a8902e",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "park": 2,
+    "street": 5,
+    "field": 0.5
+  },
+  "windSway": {
+    "amplitude": 0.03,
+    "frequencyHz": 0.3
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "base:apple",
+  "name": "tree.base.apple.name",
+  "leafType": "broadleaf",
+  "heightM": {
+    "min": 3,
+    "max": 7
+  },
+  "crownRadiusM": {
+    "min": 1.8,
+    "max": 3
+  },
+  "crownDensity": 0.75,
+  "leafClusters": {
+    "min": 8,
+    "max": 12
+  },
+  "trunk": {
+    "radiusM": 0.15,
+    "color": "#5c4838",
+    "barkTexture": "Bark009"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#4e7a30",
+        "weight": 3
+      },
+      {
+        "hex": "#5d8a3a",
+        "weight": 1
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#a8862e",
+        "weight": 2
+      },
+      {
+        "hex": "#8a7030",
+        "weight": 1
+      },
+      {
+        "hex": "#b05a2a",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "garden": 5,
+    "field": 1
+  },
+  "windSway": {
+    "amplitude": 0.04,
+    "frequencyHz": 0.35
+  }
+}

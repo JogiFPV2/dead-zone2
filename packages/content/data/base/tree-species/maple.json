@@ -1,0 +1,59 @@
+{
+  "id": "base:maple",
+  "name": "tree.base.maple.name",
+  "leafType": "broadleaf",
+  "heightM": {
+    "min": 12,
+    "max": 22
+  },
+  "crownRadiusM": {
+    "min": 3.5,
+    "max": 6
+  },
+  "crownDensity": 0.8,
+  "leafClusters": {
+    "min": 12,
+    "max": 20
+  },
+  "trunk": {
+    "radiusM": 0.35,
+    "color": "#5e5248",
+    "barkTexture": "Bark003"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#4f7a2e",
+        "weight": 3
+      },
+      {
+        "hex": "#5a8636",
+        "weight": 2
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#c4452a",
+        "weight": 3
+      },
+      {
+        "hex": "#d9822a",
+        "weight": 2
+      },
+      {
+        "hex": "#e0b030",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "park": 3,
+    "street": 4,
+    "garden": 1
+  },
+  "windSway": {
+    "amplitude": 0.04,
+    "frequencyHz": 0.35
+  }
+}

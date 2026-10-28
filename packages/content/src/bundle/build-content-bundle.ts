@@ -17,6 +17,7 @@ export const BUNDLE_KEYS = {
   lootTable: 'lootTables',
   zombieType: 'zombieTypes',
   animalType: 'animalTypes',
+  treeSpecies: 'treeSpecies',
   vehicleType: 'vehicleTypes',
   containerType: 'containers',
   tile: 'tiles',

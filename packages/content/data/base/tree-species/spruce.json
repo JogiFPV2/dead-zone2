@@ -1,0 +1,60 @@
+{
+  "id": "base:spruce",
+  "name": "tree.base.spruce.name",
+  "leafType": "conifer",
+  "heightM": {
+    "min": 15,
+    "max": 30
+  },
+  "crownRadiusM": {
+    "min": 1.5,
+    "max": 2.8
+  },
+  "crownDensity": 0.85,
+  "leafClusters": {
+    "min": 10,
+    "max": 16
+  },
+  "trunk": {
+    "radiusM": 0.2,
+    "color": "#4f3a2c",
+    "barkTexture": "Bark004"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#24402a",
+        "weight": 3
+      },
+      {
+        "hex": "#2c4a31",
+        "weight": 2
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#24402a",
+        "weight": 3
+      },
+      {
+        "hex": "#2c4a31",
+        "weight": 1
+      }
+    ],
+    "winter": [
+      {
+        "hex": "#22392a",
+        "weight": 1
+      }
+    ]
+  },
+  "habitats": {
+    "forest": 3,
+    "park": 1,
+    "garden": 0.5
+  },
+  "windSway": {
+    "amplitude": 0.02,
+    "frequencyHz": 0.25
+  }
+}

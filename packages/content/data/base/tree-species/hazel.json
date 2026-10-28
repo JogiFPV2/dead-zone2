@@ -1,0 +1,56 @@
+{
+  "id": "base:hazel",
+  "name": "tree.base.hazel.name",
+  "leafType": "broadleaf",
+  "shrub": true,
+  "heightM": {
+    "min": 1.5,
+    "max": 4
+  },
+  "crownRadiusM": {
+    "min": 1,
+    "max": 2
+  },
+  "crownDensity": 0.8,
+  "leafClusters": {
+    "min": 5,
+    "max": 8
+  },
+  "trunk": {
+    "radiusM": 0.05,
+    "color": "#6a5644"
+  },
+  "colors": {
+    "summer": [
+      {
+        "hex": "#557f33",
+        "weight": 3
+      },
+      {
+        "hex": "#628a3c",
+        "weight": 1
+      }
+    ],
+    "autumn": [
+      {
+        "hex": "#c8a83c",
+        "weight": 2
+      },
+      {
+        "hex": "#a08a36",
+        "weight": 1
+      }
+    ],
+    "winter": []
+  },
+  "habitats": {
+    "forest": 2,
+    "park": 2,
+    "garden": 2,
+    "field": 2
+  },
+  "windSway": {
+    "amplitude": 0.06,
+    "frequencyHz": 0.5
+  }
+}
