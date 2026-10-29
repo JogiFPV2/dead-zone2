@@ -1,3 +1,4 @@
+import { clearUnderDeck } from './under-deck.js';
 import type { AreaKind } from '../osm/types.js';
 import {
   G_ASPHALT,
@@ -328,5 +329,6 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
       tree[j] = 0;
     });
   }
+  clearUnderDeck(w, h, rail, deck, under);
   return { x0, y0, w, h, g, tree, rail, deck, area, under };
 }

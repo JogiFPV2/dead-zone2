@@ -1,3 +1,4 @@
+import { deckRailingEdge } from './deck-railing.js';
 import { clearingMask } from './clearing.js';
 import { coverZones } from './cover.js';
 import { chunkInfra, type GenInfra } from './infra.js';
@@ -733,7 +734,7 @@ export class PlanChunkGenerator {
     return out;
   }
 
-  /** Railings on bridge-deck edges over the railway (deck at level 0, as in the OSM scene). */
+  /** Railings along both side edges of every bridge deck (deck at level 0, as in the OSM scene). */
   private railings(
     r: Raster,
     M: number,
@@ -749,7 +750,7 @@ export class PlanChunkGenerator {
       const a = at(ax, ay);
       const b = at(bx, by);
       if (!free(ax, ay) || !free(bx, by)) return false;
-      return (r.deck[a] && !r.deck[b] && r.rail[b]) || (r.deck[b] && !r.deck[a] && r.rail[a]);
+      return deckRailingEdge(r, a, b);
     };
     for (let ly = 0; ly < C; ly++)
       for (let lx = 0; lx < C; lx++) {

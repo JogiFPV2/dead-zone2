@@ -95,8 +95,11 @@ export interface WorldPlanInput {
  *     rural house weights, condition placement (rail, industrial, settlement edge, centre).
  * 31: flat-roof variants (light membrane, brownish tar) for block, kamienica, school, police,
  *     hospital, service (look-palette roofsV4) (#387).
+ * 32: taken by #390.
+ * 33: railings along both side edges of every bridge deck (not only across the track under it);
+ *     paved ground under decks near tracks becomes dirt (#376).
  */
-export const GENERATOR_REV = 31;
+export const GENERATOR_REV = 33;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {
