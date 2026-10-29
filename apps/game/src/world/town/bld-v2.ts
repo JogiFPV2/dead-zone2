@@ -219,7 +219,11 @@ function colours(b: BldInfo): { wall: string; roof: string } | undefined {
     x1: b.x1,
     y1: b.y1,
   });
-  return l && { wall: l.wallColor, roof: l.roofColor };
+  if (!l) return undefined;
+  // Blocks of one estate share the atlas wall: map the pre-jitter base colour, so the ±6 % / ±4°
+  // jitter cannot push neighbours across an atlas boundary.
+  const base = b.kind === 'block' && l.pair.startsWith('#') ? l.pair.slice(0, 7) : undefined;
+  return { wall: base ?? l.wallColor, roof: l.roofColor };
 }
 
 /** v2 wall skin of a building; undefined = keep the v1 skin (unknown building / kind). */

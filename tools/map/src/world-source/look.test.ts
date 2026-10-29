@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildingLook, clampColour, lookType } from './look.js';
+import { buildingLook, clampColour, hueBucket, jitter, lookType } from './look.js';
 import { LOOK_PALETTE } from './look-palette.js';
 
 const box = { x0: 0, y0: 0, x1: 10, y1: 10 };
@@ -19,9 +19,9 @@ describe('building look (look-spec §A–C)', () => {
   it('stable by OSM id and from the type palette', () => {
     const a = look(123, 'shop');
     expect(look(123, 'shop')).toEqual(a);
-    expect(LOOK_PALETTE.service.walls).toContain(a.wallColor);
-    expect(LOOK_PALETTE.service.roofs).toContain(a.roofColor);
+    expect(a.wallColor).toMatch(/^#[0-9a-f]{6}$/);
     expect(LOOK_PALETTE.service.trim).toContain(a.trimColor);
+    expect(LOOK_PALETTE.service.walls).toContain(a.pair.slice(0, 7));
   });
   it('houses vary; no wall colour over 30 %', () => {
     const n = new Map<string, number>();
@@ -40,6 +40,22 @@ describe('building look (look-spec §A–C)', () => {
     expect(clampColour('white')).toBe('#d9d9d9');
     expect(clampColour('nonsense')).toBeUndefined();
   });
+  it('jitter stays within L ±6 %, H ±4°', () => {
+    expect(jitter('#808080', 0, 0.06)).toBe('#888888');
+    expect(hueBucket(jitter('#d9d2c3', 4, 0))).toBe(hueBucket('#d9d2c3'));
+  });
+  it('rail / edge raise abandoned + ruin, centre lowers it', () => {
+    const bad = (o: object) => {
+      let n = 0;
+      for (let i = 1; i <= 2000; i++) {
+        const c = buildingLook({ b: { id: i, kind: 'house' }, floors: 1, ...box, ...o })!.condition;
+        if (c === 'abandoned' || c === 'ruin') n++;
+      }
+      return n;
+    };
+    expect(bad({ nearRail: true })).toBeGreaterThan(bad({}));
+    expect(bad({ centre: true })).toBeLessThan(bad({}));
+  });
   it('condition has its own seed; ruins are ruins; church tower', () => {
     const s = new Set<string>();
     for (let i = 1; i <= 500; i++) s.add(look(i, 'house').condition);
@@ -49,6 +65,6 @@ describe('building look (look-spec §A–C)', () => {
   it('the neighbour shift changes the wall + roof pair', () => {
     const a = buildingLook({ b: { id: 9, kind: 'house' }, floors: 1, ...box })!;
     const b = buildingLook({ b: { id: 9, kind: 'house' }, floors: 1, ...box, shift: 1 })!;
-    expect(`${a.wallColor}${a.roofColor}`).not.toBe(`${b.wallColor}${b.roofColor}`);
+    expect(a.pair).not.toBe(b.pair);
   });
 });

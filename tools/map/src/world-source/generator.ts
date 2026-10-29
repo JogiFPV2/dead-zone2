@@ -253,7 +253,27 @@ export class PlanChunkGenerator {
 
   private baseLook(ib: IBuilding, floors: number, shift = 0): BuildingLook | undefined {
     const bb = ib.box;
-    return buildingLook({ b: ib.b, floors, x0: bb.x0, y0: bb.y0, x1: bb.x1, y1: bb.y1, shift });
+    const cx = Math.floor((bb.x0 + bb.x1) / 2 / C);
+    const cy = Math.floor((bb.y0 + bb.y1) / 2 / C);
+    const zone = this.chunkKind(cx, cy);
+    const R = 80;
+    const nearRail =
+      this.index.rails.query({ x0: bb.x0 - R, y0: bb.y0 - R, x1: bb.x1 + R, y1: bb.y1 + R })
+        .length > 0;
+    return buildingLook({
+      b: ib.b,
+      floors,
+      x0: bb.x0,
+      y0: bb.y0,
+      x1: bb.x1,
+      y1: bb.y1,
+      shift,
+      // Settlement edge / village: houses in village, farm and open-field chunks.
+      rural: zone === 'wies' || zone === 'farma' || zone === 'pola' || zone === 'las',
+      centre: zone === 'centrum',
+      industrialArea: zone === 'przemysl',
+      nearRail,
+    });
   }
 
   /**
@@ -294,7 +314,10 @@ export class PlanChunkGenerator {
       this.looks.set(gid, l);
     }
     const h = this.ibs.get(gid)?.b.height;
-    return { ...(l ?? {}), ...(h ? { heightM: h } : {}) };
+    if (!l) return h ? { heightM: h } : {};
+    const meta: Partial<GenBuildingMeta> & { pair?: string } = { ...l };
+    delete meta.pair;
+    return { ...meta, ...(h ? { heightM: h } : {}) };
   }
 
   /** Union of raw building fills on a raster (cars and trees keep off buildings). */

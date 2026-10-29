@@ -23,6 +23,8 @@ export interface BuildingLook {
   condition: Condition;
   /** Church with a tower. */
   tower?: 1;
+  /** Base wall + roof pair before the jitter (neighbour rule; not written to chunks). */
+  pair: string;
 }
 
 /** Stable 32-bit hash in [0, 1) of two ints and a salt. */
@@ -180,6 +182,12 @@ export interface LookInput {
   y1: number;
   /** Rural setting (house archetype rural weights, village condition weights). */
   rural?: boolean;
+  /** Within 80 m of a railway (condition ×2). */
+  nearRail?: boolean;
+  /** On industrial land (condition ×2). */
+  industrialArea?: boolean;
+  /** City centre (condition ×0.5). */
+  centre?: boolean;
   /** Pick shift for the neighbour rule (0 = first choice). */
   shift?: number;
 }
@@ -197,10 +205,8 @@ export function buildingLook(i: LookInput): BuildingLook | undefined {
   const p = LOOK_PALETTE[type];
   const id = b.id;
   const shift = i.shift ?? 0;
-  let walls = p.walls;
-  let wallWeights = p.weights;
-  let roofs = p.roofs;
   let shape: string | undefined;
+  let own: readonly string[] = [];
   if (type === 'house' && p.archetypes?.length) {
     const osmShape = b.roofShape;
     const fit = p.archetypes.filter(
@@ -216,13 +222,11 @@ export function buildingLook(i: LookInput): BuildingLook | undefined {
           lookHash(id, 0, 11),
         )
       ]!;
-    if (a.walls?.length) {
-      walls = a.walls;
-      wallWeights = a.walls.map(() => 1);
-    }
-    if (a.roofs?.length) roofs = a.roofs;
+    own = [...(a.walls ?? []), ...(a.roofs ?? [])];
     shape = a.roofShape;
   }
+  const wp = pool(type, 'walls', own);
+  const rp = pool(type, 'roofs', own);
   const wallSeed =
     type === 'block'
       ? lookHash(
@@ -231,13 +235,18 @@ export function buildingLook(i: LookInput): BuildingLook | undefined {
           2,
         )
       : lookHash(id, 0, 1);
-  const wi = weighted(wallWeights, wallSeed);
-  const ri = Math.floor(lookHash(id, 0, 3) * roofs.length);
+  const wi = weighted(wp.weights, wallSeed);
+  const ri = weighted(rp.weights, lookHash(id, 0, 3));
   // Neighbour rule: a shift walks the roof first, then the wall (blocks keep the estate wall).
+  const wallStep = type === 'block' ? 0 : Math.floor(shift / rp.colours.length);
+  // Per-building jitter (look-spec: lightness ±6 %, hue ±4°), its own seed; blocks of one
+  // estate keep the shared base colour, so they only differ within these bounds.
+  const jl = (lookHash(id, 0, 17) * 2 - 1) * 0.06;
+  const jh = (lookHash(id, 0, 19) * 2 - 1) * 4;
   const wallColor =
-    clampColour(b.colour) ??
-    walls[(wi + (type === 'block' ? 0 : Math.floor(shift / roofs.length))) % walls.length]!;
-  const roofColor = clampColour(b.roofColour) ?? roofs[(ri + shift) % roofs.length]!;
+    clampColour(b.colour) ?? jitter(wp.colours[(wi + wallStep) % wp.colours.length]!, jh, jl);
+  const roofColor =
+    clampColour(b.roofColour) ?? jitter(rp.colours[(ri + shift) % rp.colours.length]!, jh, jl);
   const trimColor = p.trim[Math.floor(lookHash(id, 0, 5) * p.trim.length)] ?? wallColor;
   const shapes = Object.keys(p.roofShapes);
   const roofShape = (
@@ -247,7 +256,15 @@ export function buildingLook(i: LookInput): BuildingLook | undefined {
   ) as RoofShape;
   const zone = type === 'industrial' ? 'industrial' : i.rural ? 'village' : 'city';
   const cw = CONDITION.weights[zone];
-  const mul = CONDITION.types[type] ?? 1;
+  // look-spec §C placement: rail ×2, industrial land ×2, settlement edge ×1.5, centre ×0.5.
+  // ×0.42 keeps the map-wide abandoned + ruin share near the zone weights (placement redistributes).
+  const mul =
+    0.42 *
+    (CONDITION.types[type] ?? 1) *
+    (i.nearRail ? 2 : 1) *
+    (i.industrialArea ? 2 : 1) *
+    (i.rural ? 1.5 : 1) *
+    (i.centre ? 0.5 : 1);
   const ws = CONDITION_STATES.map((s) => cw[s] * (s === 'abandoned' || s === 'ruin' ? mul : 1));
   // Own seed, independent of the colour picks.
   const condition =
@@ -260,8 +277,98 @@ export function buildingLook(i: LookInput): BuildingLook | undefined {
     roofShape,
     condition,
     ...(b.kind === 'church' && b.tall ? { tower: 1 as const } : {}),
+    pair: `${wp.colours[(wi + wallStep) % wp.colours.length]}${rp.colours[(ri + shift) % rp.colours.length]}`,
   };
 }
 
+/**
+ * Hue bucket of `#rrggbb` (same as the Modules ratchet, building-look-variety.test.ts): 12 × 30°,
+ * greys (S < 0.12) by lightness thirds.
+ */
+export function hueBucket(hex: string): string {
+  const [h, s, l] = hsl(hex);
+  if (s < 0.12) return `grey${Math.min(2, Math.floor(l * 3))}`;
+  return `h${Math.floor(h / 30)}`;
+}
+
+function hsl(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  const l = (mx + mn) / 2;
+  const d = mx - mn;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d)
+    h = ((mx === r ? (g - b) / d : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 + 360) % 360;
+  return [h, s, l];
+}
+
+function fromHsl(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r, g, b] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  const hx = (k: number) =>
+    Math.max(0, Math.min(255, Math.round((k + m) * 255)))
+      .toString(16)
+      .padStart(2, '0');
+  return `#${hx(r)}${hx(g)}${hx(b)}`;
+}
+
+/** Colour shifted by `dh` degrees of hue and `dl` of lightness (relative). */
+export function jitter(hex: string, dh: number, dl: number): string {
+  const [h, s, l] = hsl(hex);
+  return fromHsl((h + dh + 360) % 360, s, Math.max(0, Math.min(1, l * (1 + dl))));
+}
+
+const pools = new Map<string, { colours: string[]; weights: number[] }>();
+/**
+ * Colour pool of a type with hue-balanced weights: the Designer's weights inside a hue bucket,
+ * every bucket the same total (no single hue dominates a map). Houses add the picked archetype's
+ * walls / roofs, weighted 3× inside their bucket.
+ */
+function pool(
+  type: LookType,
+  key: 'walls' | 'roofs',
+  own: readonly string[],
+): { colours: string[]; weights: number[] } {
+  const k = `${type}:${key}:${own.join()}`;
+  const hit = pools.get(k);
+  if (hit) return hit;
+  const p = LOOK_PALETTE[type];
+  const base = new Map<string, number>();
+  const list = p[key];
+  list.forEach((c, j) =>
+    base.set(c, (base.get(c) ?? 0) + (key === 'walls' ? (p.weights[j] ?? 0.1) : 1 / list.length)),
+  );
+  const avg = 1 / Math.max(1, list.length);
+  for (const c of own) base.set(c, (base.get(c) ?? avg) * 3);
+  const colours = [...base.keys()];
+  const sums = new Map<string, number>();
+  for (const c of colours) sums.set(hueBucket(c), (sums.get(hueBucket(c)) ?? 0) + base.get(c)!);
+  // Beige (h1) is most of every palette: its bucket weighs 0.8 so it stays under 30 % map-wide.
+  const weights = colours.map(
+    (c) => (base.get(c)! / sums.get(hueBucket(c))!) * (hueBucket(c) === 'h1' ? 0.8 : 1),
+  );
+  const out = { colours, weights };
+  pools.set(k, out);
+  return out;
+}
+
 /** Wall + roof pair key (neighbour rule). */
-export const lookPair = (l: BuildingLook): string => `${l.wallColor}${l.roofColor}`;
+export const lookPair = (l: BuildingLook): string => l.pair;

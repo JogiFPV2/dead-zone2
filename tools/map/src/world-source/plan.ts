@@ -87,12 +87,16 @@ export interface WorldPlanInput {
  *     `roofShape`, `condition`, `heightM`, `tower`; look-palette.ts, look.ts).
  * 22: level crossings span the carriageway, one set of signs per road side; no track under road
  *     viaducts, no catenary mast on a road.
- * 23–25: reserved for #376 / #385 / #387.
+ * 23: reserved for #376; 28–29: #391 / #392.
  * 26: taken by #390 (level crossings where OSM marks none).
  * 27: paved areas (plazas, `area:highway`) keep the ground under them (`under`) and ship their
  *     rings (`GenColumn.paved`): drawn as smooth polygons, no stair-stepped sidewalk tiles.
+ * 30: look variety (#385): hue-balanced palette weights, per-building jitter (L ±6 %, H ±4°),
+ *     rural house weights, condition placement (rail, industrial, settlement edge, centre).
+ * 31: flat-roof variants (light membrane, brownish tar) for block, kamienica, school, police,
+ *     hospital, service (look-palette roofsV4) (#387).
  */
-export const GENERATOR_REV = 27;
+export const GENERATOR_REV = 31;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

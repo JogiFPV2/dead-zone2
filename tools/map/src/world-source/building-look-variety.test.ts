@@ -9,7 +9,7 @@ import { OsmTiles, type OsmTileManifest } from './tiles.js';
 
 /**
  * Variety of the chunk-meta look fields (GENERATOR_REV 21, #382): `wallColor`, `roofColor`,
- * `look`, `condition`, `roofShape`. Ratchet: limits = measured on main d7bd50fa + small margin;
+ * `look`, `condition`, `roofShape`. Ratchet: limits = measured at GENERATOR_REV 25 + 0.01;
  * CI fails when a share grows. Target (Paweł 27.10): no hue on more than 30 % of walls / roofs
  * (KNOWN: measured higher, see LIMITS). OSM colours are not in the data yet and are not checked.
  */
@@ -31,36 +31,36 @@ interface Limits {
   samePair: number;
 }
 const LIMITS: Record<string, Limits> = {
-  // KNOWN: wall/roof hue above the 0.30 target everywhere (measured + 0.01).
+  // KNOWN: roof hue on okulickiego / plan-4 and stw look (house) above target (measured + 0.01).
   'osm-okulickiego': {
-    wallHue: 0.564,
-    roofHue: 0.45,
+    wallHue: 0.251,
+    roofHue: 0.267,
     looks: 10,
     look: 0.34,
-    bad: 0.074,
+    bad: 0.076,
     conditions: 4,
-    roofShape: 0.523,
-    samePair: 0.04,
+    roofShape: 0.521,
+    samePair: 0.01,
   },
   'osm-stw': {
-    wallHue: 0.622,
-    roofHue: 0.377,
+    wallHue: 0.275,
+    roofHue: 0.29,
     looks: 9,
-    look: 0.702,
-    bad: 0.083,
+    look: 0.703,
+    bad: 0.07,
     conditions: 4,
-    roofShape: 0.504,
-    samePair: 0.011,
+    roofShape: 0.499,
+    samePair: 0.01,
   },
   'plan-4': {
-    wallHue: 0.484,
-    roofHue: 0.455,
+    wallHue: 0.266,
+    roofHue: 0.302,
     looks: 8,
     look: 0.412,
     bad: 0.102,
     conditions: 4,
-    roofShape: 0.415,
-    samePair: 0.047,
+    roofShape: 0.411,
+    samePair: 0.01,
   },
 };
 const SAMPLE: Record<string, number> = { 'osm-okulickiego': 1, 'osm-stw': 8, 'plan-4': 8 };

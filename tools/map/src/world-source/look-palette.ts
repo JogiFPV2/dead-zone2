@@ -1,6 +1,6 @@
 /**
- * Designer's building look palette (/workspace/deadzone-shots/look-palette.json v3, look-spec.md
- * §A–C): wall / roof / trim hex per type, wall weights, roof shapes, house archetypes and
+ * Designer's building look palette (/workspace/deadzone-shots/look-palette.json v3 + roofsV4,
+ * look-spec.md §A–C): wall / roof / trim hex per type, wall weights, roof shapes, house archetypes and
  * condition weights. Data only (the `detail` key and §D are not approved yet). Single source of
  * truth: the generator writes the picked colours into the chunk building meta, the client reads them.
  */
@@ -41,7 +41,21 @@ export const LOOK_PALETTE: Readonly<Record<LookType, LookTypePalette>> = {
   block: {
     walls: ['#d9d2c3', '#c9d3cf', '#e0cfa9', '#c7c2d0', '#d6b8a6', '#bfcab2'],
     weights: [0.25, 0.18, 0.18, 0.12, 0.15, 0.12],
-    roofs: ['#5a5c5e', '#6b6d6a', '#4c4e50'],
+    roofs: [
+      '#5a5c5e',
+      '#6b6d6a',
+      '#4c4e50',
+      '#b9b6ad',
+      '#8a7a68',
+      '#7d6b58',
+      '#9aa09c',
+      '#4a4d50',
+      '#6e5a48',
+      '#6f8a6a',
+      '#8f4a3a',
+      '#5f6f82',
+      '#a8935a',
+    ],
     trim: ['#8b6a4e', '#7a7f84', '#6c7a5c', '#94886a', '#5b7480', '#a8704e'],
     roofShapes: { flat: 1.0 },
   },
@@ -147,7 +161,18 @@ export const LOOK_PALETTE: Readonly<Record<LookType, LookTypePalette>> = {
   service: {
     walls: ['#d7d3cb', '#b9bcbc', '#cfc2a4', '#c6cfd4', '#a9a397'],
     weights: [0.3, 0.2, 0.2, 0.15, 0.15],
-    roofs: ['#4c4e50', '#6b6d6a', '#3a3c3e'],
+    roofs: [
+      '#4c4e50',
+      '#6b6d6a',
+      '#3a3c3e',
+      '#a8a59c',
+      '#7d6b58',
+      '#8a5a3a',
+      '#6f8a6a',
+      '#8f4a3a',
+      '#5f6f82',
+      '#a8935a',
+    ],
     trim: ['#3f5a6e', '#7d2f2a', '#4e6a4b', '#5a5a5a'],
     roofShapes: { flat: 0.85, gabled: 0.15 },
   },
@@ -175,28 +200,28 @@ export const LOOK_PALETTE: Readonly<Record<LookType, LookTypePalette>> = {
   kamienica: {
     walls: ['#d8c49a', '#c9b08a', '#e2d6bd', '#b9a48a', '#cdbfa8'],
     weights: [0.3, 0.2, 0.2, 0.15, 0.15],
-    roofs: ['#8e3b2c', '#5a4434', '#3c3f42'],
+    roofs: ['#8e3b2c', '#5a4434', '#3c3f42', '#7a6a58', '#6a4a3a', '#9a9a94'],
     trim: ['#efe9df', '#8a7a62', '#6e6458'],
     roofShapes: { gabled: 0.3, mansard: 0.2, flat: 0.5 },
   },
   school: {
     walls: ['#e4dcc8', '#d9d2c3', '#cfd6cf', '#e0cfa9', '#c8c0b0'],
     weights: [0.3, 0.2, 0.2, 0.15, 0.15],
-    roofs: ['#5a5c5e', '#4c4e50'],
+    roofs: ['#5a5c5e', '#4c4e50', '#a8a59c', '#7d6b58', '#8a5a3a'],
     trim: ['#d0a45a', '#5b7480', '#8b6a4e', '#a8704e'],
     roofShapes: { flat: 0.85, barrel: 0.15 },
   },
   police: {
     walls: ['#e8e6e0', '#cfd2d3', '#d9d3c6'],
     weights: [0.5, 0.3, 0.2],
-    roofs: ['#4c4e50', '#3c3f42', '#8e3b2c'],
+    roofs: ['#4c4e50', '#3c3f42', '#8e3b2c', '#a8a59c', '#7d6b58'],
     trim: ['#1f4e9c', '#2a3f6e'],
     roofShapes: { flat: 0.6, hipped: 0.4 },
   },
   hospital: {
     walls: ['#e9e6dd', '#d7dcd6', '#dcd2c0', '#c9d3cf'],
     weights: [0.35, 0.25, 0.2, 0.2],
-    roofs: ['#5a5c5e', '#6b6d6a'],
+    roofs: ['#5a5c5e', '#6b6d6a', '#b9b6ad', '#a0a39f', '#8a7a68'],
     trim: ['#b8312f', '#3f7f5e', '#5b7480'],
     roofShapes: { flat: 0.95, hipped: 0.05 },
   },
