@@ -1,4 +1,4 @@
-import type { GenInfra } from '@deadzone/map/world-source';
+import type { GenInfra, GenLamp } from '@deadzone/map/world-source';
 import { CHUNK_SIZE as SIM_CHUNK_SIZE } from '@deadzone/protocol';
 import {
   CHUNK_SIZE,
@@ -83,6 +83,8 @@ export interface WorldChunk {
   readonly paved?: readonly (readonly (readonly number[])[])[];
   /** Power lines, railway, catenary (generated maps, render only, world metres). */
   readonly infra?: GenInfra;
+  /** Street lamps (generated maps, render only, world metres). */
+  readonly lamps?: readonly GenLamp[];
   /**
    * Scrub and hedges (the sim's `bushes` cover zone, generated maps): rectangles in global
    * tiles; the realistic style plants bushes there.

@@ -90,6 +90,7 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     ...(col.under ? { under: col.under } : {}),
     ...(col.paved?.length ? { paved: col.paved } : {}),
     ...(col.infra ? { infra: col.infra } : {}),
+    ...(col.lamps?.length ? { lamps: col.lamps } : {}),
   };
 }
 

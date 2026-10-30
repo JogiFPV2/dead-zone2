@@ -102,8 +102,9 @@ export interface WorldPlanInput {
  * 37: level crossing plates centred on the road axis and sheared along an oblique road (parallel
  *     tracks on one road give one continuous band at rail height); one set of crossing signs /
  *     barriers per road side; no track gap at the ends of sheared plates (#391, #392).
+ * 38: street lamps from OSM and evenly along carriageways (`chunkLamps`, #367).
  */
-export const GENERATOR_REV = 37;
+export const GENERATOR_REV = 38;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

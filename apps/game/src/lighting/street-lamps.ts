@@ -34,7 +34,7 @@ export interface LampDef {
 /** Grey-box lamp sizes (world units), from the reference scene. */
 export const LAMP_POLE_HEIGHT = 4.4;
 export const LAMP_ARM_LENGTH = 0.8;
-const GLOW_SIZE = 9;
+const GLOW_SIZE = 12;
 const GLOW_Y = 0.03;
 const LAMP_GREY = '#3e4240';
 
@@ -80,7 +80,8 @@ export class StreetLamps {
   ) {
     this.root.name = 'street-lamps';
     this.budget = options.budget ?? DEFAULT_LIGHT_BUDGET;
-    const shadowed = options.shadowedLights ?? 2;
+    // One shadowed lamp (the nearest): each one is another shadow pass of the scene (draw calls).
+    const shadowed = options.shadowedLights ?? 1;
 
     const pole = new CylinderGeometry(0.08, 0.12, LAMP_POLE_HEIGHT, 6).translate(
       0,
@@ -127,7 +128,8 @@ export class StreetLamps {
     const lamps = this.lamps;
     const working = lamps.filter((l) => l.working);
     const body = this.instanced(this.bodyGeometry, this.bodyMaterial, lamps, 'lamp-body');
-    body.castShadow = true;
+    // No shadow pass for poles: thin, and it cost a draw call per shadowed light.
+    body.castShadow = false;
     body.receiveShadow = true;
     this.meshes.push(body);
     this.meshes.push(this.instanced(this.bulbGeometry, this.bulbMaterial, working, 'lamp-bulbs'));

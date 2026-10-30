@@ -58,6 +58,7 @@ import {
   overrideMinute,
 } from './lighting/index.js';
 import { createTestLamps } from './world/test-lamps.js';
+import { genLampsOf } from './world/gen/gen-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
 import type { ActionView, CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
@@ -418,6 +419,9 @@ if (genWorld) {
     chunkStats: genWorld.source.stats,
     streamStats: () => streaming.streamer.stats(),
     townBuildMs: () => streamedTown?.buildMs ?? [],
+    /** Street lamps of the loaded chunks (world metres). */
+    lamps: (cx0: number, cy0: number, cx1: number, cy1: number) =>
+      genLampsOf(streaming.streamer.loaded, { cx0, cy0, cx1, cy1, z: 0 }),
     /** Last frame's draw calls + visible meshes per top-level group (shadow passes included). */
     draws: () => {
       const groups: Record<string, number> = {};
@@ -1431,7 +1435,9 @@ const refreshFollow = (): void => {
     .filter((o) => o.contentId === FUEL_PUMP)
     .map((o) => ({ x: o.tx, y: o.ty, z: o.z }));
   sections.mark('follow:objects');
-  if (town) lighting.lamps.setLamps(town.streetLampsOf(new town.MapTiles(world.source, 0), range));
+  if (genWorld) lighting.lamps.setLamps(genLampsOf(streaming.streamer.loaded, range));
+  else if (town)
+    lighting.lamps.setLamps(town.streetLampsOf(new town.MapTiles(world.source, 0), range));
   sections.mark('follow:lamps');
   // Same meshes / materials, new furniture list (no reallocation, no shader recompiles).
   shelfFill.setRange(range);

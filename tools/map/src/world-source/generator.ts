@@ -1,4 +1,5 @@
 import { deckRailingEdge } from './deck-railing.js';
+import { chunkLamps, type GenLamp } from './lamps.js';
 import { clearingMask } from './clearing.js';
 import { coverZones } from './cover.js';
 import { chunkInfra, type GenInfra } from './infra.js';
@@ -139,6 +140,8 @@ export interface GenColumn {
   buildings: GenBuildingMeta[];
   /** Power lines, railway track, switches, crossings, catenary (render only, world metres). */
   infra?: GenInfra;
+  /** Street lamps (OSM `street_lamp` + evenly along carriageways; render only, world metres). */
+  lamps?: GenLamp[];
 }
 
 export const VEHICLE_TYPE = 'base:sedan';
@@ -611,6 +614,8 @@ export class PlanChunkGenerator {
     const out: GenColumn = { cx, cy, levels, trees, buildings };
     const infra = chunkInfra(this.index, cx, cy, C);
     if (infra) out.infra = infra;
+    const lamps = chunkLamps(this.index, cx * C, cy * C, C);
+    if (lamps.length) out.lamps = lamps;
     // Dense cover: scrub / hedges → bushes, woods → cover (open ground only).
     const cls = new Uint8Array(CT);
     let anyCover = false;

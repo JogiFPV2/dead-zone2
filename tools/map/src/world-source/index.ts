@@ -65,6 +65,7 @@ export {
 } from './tiles.js';
 export { columnFootprintIssues, type ColumnFootprintIssue } from './footprint-check.js';
 export { surfaceIssues } from '../footprint-check.js';
+export { chunkLamps, LAMP_SPACING, type GenLamp } from './lamps.js';
 export {
   buildingLook,
   clampColour,

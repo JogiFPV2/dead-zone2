@@ -175,7 +175,13 @@ export class StreamedTown {
         if (d.kind === 'base:tree') trees.push([cx * CHUNK_SIZE + d.x, cy * CHUNK_SIZE + d.y]);
       }
     }
-    let props = z === 0 ? townDecor(new MapTiles(this.loaded, 0), range, trees).props : [];
+    // Power poles come from the plan's OSM lines (infra layer), not every 30 m along sidewalks.
+    let props =
+      z === 0
+        ? townDecor(new MapTiles(this.loaded, 0), range, trees).props.filter(
+            (p) => p.name !== 'prop-electricity-pole',
+          )
+        : [];
     if (this.trees && z === 0) {
       const sink = this.trees;
       sink.load(
