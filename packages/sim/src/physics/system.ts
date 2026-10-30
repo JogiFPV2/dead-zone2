@@ -1,3 +1,4 @@
+import { stairRunFalls } from './stair-trip.js';
 import type { SimEvent } from '@deadzone/protocol';
 import { bamToRad } from '../core/dmath.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
@@ -274,6 +275,7 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   // Falls land before the state timers run (landing → knock-down this tick).
   if (pw.multiLevel) fallSystem(w, eidBySid, events);
   vaultSystem(w, eidBySid, events);
+  if (pw.multiLevel) stairRunFalls(w, eidBySid, events);
   events.push(
     ...physicsStep(pw, {
       tick: w.tick,

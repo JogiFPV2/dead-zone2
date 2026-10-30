@@ -1,3 +1,4 @@
+import { topEntry } from '../physics/stairs.js';
 import { GAITS } from '@deadzone/protocol';
 import { DEFAULT_STAGE4_CONFIG } from '../ai/config.js';
 import { ModSlot } from '../content/adapter.js';
@@ -163,7 +164,13 @@ export function movementSystem(w: SimWorld, grid: TileGrid): void {
       MoveStats.accel[eid] = 0;
     } else if (player) {
       // Players: jerk-limited locomotion in m/s, target and velocity slid along touching walls.
-      const onStairs = (bodyOf(w, eid)?.stair ?? 0) > 0;
+      // At the top of a flight the missing floor over it is an edge contact; walking down onto
+      // the flight must not be cancelled by it (a body stopped against that edge stayed stuck).
+      const x0 = Position.x[eid] ?? 0;
+      const y0 = Position.y[eid] ?? 0;
+      const onStairs =
+        (bodyOf(w, eid)?.stair ?? 0) > 0 ||
+        (w.physics.stairs.length > 0 && topEntry(grid, x0, y0, z, vx, vy, r) !== undefined);
       if (onStairs) normals.length = 0;
       else circleContacts(grid, z, Position.x[eid] ?? 0, Position.y[eid] ?? 0, r, normals);
       // Profiles are tuned for the default walk (1.5 m/s); another `walkSpeedMps` scales them

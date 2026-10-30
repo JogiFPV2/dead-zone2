@@ -136,7 +136,7 @@ function stairsNear(grid: TileGrid, x: number, y: number, z: number, r: number):
 }
 
 /** A flight from level z − 1 whose top the body at (x, y) on level z walks down into. */
-function topEntry(
+export function topEntry(
   grid: TileGrid,
   x: number,
   y: number,

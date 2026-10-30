@@ -1792,3 +1792,8 @@ można zawiesić na oknie.
 null. Wypełniane w `characterView` (`snapshot/views.ts`) razem z resztą pól i wysyłane w
 `characters` przy zmianie, jak dotąd (animacje v2 z przedmiotem w lewej ręce). Zapis bez zmian
 (`SAVE_VERSION` 3). Test: `items/storage-window.test.ts`.
+### 9.80 Upadek przy zbieganiu po schodach
+
+`physics/stair-trip.ts` (`stairRunFalls`, w kroku fizyki po przeskokach, tylko mapy wielopoziomowe): gracz na biegu schodów, poruszający się w dół, w chodzie bieg / sprint (`MoveStats.gait` ≥ 2) co tick losuje (`rng.physics`, jedno losowanie na ciało) upadek z szansą `physics.stairs.runDownFallPerSec` / TPS (× `runDownSprintMul` w sprincie) × (1 + `runDownFallLoad`[obciążenie] + `runDownFallEndurance`[zmęczenie] + rany nóg × `runDownFallPerLegWound`). Chód i skradanie nigdy nie przewracają. Upadek: `knockdown` na `runDownFallTicks`, odrzut w dół biegu (`runDownFallPush`), zdarzenia `tripped` + `fellDown`, a niżej stojący przewracają się domino (`stairDomino`).
+
+Przy okazji poprawka: ciało zatrzymane przy krawędzi nad biegiem (x = góra + promień) nie mogło zejść, bo normalna kontaktu z krawędzią zerowała ruch, zanim hak schodów go przejął. Teraz przy wejściu od góry (`topEntry`) kontakty są pomijane jak na biegu. Bez zmiany protokołu.

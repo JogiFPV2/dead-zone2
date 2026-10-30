@@ -241,6 +241,19 @@ export interface StairsConfig {
   dominoDecay: number;
   holdForce: number;
   pushForcePerUnit: number;
+  /**
+   * Running down a flight (`stair-trip.ts`): fall chance per second when running (× sprintMul
+   * in a sprint), × (1 + load term + endurance term + leg wounds × perLegWound). Walking and
+   * sneaking never fall.
+   */
+  runDownFallPerSec: number;
+  runDownSprintMul: number;
+  runDownFallLoad: readonly number[];
+  runDownFallEndurance: readonly number[];
+  runDownFallPerLegWound: number;
+  /** Lying time after such a fall and the knock-back strength down the flight. */
+  runDownFallTicks: number;
+  runDownFallPush: number;
 }
 
 /**
@@ -459,6 +472,13 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     dominoDecay: 0.7,
     holdForce: 1.5,
     pushForcePerUnit: 0.12,
+    runDownFallPerSec: 0.04,
+    runDownSprintMul: 2.5,
+    runDownFallLoad: [0, 0.5, 1, 2, 3],
+    runDownFallEndurance: [0, 0.3, 0.8, 1.5, 2.5],
+    runDownFallPerLegWound: 0.75,
+    runDownFallTicks: sec(1.5),
+    runDownFallPush: 0.5,
   },
   fall: {
     floorHeightM: 3,
