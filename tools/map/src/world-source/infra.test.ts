@@ -101,6 +101,8 @@ describe('chunk infrastructure', () => {
 
   it('railway: track tiles, a switch, a buffer stop at the siding end, a crossing, catenary', () => {
     const idx = index({
+      // The crossing's road (a level crossing only stands on a carriageway).
+      roads: [{ id: 7, kind: 'residential', width: 7, sidewalk: 2, pts: d([300, 50, 300, 150]) }],
       rails: [
         { id: 1, kind: 'rail', el: 1, pts: d([0, 100, 100, 100, 300, 100, 400, 100]) },
         { id: 2, kind: 'siding', pts: d([100, 100, 160, 104, 220, 112]) },

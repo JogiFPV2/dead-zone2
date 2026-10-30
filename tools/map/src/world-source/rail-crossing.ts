@@ -7,7 +7,7 @@ interface V {
 }
 
 /** Road kinds without a carriageway (no level crossing furniture, no deck over the track). */
-const PED = new Set(['path', 'footway', 'cycleway', 'steps', 'track', 'pedestrian']);
+export const PED = new Set(['path', 'footway', 'cycleway', 'steps', 'track', 'pedestrian']);
 /** Road width (along the rail) one `przejazd-kat-a` model covers with its plates (m). */
 export const CROSSING_PLATES_M = 7.2;
 /** Half length (along the rail) of the crossing model at scale 1 (m). */
@@ -16,7 +16,7 @@ export const CROSSING_HALF = 6;
 const FURN_X = 5.6;
 
 /** Distance from p to the polyline `pts` (flat x, y) and the direction of the nearest segment. */
-function nearest(p: V, pts: Float64Array): { dist: number; d: V } {
+export function nearest(p: V, pts: Float64Array): { dist: number; d: V } {
   let best = Infinity;
   let d: V = { x: 1, y: 0 };
   for (let k = 0; k + 3 < pts.length; k += 2) {

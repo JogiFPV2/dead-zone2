@@ -6,6 +6,7 @@ import {
   onRoad,
   underRoadDeck,
 } from './rail-crossing.js';
+import { onCarriageway, syntheticCrossings } from './level-crossings.js';
 
 /**
  * Infrastructure of a chunk from the plan (Designer's `assets-src/infra`, attach points in
@@ -329,10 +330,30 @@ export function chunkInfra(
       return out;
     };
     const ends = new Set<string>();
-    const crossings = idx.railNodes
+    const synth = syntheticCrossings(idx, q);
+    const crossings: V[] = idx.railNodes
       .query(q)
       .map((i) => idx.railNodes.items[i]!)
-      .filter((n) => n.kind === 'level_crossing');
+      .filter((n) => n.kind === 'level_crossing' && onCarriageway(idx, n))
+      .map((n): V => n)
+      .concat(synth);
+    const crossing = (n: V, d: V) => {
+      const len = crossingScale(idx, n, d);
+      holes.push({ c: n, d, hu: CROSSING_HALF * len, hv: 2.4 });
+      if (inChunk(n)) {
+        const rot = Math.round(yawOf(d) * 1e4) / 1e4;
+        const others = crossings.filter((o) => o !== n);
+        const furn = crossingSides(n, d, sideOf(rot), others, len);
+        poles.push({
+          m: 'przejazd-kat-a',
+          x: n.x,
+          y: n.y,
+          rot,
+          ...(len !== 1 ? { len } : {}),
+          ...(furn !== 3 ? { furn } : {}),
+        });
+      }
+    };
     for (const i of idx.railNodes.query(q)) {
       const n = idx.railNodes.items[i]!;
       const a = arms(n);
@@ -371,26 +392,12 @@ export function chunkInfra(
         if (a.length !== 1) continue; // only a real end of a track
         ends.add(key(n.x, n.y));
       } else if (n.kind === 'level_crossing') {
-        if (a.length < 1) continue;
+        if (a.length < 1 || !onCarriageway(idx, n)) continue;
         const f = a[0]!;
-        const d = { x: -f.x, y: -f.y };
-        const len = crossingScale(idx, n, d);
-        holes.push({ c: n, d, hu: CROSSING_HALF * len, hv: 2.4 });
-        if (inChunk(n)) {
-          const rot = Math.round(yawOf(d) * 1e4) / 1e4;
-          const others = crossings.filter((o) => o !== n);
-          const furn = crossingSides(n, d, sideOf(rot), others, len);
-          poles.push({
-            m: 'przejazd-kat-a',
-            x: n.x,
-            y: n.y,
-            rot,
-            ...(len !== 1 ? { len } : {}),
-            ...(furn !== 3 ? { furn } : {}),
-          });
-        }
+        crossing(n, { x: -f.x, y: -f.y });
       }
     }
+    for (const s of synth) crossing(s, s.d);
     // Sidings ending in nothing: buffer stops too (main lines run off the map instead).
     for (const r of rails) {
       if (!r.siding || r.pts.length < 4) continue;
