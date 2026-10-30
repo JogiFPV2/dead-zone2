@@ -11,6 +11,7 @@ export {
 } from './generator.js';
 export {
   chunkInfra,
+  CROSSING_FILL,
   HV_SAG,
   LV_SAG,
   MW_SAG,

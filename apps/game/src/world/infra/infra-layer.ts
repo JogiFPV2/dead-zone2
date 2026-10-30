@@ -12,7 +12,13 @@ import {
   Vector3,
 } from 'three';
 import { CHUNK_SIZE } from '../chunk.js';
-import { CROSSING_CORE, CROSSING_LEFT, CROSSING_MODEL, CROSSING_RIGHT } from './crossing-parts.js';
+import {
+  CROSSING_CORE,
+  CROSSING_FILL,
+  CROSSING_LEFT,
+  CROSSING_MODEL,
+  CROSSING_RIGHT,
+} from './crossing-parts.js';
 import { MIRROR_SUFFIX, type InfraKit } from './kit.js';
 
 const Y = new Vector3(0, 1, 0);
@@ -43,12 +49,18 @@ export function addCrossing(p: GenPole, add: (id: string, m: Matrix4) => void): 
   const c = Math.cos(p.rot);
   const sn = Math.sin(p.rot);
   const q = new Quaternion().setFromAxisAngle(Y, p.rot);
-  add(CROSSING_CORE, new Matrix4().compose(new Vector3(p.x, 0, p.y), q, new Vector3(1, 1, len)));
+  const sk = p.shear ?? 0;
+  // Plates sheared along an oblique road (local z += sk·x), one band across parallel tracks.
+  const shear = new Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, sk / len, 0, 1, 0, 0, 0, 0, 1);
+  add(
+    CROSSING_CORE,
+    new Matrix4().compose(new Vector3(p.x, 0, p.y), q, new Vector3(1, 1, len)).multiply(shear),
+  );
   const tilt = new Quaternion().setFromAxisAngle(X, Math.PI / 2);
   BOOM_HINGES.forEach((h, k) => {
     if (!(furn & (1 << k))) return;
     // Furniture keeps its shape; only moved out to the stretched road edges.
-    const shift = h.z * (len - 1);
+    const shift = h.z * (len - 1) + sk * h.x;
     add(
       k === 0 ? CROSSING_LEFT : CROSSING_RIGHT,
       new Matrix4().compose(
@@ -58,7 +70,7 @@ export function addCrossing(p: GenPole, add: (id: string, m: Matrix4) => void): 
       ),
     );
     // Barrier arms raised (open); a separate model so the sim can lower them later.
-    const z = h.z * len;
+    const z = h.z * len + sk * h.x;
     const wx = p.x + h.x * c + z * sn;
     const wz = p.y - h.x * sn + z * c;
     const qq = new Quaternion().setFromAxisAngle(Y, p.rot + h.rot).multiply(tilt);
@@ -67,6 +79,18 @@ export function addCrossing(p: GenPole, add: (id: string, m: Matrix4) => void): 
       new Matrix4().compose(new Vector3(wx, h.y, wz), qq, new Vector3(1, 1, 1)),
     );
   });
+}
+
+/** Plain plate between two tracks: x scaled to `wide`, z to `len`, sheared like the plates. */
+export function fillMatrix(p: GenPole): Matrix4 {
+  const wide = p.wide ?? 1;
+  const len = p.len ?? 1;
+  const k = ((p.shear ?? 0) * wide) / len;
+  const shear = new Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, k, 0, 1, 0, 0, 0, 0, 1);
+  const q = new Quaternion().setFromAxisAngle(Y, p.rot);
+  return new Matrix4()
+    .compose(new Vector3(p.x, 0, p.y), q, new Vector3(wide, 1, len))
+    .multiply(shear);
 }
 
 /**
@@ -169,6 +193,10 @@ export class InfraLayer {
       q.setFromAxisAngle(Y, p.rot);
       if (p.m === CROSSING_MODEL) {
         addCrossing(p, add);
+        continue;
+      }
+      if (p.m === CROSSING_FILL) {
+        add(CROSSING_FILL, fillMatrix(p));
         continue;
       }
       const id = p.mirror ? p.m + MIRROR_SUFFIX : p.m;

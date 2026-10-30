@@ -87,7 +87,7 @@ export interface WorldPlanInput {
  *     `roofShape`, `condition`, `heightM`, `tower`; look-palette.ts, look.ts).
  * 22: level crossings span the carriageway, one set of signs per road side; no track under road
  *     viaducts, no catenary mast on a road.
- * 23: reserved for #376; 28–29: #391 / #392.
+ * 23: reserved for #376.
  * 26: taken by #390 (level crossings where OSM marks none).
  * 27: paved areas (plazas, `area:highway`) keep the ground under them (`under`) and ship their
  *     rings (`GenColumn.paved`): drawn as smooth polygons, no stair-stepped sidewalk tiles.
@@ -99,8 +99,11 @@ export interface WorldPlanInput {
  *     paved ground under decks near tracks becomes dirt (#376).
  * 34: level crossings where OSM marks none (track × at-grade carriageway); OSM level_crossing
  *     nodes away from any carriageway dropped (#390).
+ * 37: level crossing plates centred on the road axis and sheared along an oblique road (parallel
+ *     tracks on one road give one continuous band at rail height); one set of crossing signs /
+ *     barriers per road side; no track gap at the ends of sheared plates (#391, #392).
  */
-export const GENERATOR_REV = 34;
+export const GENERATOR_REV = 37;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {

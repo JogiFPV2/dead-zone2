@@ -1,10 +1,12 @@
-import { BufferGeometry, Float32BufferAttribute } from 'three';
+import { BoxGeometry, BufferGeometry, Float32BufferAttribute } from 'three';
 
 /** Level crossing model (`przejazd-kat-a`) and its parts: plates + track, −x and +x furniture. */
 export const CROSSING_MODEL = 'przejazd-kat-a';
 export const CROSSING_CORE = `${CROSSING_MODEL}#core`;
 export const CROSSING_LEFT = `${CROSSING_MODEL}#l`;
 export const CROSSING_RIGHT = `${CROSSING_MODEL}#r`;
+/** Plain plate between two tracks' plates (unit width in x), built from the core's plates. */
+export const CROSSING_FILL = `${CROSSING_MODEL}#fill`;
 /** Plates end at |x| = 3.6 m; signs and barriers stand beyond (|x| ≥ 4.3 m). */
 const FURN_FROM_X = 3.9;
 
@@ -39,6 +41,7 @@ export function splitCrossing(g: BufferGeometry): Map<string, BufferGeometry> {
     [CROSSING_CORE, liftRails(trianglesWhere(g, (x) => Math.abs(x) < FURN_FROM_X))],
     [CROSSING_LEFT, trianglesWhere(g, (x) => x <= -FURN_FROM_X)],
     [CROSSING_RIGHT, trianglesWhere(g, (x) => x >= FURN_FROM_X)],
+    [CROSSING_FILL, fillPlate(g)],
   ]);
 }
 
@@ -55,4 +58,36 @@ export function liftRails(g: BufferGeometry): BufferGeometry {
   pos.needsUpdate = true;
   g.computeBoundingSphere();
   return g;
+}
+
+/**
+ * A plate slab 1 m wide (x), as high and long (z) as the crossing's plates (|x| 1.5–3.6 m) and in
+ * their colour: scaled in x over the gap between neighbouring tracks' plates. Pure (tests).
+ */
+export function fillPlate(g: BufferGeometry): BufferGeometry {
+  const pos = g.getAttribute('position');
+  const col = g.getAttribute('color');
+  let top = 0;
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  let at = -1;
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(pos.getX(i));
+    if (ax < 1.5 || ax > 3.65 || pos.getY(i) > 0.7) continue;
+    z0 = Math.min(z0, pos.getZ(i));
+    z1 = Math.max(z1, pos.getZ(i));
+    if (pos.getY(i) >= top) [top, at] = [pos.getY(i), i];
+  }
+  if (at < 0) [top, z0, z1] = [0.65, -3.6, 3.6];
+  const box = new BoxGeometry(1, top, z1 - z0).toNonIndexed();
+  box.translate(0, top / 2, (z0 + z1) / 2);
+  box.deleteAttribute('uv');
+  const rgb = col && at >= 0 ? [col.getX(at), col.getY(at), col.getZ(at)] : [0.6, 0.6, 0.58];
+  const n = box.getAttribute('position').count;
+  box.setAttribute(
+    'color',
+    new Float32BufferAttribute(Array.from({ length: n }, () => rgb).flat(), 3),
+  );
+  box.computeBoundingSphere();
+  return box;
 }

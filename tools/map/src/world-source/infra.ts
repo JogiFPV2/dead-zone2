@@ -1,11 +1,14 @@
 import type { IRail, PlanIndex } from './plan-index.js';
 import {
   CROSSING_HALF,
-  crossingScale,
   crossingSides,
+  crossingScale,
+  snapToRoad,
+  crossingRoad,
   onRoad,
   underRoadDeck,
 } from './rail-crossing.js';
+import { type BandItem, crossingBands, joinAlong, shearAlong } from './crossing-band.js';
 import { onCarriageway, syntheticCrossings } from './level-crossings.js';
 
 /**
@@ -28,6 +31,10 @@ export interface GenPole {
   len?: number;
   /** Level crossing furniture sides (bit 1 = model −x, bit 2 = +x); omitted = both. */
   furn?: 0 | 1 | 2;
+  /** Level crossing sheared along an oblique road: model z += shear × x; omitted = 0. */
+  shear?: number;
+  /** Plain crossing plate (`CROSSING_FILL`) x scale: the gap between two tracks' plates (m). */
+  wide?: number;
 }
 
 /** Wires between two poles: every attach id present on both, sag as a fraction of the span. */
@@ -47,6 +54,9 @@ export interface GenInfra {
 }
 
 /** Sag of high / low voltage spans and of the catenary messenger (fraction of the span). */
+/** Plain plate filling the gap between neighbouring tracks' crossing plates (game-built). */
+export const CROSSING_FILL = 'przejazd-kat-a#fill';
+
 export const HV_SAG = 0.035;
 export const LV_SAG = 0.025;
 export const MW_SAG = 0.018;
@@ -337,22 +347,24 @@ export function chunkInfra(
       .filter((n) => n.kind === 'level_crossing' && onCarriageway(idx, n))
       .map((n): V => n)
       .concat(synth);
-    const crossing = (n: V, d: V) => {
-      const len = crossingScale(idx, n, d);
-      holes.push({ c: n, d, hu: CROSSING_HALF * len, hv: 2.4 });
-      if (inChunk(n)) {
-        const rot = Math.round(yawOf(d) * 1e4) / 1e4;
-        const others = crossings.filter((o) => o !== n);
-        const furn = crossingSides(n, d, sideOf(rot), others, len);
-        poles.push({
-          m: 'przejazd-kat-a',
-          x: n.x,
-          y: n.y,
-          rot,
-          ...(len !== 1 ? { len } : {}),
-          ...(furn !== 3 ? { furn } : {}),
-        });
-      }
+    // Crossing centres on the road axis (snapToRoad), for the furniture sides of the neighbours.
+    const centres = new Map<V, V>();
+    const centre = (at: V, d: V) => {
+      let c = centres.get(at);
+      if (!c) centres.set(at, (c = snapToRoad(idx, at, d)));
+      return c;
+    };
+    for (const o of crossings) {
+      const s = synth.find((x) => x === o);
+      if (s) centre(o, s.d);
+      else if (arms(o).length) centre(o, arms(o)[0]!);
+    }
+    const pending: (BandItem & { d: V })[] = [];
+    const crossing = (at: V, d: V) => {
+      const n = centre(at, d);
+      const rot = Math.round(yawOf(d) * 1e4) / 1e4;
+      const road = crossingRoad(idx, n, d);
+      pending.push({ n, d, rot, len: crossingScale(idx, n, d), ...(road ? { road } : {}) });
     };
     for (const i of idx.railNodes.query(q)) {
       const n = idx.railNodes.items[i]!;
@@ -398,6 +410,44 @@ export function chunkInfra(
       }
     }
     for (const s of synth) crossing(s, s.d);
+    // Parallel tracks on one road: one band of plates, furniture on the outer sides only.
+    const band = crossingBands(pending, (k) => {
+      const r = pending[k]!.road;
+      return r ? shearAlong(r.d, pending[k]!.rot) : 0;
+    });
+    joinAlong(pending, band.plates);
+    const others = pending.map((p) => p.n);
+    pending.forEach(({ n, d, rot }, k) => {
+      const { len, shear } = band.plates[k]!;
+      // Crossings off the band (another road close by) still drop a side towards a neighbour.
+      const near = others.filter((_, j) => j !== k);
+      const furn = (band.plates[k]!.furn & crossingSides(n, d, sideOf(rot), near, len, shear)) as
+        0 | 1 | 2 | 3;
+      // Sheared plates: the rail ends of the model move ±0.75·shear along the track; a shorter
+      // hole keeps the track tiles under them (no gap between the plate and the track).
+      holes.push({ c: n, d, hu: CROSSING_HALF * len - 0.75 * Math.abs(shear), hv: 2.4 });
+      if (!inChunk(n)) return;
+      poles.push({
+        m: 'przejazd-kat-a',
+        x: n.x,
+        y: n.y,
+        rot,
+        ...(len !== 1 ? { len } : {}),
+        ...(furn !== 3 ? { furn } : {}),
+        ...(shear ? { shear } : {}),
+      });
+    });
+    for (const f of band.fills)
+      if (inChunk(f))
+        poles.push({
+          m: CROSSING_FILL,
+          x: f.x,
+          y: f.y,
+          rot: f.rot,
+          wide: f.wide,
+          ...(f.len !== 1 ? { len: f.len } : {}),
+          ...(f.shear ? { shear: f.shear } : {}),
+        });
     // Sidings ending in nothing: buffer stops too (main lines run off the map instead).
     for (const r of rails) {
       if (!r.siding || r.pts.length < 4) continue;
