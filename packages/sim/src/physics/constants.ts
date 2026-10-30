@@ -214,6 +214,8 @@ export interface VaultConfig {
   tripMax: number;
   /** Lying time after a trip (then getup). */
   tripKnockdownTicks: number;
+  /** Chance that a vault trip (falling off the fence / sill) leaves a scratch on a hand, shin or foot. */
+  tripInjuryChance: number;
   /**
    * Chance that a broken window cuts (laceration on a forearm / hand / thigh). Only a frame with
    * glass left in it cuts: `removeGlass` sets the opening's `cleared` flag (physics/vault.ts).
@@ -527,6 +529,7 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     tripSkillFloor: 0.25,
     tripMax: 0.9,
     tripKnockdownTicks: sec(1.5),
+    tripInjuryChance: 0.4,
     glassChance: 0.5,
   },
   tripOver: {

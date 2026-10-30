@@ -148,6 +148,25 @@ describe('vault: fences', () => {
     expect(pbody(sim).state).toBe('idle');
   });
 
+  it('falling off the fence: a scratch on a hand, shin or foot (tripInjuryChance)', () => {
+    const hurt = vaultSim(
+      { x: 19.7, y: 25.5 },
+      { physicsConfig: withVault({ tripFence: 1, tripMax: 1, tripInjuryChance: 1 }) },
+    );
+    cmds(hurt).vault();
+    const ev = run(hurt, DEFAULT_PHYSICS_CONFIG.vault.fenceTicks + 1);
+    const w = eventsOf(ev, 'wounded');
+    expect(w).toHaveLength(1);
+    expect(w[0]!.wound).toBe('scratch');
+    expect(['hand_l', 'hand_r', 'shin_l', 'shin_r', 'foot_l', 'foot_r']).toContain(w[0]!.part);
+    const safe = vaultSim(
+      { x: 19.7, y: 25.5 },
+      { physicsConfig: withVault({ tripFence: 1, tripMax: 1, tripInjuryChance: 0 }) },
+    );
+    cmds(safe).vault();
+    expect(eventsOf(run(safe, DEFAULT_PHYSICS_CONFIG.vault.fenceTicks + 1), 'wounded')).toEqual([]);
+  });
+
   it('trip chance grows with running, load and fatigue, drops with Nimble / Fitness', async () => {
     const sim = vaultSim({ x: 19.7, y: 25.5 });
     sim.step();

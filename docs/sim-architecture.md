@@ -1800,3 +1800,6 @@ Przy okazji poprawka: ciało zatrzymane przy krawędzi nad biegiem (x = góra + 
 ### 9.81 Potknięcie o leżące ciało / przedmioty na ziemi
 
 `physics/trip-over.ts` (`tripOverSystem`, w kroku fizyki po przeskokach): gracz w biegu / sprincie (`MoveStats.gait` ≥ 2), w ruchu, poza schodami, nad leżącym ciałem (`knockdown` / `getup` / `dead`, w zasięgu promień + `tripOver.bodyReach`, ten sam poziom) albo na kafelku ze stertą na ziemi losuje (`rng.physics`, jedno losowanie na gracza na tick) potknięcie z szansą `physics.tripOver.bodyPerSec` / `itemPerSec` / TPS (× `sprintMul`) × (1 + `load`[obciążenie] + `endurance`[zmęczenie] + rany nóg × `perLegWound`). Chód i skradanie nigdy. Potknięcie: `knockdown` na `knockdownTicks`, odrzut w kierunku biegu (`push`), zdarzenia `tripped` + `fellDown`. Niskie meble nie są jeszcze przeszkodą (blokują ruch jak dotąd). Bez zmiany protokołu.
+### 9.82 Upadek z płotu / parapetu rani
+
+Potknięcie przy przeskoku (`tripped` + `fellDown`, jak dotąd) z szansą `physics.vault.tripInjuryChance` (0,4) zostawia zadrapanie (`wounded`, `scratch`) na dłoni, goleni albo stopie. Dwa dodatkowe losowania `rng.physics` tylko przy potknięciu, więc strumień bez potknięcia się nie zmienia. Bez zmiany protokołu.

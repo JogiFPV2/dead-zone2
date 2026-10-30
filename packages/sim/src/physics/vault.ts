@@ -24,6 +24,8 @@ const SKILL_NIMBLE = 'base:nimble';
 const SKILL_FITNESS = 'base:fitness';
 /** Glass cuts: forearm l / r, hand l / r, thigh l / r (BODY_PARTS indices). */
 const GLASS_PARTS = [7, 8, 9, 10, 11, 12] as const;
+/** Body parts bruised by falling off a fence / sill: hands, shins, feet. */
+const FALL_PARTS = [9, 10, 13, 14, 15, 16] as const;
 
 interface VaultEdge {
   /** OpeningKind of the edge (fence or window). */
@@ -387,6 +389,13 @@ function landVault(w: SimWorld, eid: number, b: PhysicsBody, events: PhysicsEven
   b.vaultGlass = 0;
   if (tripped) {
     setState(b, 'knockdown', w.tick, cfg.tripKnockdownTicks);
+    // Falling off: 2 more `rng.physics` draws, only on a trip (the no-trip stream is unchanged).
+    const u4 = pw.rng.nextFloat();
+    const u5 = pw.rng.nextFloat();
+    if (u4 < cfg.tripInjuryChance && w.survival) {
+      const part = FALL_PARTS[Math.min(FALL_PARTS.length - 1, Math.floor(u5 * FALL_PARTS.length))]!;
+      inflictWound(w, eid, part, woundKindIndex('scratch'));
+    }
     events.push({ type: 'tripped', entityId: b.id, tick: w.tick });
     events.push({ type: 'fellDown', entityId: b.id, tick: w.tick });
   } else {
