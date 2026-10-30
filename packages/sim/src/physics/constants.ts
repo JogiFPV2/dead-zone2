@@ -164,6 +164,8 @@ export interface PhysicsConfig {
   furniture: FurnitureConfig;
   /** Vaulting over low fences / through windows (`vault.ts`). */
   vault: VaultConfig;
+  /** Tripping over a lying body or a ground pile while running (`trip-over.ts`). */
+  tripOver: TripOverConfig;
   /** Knock-back of firearm hits per weapon category (`combat/firearms.ts` → `physicsHit`). */
   firearms: Record<FirearmCategory, FirearmKnockback>;
 }
@@ -172,6 +174,24 @@ export interface PhysicsConfig {
  * Vaulting (PZ: a standing low fence is hopped in about a second, sprinting over it often ends on
  * the ground; climbing through a window takes longer and broken glass cuts).
  */
+export interface TripOverConfig {
+  /** Trip chance per second while running over a lying body (knock-down, getting up, dead). */
+  bodyPerSec: number;
+  /** … over a tile with a ground pile (items on the floor). */
+  itemPerSec: number;
+  /** × in a sprint. */
+  sprintMul: number;
+  /** Chance × (1 + load[level] + endurance[level] + leg wounds × perLegWound). */
+  load: readonly number[];
+  endurance: readonly number[];
+  perLegWound: number;
+  /** Extra reach (tiles) beyond the player's radius at which a lying body is underfoot. */
+  bodyReach: number;
+  /** Lying time after the trip and the forward knock-back strength. */
+  knockdownTicks: number;
+  push: number;
+}
+
 export interface VaultConfig {
   /** Max distance from the body centre to the edge to start. */
   reachTiles: number;
@@ -508,6 +528,17 @@ export const DEFAULT_PHYSICS_CONFIG: PhysicsConfig = {
     tripMax: 0.9,
     tripKnockdownTicks: sec(1.5),
     glassChance: 0.5,
+  },
+  tripOver: {
+    bodyPerSec: 1.2,
+    itemPerSec: 0.25,
+    sprintMul: 2,
+    load: [0, 0.3, 0.7, 1.2, 2],
+    endurance: [0, 0.2, 0.5, 1, 1.6],
+    perLegWound: 0.5,
+    bodyReach: 0.3,
+    knockdownTicks: sec(1.5),
+    push: 0.4,
   },
   firearms: {
     pistol: { force: 0.3, closeTiles: 2, falloffTiles: 10, minMul: 0.3, maxReaction: 'stagger' },

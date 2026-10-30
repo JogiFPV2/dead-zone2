@@ -1,4 +1,5 @@
 import { stairRunFalls } from './stair-trip.js';
+import { tripOverSystem } from './trip-over.js';
 import type { SimEvent } from '@deadzone/protocol';
 import { bamToRad } from '../core/dmath.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
@@ -276,6 +277,7 @@ export function physicsSystem(w: SimWorld, grid: TileGrid): void {
   if (pw.multiLevel) fallSystem(w, eidBySid, events);
   vaultSystem(w, eidBySid, events);
   if (pw.multiLevel) stairRunFalls(w, eidBySid, events);
+  tripOverSystem(w, eidBySid, events);
   events.push(
     ...physicsStep(pw, {
       tick: w.tick,
