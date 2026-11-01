@@ -2,7 +2,7 @@
   "name": "@deadzone/map",
   "version": "0.0.0",
   "private": true,
-  "description": "Narzędzie deweloperskie: budowanie map w chunkach z blueprintów i walidacja map",
+  "description": "Narz\u0119dzie deweloperskie: budowanie map w chunkach z blueprint\u00f3w i walidacja map",
   "type": "module",
   "exports": {
     ".": {
@@ -30,7 +30,8 @@
     "osm:plan-png": "tsx src/osm/cli-plan-png.ts",
     "osm:crop": "tsx src/world-source/cli-crop.ts",
     "osm:places": "tsx src/world-source/cli-places.ts",
-    "osm:tiles": "tsx src/world-source/cli-tiles.ts"
+    "osm:tiles": "tsx src/world-source/cli-tiles.ts",
+    "osm:map2-bld": "tsx src/osm/cli-map2-buildings.ts"
   },
   "dependencies": {
     "@deadzone/content": "workspace:*",

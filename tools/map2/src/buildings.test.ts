@@ -147,6 +147,9 @@ describe('map2 buildings 1:1', () => {
     expect(A!.outer[k]![0]).toBeCloseTo(10, 1);
     expect(A!.outer[(k + 1) % 4]![0]).toBeCloseTo(10, 1);
     expect(B!.shared).toHaveLength(1);
+    // B's wall lies wholly on A's: A (lower id) draws it; A's longer wall is only partly shared.
+    expect(B!.sharedBy).toEqual(['1:0']);
+    expect(A!.sharedBy).toEqual(['']);
     expect(C!.shared).toHaveLength(0);
   });
 

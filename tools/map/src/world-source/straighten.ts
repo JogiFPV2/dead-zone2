@@ -577,6 +577,8 @@ export function straightenOsmMap(
     return squared;
   };
   const buildings = map.buildings.map((b) => {
+    // map2 outlines stay 1:1 (`exact`): only the frame rotation.
+    if (b.exact) return { ...b, rings: b.rings.map((g) => rotFlat(r, g)) };
     const { rot, squared } = sq(b.rings, true);
     if (squared) bs++;
     return { ...b, rings: cleanOrFallback(shaped(rot, squared), rot) };

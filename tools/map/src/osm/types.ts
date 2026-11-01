@@ -195,6 +195,13 @@ export interface OsmBuilding {
   osmId?: number;
   /** Outer ring (closed), holes after it. */
   rings: number[][];
+  /**
+   * map2 (`?map=stw2`): outline 1:1 from OSM, never squared, boxed or simplified; single-ring
+   * outlines always get vector walls on the exact outline.
+   */
+  exact?: 1;
+  /** map2: outer edges (k = vertex k → k + 1) whose wall a lower-gid neighbour draws (shared wall). */
+  noWall?: number[];
 }
 
 export interface OsmPoi {

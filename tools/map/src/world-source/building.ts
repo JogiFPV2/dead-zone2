@@ -73,6 +73,8 @@ const MAX_GAP = 3;
 /** Outline left slanted at runtime: single ring, off the axes by more than the snap tolerance. */
 export function isSlanted(ib: IBuilding): boolean {
   if (ib.rings.length !== 1) return false;
+  // map2 1:1 outline: walls always on the exact OSM line (vector), whatever the angle.
+  if (ib.b.exact) return true;
   const o = ringOrientation(Array.from(ib.rings[0]!));
   return Math.abs(o.deg) > SQUARE_TOLERANCE_DEG;
 }
@@ -89,9 +91,12 @@ function outlineSegments(
   fy: number,
   W: number,
   kindOf: (v: number) => string | undefined,
+  noWall: readonly number[] = [],
 ): WallSegment[] {
   const n = ring.length >> 1;
   const edges: [number, number, number, number][] = [];
+  /** Outline vertex index of every edge (`noWall`: the neighbour draws that wall). */
+  const edgeIdx: number[] = [];
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
     const e: [number, number, number, number] = [
@@ -100,8 +105,12 @@ function outlineSegments(
       ring[2 * j]!,
       ring[2 * j + 1]!,
     ];
-    if (Math.hypot(e[2] - e[0], e[3] - e[1]) > 1e-6) edges.push(e);
+    if (Math.hypot(e[2] - e[0], e[3] - e[1]) > 1e-6) {
+      edges.push(e);
+      edgeIdx.push(i);
+    }
   }
+  const skip = new Set(noWall);
   const out: WallSegment[] = [];
   for (const [z, L] of levels) {
     const gaps: [number, number][][] = edges.map(() => []);
@@ -177,6 +186,7 @@ function outlineSegments(
       }
     }
     edges.forEach(([ax, ay, bx, by], k) => {
+      if (skip.has(edgeIdx[k]!)) return;
       const len = Math.hypot(bx - ax, by - ay);
       const ux = (bx - ax) / len;
       const uy = (by - ay) / len;
@@ -572,7 +582,7 @@ export function solveBuilding(
         bx1 = Math.max(bx1, fx + x);
         by1 = Math.max(by1, fy + y);
       }
-  const segments = vector ? outlineSegments(ib.rings[0]!, levels, fx, fy, W, kindOf) : undefined;
+  const segments = vector ? outlineSegments(ib.rings[0]!, levels, fx, fy, W, kindOf, ib.b.noWall) : undefined;
   return {
     ...(segments ? { segments, outline: Array.from(ib.rings[0]!) } : {}),
     gid: ib.gid,
