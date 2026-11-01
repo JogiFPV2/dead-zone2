@@ -129,6 +129,111 @@ interface Item {
   full: number;
 }
 
+/** Box InstancedMesh of `n` wall pieces (atlas uv + fade per instance). */
+function wallMesh(material: Material, n: number): InstancedMesh {
+  const g = new BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+  g.setAttribute('instanceUv', new InstancedBufferAttribute(new Float32Array(n * 2), 2));
+  g.setAttribute('instanceFade', new InstancedBufferAttribute(new Float32Array(n).fill(1), 1));
+  const mesh = new InstancedMesh(g, fadeMaterial(material), n);
+  mesh.name = 'vector-walls';
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+const ZERO = new Matrix4().makeScale(0, 0, 0);
+
+/**
+ * Vector walls of every streamed level and chunk in a few shared InstancedMeshes (blocks of
+ * instances per `VectorWalls`, first fit): map2 / `?map=stw2` has vector walls on every building,
+ * a mesh per chunk level was ~40 draw calls (twice with shadows) at a zoomed-out view.
+ */
+export class VectorWallPool {
+  readonly root = new Group();
+  private readonly parts: { mesh: InstancedMesh; free: [number, number][]; top: number }[] = [];
+
+  constructor(
+    private readonly material: Material,
+    private readonly capacity = 16384,
+  ) {
+    this.root.name = 'vector-walls';
+  }
+
+  alloc(n: number): { mesh: InstancedMesh; start: number } {
+    for (const p of this.parts) {
+      const i = p.free.findIndex(([, len]) => len >= n);
+      if (i >= 0) {
+        const [start, len] = p.free[i]!;
+        if (len === n) p.free.splice(i, 1);
+        else p.free[i] = [start + n, len - n];
+        return { mesh: p.mesh, start };
+      }
+      if (p.top + n <= p.mesh.instanceMatrix.count) {
+        const start = p.top;
+        p.top += n;
+        p.mesh.count = p.top;
+        return { mesh: p.mesh, start };
+      }
+    }
+    const mesh = wallMesh(this.material, Math.max(this.capacity, n));
+    // One mesh over many chunks: culled as a whole would always pass, bounds would go stale.
+    mesh.frustumCulled = false;
+    mesh.count = n;
+    this.parts.push({ mesh, free: [], top: n });
+    this.root.add(mesh);
+    return { mesh, start: 0 };
+  }
+
+  free(mesh: InstancedMesh, start: number, n: number): void {
+    const p = this.parts.find((q) => q.mesh === mesh);
+    if (!p) return;
+    const fade = mesh.geometry.getAttribute('instanceFade') as InstancedBufferAttribute;
+    for (let k = start; k < start + n; k++) {
+      mesh.setMatrixAt(k, ZERO);
+      fade.setX(k, 1);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    fade.needsUpdate = true;
+    p.free.push([start, n]);
+    // Merge neighbours, give the tail back.
+    p.free.sort((a, b) => a[0] - b[0]);
+    const merged: [number, number][] = [];
+    for (const f of p.free) {
+      const last = merged[merged.length - 1];
+      if (last && last[0] + last[1] === f[0]) last[1] += f[1];
+      else merged.push([f[0], f[1]]);
+    }
+    const tail = merged[merged.length - 1];
+    if (tail && tail[0] + tail[1] === p.top) {
+      p.top = tail[0];
+      merged.pop();
+    }
+    p.free = merged;
+    mesh.count = p.top;
+  }
+
+  /** Pieces drawn (tests). */
+  get used(): number {
+    return this.parts.reduce(
+      (s, p) => s + p.top - p.free.reduce((t, [, len]) => t + len, 0),
+      0,
+    );
+  }
+
+  get meshCount(): number {
+    return this.parts.length;
+  }
+
+  dispose(): void {
+    for (const p of this.parts) {
+      p.mesh.geometry.dispose();
+      p.mesh.dispose();
+    }
+    this.parts.length = 0;
+    this.root.clear();
+  }
+}
+
 /**
  * Vector walls of slanted buildings on one level (`ChunkData.wallSegments`): one InstancedMesh
  * of atlas-coloured boxes per skin plus decorative corner posts. The raster stair-steps of the
@@ -139,7 +244,8 @@ export class VectorWalls {
   readonly root = new Group();
   private readonly items: Item[] = [];
   private readonly meshes: InstancedMesh[] = [];
-  private readonly geometries: BoxGeometry[] = [];
+  /** Instances taken from `pool` (streamed worlds). */
+  private block: { mesh: InstancedMesh; start: number; n: number } | undefined;
   readonly buildings = new Set<BuildingId>();
 
   constructor(
@@ -150,23 +256,28 @@ export class VectorWalls {
     material: Material,
     skinOf: (b: BuildingId) => Skin,
     fullOf: (b: BuildingId) => number = () => WALL_HEIGHT,
+    private readonly pool?: VectorWallPool,
   ) {
     this.root.name = 'vector-walls';
     for (const s of segments) this.buildings.add(s.building ?? NO_BUILDING);
     if (segments.length) {
       const m = new Matrix4();
       const n = segments.length * 3;
-      const g = new BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-      const iuv = new Float32Array(n * 2);
-      g.setAttribute('instanceUv', new InstancedBufferAttribute(iuv, 2));
-      g.setAttribute('instanceFade', new InstancedBufferAttribute(new Float32Array(n).fill(1), 1));
-      this.geometries.push(g);
-      const mesh = new InstancedMesh(g, fadeMaterial(material), n);
-      mesh.name = 'vector-walls';
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      let mesh: InstancedMesh;
+      let start = 0;
+      if (pool) {
+        ({ mesh, start } = pool.alloc(n));
+        this.block = { mesh, start, n };
+      } else {
+        mesh = wallMesh(material, n);
+        mesh.count = n;
+        this.meshes.push(mesh);
+        this.root.add(mesh);
+      }
+      const iuvAttr = mesh.geometry.getAttribute('instanceUv') as InstancedBufferAttribute;
+      const iuv = iuvAttr.array as Float32Array;
       const uvOf = new Map<Skin, [number, number]>();
-      let k = 0;
+      let k = start;
       for (const s of segments) {
         const building = s.building ?? NO_BUILDING;
         const skin = skinOf(building);
@@ -186,11 +297,9 @@ export class VectorWalls {
         ] as [number, number][])
           put(postMatrix(m, p[0], p[1], baseY, full), { post: p });
       }
-      mesh.count = k;
       mesh.instanceMatrix.needsUpdate = true;
-      mesh.computeBoundingSphere();
-      this.meshes.push(mesh);
-      this.root.add(mesh);
+      iuvAttr.needsUpdate = true;
+      if (!pool) mesh.computeBoundingSphere();
     }
   }
 
@@ -247,8 +356,12 @@ export class VectorWalls {
   }
 
   dispose(): void {
-    for (const m of this.meshes) m.dispose();
-    for (const g of this.geometries) g.dispose();
+    if (this.block) this.pool?.free(this.block.mesh, this.block.start, this.block.n);
+    this.block = undefined;
+    for (const m of this.meshes) {
+      m.geometry.dispose();
+      m.dispose();
+    }
     this.root.clear();
   }
 }
