@@ -18,7 +18,10 @@ kafelki wokół gracza, resztę w miarę potrzeby; każdy kafelek ma sumę SHA-2
 wersja świata to skrót wszystkich kafelków. Każdy kafelek niesie te same pola atrybucji i licencji.
 
 `stw2/`: nowa mapa z `tools/map2` (`?map=stw2`, Paweł 01.11): kwadrat 32,8 × 32,8 km (Stalowa
-Wola, Rozwadów, Huta, Nisko, San do Wisły), północ u góry, bez obrotu i prostowania. Na razie
-drogi (szerokości, pasy, chodniki z tagów, łuki krawężnika), rzeki i tory. Odtworzenie:
-`tools/map2/README.md` (roads → `pnpm --filter @deadzone/map2 osm` →
-`pnpm --filter @deadzone/map osm:tiles <plik> apps/game/public/osm/stw2 --stw2`).
+Wola, Rozwadów, Huta, Nisko, San do Wisły), północ u góry, bez obrotu i prostowania. Drogi
+(szerokości, pasy, chodniki z tagów, łuki krawężnika), rzeki, tory i budynki 1:1 z OSM (map2:
+obrysy bez prostowania, dziedzińce, ściany wspólne, piętra z tagów). Kafle `t-<x>-<y>.json.gz`
+(gzip w repo, ~6,4 MB; sha256/bytes w manifeście liczone z JSON-a, klient rozpakowuje).
+Odtworzenie: `tools/map2/README.md` (roads → `pnpm --filter @deadzone/map2 osm`, budynki →
+`pnpm --filter @deadzone/map2 buildings` → `pnpm --filter @deadzone/map osm:map2-bld <drogi>
+<budynki> <wyjście>`) → `pnpm --filter @deadzone/map osm:tiles <plik> apps/game/public/osm/stw2 --stw2`.

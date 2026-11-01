@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import type { OsmMap } from '../osm/types.js';
 import { alignBuildingsToGrid, type GridAlignStats } from './grid-align.js';
 import { OSM_ROTATION_DEG, OSM_WORLD_SIZE } from './straighten.js';
@@ -15,7 +16,7 @@ import {
 
 /**
  * `pnpm --filter @deadzone/map osm:tiles <stw-map.json> <out-dir>`: the whole OSM square as
- * lazily loaded tiles (`manifest.json` + `t-<x>-<y>.json`, see `tiles.ts`). ODbL data: every
+ * lazily loaded tiles (`manifest.json` + `t-<x>-<y>.json (stw2: .json.gz)`, see `tiles.ts`). ODbL data: every
  * tile keeps the attribution and licence fields.
  */
 const args = process.argv.slice(2);
@@ -48,10 +49,13 @@ let total = 0;
 for (const k of keys) {
   const [tx, ty] = k.split(',').map(Number) as [number, number];
   const body = JSON.stringify(tiles.get(k));
-  const file = `t-${tx}-${ty}.json`;
-  writeFileSync(join(outDir, file), body);
+  // stw2: gzipped in the repo (sha256 / bytes stay those of the JSON, so `dataHash` does not
+  // depend on the compression); the client inflates by the gzip magic (`load-plan.ts`).
+  const file = stw2 ? `t-${tx}-${ty}.json.gz` : `t-${tx}-${ty}.json`;
+  const out = stw2 ? gzipSync(body, { level: 9 }) : body;
+  writeFileSync(join(outDir, file), out);
   refs.push({ tx, ty, file, bytes: body.length, sha256: sha(body) });
-  total += body.length;
+  total += out.length;
 }
 const packed = packKinds(kinds);
 const places = map.places;
