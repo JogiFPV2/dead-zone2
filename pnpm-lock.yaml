@@ -411,6 +411,15 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  tools/map2:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
 packages:
 
   '@babel/code-frame@7.29.7':
