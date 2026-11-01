@@ -1,3 +1,4 @@
+import { pickSpecies, type TreeHabitat } from './tree-species.js';
 import { deckRailingEdge } from './deck-railing.js';
 import { chunkLamps, type GenLamp } from './lamps.js';
 import { clearingMask } from './clearing.js';
@@ -137,6 +138,12 @@ export interface GenColumn {
   paved?: number[][][];
   /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
   trees: number[];
+  /**
+   * Species of each tree (content tree-species id, e.g. `base:oak`): `treeSpecies[i]` belongs to
+   * `trees[2i], trees[2i + 1]`. Picked by habitat (forest, park, street, field, garden) from a
+   * hash of the tree's position.
+   */
+  treeSpecies: string[];
   buildings: GenBuildingMeta[];
   /** Power lines, railway track, switches, crossings, catenary (render only, world metres). */
   infra?: GenInfra;
@@ -154,6 +161,28 @@ const SCRUB_RANK = AREA_ORDER.indexOf('scrub') + 1;
 const FOREST_RANK = AREA_ORDER.indexOf('forest') + 1;
 
 /** Deterministic 0..1 hash of integer coordinates. */
+/** Habitat of a tree at world (x, y) from the chunk raster (see `treeSpecies`). */
+function habitatAt(r: Raster, occ: Uint8Array, x: number, y: number): TreeHabitat {
+  const at = (tx: number, ty: number) => {
+    const lx = tx - r.x0;
+    const ly = ty - r.y0;
+    return lx < 0 || ly < 0 || lx >= r.w || ly >= r.h ? -1 : ly * r.w + lx;
+  };
+  const j = at(Math.floor(x), Math.floor(y));
+  if (j >= 0 && (r.tree[j] === 1 || r.area[j] === FOREST_RANK)) return 'forest';
+  if (j >= 0 && r.tree[j] === 2) return 'park';
+  let garden = false;
+  for (let dy = -3; dy <= 3; dy++)
+    for (let dx = -3; dx <= 3; dx++) {
+      const k = at(Math.floor(x) + dx, Math.floor(y) + dy);
+      if (k < 0) continue;
+      const g = r.g[k]!;
+      if (g === G_ASPHALT || g === G_SIDEWALK) return 'street';
+      if (occ[k]) garden = true;
+    }
+  return garden ? 'garden' : 'field';
+}
+
 export function hash01(x: number, y: number, salt: number): number {
   let h = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ Math.imul(salt, 0x9e3779b9);
   h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
@@ -596,6 +625,7 @@ export class PlanChunkGenerator {
       C,
     );
     const trees = this.trees(r, M, occ, ground, X0, Y0, cut);
+    const treeSpecies = this.treeSpecies(r, occ, trees, X0, Y0);
     const buildings: GenBuildingMeta[] = list
       .filter((s) => s.bx1 >= X0 && s.by1 >= Y0 && s.bx0 < X0 + C && s.by0 < Y0 + C)
       .map((s) => ({
@@ -611,7 +641,7 @@ export class PlanChunkGenerator {
         ...(s.outline ? { outline: s.outline } : {}),
         ...this.lookOf(s.gid, s.floors),
       }));
-    const out: GenColumn = { cx, cy, levels, trees, buildings };
+    const out: GenColumn = { cx, cy, levels, trees, treeSpecies, buildings };
     const infra = chunkInfra(this.index, cx, cy, C);
     if (infra) out.infra = infra;
     const lamps = chunkLamps(this.index, cx * C, cy * C, C);
@@ -970,6 +1000,29 @@ export class PlanChunkGenerator {
         }
     }
     void M;
+    return out;
+  }
+
+  /**
+   * Species of every tree (`trees` pairs, chunk-local): habitat from the raster (woods → forest,
+   * parks → park, paved ground within 3 m → street, a building within 3 m → garden, else field),
+   * species weighted by its `habitats`, hashed from the world position (deterministic).
+   */
+  private treeSpecies(
+    r: Raster,
+    occ: Uint8Array,
+    trees: readonly number[],
+    X0: number,
+    Y0: number,
+  ): string[] {
+    const out: string[] = [];
+    for (let i = 0; i + 1 < trees.length; i += 2) {
+      const x = X0 + trees[i]!;
+      const y = Y0 + trees[i + 1]!;
+      out.push(
+        pickSpecies(habitatAt(r, occ, x, y), hash01(Math.round(x * 100), Math.round(y * 100), 61)),
+      );
+    }
     return out;
   }
 

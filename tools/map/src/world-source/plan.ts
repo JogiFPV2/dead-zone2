@@ -103,8 +103,9 @@ export interface WorldPlanInput {
  *     tracks on one road give one continuous band at rail height); one set of crossing signs /
  *     barriers per road side; no track gap at the ends of sheared plates (#391, #392).
  * 38: street lamps from OSM and evenly along carriageways (`chunkLamps`, #367).
+ * 39: `treeSpecies` per tree (content tree-species by habitat, hashed from the position).
  */
-export const GENERATOR_REV = 38;
+export const GENERATOR_REV = 39;
 
 /** Numeric generator version for saves (`WorldSource.generatorVersion`): 31-bit FNV-1a of the string. */
 export function generatorVersionNumber(version: string): number {
