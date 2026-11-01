@@ -2,13 +2,14 @@
   "name": "@deadzone/map2",
   "version": "0.0.0",
   "private": true,
-  "description": "Nowy pipeline mapy Stalowej Woli z OSM (etap 1: drogi). Stary generator (tools/map) zostaje do czasu zastąpienia.",
+  "description": "Nowy pipeline mapy Stalowej Woli z OSM (etap 1: drogi). Stary generator (tools/map) zostaje do czasu zast\u0105pienia.",
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
-    "roads": "tsx src/cli-roads.ts"
+    "roads": "tsx src/cli-roads.ts",
+    "buildings": "tsx src/cli-buildings.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
