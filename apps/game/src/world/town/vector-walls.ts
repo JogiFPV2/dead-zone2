@@ -24,7 +24,19 @@ import {
   type FadeView,
 } from '../wall-fade.js';
 
-/** Kit material → its clone reading the `instanceFade` attribute (one per kit material). */
+/**
+ * Atlas cell per instance: the box's uv (one atlas texel per skin) read from `instanceUv`, so all
+ * skins share ONE InstancedMesh (bld v2 gives most buildings their own skin; a mesh per skin was a
+ * draw call per building colour, map2 / `?map=stw2` has vector walls on every building).
+ */
+export function patchInstanceUv(vertexShader: string): string {
+  return `attribute vec2 instanceUv;\n${vertexShader.replace(
+    '#include <uv_vertex>',
+    '#define uv instanceUv\n#include <uv_vertex>\n#undef uv',
+  )}`;
+}
+
+/** Kit material → its clone reading `instanceFade` and `instanceUv` (one per kit material). */
 const fadeMaterials = new WeakMap<Material, Material>();
 function fadeMaterial(m: Material): Material {
   let f = fadeMaterials.get(m);
@@ -35,6 +47,13 @@ function fadeMaterial(m: Material): Material {
     f.onBeforeCompile = base.onBeforeCompile;
     f.customProgramCacheKey = base.customProgramCacheKey;
     withFade(f, true);
+    const prev = f.onBeforeCompile.bind(f);
+    const prevKey = f.customProgramCacheKey.bind(f);
+    f.onBeforeCompile = (sh, r) => {
+      prev(sh, r);
+      sh.vertexShader = patchInstanceUv(sh.vertexShader);
+    };
+    f.customProgramCacheKey = () => `${prevKey()}|dz-iuv`;
     fadeMaterials.set(m, f);
   }
   return f;
@@ -133,43 +152,39 @@ export class VectorWalls {
     fullOf: (b: BuildingId) => number = () => WALL_HEIGHT,
   ) {
     this.root.name = 'vector-walls';
-    const bySkin = new Map<Skin, SimWallSegment[]>();
-    for (const s of segments) {
-      const b = s.building ?? NO_BUILDING;
-      this.buildings.add(b);
-      const skin = skinOf(b);
-      let list = bySkin.get(skin);
-      if (!list) bySkin.set(skin, (list = []));
-      list.push(s);
-    }
-    const m = new Matrix4();
-    for (const [skin, list] of bySkin) {
+    for (const s of segments) this.buildings.add(s.building ?? NO_BUILDING);
+    if (segments.length) {
+      const m = new Matrix4();
+      const n = segments.length * 3;
       const g = new BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-      const [u, v] = cells.uv(WALL_CELL[skin]);
-      const uv = g.getAttribute('uv');
-      for (let i = 0; i < uv.count; i++) uv.setXY(i, u, v);
+      const iuv = new Float32Array(n * 2);
+      g.setAttribute('instanceUv', new InstancedBufferAttribute(iuv, 2));
+      g.setAttribute('instanceFade', new InstancedBufferAttribute(new Float32Array(n).fill(1), 1));
       this.geometries.push(g);
-      const mesh = new InstancedMesh(g, fadeMaterial(material), list.length * 3);
-      g.setAttribute(
-        'instanceFade',
-        new InstancedBufferAttribute(new Float32Array(list.length * 3).fill(1), 1),
-      );
+      const mesh = new InstancedMesh(g, fadeMaterial(material), n);
       mesh.name = 'vector-walls';
       mesh.castShadow = true;
       mesh.receiveShadow = true;
+      const uvOf = new Map<Skin, [number, number]>();
       let k = 0;
-      for (const s of list) {
+      for (const s of segments) {
         const building = s.building ?? NO_BUILDING;
+        const skin = skinOf(building);
+        let uv = uvOf.get(skin);
+        if (!uv) uvOf.set(skin, (uv = cells.uv(WALL_CELL[skin])));
         const full = fullOf(building);
-        mesh.setMatrixAt(k, segmentMatrix(m, s, baseY, full));
-        this.items.push({ mesh, index: k++, building, seg: s, height: full, full });
+        const put = (mat: Matrix4, extra: Partial<Item>) => {
+          mesh.setMatrixAt(k, mat);
+          iuv[2 * k] = uv[0];
+          iuv[2 * k + 1] = uv[1];
+          this.items.push({ mesh, index: k++, building, height: full, full, ...extra });
+        };
+        put(segmentMatrix(m, s, baseY, full), { seg: s });
         for (const p of [
           [s.x0, s.y0],
           [s.x1, s.y1],
-        ] as [number, number][]) {
-          mesh.setMatrixAt(k, postMatrix(m, p[0], p[1], baseY, full));
-          this.items.push({ mesh, index: k++, building, post: p, height: full, full });
-        }
+        ] as [number, number][])
+          put(postMatrix(m, p[0], p[1], baseY, full), { post: p });
       }
       mesh.count = k;
       mesh.instanceMatrix.needsUpdate = true;
