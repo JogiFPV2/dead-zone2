@@ -94,3 +94,70 @@ export function trunkGeometry(): BufferGeometry {
 export function triangles(g: BufferGeometry): number {
   return (g.index ? g.index.count : g.attributes.position!.count) / 3;
 }
+
+export const CONIFER_TIERS = 11;
+export const CONIFER_CARDS_PER_TIER = 8;
+
+/**
+ * Unit conifer crown (y −1..1, base radius 1): tiers of drooping needle cards round the axis,
+ * wide at the bottom, narrowing to the tip (pine / spruce cone). Same leaf material as the
+ * broadleaf crown, so the wind sway and alpha-to-coverage are shared.
+ */
+export function coniferGeometry(
+  tiers = CONIFER_TIERS,
+  perTier = CONIFER_CARDS_PER_TIER,
+): BufferGeometry {
+  const cards = tiers * perTier;
+  const pos = new Float32Array(cards * 4 * 3);
+  const nrm = new Float32Array(cards * 4 * 3);
+  const uv = new Float32Array(cards * 4 * 2);
+  const idx: number[] = [];
+  const p = new Vector3();
+  const out = new Vector3();
+  const side = new Vector3();
+  for (let t = 0; t < tiers; t++) {
+    const f = t / (tiers - 1); // 0 bottom … 1 tip
+    const y = -0.9 + 1.8 * f;
+    const r = 0.08 + 0.92 * (1 - f) ** 0.9;
+    const half = 0.3 + 0.4 * (1 - f);
+    for (let k = 0; k < perTier; k++) {
+      const i = t * perTier + k;
+      const a = (k / perTier) * Math.PI * 2 + t * 0.6 + spotHash(i, 6, 7) * 0.4;
+      out.set(Math.cos(a), 0, Math.sin(a));
+      side.set(-out.z, 0, out.x);
+      // Card from the axis out to the tier radius, drooping by 35 % of its length.
+      const len = r;
+      const corners: [number, number][] = [
+        [0, -1],
+        [1, -1],
+        [1, 1],
+        [0, 1],
+      ];
+      corners.forEach(([u, v], c) => {
+        p.copy(out)
+          .multiplyScalar(u * len)
+          .addScaledVector(side, v * half)
+          .setY(y - u * len * 0.35 + 0.05 * v);
+        const o = (i * 4 + c) * 3;
+        pos[o] = p.x;
+        pos[o + 1] = p.y;
+        pos[o + 2] = p.z;
+        // Normal: outward and up (lit like a cone, not like flat cards).
+        nrm[o] = out.x * 0.8;
+        nrm[o + 1] = 0.6;
+        nrm[o + 2] = out.z * 0.8;
+        uv[(i * 4 + c) * 2] = u;
+        uv[(i * 4 + c) * 2 + 1] = (v + 1) / 2;
+      });
+      const b = i * 4;
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    }
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new BufferAttribute(pos, 3));
+  g.setAttribute('normal', new BufferAttribute(nrm, 3));
+  g.setAttribute('uv', new BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeBoundingSphere();
+  return g;
+}

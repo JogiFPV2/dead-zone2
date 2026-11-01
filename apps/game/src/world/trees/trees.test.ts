@@ -1,25 +1,52 @@
 import { describe, expect, it } from 'vitest';
 import { leafClusterPixels } from './leaf-texture.js';
-import { SPECIES_LOOK, TREE_SPECIES, heightAt, speciesAt } from './species.js';
-import { CROWN_CARDS, crownGeometry, triangles, trunkGeometry } from './tree-geometry.js';
-import { TreeLayer, isTreeProp } from './tree-layer.js';
+import {
+  SPECIES_BY_TYPE,
+  TREE_HEIGHT_SCALE,
+  TREE_SPECIES,
+  heightAt,
+  look,
+  speciesAt,
+} from './species.js';
+import {
+  CONIFER_CARDS_PER_TIER,
+  CONIFER_TIERS,
+  CROWN_CARDS,
+  coniferGeometry,
+  crownGeometry,
+  triangles,
+  trunkGeometry,
+} from './tree-geometry.js';
+import { TreeLayer, isTreeProp, speciesOf } from './tree-layer.js';
 import { WIND_GLSL } from './wind.js';
 
-describe('real trees: species', () => {
-  it('shares sum to 1 and every deciduous species shows up', () => {
-    const sum = TREE_SPECIES.reduce((a, s) => a + SPECIES_LOOK[s].share, 0);
-    expect(sum).toBeCloseTo(1);
-    const seen = new Set<string>();
-    for (let i = 0; i < 400; i++) seen.add(speciesAt(i * 3.7, i * 1.3));
-    expect([...seen].sort()).toEqual([...TREE_SPECIES].sort());
+describe('real trees: species (content pack)', () => {
+  it('reads the town species from @deadzone/content (shrubs and garden-only skipped)', () => {
+    expect(SPECIES_BY_TYPE.broadleaf).toEqual([
+      'base:birch',
+      'base:linden',
+      'base:maple',
+      'base:oak',
+    ]);
+    expect(SPECIES_BY_TYPE.conifer).toEqual(['base:pine', 'base:spruce']);
+    expect(TREE_SPECIES).not.toContain('base:hazel');
   });
-  it('same spot = same tree, heights within the species range', () => {
+  it('every species of a leaf type shows up, same spot = same tree', () => {
+    for (const t of ['broadleaf', 'conifer'] as const) {
+      const seen = new Set<string>();
+      for (let i = 0; i < 400; i++) seen.add(speciesAt(i * 3.7, i * 1.3, t));
+      expect([...seen].sort()).toEqual([...SPECIES_BY_TYPE[t]]);
+    }
     expect(speciesAt(10, 20)).toBe(speciesAt(10, 20));
+  });
+  it('heights within the scaled content range, conifer crowns taller than broadleaf', () => {
     for (const s of TREE_SPECIES) {
       const h = heightAt(s, 5, 7);
-      expect(h).toBeGreaterThanOrEqual(SPECIES_LOOK[s].height[0]);
-      expect(h).toBeLessThanOrEqual(SPECIES_LOOK[s].height[1]);
+      expect(h).toBeGreaterThanOrEqual(look(s).height[0]);
+      expect(h).toBeLessThanOrEqual(look(s).height[1]);
     }
+    expect(look('base:pine').crownHeight).toBeGreaterThan(look('base:oak').crownHeight);
+    expect(look('base:oak').height[0]).toBeCloseTo(15 * TREE_HEIGHT_SCALE);
   });
 });
 
@@ -27,6 +54,7 @@ describe('real trees: geometry and leaves', () => {
   it('crown = 2 triangles per leaf card, trunk low-poly', () => {
     expect(triangles(crownGeometry())).toBe(CROWN_CARDS * 2);
     expect(triangles(trunkGeometry())).toBeLessThanOrEqual(48);
+    expect(triangles(coniferGeometry())).toBe(CONIFER_TIERS * CONIFER_CARDS_PER_TIER * 2);
   });
   it('leaf texture is a cut-out: both transparent and opaque texels', () => {
     const px = leafClusterPixels(64);
@@ -47,19 +75,25 @@ describe('real trees: layer', () => {
     expect(isTreeProp('prop-tree-tall')).toBe(true);
     expect(isTreeProp('prop-grass-large')).toBe(false);
   });
-  it('all trees in 2 instanced meshes (2 draw calls), chunks load / unload', () => {
+  it('kit prop picks the leaf type: prop-tree-tall = conifer', () => {
+    expect(speciesOf({ x: 3, z: 4, prop: 'prop-tree-tall' })).toMatch(/pine|spruce/);
+    expect(speciesOf({ x: 3, z: 4, prop: 'prop-tree' })).not.toMatch(/pine|spruce/);
+  });
+  it('all trees in 3 instanced meshes (3 draw calls), chunks load / unload', () => {
     const l = new TreeLayer();
     l.load('0,0', [
       { x: 1, z: 2 },
-      { x: 5, z: 9 },
+      { x: 5, z: 9, prop: 'prop-tree-tall' },
     ]);
     l.load('1,0', [{ x: 40, z: 2 }]);
     l.update(0);
     expect(l.count).toBe(3);
-    expect(l.root.children).toHaveLength(2);
+    expect(l.coniferCount).toBe(1);
+    expect(l.root.children).toHaveLength(3);
     l.unload('0,0');
     l.update(0.1);
     expect(l.count).toBe(1);
-    expect(l.root.children).toHaveLength(2);
+    expect(l.coniferCount).toBe(0);
+    expect(l.root.children).toHaveLength(3);
   });
 });

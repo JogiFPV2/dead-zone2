@@ -34,7 +34,7 @@ const key = (cx: number, cy: number, z: number) => `${cx},${cy},${z}`;
 /** Receiver of a chunk's tree props (realistic trees, `world/trees/tree-layer.ts`). */
 export interface TreeSink {
   isTree(propName: string): boolean;
-  load(key: string, trees: readonly { x: number; z: number; y: number }[]): void;
+  load(key: string, trees: readonly { x: number; z: number; y: number; prop: string }[]): void;
   unload(key: string): void;
 }
 
@@ -186,7 +186,9 @@ export class StreamedTown {
       const sink = this.trees;
       sink.load(
         `${cx},${cy}`,
-        props.filter((p) => sink.isTree(p.name)).map((p) => ({ x: p.x, z: p.z, y: p.y ?? 0 })),
+        props
+          .filter((p) => sink.isTree(p.name))
+          .map((p) => ({ x: p.x, z: p.z, y: p.y ?? 0, prop: p.name })),
       );
       props = props.filter((p) => !sink.isTree(p.name));
     }
