@@ -1,4 +1,4 @@
-import { buildingLook, lookType, type LookType } from '@deadzone/map/world-source';
+import { buildingLook, LOOK_PALETTE, lookType, type LookType } from '@deadzone/map/world-source';
 import { BLD_PALETTE, type BldType } from './bld-palette.js';
 
 type BuildingLookKind = Parameters<typeof buildingLook>[0]['b']['kind'];
@@ -16,7 +16,7 @@ type BuildingLookKind = Parameters<typeof buildingLook>[0]['b']['kind'];
  * kit paints the palette at 2× (`PALETTE_SCALE`, nearest filtering, no mipmaps), so every free
  * cell holds 4 colours and existing UVs are untouched: 33 free cells → 132 colours.
  */
-export const BLD_V2_DEFAULT = false;
+export const BLD_V2_DEFAULT = true;
 
 /** Estate grid for blocks of flats (tiles = metres). */
 /** The kit paints the palette image at this scale (sub-cells need ≥ 2). */
@@ -55,9 +55,44 @@ export function bldTypeOf(b: BldInfo): BldType | undefined {
   return toBld(lookType(b.kind ?? '', b.floors ?? 1, Math.abs((b.x1 - b.x0) * (b.y1 - b.y0))));
 }
 
-/** Unique wall / roof colours over all types, in palette order. */
-const WALL_HEX: readonly string[] = [...new Set(TYPES.flatMap((t) => BLD_PALETTE[t].walls))];
-const ROOF_HEX: readonly string[] = [...new Set(TYPES.flatMap((t) => BLD_PALETTE[t].roofs))];
+/**
+ * Atlas colours: the client palette first, then every colour of the generator palette
+ * (`LOOK_PALETTE`: school, police, hospital, barn, house archetypes, flat-roof variants), cut
+ * down to `n` by dropping the later colour of the closest pair (the atlas holds 66 colours).
+ */
+function fit(first: readonly string[], more: readonly string[], n: number): string[] {
+  const all = [...new Set([...first, ...more])];
+  const d = (a: string, b: string) => {
+    const [r, g, bl] = rgb(a);
+    const [r2, g2, b2] = rgb(b);
+    return (r - r2) ** 2 + (g - g2) ** 2 + (bl - b2) ** 2;
+  };
+  while (all.length > n) {
+    let bi = 1;
+    let bd = Infinity;
+    for (let i = 1; i < all.length; i++)
+      for (let j = 0; j < i; j++) {
+        const v = d(all[i]!, all[j]!);
+        if (v < bd) {
+          bd = v;
+          bi = i;
+        }
+      }
+    all.splice(bi, 1);
+  }
+  return all;
+}
+const LOOK = Object.values(LOOK_PALETTE);
+const WALL_HEX: readonly string[] = fit(
+  TYPES.flatMap((t) => BLD_PALETTE[t].walls),
+  LOOK.flatMap((p) => [...p.walls, ...(p.archetypes ?? []).flatMap((a) => a.walls ?? [])]),
+  37,
+);
+const ROOF_HEX: readonly string[] = fit(
+  TYPES.flatMap((t) => BLD_PALETTE[t].roofs),
+  LOOK.flatMap((p) => [...p.roofs, ...(p.archetypes ?? []).flatMap((a) => a.roofs ?? [])]),
+  29,
+);
 
 type Idx<N extends number, A extends number[] = []> = A['length'] extends N
   ? A[number]
@@ -162,6 +197,26 @@ export interface BldInfo {
   look?: string | undefined;
   wallColor?: string | undefined;
   roofColor?: string | undefined;
+  /** `ok | neglected | abandoned | ruin` from the chunk data. */
+  condition?: string | undefined;
+}
+
+/** look-spec §C condition colour: `lerp(c, luma(c), desaturate) * (1 - darken)`. */
+const CONDITION_TINT: Readonly<Record<string, readonly [number, number]>> = {
+  neglected: [0.25, 0.1],
+  abandoned: [0.45, 0.18],
+  ruin: [0.65, 0.3],
+};
+export function conditionTint(hex: string, condition: string | undefined): string {
+  const t = condition ? CONDITION_TINT[condition] : undefined;
+  if (!t) return hex;
+  const [r, g, b] = rgb(hex);
+  const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const c = (v: number) =>
+    Math.round(Math.min(255, (v + (y - v) * t[0]) * (1 - t[1])))
+      .toString(16)
+      .padStart(2, '0');
+  return `#${c(r)}${c(g)}${c(b)}`;
 }
 const infos = new Map<number, BldInfo>();
 /** Streamed town hook: remember kind and footprint of the buildings of a chunk. */
@@ -209,7 +264,11 @@ export function nearestHex(list: readonly string[], hex: string): number {
  * truth), else — old chunks only — the same generator rule (`buildingLook`) run here.
  */
 function colours(b: BldInfo): { wall: string; roof: string } | undefined {
-  if (b.wallColor && b.roofColor) return { wall: b.wallColor, roof: b.roofColor };
+  if (b.wallColor && b.roofColor)
+    return {
+      wall: conditionTint(b.wallColor, b.condition),
+      roof: conditionTint(b.roofColor, b.condition),
+    };
   if (b.look) return undefined;
   const l = buildingLook({
     b: { id: b.id, kind: (b.kind ?? '') as BuildingLookKind },

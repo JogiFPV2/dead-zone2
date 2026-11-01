@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { BLD_PALETTE } from './bld-palette.js';
+import { LOOK_PALETTE } from '@deadzone/map/world-source';
 import {
   BLD_V2_DEFAULT,
   ESTATE_CELL,
@@ -13,6 +14,8 @@ import {
   bldTypeOf,
   PUBLIC_MIN_AREA,
   clearBuildings,
+  conditionTint,
+  nearestHex,
   initBldV2,
   noteBuildings,
   setBldV2,
@@ -65,6 +68,25 @@ describe("Designer's palette", () => {
     expect(V2_WALL_HEX).toHaveLength(V2_WALL_COUNT);
     expect(V2_SKINS).toHaveLength(V2_WALL_COUNT);
   });
+  it('v2 is the default; atlas carries the generator palette', () => {
+    expect(BLD_V2_DEFAULT).toBe(true);
+    // Police white, barn red, the flat-roof membrane: nearest atlas colour within a small step.
+    for (const [list, hex] of [
+      [V2_WALL_HEX, LOOK_PALETTE.police.walls[0]!],
+      [V2_WALL_HEX, LOOK_PALETTE.barn.walls[0]!],
+      [V2_ROOF_HEX, '#b9b6ad'],
+    ] as const) {
+      const n = parseInt(hex.slice(1), 16);
+      const m = parseInt(list[nearestHex(list, hex)]!.slice(1), 16);
+      const d = [16, 8, 0].reduce((s, k) => s + (((n >> k) & 255) - ((m >> k) & 255)) ** 2, 0);
+      expect(d).toBeLessThan(20 ** 2);
+    }
+  });
+  it('condition darkens and greys the colour', () => {
+    expect(conditionTint('#8e3b2c', 'ok')).toBe('#8e3b2c');
+    const r = conditionTint('#8e3b2c', 'ruin');
+    expect(parseInt(r.slice(1, 3), 16)).toBeLessThan(0x8e);
+  });
   it('kinds map to types', () => {
     expect(bldType('block')).toBe('block');
     expect(bldType('shop')).toBe('service');
@@ -108,7 +130,8 @@ describe('atlas', () => {
 });
 
 describe('per-building look', () => {
-  it('default look unchanged when off', () => {
+  it('v1 look unchanged when off (?bld=v1)', () => {
+    setBldV2(false);
     noteBuildings([house(5)]);
     expect(skinOfWall('base:plaster-wall', 5)).toBe('plaster');
     expect(roofColour(5)).toBe('roof-b');
