@@ -17,6 +17,7 @@ export const TOUCH_ACTIONS = [
   'slot1',
   'slot2',
   'slot3',
+  'reload',
 ] as const;
 export type TouchAction = (typeof TOUCH_ACTIONS)[number];
 
@@ -39,6 +40,7 @@ export const TOUCH_ACTION_MAP: Readonly<Record<TouchAction, Action>> = {
   slot1: 'quickslot1',
   slot2: 'quickslot2',
   slot3: 'quickslot3',
+  reload: 'reload',
 };
 
 export interface TouchControlsOptions {

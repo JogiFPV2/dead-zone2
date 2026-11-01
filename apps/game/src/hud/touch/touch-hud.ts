@@ -19,6 +19,16 @@ export const TOUCH_BUTTONS: readonly {
   { id: 'sprint', label: 'BIEG', icon: 'run', size: 56, right: 104, bottom: 90, kind: 'hold' },
   { id: 'sneak', label: 'SKRAD', icon: 'sneak', size: 56, right: 38, bottom: 116, kind: 'toggle' },
   { id: 'target', label: 'CEL', icon: 'target', size: 44, right: 180, bottom: 80, kind: 'press' },
+  // Only with a firearm in hand (R: przeładuj); hidden otherwise.
+  {
+    id: 'reload',
+    label: 'PRZEŁ',
+    icon: 'rotate',
+    size: 44,
+    right: 170,
+    bottom: 146,
+    kind: 'press',
+  },
 ];
 
 /** Top bar buttons right of the quick slots (Ekwipunek, Mapa, Pauza). */
@@ -31,7 +41,7 @@ export const TOUCH_TOP: readonly { id: TouchAction; label: string; icon: ChromeI
 export interface TouchHud {
   readonly el: HTMLElement;
   /** Per frame: stick drawing, the sneak switch state. */
-  update(state: { sneaking: boolean }): void;
+  update(state: { sneaking: boolean; reload?: boolean }): void;
   dispose(): void;
 }
 
@@ -198,7 +208,7 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
 
   return {
     el,
-    update({ sneaking }) {
+    update({ sneaking, reload = false }) {
       const k = controls.stick.knob;
       ring.dataset.active = String(controls.stick.active);
       if (controls.stick.active) {
@@ -209,6 +219,8 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
       }
       knob.style.transform = `translate(${k.dx}px, ${k.dy}px)`;
       buttons.get('sneak')?.toggleAttribute('data-on', sneaking);
+      const r = buttons.get('reload');
+      if (r && r.hidden !== !reload) r.hidden = !reload;
       close.hidden = !root.dataset.modal;
     },
     dispose() {

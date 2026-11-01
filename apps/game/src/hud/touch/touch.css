@@ -377,3 +377,8 @@ html.is-touch .dz-ip__menu-item {
   padding: 8px 10px;
   font-size: 13px;
 }
+
+/* Context buttons (PRZEŁ only with a firearm). */
+.dz-touch__btn[hidden] {
+  display: none;
+}

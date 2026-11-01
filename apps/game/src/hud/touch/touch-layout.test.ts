@@ -83,3 +83,23 @@ describe('touch layout: mobile HUD spec', () => {
     }
   });
 });
+
+describe('touch layout: thumb buttons', () => {
+  it('no two thumb buttons overlap (incl. the firearm-only PRZEŁ)', () => {
+    for (const a of TOUCH_BUTTONS)
+      for (const b of TOUCH_BUTTONS) {
+        if (a === b) continue;
+        // Round buttons: centres at least the sum of the radii apart.
+        const d = Math.hypot(
+          a.right + a.size / 2 - (b.right + b.size / 2),
+          a.bottom + a.size / 2 - (b.bottom + b.size / 2),
+        );
+        const apart = d >= (a.size + b.size) / 2;
+        expect(apart, `${a.id} vs ${b.id}`).toBe(true);
+      }
+  });
+  it('has a reload button and hides it by attribute', () => {
+    expect(TOUCH_BUTTONS.some((b) => b.id === 'reload')).toBe(true);
+    expect(css).toContain('.dz-touch__btn[hidden]');
+  });
+});

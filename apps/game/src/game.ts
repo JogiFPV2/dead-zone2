@@ -2179,7 +2179,7 @@ renderer.setAnimationLoop((time) => {
   }
   // In a car WASD drive (`drive`, vehicle controller), no `move` / `aim`.
   if (!vehicles.seated) playerInput.update(time, rig.targetYaw, worldCamera);
-  touchHud?.update({ sneaking: sneak.sneaking(time) });
+  touchHud?.update({ sneaking: sneak.sneaking(time), reload: Boolean(hud.firearm()) });
   touchZoom?.update(rig.zoomTarget);
   const state = snapshots.sample(performance.now(), TICK_MS);
   const simTick = stamper.tick + Math.min(1, (performance.now() - crowdArrivedMs) / TICK_MS);
