@@ -62,6 +62,17 @@ const MAPS: Record<string, () => Promise<PlanChunkGenerator>> = {
   'plan-4': () => Promise.resolve(new PlanChunkGenerator(plan4Plan(1, 16384))),
 };
 
+/**
+ * Species diversity ratchet (Modules), on the 8 × 8 sample below (no extra generation).
+ * minSpecies = measured count; topShare / hazelShare = measured + 0.01 (GENERATOR_REV 39).
+ * Per-habitat check skipped: habitat is not stored in GenColumn.
+ */
+const LIMITS: Record<string, { minSpecies: number; topShare: number; hazelShare: number }> = {
+  'osm-okulickiego': { minSpecies: 7, topShare: 0.249, hazelShare: 0.114 },
+  'osm-stw': { minSpecies: 6, topShare: 0.34, hazelShare: 0.177 },
+  'plan-4': { minSpecies: 5, topShare: 0.376, hazelShare: 0.155 },
+};
+
 describe('gatunki drzew na mapach (ratchet: Modules)', () => {
   for (const [id, load] of Object.entries(MAPS))
     it(`${id}: każde drzewo ma gatunek, deterministycznie`, async () => {
@@ -86,6 +97,15 @@ describe('gatunki drzew na mapach (ratchet: Modules)', () => {
       );
       expect(trees).toBeGreaterThan(0);
       for (const s of n.keys()) expect(TREE_HABITAT_WEIGHTS[s]).toBeDefined();
+      const lim = LIMITS[id]!;
+      const top = Math.max(...n.values()) / trees;
+      const hazel = (n.get('base:hazel') ?? 0) / trees;
+      console.log(
+        `[gatunki] ${id} species=${n.size} top=${top.toFixed(3)} hazel=${hazel.toFixed(3)}`,
+      );
+      expect(n.size, `${id} distinct species`).toBeGreaterThanOrEqual(lim.minSpecies);
+      expect(top, `${id} top species share`).toBeLessThanOrEqual(lim.topShare);
+      expect(hazel, `${id} hazel share`).toBeLessThanOrEqual(lim.hazelShare);
       // Deterministic: a second generator of the same plan gives the same species.
       if (id !== 'osm-stw')
         expect((await load()).column(mx, my)?.treeSpecies).toEqual(g.column(mx, my)?.treeSpecies);
