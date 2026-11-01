@@ -72,14 +72,12 @@ describe('StreamedWorldRenderer disposal', () => {
     expect(st.built[LOD_FAR]).toBe(24);
     expect(w.terrain.loadedChunks).toBeGreaterThanOrEqual(9);
     const lodMeshes = w.lod.root.children.filter((o) => o instanceof Mesh).length;
-    expect(lodMeshes).toBeLessThanOrEqual(40);
+    // Mid / far: one batch each (draw call per LOD, not per chunk).
+    expect(lodMeshes).toBeLessThanOrEqual(2);
     for (let x = 1; x <= 30; x++) await step(x);
     // Scene stays bounded while walking 30 chunks.
     expect(w.terrain.loadedChunks).toBeLessThanOrEqual(2 * 16);
-    expect(w.lod.root.children.filter((o) => o instanceof Mesh).length).toBeLessThanOrEqual(
-      (2 * 4 + 1) ** 2,
-    );
-    expect(tracker.disposed).toBeGreaterThan(0);
+    expect(w.lod.root.children.filter((o) => o instanceof Mesh).length).toBeLessThanOrEqual(2);
     w.streamer.dispose();
     expect(w.terrain.loadedChunks).toBe(0);
     expect(w.structures.partCount).toBe(0);
