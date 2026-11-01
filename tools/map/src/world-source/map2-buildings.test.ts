@@ -119,7 +119,8 @@ describe('map2 buildings in the stw2 tiles (exact outlines)', () => {
     const s = straightenOsmMap(map(bs), 0);
     for (const [i, b] of s.buildings.entries())
       expect(b.rings[0]).toEqual(bs[i]!.rings[0]!.map((v) => v + OSM_RAW_SHIFT * 10));
-    const { exact: _e, ...plain } = bs[0]!;
+    const plain: OsmBuilding = { ...bs[0]! };
+    delete plain.exact;
     const q = straightenOsmMap(map([plain]), 0).buildings[0]!.rings[0]!;
     expect(q).not.toEqual(s.buildings[0]!.rings[0]);
   });
