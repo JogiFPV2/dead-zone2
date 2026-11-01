@@ -14,6 +14,7 @@ import { PLAYER_RADIUS, TICKS_PER_SECOND } from '@deadzone/sim';
 import { facingToRotationY, simToWorld } from '../sim/coords.js';
 import type { EntityState } from '../sim/snapshot.js';
 import type { PhysState } from '../anim/contract.js';
+import { forcedAttack, forcedKnockback, type DevForce } from './dev-force.js';
 import { BodyMotion, PLAYER_MOTION } from '../anim/motion.js';
 import { PoseTracker, newPose, type WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from '../weapons/weapon-kinds.js';
@@ -115,6 +116,8 @@ export class PlayerView {
   animV2 = false;
   /** Dev `?swing=0..1` (anim v2): freeze the melee attack at this progress (screenshots). */
   devSwing = NaN;
+  /** Dev `?force=attack|knockback|reload&k=` (anim v2): action frozen at a progress. */
+  devForce: DevForce | undefined;
   /** Dev: draw the grip socket axes (`?anim=v2&sockets=1`). */
   showSockets = false;
   /** Grip sockets under the wrists (anim v2 only), placed with the weapon mounts. */
@@ -259,7 +262,14 @@ export class PlayerView {
   apply(state: EntityState, nowMs = performance.now(), phys?: PhysState, tickF = 0): void {
     const dt = this.lastMs === undefined ? 0 : Math.max(0, (nowMs - this.lastMs) / 1000);
     this.lastMs = nowMs;
-    const p = phys ?? this.ownState(state, dt);
+    const p0 = phys ?? this.ownState(state, dt);
+    const f = this.animV2 ? this.devForce : undefined;
+    const p =
+      f?.kind === 'knockback'
+        ? forcedKnockback(p0, tickF, f.k)
+        : f?.kind === 'attack'
+          ? forcedAttack(p0, tickF)
+          : p0;
     const shown = this.dead && p.state !== 'dead' ? { ...p, state: 'dead' as const } : p;
     const mo = this.motion;
     // Locomotion from the sim's real speed / acceleration / gait (v13); older data: the drawn
@@ -409,8 +419,9 @@ export class PlayerView {
       attack = meleeProgress(elapsed, meleeDuration(grip), hit);
       reach = Math.max(0, meleeExtension(attack));
     }
-    if (this.animV2 && !Number.isNaN(this.devSwing)) {
-      attack = this.devSwing;
+    const forcedSwing = this.devForce?.kind === 'attack' ? this.devForce.k : this.devSwing;
+    if (this.animV2 && !Number.isNaN(forcedSwing)) {
+      attack = forcedSwing;
       reach = Math.max(0, meleeExtension(attack));
     }
     this.lastBodyState = `${pose.state}/${pose.anim}`;
@@ -462,7 +473,11 @@ export class PlayerView {
     if (this.held) this.held.object.visible = d?.kind !== 'draw' || !ds || ds.swapped;
     const o = addOffsets(
       Number.isNaN(this.shotMs) ? {} : shotOffsets(grip, (nowMs - this.shotMs) / 1000),
-      r && r.until > r.start ? reloadOffsets((tickF - r.start) / (r.until - r.start)) : {},
+      this.devForce?.kind === 'reload'
+        ? reloadOffsets(this.devForce.k)
+        : r && r.until > r.start
+          ? reloadOffsets((tickF - r.start) / (r.until - r.start))
+          : {},
       u ? useOffsets(u.kind, (tickF - u.startTick) / TICKS_PER_SECOND) : {},
       ds?.offsets ?? {},
     );

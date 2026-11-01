@@ -20,6 +20,7 @@ import {
 } from './input/touch/touch-settings.js';
 import { autoAimTarget, AUTO_AIM_RANGE } from './input/touch/auto-aim.js';
 import { createTouchHud } from './hud/touch/touch-hud.js';
+import { parseDevForce } from './player/dev-force.js';
 import { MINIMAP_TOUCH_STEPS, radiusLabel, touchMinimapZoom } from './hud/touch/minimap-levels.js';
 import { INV2_CLASS, inventoryV2Enabled } from './hud/inv3/inv2-flag.js';
 import { MapRevealer, bigMapOverview, revealFlag } from './bigmap/reveal-flag.js';
@@ -2166,6 +2167,8 @@ const devUse =
     ? devUseParam
     : undefined;
 const devSwing = Number(devQuery?.get('swing') ?? NaN);
+/** Dev `?force=attack|knockback|reload&k=0..1` (anim v2): frozen action for frame strips. */
+const devForce = parseDevForce(devQuery);
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
   realTrees?.update(time / 1000);
@@ -2189,6 +2192,7 @@ renderer.setAnimationLoop((time) => {
     const back = loadout.back;
     player.aiming = devAim || isAiming(performance.now());
     player.devSwing = devSwing;
+    player.devForce = devForce;
     const action = gameState.get().action;
     const span = action ? action.endTick - action.startTick : 0;
     const dev = devFurnitureAction;
