@@ -16,3 +16,9 @@ podpis „© współtwórcy OpenStreetMap” na mapach wygenerowanych z tych dan
 `pnpm --filter @deadzone/map osm:tiles <stw-map.json> <katalog>`). Gra ładuje na starcie tylko
 kafelki wokół gracza, resztę w miarę potrzeby; każdy kafelek ma sumę SHA-256 w manifeście, a
 wersja świata to skrót wszystkich kafelków. Każdy kafelek niesie te same pola atrybucji i licencji.
+
+`stw2/`: nowa mapa z `tools/map2` (`?map=stw2`, Paweł 01.11): kwadrat 32,8 × 32,8 km (Stalowa
+Wola, Rozwadów, Huta, Nisko, San do Wisły), północ u góry, bez obrotu i prostowania. Na razie
+drogi (szerokości, pasy, chodniki z tagów, łuki krawężnika), rzeki i tory. Odtworzenie:
+`tools/map2/README.md` (roads → `pnpm --filter @deadzone/map2 osm` →
+`pnpm --filter @deadzone/map osm:tiles <plik> apps/game/public/osm/stw2 --stw2`).

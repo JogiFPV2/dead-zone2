@@ -74,6 +74,8 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     bridge: r.bridge,
     pts: r.pts,
     d0: r.d0,
+    ...(r.cl === 0 ? { cl: r.cl } : {}),
+    ...(r.ll ? { ll: r.ll } : {}),
   }));
   const bushes = col.levels
     .find((l) => l.z === 0)

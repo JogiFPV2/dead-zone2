@@ -34,7 +34,7 @@ const UNLIT = new Set(['path', 'footway', 'cycleway', 'steps', 'track', 'service
 const MAIN = new Set(['motorway', 'trunk', 'primary', 'secondary', 'tertiary']);
 
 /** Streets that get lamps (bridges and viaducts included). */
-export const isLitRoad = (r: IRoad): boolean => !UNLIT.has(r.kind) && r.r >= MIN_R;
+export const isLitRoad = (r: IRoad): boolean => !UNLIT.has(r.kind) && r.r >= MIN_R && !r.fill;
 
 /** Offset of the pole from the road axis: behind the sidewalk, or on the verge. */
 export const lampOffset = (r: IRoad): number => (r.rs > r.r ? r.rs : r.r) + LAMP_GAP;

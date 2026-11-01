@@ -83,6 +83,12 @@ export interface OsmRoad {
   bridge?: 1;
   tunnel?: 1;
   layer?: number;
+  /** map2 (`?map=stw2`): 0 = no centre line (one-way carriageway). */
+  cl?: 0;
+  /** map2: lane lines, offsets from the axis (m, left of the way direction > 0). */
+  ll?: number[];
+  /** map2: kerb-corner asphalt strip at a junction (no lamps, no crossings, no markings). */
+  fill?: 1;
   pts: number[];
 }
 

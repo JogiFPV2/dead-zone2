@@ -18,21 +18,23 @@ import {
  * lazily loaded tiles (`manifest.json` + `t-<x>-<y>.json`, see `tiles.ts`). ODbL data: every
  * tile keeps the attribution and licence fields.
  */
-const [input, outDir] = process.argv.slice(2);
+const args = process.argv.slice(2);
+/** `--stw2`: map2 data (`?map=stw2`): north up (no rotation, no grid align), 32 768 m world. */
+const stw2 = args.includes('--stw2');
+const [input, outDir] = args.filter((a) => !a.startsWith('--'));
+const ROT = stw2 ? 0 : OSM_ROTATION_DEG;
+const WORLD = stw2 ? 32768 : OSM_WORLD_SIZE;
 if (!input || !outDir) {
-  console.error('usage: osm:tiles <stw-map.json> <out-dir>');
+  console.error('usage: osm:tiles <stw-map.json> <out-dir> [--stw2]');
   process.exit(2);
 }
 const t0 = performance.now();
 // Buildings off the street grid turned onto it once, with the whole map in view (`grid-align.ts`).
 const align = {} as GridAlignStats;
-const map = alignBuildingsToGrid(
-  JSON.parse(readFileSync(input, 'utf8')) as OsmMap,
-  OSM_ROTATION_DEG,
-  align,
-);
+const raw = JSON.parse(readFileSync(input, 'utf8')) as OsmMap;
+const map = stw2 ? raw : alignBuildingsToGrid(raw, OSM_ROTATION_DEG, align);
 console.log(`grid align: ${JSON.stringify(align)}`);
-const { tiles, kinds } = splitOsmMap(map);
+const { tiles, kinds } = splitOsmMap(map, { rotationDeg: ROT, worldSize: WORLD });
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
@@ -65,8 +67,9 @@ const manifest: OsmTileManifest = {
   attribution: map.attribution,
   license: map.license,
   source: map.source,
-  worldSize: OSM_WORLD_SIZE,
-  rotationDeg: OSM_ROTATION_DEG,
+  worldSize: WORLD,
+  rotationDeg: ROT,
+  ...(stw2 ? { id: 'stw2', start: { x: 17000, y: 19000 } } : {}),
   tileSize: OSM_TILE_SIZE,
   places,
   kinds: packed,

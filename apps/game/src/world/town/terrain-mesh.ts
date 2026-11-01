@@ -502,7 +502,8 @@ export function buildTerrainGeometry(
       }
       if (r.surface === 'base:asphalt') {
         band(r.pts, r.r, RIBBON_Y.asphalt + dy, asphalt, [0.8, 0, 0, 0]);
-        if (r.r >= 2.5) dashes(r.pts, r.d0, RIBBON_Y.paint + dy, paint);
+        if (r.r >= 2.5 && r.cl !== 0) dashes(r.pts, r.d0, RIBBON_Y.paint + dy, paint);
+        for (const o of r.ll ?? []) dashes(offsetLine(r.pts, o), r.d0, RIBBON_Y.paint + dy, paint);
       } else if (r.surface === 'base:sidewalk') {
         band(r.pts, r.r, RIBBON_Y.sidewalk + dy, sidewalk, [0, 0, 0.7, 0]);
       } else {
@@ -541,6 +542,34 @@ export function buildTerrainGeometry(
   g.computeBoundingSphere();
   g.computeBoundingBox();
   return g;
+}
+
+/**
+ * Polyline (flat x, z pairs) shifted sideways by `o` (left of its direction > 0; vertex normals
+ * averaged from the adjacent segments), for lane lines.
+ */
+export function offsetLine(pts: readonly number[], o: number): number[] {
+  const n = pts.length >> 1;
+  const out: number[] = [];
+  const nrm = (i: number): [number, number] => {
+    const dx = pts[2 * i + 2]! - pts[2 * i]!;
+    const dz = pts[2 * i + 3]! - pts[2 * i + 1]!;
+    const l = Math.hypot(dx, dz) || 1;
+    return [dz / l, -dx / l];
+  };
+  for (let i = 0; i < n; i++) {
+    const a = i > 0 ? nrm(i - 1) : nrm(i);
+    const b = i < n - 1 ? nrm(i) : nrm(i - 1);
+    const sx = a[0] + b[0];
+    const sz = a[1] + b[1];
+    const l = Math.hypot(sx, sz) || 1;
+    // Miter: unit bisector scaled so both offset segments stay `o` away (capped at 2×).
+    const k = 1 / Math.max(0.5, (sx * a[0] + sz * a[1]) / l);
+    const nx = (sx / l) * k;
+    const nz = (sz / l) * k;
+    out.push(pts[2 * i]! + nx * o, pts[2 * i + 1]! + nz * o);
+  }
+  return out;
 }
 
 /** Natural ground a paved polygon may cover past the tile outline of its area (smooth edge). */

@@ -117,6 +117,9 @@ export interface GenRoad {
   pts: number[];
   /** Distance along the whole road at the first point (centre-line dashes stay continuous). */
   d0: number;
+  /** map2 (`?map=stw2`): 0 = no centre line; lane line offsets from the axis (tiles). */
+  cl?: 0;
+  ll?: number[];
 }
 
 export interface GenColumn {
@@ -737,6 +740,8 @@ export class PlanChunkGenerator {
             bridge: road.bridge,
             pts: run,
             d0: Math.round(d0 * 100) / 100,
+            ...(road.cl === 0 || road.fill ? { cl: 0 as const } : {}),
+            ...(road.ll ? { ll: road.ll } : {}),
           });
         }
         run = undefined;

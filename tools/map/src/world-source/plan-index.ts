@@ -19,6 +19,10 @@ export interface IRoad {
   rs: number;
   bridge: boolean;
   pts: Float64Array;
+  /** map2 markings: no centre line / lane line offsets (tiles); kerb-corner fill strip. */
+  cl?: 0;
+  ll?: number[];
+  fill?: 1;
 }
 export interface IRail {
   bridge: boolean;
@@ -260,7 +264,16 @@ export class PlanIndex {
       const half = Math.max(0.75, r.width / 2);
       const rs = r.sidewalk > 0 ? r.width / 2 + r.sidewalk : 0;
       this.roads.add(
-        { kind: r.kind, r: half, rs, bridge: !!r.bridge, pts },
+        {
+          kind: r.kind,
+          r: half,
+          rs,
+          bridge: !!r.bridge,
+          pts,
+          ...(r.cl === 0 ? { cl: 0 as const } : {}),
+          ...(r.ll?.length ? { ll: r.ll } : {}),
+          ...(r.fill ? { fill: 1 as const } : {}),
+        },
         boxOf(pts, Math.max(half, rs) + 1),
         Number(!!r.bridge) * 1e9 + rank * 1e7 + (r.ord ?? i),
       );

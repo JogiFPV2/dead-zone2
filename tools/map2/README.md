@@ -19,6 +19,8 @@ tools/map2/scripts/fetch.sh                      # Geofabrik podkarpackie → ~/
 python3 tools/map2/scripts/extract.py ~/.cache/deadzone-osm/podkarpackie-latest.osm.pbf \
   ~/.cache/deadzone-osm/stw-raw2.json            # deadzone-osm-raw-2 (WGS84, id węzłów)
 pnpm --filter @deadzone/map2 roads ~/.cache/deadzone-osm/stw-raw2.json ~/.cache/deadzone-osm/stw-roads2.json
+pnpm --filter @deadzone/map2 osm ~/.cache/deadzone-osm/stw-roads2.json ~/.cache/deadzone-osm/stw2-osm.json
+pnpm --filter @deadzone/map osm:tiles ~/.cache/deadzone-osm/stw2-osm.json apps/game/public/osm/stw2 --stw2
 python3 tools/map2/scripts/overlay.py ~/.cache/deadzone-osm/stw-roads2.json out.jpg 22.0535 50.5825 15
 ```
 
@@ -41,7 +43,17 @@ nakładka wyniku na referencję, z podpisanymi głównymi ulicami i dzielnicami.
   (przecięcie na tej samej warstwie bez wspólnego węzła).
 - `src/chunks.ts`: indeks odcinków na chunki 32 m (format klienta).
 
-## Migracja klienta (następne PR-y)
+## Klient: `?map=stw2` (`src/to-osm.ts`)
+
+Sieć map2 zapisana w formacie klienta (`deadzone-osm-1`, kafle 1 km `deadzone-osm-tiles-1`,
+chunki 32 m z istniejącego generatora, obrót 0°, świat 32 768 m, przesunięcie `STW2_OFFSET`):
+jezdnie z szerokością i chodnikiem z tagów (szerszy z dwóch boków), linia osi tylko na drogach
+dwukierunkowych (`cl: 0` na jednokierunkowych), linie pasów (`ll`, przesunięcia od osi), łuki
+krawężnika jako wachlarz pasków asfaltu od środka węzła do łuku (tylko węzły bez jezdni
+jednokierunkowych), przejścia dla pieszych z istniejącego `zebras.ts` (tylko przy węzłach jezdni
+pod kątem > 30°: T, X, wloty rond; nie na włączeniach). Kafle są w `apps/game/public/osm/stw2`.
+
+## Migracja klienta (dalej)
 
 Nowy id mapy `?map=stw2` obok `osm-stw`; chunki 32 m z indeksu `chunkIndex`, render wstęg dróg
 z profilu (jezdnia, krawężnik z łukami, chodnik, linie), przejścia tylko przy węzłach T / X / rondach.
