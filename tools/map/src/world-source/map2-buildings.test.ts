@@ -180,4 +180,46 @@ describe('map2 buildings in the stw2 tiles (exact outlines)', () => {
         }),
       ).toBe(true);
   });
+
+  it('a courtyard building gets vector walls on both rings and holes for the roof', () => {
+    // North of the street (a road through the building would cut its fill: raster walls).
+    const C = local(8240, 8150);
+    const yard = map2Buildings([
+      m2(9e6 + 1, rect(...C, 30, 30, 0), {
+        rel: true,
+        inner: [rect(...C, 10, 10, 0).reverse()],
+        area: 800,
+      }),
+    ]);
+    const gen = new PlanChunkGenerator(
+      osmPlan(map(yard), {
+        dataHash: 'x',
+        region: 'all',
+        ...OSM_REGIONS.all,
+        rotationDeg: 0,
+      }),
+    );
+    const [cx, cy] = C.map((v, i) => v + STW2_OFFSET[i]!) as Pt;
+    let inner = 0;
+    let outer = 0;
+    let holes = 0;
+    const seen = new Set<string>();
+    for (let x = Math.floor((cx - 20) / 32); x <= Math.floor((cx + 20) / 32); x++)
+      for (let y = Math.floor((cy - 20) / 32); y <= Math.floor((cy + 20) / 32); y++) {
+        const col = gen.column(x, y);
+        for (const b of col?.buildings ?? []) holes = Math.max(holes, b.holes?.length ?? 0);
+        for (const l of col?.levels ?? [])
+          for (const s of l.wallSegments ?? []) {
+            const k = `${s.z},${s.x0},${s.y0},${s.x1},${s.y1}`;
+            if (s.z !== 0 || seen.has(k)) continue;
+            seen.add(k);
+            const d = Math.max(Math.abs((s.x0 + s.x1) / 2 - cx), Math.abs((s.y0 + s.y1) / 2 - cy));
+            if (Math.abs(d - 5) < 0.1) inner++;
+            else if (Math.abs(d - 15) < 0.1) outer++;
+          }
+      }
+    expect(inner).toBeGreaterThanOrEqual(4);
+    expect(outer).toBeGreaterThanOrEqual(4);
+    expect(holes).toBe(1);
+  });
 });

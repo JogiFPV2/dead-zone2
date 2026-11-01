@@ -72,9 +72,10 @@ const MAX_GAP = 3;
 
 /** Outline left slanted at runtime: single ring, off the axes by more than the snap tolerance. */
 export function isSlanted(ib: IBuilding): boolean {
-  if (ib.rings.length !== 1) return false;
-  // map2 1:1 outline: walls always on the exact OSM line (vector), whatever the angle.
+  // map2 1:1 outline: walls always on the exact OSM line (vector), whatever the angle, also
+  // around courtyards (inner rings).
   if (ib.b.exact) return true;
+  if (ib.rings.length !== 1) return false;
   const o = ringOrientation(Array.from(ib.rings[0]!));
   return Math.abs(o.deg) > SQUARE_TOLERANCE_DEG;
 }
@@ -215,6 +216,8 @@ export interface SolvedBuilding {
   segments?: WallSegment[];
   /** Slanted building with vector walls: its outline (x, y pairs, world metres) for the roof. */
   outline?: number[];
+  /** Courtyards (inner rings, x, y pairs) of `outline`: holes in the roof, walls around them. */
+  holes?: number[][];
   gid: number;
   osmId: number;
   kind: string;
@@ -582,9 +585,17 @@ export function solveBuilding(
         bx1 = Math.max(bx1, fx + x);
         by1 = Math.max(by1, fy + y);
       }
-  const segments = vector ? outlineSegments(ib.rings[0]!, levels, fx, fy, W, kindOf, ib.b.noWall) : undefined;
+  // Inner rings: courtyard walls (noWall indexes the outer ring only).
+  const segments = vector
+    ? ib.rings.flatMap((ring, k) =>
+        outlineSegments(ring, levels, fx, fy, W, kindOf, k === 0 ? ib.b.noWall : []),
+      )
+    : undefined;
+  const holes = ib.rings.slice(1).map((r) => Array.from(r));
   return {
-    ...(segments ? { segments, outline: Array.from(ib.rings[0]!) } : {}),
+    ...(segments
+      ? { segments, outline: Array.from(ib.rings[0]!), ...(holes.length ? { holes } : {}) }
+      : {}),
     gid: ib.gid,
     osmId: ib.b.id,
     kind: ib.b.kind,

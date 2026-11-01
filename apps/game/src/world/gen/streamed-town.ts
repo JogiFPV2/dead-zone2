@@ -145,7 +145,9 @@ export class StreamedTown {
       },
       outlineOf: (b) => {
         const m = metas.get(b);
-        return m?.outline ? { outline: m.outline, floors: m.floors } : undefined;
+        return m?.outline
+          ? { outline: m.outline, floors: m.floors, ...(m.holes ? { holes: m.holes } : {}) }
+          : undefined;
       },
       shelled: shellOf
         ? (b) => {

@@ -79,7 +79,12 @@ export interface TownStructuresOptions {
    * vector walls: its top level gets a flat roof on the outline instead of roof tiles.
    */
   outlineOf?:
-    ((b: BuildingId) => { outline: readonly number[]; floors: number } | undefined) | undefined;
+    | ((
+        b: BuildingId,
+      ) =>
+        | { outline: readonly number[]; floors: number; holes?: readonly (readonly number[])[] }
+        | undefined)
+    | undefined;
   /** Streamed worlds: blocks of flats get the Designer's facade (balconies, canopies, roof). */
   blokOf?: ((b: BuildingId) => BlokInfo | undefined) | undefined;
   /**
@@ -293,6 +298,7 @@ export class TownStructures {
           x1: (range.cx1 + 1) * CHUNK_SIZE,
           y1: (range.cy1 + 1) * CHUNK_SIZE,
         },
+        o.holes,
       );
       const at = geo?.boundingBox?.getCenter(new Vector3());
       if (geo && at && geo.getAttribute('position').count > 0)

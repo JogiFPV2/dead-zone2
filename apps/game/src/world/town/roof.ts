@@ -119,23 +119,31 @@ export function outlineRoof(
   cells: TownCells,
   y0: number,
   clip?: { x0: number; y0: number; x1: number; y1: number },
+  holes: readonly (readonly number[])[] = [],
 ): BufferGeometry | undefined {
-  const n = outline.length >> 1;
-  if (n < 3) return undefined;
-  const ring: Vector2[] = [];
-  for (let i = 0; i < n; i++) ring.push(new Vector2(outline[2 * i], outline[2 * i + 1]));
-  if (ring[0]!.equals(ring[n - 1]!)) ring.pop();
-  if (ring.length < 3) return undefined;
+  const toRing = (flat: readonly number[]) => {
+    const n = flat.length >> 1;
+    const r: Vector2[] = [];
+    for (let i = 0; i < n; i++) r.push(new Vector2(flat[2 * i], flat[2 * i + 1]));
+    if (r.length > 1 && r[0]!.equals(r[r.length - 1]!)) r.pop();
+    return r;
+  };
+  const outer = toRing(outline);
+  if (outer.length < 3) return undefined;
+  const holeRings = holes.map(toRing).filter((h) => h.length >= 3);
   const box = clip ?? { x0: -Infinity, y0: -Infinity, x1: Infinity, y1: Infinity };
-  const pts = clipPolygon(ring, box);
+  const pts = clipPolygon(outer, box);
+  const holePts = holeRings.map((h) => clipPolygon(h, box)).filter((h) => h.length >= 3);
   // Signed area in (x, y): > 0 = counter-clockwise.
-  let area = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const a = ring[i]!;
-    const b = ring[(i + 1) % ring.length]!;
-    area += a.x * b.y - b.x * a.y;
-  }
-  const ccw = area > 0;
+  const isCcw = (r: Vector2[]) => {
+    let area = 0;
+    for (let i = 0; i < r.length; i++) {
+      const a = r[i]!;
+      const b = r[(i + 1) % r.length]!;
+      area += a.x * b.y - b.x * a.y;
+    }
+    return area > 0;
+  };
   const P: number[] = [];
   const UV: number[] = [];
   type V = [number, number, number];
@@ -161,51 +169,59 @@ export function outlineRoof(
   };
   const ys = y0 + 0.02;
   // Slab: up-facing triangles (x, y → X, Z; counter-clockwise seen from +Y).
-  for (const [a, b, c] of pts.length >= 3 ? ShapeUtils.triangulateShape(pts, []) : []) {
-    const A = pts[a!]!;
-    const B = pts[b!]!;
-    const C = pts[c!]!;
+  const all = [...pts, ...holePts.flat()];
+  for (const [a, b, c] of pts.length >= 3 ? ShapeUtils.triangulateShape(pts, holePts) : []) {
+    const A = all[a!]!;
+    const B = all[b!]!;
+    const C = all[c!]!;
     tri([A.x, ys, A.y], [B.x, ys, B.y], [C.x, ys, C.y], colour);
   }
-  // Parapet along every edge: outer, inner and top faces.
+  // Parapet along every edge (outline and courtyards): outer, inner and top faces.
   const t = OUTLINE_PARAPET_T / 2;
   const yt = y0 + OUTLINE_PARAPET_H;
-  for (let i = 0; i < ring.length; i++) {
-    const ra = ring[i]!;
-    const rb = ring[(i + 1) % ring.length]!;
-    const full = ra.distanceTo(rb);
-    if (full < 1e-3) continue;
-    const dx = (rb.x - ra.x) / full;
-    const dy = (rb.y - ra.y) / full;
-    const c = clipSegment(ra, rb, box);
-    if (!c) continue;
-    const [a, b] = c;
-    // Corner overlap only at the outline's own vertices, not at the clip border.
-    const sa = a.equals(ra) ? 1 : 0;
-    const sb = b.equals(rb) ? 1 : 0;
-    // Outward normal: right of the edge for a counter-clockwise ring (in x, y), left otherwise.
-    const nx = ccw ? dy : -dy;
-    const ny = ccw ? -dx : dx;
-    const ex = dx * t;
-    const ey = dy * t;
-    const o0: [number, number] = [a.x + nx * t - ex * sa, a.y + ny * t - ey * sa];
-    const o1: [number, number] = [b.x + nx * t + ex * sb, b.y + ny * t + ey * sb];
-    const i0: [number, number] = [a.x - nx * t - ex * sa, a.y - ny * t - ey * sa];
-    const i1: [number, number] = [b.x - nx * t + ex * sb, b.y - ny * t + ey * sb];
-    const face = (p: [number, number], q: [number, number], out: boolean) => {
-      const v: V[] = [
-        [p[0], y0, p[1]],
-        [q[0], y0, q[1]],
-        [q[0], yt, q[1]],
-        [p[0], yt, p[1]],
-      ];
-      quad(v[0]!, v[1]!, v[2]!, v[3]!, wallCell, out ? [nx, 0, ny] : [-nx, 0, -ny]);
-    };
-    face(o0, o1, true);
-    face(i0, i1, false);
-    // top
-    tri([o0[0], yt, o0[1]], [i1[0], yt, i1[1]], [o1[0], yt, o1[1]], wallCell);
-    tri([o0[0], yt, o0[1]], [i0[0], yt, i0[1]], [i1[0], yt, i1[1]], wallCell);
+  for (const [ring, hole] of [
+    [outer, false] as const,
+    ...holeRings.map((h) => [h, true] as const),
+  ]) {
+    // Away from the roof: outside the outline, into a courtyard.
+    const ccw = isCcw(ring) !== hole;
+    for (let i = 0; i < ring.length; i++) {
+      const ra = ring[i]!;
+      const rb = ring[(i + 1) % ring.length]!;
+      const full = ra.distanceTo(rb);
+      if (full < 1e-3) continue;
+      const dx = (rb.x - ra.x) / full;
+      const dy = (rb.y - ra.y) / full;
+      const c = clipSegment(ra, rb, box);
+      if (!c) continue;
+      const [a, b] = c;
+      // Corner overlap only at the outline's own vertices, not at the clip border.
+      const sa = a.equals(ra) ? 1 : 0;
+      const sb = b.equals(rb) ? 1 : 0;
+      // Outward normal: right of the edge for a counter-clockwise ring (in x, y), left otherwise.
+      const nx = ccw ? dy : -dy;
+      const ny = ccw ? -dx : dx;
+      const ex = dx * t;
+      const ey = dy * t;
+      const o0: [number, number] = [a.x + nx * t - ex * sa, a.y + ny * t - ey * sa];
+      const o1: [number, number] = [b.x + nx * t + ex * sb, b.y + ny * t + ey * sb];
+      const i0: [number, number] = [a.x - nx * t - ex * sa, a.y - ny * t - ey * sa];
+      const i1: [number, number] = [b.x - nx * t + ex * sb, b.y - ny * t + ey * sb];
+      const face = (p: [number, number], q: [number, number], out: boolean) => {
+        const v: V[] = [
+          [p[0], y0, p[1]],
+          [q[0], y0, q[1]],
+          [q[0], yt, q[1]],
+          [p[0], yt, p[1]],
+        ];
+        quad(v[0]!, v[1]!, v[2]!, v[3]!, wallCell, out ? [nx, 0, ny] : [-nx, 0, -ny]);
+      };
+      face(o0, o1, true);
+      face(i0, i1, false);
+      // top
+      tri([o0[0], yt, o0[1]], [i1[0], yt, i1[1]], [o1[0], yt, o1[1]], wallCell);
+      tri([o0[0], yt, o0[1]], [i0[0], yt, i0[1]], [i1[0], yt, i1[1]], wallCell);
+    }
   }
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));

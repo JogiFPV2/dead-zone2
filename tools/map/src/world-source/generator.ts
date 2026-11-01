@@ -86,6 +86,8 @@ export interface GenBuildingMeta {
   kind: string;
   /** Slanted building with vector walls: outline (x, y pairs, world metres) for a flat roof. */
   outline?: number[];
+  /** Courtyards of `outline` (inner rings, x, y pairs). */
+  holes?: number[][];
   /**
    * Look (generator rev 21+, look-spec.md §A–C): palette type, colours `#rrggbb`, roof shape,
    * condition. Absent on older chunks and on buildings without a palette type (ruins).
@@ -642,6 +644,7 @@ export class PlanChunkGenerator {
         type: s.type,
         kind: s.kind,
         ...(s.outline ? { outline: s.outline } : {}),
+        ...(s.holes ? { holes: s.holes } : {}),
         ...this.lookOf(s.gid, s.floors),
       }));
     const out: GenColumn = { cx, cy, levels, trees, treeSpecies, buildings };
