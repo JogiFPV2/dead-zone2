@@ -1,13 +1,15 @@
+import { onCarriageway, syntheticCrossings } from './level-crossings.js';
 import type { IRail, IRoad, PlanIndex } from './plan-index.js';
 
 /**
  * Level crossings (Paweł 27.10: rail × road crossings drawn wrong). Every intersection of a
  * track axis with a carriageway axis (both at grade) must carry an OSM `level_crossing` rail
- * node (`idx.railNodes`, drawn as `przejazd-kat-a`); a road or rail bridge passes over instead.
+ * node (`idx.railNodes`, drawn as `przejazd-kat-a`) or a geometric `syntheticCrossings` entry;
+ * a road or rail bridge passes over instead.
  * Test helper (level-crossing-*.test.ts). Counts:
- * - `missing`: at-grade intersection without a `level_crossing` node within reach;
+ * - `missing`: at-grade intersection with neither a `level_crossing` node nor a synthetic crossing;
  * - `inBuilding`: subset of `missing` inside an OSM building outline (depot tracks, known case);
- * - `orphan`: `level_crossing` node with no carriageway within reach.
+ * - `orphan`: `level_crossing` node off every carriageway (`onCarriageway`, skipped by the generator).
  */
 export interface LevelCrossingStats {
   intersections: number;
@@ -83,6 +85,14 @@ export function levelCrossingStats(idx: PlanIndex, samples: string[] = []): Leve
     orphan: 0,
   };
   const nodes = idx.railNodes.items.filter((n) => n.kind === 'level_crossing');
+  const all = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const b of idx.rails.boxes) {
+    all.x0 = Math.min(all.x0, b.x0);
+    all.y0 = Math.min(all.y0, b.y0);
+    all.x1 = Math.max(all.x1, b.x1);
+    all.y1 = Math.max(all.y1, b.y1);
+  }
+  const synth = idx.rails.items.length ? syntheticCrossings(idx, all) : [];
   const seen = new Set<string>();
   idx.rails.items.forEach((rail: IRail) => {
     for (const ri of idx.roads.query(boxOf(rail.pts))) {
@@ -99,10 +109,11 @@ export function levelCrossingStats(idx: PlanIndex, samples: string[] = []): Leve
         }
         const reach = road.r + REACH_M;
         const q = { x0: h.x - reach, y0: h.y - reach, x1: h.x + reach, y1: h.y + reach };
-        const ok = idx.railNodes.query(q).some((i) => {
-          const n = idx.railNodes.items[i]!;
-          return n.kind === 'level_crossing' && Math.hypot(n.x - h.x, n.y - h.y) <= reach;
-        });
+        const ok =
+          idx.railNodes.query(q).some((i) => {
+            const n = idx.railNodes.items[i]!;
+            return n.kind === 'level_crossing' && Math.hypot(n.x - h.x, n.y - h.y) <= reach;
+          }) || synth.some((c) => Math.hypot(c.x - h.x, c.y - h.y) <= reach);
         if (ok) {
           s.marked++;
           continue;
@@ -115,19 +126,7 @@ export function levelCrossingStats(idx: PlanIndex, samples: string[] = []): Leve
     }
   });
   for (const n of nodes) {
-    const q = { x0: n.x - 20, y0: n.y - 20, x1: n.x + 20, y1: n.y + 20 };
-    const near = idx.roads.query(q).some((i) => {
-      const r = idx.roads.items[i]!;
-      if (!carriageway(r)) return false;
-      const p = r.pts;
-      for (let k = 0; k + 3 < p.length; k += 2) {
-        const [ax, ay, dx, dy] = [p[k]!, p[k + 1]!, p[k + 2]! - p[k]!, p[k + 3]! - p[k + 1]!];
-        const l2 = dx * dx + dy * dy || 1;
-        const t = Math.max(0, Math.min(1, ((n.x - ax) * dx + (n.y - ay) * dy) / l2));
-        if (Math.hypot(ax + t * dx - n.x, ay + t * dy - n.y) <= r.r + REACH_M) return true;
-      }
-      return false;
-    });
+    const near = onCarriageway(idx, n);
     if (!near) {
       s.orphan++;
       samples.push(`sierota @${n.x.toFixed(0)},${n.y.toFixed(0)}`);

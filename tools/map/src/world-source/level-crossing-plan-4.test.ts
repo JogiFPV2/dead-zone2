@@ -7,7 +7,7 @@ import { MAPS } from './level-crossing-maps.js';
  * them when the generator / data is fixed. `inBuilding`: depot tracks inside an OSM building
  * outline (known, not fixed in #373).
  */
-const KNOWN = { missing: 22, inBuilding: 0, orphan: 0 };
+const KNOWN = { missing: 0, inBuilding: 0, orphan: 0 };
 
 describe('przejazdy kolejowe: plan-4', () => {
   it('każde przecięcie toru z jezdnią ma przejazd albo most (ratchet)', async () => {
