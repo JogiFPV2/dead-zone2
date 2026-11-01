@@ -2,7 +2,7 @@ import type { ContentId } from '../chunk.js';
 
 /**
  * Interior card behind a window (bld-spec §4 variant A): a picture of the room seen through the
- * glass, one cell of a 4×4 atlas. Rows of categories × 2 variants; the cell is deterministic from
+ * glass, one cell of the card atlas (`CARD_GRID`). Rows of categories × 2 variants; the cell is deterministic from
  * the building and the window edge, so a facade never flickers between loads.
  */
 export const CARD_CATEGORIES = [
@@ -17,7 +17,36 @@ export const CARD_CATEGORIES = [
 ] as const;
 export type CardCategory = (typeof CARD_CATEGORIES)[number];
 export const CARD_VARIANTS = 2;
-export const CARD_GRID = 4;
+/** Atlas grid (8 × 8): rows 0–1 interior cards, from cell 16 the bld detail cells (`DETAIL_CARD`). */
+export const CARD_GRID = 8;
+/**
+ * bld detail cells (look-spec §D, `?bld-detail=1`) in the same card atlas / material: window
+ * states, signs, stripes, roof holes, graffiti, plaster loss. Painted on the canvas, no asset.
+ */
+export const DETAIL_CARD = {
+  broken: 16,
+  broken2: 17,
+  boarded: 18,
+  boarded2: 19,
+  dirty: 20,
+  signSchool: 21,
+  signPolice: 22,
+  signHospital: 23,
+  signSor: 24,
+  cross: 25,
+  star: 26,
+  stripePolice: 27,
+  bandSchool: 28,
+  roofHole: 29,
+  roofHole2: 30,
+  graffiti0: 31,
+  graffiti1: 32,
+  graffiti2: 33,
+  graffiti3: 34,
+  plasterLoss: 35,
+  streaks: 36,
+} as const;
+export type DetailCard = keyof typeof DETAIL_CARD;
 
 const BY_ROOM: Readonly<Record<string, CardCategory>> = {
   'room-living-room': 'salon',
@@ -59,7 +88,7 @@ export function cardSeed(building: number, tx: number, ty: number, axis: 'N' | '
   return h >>> 0;
 }
 
-/** Atlas cell 0..15 of a category and a seed. */
+/** Atlas cell 0..15 of a category and a seed (interior cards fill the first 16 cells). */
 export function cardCell(cat: CardCategory, seed: number): number {
   return CARD_CATEGORIES.indexOf(cat) * CARD_VARIANTS + (seed % CARD_VARIANTS);
 }

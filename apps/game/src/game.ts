@@ -184,9 +184,11 @@ import { SaveRefusedError, handleEscape, type Closable } from './pause/pause-mod
 import type { WorkerSimClient } from './sim/worker-sim-client.js';
 import { bindUiScale, scaledUi } from './ui/ui-scale.js';
 import { initBldV2 } from './world/town/bld-v2.js';
+import { initBldDetail } from './world/town/bld-decals.js';
 
 // Buildings v2 look (`?bld=v2`), before any town is built.
 initBldV2(location.search);
+initBldDetail(location.search);
 
 const VIEW_HEIGHT = 24;
 const QUICKSLOTS = ['quickslot1', 'quickslot2', 'quickslot3', 'quickslot4', 'quickslot5'] as const;

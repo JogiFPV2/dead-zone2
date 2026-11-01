@@ -20,6 +20,7 @@ describe('window interior card', () => {
     const cells = new Set<number>();
     for (let tx = 0; tx < 50; tx++) cells.add(cardCell('sypialnia', cardSeed(3, tx, 7, 'N')));
     expect([...cells].sort()).toEqual([4, 5]);
+    expect(cardCell('pusty', 1)).toBeLessThan(16);
     expect(cardCell('pusty', 1)).toBeLessThan(CARD_GRID * CARD_GRID);
   });
 });

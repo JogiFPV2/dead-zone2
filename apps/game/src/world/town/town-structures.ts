@@ -576,6 +576,7 @@ export class TownStructures {
       const e = item.edge;
       const [x, y] = e.axis === 'N' ? [e.tx + 0.5, e.ty] : [e.tx, e.ty + 0.5];
       item.pane = panes.add(m, spec.box, spec.inward, spec.cell, x, y);
+      if (spec.noGlass) item.broken = true;
       if (shared) this.paneSlots.push(item.pane);
       this.apply(item);
     }

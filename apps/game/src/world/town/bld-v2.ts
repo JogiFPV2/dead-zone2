@@ -285,6 +285,11 @@ function colours(b: BldInfo): { wall: string; roof: string } | undefined {
   return { wall: base ?? l.wallColor, roof: l.roofColor };
 }
 
+/** Chunk `condition` of a noted building (bld detail). */
+export function buildingCondition(building: number): string | undefined {
+  return infos.get(building)?.condition;
+}
+
 /** v2 wall skin of a building; undefined = keep the v1 skin (unknown building / kind). */
 export function v2WallSkin(building: number): V2Skin | undefined {
   const b = infos.get(building);

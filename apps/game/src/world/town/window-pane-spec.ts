@@ -6,12 +6,16 @@ import type { TownKit } from './kit.js';
 import type { TownEdge } from './layout.js';
 import { edgeModule } from './modules.js';
 import { cardCategory, cardCell, cardSeed } from './window-card.js';
+import { detailWindowCell } from './bld-decals.js';
+import { buildingCondition } from './bld-v2.js';
 
 /** Where a window's pane and card go: glass box (module space), inward side, atlas cell. */
 export interface PaneSpec {
   box: Box3;
   inward: 1 | -1;
   cell: number;
+  /** bld detail: broken / boarded window of an abandoned building, drawn without glass. */
+  noGlass?: boolean;
 }
 
 const boxes = new WeakMap<TownKit, Map<string, Box3 | null>>();
@@ -55,6 +59,9 @@ export function windowPaneSpec(
   if (!box) return undefined;
   const inward: 1 | -1 = lookup.at(e.tx, e.ty, z) === e.building ? 1 : -1;
   const [ix, iy] = inward > 0 ? [e.tx, e.ty] : e.axis === 'N' ? [e.tx, e.ty - 1] : [e.tx - 1, e.ty];
+  const seed = cardSeed(e.building, e.tx, e.ty, e.axis);
+  const state = detailWindowCell(buildingCondition(e.building), e.building, seed);
+  if (state !== undefined) return { box, inward, cell: state, noGlass: true };
   const cat = cardCategory(roomTypeAt(source, ix, iy, z));
-  return { box, inward, cell: cardCell(cat, cardSeed(e.building, e.tx, e.ty, e.axis)) };
+  return { box, inward, cell: cardCell(cat, seed) };
 }

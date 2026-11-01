@@ -1,7 +1,7 @@
 import type { FadeView } from '../wall-fade.js';
 import { noteBuildings } from '../town/bld-v2.js';
 import type { EdgeSide, OpeningView, SimEvent } from '@deadzone/protocol';
-import { Group, Mesh, type MeshStandardMaterial } from 'three';
+import { Group, Mesh, type Material, type MeshStandardMaterial } from 'three';
 import { BuildingLookup } from '../building-lookup.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from '../chunk.js';
 import type { Cutaway } from '../cutaway.js';
@@ -19,6 +19,7 @@ import {
   type SharedTownBatch,
 } from '../town/town-structures.js';
 import { WindowPanes } from '../town/window-panes.js';
+import { BldDecals, bldDetail, buildingDecals } from '../town/bld-decals.js';
 import { terrainMaterial } from '../town/town-terrain.js';
 import { MapTiles } from '../town/tiles.js';
 import type { GenBuildingInfo } from './convert.js';
@@ -46,6 +47,8 @@ export class StreamedTown {
   private readonly levels = new Map<string, TownStructures>();
   /** Glass + interior cards of every loaded level: +2 draw calls in total (bld-spec §4). */
   private readonly panes = new WindowPanes(1024, cardAtlasShared());
+  /** bld detail decals (`?bld-detail=1`) on the window-card material: +1 draw call. */
+  private readonly decals = new BldDecals(this.panes.card.material as Material);
   private readonly terrain = new Map<string, Mesh>();
   /** One town BatchedMesh per chunk column (all its levels): fewer draw calls / shadow draws. */
   private readonly columns = new Map<string, { batch: SharedTownBatch; levels: number }>();
@@ -67,6 +70,7 @@ export class StreamedTown {
   ) {
     this.root.name = 'streamed-town';
     this.root.add(this.panes.root);
+    if (bldDetail()) this.root.add(this.decals.mesh);
     this.lookup = new BuildingLookup(loaded, false);
     this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail);
   }
@@ -193,6 +197,16 @@ export class StreamedTown {
       props = props.filter((p) => !sink.isTree(p.name));
     }
     level.loadRange(range, props);
+    if (z === 0 && bldDetail()) {
+      // Each building once: from the chunk holding its footprint's first tile.
+      const own = [...metas.values()].filter(
+        (m) => Math.floor(m.x0 / CHUNK_SIZE) === cx && Math.floor(m.y0 / CHUNK_SIZE) === cy,
+      );
+      this.decals.set(
+        `${cx},${cy}`,
+        own.flatMap((m) => buildingDecals(m)),
+      );
+    }
     level.root.position.y = 0;
     this.levels.set(key(cx, cy, z), level);
     this.root.add(level.root);
@@ -212,6 +226,7 @@ export class StreamedTown {
   unloadChunk(cx: number, cy: number, z: number): void {
     const k = key(cx, cy, z);
     if (z === 0) this.trees?.unload(`${cx},${cy}`);
+    if (z === 0) this.decals.remove(`${cx},${cy}`);
     const level = this.levels.get(k);
     if (level) {
       this.root.remove(level.root);

@@ -58,8 +58,10 @@ export function glassLocal(box: Box3, out = new Matrix4()): Matrix4 {
 function cardMaterial(atlas: Texture | undefined): MeshLambertMaterial {
   const m = new MeshLambertMaterial({ color: '#ffffff', side: FrontSide });
   if (atlas) m.map = atlas;
+  // Interior cards are opaque; bld detail decals (same material) cut their transparent pixels.
+  m.alphaTest = 0.5;
   m.name = 'window-card';
-  // Per-instance atlas cell (aCell 0..15): uv into a 4×4 grid.
+  // Per-instance atlas cell (aCell): uv into the CARD_GRID² grid.
   m.onBeforeCompile = (p) => {
     p.vertexShader = p.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aCell;')
