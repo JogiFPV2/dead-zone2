@@ -2276,13 +2276,16 @@ renderer.setAnimationLoop((time) => {
   cameraInput.update(time);
   if (import.meta.env.DEV && boot.cam) {
     rig.target.set(boot.cam.x, 0, boot.cam.z);
-    camera.zoom = VIEW_HEIGHT / boot.cam.viewHeight;
-    camera.updateProjectionMatrix();
   }
   // Recentre the render origin on the camera target (whole chunks, > 1 km away), then place the
   // camera in render space and mirror it into world space.
   floating.update(rig.target.x, rig.target.z);
   rig.update(time);
+  // After the rig (it applies its own zoom every frame): `?cam=` view height wins.
+  if (import.meta.env.DEV && boot.cam) {
+    camera.zoom = VIEW_HEIGHT / boot.cam.viewHeight;
+    camera.updateProjectionMatrix();
+  }
   floating.syncWorldCamera(camera, worldCamera);
   sections.mark('camera');
   if (follow && state && follow.update(state, streaming.streamer.loaded.size, time))
