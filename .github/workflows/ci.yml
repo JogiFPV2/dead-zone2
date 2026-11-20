@@ -1,12 +1,10 @@
 name: CI
 
 # Self-hosted runner `deadzone` (box, Node 22 + corepack w PATH) - bez minut GitHub Actions.
+# Decyzja Pawła (20.11.2026): testy uruchamiamy lokalnie (`pnpm lint`, `pnpm typecheck`,
+# `pnpm test`, `pnpm build`) przed każdym PR-em, bez automatycznego CI na push i PR. Box `deadzone`
+# zostaje nietknięty; ten workflow da się odpalić tylko ręcznie (gdy runner jest podpięty do repo).
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
-  pull_request:
-    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
   workflow_dispatch:
 
 concurrency:
