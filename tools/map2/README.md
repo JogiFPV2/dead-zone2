@@ -1,7 +1,9 @@
 # map2: nowa mapa Stalowej Woli z OSM (`@deadzone/map2`)
 
 Osobny, czysty pipeline. Stary generator (`tools/map`, `?map=osm-stw`) zostaje bez zmian, dopóki
-map2 go nie zastąpi. Etapy: **1 drogi** (ten pakiet teraz) → 2 tory → 3 budynki 1:1 → 4 lasy i drzewa.
+map2 go nie zastąpi. Etapy: **1 drogi** → **3 budynki 1:1** → **4 teren 1:1** (wody, lasy, pola,
+zieleń, tory wszystkich rodzajów, drzewa, linie energetyczne) → dalej: lasy i drzewa w średnim i
+dalekim LOD, dopasowanie terenu do budynków i dróg.
 
 Zasady, które odróżniają map2 od starego generatora:
 
@@ -20,7 +22,17 @@ python3 tools/map2/scripts/extract.py ~/.cache/deadzone-osm/podkarpackie-latest.
   ~/.cache/deadzone-osm/stw-raw2.json            # deadzone-osm-raw-2 (WGS84, id węzłów)
 pnpm --filter @deadzone/map2 roads ~/.cache/deadzone-osm/stw-raw2.json ~/.cache/deadzone-osm/stw-roads2.json
 pnpm --filter @deadzone/map2 osm ~/.cache/deadzone-osm/stw-roads2.json ~/.cache/deadzone-osm/stw2-osm.json
-pnpm --filter @deadzone/map osm:tiles ~/.cache/deadzone-osm/stw2-osm.json apps/game/public/osm/stw2 --stw2
+python3 tools/map2/scripts/extract_buildings.py ~/.cache/deadzone-osm/podkarpackie-latest.osm.pbf \
+  ~/.cache/deadzone-osm/stw-bld-raw2.json        # budynki 1:1 (deadzone-osm-bld-raw-2)
+pnpm --filter @deadzone/map2 buildings ~/.cache/deadzone-osm/stw-bld-raw2.json ~/.cache/deadzone-osm/stw-bld2.json
+pnpm --filter @deadzone/map osm:map2-bld ~/.cache/deadzone-osm/stw2-osm.json \
+  ~/.cache/deadzone-osm/stw-bld2.json ~/.cache/deadzone-osm/stw2-bld.json
+python3 tools/map2/scripts/extract_land.py ~/.cache/deadzone-osm/podkarpackie-latest.osm.pbf \
+  ~/.cache/deadzone-osm/stw-land-raw2.json       # teren 1:1 (deadzone-osm-land-raw-2)
+pnpm --filter @deadzone/map2 land ~/.cache/deadzone-osm/stw-land-raw2.json ~/.cache/deadzone-osm/stw-land2.json
+pnpm --filter @deadzone/map osm:map2-land ~/.cache/deadzone-osm/stw2-bld.json \
+  ~/.cache/deadzone-osm/stw-land2.json ~/.cache/deadzone-osm/stw2-full.json
+pnpm --filter @deadzone/map osm:tiles ~/.cache/deadzone-osm/stw2-full.json $PWD/apps/game/public/osm/stw2 --stw2
 python3 tools/map2/scripts/overlay.py ~/.cache/deadzone-osm/stw-roads2.json out.jpg 22.0535 50.5825 15
 ```
 
@@ -52,6 +64,24 @@ dwukierunkowych (`cl: 0` na jednokierunkowych), linie pasów (`ll`, przesunięci
 krawężnika jako wachlarz pasków asfaltu od środka węzła do łuku (tylko węzły bez jezdni
 jednokierunkowych), przejścia dla pieszych z istniejącego `zebras.ts` (tylko przy węzłach jezdni
 pod kątem > 30°: T, X, wloty rond; nie na włączeniach). Kafle są w `apps/game/public/osm/stw2`.
+
+## Teren 1:1 (`src/land.ts`, `tools/map` `src/osm/map2-land.ts`)
+
+`extract_land.py` bierze z OSM wszystko na ziemi poza drogami i budynkami, z każdym wierzchołkiem
+i z dziurami multipoligonów (wyspy na stawach, polany w lasach): obszary (`natural`, `landuse`,
+`leisure`, `amenity`, `waterway=riverbank`, `man_made`…), żywopłoty, cieki, tory, linie
+energetyczne, pojedyncze drzewa, szpalery, zwrotnice / kozły / przejazdy i POI. map2 tylko je
+rzutuje (`land`), a klasyfikację robi ten sam `classifyArea` co w starym konwerterze:
+
+- **wody**: jeziora, stawy, zbiorniki i koryto Sanu jako wielokąty 1:1 (`water`), mokradła;
+- **cieki**: rzeka / kanał / strumień / rów (`drain` → rów, przepusty pominięte), szerokość z
+  `width`, a bez niej San i Wisła 60 m, inne rzeki 15 m, kanał 8, strumień 3, rów 1,5;
+- **tory**: główne, bocznice (`service`), tramwaj, nieczynne (`disused`, bez sieci trakcyjnej),
+  sieć trakcyjna z `electrified=contact_line`, mosty; zwrotnice i przejazdy tylko na wierzchołku toru;
+- **reszta**: lasy, łąki, pola, sady, ogródki, parki, boiska, cmentarze, parkingi, tereny
+  mieszkaniowe / przemysłowe / handlowe / wojskowe, żywopłoty jako paski zarośli.
+
+Obszary relacji mają id powyżej id dróg OSM (`1e10 + pierścień · 1e8 + id`), tak jak budynki.
 
 ## Migracja klienta (dalej)
 

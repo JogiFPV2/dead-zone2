@@ -31,7 +31,8 @@
     "osm:crop": "tsx src/world-source/cli-crop.ts",
     "osm:places": "tsx src/world-source/cli-places.ts",
     "osm:tiles": "tsx src/world-source/cli-tiles.ts",
-    "osm:map2-bld": "tsx src/osm/cli-map2-buildings.ts"
+    "osm:map2-bld": "tsx src/osm/cli-map2-buildings.ts",
+    "osm:map2-land": "tsx src/osm/cli-map2-land.ts"
   },
   "dependencies": {
     "@deadzone/content": "workspace:*",
