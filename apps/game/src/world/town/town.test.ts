@@ -281,12 +281,14 @@ describe('town terrain', () => {
     expect(buildTerrainGeometry(new MapTiles(roadMap(), 0), 1, 0, cells)).toBeUndefined();
   });
 
-  it('paved areas are smooth polygons clipped to their tiles, not tile steps', () => {
+  it('areas are smooth polygons clipped to their tiles, not tile steps', () => {
     // Diagonal plaza over grass (z ≥ 10), its corner reaching the sidewalk / road rows.
     const vector = {
       roads: [],
       underAt: () => undefined,
-      paved: [[[2.3, 8, 20.7, 12.4, 4.1, 28.9]]],
+      areas: [
+        { surface: 'base:sidewalk' as const, order: 18, rings: [[2.3, 8, 20.7, 12.4, 4.1, 28.9]] },
+      ],
     };
     const g = buildTerrainGeometry(new MapTiles(roadMap(), 0), 0, 0, cells, 0, vector)!;
     const pos = g.getAttribute('position');
@@ -294,7 +296,7 @@ describe('town terrain', () => {
     let offGrid = 0;
     let onRoad = 0;
     for (let i = 0; i < pos.count; i++) {
-      if (Math.abs(pos.getY(i) - 0.005) > 1e-6) continue;
+      if (Math.abs(pos.getY(i) - (0.001 + 18 * 0.0002)) > 1e-6) continue;
       n++;
       const x = pos.getX(i);
       const z = pos.getZ(i);

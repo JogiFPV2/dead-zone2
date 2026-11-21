@@ -105,7 +105,8 @@ export interface WorldPlanInput {
  * 38: street lamps from OSM and evenly along carriageways (`chunkLamps`, #367).
  * 39: `treeSpecies` per tree (content tree-species by habitat, hashed from the position).
  * 40: fire stations in red brick (were the police skin); map2 outlines keep vector walls and
- *     roofs when an older neighbour takes some of their tiles (no stair-step roofs).
+ *     roofs when an older neighbour takes some of their tiles (no stair-step roofs); every area
+ *     (landuse, parking, plazas, water) is a smooth polygon over the ground under it (`areas`).
  */
 export const GENERATOR_REV = 40;
 

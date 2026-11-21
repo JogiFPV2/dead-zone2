@@ -94,10 +94,10 @@ export class StreamedTown {
     if (z === 0) {
       const pal = this.loaded.tilePalette;
       const vector =
-        col.roads || col.under || col.paved
+        col.roads || col.under || col.areas
           ? {
               roads: col.roads ?? [],
-              ...(col.paved ? { paved: col.paved } : {}),
+              ...(col.areas ? { areas: col.areas } : {}),
               // Also the neighbour chunks' layer (curbs at the chunk edge look across it).
               underAt: (x: number, y: number) => {
                 const ncx = Math.floor(x / CHUNK_SIZE);

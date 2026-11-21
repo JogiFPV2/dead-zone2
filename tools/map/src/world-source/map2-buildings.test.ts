@@ -223,3 +223,18 @@ describe('map2 buildings in the stw2 tiles (exact outlines)', () => {
     expect(holes).toBe(1);
   });
 });
+
+describe('clipRing', () => {
+  it('keeps a ring inside the box and clips one across it to the box', async () => {
+    const { clipRing } = await import('./generator.js');
+    const box = { x0: 0, y0: 0, x1: 10, y1: 10 };
+    expect(clipRing([1, 1, 5, 1, 5, 5], box)).toEqual([1, 1, 5, 1, 5, 5]);
+    const c = clipRing([-5, 5, 5, -5, 15, 5, 5, 15], box);
+    for (let k = 0; k < c.length; k++) {
+      expect(c[k]).toBeGreaterThanOrEqual(0);
+      expect(c[k]).toBeLessThanOrEqual(10);
+    }
+    expect(c.length).toBe(16);
+    expect(clipRing([20, 20, 30, 20, 30, 30], box)).toEqual([]);
+  });
+});

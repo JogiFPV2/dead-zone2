@@ -4,7 +4,7 @@ import { CHUNK_SIZE, type ContentId } from '../chunk.js';
 import type { TownCells } from './kit.js';
 import { hash01 } from './modules.js';
 import type { MapTiles } from './tiles.js';
-import type { VectorRoad } from '../streaming/source.js';
+import type { VectorArea, VectorRoad } from '../streaming/source.js';
 import { zebraSpots } from './zebras.js';
 
 /** Detail channels of the terrain texture: R asphalt, G grass, B paving, A dirt. */
@@ -84,18 +84,21 @@ export interface TerrainVectorRoads {
   /** Ground content under a road tile (world tile), undefined = not a road tile. */
   underAt: (x: number, z: number) => ContentId | undefined;
   /**
-   * Paved areas (plazas, `area:highway`) touching the chunk: rings in chunk-local tiles (first
-   * outer, the rest holes), drawn as smooth polygons instead of stair-stepped sidewalk tiles.
+   * Areas (landuse, parking, plazas, water…) touching the chunk, in paint order: smooth polygons
+   * over the ground under them instead of stair-stepped area tiles.
    */
-  paved?: readonly (readonly (readonly number[])[])[];
+  areas?: readonly VectorArea[];
 }
 
 /** Indoor floor height (above every road ribbon, see RIBBON_Y). */
 export const INDOOR_Y = 0.02;
-/** Ribbon heights: dirt < sidewalk < curb < asphalt < paint, all under indoor floors (2 cm). */
+/**
+ * Ribbon heights: areas < dirt < sidewalk < curb < asphalt < paint, all under indoor floors
+ * (2 cm). Area polygons stack by paint order from AREA_Y.base in AREA_Y.step (22 kinds < dirt).
+ */
+const AREA_Y = { base: 0.001, step: 0.0002 };
 const RIBBON_Y = {
-  dirt: 0.004,
-  paved: 0.005,
+  dirt: 0.006,
   sidewalk: 0.008,
   curb: 0.011,
   asphalt: 0.014,
@@ -533,7 +536,17 @@ export function buildTerrainGeometry(
       }
     }
   }
-  if (vector?.paved?.length) pavedPolygons(vector, tiles, x0, z0, col('sidewalk'), P, C, M, baseY);
+  if (vector?.areas?.length) {
+    const colorAt = (look: FloorLook, x: number, z: number): Color =>
+      look.cell === 'grass'
+        ? grassAt(x, z)
+        : look.cell === 'dirt'
+          ? dirtAt(x, z)
+          : col(look.cell)
+              .clone()
+              .multiplyScalar(1 + (vnoise(x + 17, z - 5, 4) - 0.5) * (look.jitter ?? 0.06));
+    areaPolygons(vector, tiles, x0, z0, colorAt, P, C, M, baseY);
+  }
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));
   g.setAttribute('color', new BufferAttribute(new Float32Array(C), 3));
@@ -572,26 +585,25 @@ export function offsetLine(pts: readonly number[], o: number): number[] {
   return out;
 }
 
-/** Natural ground a paved polygon may cover past the tile outline of its area (smooth edge). */
+/** Natural ground an area polygon may cover past the tile outline of its area (smooth edge). */
 const SOFT_GROUND = new Set<ContentId>(['base:grass', 'base:dirt']);
 
 /**
- * Paved areas as smooth polygons (triangulated rings), clipped to the tiles of the chunk where the
- * area really lies: tiles it paved (`underAt` set) and natural ground along its outline. Tiles of
- * buildings or of other areas painted over it keep their own floor.
+ * Areas as smooth polygons (triangulated rings, stacked by paint order), clipped to the tiles of
+ * the chunk where they may lie: area / road tiles (`underAt` set) and natural ground. Buildings,
+ * track beds and waterways keep their own tiles.
  */
-function pavedPolygons(
+function areaPolygons(
   vector: TerrainVectorRoads,
   tiles: MapTiles,
   x0: number,
   z0: number,
-  color: Color,
+  colorAt: (look: FloorLook, x: number, z: number) => Color,
   P: number[],
   C: number[],
   M: number[],
   baseY: number,
 ): void {
-  const y = RIBBON_Y.paved + baseY;
   const ok = new Map<number, boolean>();
   const allowed = (x: number, z: number): boolean => {
     const k = (z - z0) * CHUNK_SIZE + (x - x0);
@@ -607,31 +619,38 @@ function pavedPolygons(
     }
     return v;
   };
-  const push = (poly: readonly (readonly [number, number])[]) => {
-    for (let i = 1; i + 1 < poly.length; i++) {
-      const a = poly[0]!;
-      const b = poly[i]!;
-      const c = poly[i + 1]!;
-      // Up-facing winding: (b − a) × (c − a) must point to +y (as the road ribbons).
-      const ny = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
-      for (const [px, pz] of ny >= 0 ? [a, b, c] : [a, c, b]) {
-        P.push(px, y, pz);
-        C.push(color.r, color.g, color.b);
-        M.push(0, 0, 0.7, 0);
+  for (const area of vector.areas ?? []) {
+    const look = floorLook(area.surface, undefined);
+    const y = AREA_Y.base + area.order * AREA_Y.step + baseY;
+    const push = (poly: readonly (readonly [number, number])[]) => {
+      for (let i = 1; i + 1 < poly.length; i++) {
+        const a = poly[0]!;
+        const b = poly[i]!;
+        const c = poly[i + 1]!;
+        // Up-facing winding: (b − a) × (c − a) must point to +y (as the road ribbons).
+        const ny = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
+        for (const [px, pz] of ny >= 0 ? [a, b, c] : [a, c, b]) {
+          const cc = colorAt(look, px, pz);
+          P.push(px, y, pz);
+          C.push(cc.r, cc.g, cc.b);
+          M.push(...look.mask);
+        }
       }
-    }
-  };
-  for (const rings of vector.paved ?? []) {
+    };
     const toV = (r: readonly number[]) => {
       const out: Vector2[] = [];
-      for (let k = 0; k + 1 < r.length; k += 2) out.push(new Vector2(x0 + r[k]!, z0 + r[k + 1]!));
-      // Closed OSM rings repeat the first point.
+      for (let k = 0; k + 1 < r.length; k += 2) {
+        const p = new Vector2(x0 + r[k]!, z0 + r[k + 1]!);
+        // Closed OSM rings repeat the first point; clipping can repeat points too.
+        if (out.length && out[out.length - 1]!.equals(p)) continue;
+        out.push(p);
+      }
       if (out.length > 1 && out[0]!.equals(out[out.length - 1]!)) out.pop();
       return out;
     };
-    const outer = toV(rings[0] ?? []);
+    const outer = toV(area.rings[0] ?? []);
     if (outer.length < 3) continue;
-    const holes = rings
+    const holes = area.rings
       .slice(1)
       .map(toV)
       .filter((h) => h.length >= 3);
@@ -642,14 +661,22 @@ function pavedPolygons(
       const cx1 = Math.min(x0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.x))));
       const cz0 = Math.max(z0, Math.floor(Math.min(...tri.map((p) => p.y))));
       const cz1 = Math.min(z0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.y))));
+      if (cx1 < cx0 || cz1 < cz0) continue;
+      const pts = tri.map((p) => [p.x, p.y] as [number, number]);
+      // Whole triangle inside the chunk over allowed tiles only: one triangle, no per-tile cut.
+      let whole = pts.every(
+        ([px, pz]) => px >= x0 && px <= x0 + CHUNK_SIZE && pz >= z0 && pz <= z0 + CHUNK_SIZE,
+      );
+      for (let z = cz0; whole && z <= cz1; z++)
+        for (let x = cx0; whole && x <= cx1; x++) if (!allowed(x, z)) whole = false;
+      if (whole) {
+        push(pts);
+        continue;
+      }
       for (let z = cz0; z <= cz1; z++)
         for (let x = cx0; x <= cx1; x++) {
           if (!allowed(x, z)) continue;
-          const poly = clipToCell(
-            tri.map((p) => [p.x, p.y] as [number, number]),
-            x,
-            z,
-          );
+          const poly = clipToCell(pts, x, z);
           if (poly.length >= 3) push(poly);
         }
     }
