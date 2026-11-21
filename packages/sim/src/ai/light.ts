@@ -16,6 +16,7 @@ export { LIGHT };
 import { sneakVisibilityMul } from './sneak.js';
 import type { AiWorld } from './state.js';
 import { inDarkZone, lightAt } from './vision.js';
+import { inLowShade } from './low-shade.js';
 
 /**
  * Light and hiding (docs 9.45). One model with the renderer: the sun comes from `sunAt`
@@ -24,7 +25,8 @@ import { inDarkZone, lightAt } from './vision.js';
  * artificial lights). Sky: `LIGHT.moon` at night, 1 by day, linear while the sun is between −6°
  * and +6° (civil twilight). Shadow: a ray from the point towards the sun over the tile grid hits a
  * building taller than the ray (levels × `LIGHT.levelHeightM`); masks are cached per chunk and
- * game quarter-hour. Tree crowns (`SimChunk.trees`) shade too, lighter (`LIGHT.treeShadeMul`): a
+ * game quarter-hour. Cars, fences and walls cast short shadows (`low-shade.ts`, not cached; a
+ * sneaking player is lower, so they hide behind them better). Tree crowns (`SimChunk.trees`) shade too, lighter (`LIGHT.treeShadeMul`): a
  * tile under a crown or whose ray passes through one. Indoors (a room tile) the sky is × `LIGHT.indoorMul`.
  *
  * Visibility of a player to zombies = sight factor of the light (`nightFactor` at moonlight, 1 in
@@ -208,6 +210,8 @@ export function lightLevelAt(
   x: number,
   y: number,
   z: number,
+  /** Height (m) the light is taken at: standing `LIGHT.bodyHeightM`, sneaking lower. */
+  bodyM: number = LIGHT.bodyHeightM,
 ): number {
   const sun = sunState(gameMinuteAt(w.clock, w.tick));
   const tx = Math.floor(x);
@@ -218,6 +222,7 @@ export function lightLevelAt(
   else if (z === 0) {
     const shade = shadeAt(grid, sun, tx, ty);
     if (shade === SHADE_BUILDING) sky *= LIGHT.shadowMul;
+    else if (inLowShade(w, grid, sun, x, y, bodyM)) sky *= LIGHT.lowShadeMul;
     else if (shade === SHADE_TREE) sky *= LIGHT.treeShadeMul;
   }
   return Math.fround(Math.max(sky, lightAt(w, ai, x, y, z)));
@@ -227,7 +232,7 @@ export function lightLevelAt(
 export function lightSystem(w: SimWorld, grid: TileGrid): void {
   const ai = w.ai;
   if (!ai) return;
-  const { Position } = w.c;
+  const { Position, MoveIntent } = w.c;
   for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
     if (w.tick % LIGHT.everyTicks !== 0 && (ai.lightLevel[eid] ?? -1) >= 0) continue;
     ai.lightLevel[eid] = lightLevelAt(
@@ -237,6 +242,7 @@ export function lightSystem(w: SimWorld, grid: TileGrid): void {
       Position.x[eid] ?? 0,
       Position.y[eid] ?? 0,
       floorZ(w, eid),
+      GAITS[MoveIntent.gait[eid] ?? 1] === 'sneak' ? LIGHT.sneakBodyHeightM : LIGHT.bodyHeightM,
     );
   }
 }

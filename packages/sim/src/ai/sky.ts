@@ -13,6 +13,14 @@ export const LIGHT = {
   shadowMul: 0.45,
   /** Sky × this in the shade of tree crowns (leaves let some light through; `SimChunk.trees`). */
   treeShadeMul: 0.6,
+  /** Body height (m) the light is taken at while sneaking (crouched behind a car or a fence). */
+  sneakBodyHeightM: 0.5,
+  /** Heights (m) of low shade casters: parked / driven cars, fences and gates, garden walls. */
+  carHeightM: 1.5,
+  fenceHeightM: 1.5,
+  wallHeightM: 2,
+  /** Sky × this in the shadow of a car, a fence or a wall (as dense as a building). */
+  lowShadeMul: 0.45,
   /** Sky × this inside a room (windows, doors). */
   indoorMul: 0.35,
   /** Height of one level (m) for shadows; ray starts at `bodyHeightM` above the ground. */
