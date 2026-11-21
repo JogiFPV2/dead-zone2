@@ -83,22 +83,24 @@ function fit(first: readonly string[], more: readonly string[], n: number): stri
   return all;
 }
 const LOOK = Object.values(LOOK_PALETTE);
+/** Wall colours in the atlas (`V2_WALL_COUNT`; walls + roofs fill the 132 sub-cells). */
+const V2_WALL_COUNT_N = 39;
 const WALL_HEX: readonly string[] = fit(
   TYPES.flatMap((t) => BLD_PALETTE[t].walls),
   LOOK.flatMap((p) => [...p.walls, ...(p.archetypes ?? []).flatMap((a) => a.walls ?? [])]),
-  37,
+  V2_WALL_COUNT_N,
 );
 const ROOF_HEX: readonly string[] = fit(
   TYPES.flatMap((t) => BLD_PALETTE[t].roofs),
   LOOK.flatMap((p) => [...p.roofs, ...(p.archetypes ?? []).flatMap((a) => a.roofs ?? [])]),
-  29,
+  27,
 );
 
 type Idx<N extends number, A extends number[] = []> = A['length'] extends N
   ? A[number]
   : Idx<N, [...A, A['length']]>;
-/** Wall skins: one per unique wall colour (37 in the palette; the test pins the count). */
-export const V2_WALL_COUNT = 37;
+/** Wall skins: one per unique wall colour (39 in the palette; the test pins the count). */
+export const V2_WALL_COUNT = 39;
 export type V2Skin = `v2w${Idx<typeof V2_WALL_COUNT>}`;
 export const V2_SKINS: readonly V2Skin[] = Array.from(
   { length: V2_WALL_COUNT },

@@ -106,7 +106,8 @@ export interface WorldPlanInput {
  * 39: `treeSpecies` per tree (content tree-species by habitat, hashed from the position).
  * 40: fire stations in red brick (were the police skin); map2 outlines keep vector walls and
  *     roofs when an older neighbour takes some of their tiles (no stair-step roofs); every area
- *     (landuse, parking, plazas, water) is a smooth polygon over the ground under it (`areas`).
+ *     (landuse, parking, plazas, water) is a smooth polygon over the ground under it (`areas`);
+ *     PKS / PKP stations get their own look type (`station`: sand / blue-grey plaster).
  */
 export const GENERATOR_REV = 40;
 

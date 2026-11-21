@@ -40,6 +40,7 @@ const WALL: Record<BldType, DetailCell> = {
   public: 'plaster',
   outbuilding: 'planks',
   kamienica: 'plaster-rough',
+  station: 'plaster',
 };
 const ROOF: Record<BldType, DetailCell> = {
   block: 'felt',
@@ -49,6 +50,7 @@ const ROOF: Record<BldType, DetailCell> = {
   public: 'sheet',
   outbuilding: 'felt',
   kamienica: 'tiles-plain',
+  station: 'felt',
 };
 /** Colour overrides (brick walls, graphite / brown house roofs). */
 const BY_HEX: Readonly<Record<string, DetailCell>> = {
