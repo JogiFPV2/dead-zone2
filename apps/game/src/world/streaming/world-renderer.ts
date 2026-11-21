@@ -3,7 +3,7 @@ import { CHUNK_SIZE, type EdgeDef } from '../chunk.js';
 import { LOD_MID, LOD_NEAR, type Lod } from './rings.js';
 import type { BuiltChunk, ChunkBuilder } from './streamer.js';
 import { DecorLayer } from './decor.js';
-import { buildFarGeometry, buildMidGeometry, summarize } from './lod-meshes.js';
+import { buildFarGeometry, buildMidGeometry, summarize, type TilePalette } from './lod-meshes.js';
 import type { ChunkSummary, WorldChunk } from './source.js';
 
 /**
@@ -111,6 +111,8 @@ export class StreamedWorldRenderer implements ChunkBuilder {
   constructor(
     private readonly edgePalette: readonly (EdgeDef | null)[] | undefined,
     private readonly drawDecor = true,
+    /** Floor palette: distant ground in its real colours (water, grass, roads); else greys. */
+    private readonly tilePalette?: TilePalette,
   ) {
     this.root.name = 'streamed-lod';
     this.midBatch = new LodBatch(this.root, this.material, 'lod-mid', true);
@@ -142,10 +144,15 @@ export class StreamedWorldRenderer implements ChunkBuilder {
   ): BuiltChunk {
     if (lod === LOD_NEAR && data) return this.buildNear(cx, cy, data);
     if (lod === LOD_MID && data) {
-      return this.mesh(buildMidGeometry(data, this.edgePalette), cx, cy, this.midBatch);
+      return this.mesh(
+        buildMidGeometry(data, this.edgePalette, this.tilePalette),
+        cx,
+        cy,
+        this.midBatch,
+      );
     }
     const s = summary ?? (data ? summarize(data) : undefined);
-    return this.mesh(s ? buildFarGeometry(s) : undefined, cx, cy, this.farBatch);
+    return this.mesh(s ? buildFarGeometry(s, this.tilePalette) : undefined, cx, cy, this.farBatch);
   }
 
   dispose(): void {

@@ -65,7 +65,11 @@ export function createWorldStreaming(
   } = {},
 ): WorldStreaming {
   const greyBox = opts.greyBox ?? true;
-  const lod = new StreamedWorldRenderer(source.edgePalette, opts.decor ?? true);
+  const lod = new StreamedWorldRenderer(
+    source.edgePalette,
+    opts.decor ?? true,
+    opts.streamed ? source.tilePalette : undefined,
+  );
   // Town kit maps are laid out whole by the kit: keep every map object loaded too (as before
   // streaming) and no grey mid / far LOD over the kit's meshes.
   const fitted = opts.streamed

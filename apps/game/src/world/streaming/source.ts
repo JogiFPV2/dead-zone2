@@ -130,6 +130,8 @@ export interface ChunkSummary {
   readonly ground: Uint16Array;
   /** SUMMARY_CELLS² building height per cell in levels (0 = no building). */
   readonly height: Uint8Array;
+  /** SUMMARY_CELLS² flags: 1 = trees on the cell (grass drawn as forest in the far LOD). */
+  readonly forest?: Uint8Array;
 }
 
 /** Inclusive chunk bounds of the world (level-independent). */
