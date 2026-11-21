@@ -104,7 +104,8 @@ export interface WorldPlanInput {
  *     barriers per road side; no track gap at the ends of sheared plates (#391, #392).
  * 38: street lamps from OSM and evenly along carriageways (`chunkLamps`, #367).
  * 39: `treeSpecies` per tree (content tree-species by habitat, hashed from the position).
- * 40: fire stations in red brick (were the police skin).
+ * 40: fire stations in red brick (were the police skin); map2 outlines keep vector walls and
+ *     roofs when an older neighbour takes some of their tiles (no stair-step roofs).
  */
 export const GENERATOR_REV = 40;
 

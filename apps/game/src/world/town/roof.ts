@@ -234,10 +234,10 @@ export function outlineRoof(
   return m;
 }
 
-type Box = { x0: number; y0: number; x1: number; y1: number };
+export type Box = { x0: number; y0: number; x1: number; y1: number };
 
 /** Sutherland–Hodgman clip of a polygon to an axis-aligned box. */
-function clipPolygon(poly: Vector2[], b: Box): Vector2[] {
+export function clipPolygon(poly: Vector2[], b: Box): Vector2[] {
   let out = poly;
   const planes: [(p: Vector2) => number][] = [
     [(p) => p.x - b.x0],

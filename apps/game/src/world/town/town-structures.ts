@@ -402,7 +402,7 @@ export class TownStructures {
     }
     // Upper levels: floor slab per building and chunk, stair runs of this level.
     if (range.z > 0) {
-      for (const s of slabGeometry(tiles, range, baseY, this.kit.cells)) {
+      for (const s of slabGeometry(tiles, range, baseY, this.kit.cells, this.opts.outlineOf)) {
         push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
       }
     }

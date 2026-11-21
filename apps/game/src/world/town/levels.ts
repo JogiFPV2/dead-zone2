@@ -1,7 +1,8 @@
-import { BufferAttribute, BufferGeometry } from 'three';
+import { BufferAttribute, BufferGeometry, ShapeUtils, Vector2 } from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId, type ChunkRange } from '../chunk.js';
 import type { TownCells } from './kit.js';
+import { clipPolygon } from './roof.js';
 import { floorLook } from './terrain-mesh.js';
 import type { MapTiles } from './tiles.js';
 
@@ -22,6 +23,14 @@ export class Builder {
     const u = this.cells.uv(cell);
     this.P.push(...a, ...b, ...c, ...a, ...c, ...d);
     for (let i = 0; i < 6; i++) this.UV.push(...u);
+  }
+  /** Triangle facing up (`up` = 1) or down (-1), whatever the winding of a, b, c in (x, z). */
+  tri(a: number[], b: number[], c: number[], cell: string, up: 1 | -1): void {
+    const cross = (b[2]! - a[2]!) * (c[0]! - a[0]!) - (b[0]! - a[0]!) * (c[2]! - a[2]!);
+    const u = this.cells.uv(cell);
+    if (cross * up >= 0) this.P.push(...a, ...b, ...c);
+    else this.P.push(...a, ...c, ...b);
+    for (let i = 0; i < 3; i++) this.UV.push(...u);
   }
   /** Axis-aligned box, top in `top`, sides in `side`. */
   box(
@@ -60,14 +69,77 @@ export interface LevelPiece {
   geo: BufferGeometry;
 }
 
-/** One slab geometry per (building, chunk) of level `tiles.z` (baseY = z · floor height). */
+/**
+ * Slab piece of tile (tx, ty) cut to a building outline (x, y pairs, world metres): the tile
+ * square clipped to the polygon, top in `top`, sides along the cut edges.
+ */
+function clippedTile(
+  g: Builder,
+  outline: readonly Vector2[],
+  tx: number,
+  ty: number,
+  y0: number,
+  y1: number,
+  top: string,
+  side: string,
+): void {
+  const pts = clipPolygon(outline as Vector2[], { x0: tx, y0: ty, x1: tx + 1, y1: ty + 1 });
+  if (pts.length < 3) return;
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    area += a.x * b.y - b.x * a.y;
+  }
+  if (Math.abs(area) > 1 - 1e-6) {
+    g.box(tx, y0, ty, tx + 1, y1, ty + 1, top, side);
+    return;
+  }
+  if (Math.abs(area) < 1e-4) return;
+  for (const [a, b, c] of ShapeUtils.triangulateShape(pts, [])) {
+    const A = pts[a!]!;
+    const B = pts[b!]!;
+    const C = pts[c!]!;
+    g.tri([A.x, y1, A.y], [B.x, y1, B.y], [C.x, y1, C.y], top, 1);
+    g.tri([A.x, y0, A.y], [B.x, y0, B.y], [C.x, y0, C.y], side, -1);
+  }
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    if (a.distanceTo(b) < 1e-4) continue;
+    // Quad a, b, b↑, a↑ faces (−dz, dx): inward for a counter-clockwise ring, so flip those.
+    if (area > 0) g.quad([b.x, y0, b.y], [a.x, y0, a.y], [a.x, y1, a.y], [b.x, y1, b.y], side);
+    else g.quad([a.x, y0, a.y], [b.x, y0, b.y], [b.x, y1, b.y], [a.x, y1, a.y], side);
+  }
+}
+
+/**
+ * One slab geometry per (building, chunk) of level `tiles.z` (baseY = z · floor height).
+ * `outlineOf`: buildings with vector walls get their slab cut to the outline (no tile
+ * stair-steps sticking out of slanted walls).
+ */
 export function slabGeometry(
   tiles: MapTiles,
   range: ChunkRange,
   baseY: number,
   cells: TownCells,
+  outlineOf?: (b: BuildingId) => { outline: readonly number[] } | undefined,
 ): LevelPiece[] {
   const out: LevelPiece[] = [];
+  const rings = new Map<BuildingId, Vector2[] | null>();
+  const ringOf = (b: BuildingId): Vector2[] | null => {
+    let r = rings.get(b);
+    if (r !== undefined) return r;
+    const o = outlineOf?.(b)?.outline;
+    r = null;
+    if (o && o.length >= 6) {
+      r = [];
+      for (let i = 0; i + 1 < o.length; i += 2) r.push(new Vector2(o[i], o[i + 1]));
+      if (r.length > 1 && r[0]!.equals(r[r.length - 1]!)) r.pop();
+    }
+    rings.set(b, r);
+    return r;
+  };
   for (let cy = range.cy0; cy <= range.cy1; cy++) {
     for (let cx = range.cx0; cx <= range.cx1; cx++) {
       const per = new Map<BuildingId, Builder>();
@@ -81,7 +153,9 @@ export function slabGeometry(
           let g = per.get(b);
           if (!g) per.set(b, (g = new Builder(cells)));
           const cell = floorLook(floor, tiles.roomType(tx, ty)).cell;
-          g.box(tx, baseY - SLAB, ty, tx + 1, baseY + 0.02, ty + 1, cell, 'concrete');
+          const ring = ringOf(b);
+          if (ring) clippedTile(g, ring, tx, ty, baseY - SLAB, baseY + 0.02, cell, 'concrete');
+          else g.box(tx, baseY - SLAB, ty, tx + 1, baseY + 0.02, ty + 1, cell, 'concrete');
         }
       }
       for (const [building, g] of per) {
