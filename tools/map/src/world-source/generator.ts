@@ -413,6 +413,8 @@ export class PlanChunkGenerator {
     const levels: GenLevel[] = [];
     /** Tiles of level 0 under a building room (gid). */
     const owner = new Int32Array(CT);
+    /** Buildings with an exact outline (vector walls): their edge tiles also show the ground. */
+    const outlined = new Set<number>();
     for (const z of [...zs].sort((a, b) => a - b)) {
       const floor = new Uint16Array(CT);
       const edgeN = new Uint16Array(CT);
@@ -452,7 +454,10 @@ export class PlanChunkGenerator {
                 if (s.lockKind && !kinds.has(s.gid)) kinds.set(s.gid, s.lockKind);
               }
               room[i] = id;
-              if (z === 0) owner[i] = s.gid;
+              if (z === 0) {
+                owner[i] = s.gid;
+                if (s.outline) outlined.add(s.gid);
+              }
               any = true;
             }
             if (L.edgeN[k]) {
@@ -700,8 +705,17 @@ export class PlanChunkGenerator {
     const under = new Uint16Array(CT);
     let anyUnder = false;
     for (let i = 0; i < CT; i++) {
-      const u = r.under[ri(i % C, (i / C) | 0)]!;
-      if (!u || owner[i]) continue;
+      const j = ri(i % C, (i / C) | 0);
+      const u = r.under[j]!;
+      if (owner[i]) {
+        // A tile of an outlined building: the renderer cuts its floor to the outline, the rest
+        // of the tile is the ground outside (under the areas / roads, or the plain ground).
+        if (!outlined.has(owner[i]!)) continue;
+        under[i] = GROUND_TILE_IDS[u ? u - 1 : r.g[j]!]!;
+        anyUnder = true;
+        continue;
+      }
+      if (!u) continue;
       under[i] = GROUND_TILE_IDS[u - 1]!;
       anyUnder = true;
     }

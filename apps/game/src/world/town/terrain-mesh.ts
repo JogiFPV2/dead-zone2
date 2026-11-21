@@ -1,6 +1,7 @@
 import type { Color } from 'three';
 import { BufferAttribute, BufferGeometry, ShapeUtils, Vector2 } from 'three';
-import { CHUNK_SIZE, type ContentId } from '../chunk.js';
+import { CHUNK_SIZE, type BuildingId, type ContentId } from '../chunk.js';
+import { clipPolygon } from './roof.js';
 import type { TownCells } from './kit.js';
 import { hash01 } from './modules.js';
 import type { MapTiles } from './tiles.js';
@@ -88,6 +89,11 @@ export interface TerrainVectorRoads {
    * over the ground under them instead of stair-stepped area tiles.
    */
   areas?: readonly VectorArea[];
+  /**
+   * Outline (world tiles) of a building with vector walls: its edge tiles get the indoor floor cut
+   * to the outline over the ground under them (`underAt`), no tile corners poking out.
+   */
+  outlineOf?: (b: BuildingId) => readonly Vector2[] | undefined;
 }
 
 /** Indoor floor height (above every road ribbon, see RIBBON_Y). */
@@ -161,38 +167,80 @@ export function buildTerrainGeometry(
     }
     return n;
   };
+  const tileColor = (look: FloorLook, x: number, z: number): Color => {
+    let c = col(look.cell)
+      .clone()
+      .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));
+    if (look.cell === 'kitchen-tiles' && (x + z) & 1) c = c.multiplyScalar(0.85);
+    if (look.cell === 'wood-floor' && x & 1) c = c.multiplyScalar(0.92);
+    return c;
+  };
+  /** One ground / floor tile quad (grass and dirt blended per corner). */
+  const tile = (x: number, z: number, look: FloorLook, indoor: boolean) => {
+    // Smooth roads run under indoor floors: lift every indoor floor to 2 cm. In every chunk, not
+    // only those with a road layer: otherwise a hall across a chunk edge gets a 2 cm step there
+    // and the background shows through the crack (a white line along the hall).
+    const y = indoor ? Math.max(look.y ?? 0, INDOOR_Y) : (look.y ?? 0);
+    const corners: V[] = [
+      [x, y, z + 1],
+      [x + 1, y, z + 1],
+      [x + 1, y, z],
+      [x, y, z],
+    ];
+    const cs =
+      look.cell === 'grass'
+        ? corners.map(([a, , b]) => grassAt(a, b))
+        : look.cell === 'dirt'
+          ? corners.map(([a, , b]) => dirtAt(a, b))
+          : tileColor(look, x, z);
+    quad(corners, cs, look.mask);
+  };
   const x0 = cx * CHUNK_SIZE;
   const z0 = cy * CHUNK_SIZE;
   let any = false;
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
-      const floor = vector?.underAt(x, z) ?? floorAt(x, z);
+      const room = tiles.roomType(x, z);
+      const ground = vector?.underAt(x, z);
+      const floor = room ? floorAt(x, z) : (ground ?? floorAt(x, z));
       if (!floor) continue;
       any = true;
-      const room = tiles.roomType(x, z);
-      const look = floorLook(floor, room);
-      // Smooth roads run under indoor floors: lift every indoor floor to 2 cm. In every chunk, not
-      // only those with a road layer: otherwise a hall across a chunk edge gets a 2 cm step there
-      // and the background shows through the crack (a white line along the hall).
-      const y = room ? Math.max(look.y ?? 0, INDOOR_Y) : (look.y ?? 0);
-      let c = col(look.cell)
-        .clone()
-        .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));
-      if (look.cell === 'kitchen-tiles' && (x + z) & 1) c = c.multiplyScalar(0.85);
-      if (look.cell === 'wood-floor' && x & 1) c = c.multiplyScalar(0.92);
-      const corners: V[] = [
-        [x, y, z + 1],
-        [x + 1, y, z + 1],
-        [x + 1, y, z],
-        [x, y, z],
-      ];
-      const cs =
-        look.cell === 'grass'
-          ? corners.map(([a, , b]) => grassAt(a, b))
-          : look.cell === 'dirt'
-            ? corners.map(([a, , b]) => dirtAt(a, b))
-            : c;
-      quad(corners, cs, look.mask);
+      if (room && ground) {
+        const ring = vector?.outlineOf?.(tiles.building(x, z));
+        const cut = ring
+          ? clipPolygon(ring as Vector2[], { x0: x, y0: z, x1: x + 1, y1: z + 1 })
+          : [];
+        let area = 0;
+        for (let i = 0; i < cut.length; i++) {
+          const a = cut[i]!;
+          const b = cut[(i + 1) % cut.length]!;
+          area += a.x * b.y - b.x * a.y;
+        }
+        area = Math.abs(area) / 2;
+        if (ring && area < 1 - 1e-4) {
+          // Edge tile of an outlined building: the ground under the whole tile, the indoor
+          // floor only inside the outline.
+          tile(x, z, floorLook(ground, undefined), false);
+          if (area > 1e-4) {
+            const look = floorLook(floor, room);
+            const y = Math.max(look.y ?? 0, INDOOR_Y) + baseY;
+            const c = tileColor(look, x, z);
+            for (const [a, b, d] of ShapeUtils.triangulateShape(cut, [])) {
+              const t = [cut[a!]!, cut[b!]!, cut[d!]!];
+              const ny =
+                (t[1]!.y - t[0]!.y) * (t[2]!.x - t[0]!.x) -
+                (t[1]!.x - t[0]!.x) * (t[2]!.y - t[0]!.y);
+              for (const p of ny >= 0 ? t : [t[0]!, t[2]!, t[1]!]) {
+                P.push(p.x, y, p.y);
+                C.push(c.r, c.g, c.b);
+                M.push(...look.mask);
+              }
+            }
+          }
+          continue;
+        }
+      }
+      tile(x, z, floorLook(floor, room), !!room);
     }
   }
   if (!any) return undefined;
@@ -609,7 +657,8 @@ function areaPolygons(
     const k = (z - z0) * CHUNK_SIZE + (x - x0);
     let v = ok.get(k);
     if (v === undefined) {
-      if (tiles.roomType(x, z)) v = false;
+      // Rooms: only the edge tiles of outlined buildings (ground under them; the floor is above).
+      if (tiles.roomType(x, z)) v = !!vector.underAt(x, z);
       else if (vector.underAt(x, z)) v = true;
       else {
         const f = tiles.floor(x, z);

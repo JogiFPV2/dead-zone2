@@ -1,7 +1,7 @@
 import type { FadeView } from '../wall-fade.js';
 import { noteBuildings } from '../town/bld-v2.js';
 import type { EdgeSide, OpeningView, SimEvent } from '@deadzone/protocol';
-import { Group, Mesh, type MeshStandardMaterial } from 'three';
+import { Group, Mesh, Vector2, type MeshStandardMaterial } from 'three';
 import { BuildingLookup } from '../building-lookup.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from '../chunk.js';
 import type { Cutaway } from '../cutaway.js';
@@ -93,11 +93,24 @@ export class StreamedTown {
     let triangles = 0;
     if (z === 0) {
       const pal = this.loaded.tilePalette;
+      const rings = new Map<BuildingId, Vector2[] | undefined>();
       const vector =
         col.roads || col.under || col.areas
           ? {
               roads: col.roads ?? [],
               ...(col.areas ? { areas: col.areas } : {}),
+              outlineOf: (b: BuildingId) => {
+                if (rings.has(b)) return rings.get(b);
+                const o = metas.get(b)?.outline;
+                let r: Vector2[] | undefined;
+                if (o && o.length >= 6) {
+                  r = [];
+                  for (let i = 0; i + 1 < o.length; i += 2) r.push(new Vector2(o[i], o[i + 1]));
+                  if (r.length > 1 && r[0]!.equals(r[r.length - 1]!)) r.pop();
+                }
+                rings.set(b, r);
+                return r;
+              },
               // Also the neighbour chunks' layer (curbs at the chunk edge look across it).
               underAt: (x: number, y: number) => {
                 const ncx = Math.floor(x / CHUNK_SIZE);
