@@ -6,6 +6,7 @@ import {
   type OsmTiles,
   type PlanChunkGenerator,
 } from '@deadzone/map/world-source';
+import { simTrees } from '../trees/crowns.js';
 import { levelToSimChunk } from './convert.js';
 
 /**
@@ -13,7 +14,8 @@ import { levelToSimChunk } from './convert.js';
  * are generated on demand (one column = all storeys, kept in a small LRU; the sim caches
  * `SimChunk`s itself), zone kinds come from the plan's chunk-resolution raster (cheap: the sim
  * asks for every chunk of the world when populating its LOD).
- * Cover zones and pylon blockers ride on each chunk (`SimChunk.zones` / `blockers`, #256).
+ * Cover zones and pylon blockers ride on each chunk (`SimChunk.zones` / `blockers`, #256), tree
+ * crowns on level 0 (`SimChunk.trees`, shade for light and hiding).
  */
 export function generatorWorldSource(
   gen: PlanChunkGenerator,
@@ -48,8 +50,14 @@ export function generatorWorldSource(
     bounds: { cx0, cy0, cx1, cy1, z0: 0, z1: gen.maxLevel },
     getChunk(cx, cy, z): SimChunk | undefined {
       if (cx < cx0 || cy < cy0 || cx > cx1 || cy > cy1) return undefined;
-      const l = column(cx, cy)?.levels.find((v) => v.z === z);
-      return l ? levelToSimChunk(l, water) : undefined;
+      const col = column(cx, cy);
+      const l = col?.levels.find((v) => v.z === z);
+      if (!l) return undefined;
+      const chunk = levelToSimChunk(l, water);
+      // Tree crowns shade the ground (light and hiding, docs 9.45).
+      return z === 0 && col!.trees.length > 0
+        ? { ...chunk, trees: simTrees(col!.trees, col!.treeSpecies) }
+        : chunk;
     },
     chunkKind: (cx, cy) => gen.chunkKind(cx, cy),
     edgeKinds: EDGE_PALETTE.map((e) => (e ? e.kind : null)),

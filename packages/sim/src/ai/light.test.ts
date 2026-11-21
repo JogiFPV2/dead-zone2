@@ -84,6 +84,50 @@ describe('light: sun, sky and shadows (one model with the renderer: sunAt)', () 
   });
 });
 
+describe('light: tree crowns shade (SimChunk.trees)', () => {
+  // One tree at (10, 10): crown radius 3 m from 2 m to 8 m; another crossing a chunk border.
+  const park: MapSpec = {
+    width: 64,
+    height: 64,
+    trees: [
+      { x: 10, y: 10, r: 3, bottom: 2, top: 8 },
+      { x: 31.5, y: 50, r: 3, bottom: 2, top: 8 },
+    ],
+  };
+
+  it('under a crown and in its shadow by day: tree shade (lighter than a building)', () => {
+    const sim = at(NOON, { x: 10.5, y: 10.5 }, park);
+    expect(light(sim)).toBeCloseTo(LIGHT.treeShadeMul, 5);
+    expect(LIGHT.treeShadeMul).toBeGreaterThan(LIGHT.shadowMul);
+    // Noon sun in the south: the crown's shadow falls north of the trunk, not south.
+    expect(light(sim, 10.5, 5.5)).toBeCloseTo(LIGHT.treeShadeMul, 5);
+    expect(light(sim, 10.5, 16.5)).toBe(1);
+    // Far away: sunlit.
+    expect(light(sim, 50.5, 10.5)).toBe(1);
+  });
+
+  it('a crown reaches over the chunk border', () => {
+    const sim = at(NOON, { x: 33.5, y: 50.5 }, park);
+    expect(light(sim)).toBeCloseTo(LIGHT.treeShadeMul, 5);
+  });
+
+  it('at night a tree adds nothing (moonlight)', () => {
+    const sim = at(MIDNIGHT, { x: 10.5, y: 10.5 }, park);
+    expect(light(sim)).toBeCloseTo(LIGHT.moon, 5);
+  });
+
+  it('standing still in tree shade by day is less visible than in the open', () => {
+    const shade = at(NOON, { x: 10.5, y: 10.5 }, park);
+    const open = at(NOON, { x: 50.5, y: 50.5 }, park);
+    for (let i = 0; i < 10; i++) {
+      shade.step();
+      open.step();
+    }
+    expect(vis(shade)).toBeLessThan(vis(open));
+    expect(stealthOf(vis(open))).toBe('lit');
+  });
+});
+
 describe('visibility and stealth', () => {
   it('still in the dark ≈ hidden; moving in the dark dim; daylight lit', () => {
     const night = at(MIDNIGHT, { x: 10.5, y: 10.5 });

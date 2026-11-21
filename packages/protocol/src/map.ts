@@ -93,7 +93,18 @@ export interface SimChunk {
    * Optional; corner posts drawn by the client are decoration and are not listed.
    */
   readonly wallSegments?: readonly SimWallSegment[] | undefined;
+  /**
+   * Tree crowns on this level (protocol 49, light and hiding, docs 9.45): flat list, five numbers
+   * per tree: centre x, y in **local tiles** of the chunk (float, 0 ≤ x, y < 32), crown radius,
+   * crown bottom and crown top above the ground, all in metres. The sim casts the crowns' shadow
+   * (`ai/light.ts`): a player in it is harder to see. Trees do not block movement or sight.
+   * Optional; only level 0 has trees.
+   */
+  readonly trees?: readonly number[] | undefined;
 }
+
+/** Numbers per tree in `SimChunk.trees` (x, y, radius, bottom, top). */
+export const SIM_TREE_STRIDE = 5;
 
 /** One wall segment (`SimChunk.wallSegments`): world metres, `z` = level (= the chunk's). */
 export interface SimWallSegment {
@@ -280,6 +291,7 @@ export function simMapFromData(data: SimMapData): SimMap {
       objects: c.objects,
       ...(c.stairs ? { stairs: c.stairs } : {}),
       ...(c.vehicles ? { vehicles: c.vehicles } : {}),
+      ...(c.trees ? { trees: c.trees } : {}),
     });
   }
   const list: SimChunkAddress[] = data.chunks.map(({ cx, cy, z }) => ({ cx, cy, z }));

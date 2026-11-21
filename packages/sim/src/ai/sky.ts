@@ -11,6 +11,8 @@ export const LIGHT = {
   twilightSin: 0.1045,
   /** Sky × this in a building's shadow (sun above the horizon). */
   shadowMul: 0.45,
+  /** Sky × this in the shade of tree crowns (leaves let some light through; `SimChunk.trees`). */
+  treeShadeMul: 0.6,
   /** Sky × this inside a room (windows, doors). */
   indoorMul: 0.35,
   /** Height of one level (m) for shadows; ray starts at `bodyHeightM` above the ground. */
