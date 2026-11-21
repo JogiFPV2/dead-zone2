@@ -25,11 +25,12 @@ pnpm --filter @deadzone/map2 osm ~/.cache/deadzone-osm/stw-roads2.json ~/.cache/
 python3 tools/map2/scripts/extract_buildings.py ~/.cache/deadzone-osm/podkarpackie-latest.osm.pbf \
   ~/.cache/deadzone-osm/stw-bld-raw2.json        # budynki 1:1 (deadzone-osm-bld-raw-2)
 pnpm --filter @deadzone/map2 buildings ~/.cache/deadzone-osm/stw-bld-raw2.json ~/.cache/deadzone-osm/stw-bld2.json
-pnpm --filter @deadzone/map osm:map2-bld ~/.cache/deadzone-osm/stw2-osm.json \
-  ~/.cache/deadzone-osm/stw-bld2.json ~/.cache/deadzone-osm/stw2-bld.json
 python3 tools/map2/scripts/extract_land.py ~/.cache/deadzone-osm/podkarpackie-latest.osm.pbf \
   ~/.cache/deadzone-osm/stw-land-raw2.json       # teren 1:1 (deadzone-osm-land-raw-2)
 pnpm --filter @deadzone/map2 land ~/.cache/deadzone-osm/stw-land-raw2.json ~/.cache/deadzone-osm/stw-land2.json
+pnpm --filter @deadzone/map osm:map2-bld ~/.cache/deadzone-osm/stw2-osm.json \
+  ~/.cache/deadzone-osm/stw-bld2.json ~/.cache/deadzone-osm/stw2-bld.json \
+  ~/.cache/deadzone-osm/stw-land2.json           # teren daje rodzaj budynkom bez opisu
 pnpm --filter @deadzone/map osm:map2-land ~/.cache/deadzone-osm/stw2-bld.json \
   ~/.cache/deadzone-osm/stw-land2.json ~/.cache/deadzone-osm/stw2-full.json
 pnpm --filter @deadzone/map osm:tiles ~/.cache/deadzone-osm/stw2-full.json $PWD/apps/game/public/osm/stw2 --stw2
