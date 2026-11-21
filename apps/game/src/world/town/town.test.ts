@@ -309,6 +309,34 @@ describe('town terrain', () => {
     expect(onRoad).toBe(0);
   });
 
+  it('parking lots get bay stripes across their long edges, facing up', () => {
+    const vector = {
+      roads: [],
+      underAt: () => undefined,
+      areas: [
+        { surface: 'base:parking' as const, order: 20, rings: [[2, 12, 28, 14, 27, 24, 1, 22]] },
+      ],
+    };
+    const g = buildTerrainGeometry(new MapTiles(roadMap(), 0), 0, 0, cells, 0, vector)!;
+    const pos = g.getAttribute('position');
+    const y = 0.012;
+    let tris = 0;
+    for (let i = 0; i + 2 < pos.count; i += 3) {
+      if (Math.abs(pos.getY(i) - y) > 1e-6) continue;
+      tris++;
+      const ax = pos.getX(i);
+      const az = pos.getZ(i);
+      const bx = pos.getX(i + 1);
+      const bz = pos.getZ(i + 1);
+      const cx = pos.getX(i + 2);
+      const cz = pos.getZ(i + 2);
+      // Up-facing: (b − a) × (c − a) has +y.
+      expect((bz - az) * (cx - ax) - (bx - ax) * (cz - az)).toBeGreaterThan(0);
+    }
+    // Two long edges of ~26 m: about 9 stripes each (2 triangles per stripe).
+    expect(tris).toBeGreaterThanOrEqual(2 * 2 * 8);
+  });
+
   it('clipToCell clips a triangle to one tile square', () => {
     const p = clipToCell(
       [

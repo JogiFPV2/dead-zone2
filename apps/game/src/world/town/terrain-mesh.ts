@@ -593,7 +593,7 @@ export function buildTerrainGeometry(
           : col(look.cell)
               .clone()
               .multiplyScalar(1 + (vnoise(x + 17, z - 5, 4) - 0.5) * (look.jitter ?? 0.06));
-    areaPolygons(vector, tiles, x0, z0, colorAt, P, C, M, baseY);
+    areaPolygons(vector, tiles, x0, z0, colorAt, paint, P, C, M, baseY);
   }
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));
@@ -647,6 +647,7 @@ function areaPolygons(
   x0: number,
   z0: number,
   colorAt: (look: FloorLook, x: number, z: number) => Color,
+  paint: Color,
   P: number[],
   C: number[],
   M: number[],
@@ -729,8 +730,125 @@ function areaPolygons(
           if (poly.length >= 3) push(poly);
         }
     }
+    if (area.surface === 'base:parking') parkingBays(outer, holes, BAY.y + baseY);
+  }
+
+  /** Point inside the area (even-odd over its rings). */
+  function inside(rings: readonly Vector2[][], px: number, pz: number): boolean {
+    let c = false;
+    for (const r of rings)
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+        const a = r[i]!;
+        const b = r[j]!;
+        if (a.y > pz !== b.y > pz && px < ((b.x - a.x) * (pz - a.y)) / (b.y - a.y) + a.x) c = !c;
+      }
+    return c;
+  }
+
+  /**
+   * Parking bays: a BAY.depth stripe across every long edge of the lot every BAY.width (anchored
+   * to the world, so stripes line up across chunks), drawn where it lies inside the lot.
+   */
+  function parkingBays(outer: Vector2[], holes: Vector2[][], y: number): void {
+    const rings = [outer, ...holes];
+    const onRoad = (px: number, pz: number): boolean => {
+      for (const rd of vector.roads) {
+        if (rd.bridge) continue;
+        const p = rd.pts;
+        for (let k = 0; k + 3 < p.length; k += 2) {
+          const ax = x0 + p[k]!;
+          const az = z0 + p[k + 1]!;
+          const dx = x0 + p[k + 2]! - ax;
+          const dz = z0 + p[k + 3]! - az;
+          const l2 = dx * dx + dz * dz || 1;
+          const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2));
+          if (Math.hypot(ax + dx * t - px, az + dz * t - pz) < Math.max(rd.r, rd.rs) + 0.05)
+            return true;
+        }
+      }
+      return false;
+    };
+    // Edges the chunk clip made (along the margin box) are not lot edges.
+    const onBox = (p: Vector2) =>
+      Math.abs(p.x - (x0 - 2)) < 0.02 ||
+      Math.abs(p.x - (x0 + CHUNK_SIZE + 2)) < 0.02 ||
+      Math.abs(p.y - (z0 - 2)) < 0.02 ||
+      Math.abs(p.y - (z0 + CHUNK_SIZE + 2)) < 0.02;
+    const w = BAY.line / 2;
+    for (const r of rings)
+      for (let i = 0; i < r.length; i++) {
+        const a = r[i]!;
+        const b = r[(i + 1) % r.length]!;
+        if (onBox(a) && onBox(b)) continue;
+        const len = a.distanceTo(b);
+        if (len < BAY.width * 4) continue;
+        const ux = (b.x - a.x) / len;
+        const uz = (b.y - a.y) / len;
+        // Inward normal: the side where the lot is.
+        const mx = (a.x + b.x) / 2;
+        const mz = (a.y + b.y) / 2;
+        let nx = -uz;
+        let nz = ux;
+        if (!inside(rings, mx + nx * 0.5, mz + nz * 0.5)) {
+          nx = -nx;
+          nz = -nz;
+          if (!inside(rings, mx + nx * 0.5, mz + nz * 0.5)) continue;
+        }
+        const s0 = a.x * ux + a.y * uz;
+        for (let k = Math.ceil((s0 + 0.5) / BAY.width); k * BAY.width < s0 + len - 0.5; k++) {
+          const t = k * BAY.width - s0;
+          const ex = a.x + ux * t;
+          const ez = a.y + uz * t;
+          // A bay starts past a street's sidewalk along the lot and ends at a road (the aisle).
+          let from = 0;
+          while (from < BAY.depth && onRoad(ex + nx * from, ez + nz * from)) from += 0.25;
+          let to = from;
+          while (to < from + BAY.depth && !onRoad(ex + nx * to, ez + nz * to)) to += 0.25;
+          to = Math.min(to, from + BAY.depth);
+          if (to - from < 2) continue;
+          const px = ex + nx * from;
+          const pz = ez + nz * from;
+          const qx = ex + nx * to;
+          const qz = ez + nz * to;
+          const cx = (px + qx) / 2;
+          const cz = (pz + qz) / 2;
+          if (cx < x0 || cx >= x0 + CHUNK_SIZE || cz < z0 || cz >= z0 + CHUNK_SIZE) continue;
+          if (!inside(rings, qx - nx * 0.1, qz - nz * 0.1) || !inside(rings, cx, cz)) continue;
+          if (!allowed(Math.floor(cx), Math.floor(cz))) continue;
+          const quad: [number, number][] = [
+            [px + ux * w, pz + uz * w],
+            [qx + ux * w, qz + uz * w],
+            [qx - ux * w, qz - uz * w],
+            [px - ux * w, pz - uz * w],
+          ];
+          for (const [i0, i1, i2] of [
+            [0, 1, 2],
+            [0, 2, 3],
+          ] as const) {
+            const t3: [[number, number], [number, number], [number, number]] = [
+              quad[i0]!,
+              quad[i1]!,
+              quad[i2]!,
+            ];
+            const ny =
+              (t3[1][1] - t3[0][1]) * (t3[2][0] - t3[0][0]) -
+              (t3[1][0] - t3[0][0]) * (t3[2][1] - t3[0][1]);
+            for (const [qx2, qz2] of ny >= 0 ? t3 : [t3[0], t3[2], t3[1]]) {
+              P.push(qx2, y, qz2);
+              C.push(paint.r, paint.g, paint.b);
+              M.push(0.5, 0, 0, 0);
+            }
+          }
+        }
+      }
   }
 }
+
+/**
+ * Parking bay stripes: spacing and depth (m), line width, height (over every area and the dirt /
+ * sidewalk ribbons, under asphalt; bays are cut back from the roads crossing the lot).
+ */
+const BAY = { width: 2.5, depth: 5, line: 0.15, y: 0.012 };
 
 /** Convex polygon clipped to the tile square [x, x + 1] × [z, z + 1] (Sutherland–Hodgman). */
 export function clipToCell(
