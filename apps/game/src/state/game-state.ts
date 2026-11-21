@@ -19,6 +19,7 @@ import type {
   SimEvent,
   SimViewPatch,
   SleepView,
+  StealthLevel,
   ViewStat,
   VehicleStateView,
   UtilitiesView,
@@ -92,6 +93,8 @@ export interface GameState {
   };
   /** Threat 0–100 (view.threat; 0 = safe). */
   threat: number;
+  /** How well zombies see the player (view.stealth / visibility / lightLevel, docs 9.45). */
+  stealth?: { level: StealthLevel; visibility: number; light: number };
   /**
    * Furniture / edges in reach with their context-menu actions (view.furnitureActions, full
    * list; nearest to the aim point first).
@@ -206,6 +209,15 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
+    ...(view.stealth !== undefined || view.visibility !== undefined
+      ? {
+          stealth: {
+            level: view.stealth ?? s.stealth?.level ?? 'lit',
+            visibility: view.visibility ?? s.stealth?.visibility ?? 1,
+            light: view.lightLevel ?? s.stealth?.light ?? 1,
+          },
+        }
+      : {}),
     ...(view.furnitureActions ? { furniture: view.furnitureActions } : {}),
     ...(view.utilities ? { utilities: view.utilities } : {}),
     ...(view.litWindows ? { litWindows: view.litWindows } : {}),

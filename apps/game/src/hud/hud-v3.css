@@ -521,3 +521,62 @@
 .dz-reduced-motion .dz-ip[data-mode='search'][data-threat] .dz-ip__ring {
   animation: none;
 }
+
+/* Visibility eye (docs 9.45): bottom left, just above the HP bar. */
+.dz-g--stealth {
+  left: var(--_safe);
+  bottom: calc(var(--_safe) + 18px);
+  transform: scale(var(--_s));
+  transform-origin: bottom left;
+}
+.dz-eye3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 182px;
+  color: var(--color-text-primary);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+  pointer-events: none;
+}
+.dz-eye3[hidden] {
+  display: none;
+}
+.dz-eye3__icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dz-eye3__pupil {
+  fill: currentColor;
+  stroke: none;
+}
+.dz-eye3__faint {
+  opacity: 0.35;
+}
+.dz-eye3__track {
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.15);
+}
+.dz-eye3__fill {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  transform-origin: left center;
+  transition: transform 0.3s ease-out;
+}
+.dz-eye3[data-level='lit'] {
+  color: #f2d27a;
+}
+.dz-eye3[data-level='dim'] {
+  color: #9fb0c0;
+}
+.dz-eye3[data-level='hidden'] {
+  color: #6f8a6a;
+}
