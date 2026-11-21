@@ -59,6 +59,10 @@ export interface BuildingMeta {
   readonly heightM?: number;
   /** Church with a tower. */
   readonly tower?: 1;
+  /** Slanted building with vector walls: outline (x, y pairs, world metres), flat roof. */
+  readonly outline?: readonly number[];
+  /** Courtyards of `outline` (inner rings). */
+  readonly holes?: readonly (readonly number[])[];
 }
 
 /** One chunk column: all levels at (cx, cy) plus client-only decor and building metadata. */
