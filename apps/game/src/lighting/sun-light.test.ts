@@ -28,11 +28,11 @@ describe('applySun', () => {
     expect(Math.abs(c.directional.offset.x)).toBeLessThan(1e-6);
   });
 
-  it('daytime shadow is very subtle and soft', () => {
+  it('daytime shadow is clear (hiding in it, Pawel 2026-11-21) and soft', () => {
     const c = compilePreset(DAY_PRESET);
     expect(applySun(c, sunAt(12, DAY1))).toBe(1);
     expect(c.directional.shadowIntensity).toBe(SUN_LIGHT.shadowIntensity);
-    expect(c.directional.shadowIntensity).toBeLessThanOrEqual(0.45);
+    expect(c.directional.shadowIntensity).toBeGreaterThanOrEqual(0.6);
     expect(c.directional.shadowRadius).toBe(SUN_LIGHT.shadowRadius);
   });
 
@@ -42,7 +42,7 @@ describe('applySun', () => {
     const o = c.directional.offset;
     const el = Math.atan2(o.y, Math.hypot(o.x, o.z)) * (180 / Math.PI);
     expect(el).toBeCloseTo(SUN_LIGHT.minElevationDeg, 6);
-    expect(c.directional.shadowIntensity).toBeLessThan(0.1);
+    expect(c.directional.shadowIntensity).toBeLessThan(SUN_LIGHT.shadowIntensity * 0.25);
   });
 
   it('night: moon light untouched, sun shadow off', () => {

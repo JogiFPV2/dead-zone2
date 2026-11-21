@@ -256,7 +256,7 @@ export class ViewTracker {
     }
     const wx = weatherNow(w, minute);
     if (wx) {
-      const k = `${wx.kind}|${wx.from}|${wx.blend}|${wx.cloud}|${wx.sightMul}|${wx.hearingMul}|${wx.tempC}|${wx.moon}`;
+      const k = `${wx.kind}|${wx.from}|${wx.blend}|${wx.cloud}|${wx.sightMul}|${wx.hearingMul}|${wx.tempC}|${wx.moon}|${wx.snow}`;
       if (k !== this.weatherKey) {
         this.weatherKey = k;
         patch.weather = { ...wx };

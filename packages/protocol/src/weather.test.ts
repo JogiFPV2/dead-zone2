@@ -58,3 +58,29 @@ describe('weather and moon (protocol 50)', () => {
     expect(fog).toMatchObject({ kind: 'fog', from: 'fog', blend: 1, sightMul: 0.45 });
   });
 });
+
+describe('snow on the ground', () => {
+  it('grows while it snows, then melts; forced snow = full, forced rain = none', async () => {
+    const { snowCover, SNOW_COVER } = await import('./weather.js');
+    expect(snowCover(1, 5000, undefined, 'snow')).toBe(1);
+    expect(snowCover(1, 5000, undefined, 'rain')).toBe(0);
+    // A winter seed with a snow spell followed by another kind.
+    const doy = 15;
+    let seed = 1;
+    let n = 0;
+    const winterStartDay = 365 - 183; // game day whose day of year is 1 (start = day 184)
+    const base = (winterStartDay + doy) * 1440;
+    const spell = 360;
+    outer: for (; seed < 500; seed++)
+      for (n = Math.ceil(base / spell); n < Math.ceil(base / spell) + 40; n++)
+        if (spellKind(seed, n, doy) === 'snow' && spellKind(seed, n + 1, doy) === 'clear')
+          break outer;
+    const end = (n + 1) * spell;
+    const full = snowCover(seed, end);
+    expect(full).toBeGreaterThan(0.99);
+    const later = snowCover(seed, end + SNOW_COVER.meltMinutes.clear / 2);
+    expect(later).toBeGreaterThan(0.3);
+    expect(later).toBeLessThan(0.7);
+    expect(snowCover(seed, end + spell)).toBe(0);
+  });
+});

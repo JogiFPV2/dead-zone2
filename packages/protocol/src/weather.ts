@@ -55,7 +55,23 @@ export interface WeatherView {
   tempC: number;
   /** Lit fraction of the moon 0..1 (0 = new, 1 = full; rounded to 0.05). */
   moon: number;
+  /** Snow lying on the ground 0..1 (`snowCover`; rounded to 0.05). */
+  snow: number;
 }
+
+/**
+ * Snow on the ground: grows while it snows (full after `growMinutes`), melts afterwards at a rate
+ * per kind (minutes from full to none; rain melts fast, overcast and fog slowly).
+ */
+export const SNOW_COVER = {
+  growMinutes: 120,
+  meltMinutes: { clear: 300, overcast: 720, rain: 90, storm: 90, fog: 720, snow: 0 } as Record<
+    WeatherKind,
+    number
+  >,
+  /** Spells of history looked at (older snow has melted by then). */
+  memorySpells: 8,
+};
 
 export interface WeatherTiming {
   /** Game minutes of one weather spell (a new kind may start at every spell boundary). */
@@ -147,7 +163,31 @@ export function weatherAt(
     hearingMul: r05(mix(a.hearingMul, b.hearingMul)),
     tempC: Math.round(mix(a.tempC, b.tempC) * 2) / 2,
     moon: r05(moonIllumination(minute)),
+    snow: r05(snowCover(seed, minute, timing, forced)),
   };
+}
+
+/** Snow lying on the ground 0..1 at `minute` (from the last `memorySpells` spells). */
+export function snowCover(
+  seed: number,
+  minute: number,
+  timing: WeatherTiming = DEFAULT_WEATHER_TIMING,
+  forced?: WeatherKind,
+): number {
+  if (forced) return forced === 'snow' ? 1 : 0;
+  const len = timing.spellMinutes;
+  const n = Math.floor(minute / len);
+  let cover = 0;
+  for (let k = n - SNOW_COVER.memorySpells; k <= n; k++) {
+    const start = Math.max(0, k * len);
+    const end = Math.min(minute, k * len + len);
+    const dur = end - start;
+    if (dur <= 0) continue;
+    const kind = spellKind(seed, k, dayOfYearForGameDay(Math.floor(start / MINUTES_PER_DAY) + 1));
+    if (kind === 'snow') cover = Math.min(1, cover + dur / SNOW_COVER.growMinutes);
+    else cover = Math.max(0, cover - dur / SNOW_COVER.meltMinutes[kind]);
+  }
+  return cover;
 }
 
 /** Wetness per game minute outdoors of a view (blended like the other effects). */
