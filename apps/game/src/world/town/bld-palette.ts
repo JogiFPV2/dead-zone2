@@ -4,14 +4,7 @@
  * JSON when it changes.
  */
 export type BldType =
-  | 'block'
-  | 'house'
-  | 'service'
-  | 'industrial'
-  | 'public'
-  | 'outbuilding'
-  | 'kamienica'
-  | 'station';
+  'block' | 'house' | 'service' | 'industrial' | 'public' | 'outbuilding' | 'kamienica' | 'station';
 export interface BldTypePalette {
   walls: readonly string[];
   weights: readonly number[];
