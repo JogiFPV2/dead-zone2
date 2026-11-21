@@ -61,6 +61,114 @@ const REL_RING = 1e8;
 export const map2BuildingId = (b: Pick<Map2Building, 'id' | 'rel' | 'ring'>): number =>
   b.rel ? REL_BASE + b.ring * REL_RING + b.id : b.id;
 
+/** Recesses / bumps up to this depth (m) are smoothed out of the outlines (Paweł, 21.11.2026). */
+export const NOTCH_DEPTH = 2;
+/** Widest notch (chord, m) that is smoothed: longer runs are real bends, not notches. */
+const NOTCH_WIDTH = 8;
+
+const segDist = (p: Pt, a: Pt, b: Pt): number => {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const l2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+  return Math.hypot(a[0] + dx * t - p[0], a[1] + dy * t - p[1]);
+};
+/** Turn at `b` on a → b → c below NOTCH_TURN. */
+const NOTCH_TURN = (25 * Math.PI) / 180;
+const straight = (a: Pt, b: Pt, c: Pt): boolean => {
+  const t = Math.abs(
+    Math.atan2(
+      (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]),
+      (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]),
+    ),
+  );
+  return t < NOTCH_TURN;
+};
+const ringArea = (r: readonly Pt[]): number => {
+  let s = 0;
+  for (let i = 0; i < r.length; i++) {
+    const a = r[i]!;
+    const b = r[(i + 1) % r.length]!;
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return s / 2;
+};
+
+/**
+ * Ring (open, no repeated first point) without its small recesses and bumps: runs of 1–3
+ * vertices within NOTCH_DEPTH of the chord that skips them (chord ≤ NOTCH_WIDTH) are dropped,
+ * unless a vertex ends a shared wall (`shared`: edge k = vertex k → k + 1; the neighbour keeps
+ * those). Returns the ring and the new index of every kept edge (`-1` = gone).
+ */
+export function smoothRing(
+  ring: readonly Pt[],
+  shared: readonly number[] = [],
+): { ring: Pt[]; edge: number[] } {
+  const keep = ring.map(() => true);
+  const fixed = new Set<number>();
+  for (const k of shared) {
+    fixed.add(k);
+    fixed.add((k + 1) % ring.length);
+  }
+  const area0 = Math.abs(ringArea(ring));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const idx = keep.flatMap((k, i) => (k ? [i] : []));
+    const n = idx.length;
+    if (n <= 4) break;
+    for (let s = 0; s < n && !changed; s++) {
+      for (let k = 3; k >= 1 && !changed; k--) {
+        if (n - k < 4) continue;
+        const run = Array.from({ length: k }, (_, j) => idx[(s + 1 + j) % n]!);
+        if (run.some((v) => fixed.has(v))) continue;
+        const a = ring[idx[s]!]!;
+        const d = ring[idx[(s + k + 1) % n]!]!;
+        if (Math.hypot(d[0] - a[0], d[1] - a[1]) > NOTCH_WIDTH) continue;
+        if (run.some((v) => segDist(ring[v]!, a, d) > NOTCH_DEPTH)) continue;
+        // On a straight wall: the walls before and after run along the chord (no corner cut).
+        const p = ring[idx[(s + n - 1) % n]!]!;
+        const q = ring[idx[(s + k + 2) % n]!]!;
+        if (!straight(p, a, d) || !straight(a, d, q)) continue;
+        // The notch is small next to the building (no corner of a small shed cut off).
+        const next = idx.filter((v) => !run.includes(v)).map((v) => ring[v]!);
+        if (Math.abs(Math.abs(ringArea(next)) - area0) > area0 * 0.08) continue;
+        for (const v of run) keep[v] = false;
+        changed = true;
+      }
+    }
+  }
+  // Vertices left on a straight line by a dropped notch (1 cm off the chord at most).
+  for (let again = true; again;) {
+    again = false;
+    const idx = keep.flatMap((k, i) => (k ? [i] : []));
+    if (idx.length <= 3) break;
+    for (let s = 0; s < idx.length; s++) {
+      const v = idx[s]!;
+      if (fixed.has(v)) continue;
+      const a = ring[idx[(s + idx.length - 1) % idx.length]!]!;
+      const d = ring[idx[(s + 1) % idx.length]!]!;
+      if (segDist(ring[v]!, a, d) < 0.01) {
+        keep[v] = false;
+        again = true;
+        break;
+      }
+    }
+  }
+  const pos = new Map<number, number>();
+  const out: Pt[] = [];
+  ring.forEach((p, i) => {
+    if (!keep[i]) return;
+    pos.set(i, out.length);
+    out.push(p);
+  });
+  const edge = ring.map((_, i) => {
+    const j = (i + 1) % ring.length;
+    return keep[i] && keep[j] ? pos.get(i)! : -1;
+  });
+  return { ring: out, edge };
+}
+
 const dmRing = (r: readonly Pt[]): number[] => {
   const out = r.flatMap(([x, y]) => [
     Math.round((x + STW2_OFFSET[0] - OSM_RAW_SHIFT) * 10),
@@ -212,10 +320,15 @@ export function map2Buildings(bs: readonly Map2Building[], land?: Map2Land): Osm
         : tagged
           ? Math.min(MAX_LEVELS, Math.max(1, b.levels))
           : defaultLevels(kind, b.id, b.area, long);
-    const noWall = b.shared.filter((k, j) => {
-      const by = b.sharedBy[j] ? ids.get(b.sharedBy[j]) : undefined;
-      return by !== undefined && by < id;
-    });
+    // Small recesses / bumps smoothed (shared walls and their ends stay as the neighbour has them).
+    const sm = smoothRing(b.outer, b.shared);
+    const noWall = b.shared
+      .filter((k, j) => {
+        const by = b.sharedBy[j] ? ids.get(b.sharedBy[j]) : undefined;
+        return by !== undefined && by < id;
+      })
+      .map((k) => sm.edge[k] ?? -1)
+      .filter((k) => k >= 0);
     const ob: OsmBuilding = {
       id,
       ...(id !== b.id ? { osmId: b.id } : {}),
@@ -228,7 +341,7 @@ export function map2Buildings(bs: readonly Map2Building[], land?: Map2Land): Osm
       ...(own.name ? { name: own.name } : {}),
       ...lookTags(b.tags),
       ...(b.heightFrom === 'height' || b.heightFrom === 'parts' ? { height: b.height } : {}),
-      rings: [dmRing(b.outer), ...b.inner.map(dmRing)],
+      rings: [dmRing(sm.ring), ...b.inner.map((r) => dmRing(smoothRing(r).ring))],
       exact: 1,
       ...(noWall.length ? { noWall } : {}),
     };
