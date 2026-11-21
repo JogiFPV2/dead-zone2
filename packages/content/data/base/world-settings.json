@@ -66,5 +66,10 @@
     "dayRangeTiles": 30,
     "nightFactor": 0.4,
     "lightBonus": 0.5
+  },
+  "weather": {
+    "enabled": true,
+    "spellMinutes": 360,
+    "fadeMinutes": 40
   }
 }

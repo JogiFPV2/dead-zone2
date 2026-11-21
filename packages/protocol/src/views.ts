@@ -1,3 +1,4 @@
+import type { WeatherView } from './weather.js';
 import type { VehiclePart } from './vehicles.js';
 import type {
   BodyPart,
@@ -595,6 +596,8 @@ export interface SimViewPatch {
   stealth?: StealthLevel;
   /** Light level 0..1 at the player (rounded to 0.05; debug / HUD), sent with `visibility`. */
   lightLevel?: number;
+  /** Weather and moon now (protocol 50, `weatherAt`), sent on change; absent = weather off. */
+  weather?: WeatherView;
   threat?: number;
   /** Combat state of the local player (changes on kills, cooldown and weapon switch). */
   combat?: CombatView;

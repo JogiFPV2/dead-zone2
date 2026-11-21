@@ -4,22 +4,49 @@ import { sortedQuery, type SimWorld } from '../core/world.js';
 import { ModSlot } from '../content/adapter.js';
 import { clampStat, modded, type SurvivalWorld } from '../survival/state.js';
 import { hygieneMinute } from '../survival/hygiene.js';
+import { weatherWetPerMin } from '@deadzone/protocol';
+import type { TileGrid } from '../world/grid.js';
+import { floorZ } from '../world/levels.js';
+import { weatherNow } from '../world/weather.js';
+import { seatOf } from '../vehicles/seats.js';
 
-/** Ambient temperature until weather exists (inside the comfort band of the base data). */
+/** Ambient temperature before weather (inside the comfort band of the base data). */
 export const DEFAULT_AMBIENT_C = 20;
 
 /**
  * Pipeline step 13 (per game minute): needs and mind. Rates are data (`worldSettings.survival`,
  * points 0–100 per game minute) × activity multipliers × moodle modifiers.
  */
-export function survivalSystem(w: SimWorld, first: number, count: number, ambientC: number): void {
+export function survivalSystem(
+  w: SimWorld,
+  first: number,
+  count: number,
+  ambientC: number,
+  /** Map grid: with weather on, rain wets players outdoors (not on a room tile). */
+  grid?: TileGrid,
+): void {
   const s = w.survival;
   if (!s) return;
   for (let m = first; m < first + count; m++) {
+    // Weather (docs 9.45): colder air, and rain / snow outdoors.
+    const wx = weatherNow(w, m);
+    const air = ambientC + (wx?.tempC ?? 0);
+    const wet = wx ? weatherWetPerMin(wx) : 0;
     for (const eid of sortedQuery(w, 'players', [w.c.Player])) {
-      if (!s.dead[eid]) survivalMinute(w, s, eid, ambientC);
+      if (s.dead[eid]) continue;
+      if (wet > 0 && grid && !indoors(w, grid, eid))
+        s.vitals.wetness[eid] = clampStat((s.vitals.wetness[eid] ?? 0) + wet);
+      survivalMinute(w, s, eid, air);
     }
   }
+}
+
+/** Player on a room tile (under a roof) or in a car. */
+function indoors(w: SimWorld, grid: TileGrid, eid: number): boolean {
+  if (seatOf(w, w.c.StableId.value[eid] ?? 0)) return true;
+  const x = Math.floor(w.c.Position.x[eid] ?? 0);
+  const y = Math.floor(w.c.Position.y[eid] ?? 0);
+  return grid.roomAt(x, y, floorZ(w, eid)) !== 0;
 }
 
 /** Sprinting: the running activity with `SPRINT_ENDURANCE_MUL` × its endurance drain. */
@@ -101,7 +128,7 @@ function survivalMinute(w: SimWorld, s: SurvivalWorld, eid: number, ambientC: nu
 
   hygieneMinute(s, eid);
 
-  // Wetness (no rain yet; indoor/outdoor is unknown, so the slower outdoor rate).
+  // Wetness dries (rain adds to it first, `survivalSystem`); the slower outdoor rate.
   const wetness = clampStat((v.wetness[eid] ?? 0) - cfg.wetness.dryOutdoorsPerMin);
   v.wetness[eid] = wetness;
 

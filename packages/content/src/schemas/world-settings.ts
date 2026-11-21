@@ -9,6 +9,7 @@ import { NoiseSettingsSchema } from './noise-settings.js';
 import { CombatSettingsSchema } from './combat-settings.js';
 import { AiSettingsSchema } from './ai-settings.js';
 import { VisionSettingsSchema } from './vision-settings.js';
+import { WeatherSettingsSchema } from './weather-settings.js';
 import { MovementSettingsSchema } from './movement-settings.js';
 import { SimLodSettingsSchema } from './sim-lod-settings.js';
 import { MapMarkersSettingsSchema, PlayerMapSettingsSchema } from './map-markers-settings.js';
@@ -56,6 +57,8 @@ export const WorldSettingsSchema = z.strictObject({
   crafting: CraftingSettingsSchema,
   /** Zasięg widzenia w dzień i w nocy, bonus światła. */
   vision: VisionSettingsSchema,
+  /** Pogoda (rodzaje, okresy, przejścia) i fazy księżyca. */
+  weather: WeatherSettingsSchema,
   /** Chód / bieg / skradanie gracza (m/s i mnożniki). */
   movement: MovementSettingsSchema,
   /** Znaczniki na mapie gracza (ikony, kolory, limity). */

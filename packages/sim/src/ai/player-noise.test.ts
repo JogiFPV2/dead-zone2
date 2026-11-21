@@ -177,6 +177,8 @@ describe('playerNoise: combat', () => {
       spawn: { x: 10.5, y: 10.5 },
       content,
       dev: true,
+      // Exact noise radii from the data: no rain masking.
+      weather: 'off',
       clockStart: { day: 1, hour: 12, minute: 0 },
     });
     send(dev, { type: 'debugGiveItem', itemId: 'base:pistol' });

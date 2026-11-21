@@ -10,7 +10,15 @@ import { gameMinuteAt } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import type { TileGrid } from '../world/grid.js';
 import { floorZ } from '../world/levels.js';
-import { LIGHT, sightFactor, sunState, type SunState } from './sky.js';
+import {
+  cloudSoftened,
+  LIGHT,
+  sightFactor,
+  skyLight,
+  sunState,
+  weatherSightMul,
+  type SunState,
+} from './sky.js';
 
 export { LIGHT };
 import { sneakVisibilityMul } from './sneak.js';
@@ -213,17 +221,19 @@ export function lightLevelAt(
   /** Height (m) the light is taken at: standing `LIGHT.bodyHeightM`, sneaking lower. */
   bodyM: number = LIGHT.bodyHeightM,
 ): number {
-  const sun = sunState(gameMinuteAt(w.clock, w.tick));
+  const minute = gameMinuteAt(w.clock, w.tick);
+  const sun = sunState(minute);
   const tx = Math.floor(x);
   const ty = Math.floor(y);
-  let sky = sun.sky;
+  let sky = skyLight(w, minute);
   if (inDarkZone(ai, tx, ty, z)) sky = 0;
   else if (grid.roomAt(tx, ty, z) !== 0) sky *= LIGHT.indoorMul;
   else if (z === 0) {
     const shade = shadeAt(grid, sun, tx, ty);
-    if (shade === SHADE_BUILDING) sky *= LIGHT.shadowMul;
-    else if (inLowShade(w, grid, sun, x, y, bodyM)) sky *= LIGHT.lowShadeMul;
-    else if (shade === SHADE_TREE) sky *= LIGHT.treeShadeMul;
+    if (shade === SHADE_BUILDING) sky *= cloudSoftened(w, LIGHT.shadowMul, minute);
+    else if (inLowShade(w, grid, sun, x, y, bodyM))
+      sky *= cloudSoftened(w, LIGHT.lowShadeMul, minute);
+    else if (shade === SHADE_TREE) sky *= cloudSoftened(w, LIGHT.treeShadeMul, minute);
   }
   return Math.fround(Math.max(sky, lightAt(w, ai, x, y, z)));
 }
@@ -268,7 +278,8 @@ export function playerVisibility(w: SimWorld, ai: AiWorld, eid: number, level?: 
       LIGHT.stillDarkMul + (1 - LIGHT.stillDarkMul) * Math.min(1, lightNow / LIGHT.stillFullLight);
   else if (gait === 'run') motion = LIGHT.runMul;
   else if (gait === 'sprint') motion = LIGHT.sprintMul;
-  let v = Math.min(1, sightFactor(vc, lightNow) * motion);
+  const fog = weatherSightMul(w, gameMinuteAt(w.clock, w.tick));
+  let v = Math.min(1, sightFactor(vc, lightNow, w.weather !== undefined) * motion * fog);
   if (gait === 'sneak') v *= sneakVisibilityMul(w, eid);
   return Math.fround(v);
 }

@@ -1,3 +1,4 @@
+import type { WeatherKind } from './weather.js';
 import type { CharacterSpec, Command } from './commands.js';
 import type { SimEvent } from './events.js';
 import type { SimMapData } from './map.js';
@@ -74,6 +75,8 @@ export type MainToWorker =
       vehicles?: readonly SimVehicleSpawn[] | undefined;
       /** Single loot items on floors at init (default true). */
       floorLoot?: boolean | undefined;
+      /** Weather (protocol 50): a kind pins it (dev `?weather=`), `off` disables; default content. */
+      weather?: WeatherKind | 'auto' | 'off' | undefined;
       /** Save from a `saved` message: restores the game (spawn, zombies, floorLoot are ignored). */
       save?: ArrayBuffer | undefined;
       /** Enables debug commands (`debugWound`, `debugStat`, `debugGiveItem`, `debugSpawnZombie`, `debugSpawnAnimal`, `debugNoise`). */

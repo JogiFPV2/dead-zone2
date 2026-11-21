@@ -1,3 +1,4 @@
+import type { WeatherConfig } from '../world/weather.js';
 import type { PlayerId, SimEvent, SimMap, WorldSource } from '@deadzone/protocol';
 import { createFurnitureIndex, type FurnitureIndex } from '../world/furniture.js';
 import { createChunkWatch, type ChunkWatch } from '../world/chunk-events.js';
@@ -92,6 +93,8 @@ export interface SimWorld {
   /** Allows only `debugRevealMap` outside dev (single-player client sets it; servers/multiplayer never). Default false. */
   readonly allowRevealMap: boolean;
   events: SimEvent[];
+  /** Weather settings (`world/weather.ts`); undefined = off. Not state: a function of seed + clock. */
+  weather: WeatherConfig | undefined;
   readonly sortedCache: Map<string, { version: number; eids: number[] }>;
 }
 
@@ -149,6 +152,7 @@ export function createSimWorld(opts: {
     dev: opts.dev ?? false,
     allowRevealMap: opts.allowRevealMap ?? false,
     events: [],
+    weather: undefined,
     sortedCache: new Map(),
   };
 }

@@ -2,6 +2,7 @@ import { dayOfYearForGameDay, sunAt } from '@deadzone/protocol';
 import { dayOf, gameMinuteAt, minuteOfDay } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import type { VisionConfig } from './config.js';
+import { weatherNow } from '../world/weather.js';
 
 /** Sun, sky light and the light → sight mapping (docs 9.45; shadows and hiding: light.ts). */
 export const LIGHT = {
@@ -11,6 +12,15 @@ export const LIGHT = {
   twilightSin: 0.1045,
   /** Sky × this in a building's shadow (sun above the horizon). */
   shadowMul: 0.45,
+  /** Weather on: moonlight × this at new moon, rising to × 1 at full moon. */
+  newMoonMul: 0.25,
+  /** Weather on: full cloud cover dims the moonlight by this share and the daylight by this one. */
+  cloudMoonDim: 0.7,
+  cloudDayDim: 0.45,
+  /** Weather on: shadows fade towards no shadow by this share at full cloud cover (diffuse light). */
+  cloudShadowSoften: 0.8,
+  /** Weather on: below moonlight the sight factor falls with the light, down to × this. */
+  darkSightFloor: 0.25,
   /** Sky × this in the shade of tree crowns (leaves let some light through; `SimChunk.trees`). */
   treeShadeMul: 0.6,
   /** Body height (m) the light is taken at while sneaking (crouched behind a car or a fence). */
@@ -83,12 +93,49 @@ export function sunState(minute: number): SunState {
   return sunCache;
 }
 
-/** Sight factor of a light level: `nightFactor` under the moon, 1 in full light. */
-export function sightFactor(vc: VisionConfig, light: number): number {
+/**
+ * Sky light 0..1 at a game minute: the sun's `sky` (`sunState`), with weather on also the moon
+ * phase (new moon ≈ a quarter of the full-moon light) and clouds (dim the moon and the day).
+ */
+export function skyLight(w: SimWorld, minute: number): number {
+  const sun = sunState(minute);
+  const wx = weatherNow(w, minute);
+  if (!wx) return sun.sky;
+  const night =
+    LIGHT.moon *
+    (LIGHT.newMoonMul + (1 - LIGHT.newMoonMul) * wx.moon) *
+    (1 - LIGHT.cloudMoonDim * wx.cloud);
+  const day = 1 - LIGHT.cloudDayDim * wx.cloud;
+  const k = (sun.sky - LIGHT.moon) / (1 - LIGHT.moon);
+  return Math.fround(night + (day - night) * k);
+}
+
+/** Shade multiplier `mul` softened by clouds (overcast light is diffuse: weak shadows). */
+export function cloudSoftened(w: SimWorld, mul: number, minute: number): number {
+  const wx = weatherNow(w, minute);
+  return wx ? mul + (1 - mul) * LIGHT.cloudShadowSoften * wx.cloud : mul;
+}
+
+/** Sight range × this for the weather now (fog, rain, snow); 1 when weather is off. */
+export const weatherSightMul = (w: SimWorld, minute: number): number =>
+  weatherNow(w, minute)?.sightMul ?? 1;
+
+/**
+ * Sight factor of a light level: `nightFactor` under the (full) moon, 1 in full light. With
+ * `darker` (weather on) a light below the moonlight lowers it further, down to × `darkSightFloor`
+ * (new moon, clouds at night, indoors at night).
+ */
+export function sightFactor(vc: VisionConfig, light: number, darker = false): number {
+  if (darker && light < LIGHT.moon)
+    return Math.fround(vc.nightFactor * Math.max(LIGHT.darkSightFloor, light / LIGHT.moon));
   const k = Math.max(0, Math.min(1, (light - LIGHT.moon) / (1 - LIGHT.moon)));
   return Math.fround(vc.nightFactor + (1 - vc.nightFactor) * k);
 }
 
 /** Sky sight factor now (outdoors, no shadow): replaces the clock dawn / dusk blend. */
-export const skySightFactor = (w: SimWorld, vc: VisionConfig): number =>
-  sightFactor(vc, sunState(gameMinuteAt(w.clock, w.tick)).sky);
+export function skySightFactor(w: SimWorld, vc: VisionConfig): number {
+  const m = gameMinuteAt(w.clock, w.tick);
+  return Math.fround(
+    sightFactor(vc, skyLight(w, m), w.weather !== undefined) * weatherSightMul(w, m),
+  );
+}

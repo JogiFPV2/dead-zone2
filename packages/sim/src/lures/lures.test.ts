@@ -21,6 +21,8 @@ function sim(zombies: { x: number; y: number }[] = [], hour = 12, load?: Uint8Ar
     spawn: { x: 10.5, y: 10.5 },
     content,
     dev: true,
+    // Exact noise radii from the data: no rain masking.
+    weather: 'off',
     clockStart: { day: 1, hour, minute: 0 },
     ...(zombies.length ? { spawnZombies: zombies } : {}),
     ...(load ? { load } : {}),
@@ -162,6 +164,8 @@ describe('throw', () => {
       spawn: { x: 10.5, y: 10.5 },
       content,
       dev: true,
+      // Exact noise radii from the data: no rain masking.
+      weather: 'off',
     });
     give(s, 'base:bottle');
     s.step();

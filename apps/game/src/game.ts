@@ -688,6 +688,7 @@ if (boot.sim === 'worker') {
       : {}),
     // Animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits). Generated worlds:
     // around the start (the sim populates the chunks near the player, not the whole map).
+    ...(boot.weather ? { weather: boot.weather } : {}),
     populateAnimals:
       boot.map === 'test'
         ? 0

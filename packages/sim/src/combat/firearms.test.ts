@@ -20,6 +20,8 @@ function sim(zombies: { x: number; y: number }[] = [], seed = 3, load?: Uint8Arr
     spawn: { x: 10.5, y: 10.5 },
     content,
     dev: true,
+    // Exact noise radii from the data: no rain masking.
+    weather: 'off',
     clockStart: { day: 1, hour: 12, minute: 0 },
     ...(zombies.length ? { spawnZombies: zombies } : {}),
     ...(load ? { load } : {}),
@@ -332,6 +334,8 @@ describe('firearms: whole reload and unjam progress', () => {
       spawn: { x: 10.5, y: 10.5 },
       content: jc,
       dev: true,
+      // Exact noise radii from the data: no rain masking.
+      weather: 'off',
       clockStart: { day: 1, hour: 12, minute: 0 },
     });
     arm(s, 'base:pistol', [

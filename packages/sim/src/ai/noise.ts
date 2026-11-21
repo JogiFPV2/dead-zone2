@@ -12,6 +12,7 @@ import { edgesBetween } from '../world/los.js';
 import type { TileGrid } from '../world/grid.js';
 import { noiseSourceIndex, type AiWorld, type Noise } from './state.js';
 import { floorZ } from '../world/levels.js';
+import { weatherNow } from '../world/weather.js';
 
 /**
  * Noise buffer (docs 2.5 `noise`). Anything that makes a sound calls `emitNoise`; zombies read
@@ -38,6 +39,8 @@ export function emitNoise(
 ): void {
   const ai = w.ai;
   if (!ai || radius <= 0) return;
+  // Rain, storm and snow mask sounds (weather on): every noise carries less far.
+  radius *= weatherNow(w)?.hearingMul ?? 1;
   const n: Noise = {
     tick: w.tick,
     x: Math.fround(x),

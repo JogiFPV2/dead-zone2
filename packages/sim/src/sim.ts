@@ -23,6 +23,8 @@ import { parseCommand } from '@deadzone/protocol/schema';
 import { flushChunkEvents, primeChunkWatch } from './world/chunk-events.js';
 import {
   CHUNK_SIZE,
+  DEFAULT_WEATHER_TIMING,
+  type WeatherKind,
   snapshotByteLength,
   type Command,
   type CommandRejectReason,
@@ -202,8 +204,20 @@ export interface SimOptions {
   character?: CharacterSpec | undefined;
   /** Game clock start; default day 1, 09:00. */
   clockStart?: ClockStart | undefined;
-  /** Ambient temperature in °C until weather exists; default 20 (comfortable). */
+  /** Ambient temperature in °C before weather; default 20 (comfortable). Weather adds to it. */
   ambientTemperatureC?: number | undefined;
+  /**
+   * Weather (docs 9.45): `auto` = by seed and season, a kind = always that kind (dev `?weather=`),
+   * `off` = none. Default: `worldSettings.weather.enabled` (auto) or off.
+   */
+  weather?: WeatherKind | 'auto' | 'off' | undefined;
+}
+
+/** `worldSettings.weather` (content `WeatherSettingsSchema`). */
+interface WeatherSettings {
+  enabled: boolean;
+  spellMinutes: number;
+  fadeMinutes: number;
 }
 
 export interface GameTime {
@@ -502,6 +516,20 @@ export function createSim(input: SimOptions): Sim {
       ),
   });
   if (opts.namesPl) w.namesPl = opts.namesPl;
+  {
+    const ws = (content?.worldSettings as { weather?: Partial<WeatherSettings> } | undefined)
+      ?.weather;
+    const mode = opts.weather ?? (ws?.enabled ? 'auto' : 'off');
+    if (mode !== 'off') {
+      w.weather = {
+        timing: {
+          spellMinutes: ws?.spellMinutes ?? DEFAULT_WEATHER_TIMING.spellMinutes,
+          fadeMinutes: ws?.fadeMinutes ?? DEFAULT_WEATHER_TIMING.fadeMinutes,
+        },
+        ...(mode !== 'auto' ? { forced: mode } : {}),
+      };
+    }
+  }
   const lodCfg: SimLodConfig = {
     ...DEFAULT_SIM_LOD,
     ...(w.survival?.content.simLod ?? {}),
