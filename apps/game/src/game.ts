@@ -52,6 +52,8 @@ import {
   DAY_CYCLE,
   DayCycle,
   applySun,
+  applyWeatherLook,
+  smoothstep,
   sunForClock,
   clockMinute,
   createWorldLighting,
@@ -59,6 +61,7 @@ import {
   overrideMinute,
 } from './lighting/index.js';
 import { createTestLamps } from './world/test-lamps.js';
+import { WeatherFx } from './world/weather/weather-fx.js';
 import { genLampsOf } from './world/gen/gen-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
@@ -686,9 +689,9 @@ if (boot.sim === 'worker') {
             : [],
         }
       : {}),
+    ...(boot.weather ? { weather: boot.weather } : {}),
     // Animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits). Generated worlds:
     // around the start (the sim populates the chunks near the player, not the whole map).
-    ...(boot.weather ? { weather: boot.weather } : {}),
     populateAnimals:
       boot.map === 'test'
         ? 0
@@ -1992,6 +1995,8 @@ const lighting = createWorldLighting(
 // Street lamps are world content; the sun / moon light and its shadow fit stay in render space.
 worldRoot.add(lighting.lamps.root);
 const dayCycle = new DayCycle(DAY_CYCLE);
+// Rain, snow and lightning (sim weather, protocol 50); `?weather=` pins a kind.
+const weatherFx = new WeatherFx(scene);
 if (realStyle) {
   realStyle.attach(scene, camera, lighting.sky.directional, window.devicePixelRatio);
   realStyle.setOrigin(floating.x, floating.z);
@@ -2306,7 +2311,17 @@ renderer.setAnimationLoop((time) => {
   lightMinute = currentMinute(performance.now());
   const look = dayCycle.sample(lightMinute);
   // Sun direction from the shared `sunAt` (same as the sim's light level); moon at night.
-  applySun(look, sunForClock(lightMinute, gameState.get().clock?.day ?? 1));
+  const sunNow = sunForClock(lightMinute, gameState.get().clock?.day ?? 1);
+  applySun(look, sunNow);
+  // Weather and moon phase on top (clouds, fog, new moon), then rain / snow / lightning.
+  const weatherNow = gameState.get().weather;
+  const daylight = smoothstep((sunNow.elevation * (180 / Math.PI) + 6) / 12);
+  applyWeatherLook(look, weatherNow, daylight);
+  const flash = weatherFx.update(weatherNow, rig.target.x, rig.target.z, time / 1000, daylight);
+  if (flash > 0) {
+    look.hemisphere.intensity += 4 * flash;
+    look.exposure *= 1 + 0.6 * flash;
+  }
   lighting.applyCompiled(look, dayCycle.lampLevel(lightMinute));
   realStyle?.afterLighting();
   streamedTown?.setMinute(lightMinute);

@@ -20,6 +20,7 @@ import type {
   SimViewPatch,
   SleepView,
   StealthLevel,
+  WeatherView,
   ViewStat,
   VehicleStateView,
   UtilitiesView,
@@ -93,6 +94,8 @@ export interface GameState {
   };
   /** Threat 0–100 (view.threat; 0 = safe). */
   threat: number;
+  /** Weather and moon now (view.weather, protocol 50); absent = weather off. */
+  weather?: WeatherView;
   /** How well zombies see the player (view.stealth / visibility / lightLevel, docs 9.45). */
   stealth?: { level: StealthLevel; visibility: number; light: number };
   /**
@@ -209,6 +212,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
+    ...(view.weather ? { weather: view.weather } : {}),
     ...(view.stealth !== undefined || view.visibility !== undefined
       ? {
           stealth: {

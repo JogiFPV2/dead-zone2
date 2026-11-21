@@ -19,6 +19,7 @@ import {
   type CommandParseResult,
 } from './commands.js';
 import { VEHICLE_PARTS } from './vehicles.js';
+import { WEATHER_KINDS } from './weather.js';
 import { CHUNK_SIZE, CHUNK_TILES, OPENING_STATES, SIM_EDGE_KINDS, STAIR_DIRS } from './map.js';
 import type { MainToWorker, ParseResult, SimContentFile } from './worker-messages.js';
 
@@ -714,6 +715,12 @@ export const simMapDataSchema = z.object({
         )
         .max(4096)
         .optional(),
+      // Tree crowns (protocol 49): x, y, radius, bottom, top per tree.
+      trees: z
+        .array(z.number().finite())
+        .max(5 * 8192)
+        .refine((a) => a.length % 5 === 0, 'trees: 5 numbers per tree')
+        .optional(),
       objects: z
         .array(
           z.object({
@@ -780,6 +787,7 @@ export const mainToWorkerSchema = z.discriminatedUnion('kind', [
     map: simMapDataSchema,
     spawn: simSpawnSchema.optional(),
     floorLoot: z.boolean().optional(),
+    weather: z.enum([...WEATHER_KINDS, 'auto', 'off']).optional(),
     save: z.instanceof(ArrayBuffer).optional(),
     zombies: z
       .array(

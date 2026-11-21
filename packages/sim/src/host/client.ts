@@ -1,3 +1,4 @@
+import type { WeatherKind } from '@deadzone/protocol';
 import type {
   CharacterSpec,
   SaveReason,
@@ -74,6 +75,8 @@ export interface SimWorkerClient {
       save?: ArrayBuffer;
       /** New game: character from the creator (validated by the sim). */
       character?: CharacterSpec;
+      /** Weather: a kind pins it (dev `?weather=`), `off` disables (protocol 50). */
+      weather?: WeatherKind | 'auto' | 'off';
     },
   ): void;
   /** Requests a save (`exit` on quit); resolves with the blob. */
@@ -341,6 +344,7 @@ export function createSimWorkerClient(
         ...(opts?.floorLoot !== undefined ? { floorLoot: opts.floorLoot } : {}),
         ...(opts?.save ? { save: opts.save } : {}),
         ...(opts?.character ? { character: opts.character } : {}),
+        ...(opts?.weather ? { weather: opts.weather } : {}),
       }),
     save(reason = 'manual') {
       const requestId = nextSaveId++;
