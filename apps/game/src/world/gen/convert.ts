@@ -79,6 +79,11 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     d0: r.d0,
     ...(r.cl === 0 ? { cl: r.cl } : {}),
     ...(r.ll ? { ll: r.ll } : {}),
+    ...(r.look === 1
+      ? { look: 'gravel' as const }
+      : r.look === 2
+        ? { look: 'trail' as const }
+        : {}),
   }));
   const bushes = col.levels
     .find((l) => l.z === 0)

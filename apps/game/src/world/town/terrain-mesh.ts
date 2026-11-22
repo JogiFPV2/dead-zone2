@@ -99,12 +99,14 @@ export interface TerrainVectorRoads {
 /** Indoor floor height (above every road ribbon, see RIBBON_Y). */
 export const INDOOR_Y = 0.02;
 /**
- * Ribbon heights: areas < dirt < sidewalk < curb < asphalt < paint, all under indoor floors
+ * Ribbon heights: areas < verge < dirt < ruts < sidewalk < curb < asphalt < paint, all under indoor floors
  * (2 cm). Area polygons stack by paint order from AREA_Y.base in AREA_Y.step (22 kinds < dirt).
  */
 const AREA_Y = { base: 0.001, step: 0.0002 };
 const RIBBON_Y = {
+  dirtEdge: 0.0056,
   dirt: 0.006,
+  rut: 0.0068,
   sidewalk: 0.008,
   curb: 0.011,
   asphalt: 0.014,
@@ -116,6 +118,8 @@ const CURB_BAND = 0.15;
 const JOIN_SEGMENTS = 14;
 const DASH = { on: 1.6, period: 3.2, width: 0.14 };
 const ZEBRA = { stripe: 0.5, gap: 0.5 };
+/** Gravel track (fractions of its half width): rut offset and half width, grass strip half width. */
+const TRACK = { rut: 0.5, rutWidth: 0.14, grass: 0.22 };
 
 export function buildTerrainGeometry(
   tiles: MapTiles,
@@ -124,6 +128,12 @@ export function buildTerrainGeometry(
   cells: TownCells,
   baseY = 0,
   vector?: TerrainVectorRoads,
+  /**
+   * Positions relative to the chunk corner (the mesh goes at the corner): float32 keeps
+   * sub-millimetre precision far from (0, 0), so stacked ribbons (ruts over a gravel bed) do not
+   * flicker through each other.
+   */
+  local = false,
 ): BufferGeometry | undefined {
   const P: number[] = [];
   const C: number[] = [];
@@ -545,6 +555,11 @@ export function buildTerrainGeometry(
     const asphalt = col('asphalt');
     const sidewalk = col('sidewalk');
     const dirt = col('dirt');
+    const gravel = dirt.clone().lerp(col('concrete'), 0.5).multiplyScalar(0.88);
+    const rut = dirt.clone().multiplyScalar(0.7);
+    const grassStrip = col('grass-d').clone().lerp(dirt, 0.25);
+    const verge = col('grass-d').clone().lerp(dirt, 0.5);
+    const trailCore = dirt.clone().multiplyScalar(0.86);
     for (const r of vector.roads) {
       const dy = r.bridge ? BRIDGE_DY : 0;
       if (r.rs > 0) {
@@ -557,6 +572,19 @@ export function buildTerrainGeometry(
         for (const o of r.ll ?? []) dashes(offsetLine(r.pts, o), r.d0, RIBBON_Y.paint + dy, paint);
       } else if (r.surface === 'base:sidewalk') {
         band(r.pts, r.r, RIBBON_Y.sidewalk + dy, sidewalk, [0, 0, 0.7, 0]);
+      } else if (r.look === 'gravel') {
+        // Gravel track: pale gravel bed, two dark wheel ruts, a grass strip between them.
+        band(r.pts, r.r + 0.25, RIBBON_Y.dirtEdge + dy, verge, [0, 0.5, 0, 0.5]);
+        band(r.pts, r.r, RIBBON_Y.dirt + dy, gravel, [0, 0, 0.35, 0.65]);
+        const o = r.r * TRACK.rut;
+        for (const s of [-o, o])
+          band(offsetLine(r.pts, s), r.r * TRACK.rutWidth, RIBBON_Y.rut + dy, rut, [0, 0, 0, 1]);
+        band(r.pts, r.r * TRACK.grass, RIBBON_Y.rut + dy, grassStrip, [0, 1, 0, 0]);
+      } else if (r.look === 'trail') {
+        // Trodden path: worn grass fading into bare earth (no hard edge), darker in the middle.
+        band(r.pts, r.r * 1.6, RIBBON_Y.dirtEdge + dy, verge, [0, 0.5, 0, 0.5]);
+        band(r.pts, r.r, RIBBON_Y.dirt + dy, dirt, [0, 0, 0, 1]);
+        band(r.pts, r.r * 0.45, RIBBON_Y.rut + dy, trailCore, [0, 0, 0, 1]);
       } else {
         band(r.pts, r.r, RIBBON_Y.dirt + dy, dirt, [0, 0, 0, 1]);
       }
@@ -595,6 +623,11 @@ export function buildTerrainGeometry(
               .multiplyScalar(1 + (vnoise(x + 17, z - 5, 4) - 0.5) * (look.jitter ?? 0.06));
     areaPolygons(vector, tiles, x0, z0, colorAt, paint, P, C, M, baseY);
   }
+  if (local)
+    for (let i = 0; i < P.length; i += 3) {
+      P[i]! -= x0;
+      P[i + 2]! -= z0;
+    }
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));
   g.setAttribute('color', new BufferAttribute(new Float32Array(C), 3));

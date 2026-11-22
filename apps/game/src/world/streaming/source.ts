@@ -120,6 +120,8 @@ export interface VectorRoad {
   /** 0 = no centre line (one-way carriageway, map2); lane line offsets from the axis (tiles). */
   readonly cl?: 0;
   readonly ll?: readonly number[];
+  /** Unpaved look of a dirt road: gravel track (ruts, grass strip) or trodden path (soft edges). */
+  readonly look?: 'gravel' | 'trail';
 }
 
 /**

@@ -435,3 +435,82 @@ describe('kit opening pieces', () => {
     expect(visible()).toBeGreaterThan(shut);
   });
 });
+
+describe('unpaved ways', () => {
+  const way = (look: 'gravel' | 'trail', r: number) => ({
+    roads: [
+      { surface: 'base:dirt' as const, r, rs: 0, bridge: false, pts: [2, 20, 30, 20], d0: 0, look },
+    ],
+    underAt: () => undefined,
+  });
+  /** Vertex z offsets from the axis (z = 20) of one ribbon layer, rounded to cm. */
+  const layer = (look: 'gravel' | 'trail', r: number, y: number) => {
+    const g = buildTerrainGeometry(new MapTiles(roadMap(), 0), 0, 0, cells, 0, way(look, r))!;
+    const pos = g.getAttribute('position');
+    const zs = new Set<number>();
+    for (let i = 0; i < pos.count; i++)
+      // Ribbon quad corners at the ends of the segment (x = 2 or 30).
+      if (Math.abs(pos.getY(i) - y) < 1e-6 && (pos.getX(i) === 2 || pos.getX(i) === 30))
+        zs.add(Math.round((pos.getZ(i) - 20) * 100) / 100);
+    return [...zs].sort((a, b) => a - b);
+  };
+
+  it('a gravel track has two wheel ruts and a grass strip between them', () => {
+    // Ruts at ±0.5 r (half width 0.14 r), grass strip ±0.22 r, all on the rut layer.
+    const zs = layer('gravel', 1.5, 0.0068);
+    for (const z of [-0.96, -0.54, -0.33, 0.33, 0.54, 0.96]) expect(zs).toContain(z);
+    // Verge under the bed, wider than the track.
+    expect(layer('gravel', 1.5, 0.0056)).toContain(1.75);
+  });
+
+  it('a trodden path fades into the grass and has a darker middle', () => {
+    // Verge 1.6 r, bare earth r, darker middle 0.45 r.
+    expect(layer('trail', 0.75, 0.0056)).toContain(1.2);
+    expect(layer('trail', 0.75, 0.006)).toContain(0.75);
+    expect(layer('trail', 0.75, 0.0068).length).toBeGreaterThan(0);
+  });
+});
+
+describe('chunk-local terrain', () => {
+  it('local positions are the world positions minus the chunk corner', () => {
+    const far: ChunkSource = {
+      tilePalette: [null, 'base:grass'],
+      edgePalette: [null],
+      getChunk(cx, cy, z) {
+        if (cx !== 600 || cy !== 700 || z !== 0) return undefined;
+        return { coord: { cx, cy, z }, floor: new Uint16Array(32 * 32).fill(1) };
+      },
+    };
+    const world = buildTerrainGeometry(new MapTiles(far, 0), 600, 700, cells)!;
+    const local = buildTerrainGeometry(new MapTiles(far, 0), 600, 700, cells, 0, undefined, true)!;
+    const w = world.getAttribute('position');
+    const l = local.getAttribute('position');
+    expect(l.count).toBe(w.count);
+    for (let i = 0; i < l.count; i += 97) {
+      expect(l.getX(i) + 600 * 32).toBeCloseTo(w.getX(i), 2);
+      expect(l.getZ(i) + 700 * 32).toBeCloseTo(w.getZ(i), 2);
+      expect(l.getX(i)).toBeGreaterThanOrEqual(0);
+      expect(l.getX(i)).toBeLessThanOrEqual(32);
+    }
+  });
+});
+
+describe('decor on unpaved ways', () => {
+  it('no grass tufts, rocks or trees on dirt tracks and paths, nor right at their edge', () => {
+    // Grass with a 3-tile dirt track along z = 15..17.
+    const track: ChunkSource = {
+      tilePalette: [null, 'base:grass', 'base:dirt'],
+      edgePalette: [null],
+      getChunk(cx, cy, z) {
+        if (cx !== 0 || cy !== 0 || z !== 0) return undefined;
+        const floor = new Uint16Array(32 * 32);
+        for (let y = 0; y < 32; y++)
+          for (let x = 0; x < 32; x++) floor[y * 32 + x] = y >= 15 && y <= 17 ? 2 : 1;
+        return { coord: { cx, cy, z }, floor };
+      },
+    };
+    const d = townDecor(new MapTiles(track, 0), { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
+    expect(d.props.length).toBeGreaterThan(0);
+    for (const p of d.props) expect(p.z < 14 || p.z > 19).toBe(true);
+  });
+});

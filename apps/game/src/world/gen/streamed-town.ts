@@ -72,7 +72,7 @@ export class StreamedTown {
     this.vectorPool = new VectorWallPool(this.kit.material);
     this.root.add(this.vectorPool.root);
     this.lookup = new BuildingLookup(loaded, false);
-    this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail);
+    this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail, kit.cells);
   }
 
   loadChunk(cx: number, cy: number, z: number): { bytes: number; triangles: number } {
@@ -129,9 +129,11 @@ export class StreamedTown {
         this.kit.cells,
         0,
         vector,
+        true,
       );
       if (g) {
         const mesh = new Mesh(g, this.terrainMat);
+        mesh.position.set(cx * CHUNK_SIZE, 0, cy * CHUNK_SIZE);
         mesh.name = `terrain:${cx},${cy}`;
         mesh.receiveShadow = true;
         this.root.add(mesh);

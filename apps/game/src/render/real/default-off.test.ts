@@ -41,7 +41,9 @@ describe('realistic style is off by default', () => {
 
   it('terrain keeps its own material unless the kit brings one', () => {
     for (const p of ['../../world/town/town-terrain.ts', '../../world/gen/streamed-town.ts']) {
-      expect(src(p)).toMatch(/kit\.terrainMaterial \?\? terrainMaterial\(kit\.detail\)/);
+      expect(src(p)).toMatch(
+        /kit\.terrainMaterial \?\? terrainMaterial\(kit\.detail, kit\.cells\)/,
+      );
     }
   });
 });

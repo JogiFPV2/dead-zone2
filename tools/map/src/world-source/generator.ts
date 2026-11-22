@@ -123,6 +123,8 @@ export interface GenRoad {
   /** map2 (`?map=stw2`): 0 = no centre line; lane line offsets from the axis (tiles). */
   cl?: 0;
   ll?: number[];
+  /** Unpaved look: 1 = gravel track (ruts, grass strip), 2 = trodden path (soft dirt edges). */
+  look?: 1 | 2;
 }
 
 /** One area polygon of a chunk (render only). */
@@ -785,6 +787,11 @@ export class PlanChunkGenerator {
             d0: Math.round(d0 * 100) / 100,
             ...(road.cl === 0 || road.fill ? { cl: 0 as const } : {}),
             ...(road.ll ? { ll: road.ll } : {}),
+            ...(road.kind === 'track'
+              ? { look: 1 as const }
+              : road.kind === 'path'
+                ? { look: 2 as const }
+                : {}),
           });
         }
         run = undefined;
