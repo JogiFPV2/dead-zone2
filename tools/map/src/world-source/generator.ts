@@ -26,6 +26,7 @@ import type { Condition, LookType, RoofShape } from './look-palette.js';
 import { AREA_ORDER, PlanIndex, type IBuilding } from './plan-index.js';
 import { generatorVersionNumber, type WorldPlanInput } from './plan.js';
 import {
+  AREA_GROUND,
   AREA_TREES,
   ROAD_GROUND,
   clipSegment,
@@ -124,6 +125,16 @@ export interface GenRoad {
   ll?: number[];
 }
 
+/** One area polygon of a chunk (render only). */
+export interface GenArea {
+  /** Ground class of the area (`GROUND_TILES` index). */
+  ground: number;
+  /** Paint order (AREA_ORDER rank): a higher area is drawn over a lower one. */
+  order: number;
+  /** Rings in chunk-local tiles (flat x, y pairs, 1/100 tile; first outer, the rest holes). */
+  rings: number[][];
+}
+
 export interface GenColumn {
   cx: number;
   cy: number;
@@ -136,11 +147,10 @@ export interface GenColumn {
    */
   under?: Uint16Array;
   /**
-   * Paved areas (OSM pedestrian plazas, `area:highway`) touching the chunk, render only: rings
-   * (chunk-local tiles, flat x, y pairs; first ring outer, the rest holes) drawn as smooth
-   * polygons over `under` instead of the stair-stepped sidewalk tiles.
+   * Areas (landuse, parking, plazas, water…) touching the chunk, render only, in paint order:
+   * smooth polygons drawn over `under` instead of the stair-stepped area tiles.
    */
-  paved?: number[][][];
+  areas?: GenArea[];
   /** Trees from the plan (OSM trees, avenues, woods, parks): local tile x, y pairs. */
   trees: number[];
   /**
@@ -403,6 +413,8 @@ export class PlanChunkGenerator {
     const levels: GenLevel[] = [];
     /** Tiles of level 0 under a building room (gid). */
     const owner = new Int32Array(CT);
+    /** Buildings with an exact outline (vector walls): their edge tiles also show the ground. */
+    const outlined = new Set<number>();
     for (const z of [...zs].sort((a, b) => a - b)) {
       const floor = new Uint16Array(CT);
       const edgeN = new Uint16Array(CT);
@@ -442,7 +454,10 @@ export class PlanChunkGenerator {
                 if (s.lockKind && !kinds.has(s.gid)) kinds.set(s.gid, s.lockKind);
               }
               room[i] = id;
-              if (z === 0) owner[i] = s.gid;
+              if (z === 0) {
+                owner[i] = s.gid;
+                if (s.outline) outlined.add(s.gid);
+              }
               any = true;
             }
             if (L.edgeN[k]) {
@@ -685,13 +700,22 @@ export class PlanChunkGenerator {
     if (feet.length) ground.blockers = feet;
     const roads = this.vectorRoads(X0, Y0);
     if (roads.length) out.roads = roads;
-    const paved = this.pavedAreas(X0, Y0);
-    if (paved.length) out.paved = paved;
+    const areas = this.vectorAreas(X0, Y0);
+    if (areas.length) out.areas = areas;
     const under = new Uint16Array(CT);
     let anyUnder = false;
     for (let i = 0; i < CT; i++) {
-      const u = r.under[ri(i % C, (i / C) | 0)]!;
-      if (!u || owner[i]) continue;
+      const j = ri(i % C, (i / C) | 0);
+      const u = r.under[j]!;
+      if (owner[i]) {
+        // A tile of an outlined building: the renderer cuts its floor to the outline, the rest
+        // of the tile is the ground outside (under the areas / roads, or the plain ground).
+        if (!outlined.has(owner[i]!)) continue;
+        under[i] = GROUND_TILE_IDS[u ? u - 1 : r.g[j]!]!;
+        anyUnder = true;
+        continue;
+      }
+      if (!u) continue;
       under[i] = GROUND_TILE_IDS[u - 1]!;
       anyUnder = true;
     }
@@ -701,24 +725,40 @@ export class PlanChunkGenerator {
     return out;
   }
 
-  /** Rings of the paved areas whose bounds touch the chunk, chunk-local (0.01 tile). */
-  private pavedAreas(X0: number, Y0: number): number[][][] {
-    const out: number[][][] = [];
+  /**
+   * Areas whose bounds touch the chunk, in paint order, rings chunk-local (0.01 tile) and clipped
+   * to the chunk (+ margin) when large. A grass area is only sent over a lower non-grass area (on
+   * plain ground it looks like the ground under it).
+   */
+  private vectorAreas(X0: number, Y0: number): GenArea[] {
+    const out: GenArea[] = [];
     const idx = this.index.areas;
+    let lowest = Infinity;
+    const box = {
+      x0: X0 - AREA_MARGIN,
+      y0: Y0 - AREA_MARGIN,
+      x1: X0 + C + AREA_MARGIN,
+      y1: Y0 + C + AREA_MARGIN,
+    };
     for (const i of idx.query({ x0: X0, y0: Y0, x1: X0 + C, y1: Y0 + C })) {
       const a = idx.items[i]!;
-      if (a.kind !== 'paved') continue;
-      out.push(
-        a.rings.map((r) => {
-          const pts: number[] = [];
-          for (let k = 0; k + 1 < r.length; k += 2)
-            pts.push(
-              Math.round((r[k]! - X0) * 100) / 100,
-              Math.round((r[k + 1]! - Y0) * 100) / 100,
-            );
-          return pts;
-        }),
-      );
+      const ground = AREA_GROUND[a.kind] ?? G_GRASS;
+      if (ground === G_GRASS && a.rank <= lowest) continue;
+      const rings: number[][] = [];
+      for (const r of a.rings) {
+        const c = clipRing(r, box);
+        if (c.length < 6) {
+          if (!rings.length) break;
+          continue;
+        }
+        const pts: number[] = [];
+        for (let k = 0; k + 1 < c.length; k += 2)
+          pts.push(Math.round((c[k]! - X0) * 100) / 100, Math.round((c[k + 1]! - Y0) * 100) / 100);
+        rings.push(pts);
+      }
+      if (!rings.length) continue;
+      if (ground !== G_GRASS) lowest = Math.min(lowest, a.rank);
+      out.push({ ground, order: a.rank, rings });
     }
     return out;
   }
@@ -1246,4 +1286,57 @@ export function cutSegments<S extends { x0: number; y0: number; x1: number; y1: 
     cur = next;
   }
   return cur;
+}
+
+/** Area rings reach this far past the chunk (tiles): the renderer clips them per tile. */
+const AREA_MARGIN = 2;
+
+/**
+ * Ring (flat x, y pairs) clipped to a box (Sutherland–Hodgman); a ring inside the box is returned
+ * as is. A concave ring may keep zero-width runs along the box edge (harmless for filling).
+ */
+export function clipRing(
+  r: ArrayLike<number>,
+  b: { x0: number; y0: number; x1: number; y1: number },
+): number[] {
+  let inside = true;
+  for (let k = 0; k + 1 < r.length; k += 2) {
+    const x = r[k]!;
+    const y = r[k + 1]!;
+    if (x < b.x0 || x > b.x1 || y < b.y0 || y > b.y1) {
+      inside = false;
+      break;
+    }
+  }
+  let pts: number[] = Array.from(r);
+  if (inside) return pts;
+  const edges: [0 | 1, 1 | -1, number][] = [
+    [0, 1, b.x0],
+    [0, -1, -b.x1],
+    [1, 1, b.y0],
+    [1, -1, -b.y1],
+  ];
+  for (const [axis, sign, lim] of edges) {
+    const inp = pts;
+    pts = [];
+    const n = inp.length >> 1;
+    if (!n) break;
+    for (let i = 0; i < n; i++) {
+      const cx = inp[2 * i]!;
+      const cy = inp[2 * i + 1]!;
+      const p = (i + n - 1) % n;
+      const px = inp[2 * p]!;
+      const py = inp[2 * p + 1]!;
+      const cv = axis ? cy : cx;
+      const pv = axis ? py : px;
+      const ci = sign * cv >= lim;
+      const pi = sign * pv >= lim;
+      if (ci !== pi) {
+        const t = (lim - sign * pv) / (sign * (cv - pv));
+        pts.push(px + (cx - px) * t, py + (cy - py) * t);
+      }
+      if (ci) pts.push(cx, cy);
+    }
+  }
+  return pts;
 }

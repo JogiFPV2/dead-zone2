@@ -214,10 +214,7 @@ export class VectorWallPool {
 
   /** Pieces drawn (tests). */
   get used(): number {
-    return this.parts.reduce(
-      (s, p) => s + p.top - p.free.reduce((t, [, len]) => t + len, 0),
-      0,
-    );
+    return this.parts.reduce((s, p) => s + p.top - p.free.reduce((t, [, len]) => t + len, 0), 0);
   }
 
   get meshCount(): number {
@@ -364,4 +361,101 @@ export class VectorWalls {
     }
     this.root.clear();
   }
+}
+
+/** Same reach / margin / cap as the generator's gaps around exterior openings (building.ts). */
+const OPENING_REACH = 1.6;
+const GAP_MARGIN = 0.1;
+const MAX_GAP = 3;
+const OPENING_GAP = 1.2;
+
+/** Where an exterior door / window of a vector-walled building sits on its outline. */
+export interface OutlineOpening {
+  x: number;
+  z: number;
+  /** Rotation about +y of the edge module (local +x along the wall). */
+  rotY: number;
+  /** Gap width (m): the 1 m module is stretched to it. */
+  width: number;
+}
+
+/**
+ * The gap the generator cut into a vector wall for the opening on tile edge (x0, y0)–(x1, y1):
+ * on the outline edge nearest to the tile edge that crosses its corridor (else the nearest edge,
+ * centred). The module is turned along that wall, its local +z on the same side as `rotY0`'s
+ * (inside / outside of the tile edge kept). Pure (tests).
+ */
+export function openingOnOutline(
+  rings: readonly (readonly number[])[],
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  rotY0: number,
+): OutlineOpening | undefined {
+  const nx = -(y1 - y0);
+  const ny = x1 - x0;
+  const mx = (x0 + x1) / 2;
+  const my = (y0 + y1) / 2;
+  let best: { ax: number; ay: number; ux: number; uy: number; t0: number; t1: number } | undefined;
+  let bestS = Infinity;
+  let near: typeof best;
+  let nearD = OPENING_REACH;
+  for (const r of rings) {
+    const n = r.length >> 1;
+    for (let i = 0; i < n; i++) {
+      const ax = r[2 * i]!;
+      const ay = r[2 * i + 1]!;
+      const bx = r[(2 * i + 2) % (2 * n)]!;
+      const by = r[(2 * i + 3) % (2 * n)]!;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-6) continue;
+      const ux = dx / len;
+      const uy = dy / len;
+      // Fallback: nearest point of the edge to the tile edge's midpoint.
+      const tm = Math.max(0, Math.min(len, (mx - ax) * ux + (my - ay) * uy));
+      const dm = Math.hypot(ax + ux * tm - mx, ay + uy * tm - my);
+      if (dm < nearD) {
+        nearD = dm;
+        near = { ax, ay, ux, uy, t0: tm - OPENING_GAP / 2, t1: tm + OPENING_GAP / 2 };
+      }
+      const det = dx * ny - dy * nx;
+      if (Math.abs(det) < 1e-6 * len) continue;
+      const ts: number[] = [];
+      let s = Infinity;
+      for (const [px, py] of [
+        [x0, y0],
+        [x1, y1],
+      ] as const) {
+        ts.push((((px - ax) * ny - (py - ay) * nx) / det) * len);
+        s = Math.min(s, Math.abs(((px - ax) * dy - (py - ay) * dx) / det));
+      }
+      const t0 = Math.min(...ts) - GAP_MARGIN;
+      const t1 = Math.max(...ts) + GAP_MARGIN;
+      if (s > OPENING_REACH || t1 < 0 || t0 > len || t1 - t0 > MAX_GAP) continue;
+      if (s < bestS) {
+        bestS = s;
+        best = { ax, ay, ux, uy, t0: Math.max(0, t0), t1: Math.min(len, t1) };
+      }
+    }
+  }
+  const g = best ?? near;
+  if (!g || g.t1 - g.t0 < 0.3) return undefined;
+  const c = (g.t0 + g.t1) / 2;
+  let { ux, uy } = g;
+  // Local +z of rotation a is (sin a, cos a); keep it on the side of the tile module's +z.
+  const zx = Math.sin(rotY0);
+  const zz = Math.cos(rotY0);
+  if (-uy * zx + ux * zz < 0) {
+    ux = -ux;
+    uy = -uy;
+  }
+  return {
+    x: g.ax + g.ux * c,
+    z: g.ay + g.uy * c,
+    rotY: Math.atan2(-uy, ux),
+    width: g.t1 - g.t0,
+  };
 }

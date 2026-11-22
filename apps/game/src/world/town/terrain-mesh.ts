@@ -1,10 +1,11 @@
 import type { Color } from 'three';
 import { BufferAttribute, BufferGeometry, ShapeUtils, Vector2 } from 'three';
-import { CHUNK_SIZE, type ContentId } from '../chunk.js';
+import { CHUNK_SIZE, type BuildingId, type ContentId } from '../chunk.js';
+import { clipPolygon } from './roof.js';
 import type { TownCells } from './kit.js';
 import { hash01 } from './modules.js';
 import type { MapTiles } from './tiles.js';
-import type { VectorRoad } from '../streaming/source.js';
+import type { VectorArea, VectorRoad } from '../streaming/source.js';
 import { zebraSpots } from './zebras.js';
 
 /** Detail channels of the terrain texture: R asphalt, G grass, B paving, A dirt. */
@@ -84,18 +85,26 @@ export interface TerrainVectorRoads {
   /** Ground content under a road tile (world tile), undefined = not a road tile. */
   underAt: (x: number, z: number) => ContentId | undefined;
   /**
-   * Paved areas (plazas, `area:highway`) touching the chunk: rings in chunk-local tiles (first
-   * outer, the rest holes), drawn as smooth polygons instead of stair-stepped sidewalk tiles.
+   * Areas (landuse, parking, plazas, water…) touching the chunk, in paint order: smooth polygons
+   * over the ground under them instead of stair-stepped area tiles.
    */
-  paved?: readonly (readonly (readonly number[])[])[];
+  areas?: readonly VectorArea[];
+  /**
+   * Outline (world tiles) of a building with vector walls: its edge tiles get the indoor floor cut
+   * to the outline over the ground under them (`underAt`), no tile corners poking out.
+   */
+  outlineOf?: (b: BuildingId) => readonly Vector2[] | undefined;
 }
 
 /** Indoor floor height (above every road ribbon, see RIBBON_Y). */
 export const INDOOR_Y = 0.02;
-/** Ribbon heights: dirt < sidewalk < curb < asphalt < paint, all under indoor floors (2 cm). */
+/**
+ * Ribbon heights: areas < dirt < sidewalk < curb < asphalt < paint, all under indoor floors
+ * (2 cm). Area polygons stack by paint order from AREA_Y.base in AREA_Y.step (22 kinds < dirt).
+ */
+const AREA_Y = { base: 0.001, step: 0.0002 };
 const RIBBON_Y = {
-  dirt: 0.004,
-  paved: 0.005,
+  dirt: 0.006,
   sidewalk: 0.008,
   curb: 0.011,
   asphalt: 0.014,
@@ -158,38 +167,80 @@ export function buildTerrainGeometry(
     }
     return n;
   };
+  const tileColor = (look: FloorLook, x: number, z: number): Color => {
+    let c = col(look.cell)
+      .clone()
+      .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));
+    if (look.cell === 'kitchen-tiles' && (x + z) & 1) c = c.multiplyScalar(0.85);
+    if (look.cell === 'wood-floor' && x & 1) c = c.multiplyScalar(0.92);
+    return c;
+  };
+  /** One ground / floor tile quad (grass and dirt blended per corner). */
+  const tile = (x: number, z: number, look: FloorLook, indoor: boolean) => {
+    // Smooth roads run under indoor floors: lift every indoor floor to 2 cm. In every chunk, not
+    // only those with a road layer: otherwise a hall across a chunk edge gets a 2 cm step there
+    // and the background shows through the crack (a white line along the hall).
+    const y = indoor ? Math.max(look.y ?? 0, INDOOR_Y) : (look.y ?? 0);
+    const corners: V[] = [
+      [x, y, z + 1],
+      [x + 1, y, z + 1],
+      [x + 1, y, z],
+      [x, y, z],
+    ];
+    const cs =
+      look.cell === 'grass'
+        ? corners.map(([a, , b]) => grassAt(a, b))
+        : look.cell === 'dirt'
+          ? corners.map(([a, , b]) => dirtAt(a, b))
+          : tileColor(look, x, z);
+    quad(corners, cs, look.mask);
+  };
   const x0 = cx * CHUNK_SIZE;
   const z0 = cy * CHUNK_SIZE;
   let any = false;
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
-      const floor = vector?.underAt(x, z) ?? floorAt(x, z);
+      const room = tiles.roomType(x, z);
+      const ground = vector?.underAt(x, z);
+      const floor = room ? floorAt(x, z) : (ground ?? floorAt(x, z));
       if (!floor) continue;
       any = true;
-      const room = tiles.roomType(x, z);
-      const look = floorLook(floor, room);
-      // Smooth roads run under indoor floors: lift every indoor floor to 2 cm. In every chunk, not
-      // only those with a road layer: otherwise a hall across a chunk edge gets a 2 cm step there
-      // and the background shows through the crack (a white line along the hall).
-      const y = room ? Math.max(look.y ?? 0, INDOOR_Y) : (look.y ?? 0);
-      let c = col(look.cell)
-        .clone()
-        .multiplyScalar(1 + (hash01(x, z) - 0.5) * (look.jitter ?? 0.06));
-      if (look.cell === 'kitchen-tiles' && (x + z) & 1) c = c.multiplyScalar(0.85);
-      if (look.cell === 'wood-floor' && x & 1) c = c.multiplyScalar(0.92);
-      const corners: V[] = [
-        [x, y, z + 1],
-        [x + 1, y, z + 1],
-        [x + 1, y, z],
-        [x, y, z],
-      ];
-      const cs =
-        look.cell === 'grass'
-          ? corners.map(([a, , b]) => grassAt(a, b))
-          : look.cell === 'dirt'
-            ? corners.map(([a, , b]) => dirtAt(a, b))
-            : c;
-      quad(corners, cs, look.mask);
+      if (room && ground) {
+        const ring = vector?.outlineOf?.(tiles.building(x, z));
+        const cut = ring
+          ? clipPolygon(ring as Vector2[], { x0: x, y0: z, x1: x + 1, y1: z + 1 })
+          : [];
+        let area = 0;
+        for (let i = 0; i < cut.length; i++) {
+          const a = cut[i]!;
+          const b = cut[(i + 1) % cut.length]!;
+          area += a.x * b.y - b.x * a.y;
+        }
+        area = Math.abs(area) / 2;
+        if (ring && area < 1 - 1e-4) {
+          // Edge tile of an outlined building: the ground under the whole tile, the indoor
+          // floor only inside the outline.
+          tile(x, z, floorLook(ground, undefined), false);
+          if (area > 1e-4) {
+            const look = floorLook(floor, room);
+            const y = Math.max(look.y ?? 0, INDOOR_Y) + baseY;
+            const c = tileColor(look, x, z);
+            for (const [a, b, d] of ShapeUtils.triangulateShape(cut, [])) {
+              const t = [cut[a!]!, cut[b!]!, cut[d!]!];
+              const ny =
+                (t[1]!.y - t[0]!.y) * (t[2]!.x - t[0]!.x) -
+                (t[1]!.x - t[0]!.x) * (t[2]!.y - t[0]!.y);
+              for (const p of ny >= 0 ? t : [t[0]!, t[2]!, t[1]!]) {
+                P.push(p.x, y, p.y);
+                C.push(c.r, c.g, c.b);
+                M.push(...look.mask);
+              }
+            }
+          }
+          continue;
+        }
+      }
+      tile(x, z, floorLook(floor, room), !!room);
     }
   }
   if (!any) return undefined;
@@ -533,7 +584,17 @@ export function buildTerrainGeometry(
       }
     }
   }
-  if (vector?.paved?.length) pavedPolygons(vector, tiles, x0, z0, col('sidewalk'), P, C, M, baseY);
+  if (vector?.areas?.length) {
+    const colorAt = (look: FloorLook, x: number, z: number): Color =>
+      look.cell === 'grass'
+        ? grassAt(x, z)
+        : look.cell === 'dirt'
+          ? dirtAt(x, z)
+          : col(look.cell)
+              .clone()
+              .multiplyScalar(1 + (vnoise(x + 17, z - 5, 4) - 0.5) * (look.jitter ?? 0.06));
+    areaPolygons(vector, tiles, x0, z0, colorAt, paint, P, C, M, baseY);
+  }
   const g = new BufferGeometry();
   g.setAttribute('position', new BufferAttribute(new Float32Array(P), 3));
   g.setAttribute('color', new BufferAttribute(new Float32Array(C), 3));
@@ -572,32 +633,33 @@ export function offsetLine(pts: readonly number[], o: number): number[] {
   return out;
 }
 
-/** Natural ground a paved polygon may cover past the tile outline of its area (smooth edge). */
+/** Natural ground an area polygon may cover past the tile outline of its area (smooth edge). */
 const SOFT_GROUND = new Set<ContentId>(['base:grass', 'base:dirt']);
 
 /**
- * Paved areas as smooth polygons (triangulated rings), clipped to the tiles of the chunk where the
- * area really lies: tiles it paved (`underAt` set) and natural ground along its outline. Tiles of
- * buildings or of other areas painted over it keep their own floor.
+ * Areas as smooth polygons (triangulated rings, stacked by paint order), clipped to the tiles of
+ * the chunk where they may lie: area / road tiles (`underAt` set) and natural ground. Buildings,
+ * track beds and waterways keep their own tiles.
  */
-function pavedPolygons(
+function areaPolygons(
   vector: TerrainVectorRoads,
   tiles: MapTiles,
   x0: number,
   z0: number,
-  color: Color,
+  colorAt: (look: FloorLook, x: number, z: number) => Color,
+  paint: Color,
   P: number[],
   C: number[],
   M: number[],
   baseY: number,
 ): void {
-  const y = RIBBON_Y.paved + baseY;
   const ok = new Map<number, boolean>();
   const allowed = (x: number, z: number): boolean => {
     const k = (z - z0) * CHUNK_SIZE + (x - x0);
     let v = ok.get(k);
     if (v === undefined) {
-      if (tiles.roomType(x, z)) v = false;
+      // Rooms: only the edge tiles of outlined buildings (ground under them; the floor is above).
+      if (tiles.roomType(x, z)) v = !!vector.underAt(x, z);
       else if (vector.underAt(x, z)) v = true;
       else {
         const f = tiles.floor(x, z);
@@ -607,31 +669,38 @@ function pavedPolygons(
     }
     return v;
   };
-  const push = (poly: readonly (readonly [number, number])[]) => {
-    for (let i = 1; i + 1 < poly.length; i++) {
-      const a = poly[0]!;
-      const b = poly[i]!;
-      const c = poly[i + 1]!;
-      // Up-facing winding: (b − a) × (c − a) must point to +y (as the road ribbons).
-      const ny = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
-      for (const [px, pz] of ny >= 0 ? [a, b, c] : [a, c, b]) {
-        P.push(px, y, pz);
-        C.push(color.r, color.g, color.b);
-        M.push(0, 0, 0.7, 0);
+  for (const area of vector.areas ?? []) {
+    const look = floorLook(area.surface, undefined);
+    const y = AREA_Y.base + area.order * AREA_Y.step + baseY;
+    const push = (poly: readonly (readonly [number, number])[]) => {
+      for (let i = 1; i + 1 < poly.length; i++) {
+        const a = poly[0]!;
+        const b = poly[i]!;
+        const c = poly[i + 1]!;
+        // Up-facing winding: (b − a) × (c − a) must point to +y (as the road ribbons).
+        const ny = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
+        for (const [px, pz] of ny >= 0 ? [a, b, c] : [a, c, b]) {
+          const cc = colorAt(look, px, pz);
+          P.push(px, y, pz);
+          C.push(cc.r, cc.g, cc.b);
+          M.push(...look.mask);
+        }
       }
-    }
-  };
-  for (const rings of vector.paved ?? []) {
+    };
     const toV = (r: readonly number[]) => {
       const out: Vector2[] = [];
-      for (let k = 0; k + 1 < r.length; k += 2) out.push(new Vector2(x0 + r[k]!, z0 + r[k + 1]!));
-      // Closed OSM rings repeat the first point.
+      for (let k = 0; k + 1 < r.length; k += 2) {
+        const p = new Vector2(x0 + r[k]!, z0 + r[k + 1]!);
+        // Closed OSM rings repeat the first point; clipping can repeat points too.
+        if (out.length && out[out.length - 1]!.equals(p)) continue;
+        out.push(p);
+      }
       if (out.length > 1 && out[0]!.equals(out[out.length - 1]!)) out.pop();
       return out;
     };
-    const outer = toV(rings[0] ?? []);
+    const outer = toV(area.rings[0] ?? []);
     if (outer.length < 3) continue;
-    const holes = rings
+    const holes = area.rings
       .slice(1)
       .map(toV)
       .filter((h) => h.length >= 3);
@@ -642,19 +711,144 @@ function pavedPolygons(
       const cx1 = Math.min(x0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.x))));
       const cz0 = Math.max(z0, Math.floor(Math.min(...tri.map((p) => p.y))));
       const cz1 = Math.min(z0 + CHUNK_SIZE - 1, Math.floor(Math.max(...tri.map((p) => p.y))));
+      if (cx1 < cx0 || cz1 < cz0) continue;
+      const pts = tri.map((p) => [p.x, p.y] as [number, number]);
+      // Whole triangle inside the chunk over allowed tiles only: one triangle, no per-tile cut.
+      let whole = pts.every(
+        ([px, pz]) => px >= x0 && px <= x0 + CHUNK_SIZE && pz >= z0 && pz <= z0 + CHUNK_SIZE,
+      );
+      for (let z = cz0; whole && z <= cz1; z++)
+        for (let x = cx0; whole && x <= cx1; x++) if (!allowed(x, z)) whole = false;
+      if (whole) {
+        push(pts);
+        continue;
+      }
       for (let z = cz0; z <= cz1; z++)
         for (let x = cx0; x <= cx1; x++) {
           if (!allowed(x, z)) continue;
-          const poly = clipToCell(
-            tri.map((p) => [p.x, p.y] as [number, number]),
-            x,
-            z,
-          );
+          const poly = clipToCell(pts, x, z);
           if (poly.length >= 3) push(poly);
         }
     }
+    if (area.surface === 'base:parking') parkingBays(outer, holes, BAY.y + baseY);
+  }
+
+  /** Point inside the area (even-odd over its rings). */
+  function inside(rings: readonly Vector2[][], px: number, pz: number): boolean {
+    let c = false;
+    for (const r of rings)
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+        const a = r[i]!;
+        const b = r[j]!;
+        if (a.y > pz !== b.y > pz && px < ((b.x - a.x) * (pz - a.y)) / (b.y - a.y) + a.x) c = !c;
+      }
+    return c;
+  }
+
+  /**
+   * Parking bays: a BAY.depth stripe across every long edge of the lot every BAY.width (anchored
+   * to the world, so stripes line up across chunks), drawn where it lies inside the lot.
+   */
+  function parkingBays(outer: Vector2[], holes: Vector2[][], y: number): void {
+    const rings = [outer, ...holes];
+    const onRoad = (px: number, pz: number): boolean => {
+      for (const rd of vector.roads) {
+        if (rd.bridge) continue;
+        const p = rd.pts;
+        for (let k = 0; k + 3 < p.length; k += 2) {
+          const ax = x0 + p[k]!;
+          const az = z0 + p[k + 1]!;
+          const dx = x0 + p[k + 2]! - ax;
+          const dz = z0 + p[k + 3]! - az;
+          const l2 = dx * dx + dz * dz || 1;
+          const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2));
+          if (Math.hypot(ax + dx * t - px, az + dz * t - pz) < Math.max(rd.r, rd.rs) + 0.05)
+            return true;
+        }
+      }
+      return false;
+    };
+    // Edges the chunk clip made (along the margin box) are not lot edges.
+    const onBox = (p: Vector2) =>
+      Math.abs(p.x - (x0 - 2)) < 0.02 ||
+      Math.abs(p.x - (x0 + CHUNK_SIZE + 2)) < 0.02 ||
+      Math.abs(p.y - (z0 - 2)) < 0.02 ||
+      Math.abs(p.y - (z0 + CHUNK_SIZE + 2)) < 0.02;
+    const w = BAY.line / 2;
+    for (const r of rings)
+      for (let i = 0; i < r.length; i++) {
+        const a = r[i]!;
+        const b = r[(i + 1) % r.length]!;
+        if (onBox(a) && onBox(b)) continue;
+        const len = a.distanceTo(b);
+        if (len < BAY.width * 4) continue;
+        const ux = (b.x - a.x) / len;
+        const uz = (b.y - a.y) / len;
+        // Inward normal: the side where the lot is.
+        const mx = (a.x + b.x) / 2;
+        const mz = (a.y + b.y) / 2;
+        let nx = -uz;
+        let nz = ux;
+        if (!inside(rings, mx + nx * 0.5, mz + nz * 0.5)) {
+          nx = -nx;
+          nz = -nz;
+          if (!inside(rings, mx + nx * 0.5, mz + nz * 0.5)) continue;
+        }
+        const s0 = a.x * ux + a.y * uz;
+        for (let k = Math.ceil((s0 + 0.5) / BAY.width); k * BAY.width < s0 + len - 0.5; k++) {
+          const t = k * BAY.width - s0;
+          const ex = a.x + ux * t;
+          const ez = a.y + uz * t;
+          // A bay starts past a street's sidewalk along the lot and ends at a road (the aisle).
+          let from = 0;
+          while (from < BAY.depth && onRoad(ex + nx * from, ez + nz * from)) from += 0.25;
+          let to = from;
+          while (to < from + BAY.depth && !onRoad(ex + nx * to, ez + nz * to)) to += 0.25;
+          to = Math.min(to, from + BAY.depth);
+          if (to - from < 2) continue;
+          const px = ex + nx * from;
+          const pz = ez + nz * from;
+          const qx = ex + nx * to;
+          const qz = ez + nz * to;
+          const cx = (px + qx) / 2;
+          const cz = (pz + qz) / 2;
+          if (cx < x0 || cx >= x0 + CHUNK_SIZE || cz < z0 || cz >= z0 + CHUNK_SIZE) continue;
+          if (!inside(rings, qx - nx * 0.1, qz - nz * 0.1) || !inside(rings, cx, cz)) continue;
+          if (!allowed(Math.floor(cx), Math.floor(cz))) continue;
+          const quad: [number, number][] = [
+            [px + ux * w, pz + uz * w],
+            [qx + ux * w, qz + uz * w],
+            [qx - ux * w, qz - uz * w],
+            [px - ux * w, pz - uz * w],
+          ];
+          for (const [i0, i1, i2] of [
+            [0, 1, 2],
+            [0, 2, 3],
+          ] as const) {
+            const t3: [[number, number], [number, number], [number, number]] = [
+              quad[i0]!,
+              quad[i1]!,
+              quad[i2]!,
+            ];
+            const ny =
+              (t3[1][1] - t3[0][1]) * (t3[2][0] - t3[0][0]) -
+              (t3[1][0] - t3[0][0]) * (t3[2][1] - t3[0][1]);
+            for (const [qx2, qz2] of ny >= 0 ? t3 : [t3[0], t3[2], t3[1]]) {
+              P.push(qx2, y, qz2);
+              C.push(paint.r, paint.g, paint.b);
+              M.push(0.5, 0, 0, 0);
+            }
+          }
+        }
+      }
   }
 }
+
+/**
+ * Parking bay stripes: spacing and depth (m), line width, height (over every area and the dirt /
+ * sidewalk ribbons, under asphalt; bays are cut back from the roads crossing the lot).
+ */
+const BAY = { width: 2.5, depth: 5, line: 0.15, y: 0.012 };
 
 /** Convex polygon clipped to the tile square [x, x + 1] × [z, z + 1] (Sutherland–Hodgman). */
 export function clipToCell(

@@ -8,6 +8,7 @@ export {
   type GenColumn,
   type GenLevel,
   type GenRoad,
+  type GenArea,
 } from './generator.js';
 export {
   chunkInfra,

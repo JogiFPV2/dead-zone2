@@ -99,7 +99,7 @@ export function orientedBox(r: readonly P[]): { long: number; short: number; ang
 }
 
 /** Uniform grid over bounding boxes (spatial lookup of polygons). */
-class Grid<T> {
+export class Grid<T> {
   private cells = new Map<number, T[]>();
   constructor(private cell = 64) {}
   private key = (cx: number, cy: number) => (cx + 1000) * 4096 + (cy + 1000);
@@ -117,7 +117,7 @@ class Grid<T> {
   }
 }
 
-const bbox = (r: readonly P[]) => {
+export const bbox = (r: readonly P[]) => {
   let x0 = Infinity,
     y0 = Infinity,
     x1 = -Infinity,
@@ -136,7 +136,7 @@ const centroid = (r: readonly P[]): P => {
 };
 
 /** Landuse kinds that give context to untyped buildings (smallest containing area wins). */
-const CONTEXT: ReadonlySet<AreaKind> = new Set([
+export const CONTEXT: ReadonlySet<AreaKind> = new Set([
   'residential',
   'industrial',
   'commercial',
@@ -147,7 +147,7 @@ const CONTEXT: ReadonlySet<AreaKind> = new Set([
   'railway',
   'military',
 ]);
-const POI_KEYS = ['amenity', 'shop', 'office', 'healthcare', 'craft', 'leisure'] as const;
+export const POI_KEYS = ['amenity', 'shop', 'office', 'healthcare', 'craft', 'leisure'] as const;
 
 export interface ConvertStats {
   buildings: number;
@@ -530,7 +530,7 @@ export function unflat(f: readonly number[]): P[] {
   return out;
 }
 
-function nearRing(x: number, y: number, r: readonly P[], d: number): boolean {
+export function nearRing(x: number, y: number, r: readonly P[], d: number): boolean {
   for (let i = 1; i < r.length; i++) {
     const [ax, ay] = r[i - 1]!;
     const [bx, by] = r[i]!;

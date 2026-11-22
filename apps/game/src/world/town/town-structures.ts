@@ -35,7 +35,7 @@ import {
   isRoofHidden,
   type Cutaway,
 } from '../cutaway.js';
-import { VectorWalls, type VectorWallPool } from './vector-walls.js';
+import { openingOnOutline, VectorWalls, type VectorWallPool } from './vector-walls.js';
 import type { SimWallSegment } from '@deadzone/protocol';
 import { LEVEL_HEIGHT } from '../instances.js';
 import { WALL_HEIGHT } from '../structure-instances.js';
@@ -271,9 +271,36 @@ export class TownStructures {
       const x = e.axis === 'N' ? e.tx + 0.5 : e.tx;
       const z = e.axis === 'N' ? e.ty : e.ty + 0.5;
       const look = { lowered: false };
+      const rot = e.axis === 'N' ? 0 : Math.PI / 2;
+      let m = at(x, baseY, z, rot);
+      // Exterior door / window of a vector-walled building: set into the gap of its outline
+      // wall, turned along it (not on the tile edge behind the slanted wall).
+      if (
+        vectorBuildings?.has(e.building) &&
+        !e.interior &&
+        (e.kind === 'door' || e.kind === 'window')
+      ) {
+        const o = this.opts.outlineOf?.(e.building);
+        const p =
+          o &&
+          openingOnOutline(
+            [o.outline, ...(o.holes ?? [])],
+            e.tx,
+            e.ty,
+            e.axis === 'N' ? e.tx + 1 : e.tx,
+            e.axis === 'N' ? e.ty : e.ty + 1,
+            rot,
+          );
+        if (p)
+          m = new Matrix4().compose(
+            v.set(p.x, baseY, p.z),
+            q.setFromAxisAngle(Y_AXIS, p.rotY),
+            new Vector3(p.width, 1, 1),
+          );
+      }
       push(x, z, {
         geo: edgeModule(e.kind, e.skin, e.content, look),
-        m: at(x, baseY, z, e.axis === 'N' ? 0 : Math.PI / 2),
+        m,
         variants: edgeVariants(e.kind, e.skin, e.content),
         edge: e,
       });
@@ -402,7 +429,7 @@ export class TownStructures {
     }
     // Upper levels: floor slab per building and chunk, stair runs of this level.
     if (range.z > 0) {
-      for (const s of slabGeometry(tiles, range, baseY, this.kit.cells)) {
+      for (const s of slabGeometry(tiles, range, baseY, this.kit.cells, this.opts.outlineOf)) {
         push(s.cx, s.cz, { geo: s.geo, m: new Matrix4(), slab: s.building });
       }
     }

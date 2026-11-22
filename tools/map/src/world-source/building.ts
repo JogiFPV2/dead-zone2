@@ -70,6 +70,9 @@ const OPENING_REACH = 1.6;
 const GAP_MARGIN = 0.1;
 const MAX_GAP = 3;
 
+/** map2 outlines: tiles a fill may lose (diagonal-only corner pieces) and keep vector walls. */
+const EXACT_LOOSE_MIN = 4;
+
 /** Outline left slanted at runtime: single ring, off the axes by more than the snap tolerance. */
 export function isSlanted(ib: IBuilding): boolean {
   // map2 1:1 outline: walls always on the exact OSM line (vector), whatever the angle, also
@@ -345,21 +348,29 @@ export function solveBuilding(
   const ownCount = rawFill(ib, r, own, 1, slanted);
   const mask = new Uint8Array(w * h);
   let count = 0;
+  /** Own tiles taken by an older neighbour (terraced houses, a wall shared or overlapping). */
+  let toLower = 0;
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const i = (y + MARGIN) * r.w + (x + MARGIN);
       if (own[i] && !lower[i]) {
         mask[y * w + x] = 1;
         count++;
-      }
+      } else if (own[i]) toLower++;
     }
   if (count < 6) return undefined;
   keepLargest(mask, w, h);
   let kept = 0;
   for (let i = 0; i < mask.length; i++) kept += mask[i]!;
-  // Vector walls only when the raster is the whole conservative fill (not cut by a road, a rail
-  // or an older building): the outline then encloses exactly this building.
-  const vector = slanted && kept === ownCount;
+  // Vector walls only when the raster is the whole conservative fill (not cut by a road or a
+  // rail): the outline then encloses exactly this building. map2 1:1 outlines (`exact`) may also
+  // lose tiles to an older neighbour along a shared / touching wall and a few corner tiles that
+  // hang on by a diagonal only (`keepLargest`): the walls stay on the OSM line (the neighbour
+  // draws the shared one), no tile stair-steps.
+  const vector =
+    slanted &&
+    (kept === ownCount ||
+      (!!ib.b.exact && ownCount - toLower - kept <= Math.max(EXACT_LOOSE_MIN, ownCount * 0.02)));
   const mine = (x: number, y: number) =>
     x >= fx && y >= fy && x < fx + w && y < fy + h && mask[(y - fy) * w + (x - fx)] === 1;
   // Distance to the nearest road / sidewalk / parking tile (BFS around other buildings).

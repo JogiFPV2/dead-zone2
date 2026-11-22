@@ -71,7 +71,12 @@ export function kindFromTags(t: Tags): BuildingKind | undefined {
     am === 'place_of_worship'
   )
     return 'church';
-  if (['train_station', 'transportation'].includes(b) || t.railway === 'station') return 'station';
+  if (
+    ['train_station', 'transportation'].includes(b) ||
+    t.railway === 'station' ||
+    am === 'bus_station'
+  )
+    return 'station';
   if (t.shop && (SHOP_FOOD.has(t.shop) || b === 'retail' || b === 'supermarket')) return 'shop';
   if (['retail', 'supermarket', 'kiosk'].includes(b) || t.shop) return 'shop';
   if (

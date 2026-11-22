@@ -93,7 +93,15 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     ...(bushes?.length ? { bushes } : {}),
     ...(roads?.length ? { roads } : {}),
     ...(col.under ? { under: col.under } : {}),
-    ...(col.paved?.length ? { paved: col.paved } : {}),
+    ...(col.areas?.length
+      ? {
+          areas: col.areas.map((a) => ({
+            surface: GROUND_TILES[a.ground] ?? 'base:grass',
+            order: a.order,
+            rings: a.rings,
+          })),
+        }
+      : {}),
     ...(col.infra ? { infra: col.infra } : {}),
     ...(col.lamps?.length ? { lamps: col.lamps } : {}),
   };

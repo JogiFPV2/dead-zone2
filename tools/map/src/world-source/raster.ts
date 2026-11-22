@@ -13,7 +13,7 @@ import {
 import type { PlanIndex } from './plan-index.js';
 
 /** Ground of an area kind (raster class) and its tree class (1 = woods, 2 = park trees). */
-const AREA_GROUND: Partial<Record<AreaKind, number>> = {
+export const AREA_GROUND: Partial<Record<AreaKind, number>> = {
   farmland: G_DIRT,
   sand: G_DIRT,
   construction: G_DIRT,
@@ -57,8 +57,8 @@ export interface Raster {
   /** Area kind rank under the tile (+1; 0 = none) — chunk kinds. */
   area: Uint8Array;
   /**
-   * Ground class before the roads / paved areas were painted, +1 (0 = no road or paved area on
-   * the tile): the renderer draws it under the smooth vector roads and paved-area polygons instead
+   * Ground class before the areas / roads were painted, +1 (0 = none, or a waterway / track bed
+   * on the tile): the renderer draws it under the smooth area polygons and vector roads instead
    * of the stair-stepped tiles.
    */
   under: Uint8Array;
@@ -261,13 +261,10 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
     const a = idx.areas.items[i]!;
     const gi = AREA_GROUND[a.kind] ?? G_GRASS;
     const tr = AREA_TREES[a.kind] ?? 0;
-    const paved = a.kind === 'paved';
     fillRings(a.rings, x0, y0, w, h, (j) => {
-      // Paved areas (plazas, area:highway) are drawn as smooth polygons over the ground they
-      // cover (`GenColumn.paved`); an area painted later over them shows as its own tiles.
-      if (paved) {
-        if (!under[j]) under[j] = g[j]! + 1;
-      } else under[j] = 0;
+      // Every area is drawn as a smooth polygon (`GenColumn.areas`, paint order = height) over
+      // the land cover under it: the tile keeps that ground in `under`, no stair-stepped edges.
+      if (!under[j]) under[j] = g[j]! + 1;
       g[j] = gi;
       tree[j] = tr;
       area[j] = a.rank + 1;
@@ -290,6 +287,8 @@ export function rasterGround(idx: PlanIndex, x0: number, y0: number, w: number, 
       g[j] = G_RAIL;
       rail[j] = 1;
       tree[j] = 0;
+      // The track bed is tiles: no area polygon over it.
+      under[j] = 0;
     });
   }
   const keep = (j: number) => {

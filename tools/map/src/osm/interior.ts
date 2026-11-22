@@ -146,8 +146,15 @@ function look(kind: BuildingKind, rnd: number): Look {
         door: 'base:wooden-door',
         roof: 'base:roof-tile',
       };
-    case 'police':
     case 'fire-station':
+      // Remiza: red brick, so it never reads as the blue-grey police station.
+      return {
+        wall: 'base:brick-wall',
+        window: 'base:window-plain',
+        door: 'base:door-plain',
+        roof: 'base:roof-flat',
+      };
+    case 'police':
       return {
         wall: 'base:wall-police',
         window: 'base:window-plain',

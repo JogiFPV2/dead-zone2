@@ -77,10 +77,10 @@ export interface WorldChunk {
    */
   readonly under?: Uint16Array;
   /**
-   * Paved areas (plazas, `area:highway`) touching the chunk, render only: rings in chunk-local
-   * tiles (flat x, y pairs; first ring outer, the rest holes), drawn as smooth polygons.
+   * Areas (landuse, parking, plazas, water…) touching the chunk, render only, in paint order:
+   * smooth polygons over `under` instead of stair-stepped area tiles.
    */
-  readonly paved?: readonly (readonly (readonly number[])[])[];
+  readonly areas?: readonly VectorArea[];
   /** Power lines, railway, catenary (generated maps, render only, world metres). */
   readonly infra?: GenInfra;
   /** Street lamps (generated maps, render only, world metres). */
@@ -90,6 +90,16 @@ export interface WorldChunk {
    * tiles; the realistic style plants bushes there.
    */
   readonly bushes?: readonly { x: number; y: number; w: number; h: number }[];
+}
+
+/** One area polygon of a chunk (generated maps, render only). */
+export interface VectorArea {
+  /** Ground content of the area (`base:concrete`, `base:parking`, `base:water`…). */
+  readonly surface: ContentId;
+  /** Paint order: a higher area is drawn over a lower one. */
+  readonly order: number;
+  /** Rings in chunk-local tiles (flat x, y pairs; first outer, the rest holes). */
+  readonly rings: readonly (readonly number[])[];
 }
 
 /** One run of a road polyline touching a chunk (chunk-local tiles, flat x, y pairs). */
