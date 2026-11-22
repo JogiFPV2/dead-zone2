@@ -1,3 +1,4 @@
+import { weatherNow } from '../world/weather.js';
 import { footstepRadius, isSneaking } from '../ai/sneak.js';
 import { floorZ } from '../world/levels.js';
 import { lightLevelAt, playerVisibility, stealthOf } from '../ai/light.js';
@@ -231,6 +232,7 @@ export class ViewTracker {
   private pumpsKey = '';
   private targetKey = '';
   private stealthKey = '';
+  private weatherKey = '';
   private furnitureKey = '';
 
   constructor(private readonly playerId: PlayerId = 0) {}
@@ -251,6 +253,14 @@ export class ViewTracker {
     if (key !== this.clockKey) {
       this.clockKey = key;
       patch.clock = clock;
+    }
+    const wx = weatherNow(w, minute);
+    if (wx) {
+      const k = `${wx.kind}|${wx.from}|${wx.blend}|${wx.cloud}|${wx.sightMul}|${wx.hearingMul}|${wx.tempC}|${wx.moon}|${wx.snow}`;
+      if (k !== this.weatherKey) {
+        this.weatherKey = k;
+        patch.weather = { ...wx };
+      }
     }
     const s = w.survival;
     if (s && eid !== undefined) {

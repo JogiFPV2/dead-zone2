@@ -32,7 +32,7 @@ export interface SystemContext {
   grid: TileGrid;
   /** Written by `clock` every tick: game minutes the per-minute systems process now. */
   minutes: MinuteTicks;
-  /** Ambient temperature in °C (weather later). */
+  /** Ambient temperature in °C before weather (`world/weather.ts` adds to it). */
   ambientC: number;
 }
 
@@ -67,7 +67,8 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'health', run: (w, ctx) => healthSystem(w, ctx.minutes.first, ctx.minutes.count) },
     {
       name: 'survival',
-      run: (w, ctx) => survivalSystem(w, ctx.minutes.first, ctx.minutes.count, ctx.ambientC),
+      run: (w, ctx) =>
+        survivalSystem(w, ctx.minutes.first, ctx.minutes.count, ctx.ambientC, ctx.grid),
     },
     { name: 'sleep', run: (w, ctx) => sleepSystem(w, ctx.minutes.first, ctx.minutes.count) },
     { name: 'moodles', run: (w, ctx) => moodlesSystem(w, ctx.minutes.count > 0) },

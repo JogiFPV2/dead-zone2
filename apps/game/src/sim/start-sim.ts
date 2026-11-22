@@ -1,3 +1,4 @@
+import type { WeatherKind } from '@deadzone/protocol';
 import type {
   CharacterSpec,
   SimContentSource,
@@ -42,6 +43,8 @@ export interface StartSimOptions {
    * zombies, loot, crates and cars per chunk.
    */
   world?: GeneratedMapSpec | undefined;
+  /** Dev `?weather=rain` (or `auto` / `off`): weather of the sim (protocol 50). */
+  weather?: WeatherKind | 'auto' | 'off' | undefined;
   /** Uncaught worker error (e.g. a save that no longer loads). */
   onWorkerError?: ((message: string) => void) | undefined;
 }
@@ -76,6 +79,7 @@ export function startSimWorker(
     ...(opts.populateAnimals && !opts.save ? { populateAnimals: opts.populateAnimals } : {}),
     ...(opts.vehicles?.length ? { vehicles: opts.vehicles } : {}),
     ...(opts.character ? { character: opts.character } : {}),
+    ...(opts.weather ? { weather: opts.weather } : {}),
     // A copy: the slot's buffer stays intact if the worker takes (transfers) it.
     ...(opts.save ? { save: opts.save.slice(0) } : {}),
   });

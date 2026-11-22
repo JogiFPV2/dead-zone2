@@ -37,6 +37,8 @@ export interface MapSpec {
   blockers?: readonly { x0: number; y0: number; x1: number; y1: number }[];
   /** `SimChunk.wallSegments` in world metres (level 0), listed in every chunk their bounds touch. */
   wallSegments?: readonly { x0: number; y0: number; x1: number; y1: number }[];
+  /** `SimChunk.trees` in world metres (level 0): x, y, crown radius, bottom, top; kept in the chunk of x, y. */
+  trees?: readonly { x: number; y: number; r: number; bottom: number; top: number }[];
   /** Floor palette (content tile id per floor value). */
   floorTiles?: readonly (string | null)[];
 }
@@ -97,6 +99,9 @@ export function buildMap(spec: MapSpec = {}): SimMap {
             Math.min(g.y0, g.y1) <= (cy + 1) * CHUNK_SIZE,
         )
         .map((g) => ({ ...g, z: 0 }));
+      const trees = (spec.trees ?? [])
+        .filter((t) => Math.floor(t.x / CHUNK_SIZE) === cx && Math.floor(t.y / CHUNK_SIZE) === cy)
+        .flatMap((t) => [t.x - cx * CHUNK_SIZE, t.y - cy * CHUNK_SIZE, t.r, t.bottom, t.top]);
       for (let z = 0; z < (spec.levels ?? 1); z++) {
         chunks.push({
           cx,
@@ -112,6 +117,7 @@ export function buildMap(spec: MapSpec = {}): SimMap {
           ...(z === 0 && chunkZones ? { zones: chunkZones } : {}),
           ...(z === 0 && blockers.length > 0 ? { blockers } : {}),
           ...(z === 0 && segs.length > 0 ? { wallSegments: segs } : {}),
+          ...(z === 0 && trees.length > 0 ? { trees } : {}),
         });
       }
     }

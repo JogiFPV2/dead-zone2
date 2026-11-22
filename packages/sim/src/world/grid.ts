@@ -82,6 +82,16 @@ export class TileGrid {
   }
 
   /** Flight covering tile (tx, ty) of its base level `z` (`world/levels.ts` `stairsAt`). */
+  /** Map edge kind of a raw edge id (`SimMap.edgeKinds`: wall, fence, gate…), null = unknown. */
+  edgeKindOf(edgeId: number): string | null {
+    return edgeId > 0 ? (this.map.edgeKinds?.[edgeId] ?? null) : null;
+  }
+
+  /** Tree crowns of a chunk on level 0 (`SimChunk.trees`, chunk-local tiles), if any. */
+  treesOf(cx: number, cy: number): readonly number[] | undefined {
+    return this.chunkAt(cx, cy, 0)?.trees;
+  }
+
   stairAt(tx: number, ty: number, z: number): Stair | undefined {
     if (this.stairs.length === 0) return undefined;
     const i = this.stairTiles.get(stairKey(tx, ty, z));

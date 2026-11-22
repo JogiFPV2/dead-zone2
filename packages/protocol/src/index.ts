@@ -1,5 +1,5 @@
 /** Bump on every breaking change to commands, snapshots or worker messages. */
-export const PROTOCOL_VERSION = 48;
+export const PROTOCOL_VERSION = 50;
 
 export * from './api.js';
 export * from './commands.js';
@@ -9,6 +9,7 @@ export * from './snapshot.js';
 export * from './sun.js';
 export * from './vehicles.js';
 export * from './views.js';
+export * from './weather.js';
 export * from './worker-messages.js';
 export * from './world.js';
 

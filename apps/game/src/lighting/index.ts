@@ -10,6 +10,8 @@ export type { LampDef } from './street-lamps.js';
 export { DayCycle } from './day-cycle.js';
 export { DAY_CYCLE } from './day-cycle-config.js';
 export { SUN_LIGHT, applySun, sunForClock } from './sun-light.js';
+export { WEATHER_LOOK, applyWeatherLook } from './weather-look.js';
+export { smoothstep } from './preset.js';
 export { clockMinute, formatMinute, overrideMinute, parseTimeParam } from './game-clock.js';
 
 export interface WorldLighting {

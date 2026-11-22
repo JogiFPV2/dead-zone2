@@ -1,7 +1,16 @@
-import { DEBUG_STATS, type DebugStat, type SimVehicleSpawn } from '@deadzone/protocol';
+import {
+  DEBUG_STATS,
+  WEATHER_KINDS,
+  type DebugStat,
+  type SimVehicleSpawn,
+  type WeatherKind,
+} from '@deadzone/protocol';
 import { parseCrowdParam } from './crowd/mock-crowd.js';
 import { parseTimeParam } from './lighting/game-clock.js';
 import { parseRenderOptions, type RenderOptions, type RenderStyle } from './render/real/options.js';
+
+const isWeatherParam = (v: string | null): boolean =>
+  v !== null && ([...WEATHER_KINDS, 'auto', 'off'] as string[]).includes(v);
 
 /**
  * `test` = generated test map; a generated world (`world/gen/maps.ts`: `osm-stw` = OSM map of
@@ -29,6 +38,8 @@ export interface BootOptions {
   time?: number;
   /** Dev `?timescale=N` (with `?time`): game minutes per real second (0 = frozen). */
   timescale: number;
+  /** `?weather=rain|storm|fog|snow|overcast|clear|auto|off`: pins the weather (testing). */
+  weather?: WeatherKind | 'auto' | 'off';
   /** Dev `?give=base:kitchen-knife,base:canned-beans*3`: items put into the inventory at start. */
   give: { itemId: string; count: number }[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
@@ -182,6 +193,7 @@ export function parseBootOptions(search: string, storedStyle?: RenderStyle): Boo
     zones: q.get('zones') === '1',
     ...(time !== undefined ? { time } : {}),
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
+    ...(isWeatherParam(q.get('weather')) ? { weather: q.get('weather') as WeatherKind } : {}),
     give: parseGiveParam(q.get('give')),
     cars: parseCarParam(q.get('car')),
     pumps: parseTileListParam(q.get('pump')),

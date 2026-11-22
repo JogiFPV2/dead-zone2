@@ -69,6 +69,7 @@ import { createHud2Parts } from './v2/hud2.js';
 import type { PromptVM } from './v2/interact-prompt.js';
 import type { QuickAccessId } from './v2/quick-access.js';
 import { createHpBar } from './v3/hp-bar.js';
+import { createStealthEye } from './v3/stealth-eye.js';
 import {
   AMMO_SHOW_MS,
   MAX_STATUS_CHIPS,
@@ -303,6 +304,8 @@ export function createHud(opts: HudOptions): Hud {
   // HUD v3: thin HP bar only; thirst / hunger / energy show as statuses when they are a problem.
   const hp = createHpBar();
   inStatus('hp', hp.el);
+  const eye = createStealthEye();
+  inStatus('stealth', eye.el);
   // Target card (sim `view.target`, protocol 20) under the HP bar, in the same status block.
   const targetCard = createTargetCard();
   inStatus('target', targetCard.el);
@@ -452,6 +455,10 @@ export function createHud(opts: HudOptions): Hud {
         // The highlight follows the item in hand (inventory PPM / hotbar alike).
         selected = hotbarHeldIndex(s) ?? selected;
         hp.update(statsVM(s).health);
+        eye.update({
+          level: s.player.alive ? s.stealth?.level : undefined,
+          visibility: s.stealth?.visibility ?? 1,
+        });
         targetCard.update(targetCardVM(s.target));
         setThreat({ level: threatLevel(s.threat) });
         setMoodles(

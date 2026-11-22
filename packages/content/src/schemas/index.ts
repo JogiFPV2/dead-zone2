@@ -26,6 +26,7 @@ export * from './lighting-settings.js';
 export * from './water-settings.js';
 export * from './water-poisoning.js';
 export * from './vision-settings.js';
+export * from './weather-settings.js';
 export * from './noise-settings.js';
 export * from './movement-settings.js';
 export * from './sim-lod-settings.js';

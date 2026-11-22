@@ -5,13 +5,13 @@ import { smoothstep } from './preset.js';
 /**
  * Daytime sun from `sunAt` (shared with the sim): the directional light points along the real
  * sun direction for the game clock, so shadows of buildings, trees and cars turn and lengthen
- * through the day. Shadows are deliberately faint and soft (readability first). At night the
+ * through the day. Shadows are clear (the player hides in them) with soft edges. At night the
  * preset's moon light (approved night look) is used unchanged; around the horizon the shadow
  * fades out completely, so the switch sun → moon is never visible.
  */
 export const SUN_LIGHT = {
-  /** Shadow darkness in full daylight (0..1, `DirectionalLight.shadow.intensity`). Very subtle. */
-  shadowIntensity: 0.4,
+  /** Shadow darkness in full daylight (0..1, `DirectionalLight.shadow.intensity`). Clear: the player hides in it (Pawel 2026-11-21). */
+  shadowIntensity: 0.85,
   /** PCF blur radius of the daytime shadow (soft edges). */
   shadowRadius: 4,
   /** Sun shadows fade in between these elevations (degrees). */

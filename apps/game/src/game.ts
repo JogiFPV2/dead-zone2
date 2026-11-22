@@ -52,6 +52,8 @@ import {
   DAY_CYCLE,
   DayCycle,
   applySun,
+  applyWeatherLook,
+  smoothstep,
   sunForClock,
   clockMinute,
   createWorldLighting,
@@ -59,6 +61,9 @@ import {
   overrideMinute,
 } from './lighting/index.js';
 import { createTestLamps } from './world/test-lamps.js';
+import { WeatherFx, precipitation } from './world/weather/weather-fx.js';
+import { Footprints } from './world/weather/footprints.js';
+import { installSnowCover, setSnowCover, snowCoverNow } from './world/weather/snow-cover.js';
 import { genLampsOf } from './world/gen/gen-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
@@ -372,6 +377,8 @@ const startPoint: { x: number; y: number } = stressWorld
         ? boot.spawnAt
         : (startSpawn(world.zones) ?? (boot.sim === 'mock' ? { x: 6.5, y: 6.5 } : { x: 0, y: 0 }));
 
+// Snow on up-facing surfaces: patches three's shader chunks before anything compiles.
+installSnowCover();
 const scene = createScene();
 // Floating origin (render/floating-origin.ts): world content hangs under `worldRoot`, drawn around
 // a render origin near the player; the camera and the sun work in render space.
@@ -686,6 +693,7 @@ if (boot.sim === 'worker') {
             : [],
         }
       : {}),
+    ...(boot.weather ? { weather: boot.weather } : {}),
     // Animals by habitat (towns: cats, dogs, birds; open land: deer, rabbits). Generated worlds:
     // around the start (the sim populates the chunks near the player, not the whole map).
     populateAnimals:
@@ -1991,6 +1999,10 @@ const lighting = createWorldLighting(
 // Street lamps are world content; the sun / moon light and its shadow fit stay in render space.
 worldRoot.add(lighting.lamps.root);
 const dayCycle = new DayCycle(DAY_CYCLE);
+// Rain, snow and lightning (sim weather, protocol 50); `?weather=` pins a kind.
+const weatherFx = new WeatherFx(scene);
+// Footprints in lying snow (player and zombies near them), under the world root (sim metres).
+const footprints = new Footprints(worldRoot);
 if (realStyle) {
   realStyle.attach(scene, camera, lighting.sky.directional, window.devicePixelRatio);
   realStyle.setOrigin(floating.x, floating.z);
@@ -2305,7 +2317,28 @@ renderer.setAnimationLoop((time) => {
   lightMinute = currentMinute(performance.now());
   const look = dayCycle.sample(lightMinute);
   // Sun direction from the shared `sunAt` (same as the sim's light level); moon at night.
-  applySun(look, sunForClock(lightMinute, gameState.get().clock?.day ?? 1));
+  const sunNow = sunForClock(lightMinute, gameState.get().clock?.day ?? 1);
+  applySun(look, sunNow);
+  // Weather and moon phase on top (clouds, fog, new moon), then rain / snow / lightning.
+  const weatherNow = gameState.get().weather;
+  const daylight = smoothstep((sunNow.elevation * (180 / Math.PI) + 6) / 12);
+  applyWeatherLook(look, weatherNow, daylight);
+  const flash = weatherFx.update(weatherNow, rig.target.x, rig.target.z, time / 1000, daylight);
+  setSnowCover(weatherNow?.snow ?? 0, dt / 1000);
+  {
+    const cover = snowCoverNow();
+    footprints.update(time / 1000, cover, precipitation(weatherNow).snow);
+    if (cover > 0 && state) {
+      const lvl = Math.round(state.z);
+      footprints.step('p', state.x, state.y, lvl, cover, time / 1000);
+      for (const z of zombieHp.positionsNear(state.x, state.y, lvl, 40))
+        footprints.step(`z${z.id}`, z.x, z.z, lvl, cover, time / 1000);
+    }
+  }
+  if (flash > 0) {
+    look.hemisphere.intensity += 4 * flash;
+    look.exposure *= 1 + 0.6 * flash;
+  }
   lighting.applyCompiled(look, dayCycle.lampLevel(lightMinute));
   realStyle?.afterLighting();
   streamedTown?.setMinute(lightMinute);

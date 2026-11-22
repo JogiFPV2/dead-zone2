@@ -154,6 +154,7 @@ export function startSimWorkerHost(
           dev: msg.dev ?? false,
           allowRevealMap: msg.allowRevealMap ?? false,
           floorLoot: msg.floorLoot ?? true,
+          ...(msg.weather ? { weather: msg.weather } : {}),
           ...(msg.save ? { load: new Uint8Array(msg.save) } : {}),
           ...(msg.character && !msg.save ? { character: msg.character } : {}),
         });
