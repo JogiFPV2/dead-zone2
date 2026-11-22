@@ -40,7 +40,12 @@ import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './setti
 import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
 import { installHudLayout } from './hud/layout/hud-layout-runtime.js';
 import { displayName } from './characters/display-name.js';
-import { GraphicsStylePass, isPixelStyle, pixelRows } from './render/graphics-style.js';
+import {
+  GraphicsStylePass,
+  isPixelStyle,
+  pixelRows,
+  urlGraphicsStyle,
+} from './render/graphics-style.js';
 import { NoiseRingModel } from './hud/noise/noise-model.js';
 import { NoiseRingView } from './hud/noise/noise-ring.js';
 import { addHulls } from './render/style-materials.js';
@@ -638,8 +643,15 @@ streaming.mapObjects.setOrigin(floating.x, floating.z);
 if (realMap && realStyle?.hasShelters) streaming.mapObjects.setHiddenKinds(['base:dumpster']);
 // „Styl grafiki” (#71): post-process on the same scene, switched live from the settings.
 const stylePass = new GraphicsStylePass(renderer);
-stylePass.setStyle(settings.get().graphics.style);
-settings.subscribe((next) => stylePass.setStyle(next.graphics.style));
+// `?style=malowany`: the painted look for this session (not saved); a later change in the
+// settings still switches the style.
+let styleSetting = settings.get().graphics.style;
+stylePass.setStyle(urlGraphicsStyle(window.location.search) ?? styleSetting);
+settings.subscribe((next) => {
+  if (next.graphics.style === styleSetting) return;
+  styleSetting = next.graphics.style;
+  stylePass.setStyle(styleSetting);
+});
 // World one-shots (footsteps, melee hits, doors) on the effects bus of the #63 mixer.
 const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
 audio.setInMenu(false);

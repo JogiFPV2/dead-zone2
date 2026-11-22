@@ -2,6 +2,7 @@ import {
   BufferGeometry,
   DepthTexture,
   Float32BufferAttribute,
+  LinearFilter,
   Mesh,
   NearestFilter,
   OrthographicCamera,
@@ -18,7 +19,13 @@ import {
   type WebGLRenderer,
 } from 'three';
 import type { GraphicsStyle } from '../settings/schema.js';
-import { applyStyleMaterials, installStyleShaders, setHullSize } from './style-materials.js';
+import {
+  applyStyleMaterials,
+  installStyleShaders,
+  setHullSize,
+  STYLE_UNIFORM,
+} from './style-materials.js';
+import { PAINTED_FRAGMENT } from './painted-shader.js';
 import { PIXEL_PALETTE, STYLE_FRAGMENT, STYLE_VERTEX } from './style-shader.js';
 
 // The ramp lives in the shader chunks: installed before any program compiles.
@@ -86,7 +93,45 @@ export const STYLE_TUNING = {
    * palette step down, character lift (extra emissive share).
    */
   pixel: { dither: 0.035, edge: 0.6, shade: 0.62, lift: 0.35 },
+  /**
+   * „Malowany”: softer ramp (half-stop bands, wide border), Kuwahara tap stride (px at 720 px
+   * of height, 4x4 taps per quadrant), ink line offset (px at 720) and depth break (world units),
+   * grade tints (multiplied into shadows / light), ink colour, canvas grain amplitude.
+   */
+  painted: {
+    toonStep: 0.5,
+    toonSoft: 3,
+    stridePx: 1.4,
+    linePx: 1,
+    edge: 0.35,
+    shadowTint: [0.78, 0.84, 1.1],
+    lightTint: [1.08, 1.02, 0.9],
+    ink: [0.36, 0.25, 0.2],
+    grain: 0.045,
+    /** Mid-tone lift (display gamma exponent, < 1 = brighter) and saturation of the grade. */
+    lift: 0.78,
+    saturation: 1.3,
+    /** Camera zoom range (DEFAULT_ZOOM_LIMITS) → stride × (far … near) and sharp share at max. */
+    zoom: { min: 0.6, max: 1.6, strideFar: 1.25, strideNear: 0.6, detail: 0.6 },
+  },
 } as const;
+
+/** „Malowany” at camera `zoom`: Kuwahara stride factor and the share of the sharp image. */
+export function paintedZoom(zoom: number): { stride: number; detail: number } {
+  const z = STYLE_TUNING.painted.zoom;
+  const t = Math.min(1, Math.max(0, (zoom - z.min) / (z.max - z.min)));
+  const near = t * t * (3 - 2 * t);
+  return {
+    stride: z.strideFar + (z.strideNear - z.strideFar) * near,
+    detail: z.detail * near,
+  };
+}
+
+/** `?style=malowany` (or `painted`): the painted look for this session, without saving it. */
+export function urlGraphicsStyle(search: string): GraphicsStyle | undefined {
+  const v = new URLSearchParams(search).get('style');
+  return v === 'malowany' || v === 'painted' ? 'painted' : undefined;
+}
 
 /**
  * „Styl grafiki” on the same scene and assets:
@@ -98,6 +143,9 @@ export const STYLE_TUNING = {
  *   Bayer 4x4 dither and the 32-colour palette (OKLab nearest), 1-px hull outlines and a lift
  *   on characters; the camera is snapped to the art-pixel grid (view plane) so static
  *   geometry does not shimmer while it follows the player. The HUD (DOM) is untouched.
+ * - painted („Malowany”): softer ramp, hull outlines, scene into a full-res target, then one
+ *   fullscreen pass (painted-shader.ts): Kuwahara brush patches, cool shadows / warm light,
+ *   brown ink on depth breaks, canvas grain.
  * The low-res target is tone mapped and sRGB encoded like the canvas (see ensureTarget).
  */
 export class GraphicsStylePass {
@@ -105,6 +153,8 @@ export class GraphicsStylePass {
   private target: WebGLRenderTarget | undefined;
   private targetKey = '';
   private readonly quad: Mesh<BufferGeometry, ShaderMaterial>;
+  private readonly paintedQuad: Mesh<BufferGeometry, ShaderMaterial>;
+  private readonly paintedScene = new Scene();
   private readonly quadScene = new Scene();
   private readonly quadCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly size = new Vector2();
@@ -137,6 +187,33 @@ export class GraphicsStylePass {
     this.quad = new Mesh(g, material);
     this.quad.frustumCulled = false;
     this.quadScene.add(this.quad);
+    const P = STYLE_TUNING.painted;
+    const painted = new ShaderMaterial({
+      vertexShader: STYLE_VERTEX,
+      fragmentShader: PAINTED_FRAGMENT,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      uniforms: {
+        tColor: { value: null },
+        tDepth: { value: null },
+        uTexel: { value: new Vector2() },
+        uDepthRange: { value: 1 },
+        uStride: { value: 1 },
+        uLine: { value: 1 },
+        uEdgeMeters: { value: P.edge },
+        uShadowTint: { value: new Vector3(...P.shadowTint) },
+        uLightTint: { value: new Vector3(...P.lightTint) },
+        uInk: { value: new Vector3(...P.ink) },
+        uGrain: { value: P.grain },
+        uDetail: { value: 0 },
+        uLift: { value: P.lift },
+        uSat: { value: P.saturation },
+      },
+    });
+    this.paintedQuad = new Mesh(g, painted);
+    this.paintedQuad.frustumCulled = false;
+    this.paintedScene.add(this.paintedQuad);
   }
 
   get current(): GraphicsStyle {
@@ -148,6 +225,13 @@ export class GraphicsStylePass {
     this.style = style;
     this.targetKey = '';
     const pixel = isPixelStyle(style);
+    const painted = style === 'painted';
+    STYLE_UNIFORM.value.step = painted
+      ? STYLE_TUNING.painted.toonStep
+      : STYLE_TUNING.outline.toonStep;
+    STYLE_UNIFORM.value.soft = painted
+      ? STYLE_TUNING.painted.toonSoft
+      : STYLE_TUNING.outline.toonSoft;
     applyStyleMaterials({
       toon: style !== 'classic',
       hulls: style !== 'classic',
@@ -160,6 +244,10 @@ export class GraphicsStylePass {
     const r = this.renderer;
     r.getDrawingBufferSize(this.size);
     const style = this.style;
+    if (style === 'painted') {
+      this.renderPainted(scene, camera);
+      return;
+    }
     if (!isPixelStyle(style)) {
       setHullSize((STYLE_TUNING.outline.hullPx * this.size.y) / 720, this.size.x, this.size.y);
       r.setRenderTarget(null);
@@ -198,6 +286,35 @@ export class GraphicsStylePass {
     this.target?.dispose();
     this.quad.geometry.dispose();
     this.quad.material.dispose();
+    this.paintedQuad.material.dispose();
+  }
+
+  /** „Malowany”: full-res scene into the target, then the painted pass to the screen. */
+  private renderPainted(scene: Object3D, camera: Camera): void {
+    const r = this.renderer;
+    const { x: w, y: h } = this.size;
+    const k = h / 720;
+    setHullSize(STYLE_TUNING.outline.hullPx * 0.75 * k, w, h);
+    const t = this.ensureTarget(w, h, true);
+    r.setRenderTarget(t);
+    r.render(scene, camera);
+    r.setRenderTarget(null);
+    const ortho = (camera as OrthographicCamera).isOrthographicCamera
+      ? (camera as OrthographicCamera)
+      : undefined;
+    const u = this.paintedQuad.material.uniforms;
+    u.tColor!.value = t.texture;
+    u.tDepth!.value = t.depthTexture;
+    (u.uTexel!.value as Vector2).set(1 / w, 1 / h);
+    u.uDepthRange!.value = ortho ? ortho.far - ortho.near : 1;
+    const zp = paintedZoom(ortho?.zoom ?? 1);
+    u.uStride!.value = Math.max(0.75, STYLE_TUNING.painted.stridePx * k * zp.stride);
+    u.uDetail!.value = zp.detail;
+    u.uLine!.value = Math.max(1, STYLE_TUNING.painted.linePx * k);
+    const auto = r.info.autoReset;
+    r.info.autoReset = false;
+    r.render(this.paintedScene, this.quadCamera);
+    r.info.autoReset = auto;
   }
 
   /**
@@ -218,8 +335,8 @@ export class GraphicsStylePass {
     cam.updateMatrixWorld();
   }
 
-  private ensureTarget(w: number, h: number): WebGLRenderTarget {
-    const key = `${w}x${h}`;
+  private ensureTarget(w: number, h: number, smooth = false): WebGLRenderTarget {
+    const key = `${w}x${h}${smooth ? 's' : ''}`;
     if (this.target && key === this.targetKey) return this.target;
     this.target?.depthTexture?.dispose();
     this.target?.dispose();
@@ -228,8 +345,8 @@ export class GraphicsStylePass {
     this.target = new WebGLRenderTarget(w, h, {
       type: UnsignedByteType,
       colorSpace: SRGBColorSpace,
-      minFilter: NearestFilter,
-      magFilter: NearestFilter,
+      minFilter: smooth ? LinearFilter : NearestFilter,
+      magFilter: smooth ? LinearFilter : NearestFilter,
       depthBuffer: true,
       depthTexture: depth,
     });
