@@ -16,6 +16,7 @@ export const LOOK_TYPES = [
   'police',
   'hospital',
   'barn',
+  'station',
 ] as const;
 export type LookType = (typeof LOOK_TYPES)[number];
 export type RoofShape =
@@ -224,6 +225,14 @@ export const LOOK_PALETTE: Readonly<Record<LookType, LookTypePalette>> = {
     roofs: ['#5a5c5e', '#6b6d6a', '#b9b6ad', '#a0a39f', '#8a7a68'],
     trim: ['#b8312f', '#3f7f5e', '#5b7480'],
     roofShapes: { flat: 0.95, hipped: 0.05 },
+  },
+  // PKS / PKP stations (not in the Designer's JSON): sand / light grey plaster, flat roofs.
+  station: {
+    walls: ['#d6c48e', '#c9d3cf', '#a9b4b8'],
+    weights: [0.45, 0.35, 0.2],
+    roofs: ['#3c3f42', '#5a5c5e'],
+    trim: ['#2a5f9e', '#b8312f'],
+    roofShapes: { flat: 0.8, gabled: 0.2 },
   },
   barn: {
     walls: ['#6f5a44', '#8a7f72', '#5a4a3a', '#8e4a36', '#a0533c', '#9b9488'],

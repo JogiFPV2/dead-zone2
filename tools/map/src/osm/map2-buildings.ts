@@ -61,6 +61,194 @@ const REL_RING = 1e8;
 export const map2BuildingId = (b: Pick<Map2Building, 'id' | 'rel' | 'ring'>): number =>
   b.rel ? REL_BASE + b.ring * REL_RING + b.id : b.id;
 
+/** Recesses / bumps up to about 5 m deep are smoothed out of the outlines (Paweł, 22.11.2026; was 2, then 3 m). */
+export const NOTCH_DEPTH = 5.2;
+/** Widest notch (chord, m) that is smoothed: longer runs are real bends, not notches. */
+const NOTCH_WIDTH = 8;
+
+const segDist = (p: Pt, a: Pt, b: Pt): number => {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const l2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+  return Math.hypot(a[0] + dx * t - p[0], a[1] + dy * t - p[1]);
+};
+/** Turn at `b` on a → b → c below NOTCH_TURN. */
+const NOTCH_TURN = (25 * Math.PI) / 180;
+const straight = (a: Pt, b: Pt, c: Pt): boolean => {
+  const t = Math.abs(
+    Math.atan2(
+      (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]),
+      (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]),
+    ),
+  );
+  return t < NOTCH_TURN;
+};
+const turnAt = (a: Pt, b: Pt, c: Pt): number =>
+  Math.abs(
+    Math.atan2(
+      (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]),
+      (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]),
+    ),
+  );
+/** A tooth: the outline turns this sharply at a vertex close to its neighbours' chord. */
+const SPIKE_TURN = (60 * Math.PI) / 180;
+const ringArea = (r: readonly Pt[]): number => {
+  let s = 0;
+  for (let i = 0; i < r.length; i++) {
+    const a = r[i]!;
+    const b = r[(i + 1) % r.length]!;
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return s / 2;
+};
+
+const cross = (a: Pt, b: Pt, c: Pt, d: Pt): Pt | undefined => {
+  const rx = b[0] - a[0];
+  const ry = b[1] - a[1];
+  const sx = d[0] - c[0];
+  const sy = d[1] - c[1];
+  const den = rx * sy - ry * sx;
+  if (Math.abs(den) < 1e-9) return undefined;
+  const t = ((c[0] - a[0]) * sy - (c[1] - a[1]) * sx) / den;
+  return [a[0] + rx * t, a[1] + ry * t];
+};
+/** Corner notch: the walls meeting there turn by at least this much. */
+const CORNER_TURN = (45 * Math.PI) / 180;
+
+interface Node {
+  p: Pt;
+  /** Index in the input ring, -1 for a corner made by smoothing. */
+  src: number;
+}
+
+/**
+ * Ring (open, no repeated first point) without its small recesses and bumps, up to NOTCH_DEPTH
+ * deep and NOTCH_WIDTH wide:
+ * - on a straight wall, a run of 1–3 vertices close to the chord that skips them is dropped;
+ * - at a corner, a run of 1–3 vertices is replaced by the point where the two walls meeting
+ *   there would cross (a cut or a stepped corner becomes a plain corner).
+ * Vertices that end a shared wall (`shared`: edge k = vertex k → k + 1; the neighbour keeps those)
+ * are never moved. Returns the ring and the new index of every kept edge (`-1` = gone).
+ */
+export function smoothRing(
+  ring: readonly Pt[],
+  shared: readonly number[] = [],
+): { ring: Pt[]; edge: number[] } {
+  let nodes: Node[] = ring.map((p, src) => ({ p, src }));
+  const fixed = new Set<number>();
+  for (const k of shared) {
+    fixed.add(k);
+    fixed.add((k + 1) % ring.length);
+  }
+  const isFixed = (v: Node): boolean => v.src >= 0 && fixed.has(v.src);
+  const area0 = Math.abs(ringArea(ring));
+  const areaOk = (next: readonly Node[]): boolean =>
+    Math.abs(Math.abs(ringArea(next.map((v) => v.p))) - area0) <= area0 * 0.08;
+  // Replaces nodes s+1 … s+k with `mid` (none or one corner); null when it wraps badly.
+  const splice = (s: number, k: number, mid: Node[]): Node[] => {
+    const n = nodes.length;
+    const drop = new Set(Array.from({ length: k }, (_, j) => (s + 1 + j) % n));
+    const out: Node[] = [];
+    for (let i = 0; i < n; i++) {
+      if (drop.has(i)) continue;
+      out.push(nodes[i]!);
+      if (i === s) out.push(...mid);
+    }
+    return out;
+  };
+  let changed = true;
+  // Every pass drops a vertex or squares a corner; the cap only guards odd rings.
+  for (let pass = 0; changed && pass < ring.length * 2; pass++) {
+    changed = false;
+    const n = nodes.length;
+    if (n <= 4) break;
+    for (let s = 0; s < n && !changed; s++) {
+      for (let k = 3; k >= 0 && !changed; k--) {
+        const run = Array.from({ length: k }, (_, j) => nodes[(s + 1 + j) % n]!);
+        if (run.some(isFixed)) continue;
+        const a = nodes[s]!;
+        const d = nodes[(s + k + 1) % n]!;
+        const p = nodes[(s + n - 1) % n]!.p;
+        const q = nodes[(s + k + 2) % n]!.p;
+        if (Math.hypot(d.p[0] - a.p[0], d.p[1] - a.p[1]) > NOTCH_WIDTH) continue;
+        if (k > 0 && n - k >= 4 && straight(p, a.p, d.p) && straight(a.p, d.p, q)) {
+          // On a straight wall: the walls before and after run along the chord.
+          if (run.some((v) => segDist(v.p, a.p, d.p) > NOTCH_DEPTH)) continue;
+          const next = splice(s, k, []);
+          if (!areaOk(next)) continue;
+          nodes = next;
+          changed = true;
+          continue;
+        }
+        // At a corner: wall p → a and wall d → q meet at x, which replaces a … d.
+        if (n - k < 5 || isFixed(a) || isFixed(d)) continue;
+        const turn = Math.abs(
+          Math.atan2(
+            (a.p[0] - p[0]) * (q[1] - d.p[1]) - (a.p[1] - p[1]) * (q[0] - d.p[0]),
+            (a.p[0] - p[0]) * (q[0] - d.p[0]) + (a.p[1] - p[1]) * (q[1] - d.p[1]),
+          ),
+        );
+        if (turn < CORNER_TURN) continue;
+        const x = cross(p, a.p, d.p, q);
+        if (!x) continue;
+        // x stays on both walls (extends or trims them, never past their far end).
+        const onWall = (far: Pt, near: Pt): boolean =>
+          (x[0] - far[0]) * (near[0] - far[0]) + (x[1] - far[1]) * (near[1] - far[1]) > 0;
+        if (!onWall(p, a.p) || !onWall(q, d.p)) continue;
+        const gone = [a, ...run, d];
+        if (gone.some((v) => Math.hypot(v.p[0] - x[0], v.p[1] - x[1]) > NOTCH_WIDTH)) continue;
+        if (gone.some((v) => Math.min(segDist(v.p, p, x), segDist(v.p, x, q)) > NOTCH_DEPTH)) {
+          continue;
+        }
+        // …and close to the old outline (no wing grown out of a short wall).
+        const old = [p, ...gone.map((v) => v.p), q];
+        let near = Infinity;
+        for (let i = 0; i + 1 < old.length; i++) {
+          near = Math.min(near, segDist(x, old[i]!, old[i + 1]!));
+        }
+        if (near > NOTCH_DEPTH) continue;
+        const next = splice((s + n - 1) % n, k + 2, [{ p: x, src: -1 }]);
+        if (!areaOk(next)) continue;
+        nodes = next;
+        changed = true;
+      }
+    }
+  }
+  // Vertices left on a straight line by a dropped notch (1 cm off the chord at most), and on a
+  // smoothed ring also sharp teeth left beside it (under 2 m off the chord).
+  const touched = nodes.length < ring.length || nodes.some((v) => v.src < 0);
+  for (let again = true; again;) {
+    again = false;
+    const n = nodes.length;
+    if (n <= 3) break;
+    for (let s = 0; s < n; s++) {
+      const v = nodes[s]!;
+      if (isFixed(v)) continue;
+      const a = nodes[(s + n - 1) % n]!.p;
+      const d = nodes[(s + 1) % n]!.p;
+      const off = segDist(v.p, a, d);
+      const tooth =
+        touched && n > 4 && off < 2 && !straight(a, v.p, d) && turnAt(a, v.p, d) > SPIKE_TURN;
+      if (off < 0.01 || (tooth && areaOk(nodes.filter((_, i) => i !== s)))) {
+        nodes = nodes.filter((_, i) => i !== s);
+        again = true;
+        break;
+      }
+    }
+  }
+  const pos = new Map<number, number>();
+  nodes.forEach((v, i) => {
+    if (v.src >= 0) pos.set(v.src, i);
+  });
+  const edge = ring.map((_, i) => {
+    const pi = pos.get(i);
+    const pj = pos.get((i + 1) % ring.length);
+    return pi !== undefined && pj !== undefined && (pi + 1) % nodes.length === pj ? pi : -1;
+  });
+  return { ring: nodes.map((v) => v.p), edge };
+}
+
 const dmRing = (r: readonly Pt[]): number[] => {
   const out = r.flatMap(([x, y]) => [
     Math.round((x + STW2_OFFSET[0] - OSM_RAW_SHIFT) * 10),
@@ -212,10 +400,15 @@ export function map2Buildings(bs: readonly Map2Building[], land?: Map2Land): Osm
         : tagged
           ? Math.min(MAX_LEVELS, Math.max(1, b.levels))
           : defaultLevels(kind, b.id, b.area, long);
-    const noWall = b.shared.filter((k, j) => {
-      const by = b.sharedBy[j] ? ids.get(b.sharedBy[j]) : undefined;
-      return by !== undefined && by < id;
-    });
+    // Small recesses / bumps smoothed (shared walls and their ends stay as the neighbour has them).
+    const sm = smoothRing(b.outer, b.shared);
+    const noWall = b.shared
+      .filter((k, j) => {
+        const by = b.sharedBy[j] ? ids.get(b.sharedBy[j]) : undefined;
+        return by !== undefined && by < id;
+      })
+      .map((k) => sm.edge[k] ?? -1)
+      .filter((k) => k >= 0);
     const ob: OsmBuilding = {
       id,
       ...(id !== b.id ? { osmId: b.id } : {}),
@@ -228,7 +421,7 @@ export function map2Buildings(bs: readonly Map2Building[], land?: Map2Land): Osm
       ...(own.name ? { name: own.name } : {}),
       ...lookTags(b.tags),
       ...(b.heightFrom === 'height' || b.heightFrom === 'parts' ? { height: b.height } : {}),
-      rings: [dmRing(b.outer), ...b.inner.map(dmRing)],
+      rings: [dmRing(sm.ring), ...b.inner.map((r) => dmRing(smoothRing(r).ring))],
       exact: 1,
       ...(noWall.length ? { noWall } : {}),
     };

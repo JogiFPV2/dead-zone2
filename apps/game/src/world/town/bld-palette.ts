@@ -4,7 +4,7 @@
  * JSON when it changes.
  */
 export type BldType =
-  'block' | 'house' | 'service' | 'industrial' | 'public' | 'outbuilding' | 'kamienica';
+  'block' | 'house' | 'service' | 'industrial' | 'public' | 'outbuilding' | 'kamienica' | 'station';
 export interface BldTypePalette {
   walls: readonly string[];
   weights: readonly number[];
@@ -40,6 +40,12 @@ export const BLD_PALETTE: Readonly<Record<BldType, BldTypePalette>> = {
     walls: ['#8b7a63', '#a8a196', '#6f6656', '#b7aa8e', '#7f8a7a'],
     weights: [0.25, 0.25, 0.2, 0.15, 0.15],
     roofs: ['#2f3132', '#5f615c', '#6b4731', '#7a5a45'],
+  },
+  /** PKS / PKP station (not in the JSON): `LOOK_PALETTE.station` of the generator. */
+  station: {
+    walls: ['#d6c48e', '#c9d3cf', '#a9b4b8'],
+    weights: [0.45, 0.35, 0.2],
+    roofs: ['#3c3f42', '#5a5c5e'],
   },
   /** Tenement (look-spec.md §B table; not in the JSON). Equal-ish weights. */
   kamienica: {

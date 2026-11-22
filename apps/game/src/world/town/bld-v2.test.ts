@@ -66,6 +66,8 @@ describe("Designer's palette", () => {
   });
   it('one skin per unique wall colour', () => {
     expect(V2_WALL_HEX).toHaveLength(V2_WALL_COUNT);
+    // PKS / PKP stations keep their own sand / light grey walls in the atlas.
+    for (const hex of ['#d6c48e', '#a9b4b8']) expect(V2_WALL_HEX).toContain(hex);
     expect(V2_SKINS).toHaveLength(V2_WALL_COUNT);
   });
   it('v2 is the default; atlas carries the generator palette', () => {
@@ -91,6 +93,7 @@ describe("Designer's palette", () => {
     expect(bldType('block')).toBe('block');
     expect(bldType('shop')).toBe('service');
     expect(bldType('church')).toBe('public');
+    expect(bldType('station')).toBe('station');
     expect(bldType('garage')).toBe('outbuilding');
     expect(bldType('ruin')).toBeUndefined();
   });

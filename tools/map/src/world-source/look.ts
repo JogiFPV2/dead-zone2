@@ -83,9 +83,10 @@ export function lookType(kind: string, floors: number, area: number): LookType |
     case 'barn':
     case 'farm':
       return 'barn';
+    case 'station':
+      return 'station';
     case 'church':
     case 'fire-station':
-    case 'station':
     case 'townhall':
       return 'public';
     case 'shed':

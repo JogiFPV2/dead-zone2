@@ -85,3 +85,55 @@ describe('map2 building kinds from the land around them', () => {
     expect(k[8]).toBe('station');
   });
 });
+
+describe('smoothRing', () => {
+  it('drops a 1 m recess, keeps real corners and shared wall ends', async () => {
+    const { smoothRing } = await import('../osm/map2-buildings.js');
+    // 20 × 10 m with a 1 m deep, 2 m wide recess in the south wall.
+    const r: [number, number][] = [
+      [0, 0],
+      [20, 0],
+      [20, 10],
+      [11, 10],
+      [11, 9],
+      [9, 9],
+      [9, 10],
+      [0, 10],
+    ];
+    const s = smoothRing(r);
+    expect(s.ring).toEqual([
+      [0, 0],
+      [20, 0],
+      [20, 10],
+      [0, 10],
+    ]);
+    expect(s.edge[0]).toBe(0);
+    expect(s.edge[3]).toBe(-1);
+    // The same recess on a shared wall stays (the neighbour draws it).
+    const sh = smoothRing(r, [4]);
+    expect(sh.ring).toContainEqual([11, 9]);
+    expect(sh.ring).toContainEqual([9, 9]);
+    expect(sh.ring[sh.edge[4]!]).toEqual([11, 9]);
+    // A 7 m deep notch is kept.
+    const deep = r.map(([x, y]) => [x, y === 9 ? 3 : y] as [number, number]);
+    expect(smoothRing(deep).ring).toHaveLength(8);
+    // A 2 m stepped corner becomes a plain corner.
+    const step: [number, number][] = [
+      [0, 0],
+      [20, 0],
+      [20, 8],
+      [18, 8],
+      [18, 10],
+      [0, 10],
+    ];
+    expect(smoothRing(step).ring).toEqual([
+      [0, 0],
+      [20, 0],
+      [20, 10],
+      [0, 10],
+    ]);
+    // A 7 m step is a real wing.
+    const wing = step.map(([x, y]) => [x === 18 ? 13 : x, y === 8 ? 3 : y] as [number, number]);
+    expect(smoothRing(wing).ring).toHaveLength(6);
+  });
+});

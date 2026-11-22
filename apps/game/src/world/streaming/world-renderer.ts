@@ -3,7 +3,14 @@ import { CHUNK_SIZE, type EdgeDef } from '../chunk.js';
 import { LOD_MID, LOD_NEAR, type Lod } from './rings.js';
 import type { BuiltChunk, ChunkBuilder } from './streamer.js';
 import { DecorLayer } from './decor.js';
-import { buildFarGeometry, buildMidGeometry, summarize, type TilePalette } from './lod-meshes.js';
+import {
+  buildFarGeometry,
+  buildFarVectorGeometry,
+  buildMidGeometry,
+  hasVector,
+  summarize,
+  type TilePalette,
+} from './lod-meshes.js';
 import type { ChunkSummary, WorldChunk } from './source.js';
 
 /**
@@ -151,6 +158,8 @@ export class StreamedWorldRenderer implements ChunkBuilder {
         this.midBatch,
       );
     }
+    if (data && hasVector(data))
+      return this.mesh(buildFarVectorGeometry(data, this.tilePalette), cx, cy, this.farBatch);
     const s = summary ?? (data ? summarize(data) : undefined);
     return this.mesh(s ? buildFarGeometry(s, this.tilePalette) : undefined, cx, cy, this.farBatch);
   }
