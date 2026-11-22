@@ -26,9 +26,13 @@ describe('graphics style wiring (regression: style setting had no effect)', () =
   it('game renders every frame through the style pass driven by the setting', () => {
     const game = src('../game.ts');
     expect(game).toContain('new GraphicsStylePass(renderer)');
-    expect(game).toContain('stylePass.setStyle(settings.get().graphics.style)');
+    // `?style=malowany` wins at boot; later setting changes still switch the style.
+    expect(game).toContain('let styleSetting = settings.get().graphics.style');
+    expect(game).toContain(
+      'stylePass.setStyle(urlGraphicsStyle(window.location.search) ?? styleSetting)',
+    );
     expect(game).toMatch(
-      /settings\.subscribe\(\(next\) => stylePass\.setStyle\(next\.graphics\.style\)\)/,
+      /settings\.subscribe\(\(next\) => \{[^}]*stylePass\.setStyle\(styleSetting\)/,
     );
     expect(game).toContain('stylePass.render(scene, camera)');
     expect(game).not.toMatch(/renderer\.render\(\s*scene/);
@@ -44,7 +48,7 @@ describe('graphics style wiring (regression: style setting had no effect)', () =
   });
 
   it('keeps the three styles and appends „Pikselowy ostry”', () => {
-    expect([...GRAPHICS_STYLES]).toEqual(['classic', 'outline', 'pixel', 'pixel-fine']);
+    expect([...GRAPHICS_STYLES]).toEqual(['classic', 'outline', 'pixel', 'pixel-fine', 'painted']);
   });
 
   it('adds one hull per skinned part, as its child, idempotently', () => {
