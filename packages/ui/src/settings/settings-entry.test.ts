@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
 
@@ -30,7 +30,8 @@ it('@deadzone/ui/settings pulls no DOM code and only zod', () => {
   const files = graph(join(SRC, 'settings', 'index.ts'));
   expect(files.size).toBeGreaterThan(5);
   for (const [file, specs] of files) {
-    const rel = relative(SRC, file);
+    // Separator `/` także na Windowsie (`relative` daje tam `settings\index.ts`).
+    const rel = relative(SRC, file).split(sep).join('/');
     expect(
       ALLOWED_DIRS.some((d) => rel.startsWith(`${d}/`)),
       rel,
