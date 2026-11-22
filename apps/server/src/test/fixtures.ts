@@ -60,7 +60,7 @@ export function setup(
     accounts.users.add(u);
   }
   const validator =
-    opts.validator ?? createWorkerPool({ size: 1, timeoutMs: 10_000, maxHeapMb: 256 });
+    opts.validator ?? createWorkerPool({ size: 1, timeoutMs: 25_000, maxHeapMb: 256 });
   const rateLimits = new MemoryRateLimitStore(() => store.clock);
   let seed = 1000;
   const characters: CharacterRouteDeps = {

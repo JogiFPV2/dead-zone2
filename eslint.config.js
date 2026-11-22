@@ -22,7 +22,7 @@ export default tseslint.config(
   },
   { files: ['**/*.{js,mjs}'], extends: [tseslint.configs.disableTypeChecked] },
   { files: ['apps/web/**', 'apps/game/**'], languageOptions: { globals: globals.browser } },
-  { files: ['apps/server/**', '**/*.config.{js,ts}'], languageOptions: { globals: globals.node } },
+  { files: ['apps/server/**', 'scripts/**', '**/*.config.{js,ts}'], languageOptions: { globals: globals.node } },
   { files: ['apps/web/**/*.tsx'], extends: [reactHooks.configs.flat['recommended-latest']] },
   // Package boundaries: libraries never import apps.
   {
