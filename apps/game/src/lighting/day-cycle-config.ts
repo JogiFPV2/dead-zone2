@@ -1,8 +1,9 @@
 import { NIGHT_PRESET, type LightingPreset, type Vec3Like } from './preset.js';
 
 /**
- * Day/night cycle tuning in one place. NIGHT is approved (spec 4.1); DAWN, DAY and DUSK are
- * PLACEHOLDERS until Designer approves the daytime look (spec 4.2) — tune them here only.
+ * Day/night cycle tuning in one place. NIGHT is approved (spec 4.1). DAWN and DUSK follow
+ * Pawel's direction (2026-11-22): dawn more orange but not overdone, dusk more navy blue.
+ * DAY is still a placeholder (spec 4.2) — tune them here only.
  * Minutes are minutes of the game day (0..1439).
  */
 const at = (h: number, m = 0): number => h * 60 + m;
@@ -12,15 +13,15 @@ const withSun = (p: LightingPreset, offset: Vec3Like, intensity?: number): Light
   directional: { ...p.directional, offset, ...(intensity !== undefined ? { intensity } : {}) },
 });
 
-/** PLACEHOLDER: low warm sun in the east. */
+/** Dawn: low sun in the east, moderately orange (warm but not saturated). */
 export const DAWN_PRESET: LightingPreset = {
   ...NIGHT_PRESET,
   exposure: 1.2,
-  background: '#6a6470',
-  fog: { color: '#736a70', near: 70, far: 160 },
-  hemisphere: { sky: '#c0b4c0', ground: '#4a4034', intensity: 2.2 },
+  background: '#86705f',
+  fog: { color: '#8c7464', near: 70, far: 160 },
+  hemisphere: { sky: '#d6b89e', ground: '#4c3e30', intensity: 2.2 },
   directional: {
-    color: '#ffb07a',
+    color: '#ffa461',
     intensity: 3.2,
     offset: { x: 70, y: 35, z: -20 },
     shadowRadius: 3,
@@ -44,15 +45,15 @@ export const DAY_PRESET: LightingPreset = {
   },
 };
 
-/** PLACEHOLDER: low red-orange sun in the west. */
+/** Dusk: navy blue sky and shade, the last sun light cooled towards lavender. */
 export const DUSK_PRESET: LightingPreset = {
   ...NIGHT_PRESET,
   exposure: 1.2,
-  background: '#6a5058',
-  fog: { color: '#70565a', near: 70, far: 160 },
-  hemisphere: { sky: '#c8a8a8', ground: '#4a3a2e', intensity: 2 },
+  background: '#2c3a5e',
+  fog: { color: '#313f64', near: 70, far: 160 },
+  hemisphere: { sky: '#8296cc', ground: '#363a50', intensity: 2.6 },
   directional: {
-    color: '#ff9a5a',
+    color: '#cdb8cf',
     intensity: 3,
     offset: { x: -70, y: 30, z: 20 },
     shadowRadius: 3,
