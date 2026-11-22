@@ -11,6 +11,56 @@ import { STRUCTURE_GREYS } from '../structures.js';
 import { tileGrey } from '../terrain.js';
 import { SUMMARY_CELLS, type ChunkSummary, type WorldChunk } from './source.js';
 
+/**
+ * Ground colours of the mid / far LOD by floor content (the town kit cells of the near terrain:
+ * `town.json` / `skins.ts`), so distant water, grass and roads read like the near ring instead of
+ * placeholder greys. Floors not listed (indoor, roofs) keep `tileGrey`.
+ */
+export const LOD_GROUND: Readonly<Record<string, string>> = {
+  'base:grass': '#2c3a2f',
+  'base:dirt': '#3f362c',
+  'base:concrete': '#4a4d48',
+  'base:sidewalk': '#50554f',
+  'base:parking': '#2f3436',
+  'base:asphalt': '#33383a',
+  'base:rail': '#3c4446',
+  'base:water': '#2c4650',
+};
+/** Grass under trees (forest, park with trees) in the mid / far LOD: the near ring's dark canopy. */
+export const LOD_FOREST = '#1d2a1f';
+/** Trees per SUMMARY cell (4 × 4 tiles) from which grass there reads as forest. */
+export const FOREST_TREES_PER_CELL = 2;
+
+/** Floor palette of a source (TileId → content id); undefined = placeholder greys only. */
+export type TilePalette = readonly (string | null)[] | undefined;
+
+/** LOD colour of a floor TileId: the content's ground colour, else the placeholder grey. */
+export function lodGroundColor(id: TileId, palette: TilePalette, forest = false): string {
+  const c = palette?.[id];
+  if (forest && c === 'base:grass') return LOD_FOREST;
+  return (c && LOD_GROUND[c]) || tileGrey(id);
+}
+
+/** SUMMARY_CELLS² flags: cells (4 × 4 tiles) with enough trees on the ground level. */
+export function forestCells(chunk: WorldChunk): Uint8Array | undefined {
+  if (!chunk.decor?.length) return undefined;
+  const n = SUMMARY_CELLS;
+  const cell = CHUNK_SIZE / n;
+  const count = new Uint8Array(n * n);
+  for (const d of chunk.decor) {
+    if (d.z !== 0 || !/tree/.test(d.kind)) continue;
+    const x = Math.min(n - 1, Math.max(0, Math.floor(d.x / cell)));
+    const y = Math.min(n - 1, Math.max(0, Math.floor(d.y / cell)));
+    if (count[y * n + x]! < 255) count[y * n + x]!++;
+  }
+  let any = false;
+  for (let i = 0; i < count.length; i++) {
+    count[i] = count[i]! >= FOREST_TREES_PER_CELL ? 1 : 0;
+    if (count[i]) any = true;
+  }
+  return any ? count : undefined;
+}
+
 /** Fences in the mid LOD: a low slab (near draws them as openings with state). */
 const FENCE_LOD_HEIGHT = 1;
 
@@ -112,17 +162,40 @@ const finish = (w: MeshWriter): LodGeometry | undefined => {
 export function buildMidGeometry(
   chunk: WorldChunk,
   edgePalette: readonly (EdgeDef | null)[] | undefined,
+  tilePalette?: TilePalette,
 ): LodGeometry | undefined {
   const w = new MeshWriter();
   // Vertices relative to the chunk origin (the mesh sits at it: floating origin, float32 buffers).
   const ox = 0;
   const oz = 0;
+  const forest = tilePalette ? forestCells(chunk) : undefined;
+  const cell = CHUNK_SIZE / SUMMARY_CELLS;
   for (const [z, data] of chunk.levels) {
     const y = z * LEVEL_HEIGHT;
-    rowRuns(data.floor, (id, x0, x1, row) => {
-      w.setColor(tileGrey(id));
-      w.floor(ox + x0, oz + row, ox + x1, oz + row + 1, y);
-    });
+    // Runs of one colour per row (a run splits where the forest flag of its cell changes).
+    const colorAt = (i: number): string | undefined => {
+      const id = data.floor[i] ?? EMPTY_TILE;
+      if (id === EMPTY_TILE) return undefined;
+      const x = i % CHUNK_SIZE;
+      const row = Math.floor(i / CHUNK_SIZE);
+      const f =
+        z === 0 && !!forest?.[Math.floor(row / cell) * SUMMARY_CELLS + Math.floor(x / cell)];
+      return tilePalette ? lodGroundColor(id, tilePalette, f) : tileGrey(id);
+    };
+    for (let row = 0; row < CHUNK_SIZE; row++) {
+      let start = 0;
+      let prev = colorAt(row * CHUNK_SIZE);
+      for (let x = 1; x <= CHUNK_SIZE; x++) {
+        const cur = x < CHUNK_SIZE ? colorAt(row * CHUNK_SIZE + x) : '';
+        if (cur === prev) continue;
+        if (prev) {
+          w.setColor(prev);
+          w.floor(ox + start, oz + row, ox + x, oz + row + 1, y);
+        }
+        start = x;
+        prev = cur;
+      }
+    }
     writeEdges(w, data, edgePalette, ox, oz, y);
     if (data.roof) {
       w.setColor(STRUCTURE_GREYS.roof);
@@ -203,27 +276,37 @@ export function summarize(chunk: WorldChunk): ChunkSummary {
       height[cy * n + cx] = h;
     }
   }
-  return { cx: chunk.cx, cy: chunk.cy, ground, height };
+  const forest = forestCells(chunk);
+  return { cx: chunk.cx, cy: chunk.cy, ground, height, ...(forest ? { forest } : {}) };
 }
 
 /** Far LOD (chunk-relative like mid): coarse ground runs plus one block per built-up cell; a few hundred triangles. */
-export function buildFarGeometry(s: ChunkSummary): LodGeometry | undefined {
+export function buildFarGeometry(
+  s: ChunkSummary,
+  tilePalette?: TilePalette,
+): LodGeometry | undefined {
   const w = new MeshWriter();
   const n = SUMMARY_CELLS;
   const cell = CHUNK_SIZE / n;
   const ox = 0;
   const oz = 0;
+  const colorAt = (i: number): string | undefined => {
+    const id = s.ground[i] ?? EMPTY_TILE;
+    if (id === EMPTY_TILE) return undefined;
+    return tilePalette ? lodGroundColor(id, tilePalette, !!s.forest?.[i]) : tileGrey(id);
+  };
   for (let y = 0; y < n; y++) {
     let start = 0;
+    let prev = colorAt(y * n);
     for (let x = 1; x <= n; x++) {
-      const prev = s.ground[y * n + start] ?? EMPTY_TILE;
-      const cur = x < n ? (s.ground[y * n + x] ?? EMPTY_TILE) : -1;
+      const cur = x < n ? colorAt(y * n + x) : '';
       if (cur === prev) continue;
-      if (prev !== EMPTY_TILE) {
-        w.setColor(tileGrey(prev));
+      if (prev) {
+        w.setColor(prev);
         w.floor(ox + start * cell, oz + y * cell, ox + x * cell, oz + (y + 1) * cell, 0);
       }
       start = x;
+      prev = cur;
     }
   }
   w.setColor(STRUCTURE_GREYS.roof);
