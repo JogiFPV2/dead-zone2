@@ -24,6 +24,12 @@ export const OSM_STW_MAP = 'osm-stw';
 
 export const GENERATED_MAPS: Readonly<Record<string, GeneratedMapSpec>> = {
   [OSM_STW_MAP]: { kind: 'osm-tiles', url: 'osm/stw-16km/manifest.json' },
+  /**
+   * New OSM map (tools/map2, Paweł 01.11): north up, no rotation or straightening, 32 km square
+   * (Stalowa Wola, Rozwadów, Huta, Nisko, San to the Vistula). Roads first; replaces `osm-stw`
+   * once Paweł accepts it (`LATEST_MAP` stays until then).
+   */
+  stw2: { kind: 'osm-tiles', url: 'osm/stw2/manifest.json' },
   /** The 1.5 km window by ul. Okulickiego (single data file; small, for tests and comparisons). */
   'osm-okulickiego': {
     kind: 'osm',

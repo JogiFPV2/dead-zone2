@@ -14,3 +14,7 @@ coverage/
 
 # Cache pobranych packów assetów (tools/assets)
 .cache/
+
+# Dane OSM pobrane lokalnie (ODbL, nie do repo)
+osm-data/
+*.osm.pbf

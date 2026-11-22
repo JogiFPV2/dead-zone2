@@ -159,7 +159,7 @@ export interface ConvertStats {
   poisAttached: number;
 }
 
-function streetWidth(t: Tags): number {
+export function streetWidth(t: Tags): number {
   const w = t.width ? Number.parseFloat(t.width) : NaN;
   return Number.isFinite(w) ? w : NaN;
 }

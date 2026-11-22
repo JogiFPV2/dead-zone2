@@ -86,6 +86,8 @@ export interface GenBuildingMeta {
   kind: string;
   /** Slanted building with vector walls: outline (x, y pairs, world metres) for a flat roof. */
   outline?: number[];
+  /** Courtyards of `outline` (inner rings, x, y pairs). */
+  holes?: number[][];
   /**
    * Look (generator rev 21+, look-spec.md §A–C): palette type, colours `#rrggbb`, roof shape,
    * condition. Absent on older chunks and on buildings without a palette type (ruins).
@@ -117,6 +119,9 @@ export interface GenRoad {
   pts: number[];
   /** Distance along the whole road at the first point (centre-line dashes stay continuous). */
   d0: number;
+  /** map2 (`?map=stw2`): 0 = no centre line; lane line offsets from the axis (tiles). */
+  cl?: 0;
+  ll?: number[];
 }
 
 export interface GenColumn {
@@ -639,6 +644,7 @@ export class PlanChunkGenerator {
         type: s.type,
         kind: s.kind,
         ...(s.outline ? { outline: s.outline } : {}),
+        ...(s.holes ? { holes: s.holes } : {}),
         ...this.lookOf(s.gid, s.floors),
       }));
     const out: GenColumn = { cx, cy, levels, trees, treeSpecies, buildings };
@@ -737,6 +743,8 @@ export class PlanChunkGenerator {
             bridge: road.bridge,
             pts: run,
             d0: Math.round(d0 * 100) / 100,
+            ...(road.cl === 0 || road.fill ? { cl: 0 as const } : {}),
+            ...(road.ll ? { ll: road.ll } : {}),
           });
         }
         run = undefined;

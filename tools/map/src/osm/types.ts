@@ -83,6 +83,12 @@ export interface OsmRoad {
   bridge?: 1;
   tunnel?: 1;
   layer?: number;
+  /** map2 (`?map=stw2`): 0 = no centre line (one-way carriageway). */
+  cl?: 0;
+  /** map2: lane lines, offsets from the axis (m, left of the way direction > 0). */
+  ll?: number[];
+  /** map2: kerb-corner asphalt strip at a junction (no lamps, no crossings, no markings). */
+  fill?: 1;
   pts: number[];
 }
 
@@ -189,6 +195,13 @@ export interface OsmBuilding {
   osmId?: number;
   /** Outer ring (closed), holes after it. */
   rings: number[][];
+  /**
+   * map2 (`?map=stw2`): outline 1:1 from OSM, never squared, boxed or simplified; single-ring
+   * outlines always get vector walls on the exact outline.
+   */
+  exact?: 1;
+  /** map2: outer edges (k = vertex k → k + 1) whose wall a lower-gid neighbour draws (shared wall). */
+  noWall?: number[];
 }
 
 export interface OsmPoi {

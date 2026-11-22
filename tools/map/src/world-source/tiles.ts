@@ -44,6 +44,9 @@ export interface OsmTileManifest {
   worldSize: number;
   rotationDeg: number;
   tileSize: number;
+  /** World id (plan `id` / version prefix; default `osm-stw`) and spawn (world tiles), map2. */
+  id?: string;
+  start?: { x: number; y: number };
   /** Named places of the whole square (raw frame, decimetres). */
   places: OsmPlace[];
   /** Zone kind of every world chunk (row-major, `CHUNK_KINDS` index), run-length + base64. */
@@ -318,6 +321,7 @@ export function tiledPlanInput(
     dataHash: string;
     worldSize?: number;
     rotationDeg?: number;
+    id?: string;
     start?: { x: number; y: number };
     chunkKinds?: Uint8Array;
   },
@@ -332,9 +336,10 @@ export function tiledPlanInput(
       const s = rotatePt(rotation(deg), 6290, 8520);
       return { x: Math.round(s.x), y: Math.round(s.y) };
     })();
+  const id = opts.id ?? 'osm-stw';
   return {
-    id: 'osm-stw',
-    version: `osm-stw-${opts.dataHash.slice(0, 12)}-all-g${GENERATOR_REV}`,
+    id,
+    version: `${id}-${opts.dataHash.slice(0, 12)}-all-g${GENERATOR_REV}`,
     seed: 0x05f3a1,
     size: W,
     bounds: osmWorldBounds(W),
@@ -370,7 +375,8 @@ export class OsmTiles {
         worldSize: manifest.worldSize,
         rotationDeg: manifest.rotationDeg,
         chunkKinds: unpackKinds(manifest.kinds, n),
-        ...(start ? { start } : {}),
+        ...(manifest.id ? { id: manifest.id } : {}),
+        ...((start ?? manifest.start) ? { start: start ?? manifest.start } : {}),
       }),
     );
     for (const t of manifest.tiles) this.files.set(`${t.tx},${t.ty}`, t.file);

@@ -55,6 +55,13 @@ export interface Building2 {
   inner: Pt[][];
   /** Edge k of `outer` (outer[k] → outer[k+1]) is shared with another building. */
   shared: number[];
+  /**
+   * Parallel to `shared`: key (`id:ring`) of the neighbour covering ≥ 90 % of that edge on its
+   * own, '' when the edge is only partly shared (both walls stay).
+   */
+  sharedBy: string[];
+  /** Whitelisted OSM tags (`scripts/extract_buildings.py` KEEP). */
+  tags: Record<string, string>;
   levels: number;
   roofLevels: number;
   height: number;
@@ -229,7 +236,7 @@ export function markSharedWalls(bs: Building2[]): void {
     }),
   );
   bs.forEach((b, i) => {
-    const shared = new Set<number>();
+    const shared = new Map<number, string>();
     b.outer.forEach((a, k) => {
       const c = b.outer[(k + 1) % b.outer.length]!;
       const dx = c[0] - a[0];
@@ -239,7 +246,7 @@ export function markSharedWalls(bs: Building2[]): void {
       const seen = new Set<string>();
       for (const cell of cellsOf(a, c))
         for (const [j, m] of grid.get(cell) ?? []) {
-          if (j === i || shared.has(k)) continue;
+          if (j === i || shared.get(k)) continue;
           const id = `${j}:${m}`;
           if (seen.has(id)) continue;
           seen.add(id);
@@ -251,10 +258,13 @@ export function markSharedWalls(bs: Building2[]): void {
           const t = (r: Pt) => ((r[0] - a[0]) * dx + (r[1] - a[1]) * dy) / L;
           const lo = Math.max(0, Math.min(t(p), t(q)));
           const hi = Math.min(L, Math.max(t(p), t(q)));
-          if (hi - lo >= SHARED_MIN) shared.add(k);
+          if (hi - lo < SHARED_MIN) continue;
+          const by = hi - lo >= 0.9 * L ? `${bs[j]!.id}:${bs[j]!.ring}` : '';
+          shared.set(k, by || (shared.get(k) ?? ''));
         }
     });
-    b.shared = [...shared].sort((x, y) => x - y);
+    b.shared = [...shared.keys()].sort((x, y) => x - y);
+    b.sharedBy = b.shared.map((k) => shared.get(k)!);
   });
 }
 
@@ -294,6 +304,8 @@ export function buildBuildings(raw: RawBuildings2, proj: Projection): Building2[
         outer,
         inner,
         shared: [],
+        sharedBy: [],
+        tags: rb.t,
         levels: h.levels,
         roofLevels: h.roofLevels,
         height: h.height,

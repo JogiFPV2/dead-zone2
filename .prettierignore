@@ -7,4 +7,5 @@ docs/
 # Dane OSM (ODbL): plik danych w formacie narzędzia, bez formatowania.
 apps/game/public/osm/*.json
 apps/game/public/osm/stw-16km/
+apps/game/public/osm/stw2/
 supabase/functions/api/server.js

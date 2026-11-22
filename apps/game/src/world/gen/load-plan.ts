@@ -16,6 +16,14 @@ async function sha256(buf: ArrayBuffer): Promise<string> {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** Tile bytes as JSON bytes: gzip (stw2 `.json.gz`, unless the server already inflated it). */
+export async function inflateTile(buf: ArrayBuffer): Promise<ArrayBuffer> {
+  const u = new Uint8Array(buf);
+  if (u.length < 2 || u[0] !== 0x1f || u[1] !== 0x8b) return buf;
+  const s = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Response(s).arrayBuffer();
+}
+
 /** A loaded generated world: the generator and, for the tiled OSM map, its tile loader. */
 export interface LoadedGenerator {
   gen: PlanChunkGenerator;
@@ -49,7 +57,7 @@ export async function loadWorld(
     const tiles = new OsmTiles(manifest, async (file) => {
       const r = await fetchFn(base + file);
       if (!r.ok) throw new Error(`mapa OSM: ${file} → HTTP ${r.status}`);
-      const b = await r.arrayBuffer();
+      const b = await inflateTile(await r.arrayBuffer());
       if ((await sha256(b)) !== hashes.get(file))
         throw new Error(`mapa OSM: ${file} nie zgadza się z manifestem`);
       return JSON.parse(new TextDecoder().decode(b)) as OsmMap;

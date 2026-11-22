@@ -103,6 +103,9 @@ export interface VectorRoad {
   readonly pts: readonly number[];
   /** Distance along the road at the first point (dash phase). */
   readonly d0: number;
+  /** 0 = no centre line (one-way carriageway, map2); lane line offsets from the axis (tiles). */
+  readonly cl?: 0;
+  readonly ll?: readonly number[];
 }
 
 /**

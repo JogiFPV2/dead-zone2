@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "roads": "tsx src/cli-roads.ts",
-    "buildings": "tsx src/cli-buildings.ts"
+    "osm": "tsx src/cli-osm.ts",
+    "buildings": "tsx src/cli-buildings.ts",
+    "land": "tsx src/cli-land.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",

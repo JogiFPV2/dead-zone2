@@ -20,7 +20,7 @@ interface Box {
 /** A node counts for a track × road intersection this far beyond the carriageway half width (m). */
 export const CROSSING_REACH_M = 4;
 
-const carriageway = (r: IRoad) => !PED.has(r.kind) && !r.bridge;
+const carriageway = (r: IRoad) => !PED.has(r.kind) && !r.bridge && !r.fill;
 
 function hits(
   a: Float64Array,

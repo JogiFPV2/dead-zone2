@@ -35,7 +35,7 @@ import {
   isRoofHidden,
   type Cutaway,
 } from '../cutaway.js';
-import { VectorWalls } from './vector-walls.js';
+import { VectorWalls, type VectorWallPool } from './vector-walls.js';
 import type { SimWallSegment } from '@deadzone/protocol';
 import { LEVEL_HEIGHT } from '../instances.js';
 import { WALL_HEIGHT } from '../structure-instances.js';
@@ -79,7 +79,14 @@ export interface TownStructuresOptions {
    * vector walls: its top level gets a flat roof on the outline instead of roof tiles.
    */
   outlineOf?:
-    ((b: BuildingId) => { outline: readonly number[]; floors: number } | undefined) | undefined;
+    | ((
+        b: BuildingId,
+      ) =>
+        | { outline: readonly number[]; floors: number; holes?: readonly (readonly number[])[] }
+        | undefined)
+    | undefined;
+  /** Streamed worlds: vector walls of every level / chunk in shared meshes (draw calls). */
+  vectorPool?: VectorWallPool | undefined;
   /** Streamed worlds: blocks of flats get the Designer's facade (balconies, canopies, roof). */
   blokOf?: ((b: BuildingId) => BlokInfo | undefined) | undefined;
   /**
@@ -254,6 +261,7 @@ export class TownStructures {
           const o = this.opts.outlineOf?.(b);
           return o && range.z < o.floors - 1 ? LEVEL_HEIGHT : WALL_HEIGHT;
         },
+        this.opts.vectorPool,
       );
       this.root.add(this.vector.root);
     }
@@ -293,6 +301,7 @@ export class TownStructures {
           x1: (range.cx1 + 1) * CHUNK_SIZE,
           y1: (range.cy1 + 1) * CHUNK_SIZE,
         },
+        o.holes,
       );
       const at = geo?.boundingBox?.getCenter(new Vector3());
       if (geo && at && geo.getAttribute('position').count > 0)

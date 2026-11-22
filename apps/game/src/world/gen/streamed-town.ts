@@ -19,6 +19,7 @@ import {
   type SharedTownBatch,
 } from '../town/town-structures.js';
 import { WindowPanes } from '../town/window-panes.js';
+import { VectorWallPool } from '../town/vector-walls.js';
 import { terrainMaterial } from '../town/town-terrain.js';
 import { MapTiles } from '../town/tiles.js';
 import type { GenBuildingInfo } from './convert.js';
@@ -46,6 +47,7 @@ export class StreamedTown {
   private readonly levels = new Map<string, TownStructures>();
   /** Glass + interior cards of every loaded level: +2 draw calls in total (bld-spec §4). */
   private readonly panes = new WindowPanes(1024, cardAtlasShared());
+  private vectorPool: VectorWallPool | undefined;
   private readonly terrain = new Map<string, Mesh>();
   /** One town BatchedMesh per chunk column (all its levels): fewer draw calls / shadow draws. */
   private readonly columns = new Map<string, { batch: SharedTownBatch; levels: number }>();
@@ -67,6 +69,8 @@ export class StreamedTown {
   ) {
     this.root.name = 'streamed-town';
     this.root.add(this.panes.root);
+    this.vectorPool = new VectorWallPool(this.kit.material);
+    this.root.add(this.vectorPool.root);
     this.lookup = new BuildingLookup(loaded, false);
     this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail);
   }
@@ -137,6 +141,7 @@ export class StreamedTown {
     const level = new TownStructures(this.loaded, this.kit, {
       lookup: this.lookup,
       panes: this.panes,
+      vectorPool: this.vectorPool,
       // Every piece of this level (also one poking over the chunk edge) goes into this column.
       sharedBatch: () => shared,
       footprintOf: (b) => {
@@ -145,7 +150,9 @@ export class StreamedTown {
       },
       outlineOf: (b) => {
         const m = metas.get(b);
-        return m?.outline ? { outline: m.outline, floors: m.floors } : undefined;
+        return m?.outline
+          ? { outline: m.outline, floors: m.floors, ...(m.holes ? { holes: m.holes } : {}) }
+          : undefined;
       },
       shelled: shellOf
         ? (b) => {
@@ -295,6 +302,7 @@ export class StreamedTown {
     }
     this.terrainMat.dispose();
     this.panes.dispose();
+    this.vectorPool?.dispose();
   }
 }
 

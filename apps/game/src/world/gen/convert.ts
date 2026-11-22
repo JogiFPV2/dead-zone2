@@ -13,6 +13,8 @@ export interface GenBuildingInfo extends BuildingMeta {
   readonly rect: boolean;
   /** Slanted building with vector walls: outline (x, y pairs, world metres), flat roof. */
   readonly outline?: readonly number[];
+  /** Courtyards of `outline` (inner rings). */
+  readonly holes?: readonly (readonly number[])[];
   /** Building kind (`block`, `house`…; the block facade). */
   readonly kind?: string;
 }
@@ -58,6 +60,7 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     rect: b.rect,
     kind: b.kind,
     ...(b.outline ? { outline: b.outline } : {}),
+    ...(b.holes ? { holes: b.holes } : {}),
     ...(b.look ? { look: b.look } : {}),
     ...(b.wallColor ? { wallColor: b.wallColor } : {}),
     ...(b.roofColor ? { roofColor: b.roofColor } : {}),
@@ -74,6 +77,8 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     bridge: r.bridge,
     pts: r.pts,
     d0: r.d0,
+    ...(r.cl === 0 ? { cl: r.cl } : {}),
+    ...(r.ll ? { ll: r.ll } : {}),
   }));
   const bushes = col.levels
     .find((l) => l.z === 0)
