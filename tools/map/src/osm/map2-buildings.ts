@@ -61,8 +61,8 @@ const REL_RING = 1e8;
 export const map2BuildingId = (b: Pick<Map2Building, 'id' | 'rel' | 'ring'>): number =>
   b.rel ? REL_BASE + b.ring * REL_RING + b.id : b.id;
 
-/** Recesses / bumps up to about 3 m deep are smoothed out of the outlines (Paweł, 21.11.2026; was 2 m). */
-export const NOTCH_DEPTH = 3.2;
+/** Recesses / bumps up to about 5 m deep are smoothed out of the outlines (Paweł, 22.11.2026; was 2, then 3 m). */
+export const NOTCH_DEPTH = 5.2;
 /** Widest notch (chord, m) that is smoothed: longer runs are real bends, not notches. */
 const NOTCH_WIDTH = 8;
 
@@ -84,6 +84,15 @@ const straight = (a: Pt, b: Pt, c: Pt): boolean => {
   );
   return t < NOTCH_TURN;
 };
+const turnAt = (a: Pt, b: Pt, c: Pt): number =>
+  Math.abs(
+    Math.atan2(
+      (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]),
+      (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]),
+    ),
+  );
+/** A tooth: the outline turns this sharply at a vertex close to its neighbours' chord. */
+const SPIKE_TURN = (60 * Math.PI) / 180;
 const ringArea = (r: readonly Pt[]): number => {
   let s = 0;
   for (let i = 0; i < r.length; i++) {
@@ -206,7 +215,9 @@ export function smoothRing(
       }
     }
   }
-  // Vertices left on a straight line by a dropped notch (1 cm off the chord at most).
+  // Vertices left on a straight line by a dropped notch (1 cm off the chord at most), and on a
+  // smoothed ring also sharp teeth left beside it (under 2 m off the chord).
+  const touched = nodes.length < ring.length || nodes.some((v) => v.src < 0);
   for (let again = true; again;) {
     again = false;
     const n = nodes.length;
@@ -216,7 +227,10 @@ export function smoothRing(
       if (isFixed(v)) continue;
       const a = nodes[(s + n - 1) % n]!.p;
       const d = nodes[(s + 1) % n]!.p;
-      if (segDist(v.p, a, d) < 0.01) {
+      const off = segDist(v.p, a, d);
+      const tooth =
+        touched && n > 4 && off < 2 && !straight(a, v.p, d) && turnAt(a, v.p, d) > SPIKE_TURN;
+      if (off < 0.01 || (tooth && areaOk(nodes.filter((_, i) => i !== s)))) {
         nodes = nodes.filter((_, i) => i !== s);
         again = true;
         break;

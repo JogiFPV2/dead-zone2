@@ -114,8 +114,8 @@ describe('smoothRing', () => {
     expect(sh.ring).toContainEqual([11, 9]);
     expect(sh.ring).toContainEqual([9, 9]);
     expect(sh.ring[sh.edge[4]!]).toEqual([11, 9]);
-    // A 4 m deep notch is kept.
-    const deep = r.map(([x, y]) => [x, y === 9 ? 6 : y] as [number, number]);
+    // A 7 m deep notch is kept.
+    const deep = r.map(([x, y]) => [x, y === 9 ? 3 : y] as [number, number]);
     expect(smoothRing(deep).ring).toHaveLength(8);
     // A 2 m stepped corner becomes a plain corner.
     const step: [number, number][] = [
@@ -132,8 +132,8 @@ describe('smoothRing', () => {
       [20, 10],
       [0, 10],
     ]);
-    // A 5 m step is a real wing.
-    const wing = step.map(([x, y]) => [x === 18 ? 15 : x, y === 8 ? 5 : y] as [number, number]);
+    // A 7 m step is a real wing.
+    const wing = step.map(([x, y]) => [x === 18 ? 13 : x, y === 8 ? 3 : y] as [number, number]);
     expect(smoothRing(wing).ring).toHaveLength(6);
   });
 });
