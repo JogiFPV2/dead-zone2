@@ -7,6 +7,7 @@ import {
   parseGiveParam,
   parseStatParam,
   parseTileListParam,
+  parseWoundParam,
 } from './boot-options.js';
 
 it('uses the worker by default and the mock only for ?crowd', () => {
@@ -21,6 +22,7 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     cars: [],
     pumps: [],
     stats: [],
+    wounds: [],
     zombies: true,
     town: true,
     zspawn: 0,
@@ -79,6 +81,14 @@ it('parses ?stat= debug stats', () => {
     { stat: 'stress', value: 40 },
   ]);
   expect(parseBootOptions('').stats).toEqual([]);
+});
+
+it('parses dev starting wounds', () => {
+  expect(parseWoundParam('forearm_l:laceration, hand_r:scratch,tail:bite,head:burn')).toEqual([
+    { part: 'forearm_l', wound: 'laceration' },
+    { part: 'hand_r', wound: 'scratch' },
+  ]);
+  expect(parseBootOptions('?wound=head:bite').wounds).toEqual([{ part: 'head', wound: 'bite' }]);
 });
 
 it('parses dev TVs (`?tv=`)', () => {

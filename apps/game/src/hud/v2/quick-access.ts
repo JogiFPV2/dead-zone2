@@ -52,8 +52,11 @@ export const QUICK_ACCESS: readonly QuickAccessDef[] = [
 /** Screens that exist; the others show a „wkrótce” toast. */
 export const QUICK_ACCESS_READY: ReadonlySet<QuickAccessId> = new Set([
   'inventory',
+  'character',
+  'skills',
   'crafting',
   'map',
+  'journal',
   'menu',
 ]);
 
@@ -62,6 +65,7 @@ export function activeQuickAccess(modal: string | undefined): QuickAccessId | un
   if (modal === 'inventory' || modal === 'loot') return 'inventory';
   if (modal === 'workshop') return 'crafting';
   if (modal === 'map') return 'map';
+  if (modal === 'character' || modal === 'skills' || modal === 'journal') return modal;
   return undefined;
 }
 

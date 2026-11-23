@@ -1,7 +1,11 @@
 import {
   DEBUG_STATS,
   WEATHER_KINDS,
+  BODY_PARTS,
+  WOUND_KINDS,
+  type BodyPart,
   type DebugStat,
+  type WoundKind,
   type SimVehicleSpawn,
   type WeatherKind,
 } from '@deadzone/protocol';
@@ -44,6 +48,8 @@ export interface BootOptions {
   give: { itemId: string; count: number }[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
   stats: { stat: DebugStat; value: number }[];
+  /** Dev `?wound=forearm_l:laceration,hand_r:scratch`: wounds at start (character window). */
+  wounds: { part: BodyPart; wound: WoundKind }[];
   /** Dev `?zspawn=N`: N zombies spawned 2 tiles east (within near-sense) of the player at start. */
   zspawn: number;
   /** `?animals=N`: animals at the start of a new world (default by map size, 0 = none). */
@@ -110,6 +116,21 @@ export function parseStatParam(value: string | null): { stat: DebugStat; value: 
     if (DEBUG_STAT_SET.has(stat) && v !== '' && Number.isFinite(n)) {
       out.push({ stat: stat as DebugStat, value: n });
     }
+  }
+  return out;
+}
+
+/** `part:kind` list, comma separated; unknown parts / kinds are skipped. */
+export function parseWoundParam(value: string | null): { part: BodyPart; wound: WoundKind }[] {
+  if (!value) return [];
+  const out: { part: BodyPart; wound: WoundKind }[] = [];
+  for (const item of value.split(',')) {
+    const [part = '', wound = ''] = item.trim().split(':');
+    if (
+      (BODY_PARTS as readonly string[]).includes(part) &&
+      (WOUND_KINDS as readonly string[]).includes(wound)
+    )
+      out.push({ part: part as BodyPart, wound: wound as WoundKind });
   }
   return out;
 }
@@ -199,6 +220,7 @@ export function parseBootOptions(search: string, storedStyle?: RenderStyle): Boo
     pumps: parseTileListParam(q.get('pump')),
     ...(q.get('tv') !== null ? { tvs: parseTileListParam(q.get('tv')) } : {}),
     stats: parseStatParam(q.get('stat')),
+    wounds: parseWoundParam(q.get('wound')),
     zombies: q.get('zombies') !== '0',
     ...(q.get('animals') !== null
       ? { animals: Math.max(0, Math.min(2000, Math.floor(Number(q.get('animals')) || 0))) }

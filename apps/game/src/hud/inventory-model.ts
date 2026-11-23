@@ -13,6 +13,7 @@ import type { HudContentIndex, HudItemDef } from './content-index.js';
 import { itemIcon } from './hud-model.js';
 import { itemImage } from './item-icons.js';
 import { KIND_LABEL, formatKg } from './item-kinds.js';
+import { medicalTargetPart } from '../character/character-model.js';
 import { craftItemName } from './crafting-labels.js';
 import { containerName } from './labels.js';
 import { combineRowVM, type CombineRowVM } from './combine-model.js';
@@ -294,7 +295,11 @@ export function contextCommand(
   const def = content.items.get(it.def);
   const first = def?.equipSlots?.[0];
   if (first) return { type: 'equip', item, slot: first };
-  if (def?.usable) return { type: 'useItem', item };
+  if (def?.usable) {
+    // Bandage / disinfectant: on the worst wound (the sim rejects them without a part).
+    const part = def.kind === 'medical' ? medicalTargetPart(s.player.wounds) : undefined;
+    return part ? { type: 'useItem', item, part } : { type: 'useItem', item };
+  }
   // VHS tape: play it on the TV nearby (sim: `no-station` / `no-power` when there is none).
   if (def?.kind === 'vhs') return { type: 'watchTv', vhs: item };
   return undefined;
