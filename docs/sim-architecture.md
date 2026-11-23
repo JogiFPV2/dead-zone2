@@ -1807,3 +1807,6 @@ Przy okazji poprawka: ciało zatrzymane przy krawędzi nad biegiem (x = góra + 
 ### 9.82 Upadek z płotu / parapetu rani
 
 Potknięcie przy przeskoku (`tripped` + `fellDown`, jak dotąd) z szansą `physics.vault.tripInjuryChance` (0,4) zostawia zadrapanie (`wounded`, `scratch`) na dłoni, goleni albo stopie. Dwa dodatkowe losowania `rng.physics` tylko przy potknięciu, więc strumień bez potknięcia się nie zmienia. Bez zmiany protokołu.
+### 9.83 Cechy zdobywane i tracone w trakcie gry (protokół 51)
+
+`character/dynamic-traits.ts` (`dynamicTraitsSystem`, krok `traits` po `penalties`, raz na minutę gry): dla każdego żywego gracza z postacią cecha z `gainedWhen` pojawia się, a z `lostWhen` znika, gdy warunek trwa bez przerwy `sustainedMin` minut gry. Statystyki warunków: `body-weight-kg` (waga z przetrwania) i `zombies-killed` (licznik zabójstw z walki); inne są pomijane. Nowa cecha usuwa cechy, z którymi koliduje (np. `base:overweight` zabiera `base:athletic`). Minuta startu trwającego warunku jest w `ItemStore.traitSince` (zapis, hash tylko gdy niepusty), więc wczytanie w trakcie liczy dalej. Po zmianie: `refreshModifiers` i zdarzenie `traitChanged { playerId, trait, gained }`. W danych: `base:overweight`, `base:underweight` (waga), `base:hardened` (250 zabitych), `base:hemophobic` znika po 100 zabitych.

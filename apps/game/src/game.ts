@@ -38,6 +38,7 @@ import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
 import { Tutorial, type TutorialScreen } from './tutorial/tutorial-model.js';
 import { createTutorialCard } from './tutorial/tutorial-card.js';
+import { progressToasts } from './hud/progress-toasts.js';
 import { browserStorage, loadTutorialDone, saveTutorialDone } from './tutorial/tutorial-store.js';
 import { Thunder, ZombieVoices, ambienceLoop, isNight, GROAN_TILES } from './audio/ambient-sfx.js';
 import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './settings/store.js';
@@ -2008,6 +2009,7 @@ gameState.subscribe((_next, _prev, action) => {
     furniture.events(action.events);
     vehicles.events(action.events);
     hud.events(action.events);
+    for (const t of progressToasts(action.events, PLAYER_ID)) hud.pushToast(t);
     const p = snapshots.sample(performance.now(), TICK_MS);
     if (p)
       for (const c of eventCues(action.events, p.x, p.y, Math.random, PLAYER_ID))

@@ -657,6 +657,16 @@ export type SimEvent =
       burnt?: boolean;
     }
   | { type: 'skillLevelUp'; tick: number; playerId: PlayerId; skill: string; level: number }
+  /** A trait gained or lost during the game (`gainedWhen` / `lostWhen`, docs 9.83; protocol 51). */
+  | {
+      type: 'traitChanged';
+      tick: number;
+      playerId: PlayerId;
+      trait: string;
+      gained: boolean;
+      /** Content polarity of the trait (toast colour). */
+      polarity: 'positive' | 'negative' | 'neutral';
+    }
   /** Recipe learned (literature `unlocksRecipes`, profession, dev). */
   | { type: 'recipeLearned'; tick: number; playerId: PlayerId; recipe: string }
   | {
