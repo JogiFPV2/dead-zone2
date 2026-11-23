@@ -143,6 +143,7 @@ describe('loadSettings', () => {
       showZombieHp: false,
       targetZombieHp: true,
       revealMap: false,
+      tutorial: true,
     });
   });
 

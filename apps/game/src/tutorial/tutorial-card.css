@@ -1,0 +1,54 @@
+/* Tutorial hint: top centre, under the top bar, scaled like the HUD. */
+.dz-tutorial {
+  position: absolute;
+  top: calc(64px * var(--dz-sleep-scale, 1));
+  left: 50%;
+  z-index: var(--z-modal);
+  width: 520px;
+  padding: 12px 40px 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  border-left: 3px solid var(--color-warning-base);
+  background: var(--color-bg-tooltip);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  transform: translateX(-50%) scale(var(--dz-sleep-scale, 1));
+  transform-origin: top center;
+  pointer-events: auto;
+}
+.dz-tutorial[hidden] {
+  display: none;
+}
+.dz-tutorial__label {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--color-warning-base);
+}
+.dz-tutorial__title {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.dz-tutorial__text {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+.dz-tutorial__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+.dz-tutorial__close:hover {
+  color: var(--color-text-primary);
+}

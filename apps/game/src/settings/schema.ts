@@ -74,6 +74,8 @@ export interface InterfaceSettings {
   targetZombieHp: boolean;
   /** „Odkryj całą mapę (test)”: sends the sim's debugRevealMap once (also `?reveal=1`). */
   revealMap: boolean;
+  /** „Samouczek”: hints for a new player (tutorial/); on by default. */
+  tutorial: boolean;
 }
 
 /**
@@ -129,7 +131,13 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
   input: { bindings: DEFAULT_BINDINGS, touchMode: 'auto' },
-  interface: { noiseDisplay: 'loud', showZombieHp: false, targetZombieHp: true, revealMap: false },
+  interface: {
+    noiseDisplay: 'loud',
+    showZombieHp: false,
+    targetZombieHp: true,
+    revealMap: false,
+    tutorial: true,
+  },
   view: {
     cameraZoom: 1,
     minimapZoom: 1,
@@ -204,6 +212,7 @@ export function sanitizeSettings(raw: unknown): Settings {
       showZombieHp: bool(ui.showZombieHp, di.showZombieHp),
       targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
       revealMap: bool(ui.revealMap, di.revealMap),
+      tutorial: bool(ui.tutorial, di.tutorial),
     },
     view: {
       cameraZoom: range(v.cameraZoom, 0.25, 4, dv.cameraZoom),

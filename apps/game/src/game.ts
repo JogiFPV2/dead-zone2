@@ -36,6 +36,9 @@ import { PlayerInput } from './input/player-input.js';
 import { SneakToggle } from './input/sneak-toggle.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
+import { Tutorial, type TutorialScreen } from './tutorial/tutorial-model.js';
+import { createTutorialCard } from './tutorial/tutorial-card.js';
+import { browserStorage, loadTutorialDone, saveTutorialDone } from './tutorial/tutorial-store.js';
 import { Thunder, ZombieVoices, ambienceLoop, isNight, GROAN_TILES } from './audio/ambient-sfx.js';
 import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './settings/store.js';
 import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
@@ -1005,6 +1008,25 @@ const hud = createHud({
       ? mobileView.set('minimapZoom', minimapZoom)
       : settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
   onQuickAccess: (id) => quickAccess(id),
+});
+
+// Tutorial (Ustawienia › Interfejs › Samouczek): one hint at a time for a new player.
+const tutorialStorage = browserStorage();
+let tutorial = new Tutorial(loadTutorialDone(tutorialStorage));
+const tutorialCard = createTutorialCard(container);
+const tutorialOpened = new Set<TutorialScreen>();
+let tutorialWalked = 0;
+let tutorialLast: { x: number; y: number } | undefined;
+let tutorialSaved = '';
+tutorialCard.onDismiss(() => tutorial.dismiss(performance.now() / 1000));
+for (const screen of ['inventory', 'crafting', 'map'] as const)
+  input.on(screen, () => tutorialOpened.add(screen));
+settings.subscribe((next, prev) => {
+  // Switching it back on shows every hint again.
+  if (next.interface.tutorial && !prev.interface.tutorial) {
+    tutorial = new Tutorial();
+    saveTutorialDone(tutorialStorage, []);
+  }
 });
 // Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
 const sendBody = (body: CommandBody) => {
@@ -2349,6 +2371,39 @@ renderer.setAnimationLoop((time) => {
     else audio.setLoopVolume('ambience', amb.volume);
     const boom = thunder.update(dt / 1000, flash);
     if (boom) audio.play('sfx', boom.id, boom.volume);
+    if (state && settings.get().interface.tutorial) {
+      const gs = gameState.get();
+      if (tutorialLast) {
+        const d = Math.hypot(state.x - tutorialLast.x, state.y - tutorialLast.y);
+        if (d < 2) tutorialWalked += d;
+      }
+      tutorialLast = { x: state.x, y: state.y };
+      const inv = gs.inventory;
+      const hint = tutorial.update(
+        {
+          now: time / 1000,
+          walked: tutorialWalked,
+          items: inv ? Object.values(inv.containers).reduce((n, c) => n + c.items.length, 0) : 0,
+          nearContainer: gs.nearby.length > 0,
+          hunger: gs.player.stats.hunger ?? 0,
+          thirst: gs.player.stats.thirst ?? 0,
+          threat: gs.threat,
+          night: isNight(daylight),
+          firearm: hud.firearm() !== undefined,
+          wounded: gs.player.wounds.length > 0,
+          opened: tutorialOpened,
+          alive: gs.player.alive && !player.dead,
+          sleeping: gs.player.sleeping,
+        },
+        settings.get().input.bindings,
+      );
+      tutorialCard.show(hint);
+      const done = tutorial.doneIds.join(',');
+      if (done !== tutorialSaved) {
+        tutorialSaved = done;
+        saveTutorialDone(tutorialStorage, tutorial.doneIds);
+      }
+    } else tutorialCard.show(undefined);
     if (state && !player.dead) {
       const near = zombieHp.positionsNear(state.x, state.y, Math.round(state.z), GROAN_TILES);
       const groan = zombieVoices.update(dt / 1000, near, state.x, state.y);
