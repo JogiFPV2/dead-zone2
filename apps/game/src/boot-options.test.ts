@@ -113,9 +113,10 @@ it('render style (Styl grafiki: Realistyczny): the stored setting applies unless
   expect(parseBootOptions('').render.style).toBe('default');
 });
 
-it('the newest map is the OSM map of Stalowa Wola (osm-stw)', () => {
-  expect(LATEST_MAP).toBe('osm-stw');
-  expect(isOldMap('osm-stw')).toBe(false);
+it('the newest map is the 1:1 OSM map of Stalowa Wola (stw2)', () => {
+  expect(LATEST_MAP).toBe('stw2');
+  expect(isOldMap('stw2')).toBe(false);
+  expect(isOldMap('osm-stw')).toBe(true);
   expect(isOldMap('test-town')).toBe(true);
   expect(isOldMap('test')).toBe(false);
 });
