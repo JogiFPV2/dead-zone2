@@ -30,6 +30,8 @@ export interface DecorInstance {
   readonly rot: number;
   /** Uniform scale (1 = authored size). */
   readonly scale: number;
+  /** Tree species (content id, e.g. `base:pine`; generated maps). */
+  readonly species?: string;
 }
 
 /** Render metadata of a building touching this chunk (roof hiding, upper floors, far LOD). */
@@ -94,6 +96,8 @@ export interface WorldChunk {
    * tiles; the realistic style plants bushes there.
    */
   readonly bushes?: readonly { x: number; y: number; w: number; h: number }[];
+  /** Woods (the sim's `cover` zone, generated maps): rectangles in global tiles. */
+  readonly woods?: readonly { x: number; y: number; w: number; h: number }[];
 }
 
 /** One area polygon of a chunk (generated maps, render only). */

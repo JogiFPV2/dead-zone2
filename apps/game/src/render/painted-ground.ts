@@ -58,7 +58,7 @@ export function setPaintedGround(on: boolean): void {
   painted = true;
   for (const name of PAINTED_GROUND_LAYERS) {
     const old = PAINTED_GROUND[name].value;
-    PAINTED_GROUND[name].value = paintedGroundTexture(name);
+    PAINTED_GROUND[name].value = paintedTexture(name);
     old.dispose();
   }
 }
@@ -161,7 +161,111 @@ function dots(ctx: Ctx, s: number, n: number, r: Rand, style: (v: number) => str
   }
 }
 
-const PAINTERS: Record<PaintedGroundLayer, (ctx: Ctx, s: number, r: Rand) => void> = {
+/** Painted plant textures (crowns, needles, bark, hedges): `paintedTexture()`. */
+export const PAINTED_PLANT_LAYERS = [
+  'liscie',
+  'liscie_jasne',
+  'igly',
+  'kora',
+  'kora_sosny',
+  'kora_brzozy',
+  'zywoplot',
+] as const;
+export type PaintedPlantLayer = (typeof PAINTED_PLANT_LAYERS)[number];
+export type PaintedLayer = PaintedGroundLayer | PaintedPlantLayer;
+
+function leafDabs(
+  ctx: Ctx,
+  s: number,
+  r: Rand,
+  base: number,
+  n: number,
+  rx: number,
+  ry: number,
+  hue: number,
+): void {
+  ctx.globalAlpha = 0.8;
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = hex(shade(base, 0.65 + r() * 0.7, (r() - 0.5) * hue));
+    ctx.beginPath();
+    ctx.ellipse(
+      r() * s,
+      r() * s,
+      rx * (0.6 + r()),
+      ry * (0.6 + r()),
+      r() * Math.PI,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+const PAINTERS: Record<PaintedLayer, (ctx: Ctx, s: number, r: Rand) => void> = {
+  liscie(ctx, s, r) {
+    fill(ctx, s, 0x3e6a2c);
+    blotches(ctx, s, 0x3e6a2c, 30, r, 0.3, 0.15, 0.4);
+    leafDabs(ctx, s, r, 0x4a7c30, 1600, 9, 4, 0.05);
+  },
+  liscie_jasne(ctx, s, r) {
+    fill(ctx, s, 0x6a8a3a);
+    blotches(ctx, s, 0x6a8a3a, 30, r, 0.3, 0.15, 0.4);
+    leafDabs(ctx, s, r, 0x8aa848, 1600, 7, 4, 0.06);
+  },
+  igly(ctx, s, r) {
+    fill(ctx, s, 0x2c4a32);
+    blotches(ctx, s, 0x2c4a32, 30, r, 0.3, 0.15, 0.4);
+    strokes(ctx, s, 0x3a5c3a, 2500, r, {
+      alpha: 0.5,
+      spread: 0.4,
+      len: 0.02,
+      width: 0.003,
+      hueJit: 0.03,
+    });
+  },
+  kora(ctx, s, r) {
+    fill(ctx, s, 0x4e4034);
+    strokes(ctx, s, 0x5a4a3c, 500, r, {
+      alpha: 0.4,
+      spread: 0.35,
+      len: 0.12,
+      width: 0.015,
+      angle: Math.PI / 2,
+    });
+  },
+  kora_sosny(ctx, s, r) {
+    fill(ctx, s, 0x8a5a3a);
+    for (let i = 0; i < 160; i++) {
+      ctx.fillStyle = hex(shade(0xa8683e, 0.7 + r() * 0.6));
+      ctx.fillRect(r() * s, r() * s, 10 + r() * 30, 4 + r() * 8);
+    }
+    strokes(ctx, s, 0x5a3a2a, 300, r, {
+      alpha: 0.35,
+      spread: 0.3,
+      len: 0.08,
+      width: 0.006,
+      angle: Math.PI / 2,
+    });
+  },
+  kora_brzozy(ctx, s, r) {
+    fill(ctx, s, 0xe6e2d6);
+    strokes(ctx, s, 0xe6e2d6, 300, r, {
+      alpha: 0.25,
+      spread: 0.08,
+      len: 0.1,
+      width: 0.02,
+      angle: 0,
+    });
+    ctx.fillStyle = 'rgba(30,28,26,0.85)';
+    for (let i = 0; i < 40; i++) ctx.fillRect(r() * s, r() * s, 8 + r() * 40, 2 + r() * 5);
+  },
+  zywoplot(ctx, s, r) {
+    fill(ctx, s, 0x2f5a26);
+    blotches(ctx, s, 0x2f5a26, 40, r, 0.3, 0.1, 0.4);
+    leafDabs(ctx, s, r, 0x3e6e2e, 2400, 3.5, 2, 0.04);
+  },
+
   trawa(ctx, s, r) {
     fill(ctx, s, 0x627838);
     blotches(ctx, s, 0x627838, 60, r, 0.12, 0.1, 0.25);
@@ -258,8 +362,17 @@ const PAINTERS: Record<PaintedGroundLayer, (ctx: Ctx, s: number, r: Rand) => voi
   },
 };
 
-/** One painted, tileable ground texture (sRGB, repeat, mipmapped). */
-export function paintedGroundTexture(name: PaintedGroundLayer, seed = 7): Texture {
+const cache = new Map<PaintedLayer, Texture>();
+
+/** One painted texture, shared (painted once per session; needs a DOM). */
+export function paintedTexture(name: PaintedLayer): Texture {
+  let t = cache.get(name);
+  if (!t) cache.set(name, (t = paintedGroundTexture(name)));
+  return t;
+}
+
+/** One painted, tileable texture (sRGB, repeat, mipmapped). */
+export function paintedGroundTexture(name: PaintedLayer, seed = 7): Texture {
   const c = document.createElement('canvas');
   c.width = c.height = SIZE;
   const ctx = c.getContext('2d')!;

@@ -9,6 +9,7 @@ import { LEVEL_HEIGHT } from '../instances.js';
 import { OpeningsView, type OpeningEdge, type OpeningKind } from '../openings.js';
 import type { LoadedChunks } from '../streaming/source.js';
 import { townDecor } from '../town/decor.js';
+import type { TreeSpot } from '../trees/tree-layer.js';
 import type { TownKit } from '../town/kit.js';
 import { doorLeaf, type Skin } from '../town/modules.js';
 import { buildTerrainGeometry } from '../town/terrain-mesh.js';
@@ -35,8 +36,16 @@ const key = (cx: number, cy: number, z: number) => `${cx},${cy},${z}`;
 /** Receiver of a chunk's tree props (realistic trees, `world/trees/tree-layer.ts`). */
 export interface TreeSink {
   isTree(propName: string): boolean;
-  load(key: string, trees: readonly { x: number; z: number; y: number; prop: string }[]): void;
+  load(key: string, trees: readonly TreeSpot[]): void;
   unload(key: string): void;
+  /**
+   * Extra plants of the chunk's scrub / hedge zones and woods (`WorldChunk.bushes` / `woods`,
+   * global tiles), drawn by the painted style; absent = not planted.
+   */
+  zoneSpots?(
+    bushes: readonly { x: number; y: number; w: number; h: number }[],
+    woods: readonly { x: number; y: number; w: number; h: number }[],
+  ): TreeSpot[];
 }
 
 export class StreamedTown {
@@ -192,9 +201,17 @@ export class StreamedTown {
       },
     });
     const trees: [number, number][] = [];
+    // Plan trees with their species, for a sink that draws species (painted style: pines in the
+    // woods, limes along streets); the kit draws them as generic trees.
+    const speciesTrees: TreeSpot[] = [];
     if (z === 0) {
       for (const d of col.decor ?? []) {
-        if (d.kind === 'base:tree') trees.push([cx * CHUNK_SIZE + d.x, cy * CHUNK_SIZE + d.y]);
+        if (d.kind !== 'base:tree') continue;
+        const x = cx * CHUNK_SIZE + d.x;
+        const tz = cy * CHUNK_SIZE + d.y;
+        if (d.species && this.trees?.zoneSpots)
+          speciesTrees.push({ x, z: tz, y: 0, species: d.species });
+        else trees.push([x, tz]);
       }
     }
     // Power poles come from the plan's OSM lines (infra layer), not every 30 m along sidewalks.
@@ -206,12 +223,13 @@ export class StreamedTown {
         : [];
     if (this.trees && z === 0) {
       const sink = this.trees;
-      sink.load(
-        `${cx},${cy}`,
-        props
+      sink.load(`${cx},${cy}`, [
+        ...props
           .filter((p) => sink.isTree(p.name))
           .map((p) => ({ x: p.x, z: p.z, y: p.y ?? 0, prop: p.name })),
-      );
+        ...speciesTrees,
+        ...(sink.zoneSpots?.(col.bushes ?? [], col.woods ?? []) ?? []),
+      ]);
       props = props.filter((p) => !sink.isTree(p.name));
     }
     level.loadRange(range, props);

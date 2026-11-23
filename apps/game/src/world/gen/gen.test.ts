@@ -261,6 +261,8 @@ describe('OSM world source (Okulickiego)', () => {
         expect(d.x).toBeLessThan(CHUNK_SIZE);
         expect(d.y).toBeGreaterThanOrEqual(0);
         expect(d.y).toBeLessThan(CHUNK_SIZE);
+        // Species from the generator (habitat), for the painted trees.
+        expect(d.species).toMatch(/^base:/);
       }
     }
     expect(trees).toBeGreaterThan(0);
