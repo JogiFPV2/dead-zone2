@@ -36,6 +36,7 @@ import { PlayerInput } from './input/player-input.js';
 import { SneakToggle } from './input/sneak-toggle.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
+import { Thunder, ZombieVoices, ambienceLoop, isNight, GROAN_TILES } from './audio/ambient-sfx.js';
 import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './settings/store.js';
 import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
 import { installHudLayout } from './hud/layout/hud-layout-runtime.js';
@@ -657,6 +658,8 @@ const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
 audio.setInMenu(false);
 audio.preload(...WORLD_SOUNDS);
 const footsteps = new Footsteps();
+const zombieVoices = new ZombieVoices();
+const thunder = new Thunder();
 const input = new InputMap(settings.get().input.bindings, {
   window,
   element: renderer.domElement,
@@ -2336,6 +2339,22 @@ renderer.setAnimationLoop((time) => {
   const daylight = smoothstep((sunNow.elevation * (180 / Math.PI) + 6) / 12);
   applyWeatherLook(look, weatherNow, daylight);
   const flash = weatherFx.update(weatherNow, rig.target.x, rig.target.z, time / 1000, daylight);
+  {
+    // Ambience: rain (by strength) or night crickets, thunder after lightning, zombie groans.
+    const wet = precipitation(weatherNow);
+    const amb = player.dead ? undefined : ambienceLoop(wet.rain, isNight(daylight), wet.snow);
+    if (!amb) {
+      if (audio.loopOn('ambience')) audio.stopLoop('ambience');
+    } else if (audio.loopOn('ambience') !== amb.id) audio.playLoop('ambience', amb.id, amb.volume);
+    else audio.setLoopVolume('ambience', amb.volume);
+    const boom = thunder.update(dt / 1000, flash);
+    if (boom) audio.play('sfx', boom.id, boom.volume);
+    if (state && !player.dead) {
+      const near = zombieHp.positionsNear(state.x, state.y, Math.round(state.z), GROAN_TILES);
+      const groan = zombieVoices.update(dt / 1000, near, state.x, state.y);
+      if (groan) audio.play('sfx', groan.id, groan.volume);
+    }
+  }
   setSnowCover(weatherNow?.snow ?? 0, dt / 1000);
   {
     const cover = snowCoverNow();

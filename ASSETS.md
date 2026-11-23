@@ -177,6 +177,11 @@ z oryginałów; sumy SHA-256 dotyczą pobranych oryginałów.
 | `sfx-hit0..2` (trafienie wręcz, pchnięcie, atak zombie)                       | `impactPunch_medium_000..002.ogg` z paczki                              | Kenney, „Impact Sounds”, kenney.nl/assets/impact-sounds (CC0)                                                                 | CC0-1.0  | jak wyżej                                                                                           |
 | `sfx-door-open`, `sfx-door-close`                                             | `doorOpen_1.ogg`, `doorClose_1.ogg` z paczki                            | Kenney, „RPG Audio”, kenney.nl/assets/rpg-audio (`License.txt` w paczce: CC0)                                                 | CC0-1.0  | paczka `kenney_rpg-audio.zip`: 6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b     |
 
+Dźwięki proceduralne (bez plików, generowane w grze przez `apps/game/src/audio/synth.ts`, własne,
+CC0-1.0): połykanie tabletki, strzał z pistoletu, strzelby i karabinu, suchy strzał i zacięcie,
+przeładowanie, jęki i krzyk zombie, tłuczone szkło, upadek rzuconego przedmiotu, grzmot i pętla
+deszczu.
+
 ## Miasto: budynki, teren, propsy (`apps/game/public/models/deadzone-town/`)
 
 Moduły 1 kafla (ściany, okna, framugi i skrzydła drzwi, dach płaski i attyka, propsy) skonwertowane przez
