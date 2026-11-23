@@ -37,6 +37,8 @@ export function describeEvent(e: SimEvent): string {
       return `skill ${e.skill} → ${e.level}`;
     case 'recipeLearned':
       return `learned ${e.recipe}`;
+    case 'fished':
+      return e.caught ? 'fished: caught' : 'fished: nothing';
     case 'traitChanged':
       return `trait ${e.trait} ${e.gained ? 'gained' : 'lost'}`;
     case 'shot':

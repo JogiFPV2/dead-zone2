@@ -9,6 +9,8 @@ describe('progress toasts', () => {
     const t = progressToasts(
       [
         ev({ type: 'skillLevelUp', playerId: 1, skill: 'base:carpentry', level: 3 }),
+        ev({ type: 'fished', playerId: 1, caught: true, defId: 'base:raw-fish' }),
+        ev({ type: 'fished', playerId: 1, caught: false }),
         ev({ type: 'skillLevelUp', playerId: 2, skill: 'base:carpentry', level: 3 }),
         ev({
           type: 'traitChanged',
@@ -36,6 +38,8 @@ describe('progress toasts', () => {
     );
     expect(t).toEqual([
       { kind: 'gain', value: '+1', text: 'Stolarka: poziom 3' },
+      { kind: 'gain', value: '+1', text: 'Złowiona ryba' },
+      { kind: 'info', text: 'Nic nie wzięło' },
       { kind: 'gain', text: 'Nowa cecha: Zahartowany' },
       { kind: 'warning', text: 'Nowa cecha: Otyły' },
       { kind: 'gain', text: 'Cecha minęła: Otyły' },

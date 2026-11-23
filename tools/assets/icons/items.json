@@ -122,5 +122,10 @@
     "items": ["base:tarp"],
     "src": "custom/plandeka.glb",
     "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:fishing-rod"],
+    "src": "custom/wedka.glb",
+    "rot": [0, -60, -30]
   }
 ]

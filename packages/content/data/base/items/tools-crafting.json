@@ -83,5 +83,15 @@
       "durability": 30,
       "breakChancePct": 20
     }
+  },
+  {
+    "id": "base:fishing-rod",
+    "name": "item.base.fishing-rod.name",
+    "kind": "tool",
+    "weightKg": 0.8,
+    "tags": ["base:fishing-rod"],
+    "tool": {
+      "durability": { "max": 60, "lossChancePerUse": 0.05 }
+    }
   }
 ]

@@ -1,3 +1,4 @@
+import { FISHING_ROD_TAG } from '../fishing/fishing.js';
 import { applyTreatWound } from '../survival/wound-care.js';
 import type { Command, CommandRejectReason } from '@deadzone/protocol';
 import { markChunk } from '../world/chunk-events.js';
@@ -236,6 +237,8 @@ export function applyItemCommand(
       if (kind === 'ammo_box') return startAction(w, eid, newAction('unpack', { item: item.id }));
       if (kind === 'literature') return startAction(w, eid, newAction('read', { item: item.id }));
       if (kind === 'vhs') return startAction(w, eid, newAction('watch', { item: item.id }));
+      if (defOf(st, item).tags.includes(FISHING_ROD_TAG))
+        return startAction(w, eid, newAction('fish', { item: item.id }));
       if (kind === 'medical') {
         const def = defOf(st, item);
         // Pills against sickness (`reduce_sickness` only, docs 9.66): taken at once, no part.

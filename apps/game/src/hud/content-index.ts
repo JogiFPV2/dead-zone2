@@ -22,6 +22,8 @@ export interface HudItemDef {
   equipSlots?: readonly EquipSlot[];
   /** Food, drink or medical: `useItem` (eat, drink, apply). */
   usable?: boolean;
+  /** Medical effects (`medical.effects`: `stop_bleeding`, `disinfect`, …), wound care. */
+  medical?: readonly string[];
   /** Firearms (`weapon_ranged`): what the firearm HUD needs. */
   ranged?: HudRangedDef;
   /** Magazines: rounds they take and how many. */
@@ -291,7 +293,16 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(melee ? { meleeCategory: melee } : {}),
           ...(durabilityMax !== undefined ? { durabilityMax } : {}),
           ...(equipSlots.length ? { equipSlots } : {}),
-          ...(kind === 'food' || kind === 'drink' || kind === 'medical' ? { usable: true } : {}),
+          // Fishing rod: right click fishes at the water (sim `useItem` → `fish`).
+          ...(kind === 'food' ||
+          kind === 'drink' ||
+          kind === 'medical' ||
+          tags.includes('base:fishing-rod')
+            ? { usable: true }
+            : {}),
+          ...(isObj(i.medical) && Array.isArray(i.medical.effects)
+            ? { medical: i.medical.effects.filter((e): e is string => typeof e === 'string') }
+            : {}),
           ...(ranged ? { ranged } : {}),
           ...(magazine ? { magazine } : {}),
           ...(surface === 'bed' || surface === 'sofa' ? { sleepSurface: surface } : {}),

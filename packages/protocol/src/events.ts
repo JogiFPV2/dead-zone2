@@ -180,6 +180,8 @@ export type ActionKind =
   /** Furniture water (protocol 36): drink from a tank (`drink-tank`), fill a bottle (`fill-water`). */
   | 'drinkTank'
   | 'fillWater'
+  /** Fish with a rod at the water (`useItem` on a `base:fishing-rod`, protocol 51). */
+  | 'fish'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -657,6 +659,8 @@ export type SimEvent =
       burnt?: boolean;
     }
   | { type: 'skillLevelUp'; tick: number; playerId: PlayerId; skill: string; level: number }
+  /** A fishing session ended (`fish` action): a fish in the inventory or nothing (protocol 51). */
+  | { type: 'fished'; tick: number; playerId: PlayerId; caught: boolean; defId?: string }
   /** A trait gained or lost during the game (`gainedWhen` / `lostWhen`, docs 9.83; protocol 51). */
   | {
       type: 'traitChanged';

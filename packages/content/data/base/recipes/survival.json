@@ -74,5 +74,15 @@
     "durationMin": 20,
     "results": [{ "item": "base:stone-hammer" }],
     "xp": [{ "skill": "base:carpentry", "amount": 2 }]
+  },
+  {
+    "id": "base:make-fishing-rod",
+    "name": "recipe.base.make-fishing-rod.name",
+    "kind": "combine",
+    "category": "tools",
+    "ingredients": [{ "item": "base:wooden-stick" }, { "item": "base:thread" }],
+    "durationMin": 10,
+    "results": [{ "item": "base:fishing-rod" }],
+    "xp": [{ "skill": "base:fishing", "amount": 3 }]
   }
 ]

@@ -35,6 +35,7 @@ import przez Vite z `tools/assets/icons/`, bez kopii); broń bez modelu w `items
 | nailed-bat                           | Wooden Bat Barbed          | Quaternius, poly.pizza/m/HSM4KnggSz                                                         | CC0-1.0  |
 | baseball-bat                         | Baseball Bat               | Pichuliru, poly.pizza/m/POXTjdMP2c                                                          | CC0-1.0  |
 | crowbar                              | Crowbar                    | Pichuliru, poly.pizza/m/OS8gAoeDtM                                                          | CC0-1.0  |
+| fishing-rod                          | `custom/wedka.glb`         | model własny Deadzone (Python + numpy, `build_wedka.py`, 23.11.2026)                        | CC0-1.0  |
 
 ### Ikony, partie 4 i 4b (gotowe PNG od Designera, 01.10.2026)
 
