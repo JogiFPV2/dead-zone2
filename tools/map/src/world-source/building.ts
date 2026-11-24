@@ -1,4 +1,5 @@
 import { STAIR_STEP } from '@deadzone/content';
+import { joinStrip } from './strip.js';
 import { lockKindOf } from '../building-kind.js';
 import { furnishView, type FurnishView, type PlacedObject } from '../furnish.js';
 import { buildInterior, type Footprint } from '../osm/interior.js';
@@ -619,6 +620,24 @@ export function solveBuilding(
         outlineSegments(ring, levels, fx, fy, W, kindOf, k === 0 ? ib.b.noWall : []),
       )
     : undefined;
+  // Strip between the rooms and the outline: joined to the rooms (walls, upper floors).
+  if (segments)
+    segments.push(
+      ...joinStrip({
+        rings: ib.rings,
+        levels,
+        fx,
+        fy,
+        w,
+        h,
+        mask,
+        blocked: (x, y) => {
+          const i = ri(x, y);
+          return i < 0 || occupied[i] === 1;
+        },
+        kindOf,
+      }),
+    );
   const holes = ib.rings.slice(1).map((r) => Array.from(r));
   return {
     ...(segments
