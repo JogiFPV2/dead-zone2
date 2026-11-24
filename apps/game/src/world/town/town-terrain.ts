@@ -72,7 +72,7 @@ export function terrainMaterial(detail: Texture, cells?: TownCells): MeshStandar
           PAINTED_GROUND_GLSL,
           // Painted indoor floors (no ground mask): wood, tiles, carpet by the room.
           'if (pbOn > 0.5 && vMask.x + vMask.y + vMask.z + vMask.w < 0.001) {',
-          '  int pbR = pbRoom(vPbTW.xz, vPbTW.y);',
+          '  int pbR = pbRoomFloor(vPbTW.xz, vPbTW.y);',
           '  if (pbR > 0) diffuseColor.rgb = pbFloor(pbR, vPbTW.xz);',
           '}',
         ].join('\n'),

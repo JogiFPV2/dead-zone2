@@ -16,6 +16,7 @@ import type {
 } from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FURNITURE_PACKS, paintFurnitureModel } from '../render/painted-furniture.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GpuBudget } from './budget.js';
@@ -192,6 +193,8 @@ export class AssetLoader {
     return this.scenes.acquire(url, async () => {
       const g = await this.gltf.loadAsync(url);
       this.materials.bind(g.scene);
+      // „Malowany”: furniture gets the painted surface (off in the other styles).
+      if (FURNITURE_PACKS.some((p) => file.startsWith(p))) paintFurnitureModel(g.scene);
       this.budget.set(url, estimateObjectGeometry(g.scene));
       return g;
     });
