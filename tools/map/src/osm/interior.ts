@@ -831,6 +831,59 @@ function homePlan(
   };
 }
 
+/** Street side of a footprint: true when the b = 0 long side scores better for a door. */
+function frontAtZero(
+  inp: InteriorInput,
+  S: number,
+  ab: (x: number, y: number) => [number, number],
+  inM: (x: number, y: number) => boolean,
+): boolean {
+  const { fp } = inp;
+  const vertical = fp.h > fp.w;
+  let f0 = 0;
+  let f1 = 0;
+  for (let y = 0; y < fp.h; y++)
+    for (let x = 0; x < fp.w; x++) {
+      if (!inM(x, y)) continue;
+      const [, b] = ab(x, y);
+      if (b === 0) f0 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'w' : 'n'));
+      if (b === S - 1) f1 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'e' : 's'));
+    }
+  return f0 >= f1;
+}
+
+/**
+ * Shop plan: the sales floor `S` over the front, a 3–4 m back strip with the stock room `W` and a
+ * WC `T` (2 m) at one end; the stairs (if any) stay where they were put.
+ */
+function shopPlan(
+  inp: InteriorInput,
+  stair: StairPlan | undefined,
+  L: number,
+  S: number,
+  ab: (x: number, y: number) => [number, number],
+  inM: (x: number, y: number) => boolean,
+): (a: number, b: number) => string {
+  const front0 = frontAtZero(inp, S, ab, inM);
+  const depth = S >= 10 ? 4 : 3;
+  const sa = stair ? Math.max(...stair.tiles.map(([x, y]) => ab(x, y)[0])) : -1;
+  // WC at the end away from the stairs.
+  const wcAtEnd = sa < L / 2;
+  return (a, b) => {
+    const back = front0 ? b >= S - depth : b < depth;
+    if (!back) return 'S';
+    return (wcAtEnd ? a >= L - 2 : a < 2) ? 'T' : 'W';
+  };
+}
+
+/** Room type of a shop plan region on storey z (flats above the shop). */
+function shopRoomType(kind: BuildingKind, key: string, z: number): string {
+  if (key === 'T') return R('bathroom');
+  if (z > 0) return R(key === 'S' ? 'living-room' : 'kitchen');
+  if (key === 'W') return R('warehouse');
+  return R(kind === 'pharmacy' ? 'pharmacy' : 'shop');
+}
+
 /** Room type of a home plan region on storey z. */
 function homeRoomType(key: string, z: number): string {
   if (key === 'Bb') return R('bathroom');
@@ -924,7 +977,12 @@ function genericInterior(inp: InteriorInput): InteriorResult {
 
   // --- cells ------------------------------------------------------------------------------
   const single = area <= cfg.maxSingle;
-  const homeKey = home ? homePlan(inp, stair, L, S, ab, inM) : undefined;
+  const shopLike = (kind === 'shop' || kind === 'pharmacy') && !corridor && S >= 6 && L >= 6;
+  const homeKey = home
+    ? homePlan(inp, stair, L, S, ab, inM)
+    : shopLike
+      ? shopPlan(inp, stair, L, S, ab, inM)
+      : undefined;
   const cellKey = (x: number, y: number): string => {
     const [a, b] = ab(x, y);
     if (stairSet.has(`${x},${y}`)) return STAIR;
