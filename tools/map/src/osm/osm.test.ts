@@ -176,10 +176,14 @@ describe('new building types', () => {
     const xs = res.doors.map((d) => d.x).sort((a, b) => a - b);
     for (let i = 1; i < xs.length; i++) expect(xs[i]! - xs[i - 1]!).toBeGreaterThan(12);
     expect(new Set(res.doors.map((d) => d.side)).size).toBe(1);
-    // Flats: every room of a floor except the klatki is a flat (no corridor through the block).
+    // Flats (Paweł 24.11, typical layout): four per klatka and floor, each with its hall
+    // (przedpokój), bathroom, kitchen and a room; no corridor through the block.
     const types = Object.values(res.building.rooms).map((r) => r.type);
-    expect(types.filter((t) => t === 'base:room-hall')).toHaveLength(4);
-    expect(types.length).toBeGreaterThanOrEqual(4 + 4 * 2);
+    const n = (t: string) => types.filter((x) => x === `base:room-${t}`).length;
+    expect(n('hall')).toBe(4 + 16);
+    expect(n('bathroom')).toBe(16);
+    expect(n('kitchen')).toBe(16);
+    expect(n('living-room')).toBe(16);
   });
 
   it('a big industrial building is one open hall with offices and a double gate', () => {
@@ -190,7 +194,10 @@ describe('new building types', () => {
     );
     const rooms = Object.values(res.building.rooms);
     expect(rooms.map((r) => r.type)).toContain('base:room-warehouse');
-    expect(rooms.length).toBeLessThanOrEqual(3);
+    // Hall + office strip: office, staff kitchen (socjal) and WC.
+    expect(rooms.map((r) => r.type).sort()).toEqual(
+      ['base:room-bathroom', 'base:room-kitchen', 'base:room-office', 'base:room-warehouse'].sort(),
+    );
     // Gate: two doors side by side on the same wall.
     const [a, b] = res.doors;
     expect(a && b && a.side === b.side && Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1).toBe(
@@ -206,7 +213,10 @@ describe('new building types', () => {
     );
     const rooms = Object.entries(res.building.rooms);
     const halls = rooms.filter(
-      ([, r]) => r.type !== 'base:room-office' && r.type !== 'base:room-bathroom',
+      ([, r]) =>
+        r.type !== 'base:room-office' &&
+        r.type !== 'base:room-bathroom' &&
+        r.type !== 'base:room-kitchen',
     );
     // (170 − 4) / 40 ≈ 4 along, 96 / 40 ≈ 2 across.
     expect(halls).toHaveLength(8);
@@ -251,5 +261,49 @@ describe('typical home plan', () => {
     // The hall strip crosses the house: the stairs are in it.
     const plan = res.building.plan;
     for (const s of res.stairs) expect(['C', 'U']).toContain(plan[s.at[1] - 4]![s.at[0] - 4]);
+  });
+});
+
+describe('typical flat in a block', () => {
+  it('hall by the klatka and along the inner side, every room off the hall', async () => {
+    const { flatPart } = await import('./interior.js');
+    const grid = (W: number, D: number) =>
+      Array.from({ length: D }, (_, v) =>
+        Array.from({ length: W }, (_, u) => flatPart(u, v, W, D)).join(''),
+      );
+    // M3, 13 × 6 m: hall 2 wide, bathroom, kitchen, bedroom, living room along the facade.
+    expect(grid(13, 6)).toEqual([
+      'HHBBKKKSSSLLL',
+      'HHBBKKKSSSLLL',
+      'HHBBKKKSSSLLL',
+      'HHBBKKKSSSLLL',
+      'HHHHHHHHHHHHH',
+      'HHHHHHHHHHHHH',
+    ]);
+    // 12 m wide: no room for a bedroom of 3 m, kitchen and a bigger living room.
+    expect(grid(12, 6)[0]).toBe('HHBBKKKLLLLL');
+    // M2, 6 × 6 m: bathroom inside, kitchen at the facade, one room.
+    expect(grid(6, 6)).toEqual(['HKKLLL', 'HKKLLL', 'HBBLLL', 'HBBLLL', 'HHHHHH', 'HHHHHH']);
+    expect(new Set(grid(4, 6).join(''))).toEqual(new Set(['L']));
+  });
+});
+
+describe('typical office plan', () => {
+  it('offices along the corridor, a WC and a staff kitchen by the stairs on every floor', () => {
+    const { res } = build(
+      'office',
+      3,
+      fp(30, 12, () => true),
+    );
+    expect(res.levels).toBe(3);
+    for (let z = 0; z < 3; z++) {
+      const rooms =
+        z === 0 ? res.building.rooms : res.building.floors?.find((f) => f.z === z)?.rooms;
+      const t = Object.values(rooms ?? {}).map((x) => x.type);
+      expect(t.filter((x) => x === 'base:room-bathroom')).toHaveLength(1);
+      expect(t.filter((x) => x === 'base:room-kitchen')).toHaveLength(1);
+      expect(t.filter((x) => x === 'base:room-office').length).toBeGreaterThanOrEqual(2);
+      expect(t).toContain('base:room-hall');
+    }
   });
 });
