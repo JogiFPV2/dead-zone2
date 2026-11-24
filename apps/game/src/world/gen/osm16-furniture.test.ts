@@ -82,6 +82,10 @@ describe('osm-stw furniture (#131) over the whole generator', () => {
         const R = l.room;
         if (!R) continue;
         const ruin = new Set(l.rooms.filter((r) => r[1] === 'base:room-ruin').map((r) => r[0]));
+        // Slanted buildings: their outline (vector walls) closes the rooms; the strip between
+        // rooms and outline joins the rooms without tile walls (`joinStrip`).
+        const outlined = new Set(c.buildings.filter((b) => b.outline).map((b) => b.id));
+        for (const r of l.rooms) if (outlined.has(r[2])) ruin.add(r[0]);
         for (let y = 1; y < C - 1; y++)
           for (let x = 1; x < C - 1; x++) {
             const i = y * C + x;

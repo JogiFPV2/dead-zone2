@@ -124,7 +124,9 @@ const summary = (issues: WindowIssue[]) => {
 // blocked share 0.70 % → 0.65 % / 0.57 % → 0.61 %; stw raised 150 → 166 with the denser windows.
 // Slanted walls get windows on their staircase steps too (fewWindows 0 in building-shape.test):
 // okulickiego ground-floor windows 11 360 (rev 17) → 13 120; raised 476 → 570 with them.
-const OKULICKIEGO_MAX = { furniture: 570, segment: 0 };
+// Strip along slanted walls floored upstairs (joinStrip): 10 635 upper windows that dropped into
+// the void are now climbable checks; furniture in front of 126 of them: raised 570 → 766.
+const OKULICKIEGO_MAX = { furniture: 766, segment: 0 };
 const STW_MAX = { furniture: 166, segment: 0 };
 
 function ratchet(issues: WindowIssue[], max: { furniture: number; segment: number }) {
