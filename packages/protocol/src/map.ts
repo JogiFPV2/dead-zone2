@@ -115,6 +115,20 @@ export interface SimWallSegment {
   readonly z: number;
   /** Map-global building id (`roomBuildings` values); optional for the sim, used by the client. */
   readonly building?: number | undefined;
+  /**
+   * Gate: this piece fills the gap of a door / window in the wall, and the raster opening on
+   * tile edge `side` of tile (tx, ty) (world tiles, level `z`) decides whether it blocks: a
+   * closed door or any window stops walking, a window lets sight through, an open door both.
+   * Not drawn (the opening is). Without a gate the segment is a plain wall.
+   */
+  readonly gate?: SimWallGate | undefined;
+}
+
+/** Raster opening governing a gate segment (`SimWallSegment.gate`). */
+export interface SimWallGate {
+  readonly side: 'n' | 'w';
+  readonly tx: number;
+  readonly ty: number;
 }
 
 /**

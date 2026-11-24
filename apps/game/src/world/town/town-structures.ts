@@ -245,7 +245,8 @@ export class TownStructures {
     const segments: SimWallSegment[] = [];
     for (let cy = range.cy0; cy <= range.cy1; cy++)
       for (let cx = range.cx0; cx <= range.cx1; cx++)
-        for (const s of this.source.getChunk(cx, cy, range.z)?.wallSegments ?? []) segments.push(s);
+        for (const s of this.source.getChunk(cx, cy, range.z)?.wallSegments ?? [])
+          if (!s.gate) segments.push(s); // gates: the door / window there is drawn instead
     this.vector?.dispose();
     this.vector = undefined;
     if (segments.length) {

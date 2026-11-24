@@ -124,6 +124,7 @@ describe('vector walls of slanted buildings', () => {
       for (let y = Math.min(...wy); y <= Math.max(...wy) + 1; y += 4)
         chunks.add(`${Math.floor(x / CHUNK_SIZE)},${Math.floor(y / CHUNK_SIZE)}`);
     let total = 0;
+    let gated = 0;
     const zs = new Set<number>();
     let roomTiles = 0;
     for (const k of chunks) {
@@ -144,7 +145,9 @@ describe('vector walls of slanted buildings', () => {
             expect(y).toBeGreaterThanOrEqual(ccy * CHUNK_SIZE - 1e-6);
             expect(y).toBeLessThanOrEqual((ccy + 1) * CHUNK_SIZE + 1e-6);
           }
-          if (l.z === 0) total += Math.hypot(s.x1 - s.x0, s.y1 - s.y0);
+          // Plain walls only: gates close the gaps (the doorway's / window's raster edge).
+          if (l.z === 0 && !s.gate) total += Math.hypot(s.x1 - s.x0, s.y1 - s.y0);
+          if (s.gate) gated++;
         }
         if (l.z !== 0 || !l.room) continue;
         for (let i = 0; i < l.room.length; i++) {
@@ -168,5 +171,6 @@ describe('vector walls of slanted buildings', () => {
     // walls get windows on their steps too since #351, so the floor is 25, not 30).
     expect(total).toBeGreaterThan(25);
     expect(total).toBeLessThan(92 - 1);
+    expect(gated).toBeGreaterThan(0);
   });
 });

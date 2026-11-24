@@ -26,6 +26,11 @@ const SEGMENT_KEY_BASE = -(2 ** 46);
  * Doors and windows (`SimMap.edgeKinds`) take their flags from the openings state (world state,
  * `w.openings`); without one every door / window is in the map default state `closed`.
  */
+/** A gate (`SimWallSegment.gate`) stops bodies when its opening blocks movement. */
+export const gateBlocksMove = (flags: number): boolean => (flags & EF.blocksMove) !== 0;
+/** Vehicles: every gate blocks (no car fits through a door or window). */
+export const gateAlways = (): boolean => true;
+
 export class TileGrid {
   private lastCx = Number.NaN;
   private lastCy = Number.NaN;
@@ -119,6 +124,8 @@ export class TileGrid {
    * Exact walls (`SimChunk.wallSegments`, world metres, docs 9.63) of the chunks that touch the
    * box [x0, x1] × [y0, y1] on level z whose bounds touch the box, in chunk (y, x) then list
    * order. `key` is unique per segment (negative, below the blocker keys).
+   * Gates (`SimWallSegment.gate`, the closed state of a door / window gap) count only with
+   * `gate` given and when it returns true for the flags (EF) of their raster opening.
    */
   forSegments(
     x0: number,
@@ -127,6 +134,7 @@ export class TileGrid {
     y1: number,
     z: number,
     fn: (key: number, ax: number, ay: number, bx: number, by: number) => void,
+    gate?: (flags: number) => boolean,
   ): void {
     const cx0 = Math.floor(x0 / CHUNK_SIZE);
     const cx1 = Math.floor(x1 / CHUNK_SIZE);
@@ -141,6 +149,11 @@ export class TileGrid {
           if (g.z !== z) continue;
           if (Math.max(g.x0, g.x1) < x0 || Math.min(g.x0, g.x1) > x1) continue;
           if (Math.max(g.y0, g.y1) < y0 || Math.min(g.y0, g.y1) > y1) continue;
+          if (g.gate) {
+            if (!gate) continue;
+            const { side, tx, ty } = g.gate;
+            if (!gate(side === 'n' ? this.flagsN(tx, ty, z) : this.flagsW(tx, ty, z))) continue;
+          }
           fn(
             SEGMENT_KEY_BASE - (((cx + 0x2000) * 0x4000 + (cy + 0x2000)) * 4096 + i),
             g.x0,

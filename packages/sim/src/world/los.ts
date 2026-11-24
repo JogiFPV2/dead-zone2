@@ -148,7 +148,8 @@ export const lineOfSight = (
   x1: number,
   y1: number,
 ): boolean =>
-  trace(grid, z, x0, y0, x1, y1, Mode.Sight, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+  trace(grid, z, x0, y0, x1, y1, Mode.Sight, 0) &&
+  !crossesSegment(grid, z, x0, y0, x1, y1, Mode.Sight);
 
 /** Straight line without any edge or void tile (AI can steer directly). */
 export const walkableLine = (
@@ -159,7 +160,8 @@ export const walkableLine = (
   x1: number,
   y1: number,
 ): boolean =>
-  trace(grid, z, x0, y0, x1, y1, Mode.Walk, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+  trace(grid, z, x0, y0, x1, y1, Mode.Walk, 0) &&
+  !crossesSegment(grid, z, x0, y0, x1, y1, Mode.Walk);
 
 /** A melee blow can land along this line (no wall, window, closed door or exact wall). */
 export const meleeLine = (
@@ -170,7 +172,8 @@ export const meleeLine = (
   x1: number,
   y1: number,
 ): boolean =>
-  trace(grid, z, x0, y0, x1, y1, Mode.Melee, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+  trace(grid, z, x0, y0, x1, y1, Mode.Melee, 0) &&
+  !crossesSegment(grid, z, x0, y0, x1, y1, Mode.Melee);
 
 /**
  * A hand can reach along this line (looting, docs 9.69): like `meleeLine`, but open / broken
@@ -184,14 +187,16 @@ export const reachLine = (
   x1: number,
   y1: number,
 ): boolean =>
-  trace(grid, z, x0, y0, x1, y1, Mode.Reach, 0) && !crossesSegment(grid, z, x0, y0, x1, y1);
+  trace(grid, z, x0, y0, x1, y1, Mode.Reach, 0) &&
+  !crossesSegment(grid, z, x0, y0, x1, y1, Mode.Reach);
 
 const orient = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number): number =>
   (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
 
 /**
  * The line crosses or touches an exact wall (`SimChunk.wallSegments`, docs 9.63). Openings are
- * gaps in the segments, so windows and doorways stay to the tile edges; sound stays on tiles.
+ * gaps in the segments closed by gates that follow their raster edge (`mode` as for edges);
+ * sound stays on tiles.
  * Skipped until a chunk with segments was read (the trace reads every chunk on the line).
  */
 function crossesSegment(
@@ -201,6 +206,7 @@ function crossesSegment(
   y0: number,
   x1: number,
   y1: number,
+  mode: Mode,
 ): boolean {
   if (!grid.segmentsSeen) return false;
   let hit = false;
@@ -227,6 +233,8 @@ function crossesSegment(
       }
       hit = true;
     },
+    // A gate (door / window gap) stops the line as its opening's edge would.
+    (f) => edgeBlocks(f, mode),
   );
   return hit;
 }
