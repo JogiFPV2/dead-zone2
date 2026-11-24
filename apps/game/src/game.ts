@@ -50,6 +50,7 @@ import {
   isPixelStyle,
   pixelRows,
   urlGraphicsStyle,
+  markCharacter,
 } from './render/graphics-style.js';
 import { NoiseRingModel } from './hud/noise/noise-model.js';
 import { NoiseRingView } from './hud/noise/noise-ring.js';
@@ -86,8 +87,10 @@ import { SimStreamSync } from './world/streaming/sim-sync.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
-import { tileOf } from './world/building-lookup.js';
+import { buildingAtPoint, tileOf } from './world/building-lookup.js';
 import { cameraSide, occludersOf } from './world/cutaway.js';
+import { PAINTED_BLD, setPaintedOrigin } from './render/painted-buildings.js';
+import { PaintedRooms } from './world/town/painted-rooms.js';
 import { FrameSections } from './dev/frame-sections.js';
 import { furnitureFootprintsFromFiles, isRealScale } from './world/furniture-footprint.js';
 import {
@@ -535,6 +538,9 @@ if (realTrees) {
   worldRoot.add(realTrees.root);
   (globalThis as { __dzTrees?: unknown }).__dzTrees = realTrees;
 }
+// Painted buildings: room of every tile around the player (wallpapers and floors by room).
+const paintedRooms =
+  townKit && !realStyle ? new PaintedRooms(streaming.streamer.loaded) : undefined;
 if (paintedTrees) {
   worldRoot.add(paintedTrees.root);
   (globalThis as { __dzTrees?: unknown }).__dzTrees = paintedTrees;
@@ -658,6 +664,8 @@ rig.origin = floating;
 const worldCamera = camera.clone();
 floating.set(...chunkCorner(startPoint.x, startPoint.y));
 floating.onShift((o) => streaming.mapObjects.setOrigin(o.x, o.z));
+floating.onShift((o) => setPaintedOrigin(o.x, o.z));
+setPaintedOrigin(floating.x, floating.z);
 streaming.mapObjects.setOrigin(floating.x, floating.z);
 // Realistic style: dumpsters stand under Designer's bin shelters (their markers stay).
 if (realMap && realStyle?.hasShelters) streaming.mapObjects.setHiddenKinds(['base:dumpster']);
@@ -1568,6 +1576,7 @@ void ModelKit.create(renderer).then(async (kit) => {
     if (real) lightReal(p.object);
     else brighten(p.object);
     addHulls(p.object);
+    markCharacter(p.object);
     player.setModel(p.object, p.clips);
     // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
     if (!real)
@@ -1579,7 +1588,10 @@ void ModelKit.create(renderer).then(async (kit) => {
             ),
           )
           // Outlines for the creator parts too (idempotent).
-          .then(() => addHulls(p.object))
+          .then(() => {
+            addHulls(p.object);
+            markCharacter(p.object);
+          })
           .catch((e: unknown) => console.warn('player look', e));
       };
     // Creator look right away; a loaded save brings its look in view.characterProfile.
@@ -2363,9 +2375,18 @@ renderer.setAnimationLoop((time) => {
     else followStep(rig.target, goal, dt, FOLLOW_HALF_LIFE_MS);
     cameraSnapped = true;
     const { tx, ty } = tileOf(state.x, state.y);
+    if (paintedRooms && PAINTED_BLD.pbOn.value > 0)
+      paintedRooms.update(tx, ty, streaming.streamer.loaded.size);
     // Floor level of the body (fractional on stairs / while falling).
     const level = Math.floor(state.z + 1e-3);
-    const building = structures.lookup.at(tx, ty, level);
+    // By point, not tile: by a slanted wall the tile has no room but the player is indoors.
+    const building = buildingAtPoint(
+      structures.lookup,
+      'outlineAt' in structures ? structures.outlineAt : undefined,
+      state.x,
+      state.y,
+      level,
+    );
     // Buildings between the camera and the player are cut down to its floor too (raycast);
     // recomputed on a new tile / floor / view and twice a second (chunks streaming in).
     const occKey = `${tx},${ty},${level},${building},${rig.targetYaw.toFixed(3)}`;
@@ -2603,6 +2624,7 @@ renderer.setAnimationLoop((time) => {
 
 // Dev only: switch / freeze the graphics style for screenshots and measurements.
 if (import.meta.env.DEV) {
+  void import('three').then((t) => Object.assign(window, { __dzThree: t }));
   Object.assign(window, {
     /** Dev: big map frame stats (atlas chunks, mode, draw ms). */
     __dzBigMap: { stats: () => bigMap.stats() },
@@ -2613,6 +2635,7 @@ if (import.meta.env.DEV) {
       pass: stylePass,
       calls: () => renderer.info.render.calls,
       scene,
+      camera,
       /** Stops the loop and draws the current frame once in `style` (same frame per style). */
       still: (style: GraphicsStyle) => {
         renderer.setAnimationLoop(null);

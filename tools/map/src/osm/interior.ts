@@ -774,6 +774,125 @@ function allReach(
   return n === total;
 }
 
+/**
+ * Regions of a home plan in (a, b) = (along the long axis, across): the hall strip `C` (stairs
+ * and an aisle, across the whole depth), the bigger side `A` (`Af` / `Ab` when deep and wide
+ * enough), the other side `Bf` (front, the street side) and `Bb` (a 2–3 m strip at the back).
+ */
+function homePlan(
+  inp: InteriorInput,
+  stair: StairPlan | undefined,
+  L: number,
+  S: number,
+  ab: (x: number, y: number) => [number, number],
+  inM: (x: number, y: number) => boolean,
+): (a: number, b: number) => string {
+  let lo: number;
+  let hi: number;
+  if (stair) {
+    const along = stair.tiles.map(([x, y]) => ab(x, y)[0]);
+    lo = Math.min(...along);
+    hi = Math.max(...along);
+  } else {
+    lo = Math.round(L * 0.55) - 1;
+    hi = lo;
+  }
+  // The hall is at least 2 m wide: the aisle goes on the smaller side.
+  if (hi - lo < 1) {
+    if (lo > L - 1 - hi) hi++;
+    else lo--;
+  }
+  const leftW = lo;
+  const rightW = L - 1 - hi;
+  const aSide = leftW >= rightW ? 'L' : 'R';
+  const bW = Math.min(leftW, rightW);
+  const aW = Math.max(leftW, rightW);
+  // Street side: the long side with the better exterior door scores.
+  const { fp } = inp;
+  let f0 = 0;
+  let f1 = 0;
+  for (let y = 0; y < fp.h; y++)
+    for (let x = 0; x < fp.w; x++) {
+      if (!inM(x, y)) continue;
+      const [, b] = ab(x, y);
+      const vertical = fp.h > fp.w;
+      if (b === 0) f0 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'w' : 'n'));
+      if (b === S - 1) f1 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'e' : 's'));
+    }
+  const frontAt0 = f0 >= f1;
+  const back = (b: number, depth: number) => (frontAt0 ? b >= S - depth : b < depth);
+  const bathDepth = S >= 8 ? 3 : 2;
+  return (a, b) => {
+    if (a >= lo && a <= hi) return HALL;
+    const side = a < lo ? 'L' : 'R';
+    if (side === aSide) return aW >= 4 && S >= 9 ? (back(b, Math.floor(S / 2)) ? 'Ab' : 'Af') : 'A';
+    if (bW < 2) return HALL;
+    return S >= 5 && back(b, bathDepth) ? 'Bb' : 'Bf';
+  };
+}
+
+/** Street side of a footprint: true when the b = 0 long side scores better for a door. */
+function frontAtZero(
+  inp: InteriorInput,
+  S: number,
+  ab: (x: number, y: number) => [number, number],
+  inM: (x: number, y: number) => boolean,
+): boolean {
+  const { fp } = inp;
+  const vertical = fp.h > fp.w;
+  let f0 = 0;
+  let f1 = 0;
+  for (let y = 0; y < fp.h; y++)
+    for (let x = 0; x < fp.w; x++) {
+      if (!inM(x, y)) continue;
+      const [, b] = ab(x, y);
+      if (b === 0) f0 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'w' : 'n'));
+      if (b === S - 1) f1 += Math.max(0, inp.doorScore(fp.x0 + x, fp.y0 + y, vertical ? 'e' : 's'));
+    }
+  return f0 >= f1;
+}
+
+/**
+ * Shop plan: the sales floor `S` over the front, a 3–4 m back strip with the stock room `W` and a
+ * WC `T` (2 m) at one end; the stairs (if any) stay where they were put.
+ */
+function shopPlan(
+  inp: InteriorInput,
+  stair: StairPlan | undefined,
+  L: number,
+  S: number,
+  ab: (x: number, y: number) => [number, number],
+  inM: (x: number, y: number) => boolean,
+): (a: number, b: number) => string {
+  const front0 = frontAtZero(inp, S, ab, inM);
+  const depth = S >= 10 ? 4 : 3;
+  const sa = stair ? Math.max(...stair.tiles.map(([x, y]) => ab(x, y)[0])) : -1;
+  // WC at the end away from the stairs.
+  const wcAtEnd = sa < L / 2;
+  return (a, b) => {
+    const back = front0 ? b >= S - depth : b < depth;
+    if (!back) return 'S';
+    return (wcAtEnd ? a >= L - 2 : a < 2) ? 'T' : 'W';
+  };
+}
+
+/** Room type of a shop plan region on storey z (flats above the shop). */
+function shopRoomType(kind: BuildingKind, key: string, z: number): string {
+  if (key === 'T') return R('bathroom');
+  if (z > 0) return R(key === 'S' ? 'living-room' : 'kitchen');
+  if (key === 'W') return R('warehouse');
+  return R(kind === 'pharmacy' ? 'pharmacy' : 'shop');
+}
+
+/** Room type of a home plan region on storey z. */
+function homeRoomType(key: string, z: number): string {
+  if (key === 'Bb') return R('bathroom');
+  if (z > 0) return R('bedroom');
+  if (key === 'Bf') return R('kitchen');
+  if (key === 'Ab') return R('bedroom');
+  return R('living-room');
+}
+
 export function buildInterior(inp: InteriorInput): InteriorResult {
   if (inp.kind === 'block') {
     const r = blockWithStairwells(inp);
@@ -800,6 +919,9 @@ function genericInterior(inp: InteriorInput): InteriorResult {
   const cfg = cut(kind);
   const corridor = cfg.corridor && S >= 9 && area > 120;
   const cb0 = Math.floor(S / 2) - 1; // corridor rows (across) cb0, cb0 + 1
+  // Homes: a typical plan (hall with the stairs across the house, living room on the bigger
+  // side, kitchen at the front and bathroom at the back on the other; bedrooms upstairs).
+  const home = (kind === 'house' || kind === 'kostka') && !corridor && area >= 30 && L >= 6;
 
   // --- stairs -----------------------------------------------------------------------------
   let levels = Math.max(1, inp.levels);
@@ -818,7 +940,14 @@ function genericInterior(inp: InteriorInput): InteriorResult {
             if (!s.tiles.every(([tx, ty]) => inM(tx, ty))) continue;
             const [a, b] = ab(x, y);
             let score = -Math.hypot(a - ca, b - cbm) * 0.2 + (s.kind === 'u' ? 2 : 0);
-            if (corridor) {
+            if (home) {
+              // Flights across the house (along b), the stairwell a little off the middle.
+              const along = s.tiles.map(([tx, ty]) => ab(tx, ty)[0]);
+              const lo = Math.min(...along);
+              const hi = Math.max(...along);
+              if (hi - lo + 1 > 3) continue;
+              score += 20 - Math.abs((lo + hi) / 2 - L * 0.55) * 1.5;
+            } else if (corridor) {
               // Touching the corridor along a whole side, not crossing it.
               const across = s.tiles.map(([tx, ty]) => ab(tx, ty)[1]);
               const lo = Math.min(...across);
@@ -848,9 +977,16 @@ function genericInterior(inp: InteriorInput): InteriorResult {
 
   // --- cells ------------------------------------------------------------------------------
   const single = area <= cfg.maxSingle;
+  const shopLike = (kind === 'shop' || kind === 'pharmacy') && !corridor && S >= 6 && L >= 6;
+  const homeKey = home
+    ? homePlan(inp, stair, L, S, ab, inM)
+    : shopLike
+      ? shopPlan(inp, stair, L, S, ab, inM)
+      : undefined;
   const cellKey = (x: number, y: number): string => {
     const [a, b] = ab(x, y);
     if (stairSet.has(`${x},${y}`)) return STAIR;
+    if (homeKey) return homeKey(a, b);
     if (corridor && (b === cb0 || b === cb0 + 1)) return HALL;
     if (single) return '0';
     const band = corridor
@@ -1024,7 +1160,12 @@ function genericInterior(inp: InteriorInput): InteriorResult {
     // Bigger rooms first get the main use (shop floor, living room).
     ordinary.sort((a, b) => roomTiles[b]!.length - roomTiles[a]!.length || a - b);
     const typeOf = new Map<number, string>();
-    ordinary.forEach((r, i) => typeOf.set(r, roomType(kind, z, i, ordinary.length, levels)));
+    ordinary.forEach((r, i) =>
+      typeOf.set(
+        r,
+        homeKey ? homeRoomType(roomKey[r]!, z) : roomType(kind, z, i, ordinary.length, levels),
+      ),
+    );
     for (const r of alive) {
       const ch = charOf.get(r)!;
       const type = roomKey[r] === STAIR || roomKey[r] === HALL ? R('hall') : typeOf.get(r)!;

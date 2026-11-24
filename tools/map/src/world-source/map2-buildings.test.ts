@@ -9,7 +9,7 @@ import {
 import type { OsmBuilding, OsmMap } from '../osm/types.js';
 import { PlanChunkGenerator } from './generator.js';
 import { OSM_REGIONS, osmPlan } from './sources.js';
-import { straightenOsmMap } from './straighten.js';
+import { sameFootprint, straightenOsmMap } from './straighten.js';
 
 type Pt = [number, number];
 /** Rectangle of `w` × `h` m turned by `deg` about (cx, cy), counter-clockwise in y-south. */
@@ -115,14 +115,24 @@ describe('map2 buildings in the stw2 tiles (exact outlines)', () => {
     expect(c!.id).toBeGreaterThan(1e10);
   });
 
-  it('straighten leaves exact outlines 1:1 (squares the same house without `exact`)', () => {
+  it('straighten keeps exact outlines in place, squared on their own axis', () => {
     const s = straightenOsmMap(map(bs), 0);
-    for (const [i, b] of s.buildings.entries())
-      expect(b.rings[0]).toEqual(bs[i]!.rings[0]!.map((v) => v + OSM_RAW_SHIFT * 10));
-    const plain: OsmBuilding = { ...bs[0]! };
-    delete plain.exact;
-    const q = straightenOsmMap(map([plain]), 0).buildings[0]!.rings[0]!;
-    expect(q).not.toEqual(s.buildings[0]!.rings[0]);
+    for (const [i, b] of s.buildings.entries()) {
+      const raw = bs[i]!.rings[0]!.map((v) => v + OSM_RAW_SHIFT * 10);
+      expect(sameFootprint(b.rings[0]!, raw)).toBe(true);
+      // Every corner a right angle (±1°) or the outline unchanged (shared walls stay on OSM).
+      const g = b.rings[0]!;
+      const n = (g.length >> 1) - 1;
+      const square = Array.from({ length: n }, (_, k) => {
+        const p = (j: number) => [g[2 * ((j + n) % n)]!, g[2 * ((j + n) % n) + 1]!] as const;
+        const [ax, ay] = p(k - 1);
+        const [bx, by] = p(k);
+        const [cx, cy] = p(k + 1);
+        const dot = (bx - ax) * (cx - bx) + (by - ay) * (cy - by);
+        return Math.abs(dot) / (Math.hypot(bx - ax, by - ay) * Math.hypot(cx - bx, cy - by));
+      }).every((c) => c < Math.sin(Math.PI / 180));
+      expect(square || JSON.stringify(g) === JSON.stringify(raw)).toBe(true);
+    }
   });
 
   it('a 5° house gets vector walls on its OSM line; the shared wall only once', () => {

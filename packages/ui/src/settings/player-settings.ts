@@ -10,7 +10,7 @@ export const PLAYER_SETTINGS_VERSION = 1;
 /** Server limit for `profiles.settings` (JSON, UTF-8). */
 export const PLAYER_SETTINGS_MAX_BYTES = 16384;
 
-export const GRAPHICS_STYLES = ['classic', 'outline', 'pixel', 'pixel-fine'] as const;
+export const GRAPHICS_STYLES = ['classic', 'outline', 'pixel', 'pixel-fine', 'painted'] as const;
 export const VIEW_DISTANCES = ['low', 'medium', 'high'] as const;
 export const NOISE_DISPLAYS = ['off', 'loud', 'always'] as const;
 export const INVENTORY_VIEW_MODES = ['list', 'grid'] as const;
@@ -76,7 +76,7 @@ export const viewSettingsSchema = z.object({
 
 export const graphicsSettingsSchema = z.object({
   /** „Styl grafiki”. */
-  style: z.enum(GRAPHICS_STYLES).default('classic'),
+  style: z.enum(GRAPHICS_STYLES).default('painted'),
   pixelRatioCap: range(0.5, 4, 2),
   antialias: bool(true),
   showFps: bool(false),

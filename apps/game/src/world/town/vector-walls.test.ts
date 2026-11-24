@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Matrix4, Vector3 } from 'three';
+import type { InstancedMesh } from 'three';
+import { Color, Matrix4, Vector3 } from 'three';
 import { NO_CUTAWAY } from '../cutaway.js';
 import { LOWERED_HEIGHT, WALL_HEIGHT } from '../structure-instances.js';
 import { segmentMatrix, vectorWallHeight } from './vector-walls.js';
@@ -47,5 +48,64 @@ describe('openingOnOutline', () => {
     expect(p.width).toBeLessThan(1.4);
     // No wall within reach: no placement.
     expect(openingOnOutline([ring], 3, 5, 4, 5, 0)).toBeUndefined();
+  });
+});
+
+describe('facade bands (plinth, cornice, storey band, lintel)', () => {
+  it('ground floor: plinth + cornice on a one-storey house, storey band below the top', async () => {
+    const { wallBands, PLINTH, CORNICE, STOREY_BAND } = await import('./vector-walls.js');
+    const { LEVEL_HEIGHT } = await import('../instances.js');
+    expect(wallBands(0, WALL_HEIGHT)).toEqual([PLINTH, CORNICE]);
+    expect(wallBands(0, LEVEL_HEIGHT)).toEqual([PLINTH, STOREY_BAND]);
+    expect(wallBands(1, WALL_HEIGHT)).toEqual([CORNICE]);
+    // Thicker than the corner posts, so they never poke through.
+    const { POST_SIZE } = await import('./vector-walls.js');
+    for (const b of [PLINTH, CORNICE, STOREY_BAND])
+      expect(b.t).toBeGreaterThan(POST_SIZE * Math.SQRT2);
+  });
+
+  it('cut with the wall: the plinth shrinks, the cornice goes with the full height', async () => {
+    const { bandAt, PLINTH, CORNICE } = await import('./vector-walls.js');
+    const s = { x0: 0, y0: 0, x1: 4, y1: 0, z: 0 };
+    const top = (m: Matrix4) => new Vector3(0, 1, 0).applyMatrix4(m).y;
+    const m = new Matrix4();
+    expect(top(bandAt(m, s, 0, PLINTH, WALL_HEIGHT, WALL_HEIGHT))).toBeCloseTo(PLINTH.h, 5);
+    expect(top(bandAt(m, s, 0, PLINTH, LOWERED_HEIGHT, WALL_HEIGHT))).toBeCloseTo(
+      LOWERED_HEIGHT,
+      5,
+    );
+    expect(top(bandAt(m, s, 0, CORNICE, WALL_HEIGHT, WALL_HEIGHT))).toBeCloseTo(WALL_HEIGHT, 5);
+    // Lowered or hidden: no cornice floating over the cut wall.
+    expect(bandAt(m, s, 0, CORNICE, LOWERED_HEIGHT, WALL_HEIGHT).determinant()).toBe(0);
+    expect(bandAt(m, s, 0, PLINTH, 0, WALL_HEIGHT).determinant()).toBe(0);
+  });
+
+  it('a gap gets the bands and, below the top storey, a lintel up to the next slab', async () => {
+    const { VectorWalls } = await import('./vector-walls.js');
+    const { LEVEL_HEIGHT } = await import('../instances.js');
+    const { MeshStandardMaterial } = await import('three');
+    const cells = { uv: () => [0, 0] as [number, number], color: () => new Color() };
+    const seg = { x0: 0, y0: 0, x1: 4, y1: 0, z: 0, building: 3 };
+    const gap = { x0: 4, y0: 0, x1: 5.2, y1: 0, z: 0, building: 3 };
+    const count = (full: number, door: boolean) => {
+      const w = new VectorWalls(
+        [seg],
+        0,
+        0,
+        cells,
+        new MeshStandardMaterial(),
+        () => 'plaster',
+        () => full,
+        undefined,
+        [{ seg: gap, door }],
+      );
+      return w.root.children[0] ? (w.root.children[0] as InstancedMesh).count : 0;
+    };
+    // wall + 2 posts + plinth + cornice; window gap: plinth + cornice.
+    expect(count(WALL_HEIGHT, false)).toBe(5 + 2);
+    // Door gap: no plinth.
+    expect(count(WALL_HEIGHT, true)).toBe(5 + 1);
+    // Lower storey: storey band instead of the cornice, and a lintel over the gap.
+    expect(count(LEVEL_HEIGHT, false)).toBe(5 + 3);
   });
 });

@@ -91,6 +91,6 @@ describe('settings screen tabs', () => {
     screen.onKey(key('Escape'));
     screen.onKey(key('Enter'));
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(settings.get().graphics.style).toBe('classic');
+    expect(settings.get().graphics.style).toBe('painted');
   });
 });

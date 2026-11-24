@@ -2,8 +2,10 @@ import {
   BufferGeometry,
   DepthTexture,
   Float32BufferAttribute,
+  LessEqualDepth,
   LinearFilter,
   Mesh,
+  MeshBasicMaterial,
   NearestFilter,
   OrthographicCamera,
   Scene,
@@ -27,6 +29,7 @@ import {
 } from './style-materials.js';
 import { PAINTED_FRAGMENT } from './painted-shader.js';
 import { setPaintedGround } from './painted-ground.js';
+import { setPaintedBuildings } from './painted-buildings.js';
 import { PIXEL_PALETTE, STYLE_FRAGMENT, STYLE_VERTEX } from './style-shader.js';
 
 // The ramp lives in the shader chunks: installed before any program compiles.
@@ -149,6 +152,17 @@ export function urlGraphicsStyle(search: string): GraphicsStyle | undefined {
  *   brown ink on depth breaks, canvas grain.
  * The low-res target is tone mapped and sRGB encoded like the canvas (see ensureTarget).
  */
+/**
+ * Layer of the player model (also on its default layer 0): the painted style keeps it sharp
+ * (no brush filter there), so it reads at any zoom (Paweł 24.11).
+ */
+export const CHARACTER_LAYER = 7;
+
+/** Puts `object` and its children on `CHARACTER_LAYER` too (call again after re-dressing). */
+export function markCharacter(object: Object3D): void {
+  object.traverse((o) => o.layers.enable(CHARACTER_LAYER));
+}
+
 export class GraphicsStylePass {
   private style: GraphicsStyle = 'classic';
   private target: WebGLRenderTarget | undefined;
@@ -162,6 +176,15 @@ export class GraphicsStylePass {
   private readonly right = new Vector3();
   private readonly up = new Vector3();
   private readonly saved = new Vector3();
+  /** Painted style: where the player is in view (the filter keeps it sharp there). */
+  private mask: WebGLRenderTarget | undefined;
+  private readonly maskMaterial = new MeshBasicMaterial({
+    color: 0xffffff,
+    depthWrite: false,
+    depthFunc: LessEqualDepth,
+    fog: false,
+    toneMapped: false,
+  });
 
   constructor(private readonly renderer: WebGLRenderer) {
     installStyleShaders();
@@ -198,6 +221,7 @@ export class GraphicsStylePass {
       uniforms: {
         tColor: { value: null },
         tDepth: { value: null },
+        tMask: { value: null },
         uTexel: { value: new Vector2() },
         uDepthRange: { value: 1 },
         uStride: { value: 1 },
@@ -234,6 +258,7 @@ export class GraphicsStylePass {
       ? STYLE_TUNING.painted.toonSoft
       : STYLE_TUNING.outline.toonSoft;
     setPaintedGround(painted);
+    setPaintedBuildings(painted);
     applyStyleMaterials({
       toon: style !== 'classic',
       hulls: style !== 'classic',
@@ -289,6 +314,8 @@ export class GraphicsStylePass {
     this.quad.geometry.dispose();
     this.quad.material.dispose();
     this.paintedQuad.material.dispose();
+    this.mask?.dispose();
+    this.maskMaterial.dispose();
   }
 
   /** „Malowany”: full-res scene into the target, then the painted pass to the screen. */
@@ -300,6 +327,7 @@ export class GraphicsStylePass {
     const t = this.ensureTarget(w, h, true);
     r.setRenderTarget(t);
     r.render(scene, camera);
+    const mask = this.renderMask(scene, camera, t);
     r.setRenderTarget(null);
     const ortho = (camera as OrthographicCamera).isOrthographicCamera
       ? (camera as OrthographicCamera)
@@ -307,6 +335,7 @@ export class GraphicsStylePass {
     const u = this.paintedQuad.material.uniforms;
     u.tColor!.value = t.texture;
     u.tDepth!.value = t.depthTexture;
+    u.tMask!.value = mask.texture;
     (u.uTexel!.value as Vector2).set(1 / w, 1 / h);
     u.uDepthRange!.value = ortho ? ortho.far - ortho.near : 1;
     const zp = paintedZoom(ortho?.zoom ?? 1);
@@ -335,6 +364,50 @@ export class GraphicsStylePass {
     const db = Math.round(b / texel) * texel - b;
     cam.position.addScaledVector(this.right, da).addScaledVector(this.up, db);
     cam.updateMatrixWorld();
+  }
+
+  /**
+   * The visible pixels of the player (`CHARACTER_LAYER`) in white: the layer alone, drawn again
+   * with a flat material against the scene's depth (shared depth texture, no depth write), so
+   * walls in front still hide it. Shadows are not redrawn.
+   */
+  private renderMask(scene: Object3D, camera: Camera, t: WebGLRenderTarget): WebGLRenderTarget {
+    const r = this.renderer;
+    if (!this.mask || this.mask.width !== t.width || this.mask.height !== t.height) {
+      this.mask?.dispose();
+      this.mask = new WebGLRenderTarget(t.width, t.height, {
+        type: UnsignedByteType,
+        minFilter: LinearFilter,
+        magFilter: LinearFilter,
+        depthBuffer: true,
+      });
+    }
+    // Same depth as the scene: assigned per frame (the scene target may have been rebuilt).
+    this.mask.depthTexture = t.depthTexture;
+    const s = scene as Scene;
+    const background = s.background;
+    const override = s.overrideMaterial;
+    const layers = camera.layers.mask;
+    const autoClear = r.autoClear;
+    const shadows = r.shadowMap.autoUpdate;
+    const auto = r.info.autoReset;
+    r.info.autoReset = false;
+    r.shadowMap.autoUpdate = false;
+    r.autoClear = false;
+    s.background = null;
+    s.overrideMaterial = this.maskMaterial;
+    camera.layers.set(CHARACTER_LAYER);
+    r.setRenderTarget(this.mask);
+    r.setClearColor(0x000000, 0);
+    r.clear(true, false, false);
+    r.render(scene, camera);
+    camera.layers.mask = layers;
+    s.overrideMaterial = override;
+    s.background = background;
+    r.autoClear = autoClear;
+    r.shadowMap.autoUpdate = shadows;
+    r.info.autoReset = auto;
+    return this.mask;
   }
 
   private ensureTarget(w: number, h: number, smooth = false): WebGLRenderTarget {

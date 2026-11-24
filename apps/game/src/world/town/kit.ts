@@ -20,9 +20,11 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CanvasTexture } from 'three';
 import { deriveSkins, paintExtCells, withExtCells } from './skins.js';
 import { PALETTE_SCALE, bldV2, paintV2Cells } from './bld-v2.js';
-import { paintDetailIndex, withFacadeDetail } from './bld-detail.js';
+import { V2_DETAIL, paintDetailIndex, withFacadeDetail } from './bld-detail.js';
+import { setPaintedBuildingCells, withPaintedBuildings } from '../../render/painted-buildings.js';
 import { shopWindowGeometry } from './levels.js';
 import { ALL_SKINS, WALL_CELL } from './modules.js';
+import { addWindowSills } from './window-sill.js';
 
 /** `deadzone-town/town.json` (written by `assets town`). */
 export interface TownKitIndex {
@@ -178,6 +180,7 @@ export async function loadTownKit(
     geometries.set(name.replace(/_\d+$/, ''), bakeGeometry(m.geometry, m.matrixWorld));
   });
   const cells = townCells(index);
+  addWindowSills(geometries, (c) => cells.uv(c));
   const glass = cells.uv('glass');
   for (const [name, g] of [...geometries]) {
     if (name.startsWith('window-') && !name.endsWith('-lit')) {
@@ -198,6 +201,9 @@ export async function loadTownKit(
   });
   material.name = 'deadzone-town/palette';
   if (bldV2()) await addFacadeDetail(material, tl, baseUrl, canvas.width);
+  // „Malowany”: painted walls, roofs, wallpapers and floors (off until the style is chosen).
+  setPaintedBuildingCells(index.cells, V2_DETAIL);
+  withPaintedBuildings(material);
   withFade(material);
   return { geometries, material, cells, detail, cellIndex: index.cells };
 }
