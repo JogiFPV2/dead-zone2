@@ -29,6 +29,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # setup-node@v5 sam włącza cache pnpm (pole packageManager), a pnpm pojawia się dopiero
+          # w następnym kroku przez corepack, więc bez tego krok pada na „Unable to locate pnpm”.
+          package-manager-cache: false
 
       # pnpm w wersji z packageManager (package.json).
       - name: pnpm (corepack)
