@@ -27,6 +27,6 @@ describe('cutSegments (okna w ukośnych ścianach, Fizyka 25.10)', () => {
     const again = cutSegments([along[2]!], [[1.2, 0, 1.8, 2, gate]]);
     expect(again).toEqual([along[2]]);
     const corner = cutSegments([{ x0: 1.5, y0: 0, x1: 1.5, y1: 4 }], [[1, 0, 2, 2, gate]]);
-    expect(corner.some((w) => w.gate)).toBe(false);
+    expect(corner.some((w) => (w as { gate?: unknown }).gate)).toBe(false);
   });
 });
