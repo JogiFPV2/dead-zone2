@@ -12,7 +12,13 @@ import { TICKS_PER_SECOND } from '../core/constants.js';
 import { gameMinuteAt, ticksPerGameMinute } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces, carriedItems, hasToolTag } from '../items/actions.js';
-import { activeHandOf, carriedLoad, hardLimit, playerItems, reachTarget } from '../items/inventory.js';
+import {
+  activeHandOf,
+  carriedLoad,
+  hardLimit,
+  playerItems,
+  reachTarget,
+} from '../items/inventory.js';
 import {
   defOf,
   destroyItem,

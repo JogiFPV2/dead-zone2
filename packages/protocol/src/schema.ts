@@ -143,7 +143,11 @@ export const setActiveHandCommandSchema = z.strictObject({
 export const setQuickSlotCommandSchema = z.strictObject({
   ...header,
   type: z.literal('setQuickSlot'),
-  index: z.number().int().min(0).max(QUICK_SLOTS - 1),
+  index: z
+    .number()
+    .int()
+    .min(0)
+    .max(QUICK_SLOTS - 1),
   item: itemId.optional(),
 });
 export const unequipCommandSchema = z.strictObject({

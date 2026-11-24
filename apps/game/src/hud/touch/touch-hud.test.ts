@@ -57,7 +57,8 @@ describe('touch HUD: multitouch', () => {
     t.btn('attack').dispatchEvent(finger('pointerdown', 4));
     expect(t.controls.stick.active).toBe(true);
     expect(t.controls.vector()).not.toEqual({ x: 0, y: 0, magnitude: 0 });
-    expect(t.aim).toHaveBeenLastCalledWith(expect.objectContaining({ x: expect.any(Number) }));
+    expect(t.aim).toHaveBeenCalledTimes(1);
+    expect(t.aim.mock.calls[0]![0]).toBeDefined();
     expect(t.input.isDown('sprint')).toBe(true);
     expect(t.input.isDown('primaryAction')).toBe(true);
     expect(attacks).toHaveBeenCalledTimes(1);

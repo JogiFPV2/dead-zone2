@@ -115,4 +115,3 @@ describe('combat: left and right hand (quick slots 1 and 2)', () => {
     expect(sim.getInventory()!.quickSlots).toBeUndefined();
   });
 });
-
