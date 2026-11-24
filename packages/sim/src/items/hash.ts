@@ -106,6 +106,14 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
     h.u32(0x4a2d_0001).u32(leftHands.length);
     for (const sid of leftHands) h.u32(sid);
   }
+  const pinned = pids.filter((sid) => st.players.get(sid)!.quick);
+  if (pinned.length > 0) {
+    h.u32(0x9c1c_0001).u32(pinned.length);
+    for (const sid of pinned) {
+      h.u32(sid);
+      for (const id of st.players.get(sid)!.quick!) h.u32(id);
+    }
+  }
   // Corpse and hidden-cache indexes (only when present: older golden hashes stay valid).
   if (st.corpses.size > 0) {
     h.u32(0xc0a5_0001).u32(st.corpses.size);

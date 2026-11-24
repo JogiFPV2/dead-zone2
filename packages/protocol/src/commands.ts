@@ -301,6 +301,20 @@ export interface SetActiveHandCommand extends CommandHeader {
   hand: HandSlot;
 }
 
+/** Pinnable quick slots 3–5 (`setQuickSlot.index` 0..2). */
+export const QUICK_SLOTS = 3;
+
+/**
+ * Pins a carried item to quick slot `index` (0..2 = keys 3–5; protocol 52), or clears it
+ * without `item`. An item sits in one quick slot at most (pinning moves it). Rejects:
+ * `invalid-target` (not carried), `no-item`.
+ */
+export interface SetQuickSlotCommand extends CommandHeader {
+  type: 'setQuickSlot';
+  index: number;
+  item?: ItemId | undefined;
+}
+
 /**
  * Opens a container for the loot panel. A world storage, corpse, trunk or glovebox not yet
  * searched by this player (`nearby[].searched` false) starts the timed action `search`
@@ -976,6 +990,7 @@ export type Command =
   | EquipCommand
   | UnequipCommand
   | SetActiveHandCommand
+  | SetQuickSlotCommand
   | OpenContainerCommand
   | SearchCommand
   | CloseContainerCommand

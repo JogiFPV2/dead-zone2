@@ -320,11 +320,15 @@ export function backWeapon(st: ItemStore, item: ItemInstance): boolean {
   );
 }
 
-/** Slots an item may go to: bags their `bag.slots`, clothing its slot, weapons the hands/back. */
+/**
+ * Slots an item may go to: bags their `bag.slots`, clothing its slot, long weapons the back, and
+ * any item the hands (quick slots 1 and 2: anything can be held, harmless items only push).
+ */
 export function allowedSlots(st: ItemStore, item: ItemInstance): readonly EquipSlot[] {
   const def = defOf(st, item);
-  if (def.kind === 'container') return def.bag.slots;
-  if (def.kind === 'clothing') return [def.clothing.slot];
+  const own =
+    def.kind === 'container' ? def.bag.slots : def.kind === 'clothing' ? [def.clothing.slot] : [];
+  if (own.length > 0) return [...new Set([...own, ...HANDS])];
   return backWeapon(st, item) ? [...HANDS, 'back'] : HANDS;
 }
 

@@ -91,6 +91,8 @@ export interface PlayerItems {
   readonly slots: Map<EquipSlot, number>;
   /** Hand that attacks (`setActiveHand`); absent = `hand_primary`. */
   activeHand?: 'hand_secondary' | undefined;
+  /** Items pinned to quick slots 3–5 (`setQuickSlot`), 0 = empty; absent = none pinned. */
+  quick?: number[] | undefined;
   /** Long/two-handed weapon carried on the back alongside a back slot item (usually a bag). */
   backWeapon: number;
   /** Open container (loot panel), 0 = none. */

@@ -8,6 +8,7 @@ import {
   DEBUG_STATS,
   EQUIP_SLOTS,
   HAND_SLOTS,
+  QUICK_SLOTS,
   GAITS,
   MARKER_COLORS,
   MAX_PLAYER_ID,
@@ -138,6 +139,12 @@ export const setActiveHandCommandSchema = z.strictObject({
   ...header,
   type: z.literal('setActiveHand'),
   hand: z.enum(HAND_SLOTS),
+});
+export const setQuickSlotCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setQuickSlot'),
+  index: z.number().int().min(0).max(QUICK_SLOTS - 1),
+  item: itemId.optional(),
 });
 export const unequipCommandSchema = z.strictObject({
   ...header,
@@ -583,6 +590,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   equipCommandSchema,
   unequipCommandSchema,
   setActiveHandCommandSchema,
+  setQuickSlotCommandSchema,
   openContainerCommandSchema,
   searchCommandSchema,
   closeContainerCommandSchema,

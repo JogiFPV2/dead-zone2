@@ -97,4 +97,22 @@ describe('combat: left and right hand (quick slots 1 and 2)', () => {
     expect(hp()).toBe(before);
     expect(sim.world.items!.items.get(tissue)!.wear).toBeUndefined();
   });
+
+  it('quick slots 3–5: pin, move, clear; dropped items show as empty', () => {
+    const sim = aiSim({ aiConfig: DEAF });
+    const brick = give(sim, 'fixture:brick');
+    send(sim, { type: 'setQuickSlot', index: 0, item: brick });
+    sim.step();
+    expect(sim.getInventory()!.quickSlots).toEqual([brick, null, null]);
+    send(sim, { type: 'setQuickSlot', index: 2, item: brick });
+    sim.step();
+    expect(sim.getInventory()!.quickSlots).toEqual([null, null, brick]);
+    send(sim, { type: 'drop', item: brick });
+    sim.step();
+    expect(sim.getInventory()!.quickSlots).toEqual([null, null, null]);
+    send(sim, { type: 'setQuickSlot', index: 2 });
+    sim.step();
+    expect(sim.getInventory()!.quickSlots).toBeUndefined();
+  });
 });
+
