@@ -24,6 +24,7 @@ import { V2_DETAIL, paintDetailIndex, withFacadeDetail } from './bld-detail.js';
 import { setPaintedBuildingCells, withPaintedBuildings } from '../../render/painted-buildings.js';
 import { shopWindowGeometry } from './levels.js';
 import { ALL_SKINS, WALL_CELL } from './modules.js';
+import { addWindowSills } from './window-sill.js';
 
 /** `deadzone-town/town.json` (written by `assets town`). */
 export interface TownKitIndex {
@@ -179,6 +180,7 @@ export async function loadTownKit(
     geometries.set(name.replace(/_\d+$/, ''), bakeGeometry(m.geometry, m.matrixWorld));
   });
   const cells = townCells(index);
+  addWindowSills(geometries, (c) => cells.uv(c));
   const glass = cells.uv('glass');
   for (const [name, g] of [...geometries]) {
     if (name.startsWith('window-') && !name.endsWith('-lit')) {

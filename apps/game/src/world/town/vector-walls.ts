@@ -11,6 +11,7 @@ import {
 import type { SimWallSegment } from '@deadzone/protocol';
 import { NO_BUILDING, type BuildingId } from '../chunk.js';
 import { CUT_NEAR, isLevelHidden, isOccluder, type Cutaway } from '../cutaway.js';
+import { LEVEL_HEIGHT } from '../instances.js';
 import { LOWERED_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from '../structure-instances.js';
 import type { TownCells } from './kit.js';
 import { WALL_CELL, type Skin } from './modules.js';
@@ -91,6 +92,89 @@ function postMatrix(out: Matrix4, x: number, y: number, baseY: number, height: n
   return out.compose(pos.set(x, baseY, y), q, scl.set(POST_SIZE, height + 0.05, POST_SIZE));
 }
 
+/**
+ * Facade bands along every vector wall (Paweł 24.11: details from geometry): a stone plinth on
+ * the ground floor, a cornice under the roof of the top storey, a storey band at the slab of the
+ * lower ones. Boxes a little thicker than the wall and its corner posts (both sides: skirting / ceiling moulding
+ * inside), longer by their own thickness so corners close.
+ */
+export interface WallBand {
+  /** Bottom above the level base (m), height (m), thickness (m). */
+  y: number;
+  h: number;
+  t: number;
+  /** Shown only at the wall's full height (cornice, lintel), else cut with the wall (plinth). */
+  top: boolean;
+  cell: string;
+}
+/** Band thickness: over the corner posts' diagonal (posts stay on the axes, walls turn). */
+const BAND_T = POST_SIZE * Math.SQRT2 + 0.02;
+export const PLINTH: WallBand = {
+  y: 0,
+  h: 0.45,
+  t: BAND_T,
+  top: false,
+  cell: 'curb',
+};
+export const CORNICE: WallBand = {
+  y: WALL_HEIGHT - 0.22,
+  h: 0.22,
+  t: BAND_T + 0.08,
+  top: true,
+  cell: 'trim-light',
+};
+export const STOREY_BAND: WallBand = {
+  y: LEVEL_HEIGHT - 0.16,
+  h: 0.16,
+  t: BAND_T,
+  top: true,
+  cell: 'trim-light',
+};
+
+/** Exterior door / window gap of a vector wall (`VectorWalls` facade bands, lintel). */
+export interface WallGap {
+  seg: SimWallSegment;
+  door: boolean;
+}
+
+/** Bands of a wall on level `z` whose uncut height is `full`. Pure (tests). */
+export function wallBands(z: number, full: number): WallBand[] {
+  const out: WallBand[] = [];
+  if (z === 0) out.push(PLINTH);
+  out.push(full > WALL_HEIGHT + 1e-6 ? STOREY_BAND : CORNICE);
+  return out;
+}
+
+/** Matrix of band `b` along segment `s` (hidden: zero scale). */
+export function bandMatrix(
+  out: Matrix4,
+  s: SimWallSegment,
+  baseY: number,
+  b: Pick<WallBand, 'y' | 'h' | 't'>,
+): Matrix4 {
+  const dx = s.x1 - s.x0;
+  const dy = s.y1 - s.y0;
+  const len = Math.hypot(dx, dy);
+  q.setFromAxisAngle(Y_AXIS, -Math.atan2(dy, dx));
+  pos.set((s.x0 + s.x1) / 2, baseY + b.y, (s.y0 + s.y1) / 2);
+  return out.compose(pos, q, scl.set(len + b.t, b.h, b.t));
+}
+
+/** Band matrix for a wall cut to height `wall` (0 = hidden). Pure (tests). */
+export function bandAt(
+  out: Matrix4,
+  s: SimWallSegment,
+  baseY: number,
+  b: WallBand,
+  wall: number,
+  full: number,
+): Matrix4 {
+  if (wall <= 0 || (b.top && wall < full - 1e-6)) return out.makeScale(0, 0, 0);
+  const h = Math.min(b.h, wall - b.y);
+  if (h <= 0) return out.makeScale(0, 0, 0);
+  return bandMatrix(out, s, baseY, { y: b.y, h, t: b.t });
+}
+
 /** Whether a wall at (mx, my) of a near building faces the camera from the player (CUT_NEAR). */
 function nearAndFacing(c: Cutaway, mx: number, my: number): boolean {
   const px = c.tx + 0.5;
@@ -122,6 +206,8 @@ interface Item {
   building: BuildingId;
   seg?: SimWallSegment;
   post?: [number, number];
+  /** A facade band / lintel along `seg` (not the wall itself). */
+  band?: WallBand;
   height: number;
   /** Wall fade: current opacity / fading in. */
   fade?: { cur: number; on: boolean } | undefined;
@@ -254,54 +340,83 @@ export class VectorWalls {
     skinOf: (b: BuildingId) => Skin,
     fullOf: (b: BuildingId) => number = () => WALL_HEIGHT,
     private readonly pool?: VectorWallPool,
+    /**
+     * Exterior door / window gaps on the outline (`door`: no plinth under it). The facade bands
+     * run across them; on the lower storeys the 2.8 m kit module leaves a slot up to the next
+     * slab, closed by a lintel in the wall's colour.
+     */
+    gaps: readonly WallGap[] = [],
   ) {
     this.root.name = 'vector-walls';
     for (const s of segments) this.buildings.add(s.building ?? NO_BUILDING);
-    if (segments.length) {
-      const m = new Matrix4();
-      const n = segments.length * 3;
-      let mesh: InstancedMesh;
-      let start = 0;
-      if (pool) {
-        ({ mesh, start } = pool.alloc(n));
-        this.block = { mesh, start, n };
-      } else {
-        mesh = wallMesh(material, n);
-        mesh.count = n;
-        this.meshes.push(mesh);
-        this.root.add(mesh);
-      }
-      const iuvAttr = mesh.geometry.getAttribute('instanceUv') as InstancedBufferAttribute;
-      const iuv = iuvAttr.array as Float32Array;
-      const uvOf = new Map<Skin, [number, number]>();
-      let k = start;
-      for (const s of segments) {
-        const building = s.building ?? NO_BUILDING;
-        const skin = skinOf(building);
-        let uv = uvOf.get(skin);
-        if (!uv) uvOf.set(skin, (uv = cells.uv(WALL_CELL[skin])));
-        const full = fullOf(building);
-        const put = (mat: Matrix4, extra: Partial<Item>) => {
-          mesh.setMatrixAt(k, mat);
-          iuv[2 * k] = uv[0];
-          iuv[2 * k + 1] = uv[1];
-          this.items.push({ mesh, index: k++, building, height: full, full, ...extra });
-        };
-        put(segmentMatrix(m, s, baseY, full), { seg: s });
-        for (const p of [
-          [s.x0, s.y0],
-          [s.x1, s.y1],
-        ] as [number, number][])
-          put(postMatrix(m, p[0], p[1], baseY, full), { post: p });
-      }
-      mesh.instanceMatrix.needsUpdate = true;
-      iuvAttr.needsUpdate = true;
-      if (!pool) mesh.computeBoundingSphere();
+    if (!segments.length) return;
+    /** Every instance: wall pieces, posts, bands (atlas cell `null` = the building's wall). */
+    const pieces: { s: SimWallSegment; extra: Partial<Item>; cell: string | null }[] = [];
+    for (const s of segments) {
+      const full = fullOf(s.building ?? NO_BUILDING);
+      pieces.push({ s, extra: { seg: s }, cell: null });
+      pieces.push({ s, extra: { post: [s.x0, s.y0] }, cell: null });
+      pieces.push({ s, extra: { post: [s.x1, s.y1] }, cell: null });
+      for (const band of wallBands(z, full))
+        pieces.push({ s, extra: { seg: s, band }, cell: band.cell });
     }
+    for (const { seg: s, door } of gaps) {
+      const full = fullOf(s.building ?? NO_BUILDING);
+      for (const band of wallBands(z, full))
+        if (!(door && band === PLINTH))
+          pieces.push({ s, extra: { seg: s, band }, cell: band.cell });
+      if (full > WALL_HEIGHT + 1e-6) {
+        const band: WallBand = {
+          y: WALL_HEIGHT - 0.02,
+          h: full - WALL_HEIGHT + 0.02,
+          t: WALL_THICKNESS,
+          top: true,
+          cell: '',
+        };
+        pieces.push({ s, extra: { seg: s, band }, cell: null });
+      }
+    }
+    const m = new Matrix4();
+    const n = pieces.length;
+    let mesh: InstancedMesh;
+    let start = 0;
+    if (pool) {
+      ({ mesh, start } = pool.alloc(n));
+      this.block = { mesh, start, n };
+    } else {
+      mesh = wallMesh(material, n);
+      mesh.count = n;
+      this.meshes.push(mesh);
+      this.root.add(mesh);
+    }
+    const iuvAttr = mesh.geometry.getAttribute('instanceUv') as InstancedBufferAttribute;
+    const iuv = iuvAttr.array as Float32Array;
+    const uvOf = new Map<string, [number, number]>();
+    const uvCell = (c: string) => {
+      let uv = uvOf.get(c);
+      if (!uv) uvOf.set(c, (uv = cells.uv(c)));
+      return uv;
+    };
+    let k = start;
+    for (const { s, extra, cell } of pieces) {
+      const building = s.building ?? NO_BUILDING;
+      const full = fullOf(building);
+      const uv = uvCell(cell ?? WALL_CELL[skinOf(building)]);
+      if (extra.band) bandAt(m, s, baseY, extra.band, full, full);
+      else if (extra.post) postMatrix(m, extra.post[0], extra.post[1], baseY, full);
+      else segmentMatrix(m, s, baseY, full);
+      mesh.setMatrixAt(k, m);
+      iuv[2 * k] = uv[0];
+      iuv[2 * k + 1] = uv[1];
+      this.items.push({ mesh, index: k++, building, height: full, full, ...extra });
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    iuvAttr.needsUpdate = true;
+    if (!pool) mesh.computeBoundingSphere();
   }
 
   get segmentCount(): number {
-    return this.items.filter((i) => i.seg).length;
+    return this.items.filter((i) => i.seg && !i.band).length;
   }
 
   setCutaway(c: Cutaway): void {
@@ -313,7 +428,8 @@ export class VectorWalls {
       const h = vectorWallHeight(c, it.building, this.z, mx, my, it.full);
       if (h === it.height) continue;
       it.height = h;
-      if (h === 0) m.makeScale(0, 0, 0);
+      if (it.band && it.seg) bandAt(m, it.seg, this.baseY, it.band, h, it.full);
+      else if (h === 0) m.makeScale(0, 0, 0);
       else if (it.seg) segmentMatrix(m, it.seg, this.baseY, h);
       else postMatrix(m, it.post![0], it.post![1], this.baseY, h);
       it.mesh.setMatrixAt(it.index, m);
