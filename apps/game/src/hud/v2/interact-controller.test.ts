@@ -156,16 +156,20 @@ describe('InteractController', () => {
     expect(u.calls).toEqual(['forceDoor 2,3']);
   });
 
-  it('a tap at a closed window opens its menu; at a broken one climbs through', () => {
+  it('a tap at a closed window opens it, hold shows its menu; at a broken one climbs through', () => {
+    // Paweł 24.11: windows open and close one by one like doors.
+    const o = setup([], door(0.6, 'closed', { kind: 'window', glass: true }));
+    o.c.press(0);
+    o.release();
+    o.c.frame(100, 0);
+    expect(o.calls).toEqual(['door 2,3,n']);
     const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }));
     t.c.press(0);
-    t.release();
-    t.c.frame(100, 0);
-    expect(t.calls).toEqual([]);
-    expect(t.c.frame(120, 0)).toMatchObject({
+    expect(t.c.frame(TAP_MS, 0)).toMatchObject({
       mode: 'menu',
       items: ['Otwórz', 'Rozbij', 'Zabarykaduj', 'Zasłoń…'],
     });
+    expect(t.calls).toEqual([]);
     const u = setup([], door(0.6, 'broken', { kind: 'window' }));
     u.c.press(0);
     u.release();
@@ -225,8 +229,7 @@ describe('InteractController', () => {
     ];
     const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }), covers);
     t.c.press(0);
-    t.release();
-    t.c.frame(100, 0);
+    t.c.frame(TAP_MS, 0);
     expect(t.c.choose(3)).toBe(true);
     expect(t.calls).toEqual([]);
     expect(t.c.frame(120, 0)).toMatchObject({
@@ -242,8 +245,7 @@ describe('InteractController', () => {
   it('„Zasłoń…” with nothing to hang: a toast, no command', () => {
     const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true }));
     t.c.press(0);
-    t.release();
-    t.c.frame(100, 0);
+    t.c.frame(TAP_MS, 0);
     t.c.choose(3);
     expect(t.calls).toEqual(['toast Nie masz czym zasłonić']);
     expect(t.c.menuOpen).toBe(false);
@@ -253,9 +255,7 @@ describe('InteractController', () => {
     const cover = { item: 'base:blanket', lightPass: 0.1, blocksSight: true };
     const t = setup([], door(0.6, 'closed', { kind: 'window', glass: true, cover }));
     t.c.press(0);
-    t.release();
-    t.c.frame(100, 0);
-    expect(t.c.frame(120, 0)).toMatchObject({
+    expect(t.c.frame(TAP_MS, 0)).toMatchObject({
       items: ['Otwórz', 'Rozbij', 'Zabarykaduj', 'Zdejmij'],
     });
     t.c.choose(3);

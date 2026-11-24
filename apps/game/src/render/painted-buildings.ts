@@ -852,8 +852,19 @@ bool pbDoor = vColor.r > 0.9995 && abs(vColor.b - ${DOOR_MARK_B}) < 0.0006;
 bool pbDoor = false;
 #endif
 if (pbOn > 0.5 && pbDoor) {
-  // Door leaf (instance marked by openings.ts): soft warm glow so doors read from afar.
-  pbFill = diffuseColor.rgb * ${PB_DOOR_GLOW.toFixed(3)} + vec3(1.0, 0.72, 0.4) * 0.05;
+  // Door leaf (instance marked by openings.ts): painted wood grain on its stiles and panels
+  // (handle, hinges and glass keep their colour), soft warm glow so doors read from afar.
+  if (int(texture2D(pbLut, vMapUv).r * 255.0 + 0.5) == ${CELL_CLASS.door}) {
+    vec3 W = vPbW + pbOrigin;
+    vec3 pal = texture2D(map, vMapUv).rgb;
+    vec4 t = pbSample(${L.deski}.0, vec2(W.x + W.z, W.y) * 0.7);
+    diffuseColor.rgb = min(pal * 1.6, vec3(0.85)) * mix(1.0, t.r * 2.0, 0.35);
+    pbFill = diffuseColor.rgb * ${PB_DOOR_GLOW.toFixed(3)} + vec3(1.0, 0.72, 0.4) * 0.05;
+  } else {
+    // Handle, hinges, kick plate, glass: their own colour, a little lifted (read on the leaf).
+    diffuseColor.rgb = min(diffuseColor.rgb * 1.25, vec3(0.9));
+    pbFill = diffuseColor.rgb * 0.25;
+  }
 } else if (pbOn > 0.5) {
   int cls = int(texture2D(pbLut, vMapUv).r * 255.0 + 0.5);
   if (cls == ${CELL_CLASS.door}) {

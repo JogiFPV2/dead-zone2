@@ -7,8 +7,16 @@ import type {
 } from '@deadzone/protocol';
 import { DOOR_MARK_B } from '../render/painted-buildings.js';
 import {
+  AdditiveBlending,
   BatchedMesh,
   BoxGeometry,
+  DataTexture,
+  DoubleSide,
+  LinearFilter,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  type BufferGeometry,
+  type Texture,
   Color,
   Group,
   InstancedBufferAttribute,
@@ -18,6 +26,7 @@ import {
   Vector3,
 } from 'three';
 import type { TownKit } from './town/kit.js';
+import { LEAF, SASH, SASH_SHOP } from './town/door-models.js';
 import { placeholderMaterial } from '../lighting/materials.js';
 import { coverLook, coverMaterial, coverMatrix } from './window-cover-look.js';
 import type { BuildingLookup } from './building-lookup.js';
@@ -170,9 +179,37 @@ const KIT_LEAF = { width: 0.84, height: 2.1 };
 const KIT_FENCE = { length: 1.9, height: 1.08 };
 
 /**
- * Pose of a town-kit piece (door leaf / fence panel model, no box scaling). Same states as
- * `openingMatrix`: open doors swing 90°, broken ones lie on the floor, broken fences lie flat,
- * shake = rattle angle, `lowered` squashes the piece to the cutaway height.
+ * Where an opening sits when it is not on its tile edge: exterior doors / windows of slanted
+ * (vector-walled) buildings are set into the gap of the outline wall (`OutlineOpening`).
+ * `x`, `z`: centre of the gap; `rotY`: rotation of the edge module (local +x along the wall);
+ * `width`: gap width (the 1 m module is stretched to it).
+ */
+export interface OpeningPlace {
+  x: number;
+  z: number;
+  rotY: number;
+  width: number;
+}
+
+/** Extra pose input of `kitOpeningMatrix`. */
+export interface KitPose {
+  /** Placement on a slanted outline; absent = the tile edge. */
+  place?: OpeningPlace;
+  /**
+   * Side of the building's inside along the module's local +z (+1 / -1; 0 = unknown): opened
+   * window sashes swing in.
+   */
+  inside?: number;
+  /** Window sash model width (m, hinge at its local origin). */
+  sashWidth?: number;
+}
+
+/**
+ * Pose of a town-kit piece (door leaf / window sash / fence panel model, no box scaling). Same
+ * states as `openingMatrix`: open doors swing 90°, broken ones lie on the floor, broken fences
+ * lie flat, shake = rattle angle, `lowered` squashes the piece to the cutaway height. A window
+ * sash shows only while the window is `open` (swung 80° into the room; the wall module drops its
+ * glass then). Pure (tests).
  */
 export function kitOpeningMatrix(
   out: Matrix4,
@@ -180,48 +217,65 @@ export function kitOpeningMatrix(
   state: OpeningState,
   shake: number,
   lowered: boolean,
+  pose: KitPose = {},
 ): Matrix4 {
   const baseY = e.z * LEVEL_HEIGHT;
-  const along = e.side === 'n' ? new Vector3(1, 0, 0) : new Vector3(0, 0, 1);
-  const yawAlong = e.side === 'n' ? 0 : -Math.PI / 2;
+  const p = pose.place;
+  const yaw0 = p ? p.rotY : e.side === 'n' ? 0 : -Math.PI / 2;
+  // Local +x of the module (along the wall) in world x / z.
+  const along = new Vector3(Math.cos(yaw0), 0, -Math.sin(yaw0));
+  const centre = p
+    ? new Vector3(p.x, baseY, p.z)
+    : new Vector3(e.tx, baseY, e.ty).addScaledVector(along, 0.5);
+  const stretch = p ? p.width : 1;
   const fallDir = hash(e.tx, e.ty, e.side) < 0.5 ? 1 : -1;
   const up = new Vector3(0, 1, 0);
   const local = new Vector3(1, 0, 0);
   const q = new Quaternion();
   const tilt = new Quaternion();
-  const pos = new Vector3(e.tx, baseY, e.ty);
+  if (e.kind === 'window') {
+    const w = pose.sashWidth ?? 0.9;
+    if (state !== 'open' || lowered) return out.makeScale(0, 0, 0);
+    // +90° swings the free end towards local -z: pick the sign that points inside.
+    const dir = (pose.inside ?? 0) > 0 ? -1 : 1;
+    const pos = centre.clone().addScaledVector(along, (-w / 2) * stretch);
+    q.setFromAxisAngle(up, yaw0 + (dir * (80 * Math.PI)) / 180);
+    return out.compose(pos, q, new Vector3(stretch, 1, 1));
+  }
   if (e.kind === 'door') {
     const sy = lowered ? LOWERED_HEIGHT / KIT_LEAF.height : 1;
-    pos.addScaledVector(along, (1 - KIT_LEAF.width) / 2);
+    const pos = centre.clone().addScaledVector(along, (-KIT_LEAF.width / 2) * stretch);
+    const sx = stretch;
     if (state === 'broken') {
-      q.setFromAxisAngle(up, yawAlong);
+      q.setFromAxisAngle(up, yaw0);
       tilt.setFromAxisAngle(local, (fallDir * Math.PI) / 2);
       q.multiply(tilt);
       pos.y += 0.12;
-      return out.compose(pos, q, new Vector3(1, Math.min(sy, 1), 1));
+      return out.compose(pos, q, new Vector3(sx, Math.min(sy, 1), 1));
     }
     const swing = state === 'open' ? (Math.PI / 2) * fallDir : shake;
-    q.setFromAxisAngle(up, yawAlong + swing);
-    return out.compose(pos, q, new Vector3(1, sy, 1));
+    q.setFromAxisAngle(up, yaw0 + swing);
+    return out.compose(pos, q, new Vector3(sx, sy, 1));
   }
+  const start = centre.clone().addScaledVector(along, -0.5 * stretch);
   if (e.kind === 'gate') {
     // Fence panel model as a gate leaf: hinged at the edge start, swings 90° when open.
     const sy = lowered ? Math.min(1, LOWERED_HEIGHT / KIT_FENCE.height) : 1;
     const swing = state === 'open' ? (Math.PI / 2) * fallDir : shake;
-    q.setFromAxisAngle(up, yawAlong + swing);
+    q.setFromAxisAngle(up, yaw0 + swing);
     const dir = along.clone().applyAxisAngle(up, swing);
-    pos.addScaledVector(dir, 0.5);
-    return out.compose(pos, q, new Vector3(1 / KIT_FENCE.length, sy, 1));
+    const pos = start.addScaledVector(dir, 0.5 * stretch);
+    return out.compose(pos, q, new Vector3(stretch / KIT_FENCE.length, sy, 1));
   }
   // Fence panel, tilting around its bottom edge.
   const sy = lowered ? Math.min(1, LOWERED_HEIGHT / KIT_FENCE.height) : 1;
   const angle = state === 'broken' ? (fallDir * Math.PI) / 2 : shake;
-  q.setFromAxisAngle(up, yawAlong);
+  q.setFromAxisAngle(up, yaw0);
   tilt.setFromAxisAngle(local, -angle);
   q.multiply(tilt);
-  pos.addScaledVector(along, 0.5);
+  const pos = centre.clone();
   if (state === 'broken') pos.y += 0.08;
-  return out.compose(pos, q, new Vector3(1 / KIT_FENCE.length, sy, 1));
+  return out.compose(pos, q, new Vector3(stretch / KIT_FENCE.length, sy, 1));
 }
 
 /** Height band (m above the floor) the planks of an edge kind cover. */
@@ -278,6 +332,92 @@ export function shardMatrix(
   return out.compose(pos, q, new Vector3(0.9, h, PANE.thickness));
 }
 
+/** Door glow through walls (Paweł 24.11): colour, reach and draw order. */
+export const DOOR_GLOW_COLOR = new Color('#ffc978');
+/** Full glow up to this distance (tiles = m), none past `DOOR_GLOW_FAR`. */
+export const DOOR_GLOW_NEAR = 14;
+export const DOOR_GLOW_FAR = 30;
+/** Peak strength (additive share of `DOOR_GLOW_COLOR`): faint, a hint through walls. */
+export const DOOR_GLOW_PEAK = 0.14;
+/** Drawn after the world (no depth test: shows through walls and roofs). */
+export const DOOR_GLOW_ORDER = 20;
+
+/**
+ * Glow strength of a door for a viewer (sim x / y, level z): only doors on the viewer's level,
+ * `DOOR_GLOW_PEAK` up to `DOOR_GLOW_NEAR`, fading out by `DOOR_GLOW_FAR`. Pure (tests).
+ */
+export function doorGlowStrength(
+  e: Pick<OpeningEdge, 'tx' | 'ty' | 'z' | 'side'>,
+  v: { x: number; y: number; z: number },
+): number {
+  if (e.z !== v.z) return 0;
+  const cx = e.side === 'n' ? e.tx + 0.5 : e.tx;
+  const cy = e.side === 'n' ? e.ty : e.ty + 0.5;
+  const d = Math.hypot(cx - v.x, cy - v.y);
+  if (d >= DOOR_GLOW_FAR) return 0;
+  const k = d <= DOOR_GLOW_NEAR ? 1 : 1 - (d - DOOR_GLOW_NEAR) / (DOOR_GLOW_FAR - DOOR_GLOW_NEAR);
+  return DOOR_GLOW_PEAK * k * k * (3 - 2 * k);
+}
+
+let glowGeometry: BufferGeometry | undefined;
+/** Door-sized card in the leaf's frame (hinge at the origin, along +x, up from the floor). */
+export function doorGlowGeometry(): BufferGeometry {
+  if (!glowGeometry) {
+    // A little larger than the leaf: the soft edge falls on the frame.
+    const g = new PlaneGeometry(LEAF.width + 0.2, LEAF.height + 0.16);
+    g.translate(LEAF.width / 2, LEAF.height / 2, 0);
+    glowGeometry = g;
+  }
+  return glowGeometry;
+}
+
+/** Soft rectangle (white middle, transparent rim) for the glow card. */
+function glowTexture(): Texture {
+  const w = 32;
+  const h = 64;
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const ex = Math.min(x + 0.5, w - x - 0.5) / (w * 0.32);
+      const ey = Math.min(y + 0.5, h - y - 0.5) / (h * 0.16);
+      const k = Math.min(1, ex) * Math.min(1, ey);
+      const v = Math.round(255 * k * k * (3 - 2 * k));
+      data.set([v, v, v, 255], (y * w + x) * 4);
+    }
+  const t = new DataTexture(data, w, h);
+  t.magFilter = t.minFilter = LinearFilter;
+  t.needsUpdate = true;
+  return t;
+}
+
+let glowMaterial: MeshBasicMaterial | undefined;
+/** Shared additive, depth-test-free material of the door glow (instance colour = strength). */
+export function doorGlowMaterial(): MeshBasicMaterial {
+  if (!glowMaterial) {
+    glowMaterial = new MeshBasicMaterial({
+      color: 0xffffff,
+      map: glowTexture(),
+      transparent: true,
+      blending: AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+      side: DoubleSide,
+      fog: false,
+      toneMapped: false,
+    });
+    glowMaterial.name = 'openings/door-glow';
+  }
+  return glowMaterial;
+}
+
+/** The wall module of a window drops its glass while open (sash swung in) or smashed. */
+export const windowWithoutGlass = (state: OpeningState): boolean =>
+  state === 'broken' || state === 'open';
+
+/** Sash model for a window module kind (`windowKind`): witryna or a plain window. */
+export const sashModel = (kind: 'shop' | 'window' | undefined): string | undefined =>
+  kind === 'shop' ? SASH_SHOP : kind === 'window' ? SASH : undefined;
+
 /** Town look of the opening pieces: kit models in one BatchedMesh (windows are wall modules). */
 export interface OpeningsKit {
   kit: TownKit;
@@ -285,6 +425,10 @@ export interface OpeningsKit {
   leafOf(e: OpeningEdge): string;
   /** Window state changes (the glass lives in the wall module). */
   onWindow?(e: OpeningEdge, state: OpeningState): void;
+  /** Sash model of an opened window (`SASH` / `SASH_SHOP`); absent = windows get no sash. */
+  sashOf?(e: OpeningEdge): string | undefined;
+  /** Placement on a slanted building's outline (exterior doors / windows), else the tile edge. */
+  placeOf?(e: OpeningEdge): OpeningPlace | undefined;
 }
 
 interface Group3 {
@@ -328,6 +472,14 @@ export class OpeningsView {
   private dirty = true;
 
   private batch: BatchedMesh | undefined;
+  /** Kit pose extras per edge (outline placement, inside side, sash width). */
+  private readonly poses = new Map<OpeningEdge, KitPose>();
+  /** Door glow through walls: leaf shapes drawn over everything, faded by distance. */
+  private glow: InstancedMesh | undefined;
+  private readonly glowIds = new Map<OpeningEdge, number>();
+  private readonly glowShown = new Set<OpeningEdge>();
+  private viewer: { x: number; y: number; z: number } | undefined;
+  private readonly glowColor = new Color();
 
   constructor(
     private readonly source: ChunkSource,
@@ -433,6 +585,23 @@ export class OpeningsView {
     for (const e of lists.door) pieces.push({ kind: 'door', e, model: kit.leafOf(e) });
     for (const e of lists.fence) pieces.push({ kind: 'fence', e, model: 'prop-fence' });
     for (const e of lists.gate) pieces.push({ kind: 'gate', e, model: 'prop-fence' });
+    // Every window gets its sash (hidden until opened): each one opens on its own.
+    for (const e of lists.window) {
+      const sash = kit.sashOf?.(e);
+      pieces.push({ kind: 'window', e, model: sash ?? '' });
+    }
+    const modelOf = new Map(pieces.map((p) => [p.e, p.model]));
+    for (const kind of KINDS)
+      for (const e of lists[kind]) {
+        const place = kit.placeOf?.(e);
+        const model = modelOf.get(e);
+        const sashWidth = model ? this.modelWidth(model) : undefined;
+        this.poses.set(e, {
+          ...(place ? { place } : {}),
+          inside: this.insideSign(e, place),
+          ...(sashWidth ? { sashWidth } : {}),
+        });
+      }
     const models = [...new Set(pieces.map((p) => p.model))].filter((m) =>
       kit.kit.geometries.has(m),
     );
@@ -449,6 +618,7 @@ export class OpeningsView {
       if (edges.length) this.groups.set(kind, { edges, ids: [] });
     }
     if (!models.length) return;
+    this.addGlow(pieces.filter((p) => p.kind === 'door' && kit.kit.geometries.has(p.model)));
     const batch = new BatchedMesh(Math.max(1, pieces.length), verts, index, kit.kit.material);
     batch.name = 'openings:kit';
     batch.castShadow = true;
@@ -457,7 +627,12 @@ export class OpeningsView {
     for (const p of pieces) {
       const gid = ids.get(p.model);
       const g = this.groups.get(p.kind);
-      if (gid === undefined || !g?.ids) continue;
+      if (!g?.ids) continue;
+      if (gid === undefined) {
+        // No model (e.g. no sash for this window): keeps the index of the group's edges.
+        g.ids.push(-1);
+        continue;
+      }
       const id = batch.addInstance(gid);
       // Door leaves are marked for the painted style's soft door glow.
       if (p.kind === 'door') batch.setColorAt(id, DOOR_MARK);
@@ -465,6 +640,93 @@ export class OpeningsView {
     }
     this.batch = batch;
     this.root.add(batch);
+  }
+
+  /** Width (m, along local +x) of a kit model, cached. */
+  private modelWidth(model: string): number | undefined {
+    const g = this.kit?.kit.geometries.get(model);
+    if (!g) return undefined;
+    if (!g.boundingBox) g.computeBoundingBox();
+    const bb = g.boundingBox!;
+    return bb.max.x - Math.max(0, bb.min.x);
+  }
+
+  /**
+   * Side of the building's inside along the module's local +z: the tile on that side of the
+   * edge belongs to the edge's building (+1), the other one does (-1), else 0.
+   */
+  private insideSign(e: OpeningEdge, place?: OpeningPlace): number {
+    // Tile on the +world side of the edge (south for a north edge, east for a west edge).
+    const plus = this.lookup.at(e.tx, e.ty, e.z) === e.building;
+    const minus =
+      e.side === 'n'
+        ? this.lookup.at(e.tx, e.ty - 1, e.z) === e.building
+        : this.lookup.at(e.tx - 1, e.ty, e.z) === e.building;
+    if (plus === minus) return 0;
+    const s = plus ? 1 : -1;
+    const nx = e.side === 'n' ? 0 : s;
+    const nz = e.side === 'n' ? s : 0;
+    // Local +z of the module as `kitOpeningMatrix` turns it.
+    const yaw = place ? place.rotY : e.side === 'n' ? 0 : -Math.PI / 2;
+    return nx * Math.sin(yaw) + nz * Math.cos(yaw) >= 0 ? 1 : -1;
+  }
+
+  /**
+   * Door glow: one soft door-sized card per leaf (follows the leaf when it swings), additive and
+   * without depth test, so it shows through walls. One flat card, not the leaf model: a model's
+   * stacked faces would add up to a white blob.
+   */
+  private addGlow(doors: readonly { e: OpeningEdge; model: string }[]): void {
+    if (!doors.length) return;
+    const glow = new InstancedMesh(doorGlowGeometry(), doorGlowMaterial(), doors.length);
+    glow.name = 'openings:door-glow';
+    glow.renderOrder = DOOR_GLOW_ORDER;
+    glow.castShadow = false;
+    glow.receiveShadow = false;
+    glow.frustumCulled = false;
+    doors.forEach((d, id) => {
+      glow.setColorAt(id, this.glowColor.setScalar(0));
+      glow.setMatrixAt(id, this.m.makeScale(0, 0, 0));
+      this.glowIds.set(d.e, id);
+    });
+    this.glow = glow;
+    this.root.add(glow);
+  }
+
+  private glowAt(e: OpeningEdge, m: Matrix4 | undefined): void {
+    const id = this.glowIds.get(e);
+    if (id === undefined || !this.glow) return;
+    if (m) this.glow.setMatrixAt(id, m);
+    else this.glow.setMatrixAt(id, this.m.makeScale(0, 0, 0));
+    if (m) this.glowShown.add(e);
+    else this.glowShown.delete(e);
+  }
+
+  /** Strength of each door's glow from the viewer (player) position. */
+  private updateGlowFade(): void {
+    const glow = this.glow;
+    if (!glow) return;
+    const v = this.viewer;
+    let any = false;
+    for (const [e, id] of this.glowIds) {
+      const a = v && this.glowShown.has(e) ? doorGlowStrength(e, v) : 0;
+      if (a > 0) any = true;
+      glow.setColorAt(id, this.glowColor.copy(DOOR_GLOW_COLOR).multiplyScalar(a));
+    }
+    glow.instanceMatrix.needsUpdate = true;
+    if (glow.instanceColor) glow.instanceColor.needsUpdate = true;
+    glow.visible = any;
+  }
+
+  /**
+   * Player position (sim tiles x / y, level z): door glow fades with distance and shows on the
+   * player's level only. Re-applied when the player moved half a tile or changed level.
+   */
+  setViewer(x: number, y: number, z: number): void {
+    const v = this.viewer;
+    if (v && v.z === z && Math.hypot(v.x - x, v.y - y) < 0.5) return;
+    this.viewer = { x, y, z };
+    if (this.glow) this.dirty = true;
   }
 
   /** Edges of a kind (tests, dev). */
@@ -557,7 +819,7 @@ export class OpeningsView {
   update(nowS: number): void {
     if (!this.dirty && this.pressure.size === 0) return;
     this.dirty = false;
-    for (const { mesh, edges, ids } of this.groups.values()) {
+    for (const [kind, { mesh, edges, ids }] of this.groups) {
       if (!mesh && !ids?.length) continue;
       edges.forEach((e, i) => {
         const key = openingKey(e.tx, e.ty, e.z, e.side);
@@ -570,21 +832,30 @@ export class OpeningsView {
         const axis = e.side === 'n' ? 'N' : 'W';
         const lowered = isEdgeLowered(this.cutaway, e.building, axis, e.tx, e.ty);
         const state = this.states.get(key) ?? 'closed';
-        if (isLevelHidden(this.cutaway, e.building, e.z)) {
+        const hidden = isLevelHidden(this.cutaway, e.building, e.z);
+        if (hidden) {
           // Storey above the player's floor in a cut building: not drawn.
           this.m.makeScale(0, 0, 0);
           if (mesh) mesh.setMatrixAt(i, this.m);
-          else if (this.batch && ids?.[i] !== undefined) this.batch.setMatrixAt(ids[i], this.m);
+          else if (this.batch && ids?.[i] !== undefined && ids[i] >= 0)
+            this.batch.setMatrixAt(ids[i], this.m);
         } else if (mesh) {
           openingMatrix(this.m, e, state, shake, lowered);
           mesh.setMatrixAt(i, this.m);
-        } else if (this.batch && ids?.[i] !== undefined) {
-          kitOpeningMatrix(this.m, e, state, shake, lowered);
+        } else if (this.batch && ids?.[i] !== undefined && ids[i] >= 0) {
+          kitOpeningMatrix(this.m, e, state, shake, lowered, this.poses.get(e));
           this.batch.setMatrixAt(ids[i], this.m);
+        }
+        if (kind === 'door' && this.glow) {
+          // Glow at full height even where the cutaway lowers the leaf: the door shows there.
+          if (lowered && !hidden)
+            kitOpeningMatrix(this.m, e, state, shake, false, this.poses.get(e));
+          this.glowAt(e, hidden || state === 'broken' ? undefined : this.m);
         }
       });
       if (mesh) mesh.instanceMatrix.needsUpdate = true;
     }
+    this.updateGlowFade();
     this.updateExtras();
   }
 
@@ -667,6 +938,7 @@ export class OpeningsView {
     // The cover material is shared by every view: only its per-view geometry goes.
     this.coverMesh?.geometry.dispose();
     this.batch?.dispose();
+    this.glow?.dispose();
     this.root.clear();
   }
 }

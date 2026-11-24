@@ -108,7 +108,8 @@ describe('gates and windows (F targeting, #106)', () => {
     expect(openingPrimary(target({ state: 'locked' }))?.cmd).toBe('toggleDoor');
     expect(openingPrimary(target({ kind: 'window', state: 'broken' }))?.cmd).toBe('climbThrough');
     expect(openingPrimary(target({ kind: 'window', state: 'open' }))?.label).toBe('Przejdź');
-    expect(openingPrimary(target({ kind: 'window', state: 'closed' }))).toBeUndefined();
+    // A closed window opens on F like a door (Paweł 24.11).
+    expect(openingPrimary(target({ kind: 'window', state: 'closed' }))?.cmd).toBe('toggleDoor');
     expect(openingPrimary(target({ barricade: 1 }))).toBeUndefined();
   });
 
@@ -141,7 +142,8 @@ describe('gates and windows (F targeting, #106)', () => {
   it('prompt verbs', () => {
     expect(doorVerb(target({ barricade: 3 }))).toBe('Zabarykadowane');
     expect(doorVerb(target({ state: 'locked' }))).toBe('Zamknięte');
-    expect(doorVerb(target({ kind: 'window', state: 'closed' }))).toBe('Okno');
+    expect(doorVerb(target({ kind: 'window', state: 'closed' }))).toBe('Otwórz');
+    expect(doorVerb(target({ kind: 'window', state: 'locked' }))).toBe('Okno');
     expect(doorVerb(target({ kind: 'gate', state: 'open' }))).toBe('Zamknij');
   });
 

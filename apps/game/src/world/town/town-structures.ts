@@ -180,6 +180,8 @@ export class TownStructures {
   private readonly edgesByBuilding = new Map<BuildingId, EdgeItem[]>();
   private readonly windows: EdgeItem[] = [];
   private readonly windowIndex = new Map<string, EdgeItem>();
+  /** Exterior doors / windows of slanted buildings: their spot on the outline (`tx,ty,axis`). */
+  private readonly outlinePlaces = new Map<string, OutlineOpening>();
   private readonly roofsByBuilding = new Map<BuildingId, { batch: Batch; instance: number }[]>();
   /** Floor slabs and stair runs of upper levels (hidden with the level). */
   private readonly slabsByBuilding = new Map<
@@ -276,6 +278,7 @@ export class TownStructures {
         );
       if (!p) continue;
       onOutline.set(e, p);
+      this.outlinePlaces.set(`${e.tx},${e.ty},${e.axis}`, p);
       const ux = Math.cos(p.rotY) * (p.width / 2);
       const uy = -Math.sin(p.rotY) * (p.width / 2);
       gaps.push({
@@ -834,6 +837,18 @@ export class TownStructures {
     if (!it || it.broken === broken) return;
     it.broken = broken;
     this.apply(it);
+  }
+
+  /** Spot of an exterior door / window on a slanted building's outline (else undefined). */
+  openingPlace(tx: number, ty: number, axis: 'N' | 'W'): OutlineOpening | undefined {
+    return this.outlinePlaces.get(`${tx},${ty},${axis}`);
+  }
+
+  /** Window module kind at an edge: `shop` (witryna), `window`, undefined = none. */
+  windowKind(tx: number, ty: number, axis: 'N' | 'W'): 'shop' | 'window' | undefined {
+    const it = this.windowIndex.get(`${tx},${ty},${axis}`);
+    if (!it) return undefined;
+    return it.edge.content === 'base:window-shop' ? 'shop' : 'window';
   }
 
   /** Skin of the doorway at an edge (door leaf choice), undefined if none. */

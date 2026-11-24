@@ -16,7 +16,9 @@ type Counts = Omit<BuildingStats, 'buildings' | 'windows'>;
 const KNOWN_VIOLATIONS: Record<string, Counts> = {
   // fewWindows 1: #1759 @ 9829,11385 — the only miss on okulickiego, never 0 on CI (run 40403454959); to fix in the per-type limits PR.
   'osm-okulickiego': { short: 0, dense: 0, acute: 0, selfX: 0, fewWindows: 1 },
-  'osm-stw': { short: 2, dense: 1, acute: 0, selfX: 0, fewWindows: 0 },
+  // fewWindows 1: #2752 @ 8934,12187 (30 × 6.5 m row house, 12 ground-floor windows for 73 m of
+  // long walls; limit 12.2) since windows every 3 m (Paweł 24.11: „za dużo okien”).
+  'osm-stw': { short: 2, dense: 1, acute: 0, selfX: 0, fewWindows: 1 },
   'plan-4': { short: 0, dense: 0, acute: 0, selfX: 0, fewWindows: 0 },
 };
 
