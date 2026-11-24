@@ -50,6 +50,7 @@ import {
   isPixelStyle,
   pixelRows,
   urlGraphicsStyle,
+  markCharacter,
 } from './render/graphics-style.js';
 import { NoiseRingModel } from './hud/noise/noise-model.js';
 import { NoiseRingView } from './hud/noise/noise-ring.js';
@@ -1568,6 +1569,7 @@ void ModelKit.create(renderer).then(async (kit) => {
     if (real) lightReal(p.object);
     else brighten(p.object);
     addHulls(p.object);
+    markCharacter(p.object);
     player.setModel(p.object, p.clips);
     // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
     if (!real)
@@ -1579,7 +1581,10 @@ void ModelKit.create(renderer).then(async (kit) => {
             ),
           )
           // Outlines for the creator parts too (idempotent).
-          .then(() => addHulls(p.object))
+          .then(() => {
+            addHulls(p.object);
+            markCharacter(p.object);
+          })
           .catch((e: unknown) => console.warn('player look', e));
       };
     // Creator look right away; a loaded save brings its look in view.characterProfile.
