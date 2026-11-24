@@ -157,6 +157,11 @@ export interface ItemStore {
   readonly progress: Map<number, PlayerProgress>;
   /** Player StableId → created character (character/character.ts). */
   readonly characters: Map<number, CharacterState>;
+  /**
+   * Player StableId → trait id → game minute its `gainedWhen` / `lostWhen` condition started
+   * holding (character/dynamic-traits.ts); only running conditions.
+   */
+  readonly traitSince: Map<number, Record<string, number>>;
   /** Player StableId → content ids of VHS tapes watched to the end (sorted; leisure). */
   readonly vhsWatched: Map<number, string[]>;
   /** Fuel pumps: `tileKey` → litres left (`vehicles/fuel.ts`; rolled on first use). */
@@ -192,6 +197,7 @@ export function createItemStore(content: ContentIndex): ItemStore {
     lures: new Map(),
     progress: new Map(),
     characters: new Map(),
+    traitSince: new Map(),
     vhsWatched: new Map(),
     magOf: new Map(),
     jammed: new Set(),

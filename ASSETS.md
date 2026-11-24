@@ -35,6 +35,7 @@ import przez Vite z `tools/assets/icons/`, bez kopii); broń bez modelu w `items
 | nailed-bat                           | Wooden Bat Barbed          | Quaternius, poly.pizza/m/HSM4KnggSz                                                         | CC0-1.0  |
 | baseball-bat                         | Baseball Bat               | Pichuliru, poly.pizza/m/POXTjdMP2c                                                          | CC0-1.0  |
 | crowbar                              | Crowbar                    | Pichuliru, poly.pizza/m/OS8gAoeDtM                                                          | CC0-1.0  |
+| fishing-rod                          | `custom/wedka.glb`         | model własny Deadzone (Python + numpy, `build_wedka.py`, 23.11.2026)                        | CC0-1.0  |
 
 ### Ikony, partie 4 i 4b (gotowe PNG od Designera, 01.10.2026)
 
@@ -176,6 +177,11 @@ z oryginałów; sumy SHA-256 dotyczą pobranych oryginałów.
 | `sfx-step-concrete0..3`, `sfx-step-wood0..3` (kroki: na zewnątrz / w budynku) | `footstep_concrete_000..003.ogg`, `footstep_wood_000..003.ogg` z paczki | Kenney, „Impact Sounds”, kenney.nl/assets/impact-sounds (`License.txt` w paczce: CC0)                                         | CC0-1.0  | paczka `kenney_impact-sounds.zip`: 029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8 |
 | `sfx-hit0..2` (trafienie wręcz, pchnięcie, atak zombie)                       | `impactPunch_medium_000..002.ogg` z paczki                              | Kenney, „Impact Sounds”, kenney.nl/assets/impact-sounds (CC0)                                                                 | CC0-1.0  | jak wyżej                                                                                           |
 | `sfx-door-open`, `sfx-door-close`                                             | `doorOpen_1.ogg`, `doorClose_1.ogg` z paczki                            | Kenney, „RPG Audio”, kenney.nl/assets/rpg-audio (`License.txt` w paczce: CC0)                                                 | CC0-1.0  | paczka `kenney_rpg-audio.zip`: 6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b     |
+
+Dźwięki proceduralne (bez plików, generowane w grze przez `apps/game/src/audio/synth.ts`, własne,
+CC0-1.0): połykanie tabletki, strzał z pistoletu, strzelby i karabinu, suchy strzał i zacięcie,
+przeładowanie, jęki i krzyk zombie, tłuczone szkło, upadek rzuconego przedmiotu, grzmot i pętla
+deszczu.
 
 ## Miasto: budynki, teren, propsy (`apps/game/public/models/deadzone-town/`)
 

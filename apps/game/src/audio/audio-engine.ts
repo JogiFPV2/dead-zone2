@@ -19,8 +19,11 @@ export type SoundId =
   | SynthSoundId;
 
 interface Loop {
+  readonly id: SoundId;
   readonly gain: GainNode;
   source: AudioBufferSourceNode | null;
+  /** Target gain once the loop is playing (`setLoopVolume`). */
+  volume: number;
 }
 
 const FADE_S = 1.2;
@@ -84,7 +87,7 @@ export class AudioEngine {
   }
 
   /** Starts (or cross-fades to) a looping track on `bus` (music / ambience). */
-  playLoop(bus: 'music' | 'ambience', id: SoundId): void {
+  playLoop(bus: 'music' | 'ambience', id: SoundId, volume = 1): void {
     const ctx = this.ctx;
     const out = this.buses.get(bus);
     if (!ctx || !out) return;
@@ -92,7 +95,7 @@ export class AudioEngine {
     const gain = ctx.createGain();
     gain.gain.value = 0;
     gain.connect(out);
-    const loop: Loop = { gain, source: null };
+    const loop: Loop = { id, gain, source: null, volume };
     this.loops.set(bus, loop);
     void this.load(id).then((buf) => {
       if (!buf || this.loops.get(bus) !== loop) return;
@@ -102,8 +105,22 @@ export class AudioEngine {
       src.connect(gain);
       src.start();
       loop.source = src;
-      gain.gain.setTargetAtTime(1, ctx.currentTime, FADE_S / 3);
+      gain.gain.setTargetAtTime(loop.volume, ctx.currentTime, FADE_S / 3);
     });
+  }
+
+  /** Id of the loop playing on `bus` (undefined when none). */
+  loopOn(bus: 'music' | 'ambience'): SoundId | undefined {
+    return this.loops.get(bus)?.id;
+  }
+
+  /** Smoothly changes the gain of the loop on `bus` (rain getting heavier). */
+  setLoopVolume(bus: 'music' | 'ambience', volume: number): void {
+    const ctx = this.ctx;
+    const loop = this.loops.get(bus);
+    if (!ctx || !loop || Math.abs(loop.volume - volume) < 0.01) return;
+    loop.volume = volume;
+    if (loop.source) loop.gain.gain.setTargetAtTime(volume, ctx.currentTime, FADE_S / 3);
   }
 
   /** Fades the loop on `bus` out. */

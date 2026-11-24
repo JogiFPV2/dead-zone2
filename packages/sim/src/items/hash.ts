@@ -6,6 +6,7 @@ import type { ItemStore } from './store.js';
 import { hashLures } from '../lures/lures.js';
 import { hashProgress } from '../progress/skills.js';
 import { hashCharacters } from '../character/character.js';
+import { hashTraitSince } from '../character/dynamic-traits.js';
 import { hashVhsWatched } from '../leisure/leisure.js';
 
 const KINDS = [
@@ -144,6 +145,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   hashLures(st, h);
   hashProgress(st, h);
   hashCharacters(st, h);
+  hashTraitSince(st, h);
   hashVhsWatched(st, h);
   hashUtilities(st, h);
   if (st.magOf.size > 0 || st.jammed.size > 0) {

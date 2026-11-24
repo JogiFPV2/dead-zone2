@@ -124,3 +124,50 @@ describe('VHS tapes', () => {
     expect(contextCommand(st, content, 30)).toEqual({ type: 'watchTv', vhs: 30 });
   });
 });
+
+describe('medical items', () => {
+  it('PPM bandages the worst open wound (the sim needs a part)', async () => {
+    const { contextCommand } = await import('./inventory-model.js');
+    const content = {
+      ...EMPTY_HUD_CONTENT,
+      items: new Map([
+        [
+          'base:bandage',
+          { id: 'base:bandage', kind: 'medical', maxStack: 10, weightKg: 0.05, usable: true },
+        ],
+      ]),
+    };
+    const band = { id: 40, def: 'base:bandage', count: 1, weightKg: 0.05 };
+    const wound = {
+      wound: 'scratch',
+      healed: 0,
+      bandaged: false,
+      bandageDirty: false,
+      infected: false,
+    } as const;
+    const st: GameState = {
+      ...INITIAL_GAME_STATE,
+      player: {
+        ...INITIAL_GAME_STATE.player,
+        wounds: [
+          { ...wound, part: 'hand_l', bleeding: 3 },
+          { ...wound, part: 'shin_r', bleeding: 12 },
+        ],
+      },
+      inventory: {
+        container: 1,
+        loadKg: 0,
+        capacityKg: 12,
+        hardLimitKg: 24,
+        carryLoad: 0,
+        equipped: {},
+        containers: {
+          1: { id: 1, kind: 'inventory', capacityKg: null, weightKg: 0, items: [band] },
+        },
+      },
+    };
+    expect(contextCommand(st, content, 40)).toEqual({ type: 'useItem', item: 40, part: 'shin_r' });
+    const healthy = { ...st, player: { ...st.player, wounds: [] } };
+    expect(contextCommand(healthy, content, 40)).toEqual({ type: 'useItem', item: 40 });
+  });
+});

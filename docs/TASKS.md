@@ -19,7 +19,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Pętla symulacji 20 Hz w Web Workerze + interpolacja renderu (Symulacja + Silnik)
 - [x] ECS (bitecs), RNG z seedem, system komend (Symulacja)
 - [x] Ruch WASD, celowanie myszą, kolizje (Symulacja + Silnik)
-- [ ] Dzień i noc, latarnie, cienie (Silnik)
+- [x] Dzień i noc, latarnie, cienie (Silnik) — `apps/game/src/lighting` (latarnie `street-lamps.ts`), pogoda i księżyc
 - [x] Pomiar fps i draw calli w trybie dev (Silnik)
 
 ## Etap 2 — Przetrwanie
@@ -29,8 +29,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Infekcja i gorączka (Symulacja)
 - [x] Sen (Symulacja)
 - [x] Kary z ran, widzenie w dzień i w nocy, czasy jedzenia i picia jako dane (Modules)
-- [ ] Kary z ran do ruchu, ataku i widzenia w sim (Symulacja)
-- [ ] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer)
+- [x] Kary z ran do ruchu, ataku i widzenia w sim (Symulacja) — `survival/penalties.ts`
+- [x] Licznik przeżytych dni jako wynik + ekran śmierci ze statystykami (Silnik + Designer) — `apps/game/src/death`
 
 ## Etap 3 — Przedmioty i ekwipunek
 - [x] Definicje przedmiotów w JSON (Modules)
@@ -55,11 +55,11 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Improwizowana broń: blok `improvisedWeapon` w przedmiocie, `meleeStatsFor(item)` dla każdego przedmiotu w ręku (Modules)
 - [x] Podpiąć `meleeStatsFor` (`@deadzone/content`) pod atak wręcz: obrażenia, zasięg, tempo, trwałość i psucie się przedmiotu, XP dla `skill`, stamina, kryt, dwuręczność, `CombatView.melee` (Symulacja, sim-architecture 9.41)
 - [ ] UI: statystyki broni w ręku z `CombatView.melee` (`conditionPct`, `source`) w ActionView / karcie celu (Silnik)
-- [ ] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja)
-- [ ] Rzucanie przedmiotów jako wabik hałasem (Symulacja)
+- [x] Broń palna: pistolet, rewolwer, strzelba, karabin, amunicja, magazynki, trwałość (Symulacja) — `combat/firearms.ts`
+- [x] Rzucanie przedmiotów jako wabik hałasem (Symulacja) — event `thrown`
 - [x] Wabiki jako dane: elektroniczny z pilotem i baterią, biegający z craftingu (Modules)
-- [ ] Wabik elektroniczny: postawienie, pilot do 60 m, hałas 30 s na 40 m, zombie zostają 20–40 s, zużycie baterii (Symulacja)
-- [ ] Wabik biegający: opóźnienie 3–30 s i kierunek od gracza, bieg ~15 m, hałas 20 s na 30 m, jednorazowy (Symulacja)
+- [x] Wabik elektroniczny: postawienie, pilot do 60 m, hałas 30 s na 40 m, zombie zostają 20–40 s, zużycie baterii (Symulacja)
+- [x] Wabik biegający: opóźnienie 3–30 s i kierunek od gracza, bieg ~15 m, hałas 20 s na 30 m, jednorazowy (Symulacja)
 - [ ] Ugryzienia i szansa infekcji (Symulacja)
 - [ ] Poziom zagrożenia w HUD (Designer + Silnik); sim wystawia `view.threat` 0–100
 - [~] Karta celu w HUD (Symulacja + Silnik) — sim gotowy: `SimViewPatch.target` (lock → kursor → ostatnio trafiony 4 s), komenda `setTarget`, protokół 20 ([sim-architecture.md 9.40](sim-architecture.md)); UI karty: Silnik
@@ -67,25 +67,27 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 
 ## Etap 5 — Postać i umiejętności
 - [x] Zawody i kilkadziesiąt cech jako dane, z bilansem punktów (Modules)
-- [ ] Cechy zdobywane i tracone w trakcie gry (Symulacja)
-- [ ] Ekran tworzenia postaci (Designer + Silnik)
+- [x] Cechy zdobywane i tracone w trakcie gry (Symulacja) — system `traits`, event `traitChanged`, protokół 51 ([sim-architecture.md 9.83](sim-architecture.md)); toast w HUD
+- [x] Ekran tworzenia postaci (Designer + Silnik) — `apps/game/src/creator`
 - [x] Kreator postaci jako dane: części wyglądu, palety, pula punktów (Modules)
-- [ ] Pula punktów i wygląd w stanie postaci (Symulacja)
+- [x] Pula punktów i wygląd w stanie postaci (Symulacja) — `CharacterProfileView`
 - [x] Kasety VHS, telewizor i generator jako dane (Modules)
-- [ ] Oglądanie kaset na zasilanym telewizorze, prąd z generatora (Symulacja)
-- [ ] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)
+- [x] Oglądanie kaset na zasilanym telewizorze, prąd z generatora (Symulacja) — `watchTv`
+- [x] Umiejętności 0–10 w kategoriach walka, przetrwanie, rzemiosło i ruch, XP za akcje (Symulacja)
+- [x] Ekrany Postać (H), Umiejętności (K) i Dziennik (J) (Silnik) — `apps/game/src/character`: stan, rany z przyciskami Opatrz / Odkaź / Zszyj, cechy, umiejętności z postępem, dziennik sesji; bandaż z ekwipunku trafia w najgorszą ranę
 - [x] Książki i magazyny: mnożniki XP i odblokowanie receptur (Modules + Symulacja) — dane `items/books-*.json`, `magazines.json`, `recipe-magazines.json` (#18); sim: `xpMul` w `progress/skills.ts`, czytanie w `crafting.ts`
-- [ ] Toasty XP i obrażeń (Designer + Silnik)
+- [x] Toasty XP i obrażeń (Designer + Silnik) — awans umiejętności, cechy, połów (`hud/progress-toasts.ts`)
 
 ## Etap 6 — Crafting
 - [x] Receptury jako dane (Modules)
 - [x] Stacje rzemieślnicze z poziomami 1–3 i receptury „combine” jako dane (Modules)
-- [ ] Łączenie przedmiotów w ekwipunku (combine) (Symulacja)
-- [ ] Stacje: stawianie, ulepszanie, crafting przy stacji z poziomem (Symulacja)
+- [x] Łączenie przedmiotów w ekwipunku (combine) (Symulacja)
+- [x] Stacje: stawianie, ulepszanie, crafting przy stacji z poziomem (Symulacja) — `upgradeStation`
 - [ ] Ikona łączenia i okno warsztatu z poziomem stacji (Designer + Silnik)
 - [ ] Kolejka akcji czasowych z paskiem postępu (Symulacja)
-- [ ] Okno craftingu (Designer + Silnik)
-- [ ] Gotowanie, bandaże, barykadowanie okien, rozbiórka mebli (Symulacja)
+- [x] Okno craftingu (Designer + Silnik) — `hud/workshop-window.ts`
+- [x] Gotowanie, bandaże, barykadowanie okien, rozbiórka mebli (Symulacja)
+- [x] Wędkarstwo (Modules + Symulacja) — wędka `base:fishing-rod` (przepis, garaż, ikona), akcja `fish` przy wodzie, szansa wg umiejętności, event `fished` ([sim-architecture.md 9.84](sim-architecture.md))
 
 ## Etap 7 — Mapa demo i loot
 - [x] Format mapy w chunkach + narzędzie do budowania mapy (Silnik)
@@ -127,10 +129,10 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Model i ikony stołu i lamp (Designer) — model `base:table` (dziś szare pudełko), lampy stojąca i biurkowa; ikony `base:table`, `base:floor-lamp`, `base:desk-lamp` (na `MISSING_ICONS_ALLOWLIST`)
 - [ ] Ikony i modele (Designer) — ikony: `base:chair`, `base:armchair`, `base:gas-stove` (przedmiot), `base:light-switch` (na `MISSING_ICONS_ALLOWLIST`); modele: krzesło, fotel, włącznik (dziś szare pudełko); `base:gas-stove` ma model w `deadzone-furniture`
 - [x] Drzwi i okna: zamykanie, rozbijanie, wchodzenie przez okno, barykady z desek, wyważanie zamkniętych drzwi, brama w ogrodzeniu (Symulacja) — klucze do budynków: 9.47
-- [ ] Minimapa i licznik dni (Designer + Silnik)
+- [x] Minimapa i licznik dni (Designer + Silnik)
 - [x] Schemat punktów zaczepienia przewodów na słupach (Modules) — `@deadzone/content/wires`: `attachFileSchema` dla `<modelId>.attach.json` obok modelu (`{modelId, kind: hv110|hv220|hv400|lv|catenary, attach: [{id, x, y, z}]}`, metry od podstawy, y w górę), `WIRE_RULES` (dozwolone id per kind; drugi tor `L4`–`L6` all-or-none, `GW2` tylko z `GW`), `attachPoint(file, id)`; test waliduje każdy `*.attach.json` w repo. Modele słupów (Designer), przewody ze zwisem (Silnik 2)
 - [ ] Cele i zadania (Symulacja + Designer)
-- [ ] Lokalny zapis i wczytanie gry (IndexedDB) (Symulacja)
+- [x] Lokalny zapis i wczytanie gry (IndexedDB) (Symulacja) — `apps/game/src/characters`
 - [x] LOD symulacji dużej mapy (8×8 km): zombie daleko jako liczniki w komórkach (dryf, reakcja na głośny hałas), rozwijanie i zwijanie deterministyczne z histerezą, leniwy łup per chunk z catch-upem psucia, `worldSettings.simLod` (Symulacja) — [sim-architecture.md 9.24](sim-architecture.md)
 - [x] Zapis świata jako delta: `deadzone-save` v2 = seed + `generatorVersion` + zmienione chunki + liczniki komórek + encje aktywne; ok. 230 KiB gzip przy 300 odwiedzonych chunkach; kody błędów wczytania (Symulacja) — 9.24
 - [x] Interfejs `WorldSource` dla generatora świata + adapter mapy demo (Symulacja); generator (Silnik 2)
@@ -153,6 +155,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Łóżko podwójne `base:double-bed` 2×2 (Modules + Designer) — przedmiot (`placeable`, `sleepSurface: bed`, `footprint {w:2,h:2}`), ikona partii 9, model Designera `/workspace/assets-src/furniture/double-bed.glb` (166×199 cm, origin w środku footprintu) — #213
 - [ ] Rozstawienie łóżka podwójnego (Silnik 2) — `furnish.ts` stawia je w sypialniach z miejscem 2×2, wezgłowie przy ścianie; render modelu po włączeniu `worldSettings.furnitureFootprint`
 - [ ] Generator świata 8×8 km wg `WorldSource` (`chunkKind`, `generatorVersion`) (Silnik 2)
+- [x] Mapa `stw2` (Stalowa Wola i okolice) jako mapa nowej gry (`LATEST_MAP`), zapisy na `osm-stw` oznaczone „STARA MAPA” (Silnik)
 - [x] Tryby gry jako dane: „Przetrwaj” i „Ratunek” (Modules)
 - [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)
 - [ ] Tryb „Ratunek”: NPC zamknięty w willi, pilnująca horda (limit 300), wywabienie hordy i ewakuacja NPC (Symulacja)
@@ -170,11 +173,11 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [x] Strona polityki prywatności (Serwer) — `apps/game/public/privacy/index.html` → https://jogifpv2.github.io/deadzone-play/privacy/; administrator i kontakt: Paweł Rosol, pawelrosol@gmail.com
 
 ## Etap 9 — Grywalne demo
-- [ ] Dźwięki CC0 (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze brak
+- [~] Dźwięki (Designer) — menu: muzyka, otoczenie i UI gotowe (ASSETS.md); efekty w grze proceduralne (`audio/synth.ts`: strzały, przeładowanie, zombie, deszcz, burza, szkło), do odsłuchu i ewentualnej podmiany na nagrania CC0
 - [x] Menu główne z żywą sceną w tle + Ustawienia › Audio, szyny głośności Web Audio (Silnik)
 - [x] Tło menu: pętla pory dnia 55 s (dzień 20 · zachód 10 · noc 15 · wschód 10), moduł `menu-day-cycle` niezależny od sceny, `?menuTime=` (Silnik)
 - [x] Tło menu: scena OSM Stalowej Woli (wiadukt KEN / ul. Okulickiego) w town kicie gry, gracz + zombie ze sceny, cykl pory dnia, atrybucja OSM (Silnik)
-- [ ] Samouczek i ustawienia (Designer + Silnik)
+- [x] Samouczek i ustawienia (Designer + Silnik) — `apps/game/src/tutorial`, Ustawienia › Interfejs › Samouczek
 - [x] Schemat układu HUD i ustawień gracza (Modules) — `@deadzone/ui/settings`: `HUD_ELEMENT_IDS`, `HUD_LAYOUT_SLOTS`, `hudLayoutSchema`, `DEFAULT_HUD_LAYOUT`, `resolveLayout`, `clampToViewport`; `playerSettingsSchema` (v1, limit 16 KB) + `resolveSettings` / `validatePlayerSettings` dla serwera. Bez DOM; edytor HUD w kliencie jeszcze niepodpięty (Silnik)
 - [ ] Profilowanie i optymalizacja (Silnik)
 - [ ] Sentry i zbieranie błędów (Serwer)

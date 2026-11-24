@@ -6,6 +6,7 @@ import type { SimWorld } from '../core/world.js';
 import { ACTION_KINDS, registerAction } from '../actions/queue.js';
 import { registerCraftActions } from '../crafting/crafting.js';
 import { registerLeisureActions } from '../leisure/leisure.js';
+import { registerFishingActions } from '../fishing/fishing.js';
 import { registerVehicleActions } from '../vehicles/actions.js';
 import { isVehicleContainer, vehicleContainerBlock } from '../vehicles/containers.js';
 import { registerLockActions } from '../furniture/locks.js';
@@ -190,6 +191,7 @@ export function registerItemActions(): void {
   registerVehicleActions();
   registerFurnitureMoveActions();
   registerHoldDoorAction();
+  registerFishingActions();
 
   registerAction('search', {
     validate(w, eid, a) {

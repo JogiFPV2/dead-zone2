@@ -7,6 +7,7 @@ import {
   parseGiveParam,
   parseStatParam,
   parseTileListParam,
+  parseWoundParam,
 } from './boot-options.js';
 
 it('uses the worker by default and the mock only for ?crowd', () => {
@@ -21,6 +22,7 @@ it('uses the worker by default and the mock only for ?crowd', () => {
     cars: [],
     pumps: [],
     stats: [],
+    wounds: [],
     zombies: true,
     town: true,
     zspawn: 0,
@@ -81,6 +83,14 @@ it('parses ?stat= debug stats', () => {
   expect(parseBootOptions('').stats).toEqual([]);
 });
 
+it('parses dev starting wounds', () => {
+  expect(parseWoundParam('forearm_l:laceration, hand_r:scratch,tail:bite,head:burn')).toEqual([
+    { part: 'forearm_l', wound: 'laceration' },
+    { part: 'hand_r', wound: 'scratch' },
+  ]);
+  expect(parseBootOptions('?wound=head:bite').wounds).toEqual([{ part: 'head', wound: 'bite' }]);
+});
+
 it('parses dev TVs (`?tv=`)', () => {
   expect(parseBootOptions('?map=demo-house&tv=7,8;9,10').tvs).toEqual([
     { x: 7, y: 8 },
@@ -113,9 +123,10 @@ it('render style (Styl grafiki: Realistyczny): the stored setting applies unless
   expect(parseBootOptions('').render.style).toBe('default');
 });
 
-it('the newest map is the OSM map of Stalowa Wola (osm-stw)', () => {
-  expect(LATEST_MAP).toBe('osm-stw');
-  expect(isOldMap('osm-stw')).toBe(false);
+it('the newest map is the 1:1 OSM map of Stalowa Wola (stw2)', () => {
+  expect(LATEST_MAP).toBe('stw2');
+  expect(isOldMap('stw2')).toBe(false);
+  expect(isOldMap('osm-stw')).toBe(true);
   expect(isOldMap('test-town')).toBe(true);
   expect(isOldMap('test')).toBe(false);
 });

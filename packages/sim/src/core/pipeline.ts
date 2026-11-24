@@ -3,6 +3,7 @@ import { aiThinkSystem } from '../ai/brain.js';
 import { lightSystem } from '../ai/light.js';
 import { lightLureSystem } from '../furniture/lighting.js';
 import { combatSystem } from '../combat/system.js';
+import { dynamicTraitsSystem } from '../character/dynamic-traits.js';
 import { aiLocomotionSystem } from '../ai/locomotion.js';
 import { animalSystem } from '../animals/system.js';
 import { footstepSystem, noiseCollectSystem } from '../ai/noise.js';
@@ -73,6 +74,7 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'sleep', run: (w, ctx) => sleepSystem(w, ctx.minutes.first, ctx.minutes.count) },
     { name: 'moodles', run: (w, ctx) => moodlesSystem(w, ctx.minutes.count > 0) },
     { name: 'penalties', run: (w) => penaltiesSystem(w) },
+    { name: 'traits', run: (w, ctx) => dynamicTraitsSystem(w, ctx.minutes) },
     { name: 'combat', run: (w, ctx) => combatSystem(w, ctx.grid) },
     { name: 'lifecycle', run: (w) => lifecycleSystem(w) },
     { name: 'playerMap', run: (w, ctx) => playerMapSystem(w, ctx.grid) },

@@ -31,6 +31,7 @@ import {
   type Mounted,
   type ActionButtonProps,
   type InventorySlotProps,
+  type ToastInput,
 } from '@deadzone/ui';
 import type { Bindings } from '../input/bindings.js';
 import type { CommandBody } from '../sim/sim-client.js';
@@ -148,6 +149,8 @@ export interface Hud {
   selectSlot(index: number): void;
   /** F1: flips the key-hint row. */
   toggleHints(now: number): void;
+  /** Toast of any kind (progress: trait gained or lost, skill level up). */
+  pushToast(t: ToastInput): void;
   resize(width: number, height: number): void;
   /** Firearm in hand: the widget's view model (aim reticle, input), else undefined. */
   firearm(): FirearmVM | undefined;
@@ -557,6 +560,7 @@ export function createHud(opts: HudOptions): Hud {
       lastState = undefined;
       lastUpdate = -Infinity;
     },
+    pushToast: (t) => toasts.push(t),
     toggleHints(now) {
       hintsSetting = toggleHints(hintsSetting, now - bootMs);
       lastUpdate = -Infinity;

@@ -112,6 +112,10 @@
         "weight": 2
       },
       {
+        "item": "base:fishing-rod",
+        "weight": 2
+      },
+      {
         "item": "base:hammer",
         "weight": 6
       },

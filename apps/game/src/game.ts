@@ -36,6 +36,11 @@ import { PlayerInput } from './input/player-input.js';
 import { SneakToggle } from './input/sneak-toggle.js';
 import { AudioEngine } from './audio/audio-engine.js';
 import { Footsteps, WORLD_SOUNDS, eventCues } from './audio/world-sfx.js';
+import { Tutorial, type TutorialScreen } from './tutorial/tutorial-model.js';
+import { createTutorialCard } from './tutorial/tutorial-card.js';
+import { progressToasts } from './hud/progress-toasts.js';
+import { browserStorage, loadTutorialDone, saveTutorialDone } from './tutorial/tutorial-store.js';
+import { Thunder, ZombieVoices, ambienceLoop, isNight, GROAN_TILES } from './audio/ambient-sfx.js';
 import { SETTINGS_STORAGE_KEY, createSettingsStore, loadSettings } from './settings/store.js';
 import { LocalPlayerSettingsStore } from './settings/player-settings-store.js';
 import { installHudLayout } from './hud/layout/hud-layout-runtime.js';
@@ -152,6 +157,8 @@ import { OSM_ATTRIBUTION, osmScene, sceneZombies, withSceneVehicles } from './wo
 import type { SnapshotVehicle } from '@deadzone/protocol';
 import { createLootWindow } from './hud/loot-window.js';
 import { createWorkshopWindow } from './hud/workshop-window.js';
+import { createCharacterWindow } from './character/character-window.js';
+import { Journal, woundRejectText, type CharacterTab } from './character/character-model.js';
 import { createSleepController } from './hud/sleep-controller.js';
 import {
   SPOT_RADIUS_TILES,
@@ -670,6 +677,8 @@ const audio = new AudioEngine(settings, import.meta.env.BASE_URL);
 audio.setInMenu(false);
 audio.preload(...WORLD_SOUNDS);
 const footsteps = new Footsteps();
+const zombieVoices = new ZombieVoices();
+const thunder = new Thunder();
 const input = new InputMap(settings.get().input.bindings, {
   window,
   element: renderer.domElement,
@@ -918,6 +927,7 @@ sim.onSnapshot(({ tick, buf }) => {
     if (import.meta.env.DEV) {
       for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
       for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
+      for (const wd of boot.wounds) sim.send(stamper.stamp({ type: 'debugWound', ...wd }));
       const p0 = readEntity(buf, 0);
       if (boot.zspawn > 0 && p0) {
         sim.send(
@@ -1015,6 +1025,25 @@ const hud = createHud({
       ? mobileView.set('minimapZoom', minimapZoom)
       : settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
   onQuickAccess: (id) => quickAccess(id),
+});
+
+// Tutorial (Ustawienia › Interfejs › Samouczek): one hint at a time for a new player.
+const tutorialStorage = browserStorage();
+let tutorial = new Tutorial(loadTutorialDone(tutorialStorage));
+const tutorialCard = createTutorialCard(container);
+const tutorialOpened = new Set<TutorialScreen>();
+let tutorialWalked = 0;
+let tutorialLast: { x: number; y: number } | undefined;
+let tutorialSaved = '';
+tutorialCard.onDismiss(() => tutorial.dismiss(performance.now() / 1000));
+for (const screen of ['inventory', 'crafting', 'map'] as const)
+  input.on(screen, () => tutorialOpened.add(screen));
+settings.subscribe((next, prev) => {
+  // Switching it back on shows every hint again.
+  if (next.interface.tutorial && !prev.interface.tutorial) {
+    tutorial = new Tutorial();
+    saveTutorialDone(tutorialStorage, []);
+  }
 });
 // Sleep screen, sleep / wake / TV commands and the speed-up while asleep (mockup sleep.png).
 const sendBody = (body: CommandBody) => {
@@ -1214,14 +1243,43 @@ const workshop = createWorkshopWindow({
   content: () => hudContent,
   position: () => snapshots.sample(performance.now(), TICK_MS),
 });
+// Character window (H / K / J): stats, wounds with treatment, traits, skills, session journal.
+const journal = new Journal(PLAYER_ID);
+/** `seq` of wound treatments sent from the character window (rejections → toast). */
+const woundSeqs = new Set<number>();
+const character = createCharacterWindow({
+  root: container,
+  state: () => gameState.get(),
+  content: () => hudContent,
+  journal,
+  send: (body) => {
+    const cmd = stamper.stamp(body);
+    woundSeqs.add(cmd.seq);
+    // Accepted commands get no answer: keep only the latest few.
+    if (woundSeqs.size > 16) woundSeqs.delete(woundSeqs.values().next().value!);
+    sim.send(cmd);
+    return cmd.seq;
+  },
+});
+const toggleCharacter = (tab: CharacterTab) => {
+  if (!character.open || character.tab !== tab) {
+    if (loot.open) loot.hide();
+    inventory.close();
+    workshop.close();
+    if (bigMap.open) bigMap.escape();
+  }
+  character.toggle(tab);
+};
 const toggleInventory = () => {
   if (loot.open) loot.hide();
   workshop.close();
+  character.close();
   inventory.toggle();
 };
 const toggleWorkshop = () => {
   if (loot.open) loot.hide();
   inventory.close();
+  character.close();
   workshop.toggle();
 };
 input.on('inventory', toggleInventory);
@@ -1238,10 +1296,10 @@ const comingSoon = (id: QuickAccessId) => {
 };
 // H: horn in the driver seat (vehicle UI [ZAŁ.]), else the character screen (soon).
 input.on('character', () => {
-  if (!vehicles.pressCharacter()) comingSoon('character');
+  if (!vehicles.pressCharacter()) toggleCharacter('character');
 });
-input.on('skills', () => comingSoon('skills'));
-input.on('journal', () => comingSoon('journal'));
+input.on('skills', () => toggleCharacter('skills'));
+input.on('journal', () => toggleCharacter('journal'));
 /** Where the player is (big map, pause): nearest named place of a generated world, else the map. */
 const locationName = (): string => {
   if (boot.map === 'test') return 'Mapa testowa';
@@ -1308,6 +1366,7 @@ const toggleBigMap = () => {
     if (loot.open) loot.hide();
     inventory.close();
     workshop.close();
+    character.close();
   }
   bigMap.toggle(bigMapPlayer());
 };
@@ -1317,6 +1376,7 @@ function quickAccess(id: QuickAccessId): void {
   if (id === 'map') toggleBigMap();
   else if (id === 'inventory') toggleInventory();
   else if (id === 'crafting') toggleWorkshop();
+  else if (id === 'character' || id === 'skills' || id === 'journal') toggleCharacter(id);
   else if (id === 'menu') {
     handleEscape(escapeWindows, gameState.get().death !== undefined, () => pause.openMenu());
   } else comingSoon(id);
@@ -1340,6 +1400,7 @@ const escapeWindows: readonly Closable[] = [
   },
   inventory,
   workshop,
+  character,
   {
     get open() {
       return vehicles.open;
@@ -1693,7 +1754,12 @@ const interaction = new InteractController({
     input.isDown('primaryAction') ||
     input.isDown('secondaryAction'),
   windowOpen: () =>
-    inventory.open || loot.open || workshop.open || furniture.open || !!gameState.get().death,
+    inventory.open ||
+    loot.open ||
+    workshop.open ||
+    character.open ||
+    furniture.open ||
+    !!gameState.get().death,
   legacy: interact,
   open: (id) => sim.send(stamper.stamp({ type: 'openContainer', container: id })),
   search: (t) => sim.send(stamper.stamp({ type: 'search', ...t })),
@@ -1747,7 +1813,12 @@ const vehicles = new VehicleController({
   isDown: (a) => input.isDown(a),
   keyOf: (a) => actionKey(settings.get().input.bindings, a),
   windowOpen: () =>
-    inventory.open || loot.open || workshop.open || bigMap.open || !!gameState.get().death,
+    inventory.open ||
+    loot.open ||
+    workshop.open ||
+    character.open ||
+    bigMap.open ||
+    !!gameState.get().death,
   otherTargetDist,
   showInventory: () => {
     if (!inventory.open) toggleInventory();
@@ -1940,7 +2011,15 @@ input.on('toggleHints', () => hud.toggleHints(performance.now()));
 // Tab: lock the next live zombie (nearest first, same floor, ≤ TARGET_MAX_TILES); the sim checks
 // line of sight and answers with `view.target` (card) — the bubble follows the lock.
 input.on('targetNext', () => {
-  if (inventory.open || loot.open || workshop.open || bigMap.open || gameState.get().death) return;
+  if (
+    inventory.open ||
+    loot.open ||
+    workshop.open ||
+    character.open ||
+    bigMap.open ||
+    gameState.get().death
+  )
+    return;
   const p = snapshots.sample(performance.now(), TICK_MS);
   if (!p) return;
   const cur = gameState.get().target;
@@ -1996,6 +2075,12 @@ gameState.subscribe((_next, _prev, action) => {
     furniture.events(action.events);
     vehicles.events(action.events);
     hud.events(action.events);
+    for (const t of progressToasts(action.events, PLAYER_ID)) hud.pushToast(t);
+    const clock = gameState.get().clock;
+    if (clock) journal.add(action.events, clock.day, clock.minuteOfDay);
+    for (const e of action.events)
+      if (e.type === 'commandRejected' && woundSeqs.delete(e.seq))
+        hud.pushToast({ kind: 'warning', text: woundRejectText(e.reason) });
     const p = snapshots.sample(performance.now(), TICK_MS);
     if (p)
       for (const c of eventCues(action.events, p.x, p.y, Math.random, PLAYER_ID))
@@ -2350,6 +2435,55 @@ renderer.setAnimationLoop((time) => {
   const daylight = smoothstep((sunNow.elevation * (180 / Math.PI) + 6) / 12);
   applyWeatherLook(look, weatherNow, daylight);
   const flash = weatherFx.update(weatherNow, rig.target.x, rig.target.z, time / 1000, daylight);
+  {
+    // Ambience: rain (by strength) or night crickets, thunder after lightning, zombie groans.
+    const wet = precipitation(weatherNow);
+    const amb = player.dead ? undefined : ambienceLoop(wet.rain, isNight(daylight), wet.snow);
+    if (!amb) {
+      if (audio.loopOn('ambience')) audio.stopLoop('ambience');
+    } else if (audio.loopOn('ambience') !== amb.id) audio.playLoop('ambience', amb.id, amb.volume);
+    else audio.setLoopVolume('ambience', amb.volume);
+    const boom = thunder.update(dt / 1000, flash);
+    if (boom) audio.play('sfx', boom.id, boom.volume);
+    if (state && settings.get().interface.tutorial) {
+      const gs = gameState.get();
+      if (tutorialLast) {
+        const d = Math.hypot(state.x - tutorialLast.x, state.y - tutorialLast.y);
+        if (d < 2) tutorialWalked += d;
+      }
+      tutorialLast = { x: state.x, y: state.y };
+      const inv = gs.inventory;
+      const hint = tutorial.update(
+        {
+          now: time / 1000,
+          walked: tutorialWalked,
+          items: inv ? Object.values(inv.containers).reduce((n, c) => n + c.items.length, 0) : 0,
+          nearContainer: gs.nearby.length > 0,
+          hunger: gs.player.stats.hunger ?? 0,
+          thirst: gs.player.stats.thirst ?? 0,
+          threat: gs.threat,
+          night: isNight(daylight),
+          firearm: hud.firearm() !== undefined,
+          wounded: gs.player.wounds.length > 0,
+          opened: tutorialOpened,
+          alive: gs.player.alive && !player.dead,
+          sleeping: gs.player.sleeping,
+        },
+        settings.get().input.bindings,
+      );
+      tutorialCard.show(hint);
+      const done = tutorial.doneIds.join(',');
+      if (done !== tutorialSaved) {
+        tutorialSaved = done;
+        saveTutorialDone(tutorialStorage, tutorial.doneIds);
+      }
+    } else tutorialCard.show(undefined);
+    if (state && !player.dead) {
+      const near = zombieHp.positionsNear(state.x, state.y, Math.round(state.z), GROAN_TILES);
+      const groan = zombieVoices.update(dt / 1000, near, state.x, state.y);
+      if (groan) audio.play('sfx', groan.id, groan.volume);
+    }
+  }
   setSnowCover(weatherNow?.snow ?? 0, dt / 1000);
   {
     const cover = snowCoverNow();
@@ -2386,6 +2520,7 @@ renderer.setAnimationLoop((time) => {
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
   workshop.update();
+  character.update();
   sleep.frame(performance.now(), simTick);
   furniture.frame(performance.now(), simTick);
   shelfFill.update(gs.storages, gs.container?.id);

@@ -19,15 +19,14 @@ export type GeneratedMapSpec =
     }
   | { kind: 'plan-4'; seed: number; size: number };
 
-/** The OSM map of Stalowa Wola: the playable world source for `LATEST_MAP`. */
+/** The first OSM map of Stalowa Wola (rotated 27°, straightened buildings); old saves only. */
 export const OSM_STW_MAP = 'osm-stw';
 
 export const GENERATED_MAPS: Readonly<Record<string, GeneratedMapSpec>> = {
   [OSM_STW_MAP]: { kind: 'osm-tiles', url: 'osm/stw-16km/manifest.json' },
   /**
-   * New OSM map (tools/map2, Paweł 01.11): north up, no rotation or straightening, 32 km square
-   * (Stalowa Wola, Rozwadów, Huta, Nisko, San to the Vistula). Roads first; replaces `osm-stw`
-   * once Paweł accepts it (`LATEST_MAP` stays until then).
+   * The OSM map 1:1 (tools/map2): north up, no rotation or straightening, 32 km square
+   * (Stalowa Wola, Rozwadów, Huta, Nisko, San to the Vistula). `LATEST_MAP` since 23.11.2026.
    */
   stw2: { kind: 'osm-tiles', url: 'osm/stw2/manifest.json' },
   /** The 1.5 km window by ul. Okulickiego (single data file; small, for tests and comparisons). */

@@ -72,6 +72,9 @@ describe('characters model', () => {
     ).toContain('STARA MAPA');
     expect(
       cardView({ ...base, worldSettings: { map: 'osm-stw', mode: 'survive' } }, now, true).sub,
+    ).toContain('STARA MAPA');
+    expect(
+      cardView({ ...base, worldSettings: { map: 'stw2', mode: 'survive' } }, now, true).sub,
     ).not.toContain('STARA MAPA');
   });
 

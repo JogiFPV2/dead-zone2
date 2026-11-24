@@ -72,7 +72,13 @@ export const isFocusable = (r: SettingsRow): r is FocusableRow => 'id' in r;
 type SliderId = 'master' | 'music' | 'effects' | 'ambience' | 'voice' | 'uiScale';
 type VolumeId = Exclude<SliderId, 'uiScale'>;
 type ToggleId =
-  'menuMusic' | 'antialias' | 'showFps' | 'showZombieHp' | 'targetZombieHp' | 'revealMap';
+  | 'menuMusic'
+  | 'antialias'
+  | 'showFps'
+  | 'showZombieHp'
+  | 'targetZombieHp'
+  | 'revealMap'
+  | 'tutorial';
 type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay' | 'touchMode';
 /** Rows with a button: the screen runs them (Edytuj HUD, Przywróć domyślny układ). */
 export type ButtonId = 'editHud' | 'resetHud';
@@ -325,6 +331,13 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
         },
         {
           kind: 'toggle',
+          id: 'tutorial',
+          label: 'Samouczek',
+          hint: 'Podpowiedzi dla nowego gracza. Włączenie od nowa pokazuje je jeszcze raz.',
+          on: d.interface.tutorial,
+        },
+        {
+          kind: 'toggle',
           id: 'revealMap',
           label: 'Odkryj całą mapę (test)',
           hint: 'Odsłania mgłę na dużej mapie (M). Tylko do testów; zapis zostaje odkryty.',
@@ -369,6 +382,8 @@ export function toggleRow(d: Settings, id: ToggleId): Settings {
       return { ...d, interface: { ...d.interface, targetZombieHp: !d.interface.targetZombieHp } };
     case 'revealMap':
       return { ...d, interface: { ...d.interface, revealMap: !d.interface.revealMap } };
+    case 'tutorial':
+      return { ...d, interface: { ...d.interface, tutorial: !d.interface.tutorial } };
   }
 }
 
