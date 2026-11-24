@@ -1,0 +1,64 @@
+name: GitHub Pages
+
+# Gra (apps/game) do testów przez internet: https://jogifpv2.github.io/dead-zone2/
+# Tylko build i wdrożenie, bez testów. Decyzja Pawła (20.11.2026): testy uruchamiamy lokalnie
+# przed każdym PR-em, nie na serwerach GitHuba.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**/*.md', 'LICENSE']
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: build gry
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      # pnpm w wersji z packageManager (package.json).
+      - name: pnpm (corepack)
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        run: |
+          corepack enable pnpm
+          node -v && pnpm -v
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm -w turbo build --filter='@deadzone/game^...'
+
+      # Strona projektu na Pages żyje pod /dead-zone2/.
+      - run: pnpm --filter @deadzone/game exec vite build --base /dead-zone2/
+
+      - run: touch apps/game/dist/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/game/dist
+
+  deploy:
+    name: wdrożenie
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
