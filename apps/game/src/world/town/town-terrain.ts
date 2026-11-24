@@ -9,6 +9,7 @@ import { LEVEL_HEIGHT } from '../instances.js';
 import type { TownCells, TownKit } from './kit.js';
 import { buildTerrainGeometry } from './terrain-mesh.js';
 import { MapTiles } from './tiles.js';
+import { PAINTED_BLD, PAINTED_BLD_PARS } from '../../render/painted-buildings.js';
 
 /**
  * Palette colour of each painted ground layer (grass, asphalt, paving, earth, gravel): the
@@ -42,20 +43,22 @@ export function terrainMaterial(detail: Texture, cells?: TownCells): MeshStandar
     sh.uniforms.pgPlyty = PAINTED_GROUND.plyty;
     sh.uniforms.pgZiemia = PAINTED_GROUND.ziemia;
     sh.uniforms.pgSzuter = PAINTED_GROUND.szuter;
+    Object.assign(sh.uniforms, PAINTED_BLD);
     sh.vertexShader = sh.vertexShader
       .replace(
         '#include <common>',
-        '#include <common>\nattribute vec4 dmask; varying vec4 vMask; varying vec2 vWXZ;',
+        '#include <common>\nattribute vec4 dmask; varying vec4 vMask; varying vec2 vWXZ; varying vec3 vPbTW; uniform vec3 pbOrigin;',
       )
       .replace(
         '#include <worldpos_vertex>',
-        '#include <worldpos_vertex>\nvMask = dmask; vWXZ = (modelMatrix * vec4(transformed, 1.0)).xz;',
+        '#include <worldpos_vertex>\nvMask = dmask; vPbTW = (modelMatrix * vec4(transformed, 1.0)).xyz + pbOrigin; vWXZ = vPbTW.xz;',
       );
     sh.fragmentShader = sh.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nuniform sampler2D detailMap; varying vec4 vMask; varying vec2 vWXZ;\n' +
-          PAINTED_GROUND_PARS,
+        '#include <common>\nuniform sampler2D detailMap; varying vec4 vMask; varying vec2 vWXZ; varying vec3 vPbTW;\n' +
+          PAINTED_GROUND_PARS +
+          PAINTED_BLD_PARS,
       )
       .replace(
         '#include <color_fragment>',
@@ -67,10 +70,15 @@ export function terrainMaterial(detail: Texture, cells?: TownCells): MeshStandar
           'float dd = dot(dt * 0.65 + dt2 * 0.35, vMask) + (1.0 - dsum) * 0.5;',
           'diffuseColor.rgb *= dsum > 0.0 ? mix(0.62, 1.38, dd) : 1.0;',
           PAINTED_GROUND_GLSL,
+          // Painted indoor floors (no ground mask): wood, tiles, carpet by the room.
+          'if (pbOn > 0.5 && vMask.x + vMask.y + vMask.z + vMask.w < 0.001) {',
+          '  int pbR = pbRoom(vPbTW.xz, vPbTW.y);',
+          '  if (pbR > 0) diffuseColor.rgb = pbFloor(pbR, vPbTW.xz);',
+          '}',
         ].join('\n'),
       );
   };
-  m.customProgramCacheKey = () => 'deadzone-town-terrain';
+  m.customProgramCacheKey = () => 'deadzone-town-terrain-pb';
   return m;
 }
 
