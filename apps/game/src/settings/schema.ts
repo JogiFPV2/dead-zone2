@@ -3,7 +3,7 @@ import { UI_SCALE_DEFAULT, snapUiScale } from '../ui/ui-scale.js';
 import { RENDER_STYLES, type RenderStyle } from '../render/real/options.js';
 
 /** Bump when the persisted shape changes and add a migration from the previous version. */
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
 
 /**
  * „Styl grafiki” (#71): classic low-poly, outlines + toon bands, low-res pixel art (3 px) and
@@ -151,7 +151,7 @@ export const DEFAULT_SETTINGS: Settings = {
     inventoryGroup: true,
   },
   graphics: {
-    style: 'classic',
+    style: 'painted',
     pixelRatioCap: 2,
     antialias: true,
     showFps: false,

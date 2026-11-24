@@ -14,6 +14,14 @@ export const MIGRATIONS: Migrations = {
   2: (data) => data,
   // 3 → 4: graphics.style („Styl grafiki”, #71); sanitize defaults it to classic.
   3: (data) => data,
+  // 4 → 5: „Malowany” becomes the default look; a stored „Klasyczny” (the old default) moves to it
+  // once, other picked styles stay.
+  4: (data) => {
+    const g = data.graphics;
+    if (typeof g !== 'object' || g === null || (g as { style?: unknown }).style !== 'classic')
+      return data;
+    return { ...data, graphics: { ...g, style: 'painted' } };
+  },
 };
 
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
