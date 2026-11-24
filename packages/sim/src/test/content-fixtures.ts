@@ -129,6 +129,14 @@ export function fixturePack(worldSettings: object = {}): SimContentPack {
             maxStack: 10,
           },
           {
+            id: 'fixture:tissue',
+            name: 'item.fixture.tissue',
+            kind: 'material',
+            weightKg: 0.01,
+            maxStack: 10,
+            harmless: true,
+          },
+          {
             id: 'fixture:ammo-9',
             name: 'item.fixture.ammo-9',
             kind: 'ammo',

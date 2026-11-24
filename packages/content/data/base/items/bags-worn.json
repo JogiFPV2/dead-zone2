@@ -5,6 +5,7 @@
     "kind": "container",
     "weightKg": 0.2,
     "tags": ["base:bag", "base:bag-worn"],
+    "harmless": true,
     "bag": { "capacityKg": 2, "weightReductionPct": 20, "slots": ["belt"], "movementPenalty": 0 }
   },
   {

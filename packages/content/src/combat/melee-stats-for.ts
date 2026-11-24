@@ -45,12 +45,24 @@ function fromImprovised(b: DeepReadonly<ImprovisedWeapon>, weightKg: number): Me
   };
 }
 
+/** Przedmiot nieraniący (`harmless`): zamach bez obrażeń, bez zużycia i bez XP. */
+function harmlessStats(weightKg: number): MeleeStatsView {
+  return {
+    ...defaultMeleeStats(weightKg),
+    damage: { min: 0, max: 0 },
+    breakChancePct: 0,
+    critChance: 0,
+    twoHanded: false,
+  };
+}
+
 /**
  * Statystyki ataku wręcz przedmiotu w ręku: broń biała z katalogu (`melee`), blok
  * `improvisedWeapon`, a dla reszty (też broń palna jako pałka) słabe wartości domyślne z wagi.
  */
 export function meleeStatsFor(item: Item | DeepReadonly<Item>): MeleeStatsView {
   if (item.kind === 'weapon_melee') return fromWeapon(item);
+  if (item.harmless) return harmlessStats(item.weightKg);
   if (item.improvisedWeapon) return fromImprovised(item.improvisedWeapon, item.weightKg);
   return defaultMeleeStats(item.weightKg);
 }

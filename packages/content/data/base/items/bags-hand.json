@@ -6,6 +6,7 @@
     "lootCategory": "household",
     "weightKg": 0.02,
     "tags": ["base:bag", "base:bag-hand"],
+    "harmless": true,
     "bag": {
       "capacityKg": 3,
       "weightReductionPct": 0,
@@ -20,6 +21,7 @@
     "lootCategory": "household",
     "weightKg": 0.05,
     "tags": ["base:bag", "base:bag-hand"],
+    "harmless": true,
     "bag": {
       "capacityKg": 7,
       "weightReductionPct": 5,
@@ -33,6 +35,7 @@
     "kind": "container",
     "weightKg": 0.3,
     "tags": ["base:bag", "base:bag-hand"],
+    "harmless": true,
     "bag": {
       "capacityKg": 9,
       "weightReductionPct": 15,

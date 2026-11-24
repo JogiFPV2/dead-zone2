@@ -28,7 +28,8 @@
     "kind": "material",
     "weightKg": 0.02,
     "maxStack": 20,
-    "tags": ["base:thread"]
+    "tags": ["base:thread"],
+    "harmless": true
   },
   {
     "id": "base:sheet-rope",

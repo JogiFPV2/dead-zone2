@@ -218,6 +218,16 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   const z = floorZ(w, eid);
   const rng = w.rng.combat;
   const targets = targetsInArc(w, ai, cb, grid, eid, m.rangeTiles, true).slice(0, m.maxTargets);
+  // Harmless item (tissue, paper): no damage, no wear, no XP; only a light push.
+  if (m.damage.max <= 0) {
+    for (const t of targets) {
+      if (w.c.Animal.is[t.eid] === 1) continue;
+      damageZombie(w, ai, cb, grid, t.eid, eid, 0, 'melee');
+      physicsHit(w, eid, t.eid, 'melee', cfg.harmlessKnockback, false, 'stagger');
+    }
+    emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack', 0, { eid, kind: 'melee' });
+    return;
+  }
   for (const t of targets) {
     let dmg = m.damage.min + rng.nextFloat() * (m.damage.max - m.damage.min);
     if (m.critChance > 0 && rng.chance(m.critChance)) dmg *= cfg.critMul;

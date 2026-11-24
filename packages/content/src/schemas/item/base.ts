@@ -32,6 +32,11 @@ export const itemBaseShape = {
   throwable: ThrowableSchema.optional(),
   /** Każdy przedmiot w ręku jest bronią; blok nadpisuje słabe wartości domyślne (`meleeStatsFor`). */
   improvisedWeapon: ImprovisedWeaponSchema.optional(),
+  /**
+   * Nie zadaje obrażeń (chusteczka, papier, ubranie, bandaż): zamach w ręku tylko lekko pcha zombie.
+   * Ma pierwszeństwo przed `improvisedWeapon` i wartościami domyślnymi z wagi.
+   */
+  harmless: z.boolean().optional(),
   /** Kategoria dla lootu schowków; brak = wyliczona z `kind` i tagów (`lootCategoryOf`). */
   lootCategory: LootCategorySchema.optional(),
   /** Pojemnik na wodę (butelka): pojemność w litrach (`item/water-container.ts`). */
