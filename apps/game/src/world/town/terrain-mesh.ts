@@ -208,6 +208,52 @@ export function buildTerrainGeometry(
   const x0 = cx * CHUNK_SIZE;
   const z0 = cy * CHUNK_SIZE;
   let any = false;
+  /** Tile (x, z) cut to `ring`: its polygon and area. */
+  const cutOf = (ring: readonly Vector2[], x: number, z: number) => {
+    const cut = clipPolygon(ring as Vector2[], { x0: x, y0: z, x1: x + 1, y1: z + 1 });
+    let area = 0;
+    for (let i = 0; i < cut.length; i++) {
+      const a = cut[i]!;
+      const b = cut[(i + 1) % cut.length]!;
+      area += a.x * b.y - b.x * a.y;
+    }
+    return { cut, area: Math.abs(area) / 2 };
+  };
+  /** Indoor floor `look` on polygon `cut` (part of tile (x, z) inside an outline). */
+  const cutFloor = (cut: readonly Vector2[], look: FloorLook, x: number, z: number) => {
+    const y = Math.max(look.y ?? 0, INDOOR_Y) + baseY;
+    const c = tileColor(look, x, z);
+    for (const [a, b, d] of ShapeUtils.triangulateShape(cut as Vector2[], [])) {
+      const t = [cut[a!]!, cut[b!]!, cut[d!]!];
+      const ny =
+        (t[1]!.y - t[0]!.y) * (t[2]!.x - t[0]!.x) - (t[1]!.x - t[0]!.x) * (t[2]!.y - t[0]!.y);
+      for (const p of ny >= 0 ? t : [t[0]!, t[2]!, t[1]!]) {
+        P.push(p.x, y, p.y);
+        C.push(c.r, c.g, c.b);
+        M.push(...look.mask);
+      }
+    }
+  };
+  /**
+   * Roomless tile in the strip between a slanted building's rooms and its outline (`joinStrip`):
+   * the floor of the nearest room tile within 2 whose building's outline covers part of it.
+   */
+  const stripFloor = (x: number, z: number) => {
+    if (!vector?.outlineOf) return undefined;
+    for (let r = 1; r <= 2; r++)
+      for (let dz = -r; dz <= r; dz++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+          const room = tiles.roomType(x + dx, z + dz);
+          const floor = room ? floorAt(x + dx, z + dz) : undefined;
+          if (!room || !floor) continue;
+          const ring = vector.outlineOf(tiles.building(x + dx, z + dz));
+          if (!ring) continue;
+          const { cut, area } = cutOf(ring, x, z);
+          if (area > 1e-4) return { cut, look: floorLook(floor, room) };
+        }
+    return undefined;
+  };
   for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
       const room = tiles.roomType(x, z);
@@ -217,36 +263,21 @@ export function buildTerrainGeometry(
       any = true;
       if (room && ground) {
         const ring = vector?.outlineOf?.(tiles.building(x, z));
-        const cut = ring
-          ? clipPolygon(ring as Vector2[], { x0: x, y0: z, x1: x + 1, y1: z + 1 })
-          : [];
-        let area = 0;
-        for (let i = 0; i < cut.length; i++) {
-          const a = cut[i]!;
-          const b = cut[(i + 1) % cut.length]!;
-          area += a.x * b.y - b.x * a.y;
-        }
-        area = Math.abs(area) / 2;
+        const { cut, area } = ring ? cutOf(ring, x, z) : { cut: [], area: 0 };
         if (ring && area < 1 - 1e-4) {
           // Edge tile of an outlined building: the ground under the whole tile, the indoor
           // floor only inside the outline.
           tile(x, z, floorLook(ground, undefined), false);
-          if (area > 1e-4) {
-            const look = floorLook(floor, room);
-            const y = Math.max(look.y ?? 0, INDOOR_Y) + baseY;
-            const c = tileColor(look, x, z);
-            for (const [a, b, d] of ShapeUtils.triangulateShape(cut, [])) {
-              const t = [cut[a!]!, cut[b!]!, cut[d!]!];
-              const ny =
-                (t[1]!.y - t[0]!.y) * (t[2]!.x - t[0]!.x) -
-                (t[1]!.x - t[0]!.x) * (t[2]!.y - t[0]!.y);
-              for (const p of ny >= 0 ? t : [t[0]!, t[2]!, t[1]!]) {
-                P.push(p.x, y, p.y);
-                C.push(c.r, c.g, c.b);
-                M.push(...look.mask);
-              }
-            }
-          }
+          if (area > 1e-4) cutFloor(cut, floorLook(floor, room), x, z);
+          continue;
+        }
+      }
+      if (!room) {
+        // Strip along a slanted wall: ground under the tile, the room's floor up to the wall.
+        const strip = stripFloor(x, z);
+        if (strip) {
+          tile(x, z, floorLook(floor, undefined), false);
+          cutFloor(strip.cut, strip.look, x, z);
           continue;
         }
       }
