@@ -20,7 +20,7 @@ import { pitchedRoof, ridgeHeight } from './roof.js';
 import { buildTerrainGeometry, clipToCell, floorLook } from './terrain-mesh.js';
 import { MapTiles } from './tiles.js';
 import { LOWER_LEVEL_DIM, TownStructures } from './town-structures.js';
-import { shopWindowGeometry } from './levels.js';
+import { shopWindowGeometry, slabGeometry } from './levels.js';
 
 const cells = townCells({
   cells: Object.fromEntries(
@@ -512,5 +512,48 @@ describe('decor on unpaved ways', () => {
     const d = townDecor(new MapTiles(track, 0), { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 0 });
     expect(d.props.length).toBeGreaterThan(0);
     for (const p of d.props) expect(p.z < 14 || p.z > 19).toBe(true);
+  });
+});
+
+describe('upper-floor slab of a slanted building', () => {
+  // Level 1: building 7 has rooms on tiles 2..4 × 2..4, its outline is the triangle
+  // (1,1)-(9,1)-(1,9) (x + y < 10), so a strip of roomless tiles lies inside its walls.
+  const source: ChunkSource = {
+    tilePalette: [null, 'base:concrete'],
+    edgePalette: [null],
+    getChunk(cx, cy, z) {
+      if (cx !== 0 || cy !== 0 || z !== 1) return undefined;
+      const floor = new Uint16Array(32 * 32);
+      const room = new Uint16Array(32 * 32);
+      for (let y = 2; y <= 4; y++) {
+        for (let x = 2; x <= 4; x++) {
+          floor[y * 32 + x] = 1;
+          room[y * 32 + x] = 1;
+        }
+      }
+      const rooms = new Map([[1, { type: 'base:room-living-room' as const, buildingId: 7 }]]);
+      return { coord: { cx, cy, z }, floor, room, rooms };
+    },
+  };
+  const range = { cx0: 0, cy0: 0, cx1: 0, cy1: 0, z: 1 };
+  const outlineOf = (b: number) => (b === 7 ? { outline: [1, 1, 9, 1, 1, 9] } : undefined);
+
+  it('reaches the slanted walls and stays inside the outline', () => {
+    const pieces = slabGeometry(new MapTiles(source, 1), range, 3, cells, outlineOf);
+    expect(pieces).toHaveLength(1);
+    const pos = pieces[0]!.geo.getAttribute('position');
+    let maxX = -Infinity;
+    let minX = Infinity;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      maxX = Math.max(maxX, x);
+      minX = Math.min(minX, x);
+      expect(x + z).toBeLessThanOrEqual(10 + 1e-4);
+      expect(x).toBeGreaterThanOrEqual(1 - 1e-4);
+      expect(z).toBeGreaterThanOrEqual(1 - 1e-4);
+    }
+    expect(minX).toBeLessThan(1.01);
+    expect(maxX).toBeGreaterThan(7 - 1e-4);
   });
 });
