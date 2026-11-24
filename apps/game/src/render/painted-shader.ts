@@ -8,11 +8,13 @@
  * - grade: cool blue-violet shadows, warm light, a touch more saturation;
  * - thin warm-brown ink lines on depth breaks (silhouettes, wall / ground contours);
  * - canvas grain (screen-locked value noise).
- * Characters also get the inverted-hull outlines of the outline style (style-materials.ts).
+ * Characters also get the inverted-hull outlines of the outline style (style-materials.ts); the
+ * player (`tMask`, CHARACTER_LAYER) skips the brush filter, so it stays sharp at any zoom.
  */
 export const PAINTED_FRAGMENT = /* glsl */ `
 uniform sampler2D tColor;
 uniform sampler2D tDepth;
+uniform sampler2D tMask;
 uniform vec2 uTexel;
 uniform float uDepthRange;
 uniform float uStride;
@@ -75,7 +77,14 @@ float edge(vec2 uv) {
 
 void main() {
   // Zoomed in: part of the sharp image comes back (textures, model detail), the brush stays.
-  vec3 c = mix(kuwahara(vUv), texture2D(tColor, vUv).rgb, uDetail);
+  vec3 sharp = texture2D(tColor, vUv).rgb;
+  vec3 c = mix(kuwahara(vUv), sharp, uDetail);
+  // The player stays sharp at any zoom (mask of its visible pixels, slightly widened).
+  vec2 mo = uTexel * 1.5;
+  float m = max(texture2D(tMask, vUv).r, max(
+    max(texture2D(tMask, vUv + vec2(mo.x, 0.0)).r, texture2D(tMask, vUv - vec2(mo.x, 0.0)).r),
+    max(texture2D(tMask, vUv + vec2(0.0, mo.y)).r, texture2D(tMask, vUv - vec2(0.0, mo.y)).r)));
+  c = mix(c, sharp, m);
   // The game's palette is tuned dark: lift mid-tones before the grade (display gamma).
   c = pow(max(c, vec3(0.0)), vec3(uLift));
   float L = dot(c, vec3(0.2126, 0.7152, 0.0722));
