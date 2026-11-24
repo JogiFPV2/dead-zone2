@@ -8,7 +8,7 @@ import { OpeningKind, openingKey } from '../openings/state.js';
 import { moveCircle } from '../world/collision.js';
 import { playerEidOf } from './seats.js';
 import { collideFurniture } from './furniture-hit.js';
-import type { TileGrid } from '../world/grid.js';
+import { gateAlways, type TileGrid } from '../world/grid.js';
 import type { VehicleConfig } from './config.js';
 import {
   circleVsObb,
@@ -138,8 +138,15 @@ function collideStatic(
     };
     solid(obbVsObb(b, obbOf(v, t)), b.x, b.y);
   });
-  grid.forSegments(v.x - ex, v.y - ey, v.x + ex, v.y + ey, z, (_k, ax, ay, bx, by) =>
-    solid(obbVsSegment(obbOf(v, t), ax, ay, bx, by), (ax + bx) / 2, (ay + by) / 2),
+  grid.forSegments(
+    v.x - ex,
+    v.y - ey,
+    v.x + ex,
+    v.y + ey,
+    z,
+    (_k, ax, ay, bx, by) =>
+      solid(obbVsSegment(obbOf(v, t), ax, ay, bx, by), (ax + bx) / 2, (ay + by) / 2),
+    gateAlways,
   );
   return hit;
 }

@@ -60,7 +60,11 @@ export interface WallSegment {
   x1: number;
   y1: number;
   z: number;
+  /** Gap of a door / window, closed by that raster opening (`SimWallSegment.gate`). */
+  gate?: { side: 'n' | 'w'; tx: number; ty: number };
 }
+
+type Gate = NonNullable<WallSegment['gate']>;
 
 /** Gap cut into a vector wall around an exterior door / window (metres along the wall). */
 const OPENING_GAP = 1.2;
@@ -117,7 +121,7 @@ function outlineSegments(
   const skip = new Set(noWall);
   const out: WallSegment[] = [];
   for (const [z, L] of levels) {
-    const gaps: [number, number][][] = edges.map(() => []);
+    const gaps: [number, number, Gate][][] = edges.map(() => []);
     const roomAt = (gx: number, gy: number) =>
       gx < 0 || gy < 0 || gx >= W || gy * W + gx >= L.room.length ? 0 : L.room[gy * W + gx]!;
     /**
@@ -127,7 +131,7 @@ function outlineSegments(
      * window, corner walls next to it opened too). Falls back to a centred OPENING_GAP on the
      * nearest edge when no edge crosses the corridor.
      */
-    const opening = (x0: number, y0: number, x1: number, y1: number) => {
+    const opening = (x0: number, y0: number, x1: number, y1: number, gate: Gate) => {
       const mx = (x0 + x1) / 2;
       const my = (y0 + y1) / 2;
       const nx = -(y1 - y0);
@@ -154,7 +158,7 @@ function outlineSegments(
         const t0 = Math.min(...ts) - GAP_MARGIN;
         const t1 = Math.max(...ts) + GAP_MARGIN;
         if (!near || t1 < 0 || t0 > len || t1 - t0 > MAX_GAP) return;
-        gaps[k]!.push([t0, t1]);
+        gaps[k]!.push([t0, t1, gate]);
         hit = true;
       });
       if (hit) return;
@@ -173,7 +177,7 @@ function outlineSegments(
           bt = t * Math.sqrt(len2);
         }
       });
-      if (best >= 0) gaps[best]!.push([bt - OPENING_GAP / 2, bt + OPENING_GAP / 2]);
+      if (best >= 0) gaps[best]!.push([bt - OPENING_GAP / 2, bt + OPENING_GAP / 2, gate]);
     };
     for (let i = 0; i < L.edgeN.length; i++) {
       const gx = i % W;
@@ -185,8 +189,9 @@ function outlineSegments(
         const a = roomAt(gx, gy);
         const b = axis === 'N' ? roomAt(gx, gy - 1) : roomAt(gx - 1, gy);
         if ((a === 0) === (b === 0)) continue;
-        if (axis === 'N') opening(fx + gx, fy + gy, fx + gx + 1, fy + gy);
-        else opening(fx + gx, fy + gy, fx + gx, fy + gy + 1);
+        const gate: Gate = { side: axis === 'N' ? 'n' : 'w', tx: fx + gx, ty: fy + gy };
+        if (axis === 'N') opening(fx + gx, fy + gy, fx + gx + 1, fy + gy, gate);
+        else opening(fx + gx, fy + gy, fx + gx, fy + gy + 1, gate);
       }
     }
     edges.forEach(([ax, ay, bx, by], k) => {
@@ -195,7 +200,19 @@ function outlineSegments(
       const ux = (bx - ax) / len;
       const uy = (by - ay) / len;
       let from = 0;
-      for (const [g0, g1] of gaps[k]!.sort((p, q) => p[0] - q[0])) {
+      for (const [g0, g1, gate] of gaps[k]!.sort((p, q) => p[0] - q[0])) {
+        // The gap itself: a gate closed by its opening (no walking through a window gap).
+        const a = Math.max(0, g0);
+        const b = Math.min(len, g1);
+        if (b - a > 1e-3)
+          out.push({
+            x0: ax + ux * a,
+            y0: ay + uy * a,
+            x1: ax + ux * b,
+            y1: ay + uy * b,
+            z,
+            gate,
+          });
         if (g0 > from + 1e-3)
           out.push({
             x0: ax + ux * from,

@@ -1,4 +1,4 @@
-import type { TileGrid } from './grid.js';
+import { gateBlocksMove, type TileGrid } from './grid.js';
 
 /**
  * Circle vs tile grid, resolved per axis (x first, then y → sliding along walls).
@@ -81,13 +81,21 @@ function sweep(
     );
   // Exact walls (`SimChunk.wallSegments`): the capsule of radius r around each segment.
   const segBox = axis === 0 ? [lo, across - r, hi, across + r] : [across - r, lo, across + r, hi];
-  grid.forSegments(segBox[0]!, segBox[1]!, segBox[2]!, segBox[3]!, z, (_k, ax, ay, bx, by) => {
-    const iv =
-      axis === 0
-        ? capsuleSpan(along, across, 1, 0, ax, ay, bx, by, r)
-        : capsuleSpan(across, along, 0, 1, ax, ay, bx, by, r);
-    if (iv) clamp(along + iv[0], along + iv[1]);
-  });
+  grid.forSegments(
+    segBox[0]!,
+    segBox[1]!,
+    segBox[2]!,
+    segBox[3]!,
+    z,
+    (_k, ax, ay, bx, by) => {
+      const iv =
+        axis === 0
+          ? capsuleSpan(along, across, 1, 0, ax, ay, bx, by, r)
+          : capsuleSpan(across, along, 0, 1, ax, ay, bx, by, r);
+      if (iv) clamp(along + iv[0], along + iv[1]);
+    },
+    gateBlocksMove,
+  );
   return target;
 }
 
@@ -230,12 +238,20 @@ export function circleOverlaps(
     if (hit(x0, x1, y0, y1)) blocked = true;
   });
   if (blocked) return true;
-  grid.forSegments(x - r, y - r, x + r, y + r, z, (_k, ax, ay, bx, by) => {
-    closestOnSegment(x, y, ax, ay, bx, by);
-    const ex = x - cp.x;
-    const ey = y - cp.y;
-    if (ex * ex + ey * ey < r2) blocked = true;
-  });
+  grid.forSegments(
+    x - r,
+    y - r,
+    x + r,
+    y + r,
+    z,
+    (_k, ax, ay, bx, by) => {
+      closestOnSegment(x, y, ax, ay, bx, by);
+      const ex = x - cp.x;
+      const ey = y - cp.y;
+      if (ex * ex + ey * ey < r2) blocked = true;
+    },
+    gateBlocksMove,
+  );
   return blocked;
 }
 
@@ -280,8 +296,14 @@ function forObstacles(
     }
   }
   grid.forBlockers(x - reach - 1, y - reach - 1, x + reach + 1, y + reach + 1, z, fn);
-  grid.forSegments(x - reach, y - reach, x + reach, y + reach, z, (k, ax, ay, bx, by) =>
-    fn(k, ax, bx, ay, by, true),
+  grid.forSegments(
+    x - reach,
+    y - reach,
+    x + reach,
+    y + reach,
+    z,
+    (k, ax, ay, bx, by) => fn(k, ax, bx, ay, by, true),
+    gateBlocksMove,
   );
 }
 

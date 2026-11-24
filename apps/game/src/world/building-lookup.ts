@@ -65,3 +65,59 @@ export class BuildingLookup {
 
 /** N = north border of a tile (runs along X), W = west border (runs along Z). */
 export type EdgeAxis = 'N' | 'W';
+
+/** Outline (x, y pairs, world metres) and courtyards of an outlined building, seen from a tile. */
+export type OutlineAt = (
+  building: BuildingId,
+  tx: number,
+  ty: number,
+) => { outline: readonly number[]; holes?: readonly (readonly number[])[] } | undefined;
+
+/** Even-odd point-in-ring test on x, y pairs (closing point optional). */
+export function inRing(ring: readonly number[], x: number, y: number): boolean {
+  let inside = false;
+  const n = ring.length >> 1;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = ring[2 * i]!;
+    const yi = ring[2 * i + 1]!;
+    const xj = ring[2 * j]!;
+    const yj = ring[2 * j + 1]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** How far (tiles) from a roomless tile the outlined building's rooms may stop short of its walls. */
+const EDGE_REACH = 2;
+
+/**
+ * Building whose floor holds point (x, y) on level z. The tile's room decides; a slanted
+ * building with vector walls has rooms only on tiles mostly inside its outline, so a point on a
+ * roomless edge tile belongs to a nearby building whose outline contains it (and none of its
+ * courtyards). Cutaway: standing by a slanted wall still hides the roof and upper floors.
+ */
+export function buildingAtPoint(
+  lookup: Pick<BuildingLookup, 'at'>,
+  outlineAt: OutlineAt | undefined,
+  x: number,
+  y: number,
+  z: number,
+): BuildingId {
+  const tx = Math.floor(x);
+  const ty = Math.floor(y);
+  const own = lookup.at(tx, ty, z);
+  if (own !== NO_BUILDING || !outlineAt) return own;
+  const seen = new Set<BuildingId>();
+  for (let dy = -EDGE_REACH; dy <= EDGE_REACH; dy++) {
+    for (let dx = -EDGE_REACH; dx <= EDGE_REACH; dx++) {
+      const b = lookup.at(tx + dx, ty + dy, z);
+      if (b === NO_BUILDING || seen.has(b)) continue;
+      seen.add(b);
+      const o = outlineAt(b, tx + dx, ty + dy);
+      if (!o || !inRing(o.outline, x, y)) continue;
+      if (o.holes?.some((h) => inRing(h, x, y))) continue;
+      return b;
+    }
+  }
+  return NO_BUILDING;
+}

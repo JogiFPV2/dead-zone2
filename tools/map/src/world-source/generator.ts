@@ -58,7 +58,16 @@ export interface GenLevel {
    * Outline walls of slanted buildings on this level, clipped to the chunk (world metres, see
    * `SimChunk.wallSegments`), with the global building id for the renderer.
    */
-  wallSegments?: { x0: number; y0: number; x1: number; y1: number; z: number; building: number }[];
+  wallSegments?: {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    z: number;
+    building: number;
+    /** Door / window gap closed by that raster opening (`SimWallSegment.gate`). */
+    gate?: { side: 'n' | 'w'; tx: number; ty: number };
+  }[];
   /**
    * Level 0: dense-cover zones (`SimChunk.zones`, sim #256): `bushes` (scrub, hedges) / `cover`
    * (woods), one per role, rectangles in global tiles inside this chunk; id `cover:cx,cy:role`.
@@ -475,7 +484,15 @@ export class PlanChunkGenerator {
           if (g.z !== z) continue;
           const c = clipSegment(g.x0, g.y0, g.x1, g.y1, X0, Y0, X0 + C, Y0 + C);
           if (!c || Math.hypot(c[2] - c[0], c[3] - c[1]) < 1e-3) continue;
-          walls.push({ x0: c[0], y0: c[1], x1: c[2], y1: c[3], z, building: s.gid });
+          walls.push({
+            x0: c[0],
+            y0: c[1],
+            x1: c[2],
+            y1: c[3],
+            z,
+            building: s.gid,
+            ...(g.gate ? { gate: g.gate } : {}),
+          });
           any = true;
         }
         for (const st of s.stairs) {
@@ -489,7 +506,7 @@ export class PlanChunkGenerator {
       if (walls.length) {
         // From every nearby building's own edge grid: a window on the chunk border (x = 0 of the
         // next chunk) still cuts this chunk's walls.
-        const boxes: [number, number, number, number][] = [];
+        const boxes: CutBox[] = [];
         for (const s of list) {
           const L = s.levels.get(z);
           if (!L) continue;
@@ -511,10 +528,11 @@ export class PlanChunkGenerator {
                 if (a !== 0 && b !== 0) continue;
                 const wx = s.x0 + gx;
                 const wy = s.y0 + gy;
+                const gate = { side: axis === 'N' ? 'n' : 'w', tx: wx, ty: wy } as const;
                 boxes.push(
                   axis === 'N'
-                    ? [wx + CUT_M, wy - CUT_DEPTH, wx + 1 - CUT_M, wy + CUT_DEPTH]
-                    : [wx - CUT_DEPTH, wy + CUT_M, wx + CUT_DEPTH, wy + 1 - CUT_M],
+                    ? [wx + CUT_M, wy - CUT_DEPTH, wx + 1 - CUT_M, wy + CUT_DEPTH, gate]
+                    : [wx - CUT_DEPTH, wy + CUT_M, wx + CUT_DEPTH, wy + 1 - CUT_M, gate],
                 );
               }
             }
@@ -1252,17 +1270,25 @@ void G_WATER;
 
 /** Window / door corridor cut into wall segments: depth (m) each side, inset along the edge. */
 const CUT_DEPTH = 0.95;
+/** Raster opening of a cut (`SimWallSegment.gate`). */
+type CutGate = { side: 'n' | 'w'; tx: number; ty: number };
+/** Box x0, y0, x1, y1 cut out of the walls, with the opening that then closes the gap. */
+type CutBox = readonly [number, number, number, number, CutGate?];
 const CUT_M = 0.02;
 
 /** `walls` minus the parts inside any of `boxes` ([x0, y0, x1, y1]). Pure (tests). */
-export function cutSegments<S extends { x0: number; y0: number; x1: number; y1: number }>(
-  walls: readonly S[],
-  boxes: readonly [number, number, number, number][],
-): S[] {
+export function cutSegments<
+  S extends { x0: number; y0: number; x1: number; y1: number; gate?: CutGate },
+>(walls: readonly S[], boxes: readonly CutBox[]): S[] {
   let cur: S[] = [...walls];
-  for (const [bx0, by0, bx1, by1] of boxes) {
+  for (const [bx0, by0, bx1, by1, gate] of boxes) {
     const next: S[] = [];
     for (const w of cur) {
+      // Gates stay: they are the closed state of an opening, not a wall to cut.
+      if (w.gate) {
+        next.push(w);
+        continue;
+      }
       const dx = w.x1 - w.x0;
       const dy = w.y1 - w.y0;
       let t0 = 0;
@@ -1289,6 +1315,18 @@ export function cutSegments<S extends { x0: number; y0: number; x1: number; y1: 
       const len = Math.hypot(dx, dy);
       if (t0 * len > 1e-3) next.push({ ...w, x1: w.x0 + dx * t0, y1: w.y0 + dy * t0 });
       if ((1 - t1) * len > 1e-3) next.push({ ...w, x0: w.x0 + dx * t1, y0: w.y0 + dy * t1 });
+      // The cut piece along the opening (not a corner wall beside it, cut to make room in front
+      // of the window): a gate of the box's opening (walking through needs that opening open).
+      const along = gate ? Math.abs(gate.side === 'n' ? dx : dy) / len : 0;
+      if (gate && along > Math.SQRT1_2 && (t1 - t0) * len > 1e-3)
+        next.push({
+          ...w,
+          x0: w.x0 + dx * t0,
+          y0: w.y0 + dy * t0,
+          x1: w.x0 + dx * t1,
+          y1: w.y0 + dy * t1,
+          gate,
+        });
     }
     cur = next;
   }

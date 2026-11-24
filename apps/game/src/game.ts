@@ -50,6 +50,7 @@ import {
   isPixelStyle,
   pixelRows,
   urlGraphicsStyle,
+  markCharacter,
 } from './render/graphics-style.js';
 import { NoiseRingModel } from './hud/noise/noise-model.js';
 import { NoiseRingView } from './hud/noise/noise-ring.js';
@@ -86,7 +87,7 @@ import { SimStreamSync } from './world/streaming/sim-sync.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
-import { tileOf } from './world/building-lookup.js';
+import { buildingAtPoint, tileOf } from './world/building-lookup.js';
 import { cameraSide, occludersOf } from './world/cutaway.js';
 import { PAINTED_BLD, setPaintedOrigin } from './render/painted-buildings.js';
 import { PaintedRooms } from './world/town/painted-rooms.js';
@@ -1575,6 +1576,7 @@ void ModelKit.create(renderer).then(async (kit) => {
     if (real) lightReal(p.object);
     else brighten(p.object);
     addHulls(p.object);
+    markCharacter(p.object);
     player.setModel(p.object, p.clips);
     // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
     if (!real)
@@ -1586,7 +1588,10 @@ void ModelKit.create(renderer).then(async (kit) => {
             ),
           )
           // Outlines for the creator parts too (idempotent).
-          .then(() => addHulls(p.object))
+          .then(() => {
+            addHulls(p.object);
+            markCharacter(p.object);
+          })
           .catch((e: unknown) => console.warn('player look', e));
       };
     // Creator look right away; a loaded save brings its look in view.characterProfile.
@@ -2374,7 +2379,14 @@ renderer.setAnimationLoop((time) => {
       paintedRooms.update(tx, ty, streaming.streamer.loaded.size);
     // Floor level of the body (fractional on stairs / while falling).
     const level = Math.floor(state.z + 1e-3);
-    const building = structures.lookup.at(tx, ty, level);
+    // By point, not tile: by a slanted wall the tile has no room but the player is indoors.
+    const building = buildingAtPoint(
+      structures.lookup,
+      'outlineAt' in structures ? structures.outlineAt : undefined,
+      state.x,
+      state.y,
+      level,
+    );
     // Buildings between the camera and the player are cut down to its floor too (raycast);
     // recomputed on a new tile / floor / view and twice a second (chunks streaming in).
     const occKey = `${tx},${ty},${level},${building},${rig.targetYaw.toFixed(3)}`;

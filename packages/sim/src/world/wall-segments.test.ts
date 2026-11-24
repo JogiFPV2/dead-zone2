@@ -7,6 +7,7 @@ import type { SimEvent } from '@deadzone/protocol';
 import { circleOverlaps, moveCircle, slideCircle } from './collision.js';
 import { TileGrid } from './grid.js';
 import { lineOfSight, walkableLine } from './los.js';
+import { OS, OpeningKind, openingKey, setOpening } from '../openings/state.js';
 
 const R = PLAYER_RADIUS;
 const grid = (spec: MapSpec): TileGrid => new TileGrid(buildMap(spec));
@@ -76,6 +77,45 @@ describe('exact walls (SimChunk.wallSegments)', () => {
     // A grazing touch at the end point counts as blocked; parallel sight beside it does not.
     expect(lineOfSight(g, 0, 39, 21, 41, 19)).toBe(false);
     expect(lineOfSight(g, 0, 41, 19, 61, 39)).toBe(true);
+  });
+
+  it('a gate in the gap follows its raster opening (closed door / window stop, open door lets through)', () => {
+    // The gap of `withDoor` closed by a gate whose opening is the north edge of tile (60, 10).
+    const gate = { side: 'n' as const, tx: 60, ty: 10 };
+    const spec = (kind: 2 | 3): MapSpec => ({
+      wallSegments: [
+        ...withDoor.wallSegments!,
+        { x0: 49.576, y0: 29.576, x1: 50.424, y1: 30.424, gate },
+      ],
+      wallN: (x, y) => x === 60 && y === 10,
+      edgeId: () => kind,
+      edgeKinds: [null, 'wall', 'door', 'window'],
+    });
+    const through = (g: TileGrid): number => {
+      let x = 49;
+      let y = 31;
+      for (let i = 0; i < 20; i++) {
+        const p = slideCircle(g, 0, x, y, 0.1, -0.1, R);
+        x = p.x;
+        y = p.y;
+      }
+      return side(x, y);
+    };
+    const key = openingKey(0, 60, 10, 0);
+    const door = grid(spec(2));
+    setOpening(door.openings, key, OpeningKind.door, OS.closed);
+    expect(through(door)).toBeGreaterThan(R - 1e-3);
+    expect(lineOfSight(door, 0, 49, 31, 51, 29)).toBe(false);
+    expect(walkableLine(door, 0, 49, 31, 51, 29)).toBe(false);
+    setOpening(door.openings, key, OpeningKind.door, OS.open);
+    expect(through(door)).toBeLessThan(-R);
+    expect(lineOfSight(door, 0, 49, 31, 51, 29)).toBe(true);
+    // A window: no walking through, but it is seen through.
+    const win = grid(spec(3));
+    setOpening(win.openings, key, OpeningKind.window, OS.closed);
+    expect(through(win)).toBeGreaterThan(R - 1e-3);
+    expect(walkableLine(win, 0, 49, 31, 51, 29)).toBe(false);
+    expect(lineOfSight(win, 0, 49, 31, 51, 29)).toBe(true);
   });
 
   it('a segment duplicated in two chunks behaves the same as one', () => {

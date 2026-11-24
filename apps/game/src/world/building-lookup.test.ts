@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHUNK_TILES, NO_BUILDING, tileIndex, type ChunkData } from './chunk.js';
-import { BuildingLookup, buildingInChunk, tileOf } from './building-lookup.js';
+import { BuildingLookup, buildingAtPoint, buildingInChunk, tileOf } from './building-lookup.js';
 
 const chunk = (cx: number, cy: number, cells: [number, number, number][]): ChunkData => {
   const room = new Uint16Array(CHUNK_TILES);
@@ -93,5 +93,28 @@ describe('chunk-local room ids (docs/sim-architecture.md 9.24)', () => {
     expect(lookup.at(40, 5, 0)).toBe(4_000_000_000);
     expect(lookup.at(70, 5, 0)).toBe(lookup.at(40, 5, 0));
     expect(lookup.at(5, 5, 0)).not.toBe(lookup.at(40, 5, 0));
+  });
+});
+
+describe('buildingAtPoint', () => {
+  // Building 7: rooms only on tiles 2..4 x 2..4; its outline is the triangle (1,1)-(7,1)-(1,7).
+  const lookup = {
+    at: (tx: number, ty: number) => (tx >= 2 && tx <= 4 && ty >= 2 && ty <= 4 ? 7 : NO_BUILDING),
+  };
+  const outlineAt = (b: number) =>
+    b === 7
+      ? { outline: [1, 1, 7, 1, 1, 7], holes: [[1.2, 1.2, 1.8, 1.2, 1.8, 1.8, 1.2, 1.8]] }
+      : undefined;
+
+  it('uses the tile room first', () => {
+    expect(buildingAtPoint(lookup, outlineAt, 3.5, 3.5, 0)).toBe(7);
+  });
+  it('finds a slanted building from a roomless edge tile inside its outline', () => {
+    expect(buildingAtPoint(lookup, outlineAt, 5.5, 1.2, 0)).toBe(7);
+    expect(buildingAtPoint(lookup, undefined, 5.5, 1.2, 0)).toBe(NO_BUILDING);
+  });
+  it('keeps points outside the outline or in a courtyard outdoors', () => {
+    expect(buildingAtPoint(lookup, outlineAt, 5.5, 5.5, 0)).toBe(NO_BUILDING);
+    expect(buildingAtPoint(lookup, outlineAt, 1.5, 1.5, 0)).toBe(NO_BUILDING);
   });
 });
