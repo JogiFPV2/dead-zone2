@@ -53,6 +53,10 @@ export interface InventoryState {
   hardLimitKg: number;
   carryLoad: number;
   equipped: Readonly<Partial<Record<EquipSlot, ItemId>>>;
+  /** Hand that attacks (quick slot 1 = left `hand_secondary`, 2 = right); absent = right. */
+  activeHand?: 'hand_secondary' | 'hand_primary';
+  /** Items pinned to quick slots 3–5 (null = empty); absent = none. */
+  quickSlots?: readonly (ItemId | null)[];
   /** Main inventory and carried bags by container id (full content each). */
   containers: Readonly<Record<ContainerId, ContainerView>>;
 }
@@ -156,6 +160,8 @@ function applyInventory(prev: InventoryState | undefined, v: InventoryView): Inv
     hardLimitKg: v.hardLimitKg,
     carryLoad: v.carryLoad,
     equipped: v.equipped,
+    ...(v.activeHand ? { activeHand: v.activeHand } : {}),
+    ...(v.quickSlots ? { quickSlots: v.quickSlots } : {}),
     containers,
   };
 }

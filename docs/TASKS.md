@@ -35,7 +35,7 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 ## Etap 3 — Przedmioty i ekwipunek
 - [x] Definicje przedmiotów w JSON (Modules)
 - [x] Ekwipunek z wagą, torby, lewa i prawa ręka (Symulacja)
-- [ ] Szybkie sloty 1–5 (Silnik + Designer)
+- [x] Szybkie sloty 1–5 (Silnik + Designer) — 1/2 = lewa/prawa ręka, 3–5 przypinane ([sim-architecture.md 9.85](sim-architecture.md))
 - [x] Plecaki i torby: od reklamówki do plecaka wojskowego (pojemność, redukcja wagi) (Modules + Symulacja)
 - [~] Schowki: skrzynie, szafki, lodówki, stawiane i przenoszone skrzynie (Symulacja) — w sim gotowe; schowki z mapy (`objects`/`rooms` chunków) przekazywane z `apps/game` (Silnik), kolizje postawionych skrzyń i zapis w diffie chunka później
 - [x] Okno przeszukiwania schowka i zapełnienie mebli (propy na półkach wg `fillPct`) (Silnik)

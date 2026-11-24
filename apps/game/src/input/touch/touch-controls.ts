@@ -17,6 +17,8 @@ export const TOUCH_ACTIONS = [
   'slot1',
   'slot2',
   'slot3',
+  'slot4',
+  'slot5',
   'reload',
 ] as const;
 export type TouchAction = (typeof TOUCH_ACTIONS)[number];
@@ -25,7 +27,7 @@ export type TouchAction = (typeof TOUCH_ACTIONS)[number];
  * Touch button → existing input action (same handlers as the keys / mouse): atak = LMB
  * (`primaryAction`), F = `interact` (held = search, like the key), skradanie = `crouch` (C, the
  * sneak toggle), użyj = RMB short click (`secondaryAction`: car menu, furniture menu, shove),
- * bieg = held Shift (`sprint`), cel = Tab (`targetNext`), top bar = the screen keys and 1–3.
+ * bieg = held Shift (`sprint`), cel = Tab (`targetNext`), top bar = the screen keys and 1–5.
  */
 export const TOUCH_ACTION_MAP: Readonly<Record<TouchAction, Action>> = {
   attack: 'primaryAction',
@@ -40,6 +42,8 @@ export const TOUCH_ACTION_MAP: Readonly<Record<TouchAction, Action>> = {
   slot1: 'quickslot1',
   slot2: 'quickslot2',
   slot3: 'quickslot3',
+  slot4: 'quickslot4',
+  slot5: 'quickslot5',
   reload: 'reload',
 };
 

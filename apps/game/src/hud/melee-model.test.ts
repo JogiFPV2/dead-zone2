@@ -56,6 +56,11 @@ describe('melee weapon panel model', () => {
     expect(vm).toMatchObject({ tag: 'PRZEDMIOT', twoHanded: true });
   });
 
+  it('harmless item (tissue, clothing): NIE RANI', () => {
+    const m = melee({ source: 'default', damage: { min: 0, max: 0 } });
+    expect(meleeVM(combat('base:t-shirt', m), name)).toMatchObject({ tag: 'NIE RANI' });
+  });
+
   it('catalogue weapon: no tag; condition from condition / maxCondition', () => {
     const vm = meleeVM(combat('base:bat', noCondition(melee({ source: 'weapon' })), [3, 20]), name);
     expect(vm?.tag).toBeUndefined();

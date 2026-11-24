@@ -40,6 +40,7 @@ import { EMPTY_HUD_CONTENT, type HudContentIndex } from './content-index.js';
 import {
   HOTBAR_SLOTS,
   hintItems,
+  hotbarClearCommand,
   hotbarCommand,
   hotbarHeldIndex,
   hotbarItems,
@@ -293,6 +294,17 @@ export function createHud(opts: HudOptions): Hud {
   const hotbar = document.createElement('div');
   hotbar.className = 'dz-hotbar dz-glass';
   hotbar.append(...slots.map((s) => s.slot.el));
+  for (const s of slots) {
+    // Drop target of the inventory drag (`hotbarSlotAt`); slots 1 / 2 are the hands.
+    s.slot.el.dataset.hotbarSlot = String(s.index);
+    if (s.index < 2) s.slot.el.dataset.hand = s.index === 0 ? 'L' : 'P';
+    // PPM: a hand puts its item away, 3–5 unpin.
+    s.slot.el.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const cmd = current ? hotbarClearCommand(current, s.index) : undefined;
+      if (cmd) opts.send(cmd);
+    });
+  }
   const hotbarGroup = group('hotbar', hotbar);
   const firearmWidget = createFirearmWidget();
   // Own group (HUD editor slot `weapon`, shared with the car panel): right 18, bottom 73.
@@ -455,8 +467,8 @@ export function createHud(opts: HudOptions): Hud {
       if (s !== lastState || sneaking !== lastSneaking) {
         lastState = s;
         lastSneaking = sneaking;
-        // The highlight follows the item in hand (inventory PPM / hotbar alike).
-        selected = hotbarHeldIndex(s) ?? selected;
+        // The highlight is the hand that attacks: slot 1 = left, slot 2 = right.
+        selected = hotbarHeldIndex(s);
         hp.update(statsVM(s).health);
         eye.update({
           level: s.player.alive ? s.stealth?.level : undefined,
@@ -554,8 +566,9 @@ export function createHud(opts: HudOptions): Hud {
       lastState = undefined;
     },
     selectSlot(index) {
-      selected = Math.min(HOTBAR_SLOTS - 1, Math.max(0, index));
-      const cmd = current ? hotbarCommand(current, content, selected) : undefined;
+      const i = Math.min(HOTBAR_SLOTS - 1, Math.max(0, index));
+      if (i < 2) selected = i;
+      const cmd = current ? hotbarCommand(current, content, i) : undefined;
       if (cmd) opts.send(cmd);
       lastState = undefined;
       lastUpdate = -Infinity;

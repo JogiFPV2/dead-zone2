@@ -198,17 +198,15 @@ function rangedOf(i: Obj): HudRangedDef | undefined {
   };
 }
 
-/** Same rule as the sim's `allowedSlots`: own slots (clothing, bag, back), and always the hands. */
 function equipSlotsOf(i: Obj, kind: string): EquipSlot[] {
-  const hands: EquipSlot[] = ['hand_primary', 'hand_secondary'];
-  if (isObj(i.clothing) && isSlot(i.clothing.slot)) return [i.clothing.slot, ...hands];
-  if (isObj(i.bag) && Array.isArray(i.bag.slots)) {
-    const own = i.bag.slots.filter(isSlot);
-    return [...own, ...hands.filter((h) => !own.includes(h))];
+  if (isObj(i.clothing) && isSlot(i.clothing.slot)) return [i.clothing.slot];
+  if (isObj(i.bag) && Array.isArray(i.bag.slots)) return i.bag.slots.filter(isSlot);
+  if (kind === 'weapon_melee' || kind === 'weapon_ranged' || kind === 'tool') {
+    return longWeapon(i, kind)
+      ? ['hand_primary', 'hand_secondary', 'back']
+      : ['hand_primary', 'hand_secondary'];
   }
-  if ((kind === 'weapon_melee' || kind === 'weapon_ranged') && longWeapon(i, kind))
-    return [...hands, 'back'];
-  return hands;
+  return [];
 }
 
 /**
