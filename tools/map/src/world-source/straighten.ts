@@ -292,6 +292,29 @@ function cornersOf(runs: readonly { h: boolean }[], at: readonly number[]): numb
   return out;
 }
 
+/** Squared outline close to the original: area within 6 %, centroid within 0.5 m. */
+export function sameFootprint(a: readonly number[], b: readonly number[]): boolean {
+  const A = Math.abs(ringArea(a));
+  const B = Math.abs(ringArea(b));
+  if (!B || Math.abs(A - B) > B * 0.06) return false;
+  // Area centroid (vertex counts differ after squaring).
+  const c = (g: readonly number[]) => {
+    let x = 0;
+    let y = 0;
+    let k = 0;
+    for (let i = 0; i + 3 < g.length; i += 2) {
+      const cr = g[i]! * g[i + 3]! - g[i + 2]! * g[i + 1]!;
+      x += (g[i]! + g[i + 2]!) * cr;
+      y += (g[i + 1]! + g[i + 3]!) * cr;
+      k += cr;
+    }
+    return [x / (3 * k), y / (3 * k)] as const;
+  };
+  const [ax, ay] = c(a);
+  const [bx, by] = c(b);
+  return Math.hypot(ax - bx, ay - by) <= 5;
+}
+
 /** A flat ring turned by `deg` about `c` (decimetres, rounded). */
 function turnFlat(p: readonly number[], deg: number, c: { x: number; y: number }): number[] {
   const a = (deg * Math.PI) / 180;
@@ -576,9 +599,37 @@ export function straightenOsmMap(
     if (Math.abs(ringOrientation(rot[0]!).deg) > SQUARE_TOLERANCE_DEG) bl++;
     return squared;
   };
+  // Corners shared by two buildings (terraced houses, shared walls): those keep their line.
+  const corners = new Map<string, number>();
+  for (const b of map.buildings) {
+    if (!b.exact) continue;
+    const g = b.rings[0] ?? [];
+    for (let i = 0; i + 3 < g.length; i += 2) {
+      const k = `${Math.round(g[i]! / 3)},${Math.round(g[i + 1]! / 3)}`;
+      corners.set(k, (corners.get(k) ?? 0) + 1);
+    }
+  }
+  const touches = (g: readonly number[]): boolean => {
+    for (let i = 0; i + 3 < g.length; i += 2)
+      if ((corners.get(`${Math.round(g[i]! / 3)},${Math.round(g[i + 1]! / 3)}`) ?? 0) > 1)
+        return true;
+    return false;
+  };
   const buildings = map.buildings.map((b) => {
-    // map2 outlines stay 1:1 (`exact`): only the frame rotation.
-    if (b.exact) return { ...b, rings: b.rings.map((g) => rotFlat(r, g)) };
+    // map2 outlines (`exact`): the frame rotation, and right angles on the building's own axis
+    // when the outline is near-rectilinear (Paweł 24.11: walls straight, corners square, same
+    // shape and place). Buildings sharing a wall keep their OSM line.
+    if (b.exact) {
+      const rot = b.rings.map((g) => rotFlat(r, g));
+      if (!b.noWall && !touches(b.rings[0] ?? [])) {
+        const sqr = squareRings(rot, true);
+        if (sqr && sameFootprint(sqr[0]!, rot[0]!)) {
+          bs++;
+          return { ...b, rings: sqr };
+        }
+      }
+      return { ...b, rings: rot };
+    }
     const { rot, squared } = sq(b.rings, true);
     if (squared) bs++;
     return { ...b, rings: cleanOrFallback(shaped(rot, squared), rot) };

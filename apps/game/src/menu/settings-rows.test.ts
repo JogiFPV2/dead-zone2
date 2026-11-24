@@ -13,7 +13,11 @@ import {
 import { SETTINGS_TABS } from './settings-tabs.js';
 
 const ctx = { trackTitle: 'EmptyCity', viewport: { width: 1280, height: 720 } };
-const d = DEFAULT_SETTINGS;
+// The style rows are checked from „Klasyczny” (the default is „Malowany” since 24.11.2026).
+const d: typeof DEFAULT_SETTINGS = {
+  ...DEFAULT_SETTINGS,
+  graphics: { ...DEFAULT_SETTINGS.graphics, style: 'classic' },
+};
 const row = (tab: Parameters<typeof settingsRows>[0], id: string, s = d): FocusableRow =>
   settingsRows(tab, s, ctx)
     .filter(isFocusable)

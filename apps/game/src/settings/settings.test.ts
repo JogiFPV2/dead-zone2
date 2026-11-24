@@ -30,7 +30,7 @@ describe('sanitizeSettings', () => {
       audio: { master: -1, music: 0.3 },
     });
     expect(s.graphics).toEqual({
-      style: 'classic',
+      style: 'painted',
       pixelRatioCap: 4,
       antialias: true,
       showFps: false,
@@ -147,21 +147,29 @@ describe('loadSettings', () => {
     });
   });
 
-  it('v3 → v4 keeps the data and defaults the graphics style; v4 data loads (#71 builds)', () => {
+  it('v3 → v5 keeps the data and defaults the graphics style; v4 data loads (#71 builds)', () => {
     const r = loadSettings(
       JSON.stringify({ version: 3, graphics: { pixelRatioCap: 1 }, audio: { muted: true } }),
     );
     expect(r.migratedFrom).toBe(3);
-    expect(r.settings.graphics.style).toBe('classic');
+    expect(r.settings.graphics.style).toBe('painted');
     expect(r.settings.graphics.pixelRatioCap).toBe(1);
     expect(r.settings.audio.muted).toBe(true);
     const v4 = loadSettings(JSON.stringify({ version: 4, graphics: { style: 'pixel' } }));
     expect(v4.fallback).toBeUndefined();
     expect(v4.settings.graphics.style).toBe('pixel');
     const fine = loadSettings(JSON.stringify({ version: 4, graphics: { style: 'pixel-fine' } }));
-    expect(fine.migratedFrom).toBeUndefined();
+    expect(fine.migratedFrom).toBe(4);
     expect(fine.settings.graphics.style).toBe('pixel-fine');
-    expect(sanitizeSettings({ graphics: { style: 'vhs' } }).graphics.style).toBe('classic');
+    expect(sanitizeSettings({ graphics: { style: 'vhs' } }).graphics.style).toBe('painted');
+  });
+
+  it('v4 → v5 moves the old default „Klasyczny” to „Malowany” once', () => {
+    const r = loadSettings(JSON.stringify({ version: 4, graphics: { style: 'classic' } }));
+    expect(r.migratedFrom).toBe(4);
+    expect(r.settings.graphics.style).toBe('painted');
+    const v5 = loadSettings(JSON.stringify({ version: 5, graphics: { style: 'classic' } }));
+    expect(v5.settings.graphics.style).toBe('classic');
   });
 
   it('migrates legacy data (hypothetical v0 with a flat `keys` map)', () => {

@@ -35,7 +35,13 @@ import {
   isRoofHidden,
   type Cutaway,
 } from '../cutaway.js';
-import { openingOnOutline, VectorWalls, type VectorWallPool } from './vector-walls.js';
+import {
+  openingOnOutline,
+  VectorWalls,
+  type OutlineOpening,
+  type VectorWallPool,
+  type WallGap,
+} from './vector-walls.js';
 import type { SimWallSegment } from '@deadzone/protocol';
 import { LEVEL_HEIGHT } from '../instances.js';
 import { WALL_HEIGHT } from '../structure-instances.js';
@@ -249,6 +255,41 @@ export class TownStructures {
           if (!s.gate) segments.push(s); // gates: the door / window there is drawn instead
     this.vector?.dispose();
     this.vector = undefined;
+    // Exterior doors / windows of vector-walled buildings: where they sit on the outline (the
+    // edge module goes there; facade bands run across, lower storeys get a lintel).
+    const onOutline = new Map<TownEdge, OutlineOpening>();
+    const gaps: WallGap[] = [];
+    const segBuildings = new Set(segments.map((s) => s.building ?? NO_BUILDING));
+    for (const e of layout.edges) {
+      if (!segBuildings.has(e.building) || e.interior) continue;
+      if (e.kind !== 'door' && e.kind !== 'window') continue;
+      const o = this.opts.outlineOf?.(e.building);
+      const p =
+        o &&
+        openingOnOutline(
+          [o.outline, ...(o.holes ?? [])],
+          e.tx,
+          e.ty,
+          e.axis === 'N' ? e.tx + 1 : e.tx,
+          e.axis === 'N' ? e.ty : e.ty + 1,
+          e.axis === 'N' ? 0 : Math.PI / 2,
+        );
+      if (!p) continue;
+      onOutline.set(e, p);
+      const ux = Math.cos(p.rotY) * (p.width / 2);
+      const uy = -Math.sin(p.rotY) * (p.width / 2);
+      gaps.push({
+        seg: {
+          x0: p.x - ux,
+          y0: p.z - uy,
+          x1: p.x + ux,
+          y1: p.z + uy,
+          z: range.z,
+          building: e.building,
+        },
+        door: e.kind === 'door',
+      });
+    }
     if (segments.length) {
       this.vector = new VectorWalls(
         segments,
@@ -263,6 +304,7 @@ export class TownStructures {
           return o && range.z < o.floors - 1 ? LEVEL_HEIGHT : WALL_HEIGHT;
         },
         this.opts.vectorPool,
+        gaps,
       );
       this.root.add(this.vector.root);
     }
@@ -281,17 +323,7 @@ export class TownStructures {
         !e.interior &&
         (e.kind === 'door' || e.kind === 'window')
       ) {
-        const o = this.opts.outlineOf?.(e.building);
-        const p =
-          o &&
-          openingOnOutline(
-            [o.outline, ...(o.holes ?? [])],
-            e.tx,
-            e.ty,
-            e.axis === 'N' ? e.tx + 1 : e.tx,
-            e.axis === 'N' ? e.ty : e.ty + 1,
-            rot,
-          );
+        const p = onOutline.get(e);
         if (p)
           m = new Matrix4().compose(
             v.set(p.x, baseY, p.z),

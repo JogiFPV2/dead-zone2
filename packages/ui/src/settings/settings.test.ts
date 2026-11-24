@@ -18,7 +18,7 @@ describe('playerSettingsSchema', () => {
     const d = defaultPlayerSettings();
     expect(d.version).toBe(1);
     expect(d.graphics).toEqual({
-      style: 'classic',
+      style: 'painted',
       pixelRatioCap: 2,
       antialias: true,
       showFps: false,
