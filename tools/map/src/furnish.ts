@@ -262,11 +262,14 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
   ],
   'base:room-gym': [K('base:locker', 1, 4, 14, TALL), K('base:bench', 1, 3, 30)],
   'base:room-office': [
-    K('base:desk', 1, 2, 12, {
+    // Typical office (Paweł 24.11): a desk with a chair and a lamp per ~7 m², up to four, binder
+    // shelves along the walls (no lockers: they stood in front of the windows).
+    K('base:desk', 1, 4, 7, {
       then: K(CHAIR, 1, 1, 0, { atFront: true }),
       top: 'base:desk-lamp',
     }),
     K('base:bookshelf', 1, 2, 12, TALL),
+    K('base:metal-shelf', 0, 1, 24, TALL),
     // Meeting table in bigger offices.
     K('base:table', 0, 1, 20, { seats: { id: CHAIR, min: 2, max: 4, per: 6 } }),
     K('base:dresser', 0, 1, 14),

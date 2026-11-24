@@ -198,6 +198,53 @@ const R = (t: string) => `base:room-${t}`;
 const FLAT = ['living-room', 'kitchen', 'bedroom', 'bathroom', 'bedroom'];
 const HOUSE_UP = ['bedroom', 'bathroom', 'bedroom', 'living-room'];
 
+/**
+ * Typical office floor (Paweł 24.11: „biuro urządzone w stylu biurowym”): offices along the
+ * corridor, the WC in the smallest room next to the stairs (else the building's first end) and,
+ * from four rooms up, a staff kitchen (socjalny) in the next room by the stairs. Pure.
+ */
+export function officeRoomTypes(
+  ordinary: readonly number[],
+  roomTiles: readonly (readonly number[])[],
+  w: number,
+  stair: { tiles: readonly (readonly [number, number])[] } | undefined,
+  typeOf: Map<number, string>,
+): void {
+  for (const r of ordinary) typeOf.set(r, R('office'));
+  if (ordinary.length < 2) return;
+  const centre = (tiles: readonly number[]): [number, number] => {
+    let sx = 0;
+    let sy = 0;
+    for (const i of tiles) {
+      sx += i % w;
+      sy += Math.floor(i / w);
+    }
+    return [sx / tiles.length, sy / tiles.length];
+  };
+  let at: [number, number] = [0, 0];
+  if (stair?.tiles.length) {
+    at = [
+      stair.tiles.reduce((a, t) => a + t[0], 0) / stair.tiles.length,
+      stair.tiles.reduce((a, t) => a + t[1], 0) / stair.tiles.length,
+    ];
+  }
+  const near = [...ordinary]
+    .map((r) => {
+      const [x, y] = centre(roomTiles[r]!);
+      // Close to the stairs first, then the smaller room.
+      return { r, d: Math.hypot(x - at[0], y - at[1]) + roomTiles[r]!.length * 0.05 };
+    })
+    .sort((a, b) => a.d - b.d || a.r - b.r);
+  // The WC: the smallest of the two rooms nearest the stairs.
+  const pair = near.slice(0, 2).sort((a, b) => roomTiles[a.r]!.length - roomTiles[b.r]!.length);
+  const wc = pair[0]!.r;
+  typeOf.set(wc, R('bathroom'));
+  if (ordinary.length >= 4) {
+    const kitchen = near.find((n) => n.r !== wc)!.r;
+    typeOf.set(kitchen, R('kitchen'));
+  }
+}
+
 /** Room type of cell `i` (of `n`) on floor z. */
 function roomType(kind: BuildingKind, z: number, i: number, n: number, levels: number): string {
   switch (kind) {
@@ -297,6 +344,8 @@ const CHARS = (() => {
 })();
 const STAIR = 'U';
 const HALL = 'C';
+/** Staff room of an industrial hall's office strip (not in CHARS: never a section). */
+const SOCIAL = '~';
 
 interface StairPlan {
   kind: 'u' | 'straight';
@@ -426,6 +475,42 @@ function assemble(
   return { building, stairs, nextRoomId, levels: floorsOut.length, doors };
 }
 
+/** Room type of a flat part (`flatPart`). */
+const FLAT_PART: Record<string, string> = {
+  H: 'hall',
+  B: 'bathroom',
+  K: 'kitchen',
+  S: 'bedroom',
+  L: 'living-room',
+};
+
+/**
+ * Part of a block flat at (u, v): u tiles from the klatka (0 = next to it), v rows from the
+ * facade, in a flat `W` tiles along the block and `D` deep (Paweł 24.11: typical layout). The
+ * hall (przedpokój) runs along the klatka wall and the inner side, so it is the only room by the
+ * klatka and every room opens onto it; along the facade from the klatka: bathroom, kitchen,
+ * bedroom (wide flats) and living room. Small flats stay one room. Pure (tests).
+ */
+export function flatPart(u: number, v: number, W: number, D: number): string {
+  if (D < 6 || W < 5) return 'L';
+  const hall = W < 8 ? 1 : 2;
+  if (u < hall || v >= D - 2) return 'H';
+  const r = u - hall;
+  const Wr = W - hall;
+  if (Wr < 7) {
+    // Narrow flat (M2): bathroom (inner) and kitchen (facade) side by side, then the room.
+    if (r < 2) return v >= Math.floor((D - 2) / 2) ? 'B' : 'K';
+    return 'L';
+  }
+  if (r < 2) return 'B';
+  if (r < 5) return 'K';
+  if (Wr >= 11) {
+    const bed = Math.floor((Wr - 5) / 2);
+    return r < 5 + bed ? 'S' : 'L';
+  }
+  return 'L';
+}
+
 /**
  * Block of flats with stairwells (blok z klatkami): the long axis cut into ~16 m sections, each
  * with its own klatka — a 3-tile strip across the whole depth holding a U stair at the back and
@@ -485,16 +570,45 @@ function blockWithStairwells(inp: InteriorInput): InteriorResult | undefined {
     }
     return v;
   };
+  // Flat of every tile, and each flat's extent along the axis.
+  const flatOf = (a: number, b: number): string | undefined => {
+    const sec = Math.min(nSec - 1, Math.floor(a / secLen));
+    const st = strips[sec]!;
+    if (a >= st.a0 && a < st.a0 + 3) return undefined;
+    return `F${sec}:${a < st.a0 ? 0 : 1}:${S >= 11 && b >= Math.floor(S / 2) ? 1 : 0}`;
+  };
+  const span = new Map<string, { lo: number; hi: number; b0: number; b1: number }>();
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!inM(x, y)) continue;
+      const [a, b] = vertical ? [y, x] : [x, y];
+      const f = flatOf(a, b);
+      if (!f) continue;
+      const e = span.get(f) ?? { lo: a, hi: a, b0: b, b1: b };
+      e.lo = Math.min(e.lo, a);
+      e.hi = Math.max(e.hi, a);
+      e.b0 = Math.min(e.b0, b);
+      e.b1 = Math.max(e.b1, b);
+      span.set(f, e);
+    }
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       if (!inM(x, y)) continue;
       const [a, b] = vertical ? [y, x] : [x, y];
       const sec = Math.min(nSec - 1, Math.floor(a / secLen));
-      const st = strips[sec]!;
-      let k: string;
-      if (a >= st.a0 && a < st.a0 + 3) k = `K${sec}`;
-      else k = `F${sec}:${a < st.a0 ? 0 : 1}:${S >= 11 && b >= Math.floor(S / 2) ? 1 : 0}`;
-      cell[y * w + x] = id(k);
+      const f = flatOf(a, b);
+      if (!f) {
+        cell[y * w + x] = id(`K${sec}`);
+        continue;
+      }
+      const e = span.get(f)!;
+      const side = f.split(':')[1] === '0' ? 0 : 1;
+      // u: tiles from the klatka; v: rows from the facade (the inner side last).
+      const u = side === 0 ? e.hi - a : a - e.lo;
+      const band = f.split(':')[2] === '1';
+      const v = band ? e.b1 - b : b - e.b0;
+      const part = flatPart(u, v, e.hi - e.lo + 1, e.b1 - e.b0 + 1);
+      cell[y * w + x] = id(`${f}:${part}`);
     }
   const lk = look('block', inp.rnd);
   const flights = strips.flatMap((s) => s.stair.flights);
@@ -533,10 +647,7 @@ function blockWithStairwells(inp: InteriorInput): InteriorResult | undefined {
     }
     const rooms: BuildingInput['rooms'] = {};
     keys.forEach((k, i) => {
-      const flatNo = k.startsWith('F') ? i : 0;
-      const type = k.startsWith('K')
-        ? R('hall')
-        : R(z === 0 && flatNo % 7 === 3 ? 'shop' : FLAT[flatNo % FLAT.length]!);
+      const type = k.startsWith('K') ? R('hall') : R(FLAT_PART[k.slice(-1)] ?? 'living-room');
       rooms[charOf[i]!] = {
         id: nextRoomId++,
         type,
@@ -599,7 +710,9 @@ function industrialHall(inp: InteriorInput, split = true): InteriorResult | unde
   const secChar = (k: number) => (k === 0 ? HALL : CHARS[1 + k]!);
   const keyOf = (x: number, y: number) => {
     const [a, b] = vertical ? [y, x] : [x, y];
-    if (a < officeDepth) return b < S / 2 ? 'A' : 'B';
+    // Office strip: office, staff room (socjal, wide halls) and WC (Paweł 24.11).
+    if (a < officeDepth)
+      return S >= 15 ? (b < S / 3 ? 'A' : b < (2 * S) / 3 ? SOCIAL : 'B') : b < S / 2 ? 'A' : 'B';
     const i = Math.min(nA - 1, Math.floor((a - officeDepth) / secA));
     const j = Math.min(nB - 1, Math.floor(b / secB));
     return secChar(i * nB + j);
@@ -608,7 +721,7 @@ function industrialHall(inp: InteriorInput, split = true): InteriorResult | unde
     Array.from({ length: w }, (_, x) => (inM(x, y) ? keyOf(x, y) : '.')).join(''),
   );
   const present = new Set(plan.join('').replace(/\./g, ''));
-  const halls = new Set([...present].filter((c) => c !== 'A' && c !== 'B'));
+  const halls = new Set([...present].filter((c) => c !== 'A' && c !== 'B' && c !== SOCIAL));
   const isHall = (c: string | undefined) => c !== undefined && halls.has(c);
   // Shared edges of every pair of rooms (tile on the west / north side, its e / s edge).
   const shared = new Map<string, [number, number, Edge][]>();
@@ -672,6 +785,8 @@ function industrialHall(inp: InteriorInput, split = true): InteriorResult | unde
   if (present.has('A')) rooms.A = { id: nextRoomId++, type: R('office'), floor: 'base:concrete' };
   if (present.has('B'))
     rooms.B = { id: nextRoomId++, type: R('bathroom'), floor: 'base:kitchen-tiles' };
+  if (present.has(SOCIAL))
+    rooms[SOCIAL] = { id: nextRoomId++, type: R('kitchen'), floor: 'base:kitchen-tiles' };
   const openings: NonNullable<BuildingInput['openings']> = inner.map(([x, y, side]) => ({
     at: [x, y] as [number, number],
     side,
@@ -1166,6 +1281,7 @@ function genericInterior(inp: InteriorInput): InteriorResult {
         homeKey ? homeRoomType(roomKey[r]!, z) : roomType(kind, z, i, ordinary.length, levels),
       ),
     );
+    if (kind === 'office' && !homeKey) officeRoomTypes(ordinary, roomTiles, w, stair, typeOf);
     for (const r of alive) {
       const ch = charOf.get(r)!;
       const type = roomKey[r] === STAIR || roomKey[r] === HALL ? R('hall') : typeOf.get(r)!;
