@@ -6,7 +6,13 @@ import { BuildingLookup, type OutlineAt } from '../building-lookup.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from '../chunk.js';
 import type { Cutaway } from '../cutaway.js';
 import { LEVEL_HEIGHT } from '../instances.js';
-import { OpeningsView, type OpeningEdge, type OpeningKind } from '../openings.js';
+import {
+  OpeningsView,
+  sashModel,
+  windowWithoutGlass,
+  type OpeningEdge,
+  type OpeningKind,
+} from '../openings.js';
 import type { LoadedChunks } from '../streaming/source.js';
 import { townDecor } from '../town/decor.js';
 import type { TreeSpot } from '../trees/tree-layer.js';
@@ -20,7 +26,7 @@ import {
   type SharedTownBatch,
 } from '../town/town-structures.js';
 import { WindowPanes } from '../town/window-panes.js';
-import { VectorWallPool } from '../town/vector-walls.js';
+import { VectorWallPool, type OutlineOpening } from '../town/vector-walls.js';
 import { terrainMaterial } from '../town/town-terrain.js';
 import { MapTiles } from '../town/tiles.js';
 import type { GenBuildingInfo } from './convert.js';
@@ -330,6 +336,18 @@ export class StreamedTown {
     return l?.doorSkin(tx, ty, axis);
   }
 
+  /** Spot of an exterior door / window on a slanted building's outline (level z). */
+  openingPlace(tx: number, ty: number, z: number, axis: 'N' | 'W'): OutlineOpening | undefined {
+    const l = this.levels.get(key(Math.floor(tx / CHUNK_SIZE), Math.floor(ty / CHUNK_SIZE), z));
+    return l?.openingPlace(tx, ty, axis);
+  }
+
+  /** Window module kind at an edge (`shop` = witryna). */
+  windowKind(tx: number, ty: number, z: number, axis: 'N' | 'W'): 'shop' | 'window' | undefined {
+    const l = this.levels.get(key(Math.floor(tx / CHUNK_SIZE), Math.floor(ty / CHUNK_SIZE), z));
+    return l?.windowKind(tx, ty, axis);
+  }
+
   /** Loaded level batches (tests, perf overlay). */
   stats(): { levels: number; terrain: number; instances: number } {
     let instances = 0;
@@ -361,6 +379,8 @@ export interface OpeningsLike {
   update(nowS: number): void;
   /** Lit room windows (`litWindowKeys`): covered ones glow by their `lightPass`. */
   setLitWindows?(keys: ReadonlySet<string>): void;
+  /** Player position (sim x / y, level): door glow on that level, faded by distance. */
+  setViewer?(x: number, y: number, z: number): void;
 }
 
 /**
@@ -377,6 +397,7 @@ export class StreamedOpenings implements OpeningsLike {
   private eventsSince: SimEvent[] = [];
   private cut: Cutaway | undefined;
   private lit: ReadonlySet<string> = new Set();
+  private viewer: { x: number; y: number; z: number } | undefined;
 
   constructor(
     private readonly loaded: LoadedChunks,
@@ -388,19 +409,22 @@ export class StreamedOpenings implements OpeningsLike {
   }
 
   loadChunk(cx: number, cy: number, z: number): void {
-    if (z !== 0) return;
+    // Every storey: doors and windows open one by one on upper floors too.
     const town = this.town;
     const kit = this.kit;
+    const ax = (e: OpeningEdge) => (e.side === 'n' ? 'N' : 'W');
     const view = new OpeningsView(
       this.loaded,
       town?.lookup ?? new BuildingLookup(this.loaded, false),
       kit && town
         ? {
             kit,
-            leafOf: (e) =>
-              doorLeaf(town.doorSkin(e.tx, e.ty, e.z, e.side === 'n' ? 'N' : 'W') ?? 'interior'),
+            leafOf: (e) => doorLeaf(town.doorSkin(e.tx, e.ty, e.z, ax(e)) ?? 'interior'),
+            // Open or smashed: the wall module drops its glass (open: the sash swings in).
             onWindow: (e, state) =>
-              town.setWindowBroken(e.tx, e.ty, e.z, e.side === 'n' ? 'N' : 'W', state === 'broken'),
+              town.setWindowBroken(e.tx, e.ty, e.z, ax(e), windowWithoutGlass(state)),
+            sashOf: (e) => sashModel(town.windowKind(e.tx, e.ty, e.z, ax(e))),
+            placeOf: (e) => town.openingPlace(e.tx, e.ty, e.z, ax(e)),
           }
         : undefined,
     );
@@ -409,6 +433,7 @@ export class StreamedOpenings implements OpeningsLike {
     if (this.eventsSince.length) view.applyEvents(this.eventsSince);
     if (this.cut) view.setCutaway(this.cut);
     view.setLitWindows(this.lit);
+    if (this.viewer) view.setViewer(this.viewer.x, this.viewer.y, this.viewer.z);
     this.views.set(key(cx, cy, z), view);
     this.root.add(view.root);
     this.revision++;
@@ -460,6 +485,11 @@ export class StreamedOpenings implements OpeningsLike {
 
   update(nowS: number): void {
     for (const v of this.views.values()) v.update(nowS);
+  }
+
+  setViewer(x: number, y: number, z: number): void {
+    for (const v of this.views.values()) v.setViewer(x, y, z);
+    this.viewer = { x, y, z };
   }
 
   setLitWindows(keys: ReadonlySet<string>): void {

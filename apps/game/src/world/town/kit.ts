@@ -24,6 +24,7 @@ import { V2_DETAIL, paintDetailIndex, withFacadeDetail } from './bld-detail.js';
 import { setPaintedBuildingCells, withPaintedBuildings } from '../../render/painted-buildings.js';
 import { shopWindowGeometry } from './levels.js';
 import { ALL_SKINS, WALL_CELL } from './modules.js';
+import { addDoorAndSashModels } from './door-models.js';
 import { addWindowSills } from './window-sill.js';
 
 /** `deadzone-town/town.json` (written by `assets town`). */
@@ -189,6 +190,7 @@ export async function loadTownKit(
   }
   deriveSkins(geometries, (c) => cells.uv(c));
   addShopWindows(geometries, cells);
+  addDoorAndSashModels(geometries, cells);
   const material = new MeshStandardMaterial({
     map: palette,
     emissiveMap: emissive,

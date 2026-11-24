@@ -3,8 +3,14 @@ import { autoDoors } from '../catalog.js';
 import type { BuildingKind } from './types.js';
 import { windowEdges, windowPerRoom } from './window-rhythm.js';
 
-/** Window rhythm (m of wall per window, per storey) of homes, blocks and offices. */
-export const WINDOW_EVERY = 2.25;
+/**
+ * Window rhythm (m of wall per window, per storey) of homes, blocks and offices. 3 m (Paweł
+ * 24.11: „zdecydowanie za dużo okien”; was 2.25): about one window per room width, plus one in
+ * every room with an outer wall (`windowPerRoom`).
+ */
+export const WINDOW_EVERY = 3;
+/** Shop fronts (ground floor witryny): one every 3 m too (was 2 m, a glass wall). */
+export const SHOP_WINDOW_EVERY = 3;
 
 type BuildingInput = NonNullable<BlueprintInput['buildings']>[number];
 type StairsInput = NonNullable<BlueprintInput['stairs']>[number];
@@ -1345,14 +1351,11 @@ function genericInterior(inp: InteriorInput): InteriorResult {
         doors.push({ x: fp.x0 + o.e.x, y: fp.y0 + o.e.y, side: o.e.side });
       }
     }
-    const every =
-      kind === 'shed' || kind === 'garage' || kind === 'industrial'
-        ? 6
-        : kind === 'shop' && z === 0
-          ? 2
-          : WINDOW_EVERY;
+    const sparse = kind === 'shed' || kind === 'garage' || kind === 'industrial';
+    const shopFront = kind === 'shop' && z === 0;
+    const every = sparse ? 6 : shopFront ? SHOP_WINDOW_EVERY : WINDOW_EVERY;
     const winAt = windowEdges(ext, every, used);
-    if (every === WINDOW_EVERY) windowPerRoom(ext, (x, y) => plan[y]![x]!, winAt, used);
+    if (!sparse && !shopFront) windowPerRoom(ext, (x, y) => plan[y]![x]!, winAt, used);
     for (const e of ext) {
       if (used.has(`${e.x},${e.y},${e.side}`)) continue;
       if (kind === 'ruin' && (e.x * 7 + e.y * 13 + z) % 5 === 0) {

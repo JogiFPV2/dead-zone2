@@ -122,6 +122,9 @@ const opt = (cmd: OpeningCmd, label: string): OpeningOption => ({ cmd, label });
 export function openingPrimary(t: DoorTarget): OpeningOption | undefined {
   if (t.barricade > 0) return undefined;
   if (t.kind === 'window') {
+    // Closed window: F opens it like a door (Paweł 24.11); open / smashed: climb through
+    // (closing it again is in the hold menu).
+    if (t.state === 'closed') return opt('toggleDoor', 'Otwórz');
     return t.state === 'open' || t.state === 'broken' ? opt('climbThrough', 'Przejdź') : undefined;
   }
   if (t.state === 'open') return opt('toggleDoor', 'Zamknij');

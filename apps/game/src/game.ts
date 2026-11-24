@@ -104,7 +104,7 @@ import type { OpeningsLike } from './world/gen/streamed-town.js';
 import { FollowWindow } from './world/gen/follow-window.js';
 import { genStartRange, nearestPlace } from './world/gen/maps.js';
 import { CHUNK_SIZE } from './world/chunk.js';
-import { OpeningsView } from './world/openings.js';
+import { OpeningsView, sashModel, windowWithoutGlass } from './world/openings.js';
 import {
   doorWins,
   nearestDoor,
@@ -636,13 +636,18 @@ const openings: OpeningsLike =
               e.tx,
               e.ty,
               e.side === 'n' ? 'N' : 'W',
-              state === 'broken',
+              windowWithoutGlass(state),
             ),
+          sashOf: (e) =>
+            sashModel(townStructures.windowKind(e.tx, e.ty, e.side === 'n' ? 'N' : 'W')),
+          placeOf: (e) => townStructures.openingPlace(e.tx, e.ty, e.side === 'n' ? 'N' : 'W'),
         }
       : undefined,
   );
 if (openings instanceof OpeningsView) openings.loadRange(world.range);
 worldRoot.add(openings.root);
+// Dev: doors / windows for screenshots and console checks.
+if (import.meta.env.DEV) (globalThis as { __dzOpenings?: unknown }).__dzOpenings = openings;
 if (import.meta.env.DEV && boot.zones) {
   void import('./dev/zones-overlay.js').then(({ createZonesOverlay }) =>
     worldRoot.add(createZonesOverlay(world.zones)),
@@ -2411,6 +2416,7 @@ renderer.setAnimationLoop((time) => {
     if ('setFade' in structures) structures.setFade(fade, dt);
     for (const l of upperTown) l.setFade(fade, dt);
     openings.setCutaway(cut);
+    openings.setViewer?.(state.x, state.y, level);
     mapObjects.setCutaway(cut);
     realMap?.setCutaway(cut);
     const step = footsteps.update(state.x, state.y, building !== undefined, !player.dead);
