@@ -29,6 +29,7 @@ const DEFAULTS: Record<HudLayoutSlot, Readonly<HudElementLayout>> = {
   weapon: el('br', SAFE, 73), // weapon / vehicle panel above the quickbar, right 18, bottom 73
   threat: el('tc', 0, 40), // centred, top 40
   hints: el('bl', SAFE, SAFE), // F1 key hints, left 18, bottom 18
+  osmmap: el('bl', SAFE, 52), // OpenStreetMap window (off by default), 320×200, above the hints
 };
 
 export const DEFAULT_HUD_LAYOUT: Readonly<ResolvedHudLayout> = Object.freeze({
@@ -40,3 +41,8 @@ export const DEFAULT_HUD_LAYOUT: Readonly<ResolvedHudLayout> = Object.freeze({
 export function defaultElementLayout(slot: HudLayoutSlot): HudElementLayout {
   return { ...DEFAULTS[slot] };
 }
+
+/** Free-size slots: the editor's frame handles change width / height, not the scale. */
+export const HUD_BOX_SLOTS: readonly HudLayoutSlot[] = ['osmmap'];
+/** Default box of a free-size slot (px at scale 1). */
+export const HUD_BOX_DEFAULT = { w: 320, h: 200 } as const;

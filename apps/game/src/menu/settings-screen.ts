@@ -176,11 +176,15 @@ export function createSettingsScreen(o: SettingsScreenOptions): SettingsScreen {
       .join('');
     const body =
       tab === 'interface'
-        ? `<div class="dzo-cols"><div class="dzo-col">${list}</div><div class="dzo-col dzo-col--side">${focusedRow()?.id === 'noiseDisplay' ? noisePreview(draft.interface.noiseDisplay) : layoutPreviewHtml(hudDraft)}</div></div>`
+        ? `<div class="dzo-cols"><div class="dzo-col">${list}</div><div class="dzo-col dzo-col--side">${focusedRow()?.id === 'noiseDisplay' ? noisePreview(draft.interface.noiseDisplay) : layoutPreviewHtml(hudDraft, draft.interface.osmMap)}</div></div>`
         : tab === 'account'
           ? '<div data-account-slot></div>'
           : list;
     const accountTab = tab === 'account';
+    // Every render rebuilds the panel: keep the list's scroll (hovering a row re-renders, and the
+    // long Interfejs tab used to jump back to the top while scrolling).
+    const oldBody = stage.querySelector<HTMLElement>('.dzo-settings-body');
+    const keepScroll = oldBody?.dataset.panel === tab ? oldBody.scrollTop : 0;
     // The confirm dialog (if any) lives in the stage too: keep it on top.
     const keep = stage.querySelector('.dzo-confirm');
     stage.innerHTML = `${MINI_LOGO}
@@ -196,8 +200,17 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
       const slot = stage.querySelector('[data-account-slot]');
       if (p && slot) slot.replaceWith(p.el);
     }
+    const newBody = stage.querySelector<HTMLElement>('.dzo-settings-body');
+    if (newBody) newBody.scrollTop = keepScroll;
     if (keep) stage.appendChild(keep);
-    else stage.querySelector<HTMLElement>('[tabindex="0"]')?.focus({ preventScroll: true });
+    else {
+      const f = stage.querySelector<HTMLElement>('[tabindex="0"]');
+      f?.focus({ preventScroll: true });
+      // ↑/↓ past the visible part of the list: bring the focused row into view.
+      if (f?.dataset.row !== undefined && !scrollFromPointer)
+        f.scrollIntoView?.({ block: 'nearest' });
+    }
+    scrollFromPointer = false;
   }
 
   /** Konto: ↑/↓ walk the panel's controls (it has no settings rows). */
@@ -431,6 +444,8 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
     } else render();
   }
 
+  /** The next render comes from the mouse: the row is under the pointer, so no scrolling. */
+  let scrollFromPointer = false;
   function onOver(e: PointerEvent): void {
     if (confirm || dragKey) return;
     const rowEl = (e.target as HTMLElement).closest<HTMLElement>('[data-row]');
@@ -438,6 +453,7 @@ ${accountTab ? '' : `<div class="dzo-settings-foot"><button type="button" class=
     const index = Number(rowEl.dataset.row);
     if (focus.zone === 'row' && focus.index === index) return;
     focus = { zone: 'row', index };
+    scrollFromPointer = true;
     render();
   }
 

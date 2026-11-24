@@ -65,6 +65,8 @@ import type { LeisureSpot } from './leisure-spots.js';
 import type { Feedback } from './sleep-feedback.js';
 import { createSleepNotice } from './sleep-notice.js';
 import { createMinimapZoomControls } from './minimap-zoom-controls.js';
+import { createOsmMap } from './osm-map/osm-map.js';
+import type { LonLat } from './osm-map/osm-geo.js';
 import { createFloorHud, type FloorHudVM } from './floor-hud.js';
 import { DEFAULT_SLEEP_SETTINGS } from './sleep-settings.js';
 import { createHud2Parts } from './v2/hud2.js';
@@ -117,6 +119,15 @@ export interface HudOptions {
   minimapLabel?: (zoom: number) => string;
   /** Top bar quick access clicked (HUD v2). */
   onQuickAccess: (id: QuickAccessId) => void;
+  /**
+   * Mapa OpenStreetMap (Ustawienia › Interfejs): WGS84 of a world point, undefined when the map
+   * is not on the real Earth (only `stw2` is). Missing: the OSM window never shows.
+   */
+  osmPosition?: (x: number, z: number) => LonLat | undefined;
+  /** OSM window on at start, its zoom and the zoom change (persist). */
+  osmMap?: boolean;
+  osmZoom?: number;
+  onOsmZoom?: (zoom: number) => void;
 }
 
 /** Per-frame inputs; the HUD itself throttles to HUD_UPDATE_MS. */
@@ -172,6 +183,8 @@ export interface Hud {
    * sample content so they can be placed; off = back to the game state on the next frame.
    */
   setEditPreview(on: boolean): void;
+  /** Ustawienia › Interfejs › Mapa OpenStreetMap on / off. */
+  setOsmMap(on: boolean): void;
 }
 
 /** HUD editor sample of the weapon panel (hud-editor.png: Pistolet M9, 12/15, zapas 34). */
@@ -273,6 +286,19 @@ export function createHud(opts: HudOptions): Hud {
   // the current floor inside the minimap's world layer, toast at the top centre.
   const floors = createFloorHud(minimap.el.querySelector('.dz-minimap__world'));
   minimapGroup.append(floors.badge);
+  // Second map (live OpenStreetMap tiles), off unless switched on in Ustawienia › Interfejs.
+  const osm = createOsmMap({
+    ...(opts.osmZoom !== undefined ? { zoom: opts.osmZoom } : {}),
+    ...(opts.onOsmZoom ? { onZoom: opts.onOsmZoom } : {}),
+  });
+  const osmGroup = group('osmmap', osm.el);
+  let osmOn = !!opts.osmMap && !!opts.osmPosition;
+  let lastOsmKey = '';
+  const syncOsm = (): void => {
+    osmGroup.hidden = !osmOn;
+    lastOsmKey = '';
+  };
+  syncOsm();
   const toasts = createToastStack();
   group('toasts', toasts.el);
   group('floortoast', floors.toast);
@@ -510,6 +536,10 @@ export function createHud(opts: HudOptions): Hud {
         lastMinimapKey = mmKey;
         setMinimap(mm);
       }
+      if (osmOn && mmKey !== lastOsmKey) {
+        lastOsmKey = mmKey;
+        osm.update(opts.osmPosition?.(f.px, f.py), f.facing);
+      }
       setHints({
         items: hintItems(opts.bindings(), firearm !== undefined),
         visible: hintsVisible(hintsSetting, f.now - bootMs),
@@ -595,7 +625,12 @@ export function createHud(opts: HudOptions): Hud {
       hotbar: [hotbarGroup],
       threat: [threatGroup],
       hints: [hintsGroup],
+      osmmap: [osmGroup],
     }),
+    setOsmMap(on) {
+      osmOn = on && !!opts.osmPosition;
+      syncOsm();
+    },
     setEditPreview(on) {
       hud.toggleAttribute('data-hud-edit', on);
       floors.setEditPreview(on);

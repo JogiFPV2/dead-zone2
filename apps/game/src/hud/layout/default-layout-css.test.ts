@@ -14,9 +14,13 @@ import { readFileSync } from 'node:fs';
  * 1280×720, so a reset never moves anything visually.
  */
 // Read from disk: vitest stubs CSS imports (even `?raw`) to empty strings.
-const SHEETS = ['../hud-layout.css', '../v2/top-bar.css', '../hud-v3.css', './hud-slots.css'].map(
-  (p) => readFileSync(new URL(p, import.meta.url), 'utf8'),
-);
+const SHEETS = [
+  '../hud-layout.css',
+  '../v2/top-bar.css',
+  '../hud-v3.css',
+  './hud-slots.css',
+  '../osm-map/osm-map.css',
+].map((p) => readFileSync(new URL(p, import.meta.url), 'utf8'));
 const SLOT_CLASS: Record<HudLayoutSlot, string> = {
   topbar: 'dz-topbar',
   status: 'dz-g--status',
@@ -26,6 +30,7 @@ const SLOT_CLASS: Record<HudLayoutSlot, string> = {
   hotbar: 'dz-g--hotbar',
   threat: 'dz-g--threat',
   hints: 'dz-g--hints',
+  osmmap: 'dz-g--osmmap',
 };
 const PROPS = ['left', 'right', 'top', 'bottom'] as const;
 type Prop = (typeof PROPS)[number];

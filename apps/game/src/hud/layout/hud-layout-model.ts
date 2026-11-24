@@ -4,6 +4,7 @@
  * and its limits come from `@deadzone/ui/settings` (#156).
  */
 import {
+  HUD_BOX_DEFAULT,
   HUD_LAYOUT_SLOTS,
   HUD_OPACITY_MAX,
   HUD_OPACITY_MIN,
@@ -47,6 +48,7 @@ export const SLOT_LABELS: Record<HudLayoutSlot, string> = {
   hotbar: 'Pasek szybkiego dostępu',
   threat: 'Zagrożenie',
   hints: 'Podpowiedzi klawiszy',
+  osmmap: 'Mapa OpenStreetMap (dowolny rozmiar)',
 };
 
 /** Short names (panel title, overlap warning). */
@@ -59,6 +61,7 @@ export const SLOT_NAMES: Record<HudLayoutSlot, string> = {
   hotbar: 'Pasek szybkiego dostępu',
   threat: 'Zagrożenie',
   hints: 'Podpowiedzi klawiszy',
+  osmmap: 'Mapa OSM',
 };
 
 export const ANCHOR_NAMES: Record<HudAnchor, string> = {
@@ -124,12 +127,21 @@ export function offsetsForRect(r: Rect, anchor: HudAnchor, vp: Size): { x: numbe
 export function layoutFromRect(
   r: Rect,
   vp: Size,
-  base: Pick<HudElementLayout, 'scale' | 'opacity' | 'visible'>,
+  base: Pick<HudElementLayout, 'scale' | 'opacity' | 'visible' | 'w' | 'h'>,
   anchor: HudAnchor = anchorForRect(r, vp),
 ): HudElementLayout {
-  // Only scale / opacity / visible from `base` (callers may pass a whole element layout).
-  const { scale, opacity, visible } = base;
-  return { anchor, ...offsetsForRect(r, anchor, vp), scale, opacity, visible };
+  // Only scale / opacity / visible (and a free-size box) from `base` (callers may pass a whole
+  // element layout).
+  const { scale, opacity, visible, w, h } = base;
+  return {
+    anchor,
+    ...offsetsForRect(r, anchor, vp),
+    scale,
+    opacity,
+    visible,
+    ...(w !== undefined ? { w } : {}),
+    ...(h !== undefined ? { h } : {}),
+  };
 }
 
 export const overlaps = (a: Rect, b: Rect, tol = 1): boolean =>
@@ -288,7 +300,9 @@ export function isDefaultLayout(slot: HudLayoutSlot, el: HudElementLayout): bool
     Math.abs(el.y - d.y) < DEFAULT_EPS &&
     Math.abs(el.scale - d.scale) < 0.001 &&
     Math.abs(el.opacity - d.opacity) < 0.001 &&
-    el.visible === d.visible
+    el.visible === d.visible &&
+    (el.w === undefined || el.w === (d.w ?? HUD_BOX_DEFAULT.w)) &&
+    (el.h === undefined || el.h === (d.h ?? HUD_BOX_DEFAULT.h))
   );
 }
 

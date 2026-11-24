@@ -78,7 +78,8 @@ type ToggleId =
   | 'showZombieHp'
   | 'targetZombieHp'
   | 'revealMap'
-  | 'tutorial';
+  | 'tutorial'
+  | 'osmMap';
 type ChoiceId = 'style' | 'quality' | 'viewDistance' | 'noiseDisplay' | 'touchMode';
 /** Rows with a button: the screen runs them (Edytuj HUD, Przywróć domyślny układ). */
 export type ButtonId = 'editHud' | 'resetHud';
@@ -301,6 +302,13 @@ export function settingsRows(tab: SettingsTab, d: Settings, ctx: RowContext): Se
           icon: 'reset',
           disabled: changed === 0,
         },
+        {
+          kind: 'toggle',
+          id: 'osmMap',
+          label: 'Mapa OpenStreetMap',
+          hint: 'Druga mapa z Twoją pozycją na prawdziwej mapie Stalowej Woli (wymaga internetu). Rozmiar i miejsce: Edytuj HUD.',
+          on: d.interface.osmMap,
+        },
         { kind: 'header', label: 'Informacje na ekranie' },
         {
           kind: 'choice',
@@ -384,6 +392,8 @@ export function toggleRow(d: Settings, id: ToggleId): Settings {
       return { ...d, interface: { ...d.interface, revealMap: !d.interface.revealMap } };
     case 'tutorial':
       return { ...d, interface: { ...d.interface, tutorial: !d.interface.tutorial } };
+    case 'osmMap':
+      return { ...d, interface: { ...d.interface, osmMap: !d.interface.osmMap } };
   }
 }
 

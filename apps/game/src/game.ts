@@ -136,6 +136,7 @@ import type { LoadedMap } from './world/content-map.js';
 import { startSpawn } from './world/zones.js';
 import { tickAlpha } from './sim/interpolate.js';
 import type { FrameSample } from './dev/frame-bench.js';
+import { stw2WorldToLonLat } from './hud/osm-map/osm-geo.js';
 import { createHud } from './hud/hud.js';
 import { PICK_PLANE_Y, ZombieHpLayer } from './hud/zombie-hp.js';
 import { nextTargetId } from './hud/target-card-model.js';
@@ -1033,6 +1034,15 @@ const hud = createHud({
       ? mobileView.set('minimapZoom', minimapZoom)
       : settings.update((s) => ({ ...s, view: { ...s.view, minimapZoom } })),
   onQuickAccess: (id) => quickAccess(id),
+  // Mapa OpenStreetMap: only stw2 is the real Stalowa Wola (1:1, map2 frame).
+  ...(boot.map === 'stw2' ? { osmPosition: stw2WorldToLonLat } : {}),
+  osmMap: settings.get().interface.osmMap,
+  osmZoom: settings.get().view.osmZoom,
+  onOsmZoom: (osmZoom) => settings.update((s) => ({ ...s, view: { ...s.view, osmZoom } })),
+});
+settings.subscribe((next, prev) => {
+  if (next.interface.osmMap === prev.interface.osmMap) return;
+  hud.setOsmMap(next.interface.osmMap);
 });
 
 // Tutorial (Ustawienia › Interfejs › Samouczek): one hint at a time for a new player.

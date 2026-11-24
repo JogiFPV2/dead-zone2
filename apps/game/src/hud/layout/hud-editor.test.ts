@@ -12,6 +12,7 @@ const RECTS: Partial<Record<HudLayoutSlot, Rect>> = {
   minimap: { left: 1078, top: 18, width: 184, height: 184 },
   hotbar: { left: 452, top: 640, width: 376, height: 62 },
   status: { left: 18, top: 48, width: 240, height: 120 },
+  osmmap: { left: 18, top: 468, width: 320, height: 200 },
 };
 const EMPTY: HudLayout = { version: 1, elements: {} };
 
@@ -98,5 +99,34 @@ describe('HUD editor', () => {
     ed.onKey(key('Delete'));
     const hidden = Object.values(ed.layout.elements).filter((e) => e && !e.visible);
     expect(hidden.length).toBe(1);
+  });
+
+  it('Mapa OSM: frame handles set width and height on their own (free size)', () => {
+    const { root, ed } = setup();
+    const ptr = (type: string, target: Element, x: number, y: number): void => {
+      target.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1 }),
+      );
+    };
+    const frame = root.querySelector('.dz-hed__frame[data-slot="osmmap"]')!;
+    // Right-bottom corner: wider and taller, the top-left corner stays.
+    ptr('pointerdown', frame.querySelector('[data-h="se"]')!, 338, 668);
+    ptr('pointermove', frame, 838, 700);
+    ptr('pointerup', frame, 838, 700);
+    expect(ed.layout.elements.osmmap).toMatchObject({ w: 820, h: 232, scale: 1 });
+  });
+
+  it('Mapa OSM: the top edge changes only the height', () => {
+    const { root, ed } = setup();
+    const ptr = (type: string, target: Element, x: number, y: number): void => {
+      target.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1 }),
+      );
+    };
+    const f2 = root.querySelector('.dz-hed__frame[data-slot="osmmap"]')!;
+    ptr('pointerdown', f2.querySelector('[data-h="n"]')!, 178, 468);
+    ptr('pointermove', f2, 300, 168);
+    ptr('pointerup', f2, 300, 168);
+    expect(ed.layout.elements.osmmap).toMatchObject({ w: 320, h: 500 });
   });
 });

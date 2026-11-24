@@ -67,6 +67,7 @@ describe('sanitizeSettings', () => {
       bigMapZoom: 1,
       bigMapLayers: layers,
       ...inv,
+      osmZoom: 16,
     });
     expect(
       sanitizeSettings({
@@ -78,6 +79,7 @@ describe('sanitizeSettings', () => {
           inventoryView: 'grid',
           inventorySort: { player: { by: 'weight', desc: true }, container: { by: 'bogus' } },
           inventoryGroup: false,
+          osmZoom: 25,
         },
       }).view,
     ).toEqual({
@@ -91,6 +93,7 @@ describe('sanitizeSettings', () => {
         container: { by: 'category', desc: false },
       },
       inventoryGroup: false,
+      osmZoom: 19,
     });
   });
 });
@@ -144,6 +147,7 @@ describe('loadSettings', () => {
       targetZombieHp: true,
       revealMap: false,
       tutorial: true,
+      osmMap: false,
     });
   });
 

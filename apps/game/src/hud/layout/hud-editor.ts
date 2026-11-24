@@ -6,6 +6,10 @@
  */
 import './hud-editor.css';
 import {
+  HUD_BOX_DEFAULT,
+  HUD_BOX_MAX,
+  HUD_BOX_MIN,
+  HUD_BOX_SLOTS,
   HUD_LAYOUT_SLOTS,
   HUD_LAYOUT_VERSION,
   anchorAxes,
@@ -353,6 +357,34 @@ ${small ? '<div class="dz-hed__warn">Tekst może być nieczytelny</div>' : ''}
     drag.moved = true;
     const v = vp();
     const { slot, rect: r0, lay } = drag;
+    if (drag.handle && HUD_BOX_SLOTS.includes(slot)) {
+      // Free-size box (Mapa OpenStreetMap): each edge follows the pointer on its own.
+      const h = drag.handle;
+      const w0 = lay.w ?? HUD_BOX_DEFAULT.w;
+      const h0 = lay.h ?? HUD_BOX_DEFAULT.h;
+      const kx = r0.width / w0;
+      const ky = r0.height / h0;
+      const box = (px: number, k: number): number =>
+        Math.round(Math.min(HUD_BOX_MAX, Math.max(HUD_BOX_MIN, px / k)));
+      let { left, top } = r0;
+      let right = r0.left + r0.width;
+      let bottom = r0.top + r0.height;
+      if (h.includes('w')) left = Math.max(0, Math.min(p.x, right - HUD_BOX_MIN * kx));
+      if (h.includes('e')) right = Math.min(v.w, Math.max(p.x, left + HUD_BOX_MIN * kx));
+      if (h.includes('n')) top = Math.max(0, Math.min(p.y, bottom - HUD_BOX_MIN * ky));
+      if (h.includes('s')) bottom = Math.min(v.h, Math.max(p.y, top + HUD_BOX_MIN * ky));
+      const bw = box(right - left, kx);
+      const bh = box(bottom - top, ky);
+      const rect: Rect = {
+        left: h.includes('w') ? right - bw * kx : left,
+        top: h.includes('n') ? bottom - bh * ky : top,
+        width: bw * kx,
+        height: bh * ky,
+      };
+      setSlot(slot, layoutFromRect(rect, v, { ...lay, w: bw, h: bh }, lay.anchor), true);
+      showBubble(p, rect, slot, []);
+      return;
+    }
     if (drag.handle) {
       const h = drag.handle;
       const fx = h.includes('w')
@@ -400,11 +432,7 @@ ${small ? '<div class="dz-hed__warn">Tekst może być nieczytelny</div>' : ''}
     const useSnap = snap && !e.altKey;
     const res = snapRect(moved, others, v, { snap: useSnap, grid: useSnap && grid });
     const rect = { ...moved, left: res.left, top: res.top };
-    setSlot(
-      slot,
-      layoutFromRect(rect, v, { scale: lay.scale, opacity: lay.opacity, visible: lay.visible }),
-      true,
-    );
+    setSlot(slot, layoutFromRect(rect, v, lay), true);
     render(res.guides);
     showBubble(p, rect, slot, res.labels);
     const b = bar.getBoundingClientRect();
@@ -436,7 +464,7 @@ ${small ? '<div class="dz-hed__warn">Tekst może być nieczytelny</div>' : ''}
     const yPx =
       vv === 't' ? r.top : vv === 'b' ? v.h - r.top - r.height : r.top + r.height / 2 - v.h / 2;
     bubble.hidden = false;
-    bubble.innerHTML = `<b>Kotwica: ${esc(ANCHOR_NAMES[lay.anchor])}</b><br>X ${Math.round(xPx)} px · ${t.x}<br>Y ${Math.round(yPx)} px · ${t.y}${labels.length ? `<br><span class="dz-hed__muted">przyciąga: ${esc(labels.join(' + '))}</span>` : ''}`;
+    bubble.innerHTML = `<b>Kotwica: ${esc(ANCHOR_NAMES[lay.anchor])}</b><br>X ${Math.round(xPx)} px · ${t.x}<br>Y ${Math.round(yPx)} px · ${t.y}${HUD_BOX_SLOTS.includes(slot) ? `<br>Rozmiar ${lay.w ?? HUD_BOX_DEFAULT.w} × ${lay.h ?? HUD_BOX_DEFAULT.h} px` : ''}${labels.length ? `<br><span class="dz-hed__muted">przyciąga: ${esc(labels.join(' + '))}</span>` : ''}`;
     const bw = 200;
     const left = Math.min(p.x + 18, v.w - bw - 8);
     const top = Math.min(p.y + 18, v.h - 90);
