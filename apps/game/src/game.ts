@@ -506,18 +506,31 @@ const genLayers = genWorld ? await import('./world/gen/streamed-town.js') : unde
 // Realistic style: leafy trees (instanced leaf cards, wind sway) instead of the kit tree props.
 const realTrees =
   realStyle && genWorld ? new (await import('./world/trees/tree-layer.js')).TreeLayer() : undefined;
+// Painted style („Malowany”, chosen at start): painted tree / shrub models instead of the kit
+// props. A switch in the settings changes the look of the ground and the post pass at once; the
+// trees follow on the next start.
+const paintedTrees =
+  !realStyle &&
+  genWorld &&
+  (urlGraphicsStyle(window.location.search) ?? settings.get().graphics.style) === 'painted'
+    ? new (await import('./world/trees/painted-tree-layer.js')).PaintedTreeLayer()
+    : undefined;
 const streamedTown =
   genLayers && townKit
     ? new genLayers.StreamedTown(
         streaming.streamer.loaded,
         townKit,
         realStyle ? (b) => realStyle.buildingShell(b) !== undefined : undefined,
-        realTrees,
+        realTrees ?? paintedTrees,
       )
     : undefined;
 if (realTrees) {
   worldRoot.add(realTrees.root);
   (globalThis as { __dzTrees?: unknown }).__dzTrees = realTrees;
+}
+if (paintedTrees) {
+  worldRoot.add(paintedTrees.root);
+  (globalThis as { __dzTrees?: unknown }).__dzTrees = paintedTrees;
 }
 if (streamedTown) {
   streaming.lod.addNearLayer({
@@ -2196,6 +2209,7 @@ const devForce = parseDevForce(devQuery);
 renderer.setAnimationLoop((time) => {
   const frameStart = performance.now();
   realTrees?.update(time / 1000);
+  paintedTrees?.update();
   sections.start();
   const dt = lastFrameMs === undefined ? 0 : time - lastFrameMs;
   lastFrameMs = time;

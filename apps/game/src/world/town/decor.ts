@@ -19,7 +19,8 @@ export const TREE_DENSITY = 0.009;
  * street lamps on the curb side of sidewalks every 18 m (alternating sides, arm over the road,
  * ~1 in 4 broken), power poles every 30 m on the verge just behind the outer sidewalk edge (skipped where there is
  * none: medians, lots, buildings), trees and grass tufts on
- * open grass away from roads, buildings and walls (or the given trees, e.g. from OpenStreetMap).
+ * open grass away from roads, paths, buildings and walls (or the given trees, e.g. from
+ * OpenStreetMap), never on a dirt track or path or right at its edge.
  * Visual only: the sim does not collide with it.
  */
 export function townDecor(
@@ -44,16 +45,26 @@ export function townDecor(
     if (tiles.building(x, z) !== NO_BUILDING) return false;
     return !road(x + dx, z + dz) && !walk(x + dx, z + dz);
   };
-  const busy = (x: number, z: number, r: number) => {
+  /**
+   * Something within r tiles: not open ground, a building or a wall. `onGrass`: dirt counts too
+   * (dirt tiles are mostly unpaved tracks and trodden paths: no plants or rocks on them).
+   */
+  const busy = (x: number, z: number, r: number, onGrass = false) => {
     for (let dz = -r; dz <= r; dz++) {
       for (let dx = -r; dx <= r; dx++) {
         const t = f(x + dx, z + dz);
-        if (t !== 'base:grass' && t !== 'base:dirt') return true;
+        if (t !== 'base:grass' && (onGrass || t !== 'base:dirt')) return true;
         if (tiles.building(x + dx, z + dz) !== NO_BUILDING) return true;
         if (tiles.edge('N', x + dx, z + dz) || tiles.edge('W', x + dx, z + dz)) return true;
       }
     }
     return false;
+  };
+  /** Inside a dirt area (5 × 5 dirt tiles), not on a narrow track or path. */
+  const openDirt = (x: number, z: number) => {
+    for (let dz = -2; dz <= 2; dz++)
+      for (let dx = -2; dx <= 2; dx++) if (f(x + dx, z + dz) !== 'base:dirt') return false;
+    return !busy(x, z, 2);
   };
   for (let z = z0; z < z1; z++) {
     for (let x = x0; x < x1; x++) {
@@ -72,7 +83,7 @@ export function townDecor(
       }
       if (t !== 'base:grass' && t !== 'base:dirt') continue;
       const h = hash01(x, z, 21);
-      if (!trees && t === 'base:grass' && h < TREE_DENSITY && !busy(x, z, 2)) {
+      if (!trees && t === 'base:grass' && h < TREE_DENSITY && !busy(x, z, 2, true)) {
         const name = TREES[Math.floor(hash01(x, z, 22) * TREES.length)] ?? 'prop-tree';
         props.push({
           name,
@@ -81,14 +92,14 @@ export function townDecor(
           rotY: hash01(x, z, 23) * Math.PI * 2,
           scale: 0.9 + hash01(x, z, 24) * 0.25,
         });
-      } else if (h < 0.04 && !busy(x, z, 0)) {
+      } else if (h < 0.04 && t === 'base:grass' && !busy(x, z, 1, true)) {
         props.push({
           name: 'prop-grass-large',
           x: x + 0.5,
           z: z + 0.5,
           rotY: hash01(x, z, 25) * 6.28,
         });
-      } else if (h > 0.995 && t === 'base:dirt') {
+      } else if (h > 0.995 && t === 'base:dirt' && openDirt(x, z)) {
         props.push({ name: 'prop-rock-a', x: x + 0.5, z: z + 0.5, rotY: hash01(x, z, 26) * 6.28 });
       }
     }

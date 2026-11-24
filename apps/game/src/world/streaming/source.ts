@@ -30,6 +30,8 @@ export interface DecorInstance {
   readonly rot: number;
   /** Uniform scale (1 = authored size). */
   readonly scale: number;
+  /** Tree species (content id, e.g. `base:pine`; generated maps). */
+  readonly species?: string;
 }
 
 /** Render metadata of a building touching this chunk (roof hiding, upper floors, far LOD). */
@@ -94,6 +96,8 @@ export interface WorldChunk {
    * tiles; the realistic style plants bushes there.
    */
   readonly bushes?: readonly { x: number; y: number; w: number; h: number }[];
+  /** Woods (the sim's `cover` zone, generated maps): rectangles in global tiles. */
+  readonly woods?: readonly { x: number; y: number; w: number; h: number }[];
 }
 
 /** One area polygon of a chunk (generated maps, render only). */
@@ -120,6 +124,8 @@ export interface VectorRoad {
   /** 0 = no centre line (one-way carriageway, map2); lane line offsets from the axis (tiles). */
   readonly cl?: 0;
   readonly ll?: readonly number[];
+  /** Unpaved look of a dirt road: gravel track (ruts, grass strip) or trodden path (soft edges). */
+  readonly look?: 'gravel' | 'trail';
 }
 
 /**

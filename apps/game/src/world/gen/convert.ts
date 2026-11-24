@@ -48,7 +48,8 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
   for (let i = 0; i + 1 < col.trees.length; i += 2) {
     const x = col.trees[i]!;
     const y = col.trees[i + 1]!;
-    decor.push({ kind: TREE_DECOR, x, y, z: 0, rot: 0, scale: 1 });
+    const sp = col.treeSpecies?.[i >> 1];
+    decor.push({ kind: TREE_DECOR, x, y, z: 0, rot: 0, scale: 1, ...(sp ? { species: sp } : {}) });
   }
   const buildings: GenBuildingInfo[] = col.buildings.map((b) => ({
     id: b.id,
@@ -79,11 +80,15 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     d0: r.d0,
     ...(r.cl === 0 ? { cl: r.cl } : {}),
     ...(r.ll ? { ll: r.ll } : {}),
+    ...(r.look === 1
+      ? { look: 'gravel' as const }
+      : r.look === 2
+        ? { look: 'trail' as const }
+        : {}),
   }));
-  const bushes = col.levels
-    .find((l) => l.z === 0)
-    ?.zones?.filter((zn) => zn.role === 'bushes')
-    .flatMap((zn) => zn.rects);
+  const zones = col.levels.find((l) => l.z === 0)?.zones;
+  const bushes = zones?.filter((zn) => zn.role === 'bushes').flatMap((zn) => zn.rects);
+  const woods = zones?.filter((zn) => zn.role === 'cover').flatMap((zn) => zn.rects);
   return {
     cx: col.cx,
     cy: col.cy,
@@ -91,6 +96,7 @@ export function columnToWorldChunk(col: GenColumn): WorldChunk {
     decor,
     buildings,
     ...(bushes?.length ? { bushes } : {}),
+    ...(woods?.length ? { woods } : {}),
     ...(roads?.length ? { roads } : {}),
     ...(col.under ? { under: col.under } : {}),
     ...(col.areas?.length

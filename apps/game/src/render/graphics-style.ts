@@ -26,6 +26,7 @@ import {
   STYLE_UNIFORM,
 } from './style-materials.js';
 import { PAINTED_FRAGMENT } from './painted-shader.js';
+import { setPaintedGround } from './painted-ground.js';
 import { PIXEL_PALETTE, STYLE_FRAGMENT, STYLE_VERTEX } from './style-shader.js';
 
 // The ramp lives in the shader chunks: installed before any program compiles.
@@ -232,6 +233,7 @@ export class GraphicsStylePass {
     STYLE_UNIFORM.value.soft = painted
       ? STYLE_TUNING.painted.toonSoft
       : STYLE_TUNING.outline.toonSoft;
+    setPaintedGround(painted);
     applyStyleMaterials({
       toon: style !== 'classic',
       hulls: style !== 'classic',
