@@ -470,6 +470,10 @@ export class PlanChunkGenerator {
                 if (s.outline) outlined.add(s.gid);
               }
               any = true;
+            } else if (z > 0 && L.floor[k] && !room[i]) {
+              // Upper-storey strip along a slanted wall (`joinStrip`): floor, no room.
+              floor[i] = L.floor[k]!;
+              any = true;
             }
             if (L.edgeN[k]) {
               edgeN[i] = L.edgeN[k]!;
