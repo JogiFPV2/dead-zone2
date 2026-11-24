@@ -23,7 +23,7 @@ import { setCurtains, setLight } from './lighting.js';
 import { objectHasTag, waterAction } from '../survival/hygiene.js';
 import { tankOf, tankView, type Fixture } from './water.js';
 import { applyItemCommand } from '../items/commands.js';
-import { canReach, containerInReach, playerItems } from '../items/inventory.js';
+import { activeHandOf, canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
 import { storageTypesOf } from '../items/loot.js';
 import { defOf, tileKey, type ActionState } from '../items/store.js';
@@ -225,7 +225,8 @@ function edgeActions(
       );
   } else if (kind === OpeningKind.window) {
     if (state === OS.closed || state === OS.open) {
-      const bare = !playerItems(w, eid)?.slots.get('hand_primary');
+      const pi = playerItems(w, eid);
+      const bare = !pi?.slots.get(pi ? activeHandOf(pi) : 'hand_primary');
       out.push(
         timed(w, eid, 'smash', edgeAct('smashWindow'), {
           noiseTiles: cfg.breakNoise.radiusTiles,

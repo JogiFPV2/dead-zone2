@@ -249,6 +249,24 @@
   bottom: 3px;
   font: 400 11px/1 var(--font-family-mono);
 }
+/* Slots 1 / 2 are the hands (L = left, P = right); a gap sets them apart from the quick slots. */
+.dz-hud .dz-slot[data-hand]::after {
+  content: attr(data-hand);
+  position: absolute;
+  left: 5px;
+  bottom: 3px;
+  color: var(--color-text-muted);
+  font: 600 9px/1 var(--font-family-mono);
+  pointer-events: none;
+}
+.dz-hud .dz-hotbar > [data-hotbar-slot='2'] {
+  margin-left: 6px;
+}
+/* Inventory drag over a hotbar slot. */
+.dz-hud .dz-slot[data-drop='ok'] {
+  outline: 2px solid var(--color-accent, #e0b84a);
+  outline-offset: -2px;
+}
 
 /* Ammo widget 142×54 above the quickbar (right 18, bottom 73); hidden while calm. */
 .dz-hud .dz-fw,

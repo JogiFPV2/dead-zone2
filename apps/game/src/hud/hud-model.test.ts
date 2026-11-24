@@ -7,7 +7,10 @@ import {
   actionProgress,
   actionVMs,
   hintItems,
+  freeQuickSlot,
+  hotbarClearCommand,
   hotbarCommand,
+  hotbarDropCommand,
   hotbarHeldIndex,
   hotbarItems,
   interactIntent,
@@ -120,67 +123,111 @@ describe('HUD view models', () => {
     });
   });
 
-  it('fills the hotbar from the main inventory with icons and stack counts', () => {
-    const inv = {
-      container: 2,
-      loadKg: 1,
-      capacityKg: 12,
-      hardLimitKg: 18,
-      carryLoad: 8,
-      equipped: {},
-      containers: {
-        2: {
-          id: 2,
-          kind: 'inventory' as const,
-          capacityKg: null,
-          weightKg: 1,
-          items: [
-            { id: 7, def: 'base:kitchen-knife', count: 1, weightKg: 0.3 },
-            { id: 8, def: 'base:canned-beans', count: 3, weightKg: 1.35 },
-          ],
-        },
+  const handsInv = (
+    equipped: Record<string, number>,
+    extra: { activeHand?: 'hand_secondary'; quickSlots?: (number | null)[] } = {},
+  ) => ({
+    container: 2,
+    loadKg: 1,
+    capacityKg: 12,
+    hardLimitKg: 18,
+    carryLoad: 8,
+    equipped,
+    ...extra,
+    containers: {
+      2: {
+        id: 2,
+        kind: 'inventory' as const,
+        capacityKg: null,
+        weightKg: 1,
+        items: [
+          { id: 7, def: 'base:kitchen-knife', count: 1, weightKg: 0.3 },
+          { id: 8, def: 'base:canned-beans', count: 3, weightKg: 1.35 },
+        ],
       },
-    };
-    const slots = hotbarItems(withState({ inventory: inv }), content);
-    expect(slots).toHaveLength(5);
-    expect(slots[0]).toMatchObject({ icon: 'knife', stackable: false, name: 'Nóż kuchenny' });
-    expect(slots[1]).toMatchObject({ icon: 'can', stackable: true, count: 3 });
-    expect(slots.slice(2)).toEqual([null, null, null]);
+    },
   });
 
-  it('hotbar key puts the weapon into the hand and away again (regression: no weapon in hand)', () => {
-    const inv = (equipped: Record<string, number>) => ({
-      container: 2,
-      loadKg: 1,
-      capacityKg: 12,
-      hardLimitKg: 18,
-      carryLoad: 8,
-      equipped,
-      containers: {
-        2: {
-          id: 2,
-          kind: 'inventory' as const,
-          capacityKg: null,
-          weightKg: 1,
-          items: [
-            { id: 8, def: 'base:canned-beans', count: 3, weightKg: 1.35 },
-            { id: 7, def: 'base:kitchen-knife', count: 1, weightKg: 0.3 },
-          ],
-        },
-      },
+  it('hotbar: 1 = left hand, 2 = right hand, 3–5 = pinned items', () => {
+    const s = withState({
+      inventory: handsInv({ hand_secondary: 7 }, { quickSlots: [null, 8, 99] }),
     });
-    const empty = withState({ inventory: inv({}) });
-    expect(hotbarCommand(empty, content, 1)).toEqual({
+    const slots = hotbarItems(s, content);
+    expect(slots).toHaveLength(5);
+    expect(slots[0]).toMatchObject({ icon: 'knife', stackable: false, name: 'Nóż kuchenny' });
+    expect(slots[1]).toBeNull();
+    expect(slots[2]).toBeNull();
+    expect(slots[3]).toMatchObject({ icon: 'can', stackable: true, count: 3 });
+    // A pinned item that is no longer carried shows as empty.
+    expect(slots[4]).toBeNull();
+    expect(hotbarItems(withState({ inventory: handsInv({}) }), content)).toEqual([
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
+  });
+
+  it('keys 1 / 2 switch the hand that attacks; the highlight follows it', () => {
+    const right = withState({ inventory: handsInv({}) });
+    expect(hotbarHeldIndex(right)).toBe(1);
+    expect(hotbarCommand(right, content, 0)).toEqual({
+      type: 'setActiveHand',
+      hand: 'hand_secondary',
+    });
+    expect(hotbarCommand(right, content, 1)).toBeUndefined();
+    const left = withState({ inventory: handsInv({}, { activeHand: 'hand_secondary' }) });
+    expect(hotbarHeldIndex(left)).toBe(0);
+    expect(hotbarCommand(left, content, 1)).toEqual({
+      type: 'setActiveHand',
+      hand: 'hand_primary',
+    });
+  });
+
+  it('keys 3–5 put the pinned item into the active hand and away again', () => {
+    const pinned = { quickSlots: [7, 8, null] };
+    const empty = withState({ inventory: handsInv({}, pinned) });
+    expect(hotbarCommand(empty, content, 2)).toEqual({
       type: 'equip',
       item: 7,
       slot: 'hand_primary',
     });
-    expect(hotbarCommand(empty, content, 0)).toBeUndefined();
-    expect(hotbarCommand(empty, content, 3)).toBeUndefined();
-    expect(hotbarHeldIndex(empty)).toBeUndefined();
-    const held = withState({ inventory: inv({ hand_primary: 7 }) });
-    expect(hotbarCommand(held, content, 1)).toEqual({ type: 'unequip', slot: 'hand_primary' });
-    expect(hotbarHeldIndex(held)).toBe(1);
+    // Any item can be held: the beans too, into the left hand when it is active.
+    const left = withState({
+      inventory: handsInv({}, { ...pinned, activeHand: 'hand_secondary' }),
+    });
+    expect(hotbarCommand(left, content, 3)).toEqual({
+      type: 'equip',
+      item: 8,
+      slot: 'hand_secondary',
+    });
+    expect(hotbarCommand(empty, content, 4)).toBeUndefined();
+    const held = withState({ inventory: handsInv({ hand_primary: 7 }, pinned) });
+    expect(hotbarCommand(held, content, 2)).toEqual({ type: 'unequip', slot: 'hand_primary' });
+  });
+
+  it('drop on the hotbar: 1 / 2 equip that hand, 3–5 pin; PPM clears; first free slot', () => {
+    const s = withState({
+      inventory: handsInv({ hand_primary: 7 }, { quickSlots: [8, null, null] }),
+    });
+    expect(hotbarDropCommand(s, 0, 8)).toEqual({
+      type: 'equip',
+      item: 8,
+      slot: 'hand_secondary',
+    });
+    expect(hotbarDropCommand(s, 1, 7)).toBeUndefined();
+    expect(hotbarDropCommand(s, 4, 7)).toEqual({
+      type: 'setQuickSlot',
+      index: 2,
+      item: 7,
+    });
+    expect(hotbarDropCommand(s, 3, 999)).toBeUndefined();
+    expect(hotbarClearCommand(s, 1)).toEqual({ type: 'unequip', slot: 'hand_primary' });
+    expect(hotbarClearCommand(s, 0)).toBeUndefined();
+    expect(hotbarClearCommand(s, 2)).toEqual({ type: 'setQuickSlot', index: 0 });
+    expect(hotbarClearCommand(s, 3)).toBeUndefined();
+    expect(freeQuickSlot(s)).toBe(3);
   });
 
   it('labels keys from the current bindings', () => {

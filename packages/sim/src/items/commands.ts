@@ -1,6 +1,7 @@
 import { FISHING_ROD_TAG } from '../fishing/fishing.js';
 import { applyTreatWound } from '../survival/wound-care.js';
 import type { Command, CommandRejectReason } from '@deadzone/protocol';
+import { QUICK_SLOTS } from '@deadzone/protocol';
 import { markChunk } from '../world/chunk-events.js';
 import { gameMinuteAt } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
@@ -86,6 +87,8 @@ export type ItemCommand = Extract<
       | 'putItem'
       | 'equip'
       | 'unequip'
+      | 'setActiveHand'
+      | 'setQuickSlot'
       | 'openContainer'
       | 'search'
       | 'closeContainer'
@@ -108,6 +111,8 @@ const ITEM_COMMANDS = new Set<string>([
   'putItem',
   'equip',
   'unequip',
+  'setActiveHand',
+  'setQuickSlot',
   'openContainer',
   'search',
   'closeContainer',
@@ -216,6 +221,25 @@ export function applyItemCommand(
       const id = p.slots.get(cmd.slot);
       if (id === undefined) return 'invalid-target';
       for (const [slot, other] of [...p.slots]) if (other === id) p.slots.delete(slot);
+      st.version++;
+      return undefined;
+    }
+    case 'setActiveHand':
+      if (cmd.hand === 'hand_secondary') p.activeHand = 'hand_secondary';
+      else delete p.activeHand;
+      st.version++;
+      return undefined;
+    case 'setQuickSlot': {
+      const quick = p.quick ?? new Array<number>(QUICK_SLOTS).fill(0);
+      if (cmd.item !== undefined) {
+        const item = st.items.get(cmd.item);
+        if (!item) return 'no-item';
+        if (!isInside(st, item.loc, p.inventory)) return 'invalid-target';
+        for (let i = 0; i < quick.length; i++) if (quick[i] === item.id) quick[i] = 0;
+      }
+      quick[cmd.index] = cmd.item ?? 0;
+      if (quick.some((id) => id !== 0)) p.quick = quick;
+      else delete p.quick;
       st.version++;
       return undefined;
     }

@@ -47,7 +47,7 @@ export interface TouchHud {
 
 /**
  * Touch controls layer (`html.is-touch` only, mockup mobile-controls.png): floating joystick in
- * the left 44 %, right-top drag zone (turn / aim), thumb buttons, a top bar (quick slots 1–3 go
+ * the left 44 %, right-top drag zone (turn / aim), thumb buttons, a top bar (quick slots 1–5 go
  * to the HUD hotbar, moved up by touch.css) and the „obróć telefon” board in portrait. Feeds
  * `TouchControls`; draws nothing on desktop (the layer is not created there).
  */
@@ -144,7 +144,7 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
     el.append(b);
   }
 
-  // ── Top bar: Ekwipunek, Mapa, Pauza (HP, moodles and slots 1–3 are the HUD's own, moved).
+  // ── Top bar: Ekwipunek, Mapa, Pauza (HP, moodles and slots 1–5 are the HUD's own, moved).
   const top = document.createElement('div');
   top.className = 'dz-touch__top';
   for (const d of TOUCH_TOP) {
@@ -152,12 +152,12 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
     bindPress(b, 'press', d.id);
     top.append(b);
   }
-  // Quick slots 1–3: the HUD hotbar (moved into the top bar by touch.css) answers taps.
+  // Hotbar 1–5 (1 / 2 = left / right hand): the HUD hotbar, moved into the top bar by touch.css.
   listen(root, 'pointerdown', (e) => {
     const slot = (e.target as HTMLElement | null)?.closest?.('.dz-hotbar > *');
     if (!slot?.parentElement) return;
     const i = [...slot.parentElement.children].indexOf(slot);
-    if (i >= 0 && i < 3) controls.tap(`slot${i + 1}` as TouchAction);
+    if (i >= 0 && i < 5) controls.tap(`slot${i + 1}` as TouchAction);
   });
 
   // ── Portrait: „obróć telefon” board (shown by CSS in portrait only).
@@ -188,17 +188,25 @@ export function createTouchHud(root: HTMLElement, controls: TouchControls): Touc
   root.append(el);
   document.body.append(above);
 
+  /**
+   * Multitouch: every button tracks its own fingers, so the stick, the aim drag and several
+   * buttons work at once; a held button is released only when its last finger lifts.
+   */
   function bindPress(b: HTMLElement, kind: 'hold' | 'toggle' | 'press', id: TouchAction): void {
+    const fingers = new Set<number>();
     listen(b, 'pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       capture(b, e.pointerId);
+      const first = fingers.size === 0;
+      fingers.add(e.pointerId);
       b.dataset.down = 'true';
-      if (kind === 'hold') controls.press(id);
-      else controls.tap(id);
+      if (kind === 'hold') {
+        if (first) controls.press(id);
+      } else controls.tap(id);
     });
-    const up = () => {
-      if (!b.dataset.down) return;
+    const up = (e: PointerEvent) => {
+      if (!fingers.delete(e.pointerId) || fingers.size > 0) return;
       delete b.dataset.down;
       if (kind === 'hold') controls.release(id);
     };

@@ -4,6 +4,7 @@ import type {
   BodyPart,
   ContainerId,
   EquipSlot,
+  HandSlot,
   ItemId,
   MarkerColor,
   PlayerId,
@@ -248,6 +249,10 @@ export interface InventoryView {
   /** Stat `carry-load`: `loadKg / capacityKg × 100` (moodle `base:heavy-load` at 100+). */
   carryLoad: number;
   equipped: Partial<Record<EquipSlot, ItemId>>;
+  /** Hand that attacks (`setActiveHand`); absent = `hand_primary` (right). */
+  activeHand?: HandSlot | undefined;
+  /** Items pinned to quick slots 3–5 (`setQuickSlot`), null = empty; absent = all empty. */
+  quickSlots?: (ItemId | null)[] | undefined;
   /** Changed containers only: main inventory and containers of carried bags. */
   containers?: ContainerView[];
   /** Carried containers that are gone (bag dropped or moved away). */
