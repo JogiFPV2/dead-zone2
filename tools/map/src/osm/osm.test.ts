@@ -227,3 +227,29 @@ describe('new building types', () => {
     expect(inner).toHaveLength(20);
   });
 });
+
+describe('typical home plan', () => {
+  const types = (r: ReturnType<typeof build>['res'], z: number) => {
+    const rooms = z === 0 ? r.building.rooms : r.building.floors?.find((f) => f.z === z)?.rooms;
+    return Object.values(rooms ?? {}).map((x) => x.type);
+  };
+
+  it('a two-storey house: hall with stairs, living room, kitchen, bathroom; bedrooms upstairs', () => {
+    const { res } = build(
+      'house',
+      2,
+      fp(11, 9, () => true),
+    );
+    expect(res.levels).toBe(2);
+    const g = types(res, 0);
+    for (const t of ['hall', 'living-room', 'kitchen', 'bathroom'])
+      expect(g).toContain(`base:room-${t}`);
+    const up = types(res, 1);
+    expect(up).toContain('base:room-bedroom');
+    expect(up).toContain('base:room-bathroom');
+    expect(up).not.toContain('base:room-kitchen');
+    // The hall strip crosses the house: the stairs are in it.
+    const plan = res.building.plan;
+    for (const s of res.stairs) expect(['C', 'U']).toContain(plan[s.at[1] - 4]![s.at[0] - 4]);
+  });
+});
