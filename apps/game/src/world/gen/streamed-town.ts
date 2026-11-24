@@ -2,7 +2,7 @@ import type { FadeView } from '../wall-fade.js';
 import { noteBuildings } from '../town/bld-v2.js';
 import type { EdgeSide, OpeningView, SimEvent } from '@deadzone/protocol';
 import { Group, Mesh, Vector2, type MeshStandardMaterial } from 'three';
-import { BuildingLookup } from '../building-lookup.js';
+import { BuildingLookup, type OutlineAt } from '../building-lookup.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from '../chunk.js';
 import type { Cutaway } from '../cutaway.js';
 import { LEVEL_HEIGHT } from '../instances.js';
@@ -52,6 +52,8 @@ export class StreamedTown {
   readonly root = new Group();
   /** Building at a tile of the loaded chunks (cutaway, footsteps, big map). */
   readonly lookup: BuildingLookup;
+  /** Outline of a slanted (vector-walled) building, from the column holding tile (tx, ty). */
+  readonly outlineAt: OutlineAt;
   private readonly terrainMat: MeshStandardMaterial;
   private readonly levels = new Map<string, TownStructures>();
   /** Glass + interior cards of every loaded level: +2 draw calls in total (bld-spec §4). */
@@ -81,6 +83,13 @@ export class StreamedTown {
     this.vectorPool = new VectorWallPool(this.kit.material);
     this.root.add(this.vectorPool.root);
     this.lookup = new BuildingLookup(loaded, false);
+    this.outlineAt = (b, tx, ty) => {
+      const col = this.loaded.column(Math.floor(tx / CHUNK_SIZE), Math.floor(ty / CHUNK_SIZE));
+      const m = col?.buildings?.find((x) => x.id === b);
+      return m?.outline
+        ? { outline: m.outline, ...(m.holes ? { holes: m.holes } : {}) }
+        : undefined;
+    };
     this.terrainMat = kit.terrainMaterial ?? terrainMaterial(kit.detail, kit.cells);
   }
 

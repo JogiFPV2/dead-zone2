@@ -86,7 +86,7 @@ import { SimStreamSync } from './world/streaming/sim-sync.js';
 import { CommandStamper, type CommandBody } from './sim/sim-client.js';
 import { readEntity } from './sim/snapshot.js';
 import { TEST_MAP_RANGE, createTestMap, rangeBounds } from './world/test-map.js';
-import { tileOf } from './world/building-lookup.js';
+import { buildingAtPoint, tileOf } from './world/building-lookup.js';
 import { cameraSide, occludersOf } from './world/cutaway.js';
 import { FrameSections } from './dev/frame-sections.js';
 import { furnitureFootprintsFromFiles, isRealScale } from './world/furniture-footprint.js';
@@ -2365,7 +2365,14 @@ renderer.setAnimationLoop((time) => {
     const { tx, ty } = tileOf(state.x, state.y);
     // Floor level of the body (fractional on stairs / while falling).
     const level = Math.floor(state.z + 1e-3);
-    const building = structures.lookup.at(tx, ty, level);
+    // By point, not tile: by a slanted wall the tile has no room but the player is indoors.
+    const building = buildingAtPoint(
+      structures.lookup,
+      'outlineAt' in structures ? structures.outlineAt : undefined,
+      state.x,
+      state.y,
+      level,
+    );
     // Buildings between the camera and the player are cut down to its floor too (raycast);
     // recomputed on a new tile / floor / view and twice a second (chunks streaming in).
     const occKey = `${tx},${ty},${level},${building},${rig.targetYaw.toFixed(3)}`;
