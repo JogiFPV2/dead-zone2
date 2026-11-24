@@ -5,6 +5,7 @@ import type {
   SimEvent,
   WindowCoverView,
 } from '@deadzone/protocol';
+import { DOOR_MARK_B } from '../render/painted-buildings.js';
 import {
   BatchedMesh,
   BoxGeometry,
@@ -24,6 +25,9 @@ import type { ChunkRange, ChunkSource } from './chunk.js';
 import { NO_CUTAWAY, isEdgeLowered, isLevelHidden, type Cutaway } from './cutaway.js';
 import { LEVEL_HEIGHT } from './instances.js';
 import { LOWERED_HEIGHT, WINDOW_HEIGHT, WALL_HEIGHT, collectEdges } from './structure-instances.js';
+
+/** Batch colour of a door leaf (white to the eye, marks it for the painted door glow). */
+const DOOR_MARK = new Color(1, 1, DOOR_MARK_B);
 
 export type OpeningKind = 'door' | 'window' | 'fence' | 'gate';
 const KINDS = ['door', 'window', 'fence', 'gate'] as const;
@@ -454,7 +458,10 @@ export class OpeningsView {
       const gid = ids.get(p.model);
       const g = this.groups.get(p.kind);
       if (gid === undefined || !g?.ids) continue;
-      g.ids.push(batch.addInstance(gid));
+      const id = batch.addInstance(gid);
+      // Door leaves are marked for the painted style's soft door glow.
+      if (p.kind === 'door') batch.setColorAt(id, DOOR_MARK);
+      g.ids.push(id);
     }
     this.batch = batch;
     this.root.add(batch);

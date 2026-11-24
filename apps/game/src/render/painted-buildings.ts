@@ -86,6 +86,8 @@ export const CELL_CLASS = {
   papa: 8,
   interior: 9,
   floor: 10,
+  /** Door leaves (all doors softly lit so they read from afar, Paweł 24.11). */
+  door: 11,
 } as const;
 type CellClass = (typeof CELL_CLASS)[keyof typeof CELL_CLASS];
 
@@ -100,6 +102,7 @@ export function cellClass(name: string, v2Detail?: string): CellClass {
     if (v2Detail === 'planks') return CELL_CLASS.deski;
     return CELL_CLASS.tynk;
   }
+  if (/^door-/.test(name)) return CELL_CLASS.door;
   if (/^wall-interior/.test(name)) return CELL_CLASS.interior;
   if (/brick|chimney/.test(name)) return CELL_CLASS.cegla;
   if (/siding/.test(name)) return CELL_CLASS.siding;
@@ -814,15 +817,39 @@ export const PAINTED_BLD_VERT = /* glsl */ `
 }
 `;
 
+/**
+ * Blue of the batch colour that marks a door leaf instance (`openings.ts` sets it with red and
+ * green 1): the leaf glows softly in the painted style; the colour itself is unchanged to the eye.
+ */
+export const DOOR_MARK_B = 0.998;
+
+/** Door leaves: share of their colour added as glow (plus a faint warm light). */
+export const PB_DOOR_GLOW = 0.6;
+
 /** Share of the facade colour added as fill light on painted outside walls. */
 export const PB_FILL = 0.4;
 
 /** Kit fragment (after `#include <map_fragment>`). */
 export const PAINTED_BLD_FRAG = /* glsl */ `
 vec3 pbFill = vec3(0.0);
-if (pbOn > 0.5) {
+#if defined(USE_COLOR) || defined(USE_COLOR_ALPHA)
+bool pbDoor = vColor.r > 0.9995 && abs(vColor.b - ${DOOR_MARK_B}) < 0.0006;
+#else
+bool pbDoor = false;
+#endif
+if (pbOn > 0.5 && pbDoor) {
+  // Door leaf (instance marked by openings.ts): soft warm glow so doors read from afar.
+  pbFill = diffuseColor.rgb * ${PB_DOOR_GLOW.toFixed(3)} + vec3(1.0, 0.72, 0.4) * 0.05;
+} else if (pbOn > 0.5) {
   int cls = int(texture2D(pbLut, vMapUv).r * 255.0 + 0.5);
-  if (cls > 0) {
+  if (cls == ${CELL_CLASS.door}) {
+    // Door leaf: its palette colour with painted grain and a soft warm glow.
+    vec3 W = vPbW + pbOrigin;
+    vec3 pal = texture2D(map, vMapUv).rgb;
+    vec4 t = pbSample(${L.deski}.0, vec2(W.x + W.z, W.y) * 0.7);
+    diffuseColor.rgb = min(pal * 1.6, vec3(0.85)) * mix(1.0, t.r * 2.0, 0.5);
+    pbFill = diffuseColor.rgb * ${PB_DOOR_GLOW.toFixed(3)} + vec3(1.0, 0.72, 0.4) * 0.05;
+  } else if (cls > 0) {
     vec3 W = vPbW + pbOrigin;
     // Face normal from the derivatives (flat shading; instance scale does not matter).
     vec3 n = normalize(cross(dFdx(vPbW), dFdy(vPbW)));
@@ -846,7 +873,7 @@ if (pbOn > 0.5) {
       else if (cls != ${CELL_CLASS.floor}) {
         diffuseColor.rgb = pbWeather(pbOutside(cls, pal, wallUv, roofUv, up), wallUv, W.y);
         // Soft fill: facades away from the sun still read in their colour (Project Zomboid look).
-        pbFill = diffuseColor.rgb * ${PB_FILL};
+        pbFill = diffuseColor.rgb * ${PB_FILL.toFixed(3)};
       }
     } else if (cls != ${CELL_CLASS.floor} && cls != ${CELL_CLASS.interior}) {
       diffuseColor.rgb = pbOutside(cls, pal, up ? W.xz : wallUv, roofUv, up);

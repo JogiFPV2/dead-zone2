@@ -12,7 +12,8 @@ describe('painted buildings', () => {
     expect(cellClass('roof-gravel')).toBe(CELL_CLASS.papa);
     expect(cellClass('wood-floor')).toBe(CELL_CLASS.floor);
     expect(cellClass('glass')).toBe(CELL_CLASS.none);
-    expect(cellClass('door-wood')).toBe(CELL_CLASS.none);
+    expect(cellClass('door-wood')).toBe(CELL_CLASS.door);
+    expect(cellClass('door-panel')).toBe(CELL_CLASS.door);
     expect(cellClass('v2w3-wall', 'brick')).toBe(CELL_CLASS.cegla);
     expect(cellClass('v2r1', 'tiles-plain')).toBe(CELL_CLASS.dachowka);
     expect(cellClass('v2r1', 'felt')).toBe(CELL_CLASS.papa);
