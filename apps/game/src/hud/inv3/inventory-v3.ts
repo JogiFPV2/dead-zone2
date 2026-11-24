@@ -15,6 +15,7 @@ import { createCombineTooltip, linkIcon } from '../combine-tooltip.js';
 import type { HudContentIndex } from '../content-index.js';
 import { contextCommand, findItem, formatKg, type InvCommand } from '../inventory-model.js';
 import { containerName } from '../labels.js';
+import { freeQuickSlot, hotbarDropCommand, hotbarIds } from '../hud-model.js';
 import { lootTabs, ownItems, reachableTabs, takeWithinLimit } from '../loot-model.js';
 import { vehicleTypeName } from '../../vehicles/vehicle-model.js';
 import { bindOutsideClose } from '../outside-click.js';
@@ -53,6 +54,15 @@ import {
   itemActions,
   type Inv2ActionId,
 } from './inv2-model.js';
+
+/** Drag badge over hotbar slots 1 / 2 (the hands) and 3–5 (pinned). */
+const HOTBAR_DROP_LABEL: readonly string[] = [
+  'DO LEWEJ RĘKI',
+  'DO PRAWEJ RĘKI',
+  'PRZYPNIJ: SLOT 3',
+  'PRZYPNIJ: SLOT 4',
+  'PRZYPNIJ: SLOT 5',
+];
 
 /** Inventory v2 phone layout (`?inv=v2` on a touch device, inv2-flag.ts). */
 const isInv2 = (): boolean =>
@@ -343,6 +353,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         /** Touch press (mobile): drags only after TOUCH_DRAG_HOLD_MS, earlier moves scroll. */
         touch?: { at: number; y: number };
         target?: InvSectionVM | 'ground' | undefined;
+        /** Hotbar slot under the pointer (0 = left hand, 1 = right, 2–4 = quick slots). */
+        hotbar?: number | undefined;
       }
     | undefined;
   let ctrlAlone = false;
@@ -527,7 +539,14 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const first = r.itemIds[0];
     if (id === 'context' && first !== undefined)
       send([contextCommand(opts.state(), opts.content(), first)]);
-    else if (id === 'combine') combine(first);
+    else if ((id === 'left' || id === 'right') && first !== undefined) {
+      const cmd = hotbarDropCommand(opts.state(), id === 'left' ? 0 : 1, first);
+      if (cmd) send([cmd]);
+    } else if (id === 'pin' && first !== undefined) {
+      const slot = freeQuickSlot(opts.state());
+      const cmd = slot === undefined ? undefined : hotbarDropCommand(opts.state(), slot, first);
+      if (cmd) send([cmd]);
+    } else if (id === 'combine') combine(first);
     else if (id === 'move') transfer(side, ids, true);
     else if (id === 'drop') {
       send(moveCommands(opts.state(), opts.content(), ids, 'ground', true));
@@ -536,16 +555,25 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   };
   const renderActions = (s: GameState): void => {
     const a = actFor;
-    if (!a || !isInv2()) {
+    if (!a) {
       actMenu.hidden = true;
       return;
     }
     const c = s.container;
+    const first = a.row.itemIds[0];
+    const eq = s.inventory?.equipped ?? {};
+    const pinned = first !== undefined && hotbarIds(s).slice(2).includes(first);
     const list = itemActions({
       side: a.side,
       ...(a.row.context ? { context: a.row.context } : {}),
       combine: !!a.row.combine,
       ...(c && boxSection ? { boxName: containerName(c.type, c.kind) } : {}),
+      ...(first !== undefined
+        ? {
+            inHands: { left: eq.hand_secondary === first, right: eq.hand_primary === first },
+            pin: a.side === 'own' && !pinned && freeQuickSlot(s) !== undefined,
+          }
+        : {}),
     });
     const head = div('dz-i3__amenu-h');
     head.append(
@@ -636,21 +664,15 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         drag = undefined;
         lastClick = undefined;
         if (navigator.vibrate) navigator.vibrate(15);
-        if (v2) openActions(side, r, node);
-        else contextAction();
+        openActions(side, r, node);
       }, holdMs);
     });
-    const contextAction = (): void => {
-      const id = r.itemIds[0];
-      if (id === undefined) return;
-      if (!r.context && r.combine) combine(id);
-      else send([contextCommand(opts.state(), opts.content(), id)]);
-    };
     node.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      // Touch: the long-press timer below already ran it (browsers also fire contextmenu).
+      // Touch: the long-press timer above already opened it (browsers also fire contextmenu).
       if (isTouchUi()) return;
-      contextAction();
+      // PPM: the item menu (default action first, hands, quick slots, move, drop).
+      openActions(side, r, node);
     });
   };
 
@@ -1170,6 +1192,14 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     if (under?.closest('.dz-i3__panel, .dz-i3__keys')) return undefined;
     return 'ground';
   };
+  /** Hotbar slot under a point (the HUD hotbar stays visible beside the inventory). */
+  const hotbarSlotAt = (x: number, y: number): { index: number; el: HTMLElement } | undefined => {
+    for (const n of document.elementsFromPoint(x, y)) {
+      const slot = (n as HTMLElement).closest<HTMLElement>('[data-hotbar-slot]');
+      if (slot) return { index: Number(slot.dataset.hotbarSlot), el: slot };
+    }
+    return undefined;
+  };
   const updateDrag = (e: PointerEvent): void => {
     if (!drag) return;
     const host = stage.getBoundingClientRect();
@@ -1178,6 +1208,22 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const y = (e.clientY - host.top) / k;
     ghost.style.left = `${x + 12}px`;
     ghost.style.top = `${y + 10}px`;
+    const slot = hotbarSlotAt(e.clientX, e.clientY);
+    if (slot?.index !== drag.hotbar) {
+      for (const n of document.querySelectorAll<HTMLElement>('[data-hotbar-slot][data-drop]'))
+        delete n.dataset.drop;
+      if (slot) slot.el.dataset.drop = 'ok';
+      drag.hotbar = slot?.index;
+    }
+    if (slot) {
+      drag.target = undefined;
+      badge.textContent = HOTBAR_DROP_LABEL[slot.index] ?? `SLOT ${slot.index + 1}`;
+      badge.dataset.fits = 'true';
+      badge.style.left = `${x + 12}px`;
+      badge.style.top = `${y - 30}px`;
+      badge.hidden = false;
+      return;
+    }
     const target = sectionAt(e.clientX, e.clientY);
     const changed = target !== drag.target;
     drag.target = target;
@@ -1251,6 +1297,16 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         lastClick = { key: d.row.key, at: now };
         select(d.side, d.row, e);
       }
+      return;
+    }
+    for (const n of document.querySelectorAll<HTMLElement>('[data-hotbar-slot][data-drop]'))
+      delete n.dataset.drop;
+    if (d.hotbar !== undefined) {
+      const first = d.ids[0];
+      const cmd =
+        first === undefined ? undefined : hotbarDropCommand(opts.state(), d.hotbar, first);
+      if (cmd) send([cmd]);
+      render();
       return;
     }
     const t = d.target;

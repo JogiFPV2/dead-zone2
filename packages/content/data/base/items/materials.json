@@ -5,6 +5,7 @@
     "kind": "material",
     "weightKg": 0.6,
     "tags": ["base:fabric"],
+    "harmless": true,
     "windowCover": { "lightPass": 0.1, "setupSec": 15 }
   },
   {
@@ -13,7 +14,8 @@
     "kind": "material",
     "weightKg": 0.08,
     "maxStack": 20,
-    "tags": ["base:fabric", "base:rag"]
+    "tags": ["base:fabric", "base:rag"],
+    "harmless": true
   },
   {
     "id": "base:plank",
@@ -44,6 +46,7 @@
     "kind": "material",
     "weightKg": 0.8,
     "tags": ["base:fabric"],
+    "harmless": true,
     "windowCover": {
       "lightPass": 0.15,
       "setupSec": 5
@@ -55,6 +58,7 @@
     "kind": "material",
     "weightKg": 1.5,
     "tags": ["base:fabric"],
+    "harmless": true,
     "windowCover": {
       "lightPass": 0.1,
       "setupSec": 15

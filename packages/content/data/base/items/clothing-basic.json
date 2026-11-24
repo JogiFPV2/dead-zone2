@@ -5,6 +5,7 @@
     "kind": "clothing",
     "weightKg": 0.15,
     "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
     "clothing": {
       "slot": "torso_inner",
       "insulation": 0.1,
@@ -17,6 +18,7 @@
     "kind": "clothing",
     "weightKg": 0.6,
     "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
     "clothing": {
       "slot": "torso_outer",
       "insulation": 0.35,
@@ -31,6 +33,7 @@
     "kind": "clothing",
     "weightKg": 0.8,
     "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
     "clothing": {
       "slot": "legs",
       "insulation": 0.25,
@@ -45,6 +48,7 @@
     "lootCategory": "tool",
     "weightKg": 0.15,
     "tags": ["base:gloves", "base:clothing"],
+    "harmless": true,
     "clothing": {
       "slot": "hands",
       "insulation": 0.05,
@@ -58,6 +62,7 @@
     "kind": "clothing",
     "weightKg": 1.2,
     "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
     "clothing": {
       "slot": "torso_outer",
       "insulation": 0.5,

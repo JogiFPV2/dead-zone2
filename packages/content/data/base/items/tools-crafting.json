@@ -21,6 +21,7 @@
     "kind": "tool",
     "weightKg": 0.05,
     "tags": ["base:tool-fire-starter"],
+    "harmless": true,
     "tool": { "durability": { "max": 20 } }
   },
   {
@@ -52,6 +53,7 @@
     "kind": "tool",
     "weightKg": 0.01,
     "tags": ["base:tool-needle"],
+    "harmless": true,
     "tool": { "durability": { "max": 40, "lossChancePerUse": 0.2 } }
   },
   {

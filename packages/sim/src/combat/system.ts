@@ -17,6 +17,7 @@ import {
   type ItemStore,
 } from '../items/store.js';
 import { createCorpse } from '../items/search.js';
+import { activeHandOf } from '../items/inventory.js';
 import { clampStat, deathCauseIndex, woundKindIndex } from '../survival/state.js';
 import { inflictWound } from '../survival/wounds.js';
 import { lineOfSight, meleeLine } from '../world/los.js';
@@ -51,7 +52,7 @@ export function combatSystem(w: SimWorld, grid: TileGrid): void {
   if (ai.zombieCount > 0) zombieAttacks(w, ai, cb, grid);
 }
 
-/** Melee stats of what is in `hand_primary` (bare hands without anything). */
+/** Melee stats of what is in the active hand (bare hands without anything). */
 export interface MeleeStats {
   item: number | undefined;
   damage: { min: number; max: number };
@@ -74,14 +75,14 @@ export interface MeleeStats {
 }
 
 /**
- * Any item in `hand_primary` is a melee weapon (like Project Zomboid): catalogue melee weapons
+ * Any item in the active hand (`activeHandOf`) is a melee weapon (like Project Zomboid): catalogue melee weapons
  * with their `melee` block, every other item with `meleeStatsFor` (`improvisedWeapon` block, else
  * weak defaults from its weight). A firearm only bashes when `fire` does not take the attack.
  */
 export function meleeOf(w: SimWorld, cb: CombatWorld, eid: number): MeleeStats {
   const st = w.items;
   const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
-  const id = p?.slots.get('hand_primary');
+  const id = p?.slots.get(activeHandOf(p));
   const item = id === undefined ? undefined : st?.items.get(id);
   if (st && item) {
     const def = defOf(st, item);
@@ -217,6 +218,16 @@ function swing(w: SimWorld, ai: AiWorld, cb: CombatWorld, grid: TileGrid, eid: n
   const z = floorZ(w, eid);
   const rng = w.rng.combat;
   const targets = targetsInArc(w, ai, cb, grid, eid, m.rangeTiles, true).slice(0, m.maxTargets);
+  // Harmless item (tissue, paper): no damage, no wear, no XP; only a light push.
+  if (m.damage.max <= 0) {
+    for (const t of targets) {
+      if (w.c.Animal.is[t.eid] === 1) continue;
+      damageZombie(w, ai, cb, grid, t.eid, eid, 0, 'melee');
+      physicsHit(w, eid, t.eid, 'melee', cfg.harmlessKnockback, false, 'stagger');
+    }
+    emitNoise(w, x, y, z, m.noise.radiusTiles, m.noise.volume, 'attack', 0, { eid, kind: 'melee' });
+    return;
+  }
   for (const t of targets) {
     let dmg = m.damage.min + rng.nextFloat() * (m.damage.max - m.damage.min);
     if (m.critChance > 0 && rng.chance(m.critChance)) dmg *= cfg.critMul;

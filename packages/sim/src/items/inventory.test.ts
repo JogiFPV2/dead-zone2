@@ -108,10 +108,13 @@ describe('inventory: weight, hands, bags, carry-load', () => {
     send(sim, { type: 'moveItem', item: more.id, to: pack.container! });
     sim.step();
     expect(rejectedReasons(sim)).toEqual(['no-space']);
-    // Backpacks only go on the back (bag.slots).
+    // Any item may be held (quick slots 1–2): a backpack in the hand is carried, not worn.
+    const worn = sim.getInventory()!.loadKg;
     send(sim, { type: 'equip', item: pack.id, slot: 'hand_primary' });
     sim.step();
-    expect(rejectedReasons(sim)).toEqual(['invalid-target']);
+    expect(rejectedReasons(sim)).toEqual([]);
+    expect(sim.getInventory()!.equipped).toEqual({ hand_primary: pack.id });
+    expect(sim.getInventory()!.loadKg).toBe(worn + 4); // 8 kg bricks without the 50 % reduction
   });
 
   it('a full worn bag slows movement by bag.movementPenalty', () => {

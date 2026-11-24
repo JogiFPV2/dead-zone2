@@ -49,7 +49,7 @@ function conditionOf(c: CombatView, m: MeleeWeaponView): number | undefined {
 }
 
 /**
- * Panel VM: an item (any non-firearm) in `hand_primary`. Undefined for bare hands, a firearm
+ * Panel VM: an item (any non-firearm) in the active hand. Undefined for bare hands, a firearm
  * (no `melee`) or no combat view yet.
  */
 export function meleeVM(
@@ -61,10 +61,13 @@ export function meleeVM(
   const m = c?.melee;
   if (!c || !m || m.source === 'unarmed' || !c.weapon) return undefined;
   const conditionPct = conditionOf(c, m);
+  // Harmless items (tissue, clothing, bandage: `harmless`) only push.
   const tag =
-    m.source === 'weapon' && category?.(c.weapon) === 'improvised'
-      ? TAGS.improvised
-      : TAGS[m.source];
+    m.damage.max <= 0
+      ? 'NIE RANI'
+      : m.source === 'weapon' && category?.(c.weapon) === 'improvised'
+        ? TAGS.improvised
+        : TAGS[m.source];
   return {
     weapon: c.weapon,
     name: name(c.weapon),

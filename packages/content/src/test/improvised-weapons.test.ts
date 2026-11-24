@@ -34,7 +34,9 @@ describe('improwizowana broń (jak w PZ)', () => {
     const b = await baseBundle();
     for (const item of Object.values(b.items)) {
       const s = meleeStatsFor(item);
-      expect(s.damage.max, item.id).toBeGreaterThan(0);
+      // Przedmioty nieraniące (`harmless`: chusteczka, papier) tylko pchają.
+      if (item.harmless) expect(s.damage.max, item.id).toBe(0);
+      else expect(s.damage.max, item.id).toBeGreaterThan(0);
       expect(s.damage.min, item.id).toBeLessThanOrEqual(s.damage.max);
       expect(s.rangeTiles, item.id).toBeGreaterThan(0);
       expect(s.attackSpeed, item.id).toBeGreaterThan(0);
@@ -46,7 +48,21 @@ describe('improwizowana broń (jak w PZ)', () => {
         item.kind === 'weapon_melee' ? 'weapon' : item.improvisedWeapon ? 'improvised' : 'default';
       expect(s.source, item.id).toBe(expected);
       if (item.kind === 'weapon_melee') expect(item.improvisedWeapon, item.id).toBeUndefined();
+      if (item.harmless) expect(item.improvisedWeapon, item.id).toBeUndefined();
     }
+  });
+
+  it('nieraniące: ubrania, bandaże, szmaty i gazetki nie zadają obrażeń, cegła tak', async () => {
+    const b = await baseBundle();
+    for (const id of [
+      'base:t-shirt',
+      'base:bandage',
+      'base:rag',
+      'base:mag-angler',
+      'base:plastic-bag',
+    ])
+      expect(meleeStatsFor(b.items[id]!).damage, id).toEqual({ min: 0, max: 0 });
+    expect(meleeStatsFor(b.items['base:brick']!).damage.max).toBeGreaterThan(0);
   });
 
   it('broń z katalogu zachowuje swoje statystyki', async () => {

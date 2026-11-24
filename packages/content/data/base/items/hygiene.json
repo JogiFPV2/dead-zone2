@@ -21,7 +21,8 @@
     "name": "item.base.towel.name",
     "kind": "material",
     "weightKg": 0.4,
-    "tags": ["base:fabric"]
+    "tags": ["base:fabric"],
+    "harmless": true
   },
   {
     "id": "base:cleaning-supplies",

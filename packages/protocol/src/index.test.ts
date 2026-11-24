@@ -59,6 +59,7 @@ describe('parseCommand', () => {
       { ...base, type: 'moveItem', item: 12, to: 4, count: 1 },
       { ...base, type: 'equip', item: 12, slot: 'hand_primary' },
       { ...base, type: 'unequip', slot: 'back' },
+      { ...base, type: 'setActiveHand', hand: 'hand_secondary' },
       { ...base, type: 'openContainer', container: 4 },
       { ...base, type: 'search', container: 4 },
       { ...base, type: 'search', x: -3, y: 12 },
@@ -179,7 +180,7 @@ describe('snapshot encoding', () => {
 
   it('has no header: 20 words per entity (defaults: kind/anim 0, hpPct 1, physics idle/0, gait walk)', () => {
     expect(SNAPSHOT_ENTITY_STRIDE).toBe(20);
-    expect(PROTOCOL_VERSION).toBe(51);
+    expect(PROTOCOL_VERSION).toBe(52);
     const buf = encodeSnapshot([
       { stableId: 3, x: 1, y: 2, z: 0, facingRad: 0.25 },
       {

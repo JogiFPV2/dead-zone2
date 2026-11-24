@@ -32,6 +32,7 @@ import { combineMarks } from '../crafting/crafting.js';
 import {
   containerWeight,
   defOf,
+  isInside,
   itemWeight,
   tileKey,
   type ItemContainer,
@@ -187,6 +188,15 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
     hardLimitKg: kg(hardLimit(w, eid)),
     carryLoad: Math.round((w.survival?.carryLoad[eid] ?? 0) * 10) / 10,
     equipped,
+    ...(p.activeHand ? { activeHand: p.activeHand } : {}),
+    ...(p.quick
+      ? {
+          quickSlots: p.quick.map((id) => {
+            const item = id ? st.items.get(id) : undefined;
+            return item && isInside(st, item.loc, p.inventory) ? id : null;
+          }),
+        }
+      : {}),
     containers: carriedContainerIds(st, p.inventory).flatMap(
       (id) => containerView(w, id, marks) ?? [],
     ),

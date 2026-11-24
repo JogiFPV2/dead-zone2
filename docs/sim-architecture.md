@@ -1813,3 +1813,23 @@ Potknięcie przy przeskoku (`tripped` + `fellDown`, jak dotąd) z szansą `physi
 ### 9.84 Wędkarstwo (protokół 51)
 
 `fishing/fishing.ts`: `useItem` na przedmiocie z tagiem `base:fishing-rod` (wędka, `base:fishing-rod`: w garażach albo z kija i nici, receptura `base:make-fishing-rod`) startuje akcję `fish`, gdy w promieniu 2 kafli na tym samym poziomie jest kafel podłogi `base:water` (`SimMap.floorTiles`; inaczej `invalid-target`). Sesja trwa 20 minut gry i przerywa się jak inne akcje (ruch, zagrożenie, sen). Na końcu jedno losowanie `rng.actions` z szansą 0,3 + 0,06 × poziom wędkarstwa (najwyżej 0,85) daje `base:raw-fish` do ekwipunku. XP wędkarstwa: 6 za rybę, 2 za pustą sesję. Zdarzenie `fished { playerId, caught, defId? }`. Zużycia wędki jeszcze nie ma.
+### 9.85 Lewa i prawa ręka, szybkie sloty 3–5, przedmioty nieraniące (protokół 52)
+
+- Komenda `setActiveHand { hand }` (`hand_secondary` = lewa = slot 1, `hand_primary` = prawa = slot 2,
+  domyślna): `PlayerItems.activeHand` (tylko gdy lewa). Atak wręcz (`meleeOf`), strzał, przeładowanie
+  i widok `combat` biorą przedmiot z aktywnej ręki (`activeHandOf`), tak samo rozbicie okna gołą ręką.
+  `InventoryView.activeHand` (brak = prawa). Hash tylko gdy ktoś ma aktywną lewą rękę.
+- Komenda `setQuickSlot { index 0..2, item? }`: przypina noszony przedmiot do slotu 3–5 (przedmiot
+  jest w najwyżej jednym slocie), bez `item` czyści. `PlayerItems.quick`, `InventoryView.quickSlots`
+  (null = pusty albo przedmiot nie jest już noszony). Hash tylko gdy coś przypięto.
+- Każdy przedmiot można wziąć do ręki: `allowedSlots` dodaje obie ręce także ubraniom i torbom
+  (plecak w ręku nie zmniejsza wagi zawartości).
+- Pole treści `harmless: true` (ubrania, bandaże, szmaty, gazetki, torebki, zapałki, igła, nić):
+  `meleeStatsFor` daje obrażenia 0–0 bez zużycia i XP; zamach tylko lekko pcha zombie
+  (`combat.harmlessKnockback`, reakcja najwyżej `stagger`), a zombie rusza na gracza.
+- Klient: pasek 1 = lewa ręka, 2 = prawa (klawisz przełącza aktywną rękę, podświetlenie = aktywna),
+  3–5 = przypięte (klawisz wkłada przedmiot do aktywnej ręki albo go chowa). Przeciągnięcie z
+  ekwipunku na slot 1/2 wkłada do ręki, na 3–5 przypina; PPM na slocie chowa / odpina. PPM na
+  przedmiocie w ekwipunku otwiera menu („Do lewej ręki”, „Do prawej ręki”, „Przypnij do paska”).
+- Testy: `combat/hands.test.ts`, `content/test/improvised-weapons.test.ts`,
+  `apps/game hud-model.test.ts`, `touch-hud.test.ts` (multitouch).

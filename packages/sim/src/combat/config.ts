@@ -41,6 +41,8 @@ export interface CombatConfig {
   meleeXpPerHit: number;
   /** Knock-back of items without a `melee` block (improvised weapons), like bare hands. */
   improvisedKnockback: number;
+  /** Push of a swing with a harmless item (`harmless`: tissue, paper), no damage. */
+  harmlessKnockback: number;
   /** `worldSettings.firearms` (data wins, see ai/state.ts). */
   firearms: {
     hitFalloffAtRange: number;
@@ -80,6 +82,7 @@ export const DEFAULT_COMBAT_CONFIG: CombatConfig = {
   attackAnimSec: 0.4,
   meleeXpPerHit: 1,
   improvisedKnockback: 0.3,
+  harmlessKnockback: 0.1,
   firearms: {
     hitFalloffAtRange: 0.6,
     spread: { pistol: 0.03, revolver: 0.03, shotgun: 0.12, rifle: 0.015 },

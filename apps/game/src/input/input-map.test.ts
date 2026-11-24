@@ -49,6 +49,27 @@ describe('InputMap', () => {
     expect(input.isDown('moveUp')).toBe(false);
   });
 
+  it('many keys and buttons at once: run diagonally, attack and switch hands together', () => {
+    const { input, key, element } = setup();
+    const attack = vi.fn();
+    const slot1 = vi.fn();
+    input.on('primaryAction', attack);
+    input.on('quickslot1', slot1);
+    key('KeyW');
+    key('KeyA');
+    key('ShiftLeft');
+    element.dispatchEvent(ev('pointerdown', { button: 0 }));
+    key('Digit1');
+    expect(moveKeys(input)).toEqual({ up: true, down: false, left: true, right: false });
+    expect(input.isDown('sprint')).toBe(true);
+    expect(input.isDown('primaryAction')).toBe(true);
+    expect(attack).toHaveBeenCalledTimes(1);
+    expect(slot1).toHaveBeenCalledTimes(1);
+    key('KeyA', false);
+    expect(moveKeys(input)).toEqual({ up: true, down: false, left: false, right: false });
+    expect(input.isDown('sprint')).toBe(true);
+  });
+
   it('fires press handlers once per press, ignoring repeats', () => {
     const { input, key } = setup();
     const h = vi.fn();

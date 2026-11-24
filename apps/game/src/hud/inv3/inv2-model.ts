@@ -114,7 +114,7 @@ export function tapMoveFrom(
 /** Inventory v2 long press (spec, mobile: 400 ms; the shared LONG_PRESS_MS stays 450 elsewhere). */
 export const INV2_LONG_PRESS_MS = 400;
 
-export type Inv2ActionId = 'context' | 'combine' | 'move' | 'drop';
+export type Inv2ActionId = 'context' | 'left' | 'right' | 'pin' | 'combine' | 'move' | 'drop';
 export interface Inv2Action {
   id: Inv2ActionId;
   label: string;
@@ -128,8 +128,8 @@ const CONTEXT_LABEL: Readonly<Record<string, string>> = {
 };
 
 /**
- * Long-press menu of an item (mockup: Użyj · Załóż · Połącz… · Przenieś do … · Upuść); the first
- * entry is the default action.
+ * Item menu (PPM, long press on a phone; mockup: Użyj · Załóż · Połącz… · Przenieś do … ·
+ * Upuść), plus the hands and the pinned quick slots of the hotbar; the first entry is the default.
  */
 export function itemActions(o: {
   side: 'own' | 'box';
@@ -137,10 +137,17 @@ export function itemActions(o: {
   combine?: boolean;
   /** Name of the opened container (own side) — undefined: nothing to move into. */
   boxName?: string;
+  /** Hands the item is already in (quick slots 1 / 2); undefined: no hand entries. */
+  inHands?: { left: boolean; right: boolean };
+  /** A free quick slot 3–5 to pin it to (own side, not pinned yet). */
+  pin?: boolean;
 }): Inv2Action[] {
   const a: Inv2Action[] = [];
   if (o.context && CONTEXT_LABEL[o.context])
     a.push({ id: 'context', label: CONTEXT_LABEL[o.context]! });
+  if (o.inHands && !o.inHands.left) a.push({ id: 'left', label: 'Do lewej ręki (1)' });
+  if (o.inHands && !o.inHands.right) a.push({ id: 'right', label: 'Do prawej ręki (2)' });
+  if (o.pin) a.push({ id: 'pin', label: 'Przypnij do paska (3–5)' });
   if (o.combine) a.push({ id: 'combine', label: 'Połącz…' });
   if (o.side === 'box') a.push({ id: 'move', label: 'Weź do plecaka' });
   else if (o.boxName) a.push({ id: 'move', label: `Przenieś: ${o.boxName}` });

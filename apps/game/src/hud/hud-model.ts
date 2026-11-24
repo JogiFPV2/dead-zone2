@@ -162,23 +162,44 @@ export function itemIcon(def: HudItemDef | undefined): string {
   }
 }
 
-/**
- * TEMPORARY hotbar: quick slots 1–5 are not in the sim yet, so the slots show the first five
- * items of the main inventory.
- */
+/** Hotbar slot 1 (index 0) = left hand, 2 = right hand, 3–5 = pinned quick slots. */
+export const HAND_OF_SLOT = ['hand_secondary', 'hand_primary'] as const;
+export type HandSlotName = (typeof HAND_OF_SLOT)[number];
+
+/** Hand that attacks (`setActiveHand`): left = slot 1, right = slot 2 (the default). */
+export function activeHand(s: GameState): HandSlotName {
+  return s.inventory?.activeHand ?? 'hand_primary';
+}
+
+/** Carried item by id (main inventory and bags). */
+function carried(s: GameState, id: number | null | undefined) {
+  if (id === null || id === undefined) return undefined;
+  for (const c of Object.values(s.inventory?.containers ?? {})) {
+    const it = c.items.find((i) => i.id === id);
+    if (it) return it;
+  }
+  return undefined;
+}
+
+/** Item ids behind the hotbar: left hand, right hand, then the pinned quick slots 3–5. */
+export function hotbarIds(s: GameState): (number | undefined)[] {
+  const eq = s.inventory?.equipped ?? {};
+  const out: (number | undefined)[] = [eq.hand_secondary, eq.hand_primary];
+  for (let i = 0; i < HOTBAR_SLOTS - 2; i++) {
+    const id = s.inventory?.quickSlots?.[i] ?? undefined;
+    out.push(carried(s, id) ? id! : undefined);
+  }
+  return out;
+}
+
+/** Hotbar slots: hands first (a two-handed item shows in both), then the pinned items. */
 export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem | null)[] {
-  const inv = s.inventory;
-  const items = inv ? (inv.containers[inv.container]?.items ?? []) : [];
-  const out: (SlotItem | null)[] = [];
-  for (let i = 0; i < HOTBAR_SLOTS; i++) {
-    const it = items[i];
-    if (!it) {
-      out.push(null);
-      continue;
-    }
+  return hotbarIds(s).map((id) => {
+    const it = carried(s, id);
+    if (!it) return null;
     const def = content.items.get(it.def);
     const image = itemImage(it.def);
-    out.push({
+    return {
       id: String(it.id),
       name: craftItemName(it.def),
       icon: itemIcon(def),
@@ -186,40 +207,69 @@ export function hotbarItems(s: GameState, content: HudContentIndex): (SlotItem |
       count: it.count,
       stackable: (def?.maxStack ?? 1) > 1,
       usable: true,
-    });
-  }
-  return out;
-}
-
-/** Main-inventory items behind the hotbar slots (same TEMPORARY rule as `hotbarItems`). */
-function hotbarSource(s: GameState) {
-  const inv = s.inventory;
-  return inv ? (inv.containers[inv.container]?.items ?? []).slice(0, HOTBAR_SLOTS) : [];
+    };
+  });
 }
 
 /**
- * Hotbar slot pressed (key 1–5 or click): a weapon / tool goes into the right hand, pressing the
- * slot of the item already in hand puts it away; other items only move the highlight.
+ * Hotbar slot pressed (key 1–5 or click): 1 / 2 pick the hand that attacks; 3–5 put the pinned
+ * item into the active hand, or away again when it is already there.
  */
 export function hotbarCommand(
   s: GameState,
   content: HudContentIndex,
   index: number,
 ): CommandBody | undefined {
-  const it = hotbarSource(s)[index];
-  if (!it || s.player.sleeping) return undefined;
-  if (s.inventory?.equipped.hand_primary === it.id)
-    return { type: 'unequip', slot: 'hand_primary' };
-  if (!content.items.get(it.def)?.equipSlots?.includes('hand_primary')) return undefined;
-  return { type: 'equip', item: it.id, slot: 'hand_primary' };
+  if (s.player.sleeping) return undefined;
+  const hand = HAND_OF_SLOT[index as 0 | 1];
+  if (hand) return hand === activeHand(s) ? undefined : { type: 'setActiveHand', hand };
+  const id = hotbarIds(s)[index];
+  const it = carried(s, id);
+  if (!it) return undefined;
+  const active = activeHand(s);
+  if (s.inventory?.equipped[active] === it.id) return { type: 'unequip', slot: active };
+  // Any item can be held (the sim's `allowedSlots`).
+  return { type: 'equip', item: it.id, slot: active };
 }
 
-/** Hotbar slot of the item in the right hand, if it is on the hotbar. */
-export function hotbarHeldIndex(s: GameState): number | undefined {
-  const held = s.inventory?.equipped.hand_primary;
-  if (held === undefined) return undefined;
-  const i = hotbarSource(s).findIndex((it) => it.id === held);
-  return i < 0 ? undefined : i;
+/** Highlighted hotbar slot: the active hand (0 = left, 1 = right). */
+export function hotbarHeldIndex(s: GameState): number {
+  return activeHand(s) === 'hand_secondary' ? 0 : 1;
+}
+
+/**
+ * Item dropped on hotbar slot `index` (drag from the inventory): 1 / 2 put it into that hand,
+ * 3–5 pin it there (it stays where it is).
+ */
+export function hotbarDropCommand(
+  s: GameState,
+  index: number,
+  item: number,
+): CommandBody | undefined {
+  const hand = HAND_OF_SLOT[index as 0 | 1];
+  if (hand) {
+    if (s.inventory?.equipped[hand] === item) return undefined;
+    const it = carried(s, item) ?? s.container?.items.find((i) => i.id === item);
+    return it ? { type: 'equip', item, slot: hand } : undefined;
+  }
+  if (index < 2 || index >= HOTBAR_SLOTS || !carried(s, item)) return undefined;
+  return { type: 'setQuickSlot', index: index - 2, item };
+}
+
+/** Clear hotbar slot `index` (PPM on it): a hand puts its item away, 3–5 unpin. */
+export function hotbarClearCommand(s: GameState, index: number): CommandBody | undefined {
+  const hand = HAND_OF_SLOT[index as 0 | 1];
+  if (hand)
+    return s.inventory?.equipped[hand] !== undefined ? { type: 'unequip', slot: hand } : undefined;
+  if (index < 2 || index >= HOTBAR_SLOTS || hotbarIds(s)[index] === undefined) return undefined;
+  return { type: 'setQuickSlot', index: index - 2 };
+}
+
+/** First free pinned quick slot (index 2..4), or undefined when all are taken. */
+export function freeQuickSlot(s: GameState): number | undefined {
+  const ids = hotbarIds(s);
+  for (let i = 2; i < HOTBAR_SLOTS; i++) if (ids[i] === undefined) return i;
+  return undefined;
 }
 
 /** Key hints from the current bindings (spec §3.11 order; only actions the game has). */
