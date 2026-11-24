@@ -91,7 +91,8 @@ function clippedTile(
     const b = pts[(i + 1) % pts.length]!;
     area += a.x * b.y - b.x * a.y;
   }
-  if (Math.abs(area) > 1 - 1e-6) {
+  // Shoelace sum = twice the area: only a fully covered tile is a plain box.
+  if (Math.abs(area) / 2 > 1 - 1e-6) {
     g.box(tx, y0, ty, tx + 1, y1, ty + 1, top, side);
     return;
   }
@@ -158,12 +159,63 @@ export function slabGeometry(
           else g.box(tx, baseY - SLAB, ty, tx + 1, baseY + 0.02, ty + 1, cell, 'concrete');
         }
       }
+      // Slanted walls: rooms stop on tiles mostly inside the outline, so the strip between
+      // them and the wall had no slab (holes down to the level below). Roomless tiles near the
+      // building's rooms get the slab cut to the outline too.
+      for (const [b, g] of per) {
+        const ring = ringOf(b);
+        if (!ring) continue;
+        const x0 = cx * CHUNK_SIZE;
+        const y0 = cy * CHUNK_SIZE;
+        let bx0 = Infinity;
+        let by0 = Infinity;
+        let bx1 = -Infinity;
+        let by1 = -Infinity;
+        for (const p of ring) {
+          bx0 = Math.min(bx0, p.x);
+          by0 = Math.min(by0, p.y);
+          bx1 = Math.max(bx1, p.x);
+          by1 = Math.max(by1, p.y);
+        }
+        const ty1 = Math.min(y0 + CHUNK_SIZE - 1, Math.floor(by1));
+        const tx1 = Math.min(x0 + CHUNK_SIZE - 1, Math.floor(bx1));
+        for (let ty = Math.max(y0, Math.floor(by0)); ty <= ty1; ty++) {
+          for (let tx = Math.max(x0, Math.floor(bx0)); tx <= tx1; tx++) {
+            if (tiles.building(tx, ty) !== NO_BUILDING) continue;
+            const cell = edgeCell(tiles, b, tx, ty);
+            if (cell) clippedTile(g, ring, tx, ty, baseY - SLAB, baseY + 0.02, cell, 'concrete');
+          }
+        }
+      }
       for (const [building, g] of per) {
         out.push({ building, cx: cx * CHUNK_SIZE + 1, cz: cy * CHUNK_SIZE + 1, geo: g.geometry() });
       }
     }
   }
   return out;
+}
+
+/** How far (tiles) the rooms of a slanted building may stop short of its outline. */
+const EDGE_REACH = 2;
+
+/**
+ * Floor cell for roomless tile (tx, ty) next to building `b`: the look of the nearest of its
+ * floored tiles within EDGE_REACH, undefined when there is none (not this building's strip).
+ */
+function edgeCell(tiles: MapTiles, b: BuildingId, tx: number, ty: number): string | undefined {
+  for (let r = 1; r <= EDGE_REACH; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = tx + dx;
+        const y = ty + dy;
+        if (tiles.building(x, y) !== b) continue;
+        const floor = tiles.floor(x, y);
+        if (floor !== undefined) return floorLook(floor, tiles.roomType(x, y)).cell;
+      }
+    }
+  }
+  return undefined;
 }
 
 const STEP = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] } as const;
