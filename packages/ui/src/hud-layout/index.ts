@@ -1,7 +1,13 @@
 // HUD layout (editor data): ids, zod schema, defaults (HUD v3) and pure operations. No DOM.
 export * from './ids.js';
 export * from './schema.js';
-export { DEFAULT_HUD_LAYOUT, HUD_LAYOUT_REFERENCE, defaultElementLayout } from './defaults.js';
+export {
+  DEFAULT_HUD_LAYOUT,
+  HUD_BOX_DEFAULT,
+  HUD_BOX_SLOTS,
+  HUD_LAYOUT_REFERENCE,
+  defaultElementLayout,
+} from './defaults.js';
 export {
   resolveLayout,
   resetElement,

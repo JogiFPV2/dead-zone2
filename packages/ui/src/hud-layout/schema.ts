@@ -11,6 +11,9 @@ export const HUD_SCALE_MIN = 0.5;
 export const HUD_SCALE_MAX = 1.5;
 export const HUD_OPACITY_MIN = 0.2;
 export const HUD_OPACITY_MAX = 1;
+/** Free-size elements (`osmmap`): width / height in px at element scale 1. */
+export const HUD_BOX_MIN = 80;
+export const HUD_BOX_MAX = 4000;
 
 /** Horizontal axis is centred for 'tc' / 'bc', vertical for 'cl' / 'cr'. */
 export function anchorAxes(anchor: HudAnchor): { h: 'l' | 'c' | 'r'; v: 't' | 'c' | 'b' } {
@@ -32,6 +35,9 @@ export const hudElementLayoutSchema = z
     scale: z.number().finite().min(HUD_SCALE_MIN).max(HUD_SCALE_MAX),
     opacity: z.number().finite().min(HUD_OPACITY_MIN).max(HUD_OPACITY_MAX),
     visible: z.boolean().default(true),
+    /** Free-size elements only (`osmmap`): box width / height, px at scale 1. */
+    w: z.number().finite().min(HUD_BOX_MIN).max(HUD_BOX_MAX).optional(),
+    h: z.number().finite().min(HUD_BOX_MIN).max(HUD_BOX_MAX).optional(),
   })
   .superRefine((el, ctx) => {
     const { h, v } = anchorAxes(el.anchor);

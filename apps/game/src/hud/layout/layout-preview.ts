@@ -19,6 +19,7 @@ export const DEFAULT_RECTS: Record<HudLayoutSlot, Rect> = {
   hotbar: { left: 1036, top: 654, width: 226, height: 48 },
   threat: { left: 565, top: 40, width: 150, height: 26 },
   hints: { left: 18, top: 680, width: 320, height: 22 },
+  osmmap: { left: 18, top: 468, width: 320, height: 200 },
 };
 
 /** Rects of every element on the reference screen for a saved layout. */
@@ -33,7 +34,8 @@ export function previewRects(
       out[slot] = { ...d, opacity: 1, hidden: false };
       continue;
     }
-    const size = slot === 'topbar' ? { w: REF.w, h: d.height } : { w: d.width, h: d.height };
+    const size =
+      slot === 'topbar' ? { w: REF.w, h: d.height } : { w: el.w ?? d.width, h: el.h ?? d.height };
     const { rect } = placeRect(slot === 'topbar' ? { ...el, x: 0 } : el, REF, size);
     out[slot] = {
       ...rect,
@@ -45,13 +47,14 @@ export function previewRects(
   return out;
 }
 
-export function layoutPreviewHtml(layout: HudLayout): string {
+/** `osmMap`: Mapa OpenStreetMap switched on (its box shows only then). */
+export function layoutPreviewHtml(layout: HudLayout, osmMap = false): string {
   const k = PREVIEW_W / REF.w;
   const n = changedSlots(layout).length;
   const rects = previewRects(layout);
   const boxes = HUD_LAYOUT_SLOTS.map((slot) => {
     const r = rects[slot];
-    if (r.hidden) return '';
+    if (r.hidden || (slot === 'osmmap' && !osmMap)) return '';
     const st = `left:${(r.left * k).toFixed(1)}px;top:${(r.top * k).toFixed(1)}px;width:${(r.width * k).toFixed(1)}px;height:${(r.height * k).toFixed(1)}px;opacity:${r.opacity}`;
     return `<i class="dzo-hudpv__el dzo-hudpv__el--${slot}" style="${st}"></i>`;
   }).join('');

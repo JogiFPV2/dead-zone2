@@ -17,6 +17,7 @@ const V3: Record<HudLayoutSlot, { anchor: string; x: number; y: number }> = {
   weapon: { anchor: 'br', x: 18, y: 73 },
   threat: { anchor: 'tc', x: 0, y: 40 },
   hints: { anchor: 'bl', x: 18, y: 18 },
+  osmmap: { anchor: 'bl', x: 18, y: 52 },
 };
 
 describe('DEFAULT_HUD_LAYOUT matches HUD v3 styles', () => {

@@ -6,6 +6,7 @@
  * interfejsu”, a new layout); nothing is written back to the settings.
  */
 import {
+  HUD_BOX_SLOTS,
   HUD_LAYOUT_SLOTS,
   anchorAxes,
   type HudLayout,
@@ -25,7 +26,17 @@ export interface LayoutApplier {
   readonly layout: HudLayout;
 }
 
-const PROPS = ['left', 'right', 'top', 'bottom', 'transform', 'transform-origin', 'opacity'];
+const PROPS = [
+  'left',
+  'right',
+  'top',
+  'bottom',
+  'transform',
+  'transform-origin',
+  'opacity',
+  'width',
+  'height',
+];
 
 function clear(el: HTMLElement): void {
   for (const p of PROPS) el.style.removeProperty(p);
@@ -62,6 +73,11 @@ export function createLayoutApplier(
       else el.setAttribute('data-hud-off', '');
     }
     if (lay.opacity < 1) el.style.opacity = String(lay.opacity);
+    // Free-size box (Mapa OpenStreetMap): width / height from the editor, before measuring.
+    if (HUD_BOX_SLOTS.includes(slot)) {
+      if (lay.w !== undefined) el.style.width = px(lay.w);
+      if (lay.h !== undefined) el.style.height = px(lay.h);
+    }
     // Default place and scale from the stylesheet (overrides are cleared before measuring).
     const r = el.getBoundingClientRect();
     const w0 = el.offsetWidth;

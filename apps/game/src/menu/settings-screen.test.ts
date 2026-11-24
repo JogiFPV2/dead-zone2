@@ -68,16 +68,32 @@ describe('settings screen tabs', () => {
   it('edits a draft and saves it on Zastosuj (Enter)', () => {
     const { screen, settings, tab, root, onClose } = setup();
     tab('interface').click();
-    // Rows 0–2 = Układ HUD, row 3 = Pokazuj hałas (card with a preview), row 4 = Pokazuj życie zombie.
-    root.querySelector<HTMLElement>('[data-row="3"] [data-opt="always"]')!.click();
+    // Rows 0–2 = Układ HUD, row 3 = Mapa OpenStreetMap, row 4 = Pokazuj hałas (card with a
+    // preview), row 5 = Pokazuj życie zombie.
+    root.querySelector<HTMLElement>('[data-row="3"]')!.click();
+    expect(root.querySelector('.dzo-hudpv__el--osmmap')).not.toBeNull();
+    root.querySelector<HTMLElement>('[data-row="4"] [data-opt="always"]')!.click();
     expect(root.querySelector('.dzo-preview-tag')!.textContent).toContain('CHÓD');
-    root.querySelector<HTMLElement>('[data-row="4"]')!.click();
+    root.querySelector<HTMLElement>('[data-row="5"]')!.click();
     expect(settings.get().interface.showZombieHp).toBe(false);
     screen.onKey(key('Enter'));
     expect(settings.get().interface.showZombieHp).toBe(true);
+    expect(settings.get().interface.osmMap).toBe(true);
     expect(settings.get().interface.noiseDisplay).toBe('always');
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(root.querySelector('.dzo')).toBeNull();
+  });
+
+  it('keeps the list scrolled when hovering a row re-renders it (Interfejs)', () => {
+    const { screen, tab, root } = setup();
+    tab('interface').click();
+    const body = (): HTMLElement => root.querySelector<HTMLElement>('.dzo-settings-body')!;
+    body().scrollTop = 120;
+    const row = root.querySelector<HTMLElement>('[data-row="5"]')!;
+    row.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+    expect(root.querySelector('[data-row="5"]')!.classList.contains('dzo-row--focus')).toBe(true);
+    expect(body().scrollTop).toBe(120);
+    screen.dispose();
   });
 
   it('Esc with changes asks before discarding; without changes closes', () => {

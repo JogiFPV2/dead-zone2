@@ -76,6 +76,11 @@ export interface InterfaceSettings {
   revealMap: boolean;
   /** „Samouczek”: hints for a new player (tutorial/); on by default. */
   tutorial: boolean;
+  /**
+   * „Mapa OpenStreetMap”: second HUD map with live OSM tiles (hud/osm-map), off by default.
+   * Its place and size are the HUD layout slot `osmmap` (Edytuj HUD).
+   */
+  osmMap: boolean;
 }
 
 /**
@@ -96,6 +101,8 @@ export interface ViewSettings {
   inventorySort: { player: InventorySortSetting; container: InventorySortSetting };
   /** Inventory v3: „Grupuj stosy” (same item, different state → one row with a chevron). */
   inventoryGroup: boolean;
+  /** Mapa OpenStreetMap: tile zoom 10–19 (−/+ and the wheel over it). */
+  osmZoom: number;
 }
 
 export const INVENTORY_VIEW_MODES = ['list', 'grid'] as const;
@@ -137,6 +144,7 @@ export const DEFAULT_SETTINGS: Settings = {
     targetZombieHp: true,
     revealMap: false,
     tutorial: true,
+    osmMap: false,
   },
   view: {
     cameraZoom: 1,
@@ -149,6 +157,7 @@ export const DEFAULT_SETTINGS: Settings = {
       container: { by: 'category', desc: false },
     },
     inventoryGroup: true,
+    osmZoom: 16,
   },
   graphics: {
     style: 'painted',
@@ -213,6 +222,7 @@ export function sanitizeSettings(raw: unknown): Settings {
       targetZombieHp: bool(ui.targetZombieHp, di.targetZombieHp),
       revealMap: bool(ui.revealMap, di.revealMap),
       tutorial: bool(ui.tutorial, di.tutorial),
+      osmMap: bool(ui.osmMap, di.osmMap),
     },
     view: {
       cameraZoom: range(v.cameraZoom, 0.25, 4, dv.cameraZoom),
@@ -230,6 +240,7 @@ export function sanitizeSettings(raw: unknown): Settings {
         container: invSort(obj(v.inventorySort).container, dv.inventorySort.container),
       },
       inventoryGroup: bool(v.inventoryGroup, dv.inventoryGroup),
+      osmZoom: Math.round(range(v.osmZoom, 10, 19, dv.osmZoom)),
     },
     graphics: {
       style: (GRAPHICS_STYLES as readonly unknown[]).includes(g.style)

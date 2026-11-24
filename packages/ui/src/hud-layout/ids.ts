@@ -12,6 +12,7 @@ export const HUD_ELEMENT_IDS = [
   'vehicle',
   'threat',
   'hints',
+  'osmmap',
 ] as const;
 
 export type HudElementId = (typeof HUD_ELEMENT_IDS)[number];
@@ -26,6 +27,7 @@ export const HUD_LAYOUT_SLOTS = [
   'weapon',
   'threat',
   'hints',
+  'osmmap',
 ] as const satisfies readonly HudElementId[];
 
 export type HudLayoutSlot = (typeof HUD_LAYOUT_SLOTS)[number];

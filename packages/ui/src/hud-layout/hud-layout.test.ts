@@ -205,3 +205,13 @@ describe('clampToViewport', () => {
     expect(r).toMatchObject({ left: 0, top: 0, width: 600, height: 600 });
   });
 });
+
+describe('free-size box (osmmap)', () => {
+  it('keeps w / h and drops out-of-range boxes', () => {
+    const base = { anchor: 'bl', x: 0.01, y: 0.07, scale: 1, opacity: 1, visible: true };
+    const ok = sanitizeHudLayout({ version: 1, elements: { osmmap: { ...base, w: 900, h: 140 } } });
+    expect(ok.elements.osmmap).toMatchObject({ w: 900, h: 140 });
+    const bad = sanitizeHudLayout({ version: 1, elements: { osmmap: { ...base, w: 10, h: 140 } } });
+    expect(bad.elements.osmmap).toBeUndefined();
+  });
+});
