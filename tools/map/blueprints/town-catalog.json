@@ -4422,12 +4422,6 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
-      "x": -45,
-      "y": -16,
-      "rot": 0
-    },
-    {
       "contentId": "base:locker",
       "x": -54,
       "y": -15,
@@ -4446,16 +4440,10 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -49,
       "y": -15,
       "rot": 3
-    },
-    {
-      "contentId": "base:dresser",
-      "x": -43,
-      "y": -15,
-      "rot": 1
     },
     {
       "contentId": "base:metal-shelf",
@@ -4584,7 +4572,7 @@
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
       "x": -18,
       "y": -13,
       "rot": 0
@@ -4632,13 +4620,13 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -49,
       "y": -12,
       "rot": 3
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
       "x": -47,
       "y": -12,
       "rot": 2
@@ -4698,13 +4686,13 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -25,
       "y": -12,
       "rot": 3
     },
     {
-      "contentId": "base:dresser",
+      "contentId": "base:metal-shelf",
       "x": -22,
       "y": -12,
       "rot": 1
@@ -4825,12 +4813,6 @@
     },
     {
       "contentId": "base:bookshelf",
-      "x": -22,
-      "y": -11,
-      "rot": 1
-    },
-    {
-      "contentId": "base:locker",
       "x": -21,
       "y": -11,
       "rot": 3
@@ -5298,7 +5280,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": 14,
       "y": -7,
       "rot": 0
@@ -5436,13 +5418,13 @@
       "rot": 2
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": 4,
       "y": -4,
       "rot": 2
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:dresser",
       "x": 6,
       "y": -4,
       "rot": 2
@@ -6692,11 +6674,11 @@
       "rot": 1
     },
     {
-      "contentId": "base:bookshelf",
+      "contentId": "base:metal-shelf",
       "x": -24,
       "y": -13,
       "z": 1,
-      "rot": 0
+      "rot": 3
     },
     {
       "contentId": "base:desk",
@@ -6713,7 +6695,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": 2,
       "y": -13,
       "z": 1,
@@ -6874,7 +6856,7 @@
       "rot": 0
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -21,
       "y": -11,
       "z": 1,
@@ -6932,13 +6914,6 @@
     {
       "contentId": "base:light-switch",
       "x": 6,
-      "y": -11,
-      "z": 1,
-      "rot": 2
-    },
-    {
-      "contentId": "base:locker",
-      "x": 7,
       "y": -11,
       "z": 1,
       "rot": 2
@@ -7112,7 +7087,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -47,
       "y": -9,
       "z": 1,
@@ -7474,13 +7449,6 @@
       "y": -4,
       "z": 1,
       "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": -47,
-      "y": -4,
-      "z": 1,
-      "rot": 3
     },
     {
       "contentId": "base:locker",
@@ -8170,13 +8138,6 @@
     },
     {
       "contentId": "base:dresser",
-      "x": -24,
-      "y": -13,
-      "z": 2,
-      "rot": 3
-    },
-    {
-      "contentId": "base:bookshelf",
       "x": -21,
       "y": -13,
       "z": 2,
@@ -8204,7 +8165,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -24,
       "y": -12,
       "z": 2,
@@ -8757,11 +8718,18 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -47,
       "y": -5,
       "z": 2,
       "rot": 3
+    },
+    {
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -5,
+      "z": 2,
+      "rot": 1
     },
     {
       "contentId": "base:locker",
@@ -8769,13 +8737,6 @@
       "y": -5,
       "z": 2,
       "rot": 1
-    },
-    {
-      "contentId": "base:locker",
-      "x": -43,
-      "y": -4,
-      "z": 2,
-      "rot": 2
     },
     {
       "contentId": "base:locker",
@@ -8967,7 +8928,7 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
+      "contentId": "base:bookshelf",
       "x": -47,
       "y": -9,
       "z": 3,
@@ -9093,15 +9054,15 @@
       "rot": 1
     },
     {
-      "contentId": "base:locker",
-      "x": -58,
-      "y": -4,
+      "contentId": "base:bookshelf",
+      "x": -43,
+      "y": -5,
       "z": 3,
-      "rot": 2
+      "rot": 1
     },
     {
       "contentId": "base:locker",
-      "x": -43,
+      "x": -58,
       "y": -4,
       "z": 3,
       "rot": 2
