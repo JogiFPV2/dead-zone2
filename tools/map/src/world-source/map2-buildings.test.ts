@@ -165,8 +165,12 @@ describe('map2 buildings in the stw2 tiles (exact outlines)', () => {
     expect(shared.length).toBeGreaterThan(0);
     expect(new Set(shared.map((s) => s.b)).size).toBe(1);
     // Every segment lies on an OSM edge (no squaring): within 6 cm of one of the outline lines.
+    // Exception: room partitions carried across the strip to the wall (`joinStrip`) run on a
+    // tile grid line.
     const lines = [A, B].flatMap((r) => r.map((a, i) => [w(a), w(r[(i + 1) % 4]!)] as const));
-    for (const s of segs)
+    const onGrid = (s: (typeof segs)[number]) =>
+      (s.x0 === s.x1 && Number.isInteger(s.x0)) || (s.y0 === s.y1 && Number.isInteger(s.y0));
+    for (const s of segs.filter((x) => !onGrid(x)))
       expect(
         lines.some(([a, b]) => {
           const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
