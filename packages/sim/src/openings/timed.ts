@@ -12,7 +12,7 @@ import { TICKS_PER_SECOND } from '../core/constants.js';
 import { gameMinuteAt, ticksPerGameMinute } from '../core/clock.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces, carriedItems, hasToolTag } from '../items/actions.js';
-import { carriedLoad, hardLimit, playerItems, reachTarget } from '../items/inventory.js';
+import { activeHandOf, carriedLoad, hardLimit, playerItems, reachTarget } from '../items/inventory.js';
 import {
   defOf,
   destroyItem,
@@ -220,7 +220,7 @@ export function registerOpeningActions(): void {
       const key = a.edge!;
       const t = target(w, eid, a) as Target;
       const p = playerItems(w, eid);
-      const withHand = !p?.slots.get('hand_primary');
+      const withHand = !p?.slots.get(p ? activeHandOf(p) : 'hand_primary');
       setOpening(w.openings, key, t.kind, OS.broken, 0, { cleared: 0 });
       windowSmashed(w, key, 'player', { playerId: w.c.Player.id[eid] ?? 0, withHand }, eid);
       emitOpeningChanged(w, key, t.kind, 'player');

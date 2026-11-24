@@ -86,6 +86,7 @@ export type ItemCommand = Extract<
       | 'putItem'
       | 'equip'
       | 'unequip'
+      | 'setActiveHand'
       | 'openContainer'
       | 'search'
       | 'closeContainer'
@@ -108,6 +109,7 @@ const ITEM_COMMANDS = new Set<string>([
   'putItem',
   'equip',
   'unequip',
+  'setActiveHand',
   'openContainer',
   'search',
   'closeContainer',
@@ -219,6 +221,11 @@ export function applyItemCommand(
       st.version++;
       return undefined;
     }
+    case 'setActiveHand':
+      if (cmd.hand === 'hand_secondary') p.activeHand = 'hand_secondary';
+      else delete p.activeHand;
+      st.version++;
+      return undefined;
     case 'openContainer':
       return openContainer(w, eid, p, cmd.container);
     case 'search':

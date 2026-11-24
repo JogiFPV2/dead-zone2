@@ -89,6 +89,8 @@ export interface ItemContainer {
 export interface PlayerItems {
   readonly inventory: number;
   readonly slots: Map<EquipSlot, number>;
+  /** Hand that attacks (`setActiveHand`); absent = `hand_primary`. */
+  activeHand?: 'hand_secondary' | undefined;
   /** Long/two-handed weapon carried on the back alongside a back slot item (usually a bag). */
   backWeapon: number;
   /** Open container (loot panel), 0 = none. */

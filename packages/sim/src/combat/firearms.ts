@@ -12,7 +12,7 @@ import { gameMinuteAt } from '../core/clock.js';
 import { sortedQuery, type SimWorld } from '../core/world.js';
 import type { ItemDef } from '../content/adapter.js';
 import { carriedItems } from '../items/actions.js';
-import { playerItems } from '../items/inventory.js';
+import { activeHandOf, playerItems } from '../items/inventory.js';
 import {
   createItem,
   defOf,
@@ -51,7 +51,7 @@ export function firearmOf(
 ): { item: ItemInstance; def: RangedDef } | undefined {
   const st = w.items;
   const p = st?.players.get(w.c.StableId.value[eid] ?? 0);
-  const id = p?.slots.get('hand_primary');
+  const id = p ? p.slots.get(activeHandOf(p)) : undefined;
   const item = id === undefined ? undefined : st?.items.get(id);
   if (!st || !item) return undefined;
   const def = defOf(st, item);

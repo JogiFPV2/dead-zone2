@@ -288,6 +288,19 @@ export interface UnequipCommand extends CommandHeader {
   slot: EquipSlot;
 }
 
+/** Hands (quick slots 1 and 2: left, right). */
+export const HAND_SLOTS = ['hand_secondary', 'hand_primary'] as const;
+export type HandSlot = (typeof HAND_SLOTS)[number];
+
+/**
+ * Picks the hand that attacks / shoots / reloads (protocol 52): `hand_secondary` = left
+ * (quick slot 1), `hand_primary` = right (quick slot 2, the default).
+ */
+export interface SetActiveHandCommand extends CommandHeader {
+  type: 'setActiveHand';
+  hand: HandSlot;
+}
+
 /**
  * Opens a container for the loot panel. A world storage, corpse, trunk or glovebox not yet
  * searched by this player (`nearby[].searched` false) starts the timed action `search`
@@ -338,7 +351,8 @@ export interface CancelActionCommand extends CommandHeader {
 }
 
 /**
- * Melee attack with the weapon in `hand_primary` (bare hands without one) towards the aim point
+ * Melee attack with the weapon in the active hand (`setActiveHand`, default `hand_primary`;
+ * bare hands without one) towards the aim point
  * (last `aim`), or the facing without aim. Rejected with `busy` while the weapon cools down.
  * With a firearm in `hand_primary`: a shot towards the aim point (`no-ammo` when empty, `busy`
  * while reloading, `invalid-state` when jammed). Interrupts single-round loading
@@ -961,6 +975,7 @@ export type Command =
   | PutItemCommand
   | EquipCommand
   | UnequipCommand
+  | SetActiveHandCommand
   | OpenContainerCommand
   | SearchCommand
   | CloseContainerCommand

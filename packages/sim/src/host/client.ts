@@ -7,6 +7,7 @@ import type {
   Command,
   ContainerId,
   EquipSlot,
+  HandSlot,
   ItemId,
   DebugStat,
   Gait,
@@ -123,6 +124,8 @@ export interface SimWorkerClient {
   putItem(container: ContainerId, item: ItemId, count?: number): void;
   equip(item: ItemId, slot: EquipSlot): void;
   unequip(slot: EquipSlot): void;
+  /** Hand that attacks: quick slot 1 = `hand_secondary` (left), 2 = `hand_primary` (right). */
+  setActiveHand(hand: HandSlot): void;
   /** Opens a container (first time for world storage: timed search). */
   openContainer(container: ContainerId): void;
   closeContainer(): void;
@@ -398,6 +401,7 @@ export function createSimWorkerClient(
       cmd({ type: 'putItem', container, item, ...(count ? { count } : {}) }),
     equip: (item, slot) => cmd({ type: 'equip', item, slot }),
     unequip: (slot) => cmd({ type: 'unequip', slot }),
+    setActiveHand: (hand) => cmd({ type: 'setActiveHand', hand }),
     openContainer: (container) => cmd({ type: 'openContainer', container }),
     closeContainer: () => cmd({ type: 'closeContainer' }),
     useItem: (item, part) => cmd({ type: 'useItem', item, ...(part ? { part } : {}) }),

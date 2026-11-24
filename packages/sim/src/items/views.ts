@@ -187,6 +187,7 @@ export function inventoryView(w: SimWorld, eid: number): InventoryView | undefin
     hardLimitKg: kg(hardLimit(w, eid)),
     carryLoad: Math.round((w.survival?.carryLoad[eid] ?? 0) * 10) / 10,
     equipped,
+    ...(p.activeHand ? { activeHand: p.activeHand } : {}),
     containers: carriedContainerIds(st, p.inventory).flatMap(
       (id) => containerView(w, id, marks) ?? [],
     ),

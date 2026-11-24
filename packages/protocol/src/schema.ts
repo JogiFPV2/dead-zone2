@@ -7,6 +7,7 @@ import {
   BODY_PARTS,
   DEBUG_STATS,
   EQUIP_SLOTS,
+  HAND_SLOTS,
   GAITS,
   MARKER_COLORS,
   MAX_PLAYER_ID,
@@ -132,6 +133,11 @@ export const equipCommandSchema = z.strictObject({
   type: z.literal('equip'),
   item: itemId,
   slot: z.enum(EQUIP_SLOTS),
+});
+export const setActiveHandCommandSchema = z.strictObject({
+  ...header,
+  type: z.literal('setActiveHand'),
+  hand: z.enum(HAND_SLOTS),
 });
 export const unequipCommandSchema = z.strictObject({
   ...header,
@@ -576,6 +582,7 @@ export const commandSchema = z.discriminatedUnion('type', [
   putItemCommandSchema,
   equipCommandSchema,
   unequipCommandSchema,
+  setActiveHandCommandSchema,
   openContainerCommandSchema,
   searchCommandSchema,
   closeContainerCommandSchema,

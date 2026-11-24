@@ -305,6 +305,11 @@ export function moveItem(
 
 const HANDS: readonly EquipSlot[] = ['hand_primary', 'hand_secondary'];
 
+/** Hand that attacks / shoots (`setActiveHand`, default right). */
+export function activeHandOf(p: PlayerItems): 'hand_primary' | 'hand_secondary' {
+  return p.activeHand ?? 'hand_primary';
+}
+
 /** Long guns and two-handed melee weapons may be carried on the back alongside a bag. */
 export function backWeapon(st: ItemStore, item: ItemInstance): boolean {
   const def = defOf(st, item);
