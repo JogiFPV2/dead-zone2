@@ -698,6 +698,20 @@ int pbRoom(vec2 p, float y) {
   float v = lv == 0 ? c.r : lv == 1 ? c.g : lv == 2 ? c.b : c.a;
   return int(v * 255.0 + 0.5);
 }
+// Room code for a floor at (x, z): its own, else the nearest room within 2 tiles (the strip of a
+// slanted building between its rooms and the outline wall has no room of its own).
+int pbRoomFloor(vec2 p, float y) {
+  int r = pbRoom(p, y);
+  if (r > 0) return r;
+  for (int d = 1; d <= 2; d++)
+    for (int i = -d; i <= d; i++)
+      for (int k = 0; k < 4; k++) {
+        vec2 o = k == 0 ? vec2(i, -d) : k == 1 ? vec2(i, d) : k == 2 ? vec2(-d, i) : vec2(d, i);
+        int q = pbRoom(p + o, y);
+        if (q > 0) return q;
+      }
+  return 0;
+}
 vec4 pbSample(float layer, vec2 uv) {
   return texture(pbTex, vec3(uv / pbTile[int(layer)], layer));
 }
@@ -862,7 +876,7 @@ if (pbOn > 0.5 && pbDoor) {
     vec2 roofUv = vec2(dot(W.xz, tang), -dot(W.xz, h) * 1.3);
     float lvY = W.y - floor((W.y + 0.15) / 3.0) * 3.0;
     if (up && cls == ${CELL_CLASS.floor}) {
-      int room = pbRoom(W.xz - n.xz * 0.05, W.y);
+      int room = pbRoomFloor(W.xz - n.xz * 0.05, W.y);
       if (room > 0) diffuseColor.rgb = pbFloor(room, W.xz);
     } else if (abs(n.y) < 0.3 && cls != ${CELL_CLASS.dachowka} && cls != ${CELL_CLASS.papa}) {
       int near = pbRoom(W.xz + n.xz * 0.4, W.y);
