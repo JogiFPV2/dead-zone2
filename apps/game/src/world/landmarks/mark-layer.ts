@@ -1,7 +1,7 @@
 import { ENGINE_HALF, ENGINE_HALF_W, type GenMark } from '@deadzone/map/world-source';
+import type { BufferGeometry } from 'three';
 import {
   BoxGeometry,
-  BufferGeometry,
   Color,
   ConeGeometry,
   CylinderGeometry,
