@@ -201,6 +201,8 @@ export interface BldInfo {
   roofColor?: string | undefined;
   /** `ok | neglected | abandoned | ruin` from the chunk data. */
   condition?: string | undefined;
+  /** Church with a tower (chunk data; with `look` set, absent = no tower). */
+  tower?: 1 | undefined;
 }
 
 /** look-spec §C condition colour: `lerp(c, luma(c), desaturate) * (1 - darken)`. */
@@ -227,6 +229,14 @@ export function noteBuildings(list: Iterable<BldInfo>): void {
 }
 /** Generator kind of a noted building. */
 export const bldKind = (id: number): string | undefined => infos.get(id)?.kind;
+/**
+ * The chunk data says this church has no tower (a wooden church with a separate belfry, a former
+ * synagogue): chunks with a look (generator rev 21+) carry `tower` for every church that has one.
+ */
+export const bldNoTower = (id: number): boolean => {
+  const b = infos.get(id);
+  return !!b?.look && !b.tower;
+};
 /** Tests. */
 export function clearBuildings(): void {
   infos.clear();

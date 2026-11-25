@@ -48,6 +48,8 @@ export interface InteriorInput {
   rnd: number;
   /** Next free map-global room id (returned updated). */
   nextRoomId: number;
+  /** Wall content instead of the kind's (landmarks: St Florian's log church). */
+  wall?: string;
 }
 
 export interface InteriorResult {
@@ -1015,6 +1017,12 @@ function homeRoomType(key: string, z: number): string {
 }
 
 export function buildInterior(inp: InteriorInput): InteriorResult {
+  const r = interiorOf(inp);
+  if (inp.wall) r.building.wall = inp.wall;
+  return r;
+}
+
+function interiorOf(inp: InteriorInput): InteriorResult {
   if (inp.kind === 'block') {
     const r = blockWithStairwells(inp);
     if (r) return r;

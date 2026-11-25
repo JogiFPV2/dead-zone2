@@ -202,6 +202,8 @@ export interface OsmBuilding {
   exact?: 1;
   /** map2: outer edges (k = vertex k → k + 1) whose wall a lower-gid neighbour draws (shared wall). */
   noWall?: number[];
+  /** Wall content instead of the kind's (`world-source/landmarks.ts` fixes). */
+  wall?: string;
 }
 
 export interface OsmPoi {
