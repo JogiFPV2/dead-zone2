@@ -44,6 +44,8 @@ export interface BodySpec {
   glasses?: string;
   /** Mask over the mouth and nose (colour). */
   mask?: string;
+  /** No eyes, brows, nose, ears or mouth (garment icons). */
+  noFace?: boolean;
   /** Tie (office shirt). */
   tie?: string;
   trousers: string;
@@ -358,32 +360,34 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
   }
   // Face: nose, brows, eyes, ears, mouth.
   const fz = hz + 0.005 + 0.085;
-  mb.box(v3(0, headY + 0.075, fz + 0.012), [X, Y, Z], [0.012, 0.022, 0.014], skin, one('Head'));
-  const eye = spec.zombie ? new Color('#d8d2a0') : dark;
-  for (const s of [-1, 1]) {
+  if (!spec.noFace) {
+    mb.box(v3(0, headY + 0.075, fz + 0.012), [X, Y, Z], [0.012, 0.022, 0.014], skin, one('Head'));
+    const eye = spec.zombie ? new Color('#d8d2a0') : dark;
+    for (const s of [-1, 1]) {
+      mb.box(
+        v3(s * 0.032, headY + 0.1, fz - 0.004),
+        [X, Y, Z],
+        [0.012, 0.007, 0.006],
+        eye,
+        one('Head'),
+      );
+      mb.box(
+        v3(s * 0.033, headY + 0.118, fz - 0.002),
+        [X, Y, Z],
+        [0.018, 0.005, 0.008],
+        bald ? dark : hair,
+        one('Head'),
+      );
+      mb.box(v3(s * 0.08, headY + 0.09, hz), [X, Y, Z], [0.01, 0.022, 0.016], skin, one('Head'));
+    }
     mb.box(
-      v3(s * 0.032, headY + 0.1, fz - 0.004),
+      v3(0, headY + 0.045, fz - 0.008),
       [X, Y, Z],
-      [0.012, 0.007, 0.006],
-      eye,
+      [0.022, spec.zombie ? 0.009 : 0.004, 0.006],
+      spec.zombie ? new Color('#2a0f0c') : skin.clone().multiplyScalar(0.7),
       one('Head'),
     );
-    mb.box(
-      v3(s * 0.033, headY + 0.118, fz - 0.002),
-      [X, Y, Z],
-      [0.018, 0.005, 0.008],
-      bald ? dark : hair,
-      one('Head'),
-    );
-    mb.box(v3(s * 0.08, headY + 0.09, hz), [X, Y, Z], [0.01, 0.022, 0.016], skin, one('Head'));
   }
-  mb.box(
-    v3(0, headY + 0.045, fz - 0.008),
-    [X, Y, Z],
-    [0.022, spec.zombie ? 0.009 : 0.004, 0.006],
-    spec.zombie ? new Color('#2a0f0c') : skin.clone().multiplyScalar(0.7),
-    one('Head'),
-  );
 
   // ---- Worn on the head: hat, glasses, mask.
   if (spec.hat) {

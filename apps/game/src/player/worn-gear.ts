@@ -131,8 +131,8 @@ export function backpackGeometry(look: BagLook): BufferGeometry {
 /** Fanny pack in belt space: origin at the front of the belt, +Z forward, +Y up. */
 export function fannyPackGeometry(): BufferGeometry {
   const parts = [
-    colored(new BoxGeometry(0.22, 0.1, 0.07).translate(0, -0.01, 0.04), '#2f3133'),
-    colored(new BoxGeometry(0.16, 0.012, 0.075).translate(0, 0.035, 0.045), '#8a4b32'),
+    colored(new BoxGeometry(0.2, 0.09, 0.06).translate(0, -0.01, 0.03), '#2f3133'),
+    colored(new BoxGeometry(0.15, 0.012, 0.065).translate(0, 0.032, 0.035), '#8a4b32'),
   ];
   for (const p of parts) p.deleteAttribute('normal');
   const g = mergeGeometries(parts);
@@ -169,7 +169,7 @@ function bodyFrames(object: Object3D): { back: Group; belt: Group } | undefined 
   const backAt = pos(chest).addScaledVector(fwd, -0.11).addScaledVector(up, 0.04);
   const back = frameAt(chest, backAt, bx, up, bz);
   // Belt frame: at the front of the belt.
-  const beltAt = pos(hips).addScaledVector(fwd, 0.09).addScaledVector(up, 0.08);
+  const beltAt = pos(hips).addScaledVector(fwd, 0.07).addScaledVector(up, 0.06);
   const belt = frameAt(hips, beltAt, new Vector3().crossVectors(up, fwd).normalize(), up, fwd);
   return { back, belt };
 }

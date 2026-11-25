@@ -57,6 +57,7 @@ function onlyGarment(id: string): BodySpec {
   if (s.jacket) s.jacket.under = KEY;
   if (g.kind !== 'legs') s.trousers = s.belt = KEY;
   if (g.kind !== 'feet') s.shoes = s.sole = KEY;
+  s.noFace = true;
   return s;
 }
 
@@ -71,12 +72,15 @@ for (const id of Object.keys(GARMENTS)) {
   const col = g.getAttribute('color');
   const idx = g.getIndex()!;
   const keep: number[] = [];
-  const isKey = (i: number) => col.getX(i) > 0.9 && col.getY(i) < 0.1 && col.getZ(i) > 0.9;
+  const isKey = (i: number) =>
+    col.getX(i) > 0.5 && col.getY(i) < 0.08 && Math.abs(col.getX(i) - col.getZ(i)) < 0.05;
   for (let t = 0; t < idx.count; t += 3) {
     const a = idx.getX(t),
       b = idx.getX(t + 1),
       c = idx.getX(t + 2);
-    if (!isKey(a) && !isKey(b) && !isKey(c)) keep.push(a, b, c);
+    // Gloves: one hand only (the pair would sit at the ends of the T-pose arms).
+    const oneSide = GARMENTS[id]!.kind === 'hands' && g.getAttribute('position').getX(a) < 0;
+    if (!isKey(a) && !isKey(b) && !isKey(c) && !oneSide) keep.push(a, b, c);
   }
   g.setIndex(keep);
   scene.add(object);
