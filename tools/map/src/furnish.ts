@@ -47,6 +47,7 @@ export const BASE_FOOTPRINTS: Readonly<Record<string, Footprint>> = {
   'base:metal-shelf': { w: 2, h: 1 },
   'base:shop-counter': { w: 2, h: 1 },
   'base:sofa': { w: 2, h: 1 },
+  'base:tent': { w: 2, h: 2 },
 };
 
 /** Base pack footprint of `contentId` (1×1 when not in `BASE_FOOTPRINTS`). */
