@@ -127,5 +127,90 @@
     "items": ["base:fishing-rod"],
     "src": "custom/wedka.glb",
     "rot": [0, -60, -30]
+  },
+  {
+    "items": ["base:hoe"],
+    "src": "custom/uprawa-motyka.glb",
+    "rot": [0, 0, -45]
+  },
+  {
+    "items": ["base:garden-rake"],
+    "src": "custom/uprawa-grabie.glb",
+    "rot": [0, 0, -45]
+  },
+  {
+    "items": ["base:watering-can"],
+    "src": "custom/uprawa-konewka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:bucket"],
+    "src": "custom/uprawa-wiadro.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:glass"],
+    "src": "custom/uprawa-szklanka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-carrot"],
+    "src": "custom/uprawa-nasiona-marchew.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-cabbage"],
+    "src": "custom/uprawa-nasiona-kapusta.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-onion"],
+    "src": "custom/uprawa-nasiona-cebula.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-tomato"],
+    "src": "custom/uprawa-nasiona-pomidor.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-cucumber"],
+    "src": "custom/uprawa-nasiona-ogorek.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-beans"],
+    "src": "custom/uprawa-nasiona-fasolka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:seeds-strawberry"],
+    "src": "custom/uprawa-nasiona-truskawka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:tomato"],
+    "src": "custom/uprawa-pomidor.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:cucumber"],
+    "src": "custom/uprawa-ogorek.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:onion"],
+    "src": "custom/uprawa-cebula.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:green-beans"],
+    "src": "custom/uprawa-fasolka.glb",
+    "rot": [0, 0, 0]
+  },
+  {
+    "items": ["base:strawberry"],
+    "src": "custom/uprawa-truskawka.glb",
+    "rot": [0, 0, 0]
   }
 ]

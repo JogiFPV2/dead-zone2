@@ -257,5 +257,22 @@
   "base:curtain": "curtain.png",
   "base:jacket": "jacket.png",
   "base:blanket": "blanket.png",
-  "base:tarp": "tarp.png"
+  "base:tarp": "tarp.png",
+  "base:hoe": "hoe.png",
+  "base:garden-rake": "garden-rake.png",
+  "base:watering-can": "watering-can.png",
+  "base:bucket": "bucket.png",
+  "base:glass": "glass.png",
+  "base:seeds-carrot": "seeds-carrot.png",
+  "base:seeds-cabbage": "seeds-cabbage.png",
+  "base:seeds-onion": "seeds-onion.png",
+  "base:seeds-tomato": "seeds-tomato.png",
+  "base:seeds-cucumber": "seeds-cucumber.png",
+  "base:seeds-beans": "seeds-beans.png",
+  "base:seeds-strawberry": "seeds-strawberry.png",
+  "base:tomato": "tomato.png",
+  "base:cucumber": "cucumber.png",
+  "base:onion": "onion.png",
+  "base:green-beans": "green-beans.png",
+  "base:strawberry": "strawberry.png"
 }
