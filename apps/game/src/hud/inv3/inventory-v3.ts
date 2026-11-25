@@ -6,7 +6,7 @@ import {
   longPressHolds,
   TAP_MAX_PX,
 } from '../../input/touch/gestures.js';
-import type { ContainerId } from '@deadzone/protocol';
+import type { ContainerId, EquipSlot } from '@deadzone/protocol';
 import { createIcon, createItemTooltip } from '@deadzone/ui';
 import type { InventorySortSetting, InventoryViewMode } from '../../settings/schema.js';
 import type { GameState } from '../../state/game-state.js';
@@ -43,6 +43,7 @@ import {
   type InvSort,
 } from './inv3-model.js';
 import { INV2_CLASS } from './inv2-flag.js';
+import { createPaperDoll } from './paperdoll.js';
 import {
   categoryCounts,
   characterSlots,
@@ -319,7 +320,9 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
   const actMenu = div('dz-i3__menu dz-i3__amenu');
   actMenu.setAttribute('role', 'menu');
   actMenu.hidden = true;
-  stage.append(rail, own, box, keys, ghost, badge, menu, actMenu, tooltip.el, comboTip.el);
+  // Character drawing: drag clothes onto it to put them on (Paweł 25.11).
+  const doll = createPaperDoll((cmds) => send(cmds));
+  stage.append(rail, doll.el, own, box, keys, ghost, badge, menu, actMenu, tooltip.el, comboTip.el);
   el.append(div('dz-i3__scrim'), stage);
   opts.root.append(el);
 
@@ -355,6 +358,8 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
         target?: InvSectionVM | 'ground' | undefined;
         /** Hotbar slot under the pointer (0 = left hand, 1 = right, 2–4 = quick slots). */
         hotbar?: number | undefined;
+        /** Over the character drawing: the place it goes to (undefined slot = does not fit). */
+        doll?: { slot?: EquipSlot } | undefined;
       }
     | undefined;
   let ctrlAlone = false;
@@ -1142,6 +1147,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     lastContent = content;
     const p = prefs();
     sections = playerSections(s, content, { sort: p.sort.player, group: p.group });
+    doll.render(s, content);
     boxSection = containerSection(s, content, { sort: p.sort.container, group: p.group });
     // Drop selections of items that are gone.
     for (const side of ['own', 'box'] as const)
@@ -1208,6 +1214,22 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const y = (e.clientY - host.top) / k;
     ghost.style.left = `${x + 12}px`;
     ghost.style.top = `${y + 10}px`;
+    // Character drawing: put the dragged item on (own items and items from the container).
+    const first = findAny(opts.state(), drag.ids[0]!);
+    const onDoll = first
+      ? doll.dropTarget(e.clientX, e.clientY, first.def, opts.content())
+      : undefined;
+    drag.doll = onDoll ? (onDoll.slot ? { slot: onDoll.slot } : {}) : undefined;
+    doll.highlight(onDoll?.slot);
+    if (onDoll) {
+      drag.target = undefined;
+      badge.textContent = onDoll.label;
+      badge.dataset.fits = String(!!onDoll.slot);
+      badge.style.left = `${x + 12}px`;
+      badge.style.top = `${y - 30}px`;
+      badge.hidden = false;
+      return;
+    }
     const slot = hotbarSlotAt(e.clientX, e.clientY);
     if (slot?.index !== drag.hotbar) {
       for (const n of document.querySelectorAll<HTMLElement>('[data-hotbar-slot][data-drop]'))
@@ -1301,6 +1323,14 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     }
     for (const n of document.querySelectorAll<HTMLElement>('[data-hotbar-slot][data-drop]'))
       delete n.dataset.drop;
+    doll.highlight(undefined);
+    if (d.doll) {
+      const first = d.ids[0];
+      if (d.doll.slot && first !== undefined)
+        send([{ type: 'equip', item: first, slot: d.doll.slot }]);
+      render();
+      return;
+    }
     if (d.hotbar !== undefined) {
       const first = d.ids[0];
       const cmd =

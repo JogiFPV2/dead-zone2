@@ -196,7 +196,8 @@ import {
   ZOMBIE_BODIES,
 } from './models/painted-body/body.js';
 import { dressedBody } from './models/painted-body/wardrobe.js';
-import { baseLookOf, dressKey, wornClothesOf } from './player/painted-dress.js';
+import { baseLookOf, carriedItem, dressKey, wornClothesOf } from './player/painted-dress.js';
+import type { HandItem } from './player/worn-gear.js';
 import { basePaletteHex } from './creator/palettes.js';
 import type { Object3D } from 'three';
 import { brighten, lightReal, loadZombieTemplates } from './models/zombie-views.js';
@@ -207,7 +208,13 @@ import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
 import { animV2Enabled } from './anim/contract.js';
 import type { HeldCategory } from './weapons/grip-sockets.js';
-import { HeldItemPool, buildHeldIndex, devHeld, heldHands } from './weapons/held-items.js';
+import {
+  GRIP_CATEGORY,
+  HeldItemPool,
+  buildHeldIndex,
+  devHeld,
+  heldHands,
+} from './weapons/held-items.js';
 import { devHoldWeapon, weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
@@ -970,8 +977,8 @@ sim.onSnapshot(({ tick, buf }) => {
     // Dev `?give=` / `?stat=`: starting items and stats (debug commands, need `init.dev`).
     if (import.meta.env.DEV) {
       for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
-      for (const id of boot.wear ?? [])
-        sim.send(stamper.stamp({ type: 'debugGiveItem', itemId: id, count: 1 }));
+      for (const w of boot.wear ?? [])
+        sim.send(stamper.stamp({ type: 'debugGiveItem', itemId: w.itemId, count: 1 }));
       for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
       for (const wd of boot.wounds) sim.send(stamper.stamp({ type: 'debugWound', ...wd }));
       const p0 = readEntity(buf, 0);
@@ -1702,17 +1709,21 @@ gameState.subscribe((next, prev) => {
   if (next.inventory !== prev.inventory || next.characterProfile !== prev.characterProfile)
     redressPainted();
 });
-// Dev `?wear=`: put the given items on (their first equip slot), once each.
+// Dev `?wear=`: put the given items on (`@slot` or their first equip slot), once each.
 if (import.meta.env.DEV && boot.wear?.length) {
-  const toWear = new Set(boot.wear);
+  const toWear = [...boot.wear];
   gameState.subscribe((next) => {
     const inv = next.inventory;
-    if (!inv || toWear.size === 0) return;
+    if (!inv || toWear.length === 0) return;
     for (const c of Object.values(inv.containers))
       for (const it of c.items) {
-        const slot = hudContent.items.get(it.def)?.equipSlots?.[0];
-        if (!toWear.has(it.def) || it.equipped?.length || !slot) continue;
-        toWear.delete(it.def);
+        const i = toWear.findIndex((w) => w.itemId === it.def);
+        const w = toWear[i];
+        const slot = (w?.slot ?? hudContent.items.get(it.def)?.equipSlots?.[0]) as
+          | EquipSlot
+          | undefined;
+        if (!w || it.equipped?.length || !slot) continue;
+        toWear.splice(i, 1);
         sim.send(stamper.stamp({ type: 'equip', item: it.id, slot }));
       }
   });
@@ -2447,6 +2458,31 @@ renderer.setAnimationLoop((time) => {
       );
     }
     player.setWeapons(hand, back, weaponModels);
+    {
+      // Worn bags and hand items on the body (Paweł 25.11): bag on the back, fanny pack on the
+      // belt, anything in the left hand, a non-weapon item in the right hand.
+      const inv = gameState.get().inventory;
+      const c = characters.get(phys.localId);
+      const defOf = (slot: 'back' | 'belt') => {
+        const id = inv?.equipped[slot];
+        return id === undefined ? undefined : carriedItem(inv, id)?.def;
+      };
+      const handItem = (id: string | null | undefined): HandItem | undefined => {
+        if (!id) return undefined;
+        const weapon = weaponIndex.get(id);
+        const category = weapon?.grip ? GRIP_CATEGORY[weapon.grip] : heldIndex.get(id);
+        return category ? { id, category, ...(weapon ? { weapon } : {}) } : undefined;
+      };
+      player.setGear(
+        {
+          back: defOf('back'),
+          belt: defOf('belt'),
+          left: c?.twoHanded ? undefined : handItem(loadout.left),
+          right: hand ? undefined : handItem(c?.equippedPrimary),
+        },
+        weaponModels,
+      );
+    }
     if (heldPool) {
       // Hands from the sim: a non-weapon item in the right hand (`equippedPrimary`), the left
       // hand's item (`equippedSecondary`, protocol 48); dev `?held=R,L` overrides.

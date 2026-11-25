@@ -44,6 +44,15 @@ export interface HudItemDef {
   tags?: readonly string[];
   /** Can cover a window (`windowCover`, protocol 47): the „Zasłoń…” picker. */
   windowCover?: boolean;
+  /** Clothing: warmth, water resistance and protection (0..1), the character drawing totals. */
+  clothing?: HudClothingDef;
+}
+
+export interface HudClothingDef {
+  insulation: number;
+  waterResistance: number;
+  scratch: number;
+  bite: number;
 }
 
 export interface HudRangedDef {
@@ -198,6 +207,16 @@ function rangedOf(i: Obj): HudRangedDef | undefined {
   };
 }
 
+function clothingOf(c: Obj): HudClothingDef {
+  const p = isObj(c.protection) ? c.protection : {};
+  return {
+    insulation: num(c.insulation),
+    waterResistance: num(c.waterResistance),
+    scratch: num(p.scratch),
+    bite: num(p.bite),
+  };
+}
+
 function equipSlotsOf(i: Obj, kind: string): EquipSlot[] {
   if (isObj(i.clothing) && isSlot(i.clothing.slot)) return [i.clothing.slot];
   if (isObj(i.bag) && Array.isArray(i.bag.slots)) return i.bag.slots.filter(isSlot);
@@ -293,6 +312,7 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(melee ? { meleeCategory: melee } : {}),
           ...(durabilityMax !== undefined ? { durabilityMax } : {}),
           ...(equipSlots.length ? { equipSlots } : {}),
+          ...(isObj(i.clothing) ? { clothing: clothingOf(i.clothing) } : {}),
           // Fishing rod: right click fishes at the water (sim `useItem` → `fish`).
           ...(kind === 'food' ||
           kind === 'drink' ||

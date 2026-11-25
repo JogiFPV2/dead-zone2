@@ -199,6 +199,10 @@ html.is-touch .dz-i3__panel--own {
 html.is-touch .dz-i3__panel--box {
   right: calc(8px + var(--dz-safe-r));
 }
+/* Phone: no character drawing (clothes go on with „Załóż” from the item menu). */
+html.is-touch .dz-pd {
+  display: none;
+}
 html.is-touch .dz-i3__keys,
 html.is-touch .dz-fm__mf,
 html.is-touch kbd,
