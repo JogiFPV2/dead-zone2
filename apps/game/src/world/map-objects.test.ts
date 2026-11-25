@@ -38,3 +38,33 @@ describe('MapObjects: cutaway', () => {
     expect(shown().length).toBe(all - 2 + 1);
   });
 });
+
+describe('MapObjects: F highlight (Paweł 25.11)', () => {
+  it('lights the piece at the target tile, moves with the target, goes with none', () => {
+    const m = new MapObjects();
+    m.loadChunk(chunk(0));
+    const lit = () => m.root.children.filter((c) => c.name === 'furniture-highlight');
+    m.setHighlight({ x: 1, y: 1, z: 0 }, 0);
+    expect(m.highlightedAt).toEqual({ tx: 1, ty: 1, z: 0 });
+    expect(lit()).toHaveLength(1);
+    m.setHighlight({ x: 1, y: 1, z: 0 }, 16);
+    expect(lit()).toHaveLength(1);
+    m.setHighlight({ x: 5, y: 5, z: 0 }, 32);
+    expect(m.highlightedAt).toEqual({ tx: 5, ty: 5, z: 0 });
+    expect(lit()).toHaveLength(1);
+    m.setHighlight({ x: 9, y: 9, z: 0 }, 48);
+    expect(m.highlightedAt).toBeUndefined();
+    expect(lit()).toHaveLength(0);
+    m.setHighlight({ x: 1, y: 1, z: 0 }, 64);
+    m.setHighlight(undefined, 80);
+    expect(lit()).toHaveLength(0);
+  });
+
+  it('nothing lit when the piece is hidden by the cutaway', () => {
+    const m = new MapObjects();
+    m.loadChunk(chunk(1));
+    m.setCutaway({ building: 3, tx: 1, ty: 1, side: { sx: 1, sz: 1 }, z: 0 });
+    m.setHighlight({ x: 1, y: 1, z: 1 }, 0);
+    expect(m.highlightedAt).toBeUndefined();
+  });
+});
