@@ -187,7 +187,9 @@ import {
   PILE_MODEL,
   characterModels,
   ktx2For,
+  ZOMBIE_MODELS,
 } from './models/model-kit.js';
+import { rebuildCharacter, SURVIVOR, ZOMBIE_BODIES } from './models/painted-body/body.js';
 import { brighten, lightReal, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
@@ -1607,13 +1609,17 @@ void ModelKit.create(renderer).then(async (kit) => {
   try {
     const real = realStyle !== undefined;
     const p = await kit.character(characterModels(real ? 'real' : 'default').player, PLAYER_HEIGHT);
-    if (real) lightReal(p.object);
+    // Preview of the new painted bodies (Paweł 24.11, to accept before they replace the models).
+    const newBodies = !real && new URLSearchParams(location.search).get('body') === 'painted';
+    if (newBodies) rebuildCharacter(p.object, SURVIVOR);
+    // Vertex-coloured bodies: no emissive (three.js would not tint it by the vertex colour).
+    if (real || newBodies) lightReal(p.object);
     else brighten(p.object);
     addHulls(p.object);
     markCharacter(p.object);
     player.setModel(p.object, p.clips);
     // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
-    if (!real)
+    if (!real && !newBodies)
       dressPlayer = (look) => {
         void import('./creator/player-look.js')
           .then((m) =>
@@ -1642,9 +1648,13 @@ void ModelKit.create(renderer).then(async (kit) => {
       worldRoot.add(animalViews.root);
     })
     .catch((e: unknown) => console.warn('animal models', e));
+  const newZombies = !realStyle && new URLSearchParams(location.search).get('body') === 'painted';
   const templates = await loadZombieTemplates(
     kit,
-    characterModels(realStyle ? 'real' : 'default').zombies,
+    newZombies
+      ? ZOMBIE_BODIES.map(() => ZOMBIE_MODELS[0]!)
+      : characterModels(realStyle ? 'real' : 'default').zombies,
+    newZombies ? (o, i) => rebuildCharacter(o, ZOMBIE_BODIES[i]!) : undefined,
   );
   if (templates.length) {
     zombieViews = await InstancedZombies.create(templates, crowd);
