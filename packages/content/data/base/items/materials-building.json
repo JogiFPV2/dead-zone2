@@ -1,0 +1,34 @@
+[
+  {
+    "id": "base:barbed-wire",
+    "name": "item.base.barbed-wire.name",
+    "kind": "material",
+    "weightKg": 3.0,
+    "tags": ["base:barbed-wire"]
+  },
+  {
+    "id": "base:sandbag",
+    "name": "item.base.sandbag.name",
+    "kind": "material",
+    "weightKg": 15,
+    "tags": ["base:sandbag"]
+  },
+  {
+    "id": "base:plywood",
+    "name": "item.base.plywood.name",
+    "kind": "material",
+    "weightKg": 4.0,
+    "tags": ["base:plywood"],
+    "windowCover": {
+      "lightPass": 0,
+      "setupSec": 20
+    }
+  },
+  {
+    "id": "base:cement",
+    "name": "item.base.cement.name",
+    "kind": "material",
+    "weightKg": 25,
+    "tags": ["base:cement"]
+  }
+]

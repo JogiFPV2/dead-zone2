@@ -186,6 +186,8 @@ export function roomKind(type: string | undefined): number {
       return ROOM_KIND.public;
     case 'base:room-garage':
     case 'base:room-warehouse':
+    case 'base:room-factory':
+    case 'base:room-fire-station':
     case 'base:room-ruin':
       return ROOM_KIND.bare;
     case 'base:room-gym':

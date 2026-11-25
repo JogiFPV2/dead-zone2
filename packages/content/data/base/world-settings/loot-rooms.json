@@ -47,14 +47,15 @@
         "clothing",
         "bag"
       ],
-      "base:room-office": ["literature", "vhs", "electronics", "household"],
+      "base:room-office": ["literature", "vhs", "electronics", "household", "food-canned", "drink"],
       "base:room-shop": [
         "food-fresh",
         "food-canned",
         "drink",
         "household",
         "electronics",
-        "fabric"
+        "fabric",
+        "literature"
       ],
       "base:room-gas-station": [
         "food-fresh",
@@ -88,7 +89,32 @@
       "base:room-gun-store": ["firearm", "ammo", "weapon", "bag"],
       "base:room-bookstore": ["literature", "vhs"],
       "base:room-video-store": ["vhs"],
-      "base:room-ruin": ["material", "junk"]
+      "base:room-ruin": ["material", "junk"],
+      "base:room-church": ["household", "fabric", "literature"],
+      "base:room-factory": [
+        "material",
+        "tool",
+        "household",
+        "clothing",
+        "vehicle",
+        "electronics",
+        "weapon",
+        "bag",
+        "literature",
+        "drink"
+      ],
+      "base:room-fire-station": [
+        "tool",
+        "weapon",
+        "material",
+        "medical",
+        "electronics",
+        "vehicle",
+        "bag",
+        "household",
+        "clothing",
+        "drink"
+      ]
     }
   }
 }

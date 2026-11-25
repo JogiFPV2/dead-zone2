@@ -15,7 +15,7 @@ import type { SimWorld } from '../core/world.js';
 import { floorZ } from '../world/levels.js';
 import { newAction, startAction } from '../actions/queue.js';
 import { moveItem, stableIdOf, tileReachBlock } from './inventory.js';
-import { lootWeight } from './loot.js';
+import { lootWeight, wearLoot } from './loot.js';
 import { isVehicleContainer } from '../vehicles/containers.js';
 import { giveZombieKey } from '../vehicles/chunk-spawn.js';
 import {
@@ -280,7 +280,8 @@ export function scatterLootChunk(
       const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
       const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
       const c = hidden ? hiddenCache(st, x, y, addr.z) : groundPile(st, x, y, addr.z);
-      createItem(st, pick.def, c.id, pick.count, worldStartMinute);
+      const item = createItem(st, pick.def, c.id, pick.count, worldStartMinute);
+      wearLoot(st, item, Rng.fromSeed(deriveSeed(seed, 'scatter-wear', item.id)));
     }
   }
 }

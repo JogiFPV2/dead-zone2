@@ -87,6 +87,11 @@ export interface ItemContainer {
   readonly searchedBy: number[];
   /** Corpse: loot table id of the zombie type (`zombieType.lootTable`), undefined = none. */
   readonly lootTable?: string | undefined;
+  /**
+   * World storage in a building: index of the building's profile in
+   * `worldSettings.loot.buildingProfiles` (looted, hoarder, hunter…), absent = none.
+   */
+  readonly profile?: number | undefined;
 }
 
 /** Per-player item state: main inventory, equip slots, open container, timed actions. */

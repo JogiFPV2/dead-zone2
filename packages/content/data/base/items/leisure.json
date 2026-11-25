@@ -1,0 +1,142 @@
+[
+  {
+    "id": "base:area-map",
+    "name": "item.base.area-map.name",
+    "kind": "literature",
+    "weightKg": 0.05,
+    "harmless": true,
+    "literature": {
+      "format": "map",
+      "readMin": 10,
+      "boredomReduction": 5,
+      "stressReduction": 0
+    }
+  },
+  {
+    "id": "base:playing-cards",
+    "name": "item.base.playing-cards.name",
+    "kind": "literature",
+    "weightKg": 0.1,
+    "harmless": true,
+    "literature": {
+      "format": "game",
+      "readMin": 30,
+      "boredomReduction": 25,
+      "stressReduction": 5
+    }
+  },
+  {
+    "id": "base:newspaper",
+    "name": "item.base.newspaper.name",
+    "kind": "literature",
+    "weightKg": 0.2,
+    "harmless": true,
+    "literature": {
+      "format": "newspaper",
+      "readMin": 20,
+      "boredomReduction": 15,
+      "stressReduction": 0
+    },
+    "tags": ["base:paper"]
+  },
+  {
+    "id": "base:comic",
+    "name": "item.base.comic.name",
+    "kind": "literature",
+    "weightKg": 0.15,
+    "harmless": true,
+    "literature": {
+      "format": "comic",
+      "readMin": 30,
+      "boredomReduction": 30,
+      "stressReduction": 5
+    }
+  },
+  {
+    "id": "base:rubiks-cube",
+    "name": "item.base.rubiks-cube.name",
+    "kind": "literature",
+    "weightKg": 0.1,
+    "harmless": true,
+    "literature": {
+      "format": "game",
+      "readMin": 30,
+      "boredomReduction": 20,
+      "stressReduction": 0
+    }
+  },
+  {
+    "id": "base:game-console",
+    "name": "item.base.game-console.name",
+    "kind": "literature",
+    "weightKg": 0.8,
+    "harmless": true,
+    "literature": {
+      "format": "game",
+      "readMin": 60,
+      "boredomReduction": 40,
+      "stressReduction": 10
+    },
+    "lootCategory": "electronics"
+  },
+  {
+    "id": "base:walkman",
+    "name": "item.base.walkman.name",
+    "kind": "literature",
+    "weightKg": 0.3,
+    "harmless": true,
+    "literature": {
+      "format": "game",
+      "readMin": 45,
+      "boredomReduction": 30,
+      "stressReduction": 15
+    },
+    "lootCategory": "electronics"
+  },
+  {
+    "id": "base:cassette-tape",
+    "name": "item.base.cassette-tape.name",
+    "kind": "misc",
+    "weightKg": 0.05,
+    "tags": [],
+    "lootCategory": "electronics",
+    "maxStack": 10,
+    "harmless": true
+  },
+  {
+    "id": "base:cigarettes",
+    "name": "item.base.cigarettes.name",
+    "kind": "food",
+    "weightKg": 0.03,
+    "tags": ["base:tobacco"],
+    "food": {
+      "nutrition": {
+        "stress": -10,
+        "unhappiness": -3
+      },
+      "portions": 20,
+      "eatMin": 3,
+      "openWith": "base:tool-fire-starter"
+    },
+    "lootCategory": "household",
+    "harmless": true
+  },
+  {
+    "id": "base:chewing-gum",
+    "name": "item.base.chewing-gum.name",
+    "kind": "food",
+    "weightKg": 0.03,
+    "tags": [],
+    "food": {
+      "nutrition": {
+        "calories": 10,
+        "stress": -2,
+        "boredom": -2
+      },
+      "portions": 5,
+      "eatMin": 1
+    },
+    "lootCategory": "household",
+    "harmless": true
+  }
+]

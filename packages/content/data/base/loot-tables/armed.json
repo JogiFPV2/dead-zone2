@@ -65,10 +65,48 @@
       },
       {
         "item": "base:bandage",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
-      { "item": "base:ammo-9mm", "weight": 3, "count": { "min": 5, "max": 15 } },
-      { "item": "base:shotgun-shell", "weight": 2, "count": { "min": 3, "max": 8 } }
+      {
+        "item": "base:ammo-9mm",
+        "weight": 3,
+        "count": {
+          "min": 5,
+          "max": 15
+        }
+      },
+      {
+        "item": "base:shotgun-shell",
+        "weight": 2,
+        "count": {
+          "min": 3,
+          "max": 8
+        }
+      },
+      {
+        "item": "base:police-baton",
+        "weight": 5
+      },
+      {
+        "item": "base:pepper-spray",
+        "weight": 4
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 2
+      },
+      {
+        "item": "base:flare",
+        "weight": 1
+      }
     ]
   },
   {
@@ -129,9 +167,73 @@
         "weight": 1,
         "rarity": "rare"
       },
-      { "item": "base:ammo-9mm", "weight": 3, "count": { "min": 10, "max": 20 } },
-      { "item": "base:ammo-38", "weight": 2, "count": { "min": 6, "max": 12 } },
-      { "item": "base:shotgun-shell", "weight": 3, "count": { "min": 4, "max": 10 } }
+      {
+        "item": "base:ammo-9mm",
+        "weight": 3,
+        "count": {
+          "min": 10,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:ammo-38",
+        "weight": 2,
+        "count": {
+          "min": 6,
+          "max": 12
+        }
+      },
+      {
+        "item": "base:shotgun-shell",
+        "weight": 3,
+        "count": {
+          "min": 4,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:air-rifle",
+        "weight": 3
+      },
+      {
+        "item": "base:airgun-pellet",
+        "weight": 4,
+        "count": {
+          "min": 50,
+          "max": 200
+        }
+      },
+      {
+        "item": "base:crossbow",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:crossbow-bolt",
+        "weight": 2,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:bayonet",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:switchblade",
+        "weight": 2
+      },
+      {
+        "item": "base:pepper-spray",
+        "weight": 3
+      },
+      {
+        "item": "base:brass-knuckles",
+        "weight": 1,
+        "rarity": "uncommon"
+      }
     ]
   }
 ]

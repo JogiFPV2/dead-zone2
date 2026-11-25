@@ -119,6 +119,9 @@ const ROOM_LABELS: Readonly<Record<string, string>> = {
   'base:room-gas-station': 'stacja',
   'base:room-video-store': 'wypożycz.',
   'base:room-ruin': 'ruina',
+  'base:room-church': 'kościół',
+  'base:room-factory': 'hala',
+  'base:room-fire-station': 'remiza',
 };
 
 /** Short Polish room label for the plan (`kuchnia`, `łaz.`); unknown types: none. */
@@ -142,6 +145,9 @@ const KINDS: readonly [string, string, string][] = [
   ['base:room-warehouse', 'MAGAZYN', 'MAGAZYN'],
   ['base:room-garage', 'GARAŻ', 'GARAŻ'],
   ['base:room-office', 'BIUROWIEC', 'BIURA'],
+  ['base:room-church', 'KOŚCIÓŁ', 'KOŚCIÓŁ'],
+  ['base:room-fire-station', 'REMIZA', 'REMIZA'],
+  ['base:room-factory', 'ZAKŁAD', 'ZAKŁAD'],
   ['base:room-ruin', 'RUINA', 'RUINA'],
 ];
 

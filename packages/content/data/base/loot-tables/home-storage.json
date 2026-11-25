@@ -22,7 +22,11 @@
       },
       {
         "item": "base:t-shirt",
-        "weight": 5
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:hoodie",
@@ -34,7 +38,11 @@
       },
       {
         "item": "base:sheet",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:school-backpack",
@@ -68,6 +76,16 @@
       {
         "item": "base:gloves",
         "weight": 2
+      },
+      {
+        "item": "base:sleeping-bag",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:military-backpack",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   },
@@ -90,7 +108,11 @@
       },
       {
         "item": "base:nails",
-        "weight": 6
+        "weight": 6,
+        "count": {
+          "min": 3,
+          "max": 15
+        }
       },
       {
         "item": "base:pipe-wrench",
@@ -98,7 +120,11 @@
       },
       {
         "item": "base:duct-tape",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:saw",
@@ -106,7 +132,11 @@
       },
       {
         "item": "base:wire",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:crowbar",
@@ -118,7 +148,11 @@
       },
       {
         "item": "base:mechanical-part",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:welding-torch",
@@ -145,7 +179,11 @@
       },
       {
         "item": "base:scrap-metal",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:flashlight",
@@ -153,11 +191,72 @@
       },
       {
         "item": "base:battery",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:electronics-scrap",
         "weight": 1
+      },
+      {
+        "item": "base:pliers",
+        "weight": 5
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 3
+      },
+      {
+        "item": "base:tin-snips",
+        "weight": 2
+      },
+      {
+        "item": "base:hand-drill",
+        "weight": 2
+      },
+      {
+        "item": "base:cold-chisel",
+        "weight": 3
+      },
+      {
+        "item": "base:glue",
+        "weight": 3
+      },
+      {
+        "item": "base:grease",
+        "weight": 3
+      },
+      {
+        "item": "base:welding-rods",
+        "weight": 2,
+        "count": {
+          "min": 5,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:padlock",
+        "weight": 2
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 2
+      },
+      {
+        "item": "base:scissors",
+        "weight": 1
+      },
+      {
+        "item": "base:candle",
+        "weight": 1
+      },
+      {
+        "table": "base:stash-tools",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   }

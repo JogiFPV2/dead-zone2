@@ -41,13 +41,22 @@
       "vhs",
       "literature"
     ],
-    "placeIn": ["base:room-warehouse", "base:room-garage", "base:room-gym", "base:room-ruin"]
+    "placeIn": [
+      "base:room-warehouse",
+      "base:room-garage",
+      "base:room-gym",
+      "base:room-ruin",
+      "base:room-factory"
+    ]
   },
   {
     "id": "base:metal-shelf",
     "name": "container.base.metal-shelf.name",
     "category": "shelf",
-    "footprint": { "w": 2, "h": 1 },
+    "footprint": {
+      "w": 2,
+      "h": 1
+    },
     "capacityKg": 40,
     "searchMin": 0.5,
     "defaultLootTable": "base:garage",
@@ -82,7 +91,9 @@
       "base:room-hospital",
       "base:room-gun-store",
       "base:room-video-store",
-      "base:room-office"
+      "base:room-office",
+      "base:room-factory",
+      "base:room-fire-station"
     ]
   },
   {
@@ -93,7 +104,7 @@
     "searchMin": 1.5,
     "defaultLootTable": "base:toolbox",
     "lootAccepts": ["tool", "material", "household"],
-    "placeIn": ["base:room-garage", "base:room-warehouse"]
+    "placeIn": ["base:room-garage", "base:room-warehouse", "base:room-factory"]
   },
   {
     "id": "base:locker",
@@ -123,7 +134,9 @@
       "base:room-police",
       "base:room-hospital",
       "base:room-pharmacy",
-      "base:room-office"
+      "base:room-office",
+      "base:room-factory",
+      "base:room-fire-station"
     ]
   },
   {

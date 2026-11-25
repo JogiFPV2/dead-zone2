@@ -3,27 +3,127 @@
     "id": "base:trash",
     "containers": ["base:trash-bin", "base:dumpster"],
     "chance": 0.7,
-    "rolls": { "min": 1, "max": 3 },
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
     "entries": [
-      { "item": "base:bottle", "weight": 6 },
-      { "item": "base:plastic-bag", "weight": 5 },
-      { "item": "base:garbage-bag", "weight": 4 },
-      { "item": "base:rag", "weight": 3 },
-      { "item": "base:scrap-metal", "weight": 2 },
-      { "item": "base:wooden-stick", "weight": 2 },
-      { "item": "base:canned-beans", "weight": 1, "rarity": "uncommon" },
-      { "item": "base:glass-shards", "weight": 2, "count": { "min": 1, "max": 4 } }
+      {
+        "item": "base:bottle",
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:plastic-bag",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:garbage-bag",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:rag",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:scrap-metal",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:wooden-stick",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:canned-beans",
+        "weight": 1,
+        "rarity": "uncommon",
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:glass-shards",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:paper",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 1
+      },
+      {
+        "item": "base:candy",
+        "weight": 1
+      }
     ]
   },
   {
     "id": "base:firewood",
     "containers": ["base:firewood-pile"],
     "chance": 0.9,
-    "rolls": { "min": 2, "max": 4 },
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
     "entries": [
-      { "item": "base:log", "weight": 5 },
-      { "item": "base:plank", "weight": 3 },
-      { "item": "base:wooden-stick", "weight": 4 }
+      {
+        "item": "base:log",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:plank",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:wooden-stick",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      }
     ]
   }
 ]

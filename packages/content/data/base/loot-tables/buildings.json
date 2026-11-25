@@ -31,7 +31,11 @@
       },
       {
         "item": "base:rag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:first-aid-vol-1",
@@ -50,7 +54,11 @@
       },
       {
         "item": "base:water-bottle",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:flashlight",
@@ -80,6 +88,30 @@
           "min": 1,
           "max": 1
         }
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 3
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 4
+      },
+      {
+        "item": "base:iodine",
+        "weight": 4
+      },
+      {
+        "item": "base:aspirin",
+        "weight": 3
+      },
+      {
+        "item": "base:spirit",
+        "weight": 2
+      },
+      {
+        "item": "base:activated-charcoal",
+        "weight": 2
       }
     ]
   },
@@ -121,7 +153,11 @@
       },
       {
         "item": "base:plastic-bag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:hydrogen-peroxide",
@@ -192,6 +228,36 @@
       {
         "item": "base:towel",
         "weight": 1
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 6
+      },
+      {
+        "item": "base:iodine",
+        "weight": 5
+      },
+      {
+        "item": "base:activated-charcoal",
+        "weight": 4
+      },
+      {
+        "item": "base:aspirin",
+        "weight": 6
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:water-tablets",
+        "weight": 2
+      },
+      {
+        "table": "base:stash-medical",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   },
@@ -207,7 +273,11 @@
     "entries": [
       {
         "item": "base:canned-beans",
-        "weight": 8
+        "weight": 8,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:jarred-vegetables",
@@ -215,7 +285,11 @@
       },
       {
         "item": "base:water-bottle",
-        "weight": 6
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:potato",
@@ -251,7 +325,11 @@
       },
       {
         "item": "base:matches",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:lighter",
@@ -260,7 +338,11 @@
       },
       {
         "item": "base:battery",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:bread",
@@ -292,7 +374,11 @@
       },
       {
         "item": "base:beer",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:juice",
@@ -300,7 +386,11 @@
       },
       {
         "item": "base:soda",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:soap",
@@ -336,11 +426,19 @@
       },
       {
         "item": "base:bottle",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:duct-tape",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:painkillers",
@@ -356,17 +454,209 @@
         "weight": 1,
         "rarity": "uncommon"
       },
-      { "item": "base:seeds-carrot", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-cabbage", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-onion", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-tomato", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-cucumber", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-beans", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-strawberry", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:tomato", "weight": 3 },
-      { "item": "base:cucumber", "weight": 3 },
-      { "item": "base:onion", "weight": 3 },
-      { "item": "base:potato", "weight": 3 }
+      {
+        "item": "base:seeds-carrot",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-cabbage",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-onion",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-tomato",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-cucumber",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-beans",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-strawberry",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:tomato",
+        "weight": 3
+      },
+      {
+        "item": "base:cucumber",
+        "weight": 3
+      },
+      {
+        "item": "base:onion",
+        "weight": 3
+      },
+      {
+        "item": "base:potato",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:luncheon-meat",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:pate",
+        "weight": 3
+      },
+      {
+        "item": "base:sardines",
+        "weight": 3
+      },
+      {
+        "item": "base:pickled-cucumbers",
+        "weight": 3
+      },
+      {
+        "item": "base:jam",
+        "weight": 3
+      },
+      {
+        "item": "base:honey",
+        "weight": 2
+      },
+      {
+        "item": "base:compote",
+        "weight": 3
+      },
+      {
+        "item": "base:rusks",
+        "weight": 3
+      },
+      {
+        "item": "base:wafers",
+        "weight": 3
+      },
+      {
+        "item": "base:chocolate",
+        "weight": 3
+      },
+      {
+        "item": "base:candy",
+        "weight": 3
+      },
+      {
+        "item": "base:coffee",
+        "weight": 3
+      },
+      {
+        "item": "base:tea",
+        "weight": 3
+      },
+      {
+        "item": "base:pudding-mix",
+        "weight": 2
+      },
+      {
+        "item": "base:instant-noodles",
+        "weight": 3
+      },
+      {
+        "item": "base:lard",
+        "weight": 2
+      },
+      {
+        "item": "base:groats",
+        "weight": 3
+      },
+      {
+        "item": "base:powdered-milk",
+        "weight": 2
+      },
+      {
+        "item": "base:dried-mushrooms",
+        "weight": 1
+      },
+      {
+        "item": "base:orangeade",
+        "weight": 4
+      },
+      {
+        "item": "base:apple",
+        "weight": 3
+      },
+      {
+        "item": "base:candle",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 4
+      },
+      {
+        "item": "base:chewing-gum",
+        "weight": 3
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:firecrackers",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:thermos",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:mug",
+        "weight": 1
+      },
+      {
+        "table": "base:stash-canned",
+        "weight": 1,
+        "rarity": "very_rare"
+      }
     ]
   },
   {
@@ -394,11 +684,19 @@
       },
       {
         "item": "base:water-bottle",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:t-shirt",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:vhs-fitness-workout",
@@ -409,6 +707,26 @@
         "item": "base:vhs-strength-training",
         "weight": 1,
         "rarity": "rare"
+      },
+      {
+        "item": "base:canteen",
+        "weight": 2
+      },
+      {
+        "item": "base:whistle",
+        "weight": 3
+      },
+      {
+        "item": "base:sleeping-mat",
+        "weight": 1
+      },
+      {
+        "item": "base:orangeade",
+        "weight": 2
+      },
+      {
+        "item": "base:compass",
+        "weight": 1
       }
     ]
   },
@@ -424,15 +742,27 @@
     "entries": [
       {
         "item": "base:bandage",
-        "weight": 6
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:rag",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:sheet",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:sterilized-bandage",
@@ -488,7 +818,42 @@
       },
       {
         "item": "base:thread",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 4
+      },
+      {
+        "item": "base:iodine",
+        "weight": 3
+      },
+      {
+        "item": "base:activated-charcoal",
+        "weight": 2
+      },
+      {
+        "item": "base:aspirin",
+        "weight": 3
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 1,
+        "rarity": "very_rare"
+      },
+      {
+        "item": "base:water-tablets",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "table": "base:stash-medical",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   },
@@ -504,7 +869,11 @@
     "entries": [
       {
         "item": "base:battery",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:flashlight",
@@ -525,7 +894,87 @@
       },
       {
         "item": "base:pen",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:paper",
+        "weight": 6,
+        "count": {
+          "min": 5,
+          "max": 40
+        }
+      },
+      {
+        "item": "base:stapler",
         "weight": 3
+      },
+      {
+        "item": "base:scissors",
+        "weight": 2
+      },
+      {
+        "item": "base:calculator",
+        "weight": 3
+      },
+      {
+        "item": "base:typewriter",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:mug",
+        "weight": 3
+      },
+      {
+        "item": "base:kettle",
+        "weight": 2
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 1
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
+      },
+      {
+        "item": "base:rubiks-cube",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:area-map",
+        "weight": 1
+      },
+      {
+        "item": "base:matches",
+        "weight": 1
+      },
+      {
+        "item": "base:lighter",
+        "weight": 1
+      },
+      {
+        "item": "base:cassette-tape",
+        "weight": 1
+      },
+      {
+        "item": "base:walkie-talkie",
+        "weight": 1,
+        "rarity": "very_rare"
+      },
+      {
+        "table": "base:stash-electronics",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   },
@@ -557,7 +1006,11 @@
       },
       {
         "item": "base:plank",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:nails",
@@ -570,7 +1023,11 @@
       {
         "item": "base:metal-pipe",
         "weight": 1,
-        "rarity": "uncommon"
+        "rarity": "uncommon",
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       }
     ]
   },
@@ -586,24 +1043,52 @@
     "entries": [
       {
         "item": "base:bottle",
-        "weight": 5
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:plastic-bag",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:rag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:wooden-stick",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:battery",
         "weight": 1,
-        "rarity": "uncommon"
+        "rarity": "uncommon",
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:candle",
+        "weight": 2
+      },
+      {
+        "item": "base:paper",
+        "weight": 1
       }
     ]
   }

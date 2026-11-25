@@ -160,6 +160,8 @@ Legenda: `[x]` zrobione, `[~]` w toku, `[ ]` do zrobienia. Właściciel w nawias
 - [ ] Tryb „Przetrwaj”: wynik = przeżyte dni (Symulacja)
 - [ ] Tryb „Ratunek”: NPC zamknięty w willi, pilnująca horda (limit 300), wywabienie hordy i ewakuacja NPC (Symulacja)
 
+- [x] Losowość i różnorodność łupu (Paweł 25.11) — 92 nowe przedmioty (jedzenie z 1993, apteczka, sprzęt biwakowy, narzędzia, materiały, wiatrówka i kusza, biuro, rozrywka); zużycie łupu (`loot.wear`), losowe ilości, charakter budynku (`loot.buildingProfiles`), skarby `base:stash-*`, 1–3 rzeczy na podłodze pokoju; pomieszczenia kościół / hala / remiza i aneks w biurze. Do zrobienia: mechanika kompasu, lornetki, zegarka, krótkofalówki, tabletek do wody, kartusza, nafty, worków z piaskiem i drutu kolczastego (na razie zwykłe przedmioty)
+
 ## Etap 8 — Konta, serwer i landing
 - [ ] Landing page (Designer + Silnik)
 - [ ] Supabase Auth: email + Google (Serwer) — projekt: [backend.md](backend.md); serwer weryfikuje JWT przez JWKS, czeka na projekt Supabase, Google OAuth i SMTP (Paweł)

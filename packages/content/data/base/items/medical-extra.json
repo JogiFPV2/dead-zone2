@@ -1,0 +1,103 @@
+[
+  {
+    "id": "base:adhesive-plaster",
+    "name": "item.base.adhesive-plaster.name",
+    "kind": "medical",
+    "weightKg": 0.02,
+    "harmless": true,
+    "medical": {
+      "effects": ["stop_bleeding"],
+      "potency": 0.2,
+      "durationMin": 1,
+      "uses": 10
+    }
+  },
+  {
+    "id": "base:iodine",
+    "name": "item.base.iodine.name",
+    "kind": "medical",
+    "weightKg": 0.05,
+    "harmless": true,
+    "medical": {
+      "effects": ["disinfect"],
+      "potency": 0.6,
+      "durationMin": 1,
+      "uses": 10
+    },
+    "tags": ["base:disinfectant-liquid"]
+  },
+  {
+    "id": "base:spirit",
+    "name": "item.base.spirit.name",
+    "kind": "drink",
+    "weightKg": 0.6,
+    "tags": ["base:disinfectant-liquid"],
+    "drink": {
+      "perUse": {
+        "thirst": -3,
+        "stress": -10,
+        "unhappiness": -5
+      },
+      "uses": 10,
+      "drinkMin": 0.4,
+      "alcohol": 0.45
+    }
+  },
+  {
+    "id": "base:activated-charcoal",
+    "name": "item.base.activated-charcoal.name",
+    "kind": "medical",
+    "weightKg": 0.03,
+    "harmless": true,
+    "medical": {
+      "effects": ["reduce_sickness"],
+      "potency": 0.3,
+      "durationMin": 1,
+      "uses": 20
+    },
+    "medicine": {
+      "reduceSickness": 15,
+      "durationMin": 60
+    }
+  },
+  {
+    "id": "base:aspirin",
+    "name": "item.base.aspirin.name",
+    "kind": "medical",
+    "weightKg": 0.03,
+    "harmless": true,
+    "medical": {
+      "effects": ["pain_relief", "reduce_sickness"],
+      "potency": 0.4,
+      "durationMin": 1,
+      "uses": 10
+    },
+    "medicine": {
+      "reduceSickness": 8,
+      "durationMin": 60
+    }
+  },
+  {
+    "id": "base:tourniquet",
+    "name": "item.base.tourniquet.name",
+    "kind": "medical",
+    "weightKg": 0.1,
+    "harmless": true,
+    "medical": {
+      "effects": ["stop_bleeding"],
+      "potency": 0.9,
+      "durationMin": 1,
+      "uses": 1
+    }
+  },
+  {
+    "id": "base:water-tablets",
+    "name": "item.base.water-tablets.name",
+    "kind": "misc",
+    "weightKg": 0.02,
+    "tags": [],
+    "lootCategory": "medical",
+    "maxStack": 20,
+    "harmless": true
+  }
+]

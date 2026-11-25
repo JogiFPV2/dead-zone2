@@ -1,0 +1,1181 @@
+[
+  {
+    "id": "base:stash-canned",
+    "rolls": {
+      "min": 3,
+      "max": 6
+    },
+    "entries": [
+      {
+        "item": "base:canned-beans",
+        "weight": 4
+      },
+      {
+        "item": "base:luncheon-meat",
+        "weight": 4
+      },
+      {
+        "item": "base:pate",
+        "weight": 3
+      },
+      {
+        "item": "base:sardines",
+        "weight": 3
+      },
+      {
+        "item": "base:jarred-vegetables",
+        "weight": 3
+      },
+      {
+        "item": "base:pickled-cucumbers",
+        "weight": 2
+      },
+      {
+        "item": "base:jam",
+        "weight": 2
+      },
+      {
+        "item": "base:honey",
+        "weight": 1
+      },
+      {
+        "item": "base:rusks",
+        "weight": 2
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 3
+      }
+    ]
+  },
+  {
+    "id": "base:stash-tools",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:hand-drill",
+        "weight": 2
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 2
+      },
+      {
+        "item": "base:pliers",
+        "weight": 3
+      },
+      {
+        "item": "base:cold-chisel",
+        "weight": 2
+      },
+      {
+        "item": "base:tin-snips",
+        "weight": 2
+      },
+      {
+        "item": "base:welding-rods",
+        "weight": 2,
+        "count": {
+          "min": 10,
+          "max": 30
+        }
+      },
+      {
+        "item": "base:grease",
+        "weight": 2
+      },
+      {
+        "item": "base:glue",
+        "weight": 2
+      },
+      {
+        "item": "base:saw",
+        "weight": 1
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 1
+      },
+      {
+        "item": "base:pipe-wrench",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:stash-electronics",
+    "rolls": {
+      "min": 2,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:walkman",
+        "weight": 3
+      },
+      {
+        "item": "base:game-console",
+        "weight": 2
+      },
+      {
+        "item": "base:walkie-talkie",
+        "weight": 2
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 3
+      },
+      {
+        "item": "base:battery",
+        "weight": 4,
+        "count": {
+          "min": 2,
+          "max": 6
+        }
+      },
+      {
+        "item": "base:cassette-tape",
+        "weight": 3,
+        "count": {
+          "min": 2,
+          "max": 6
+        }
+      },
+      {
+        "item": "base:calculator",
+        "weight": 2
+      },
+      {
+        "item": "base:radio",
+        "weight": 1
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "base:stash-medical",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:antibiotics",
+        "weight": 2
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 3
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2
+      },
+      {
+        "item": "base:sterilized-bandage",
+        "weight": 3
+      },
+      {
+        "item": "base:iodine",
+        "weight": 2
+      },
+      {
+        "item": "base:aspirin",
+        "weight": 2
+      },
+      {
+        "item": "base:activated-charcoal",
+        "weight": 2
+      },
+      {
+        "item": "base:splint",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:stash-camping",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:sleeping-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:compass",
+        "weight": 2
+      },
+      {
+        "item": "base:binoculars",
+        "weight": 1
+      },
+      {
+        "item": "base:canteen",
+        "weight": 2
+      },
+      {
+        "item": "base:oil-lamp",
+        "weight": 1
+      },
+      {
+        "item": "base:lamp-oil",
+        "weight": 1
+      },
+      {
+        "item": "base:candle",
+        "weight": 2,
+        "count": {
+          "min": 2,
+          "max": 5
+        }
+      },
+      {
+        "item": "base:rope",
+        "weight": 2
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "base:profile-hoarder",
+    "rolls": {
+      "min": 3,
+      "max": 6
+    },
+    "entries": [
+      {
+        "item": "base:canned-beans",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:luncheon-meat",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:pate",
+        "weight": 3
+      },
+      {
+        "item": "base:sardines",
+        "weight": 3
+      },
+      {
+        "item": "base:jarred-vegetables",
+        "weight": 4
+      },
+      {
+        "item": "base:pickled-cucumbers",
+        "weight": 3
+      },
+      {
+        "item": "base:jam",
+        "weight": 2
+      },
+      {
+        "item": "base:honey",
+        "weight": 1
+      },
+      {
+        "item": "base:rusks",
+        "weight": 3
+      },
+      {
+        "item": "base:groats",
+        "weight": 2
+      },
+      {
+        "item": "base:pasta",
+        "weight": 3
+      },
+      {
+        "item": "base:rice",
+        "weight": 2
+      },
+      {
+        "item": "base:flour",
+        "weight": 2
+      },
+      {
+        "item": "base:sugar",
+        "weight": 2
+      },
+      {
+        "item": "base:salt",
+        "weight": 2
+      },
+      {
+        "item": "base:coffee",
+        "weight": 2
+      },
+      {
+        "item": "base:tea",
+        "weight": 2
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:compote",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "base:profile-handyman",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:hammer",
+        "weight": 3
+      },
+      {
+        "item": "base:saw",
+        "weight": 2
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 2
+      },
+      {
+        "item": "base:pliers",
+        "weight": 3
+      },
+      {
+        "item": "base:hand-drill",
+        "weight": 2
+      },
+      {
+        "item": "base:cold-chisel",
+        "weight": 2
+      },
+      {
+        "item": "base:screwdriver",
+        "weight": 3
+      },
+      {
+        "item": "base:pipe-wrench",
+        "weight": 2
+      },
+      {
+        "item": "base:nails",
+        "weight": 4,
+        "count": {
+          "min": 5,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:duct-tape",
+        "weight": 3
+      },
+      {
+        "item": "base:glue",
+        "weight": 2
+      },
+      {
+        "item": "base:grease",
+        "weight": 2
+      },
+      {
+        "item": "base:wire",
+        "weight": 2
+      },
+      {
+        "item": "base:rope",
+        "weight": 1
+      },
+      {
+        "item": "base:padlock",
+        "weight": 1
+      },
+      {
+        "item": "base:welding-rods",
+        "weight": 1,
+        "count": {
+          "min": 5,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:plank",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:metal-sheet",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:profile-hunter",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:hunting-rifle",
+        "weight": 3
+      },
+      {
+        "item": "base:double-barrel-shotgun",
+        "weight": 3
+      },
+      {
+        "item": "base:ammo-box-308",
+        "weight": 3
+      },
+      {
+        "item": "base:ammo-box-shells",
+        "weight": 3
+      },
+      {
+        "item": "base:shotgun-shell",
+        "weight": 3,
+        "count": {
+          "min": 2,
+          "max": 8
+        }
+      },
+      {
+        "item": "base:hunting-knife",
+        "weight": 4
+      },
+      {
+        "item": "base:binoculars",
+        "weight": 3
+      },
+      {
+        "item": "base:compass",
+        "weight": 2
+      },
+      {
+        "item": "base:canteen",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:crossbow",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:crossbow-bolt",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "base:profile-angler",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:fishing-rod",
+        "weight": 5
+      },
+      {
+        "item": "base:canteen",
+        "weight": 2
+      },
+      {
+        "item": "base:sleeping-mat",
+        "weight": 2
+      },
+      {
+        "item": "base:tent",
+        "weight": 1
+      },
+      {
+        "item": "base:camping-stove",
+        "weight": 1
+      },
+      {
+        "item": "base:gas-cartridge",
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:rope",
+        "weight": 2
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:profile-nurse",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:bandage",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:sterilized-bandage",
+        "weight": 3
+      },
+      {
+        "item": "base:antibiotics",
+        "weight": 2
+      },
+      {
+        "item": "base:painkillers",
+        "weight": 3
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2
+      },
+      {
+        "item": "base:iodine",
+        "weight": 3
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 3
+      },
+      {
+        "item": "base:aspirin",
+        "weight": 2
+      },
+      {
+        "item": "base:activated-charcoal",
+        "weight": 2
+      },
+      {
+        "item": "base:splint",
+        "weight": 1
+      },
+      {
+        "item": "base:hydrogen-peroxide",
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "base:profile-drunk",
+    "rolls": {
+      "min": 2,
+      "max": 5
+    },
+    "entries": [
+      {
+        "item": "base:vodka",
+        "weight": 6
+      },
+      {
+        "item": "base:beer",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:spirit",
+        "weight": 2
+      },
+      {
+        "item": "base:compote",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:profile-gardener",
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
+    "entries": [
+      {
+        "item": "base:seeds-carrot",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-cabbage",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-onion",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-tomato",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-cucumber",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-beans",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:seeds-strawberry",
+        "weight": 1
+      },
+      {
+        "item": "base:hoe",
+        "weight": 2
+      },
+      {
+        "item": "base:garden-rake",
+        "weight": 2
+      },
+      {
+        "item": "base:watering-can",
+        "weight": 2
+      },
+      {
+        "item": "base:bucket",
+        "weight": 2
+      },
+      {
+        "item": "base:sickle",
+        "weight": 2
+      },
+      {
+        "item": "base:scythe",
+        "weight": 1
+      },
+      {
+        "item": "base:pitchfork",
+        "weight": 1
+      },
+      {
+        "item": "base:shovel",
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "base:office-kitchenette",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:coffee",
+        "weight": 5
+      },
+      {
+        "item": "base:tea",
+        "weight": 5
+      },
+      {
+        "item": "base:sugar",
+        "weight": 2
+      },
+      {
+        "item": "base:wafers",
+        "weight": 2
+      },
+      {
+        "item": "base:candy",
+        "weight": 2
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 2
+      },
+      {
+        "item": "base:orangeade",
+        "weight": 1
+      }
+    ],
+    "rooms": ["base:room-office"],
+    "containers": ["base:kitchen-cabinet"],
+    "chance": 0.6
+  },
+  {
+    "id": "base:church",
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "item": "base:candle",
+        "weight": 8,
+        "count": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "item": "base:matches",
+        "weight": 3
+      },
+      {
+        "item": "base:lighter",
+        "weight": 1
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 1
+      },
+      {
+        "item": "base:paper",
+        "weight": 2,
+        "count": {
+          "min": 2,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:rag",
+        "weight": 2
+      },
+      {
+        "item": "base:cleaning-supplies",
+        "weight": 1
+      }
+    ],
+    "rooms": ["base:room-church"],
+    "chance": 0.5,
+    "containers": ["base:wooden-chest"]
+  },
+  {
+    "id": "base:factory",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:welding-rods",
+        "weight": 4,
+        "count": {
+          "min": 5,
+          "max": 30
+        }
+      },
+      {
+        "item": "base:grease",
+        "weight": 4
+      },
+      {
+        "item": "base:chain",
+        "weight": 3
+      },
+      {
+        "item": "base:rope",
+        "weight": 2
+      },
+      {
+        "item": "base:cold-chisel",
+        "weight": 3
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 2
+      },
+      {
+        "item": "base:tin-snips",
+        "weight": 2
+      },
+      {
+        "item": "base:hand-drill",
+        "weight": 1
+      },
+      {
+        "item": "base:pliers",
+        "weight": 3
+      },
+      {
+        "item": "base:pipe-wrench",
+        "weight": 3
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 2
+      },
+      {
+        "item": "base:sledgehammer",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:welding-torch",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:gloves",
+        "weight": 3
+      },
+      {
+        "item": "base:metal-sheet",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:scrap-metal",
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:metal-pipe",
+        "weight": 3
+      },
+      {
+        "item": "base:wire",
+        "weight": 3
+      },
+      {
+        "item": "base:mechanical-part",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:barbed-wire",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:gas-can",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:electronics-scrap",
+        "weight": 2
+      },
+      {
+        "table": "base:stash-tools",
+        "weight": 1,
+        "rarity": "very_rare"
+      }
+    ],
+    "rooms": ["base:room-factory"],
+    "chance": 0.7,
+    "containers": ["base:metal-shelf", "base:crate"]
+  },
+  {
+    "id": "base:fire-station",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:fire-axe",
+        "weight": 3
+      },
+      {
+        "item": "base:axe",
+        "weight": 2
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 3
+      },
+      {
+        "item": "base:sledgehammer",
+        "weight": 1
+      },
+      {
+        "item": "base:rope",
+        "weight": 4
+      },
+      {
+        "item": "base:flare",
+        "weight": 3
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2
+      },
+      {
+        "item": "base:bandage",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 2
+      },
+      {
+        "item": "base:splint",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 3
+      },
+      {
+        "item": "base:battery",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:gas-can",
+        "weight": 1
+      },
+      {
+        "item": "base:garbage-bag",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:walkie-talkie",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "table": "base:stash-medical",
+        "weight": 1,
+        "rarity": "very_rare"
+      }
+    ],
+    "rooms": ["base:room-fire-station"],
+    "chance": 0.75,
+    "containers": ["base:metal-shelf"]
+  },
+  {
+    "id": "base:factory-locker",
+    "rolls": {
+      "min": 1,
+      "max": 2
+    },
+    "entries": [
+      {
+        "item": "base:gloves",
+        "weight": 5
+      },
+      {
+        "item": "base:t-shirt",
+        "weight": 2
+      },
+      {
+        "item": "base:jacket",
+        "weight": 2
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 3
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
+      },
+      {
+        "item": "base:orangeade",
+        "weight": 2
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 2
+      },
+      {
+        "item": "base:pliers",
+        "weight": 2
+      },
+      {
+        "item": "base:screwdriver",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 2
+      },
+      {
+        "item": "base:battery",
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:duffel-bag",
+        "weight": 1
+      }
+    ],
+    "rooms": ["base:room-factory"],
+    "containers": ["base:locker"],
+    "chance": 0.6
+  },
+  {
+    "id": "base:fire-station-locker",
+    "rolls": {
+      "min": 1,
+      "max": 3
+    },
+    "entries": [
+      {
+        "item": "base:fire-axe",
+        "weight": 2
+      },
+      {
+        "item": "base:crowbar",
+        "weight": 2
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 3
+      },
+      {
+        "item": "base:battery",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:bandage",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 2
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 2
+      },
+      {
+        "item": "base:splint",
+        "weight": 1
+      },
+      {
+        "item": "base:walkie-talkie",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:gloves",
+        "weight": 3
+      },
+      {
+        "item": "base:jacket",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-bag",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:water-bottle",
+        "weight": 2
+      }
+    ],
+    "rooms": ["base:room-fire-station"],
+    "containers": ["base:locker"],
+    "chance": 0.7
+  }
+]

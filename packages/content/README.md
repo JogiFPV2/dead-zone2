@@ -270,6 +270,15 @@ jedzenie i przybory kuchenne, garaż → narzędzia, łazienka → leki i banda�
 pomieszczeniach zwykle stoi. Test sprawdza każdą parę schowek × pomieszczenie i loot na podłodze; wyjątki
 (`at`: schowek albo `base:room-*`) z powodem.
 `lootAccepts` dotyczy tylko lootu — gracz może włożyć do schowka cokolwiek.
+Losowość (`world-settings.json`, `loot`): `wear` — z szansą `wornChance` przedmiot z wytrzymałością ma
+`minPct`–`maxPct` % stanu, a lek / napój kilka porcji mniej; `floorRoomItems` — ile rzeczy leży na podłodze pokoju;
+`buildingProfiles` — charakter budynku (jeden na budynek, z seeda i id budynku): `chancePct` i `rollsAdd` zmieniają
+każdy schowek (splądrowany: prawie pusto), `extra` dokłada osobne losowanie tabeli `base:profile-*` do wskazanych
+mebli w wskazanych pomieszczeniach (chomik, majsterkowicz, myśliwy, wędkarz, pielęgniarka, pijak, działkowiec).
+Test `loot-profiles.test.ts` pilnuje `lootAccepts` dodatków (wyjątek: broń myśliwego w szafie). Skarby to rzadkie
+(`very_rare`) zagnieżdżone tabele `base:stash-*` (kilka rzeczy naraz). Pomieszczenia z własnym łupem: kościół
+`base:room-church`, hala `base:room-factory` (huta, zakład), remiza `base:room-fire-station`, aneks w biurze
+(`base:office-kitchenette` w `base:kitchen-cabinet`).
 Mebel z kilkoma schowkami: `compartments` (lodówka z zamrażarką `base:fridge-freezer` = część lodówkowa +
 `["base:freezer"]`); mapa stawia jeden obiekt, każda przegroda ma własną tabelę, `lootAccepts` i psucie.
 Piekarnik elektryczny `base:oven` ma `requiresPower`, kuchenka gazowa `base:gas-stove` nie.

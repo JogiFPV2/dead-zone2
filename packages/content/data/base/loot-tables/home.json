@@ -19,7 +19,11 @@
       },
       {
         "item": "base:t-shirt",
-        "weight": 5
+        "weight": 5,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:jeans",
@@ -31,7 +35,11 @@
       },
       {
         "item": "base:sheet",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:sewing-needle",
@@ -39,7 +47,11 @@
       },
       {
         "item": "base:thread",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:fanny-pack",
@@ -47,7 +59,11 @@
       },
       {
         "item": "base:battery",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:flashlight",
@@ -71,7 +87,11 @@
       },
       {
         "item": "base:pen",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:lighter",
@@ -79,7 +99,11 @@
       },
       {
         "item": "base:matches",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:radio",
@@ -88,11 +112,67 @@
       },
       {
         "item": "base:rag",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:gloves",
         "weight": 1
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 2
+      },
+      {
+        "item": "base:walkman",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:cassette-tape",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 2
+      },
+      {
+        "item": "base:comic",
+        "weight": 2
+      },
+      {
+        "item": "base:rubiks-cube",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:game-console",
+        "weight": 1,
+        "rarity": "very_rare"
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:candle",
+        "weight": 2
+      },
+      {
+        "item": "base:area-map",
+        "weight": 1
+      },
+      {
+        "table": "base:stash-electronics",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ],
     "buildingKey": 0.1
@@ -133,7 +213,11 @@
       },
       {
         "item": "base:metal-pipe",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:crowbar",
@@ -185,7 +269,11 @@
       },
       {
         "item": "base:brick",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:stone",
@@ -214,7 +302,11 @@
       },
       {
         "item": "base:duct-tape",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:wire",
@@ -262,7 +354,11 @@
       },
       {
         "item": "base:wooden-stick",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:gas-can",
@@ -313,7 +409,11 @@
       },
       {
         "item": "base:battery",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:camping-lantern",
@@ -331,19 +431,226 @@
       },
       {
         "item": "base:matches",
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:hoe",
+        "weight": 2
+      },
+      {
+        "item": "base:garden-rake",
+        "weight": 2
+      },
+      {
+        "item": "base:watering-can",
+        "weight": 3
+      },
+      {
+        "item": "base:bucket",
+        "weight": 3
+      },
+      {
+        "item": "base:seeds-carrot",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-cabbage",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-onion",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-tomato",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-cucumber",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-beans",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:seeds-strawberry",
+        "weight": 1,
+        "count": {
+          "min": 3,
+          "max": 10
+        }
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 2
+      },
+      {
+        "item": "base:tin-snips",
+        "weight": 2
+      },
+      {
+        "item": "base:pliers",
+        "weight": 3
+      },
+      {
+        "item": "base:hand-drill",
+        "weight": 2
+      },
+      {
+        "item": "base:chain",
+        "weight": 2
+      },
+      {
+        "item": "base:padlock",
+        "weight": 2
+      },
+      {
+        "item": "base:rope",
+        "weight": 3
+      },
+      {
+        "item": "base:glue",
+        "weight": 2
+      },
+      {
+        "item": "base:grease",
+        "weight": 3
+      },
+      {
+        "item": "base:cold-chisel",
+        "weight": 2
+      },
+      {
+        "item": "base:welding-rods",
+        "weight": 1,
+        "count": {
+          "min": 5,
+          "max": 20
+        },
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:barbed-wire",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:plywood",
+        "weight": 2
+      },
+      {
+        "item": "base:cement",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:sandbag",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:camping-stove",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:gas-cartridge",
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:tent",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:sleeping-mat",
         "weight": 1
       },
-      { "item": "base:hoe", "weight": 2 },
-      { "item": "base:garden-rake", "weight": 2 },
-      { "item": "base:watering-can", "weight": 3 },
-      { "item": "base:bucket", "weight": 3 },
-      { "item": "base:seeds-carrot", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-cabbage", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-onion", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-tomato", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-cucumber", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-beans", "weight": 1, "count": { "min": 3, "max": 10 } },
-      { "item": "base:seeds-strawberry", "weight": 1, "count": { "min": 3, "max": 10 } }
+      {
+        "item": "base:canteen",
+        "weight": 1
+      },
+      {
+        "item": "base:binoculars",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:compass",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:scythe",
+        "weight": 2,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:sickle",
+        "weight": 2
+      },
+      {
+        "item": "base:pitchfork",
+        "weight": 2
+      },
+      {
+        "item": "base:flare",
+        "weight": 1
+      },
+      {
+        "item": "base:lamp-oil",
+        "weight": 1
+      },
+      {
+        "item": "base:oil-lamp",
+        "weight": 1
+      },
+      {
+        "item": "base:water-jug",
+        "weight": 1
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 1
+      },
+      {
+        "table": "base:stash-tools",
+        "weight": 1,
+        "rarity": "very_rare"
+      }
     ]
   },
   {
@@ -362,7 +669,11 @@
       },
       {
         "item": "base:battery",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:radio",
@@ -391,6 +702,52 @@
       {
         "item": "base:lure-remote",
         "weight": 1
+      },
+      {
+        "item": "base:game-console",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:walkman",
+        "weight": 1
+      },
+      {
+        "item": "base:cassette-tape",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 3
+      },
+      {
+        "item": "base:comic",
+        "weight": 2
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 2
+      },
+      {
+        "item": "base:rubiks-cube",
+        "weight": 1
+      },
+      {
+        "item": "base:area-map",
+        "weight": 1
+      },
+      {
+        "item": "base:calculator",
+        "weight": 1
+      },
+      {
+        "table": "base:stash-electronics",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   }
