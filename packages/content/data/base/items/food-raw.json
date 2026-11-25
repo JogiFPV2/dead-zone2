@@ -79,5 +79,72 @@
       "spoilage": { "freshMin": 1440, "rottenMin": 2880 },
       "cooking": { "durationMin": 15, "cookedInto": "base:grilled-fish" }
     }
+  },
+  {
+    "id": "base:tomato",
+    "name": "item.base.tomato.name",
+    "kind": "food",
+    "weightKg": 0.15,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 25, "carbsG": 5, "proteinG": 1, "hunger": -4, "thirst": -3 },
+      "spoilage": { "freshMin": 8640, "rottenMin": 17280 },
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:cucumber",
+    "name": "item.base.cucumber.name",
+    "kind": "food",
+    "weightKg": 0.3,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 45, "carbsG": 10, "proteinG": 2, "hunger": -5, "thirst": -6 },
+      "spoilage": { "freshMin": 10080, "rottenMin": 20160 },
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:onion",
+    "name": "item.base.onion.name",
+    "kind": "food",
+    "weightKg": 0.15,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 40, "carbsG": 9, "proteinG": 1, "hunger": -3, "unhappiness": 3 },
+      "spoilage": { "freshMin": 40320, "rottenMin": 80640 },
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:green-beans",
+    "name": "item.base.green-beans.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:vegetable"],
+    "food": {
+      "nutrition": { "calories": 75, "carbsG": 17, "proteinG": 5, "hunger": -6 },
+      "spoilage": { "freshMin": 7200, "rottenMin": 14400 },
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:strawberry",
+    "name": "item.base.strawberry.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:fruit"],
+    "food": {
+      "nutrition": {
+        "calories": 80,
+        "carbsG": 19,
+        "proteinG": 2,
+        "hunger": -5,
+        "thirst": -4,
+        "unhappiness": -5
+      },
+      "spoilage": { "freshMin": 4320, "rottenMin": 8640 },
+      "eatMin": 0.5
+    }
   }
 ]

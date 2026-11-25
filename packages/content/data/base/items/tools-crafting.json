@@ -37,8 +37,9 @@
     "name": "item.base.cooking-pot.name",
     "kind": "tool",
     "weightKg": 1.1,
-    "tags": ["base:cookware", "base:cooking-pot"],
+    "tags": ["base:cookware", "base:cooking-pot", "base:water-vessel"],
     "tool": {},
+    "waterVessel": { "capacityL": 3 },
     "improvisedWeapon": {
       "damage": { "min": 5, "max": 9 },
       "rangeTiles": 0.8,

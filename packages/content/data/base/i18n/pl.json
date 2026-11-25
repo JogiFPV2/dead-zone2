@@ -257,6 +257,23 @@
     "base:antibiotics": "Antybiotyki",
     "base:vitamins": "Witaminy",
     "base:pen": "Długopis",
-    "base:cleaning-supplies": "Środki czystości"
+    "base:cleaning-supplies": "Środki czystości",
+    "base:hoe": "Motyka",
+    "base:garden-rake": "Grabie",
+    "base:watering-can": "Konewka",
+    "base:bucket": "Wiadro",
+    "base:glass": "Szklanka",
+    "base:seeds-carrot": "Nasiona marchwi",
+    "base:seeds-cabbage": "Nasiona kapusty",
+    "base:seeds-onion": "Nasiona cebuli",
+    "base:seeds-tomato": "Nasiona pomidora",
+    "base:seeds-cucumber": "Nasiona ogórka",
+    "base:seeds-beans": "Nasiona fasoli",
+    "base:seeds-strawberry": "Nasiona truskawki",
+    "base:tomato": "Pomidor",
+    "base:cucumber": "Ogórek",
+    "base:onion": "Cebula",
+    "base:green-beans": "Fasolka szparagowa",
+    "base:strawberry": "Truskawki"
   }
 }

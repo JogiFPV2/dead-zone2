@@ -24,6 +24,7 @@ import {
 } from './furniture-settings.js';
 import { LightingSettingsSchema } from './lighting-settings.js';
 import { WaterSettingsSchema } from './water-settings.js';
+import { FarmingSettingsSchema } from './farming-settings.js';
 
 /**
  * Ustawienia świata — pojedynczy obiekt z `world-settings.json` w korzeniu paczki i opcjonalnych
@@ -93,6 +94,8 @@ export const WorldSettingsSchema = z.strictObject({
   lighting: LightingSettingsSchema,
   /** Picie ze zbiornika i napełnianie butelek: ilość łyku, czas, butelki (Symulacja). */
   water: WaterSettingsSchema,
+  /** Uprawa: przekopywanie, sadzenie, podlewanie, wzrost i zbiór (Symulacja). */
+  farming: FarmingSettingsSchema,
   ext: ExtSchema,
 });
 

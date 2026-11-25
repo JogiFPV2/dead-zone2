@@ -25,7 +25,7 @@ import {
   type FurnitureView,
 } from './furniture-api.js';
 import type { FurnIcon } from './furniture-icons.js';
-import { waterTankLine } from './water-tank.js';
+import { plotLine, waterTankLine } from './water-tank.js';
 
 const TYPE_ICONS: [RegExp, FurnIcon][] = [
   [/fridge|freezer/, 'fridge'],
@@ -38,6 +38,7 @@ const TYPE_ICONS: [RegExp, FurnIcon][] = [
   [/window/, 'window'],
   [/light-switch|switch/, 'switch'],
   [/bath|sink|tap|shower|toilet/, 'water'],
+  [/^(plot|soil)$/, 'sprout'],
 ];
 
 const lookup = (t: Readonly<Record<string, string>>, k: string): string | undefined => t[k];
@@ -62,6 +63,9 @@ export const furnitureIcon = (typeId: string): FurnIcon =>
 
 const ACTION_ICONS: [RegExp, FurnIcon][] = [
   [/^stop|cancel/, 'stop'],
+  // Farming: dig with a tool, plant / harvest / clear a plot.
+  [/^dig$/, 'tool'],
+  [/^(plant|harvest|clear-plot)(:|$)/, 'sprout'],
   // Push / pull / rotate (protocol 38): away from / towards the player, the floor tile it turns on.
   [/^push$/, 'arrowUp'],
   [/^pull$/, 'arrowDown'],
@@ -333,11 +337,14 @@ export function furnitureMenuVM(
   }
   const p = ctx.player;
   return {
-    title: furnitureName(view.typeId, view.contentId),
+    title: view.plot?.harvest
+      ? `${furnitureName(view.typeId)}: ${craftItemName(view.plot.harvest)}`
+      : furnitureName(view.typeId, view.contentId),
     typeId: view.typeId,
     icon: furnitureIcon(view.contentId && view.typeId === 'other' ? view.contentId : view.typeId),
     ...(p ? { dist: metres(Math.hypot(view.x - p.x, view.y - p.y)) } : {}),
     ...(view.waterTank ? { tank: waterTankLine(view.waterTank) } : {}),
+    ...(view.plot ? { tank: plotLine(view.plot) } : {}),
     pills: menuPills(view, actions, ctx),
     rows,
   };
@@ -408,6 +415,7 @@ function menuPills(
   // An empty tank already says „Pusty zbiornik” on its rows; the pill is for taps with the mains cut.
   if (
     !view.waterTank &&
+    !view.plot &&
     (reasons.has('no-water') || (u && !u.water && !tankLeft && NEEDS_WATER.test(kind)))
   )
     pills.push({ icon: 'water', text: 'BRAK WODY', tone: 'bad' });

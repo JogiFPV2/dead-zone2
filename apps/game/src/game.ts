@@ -78,7 +78,13 @@ import { installSnowCover, setSnowCover, snowCoverNow } from './world/weather/sn
 import { genLampsOf } from './world/gen/gen-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
-import type { ActionView, CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
+import type {
+  ActionView,
+  CharacterView,
+  EquipSlot,
+  FarmPlotView,
+  ItemId,
+} from '@deadzone/protocol';
 import { SnapshotEntityKind, TARGET_MAX_TILES } from '@deadzone/protocol';
 import { SAVE_VERSION, TICK_MS } from '@deadzone/sim';
 import type { CloudPlay } from './account/cloud-play.js';
@@ -180,6 +186,7 @@ import { loadItemIcons } from './hud/item-icons.js';
 import { actionKey } from './hud/key-label.js';
 import { showDeathScreen } from './death/death-screen.js';
 import { GroundPiles } from './world/ground-piles.js';
+import { FarmPlots } from './world/farm-plots.js';
 import { ShelfFill } from './world/shelf-fill.js';
 import {
   CONTAINER_MODELS,
@@ -914,6 +921,12 @@ gameState.subscribe((_next, _prev, action) => {
   }
 });
 const stamper = new CommandStamper(PLAYER_ID);
+// Dev: send sim commands and read the game state from the console / headless screenshots.
+if (import.meta.env.DEV)
+  Object.assign(globalThis, {
+    __dzSend: (c: Parameters<typeof stamper.stamp>[0]) => sim.send(stamper.stamp(c)),
+    __dzState: () => gameState.get(),
+  });
 // Chunk streaming ↔ sim (docs/sim-architecture.md 9.24): the near ring around the camera target
 // is the sim's area of interest; `chunkChanged` rebuilds that chunk. Mock sim: neither.
 const simStreamSync = simWorker
@@ -1240,6 +1253,12 @@ const furniture = new FurnitureUi({
   },
   tickMs: TICK_MS,
 });
+// Dev: open the furniture menu at a sim point (headless screenshots of a menu).
+if (import.meta.env.DEV)
+  Object.assign(globalThis, {
+    __dzMenuAt: (x: number, y: number, z: number, sx: number, sy: number) =>
+      furniture.openAt(x, y, z, sx, sy),
+  });
 window.addEventListener(
   'keydown',
   (e) => {
@@ -1530,6 +1549,14 @@ input.on('reload', () => {
 });
 const groundPiles = new GroundPiles();
 worldRoot.add(groundPiles.root);
+const farmPlots = new FarmPlots();
+worldRoot.add(farmPlots.root);
+/** Dev: plots drawn instead of the sim's (`__dzFarmDemo(list)`, screenshots of every stage). */
+let farmDemo: readonly FarmPlotView[] | undefined;
+if (import.meta.env.DEV)
+  Object.assign(globalThis, {
+    __dzFarmDemo: (list: readonly FarmPlotView[] | undefined) => (farmDemo = list),
+  });
 const { mapObjects } = streaming;
 // Furniture pushed / pulled / turned (protocol 37): the model slides to its new tiles (the chunk
 // is not rebuilt for it, sim-sync.ts), the mover's body steps with it.
@@ -2573,6 +2600,7 @@ renderer.setAnimationLoop((time) => {
   carPoses = carList.map((c) => vehicleView.poseOf(c.stableId, nowMs) ?? c);
   vehicleView.update(nowMs, dt);
   groundPiles.update(gs.groundPiles, gs.nearby, time);
+  farmPlots.update(farmDemo ?? gs.farmPlots);
   mapObjects.update(gs.nearby, time);
   if (!inventory.open) loot.update();
   workshop.update();

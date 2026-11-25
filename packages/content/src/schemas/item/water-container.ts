@@ -9,3 +9,14 @@ export const WaterContainerSchema = z.strictObject({
 });
 
 export type WaterContainer = z.infer<typeof WaterContainerSchema>;
+
+/**
+ * Naczynie na wodę do podlewania (garnek, szklanka, konewka, wiadro): ile litrów mieści.
+ * Napełnia się przy kranie, prysznicu, wannie, zbiorniku albo w rzece / stawie (brudna woda);
+ * stan w przedmiocie (`waterL`, `waterDirty`). Nie służy do picia.
+ */
+export const WaterVesselSchema = z.strictObject({
+  capacityL: z.number().positive().max(50),
+});
+
+export type WaterVessel = z.infer<typeof WaterVesselSchema>;

@@ -18,6 +18,7 @@ import { lifecycleSystem } from '../systems/lifecycle.js';
 import { lodSystem } from '../lod/system.js';
 import { safeStartSystem } from '../lod/safe-start.js';
 import { utilitiesSystem } from '../items/utilities.js';
+import { farmingSystem } from '../farming/farming.js';
 import { playerMapSystem } from '../map/player-map.js';
 import { moodlesSystem } from '../systems/moodles.js';
 import { penaltiesSystem } from '../survival/penalties.js';
@@ -47,6 +48,10 @@ export const PIPELINE: readonly { name: string; run: (w: SimWorld, ctx: SystemCo
     { name: 'commands.apply', run: (w, ctx) => inputSystem(w, ctx.grid) },
     { name: 'clock', run: (w, ctx) => clockSystem(w, ctx.minutes) },
     { name: 'utilities', run: (w) => utilitiesSystem(w) },
+    {
+      name: 'farming',
+      run: (w, ctx) => farmingSystem(w, ctx.minutes.first, ctx.minutes.count, ctx.ambientC),
+    },
     { name: 'lod', run: (w, ctx) => lodSystem(w, ctx.grid) },
     { name: 'actions', run: (w) => actionsSystem(w) },
     { name: 'lures', run: (w, ctx) => lureSystem(w, ctx.grid) },

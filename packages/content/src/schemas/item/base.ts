@@ -11,7 +11,7 @@ import { ImprovisedWeaponSchema } from './improvised-weapon.js';
 import { MedicineSchema } from './medicine.js';
 import { WindowCoverSchema } from './window-cover.js';
 import { ThrowableSchema } from './throwable.js';
-import { WaterContainerSchema } from './water-container.js';
+import { WaterContainerSchema, WaterVesselSchema } from './water-container.js';
 
 /**
  * Pola wspólne dla wszystkich rodzajów przedmiotów.
@@ -41,6 +41,8 @@ export const itemBaseShape = {
   lootCategory: LootCategorySchema.optional(),
   /** Pojemnik na wodę (butelka): pojemność w litrach (`item/water-container.ts`). */
   waterContainer: WaterContainerSchema.optional(),
+  /** Naczynie na wodę do podlewania (`item/water-container.ts`). */
+  waterVessel: WaterVesselSchema.optional(),
   /** Lek na chorobę (`item/medicine.ts`); domyślne w `DEFAULT_MEDICINE_*`. */
   medicine: MedicineSchema.optional(),
   /** Można nim zasłonić okno (`item/window-cover.ts`); domyślne w `DEFAULT_WINDOW_COVER_*`. */

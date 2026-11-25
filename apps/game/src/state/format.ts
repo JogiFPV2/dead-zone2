@@ -39,6 +39,10 @@ export function describeEvent(e: SimEvent): string {
       return `learned ${e.recipe}`;
     case 'fished':
       return e.caught ? 'fished: caught' : 'fished: nothing';
+    case 'harvested':
+      return `harvested ${e.defId}×${e.count}`;
+    case 'plantDied':
+      return `plant ${e.crop} at ${e.x},${e.y} died (${e.reason})`;
     case 'traitChanged':
       return `trait ${e.trait} ${e.gained ? 'gained' : 'lost'}`;
     case 'shot':

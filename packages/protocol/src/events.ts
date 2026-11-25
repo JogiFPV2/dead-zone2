@@ -182,6 +182,17 @@ export type ActionKind =
   | 'fillWater'
   /** Fish with a rod at the water (`useItem` on a `base:fishing-rod`, protocol 51). */
   | 'fish'
+  /**
+   * Farming (protocol 53, docs 9.86): dig a plot with a hoe / rake / shovel in hand, plant,
+   * water from a vessel, harvest, clear a dead plant; fill a vessel at a tap / shower / bath /
+   * tank or at open water.
+   */
+  | 'dig'
+  | 'plant'
+  | 'waterPlot'
+  | 'harvest'
+  | 'clearPlot'
+  | 'fillVessel'
   /** Vehicles (`vehicles/actions.ts`): get into a seat (`enterVehicle`, 1.5 s). */
   | 'enterVehicle'
   /** Get out of the current seat (`exitVehicle`, 1 s). */
@@ -661,6 +672,18 @@ export type SimEvent =
   | { type: 'skillLevelUp'; tick: number; playerId: PlayerId; skill: string; level: number }
   /** A fishing session ended (`fish` action): a fish in the inventory or nothing (protocol 51). */
   | { type: 'fished'; tick: number; playerId: PlayerId; caught: boolean; defId?: string }
+  /** A plot harvested (`harvest`, protocol 53): `count` pieces of `defId` in the inventory. */
+  | { type: 'harvested'; tick: number; playerId: PlayerId; defId: string; count: number }
+  /** A plant on a plot died (`reason`: no water, frost / snow, end of the season; protocol 53). */
+  | {
+      type: 'plantDied';
+      tick: number;
+      x: number;
+      y: number;
+      z: number;
+      crop: string;
+      reason: 'dry' | 'frost' | 'season';
+    }
   /** A trait gained or lost during the game (`gainedWhen` / `lostWhen`, docs 9.83; protocol 51). */
   | {
       type: 'traitChanged';

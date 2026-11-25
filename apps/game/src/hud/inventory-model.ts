@@ -112,6 +112,10 @@ export function itemRow(
   if (it.uses !== undefined) sub.push(`Pozostało: ${it.uses}`);
   if (it.freshness) sub.push(FRESHNESS[it.freshness]);
   if (it.burnt) sub.push('Przypalone');
+  if (it.waterMaxL !== undefined)
+    sub.push(
+      `Woda ${String(it.waterL ?? 0).replace('.', ',')}/${String(it.waterMaxL).replace('.', ',')} l${it.waterDirty ? ' (brudna)' : ''}`,
+    );
   const equipped = (it.equipped?.length ?? 0) > 0;
   const context = equipped
     ? 'unequip'
