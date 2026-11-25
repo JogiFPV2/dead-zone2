@@ -144,7 +144,7 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
   // Clothing colours (only when there are any: older goldens stay valid).
   const tinted = iids.filter((id) => st.items.get(id)!.tint !== undefined);
   if (tinted.length > 0) {
-    h.u32(0x6e70_0006).u32(tinted.length);
+    h.u32(0x6e70_0007).u32(tinted.length);
     for (const id of tinted) h.u32(id).u32(hashString32(st.items.get(id)!.tint!.join(',')));
   }
   if (st.pumps.size > 0) {
@@ -152,6 +152,28 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
     for (const k of [...st.pumps.keys()].sort()) {
       for (const n of k.split(',')) h.u32(Number(n));
       h.f32(st.pumps.get(k)!);
+    }
+  }
+  // Water in vessels and dug plots (only when there are any: older goldens stay valid).
+  const vessels = iids.filter((id) => st.items.get(id)!.waterL !== undefined);
+  if (vessels.length > 0) {
+    h.u32(0x6e70_0006).u32(vessels.length);
+    for (const id of vessels) {
+      const it = st.items.get(id)!;
+      h.u32(id)
+        .f32(it.waterL!)
+        .u32(it.waterDirty ? 1 : 0);
+    }
+  }
+  if (st.farm && st.farm.size > 0) {
+    h.u32(0xfa20_0001).u32(st.farm.size);
+    for (const k of [...st.farm.keys()].sort()) {
+      const p = st.farm.get(k)!;
+      for (const n of k.split(',')) h.u32(Number(n) + 0x8000);
+      h.u32(p.crop ? hashString32(p.crop) : 0)
+        .f32(p.growth)
+        .u32(p.watered | 0)
+        .u32(p.dead ? 1 : 0);
     }
   }
   if (st.waterTanks && st.waterTanks.size > 0) {

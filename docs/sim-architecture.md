@@ -1833,3 +1833,14 @@ Potknięcie przy przeskoku (`tripped` + `fellDown`, jak dotąd) z szansą `physi
   przedmiocie w ekwipunku otwiera menu („Do lewej ręki”, „Do prawej ręki”, „Przypnij do paska”).
 - Testy: `combat/hands.test.ts`, `content/test/improvised-weapons.test.ts`,
   `apps/game hud-model.test.ts`, `touch-hud.test.ts` (multitouch).
+
+### 9.86 Uprawa (protokół 53)
+
+Decyzje Pawła (25.11): kopie się tylko na zewnątrz, na trawie i ziemi; motyka, grabie i łopata; 8 roślin; wzrost 3–7 dób gry; podlewanie raz na dobę, deszcz podlewa; mróz, śnieg i koniec sezonu zabijają.
+
+- Treść: `worldSettings.farming` (`world-settings/farming.json`, schemat `farming-settings.ts`): `digTag` (`base:tool-dig`: `base:hoe`, `base:garden-rake`, `base:shovel`), `soilFloors` (`base:grass`, `base:dirt`), czasy akcji (`digMin` 20, `plantMin` 5, `waterMin` 1, `harvestMin` 5, `clearMin` 5, `fillMin` 0,5), `waterPerPlotL` 0,25, `moistMin` 1440 / `wiltMin` 2880 / `dieMin` 5760 minut od podlania, `season` dni roku 91–304, `frostC` 0, `snowKill` 0,2, `yieldPerLevel` 0,25, XP, lista `crops { id, plant[], harvest, yield {min,max}, growDays }`. Pusta lista = uprawa wyłączona.
+- Naczynia: pole przedmiotu `waterVessel { capacityL }` (garnek 3 l, szklanka 0,25 l, konewka 5 l, wiadro 10 l). Stan w `ItemInstance.waterL` / `waterDirty` (woda waży 1 kg/l). Akcja `fillVessel`: w menu kranu, prysznica, wanny i zbiornika (`fill-vessel:<itemId>`, zbiornik daje tyle, ile ma) albo `useItem` przy wodzie w zasięgu wędkowania (brudna woda). Do picia nie służy.
+- Grządki: `ItemStore.farm` (`x,y,z` → `{ crop?, growth, watered, dead? }`), zapis i hash (tylko gdy są). Menu mebli (`farming/menu.ts`, id obiektu z `n = 15`): typ `soil` (`dig`, tylko z narzędziem w ręce i gdy kafel się nadaje) i `plot` (`plant:<itemId>`, `water:<itemId>`, `harvest`, `clear-plot`), `FurnitureView.plot`. Przy zagrożeniu menu ich nie pokazuje (PPM pcha).
+- Krok potoku `farming` (po `utilities`), co minutę gry: deszcz / burza ustawia `watered`, roślina rośnie tylko na wilgotnej ziemi, ginie po `dieMin` bez wody, od mrozu / śniegu i poza sezonem (`plantDied { reason }`). Zbiór: `int(min..max)` + premia z Rolnictwa, zdarzenie `harvested { defId, count }`.
+- Nasiona z owoców: receptury `base:extract-seeds-*` (pomidor, ogórek, fasolka, truskawki; nóż). Ziemniak sadzi się w całości.
+- Widok: `SimViewPatch.farmPlots` (grządki w promieniu `FARM_PLOT_VIEW_TILES` 40), klient rysuje je w `world/farm-plots.ts`.

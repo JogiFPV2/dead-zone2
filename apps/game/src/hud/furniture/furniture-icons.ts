@@ -40,6 +40,8 @@ export const FURN_ICONS = {
   warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>',
   arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
   arrowDown: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  sprout:
+    '<path d="M12 21v-9M5 21h14"/><path d="M12 12c0-4 3-6 7-6 0 4-3 6-7 6zM12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/>',
 } as const;
 
 export type FurnIcon = keyof typeof FURN_ICONS;

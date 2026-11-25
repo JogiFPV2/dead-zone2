@@ -1,3 +1,6 @@
+import { FARM_ACTIONS_PL, FARM_TYPES_PL } from './farm-labels.js';
+export { FURNITURE_REASON_DETAILS_PL } from './reason-details.js';
+
 /**
  * Polish texts of the furniture / edge context menu (`SimViewPatch.furnitureActions`): action
  * labels by action id, default reason texts by reason code and object type names. The sim fills
@@ -42,6 +45,7 @@ export const FURNITURE_ACTIONS_PL = {
   push: 'Pchnij',
   pull: 'Ciągnij',
   rotate: 'Obróć',
+  ...FARM_ACTIONS_PL,
 } as const satisfies Record<string, string>;
 
 export const FURNITURE_REASONS_PL = {
@@ -91,6 +95,7 @@ export const FURNITURE_TYPES_PL = {
   bath: 'Wanna',
   vcr: 'Magnetowid',
   other: 'Mebel',
+  ...FARM_TYPES_PL,
 } as const satisfies Record<string, string>;
 
 const lookup = (t: Readonly<Record<string, string>>, k: string): string | undefined => t[k];
@@ -112,9 +117,3 @@ export function furnitureReasonPl(reason: string): string {
 export function furnitureTypePl(typeId: string): string {
   return lookup(FURNITURE_TYPES_PL, typeId) ?? typeId;
 }
-
-/** Specific `reasonPl` for a generic reason code, e.g. „Wejdź przez okno” with `invalid-state`. */
-export const FURNITURE_REASON_DETAILS_PL = {
-  'window-closed': 'Okno zamknięte',
-  'window-boarded': 'Okno zabite deskami',
-} as const satisfies Record<string, string>;

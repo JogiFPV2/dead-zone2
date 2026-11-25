@@ -5,6 +5,7 @@ import type {
   CraftingView,
   SkillView,
   GroundPileView,
+  FarmPlotView,
   StorageMarkerView,
   ActionView,
   ClockView,
@@ -78,6 +79,8 @@ export interface GameState {
   nearby: readonly NearbyContainerView[];
   /** Ground piles within marker range (view.groundPiles). */
   groundPiles: readonly GroundPileView[];
+  /** Dug plots near the player (view.farmPlots, farming). */
+  farmPlots: readonly FarmPlotView[];
   /** World storage within marker range with fill 0..1 (view.storages; shelf props). */
   storages: readonly StorageMarkerView[];
   /** Current timed action; absent = none. */
@@ -131,6 +134,7 @@ export const INITIAL_GAME_STATE: GameState = {
   nearby: [],
   vehicles: [],
   groundPiles: [],
+  farmPlots: [],
   storages: [],
   skills: [],
   threat: 0,
@@ -216,6 +220,7 @@ function applyView(s: GameState, view: SimViewPatch, tick: number): GameState {
     ...(view.nearby ? { nearby: view.nearby } : {}),
     ...(view.vehicles ? { vehicles: view.vehicles } : {}),
     ...(view.groundPiles ? { groundPiles: view.groundPiles } : {}),
+    ...(view.farmPlots ? { farmPlots: view.farmPlots } : {}),
     ...(view.storages ? { storages: view.storages } : {}),
     ...(view.threat !== undefined ? { threat: view.threat } : {}),
     ...(view.weather ? { weather: view.weather } : {}),

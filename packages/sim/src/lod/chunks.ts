@@ -144,7 +144,7 @@ export function signature(st: ItemStore, list: readonly ItemContainer[]): number
       if (it.vehicle !== undefined) h.u32(0x6e70_0001).u32(it.vehicle);
       if (it.fuelL !== undefined) h.u32(0x6e70_0002).f32(it.fuelL);
       if (it.wear !== undefined) h.u32(0x6e70_0004).u32(it.wear);
-      if (it.tint !== undefined) h.u32(0x6e70_0006).u32(hashString32(it.tint.join(',')));
+      if (it.tint !== undefined) h.u32(0x6e70_0007).u32(hashString32(it.tint.join(',')));
       const inner = it.inner ? st.containers.get(it.inner) : undefined;
       if (inner) writeContainer(inner);
       else h.u32(0);

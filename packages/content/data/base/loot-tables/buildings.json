@@ -355,7 +355,18 @@
         "item": "base:mag-home-cooking",
         "weight": 1,
         "rarity": "uncommon"
-      }
+      },
+      { "item": "base:seeds-carrot", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-cabbage", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-onion", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-tomato", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-cucumber", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-beans", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:seeds-strawberry", "weight": 1, "count": { "min": 3, "max": 10 } },
+      { "item": "base:tomato", "weight": 3 },
+      { "item": "base:cucumber", "weight": 3 },
+      { "item": "base:onion", "weight": 3 },
+      { "item": "base:potato", "weight": 3 }
     ]
   },
   {

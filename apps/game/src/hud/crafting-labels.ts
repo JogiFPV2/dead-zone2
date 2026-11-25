@@ -8,6 +8,10 @@ import { itemLabel, skillName } from '../creator/creator-labels.js';
  */
 const RECIPES: Record<string, string> = {
   'base:saw-planks': 'Cięcie desek',
+  'base:extract-seeds-tomato': 'Nasiona z pomidora',
+  'base:extract-seeds-cucumber': 'Nasiona z ogórka',
+  'base:extract-seeds-beans': 'Nasiona z fasolki',
+  'base:extract-seeds-strawberry': 'Nasiona z truskawek',
   'base:wooden-crate': 'Skrzynia drewniana',
   'base:window-barricade': 'Barykada z desek',
   'base:craft-spear': 'Włócznia',

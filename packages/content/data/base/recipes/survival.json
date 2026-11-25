@@ -84,5 +84,49 @@
     "durationMin": 10,
     "results": [{ "item": "base:fishing-rod" }],
     "xp": [{ "skill": "base:fishing", "amount": 3 }]
+  },
+  {
+    "id": "base:extract-seeds-tomato",
+    "name": "recipe.base.extract-seeds-tomato.name",
+    "kind": "combine",
+    "category": "materials",
+    "ingredients": [{ "item": "base:tomato" }],
+    "tools": [{ "tag": "base:tool-knife" }],
+    "durationMin": 5,
+    "results": [{ "item": "base:seeds-tomato", "count": 4 }],
+    "xp": [{ "skill": "base:farming", "amount": 1 }]
+  },
+  {
+    "id": "base:extract-seeds-cucumber",
+    "name": "recipe.base.extract-seeds-cucumber.name",
+    "kind": "combine",
+    "category": "materials",
+    "ingredients": [{ "item": "base:cucumber" }],
+    "tools": [{ "tag": "base:tool-knife" }],
+    "durationMin": 5,
+    "results": [{ "item": "base:seeds-cucumber", "count": 4 }],
+    "xp": [{ "skill": "base:farming", "amount": 1 }]
+  },
+  {
+    "id": "base:extract-seeds-beans",
+    "name": "recipe.base.extract-seeds-beans.name",
+    "kind": "combine",
+    "category": "materials",
+    "ingredients": [{ "item": "base:green-beans" }],
+    "tools": [{ "tag": "base:tool-knife" }],
+    "durationMin": 5,
+    "results": [{ "item": "base:seeds-beans", "count": 3 }],
+    "xp": [{ "skill": "base:farming", "amount": 1 }]
+  },
+  {
+    "id": "base:extract-seeds-strawberry",
+    "name": "recipe.base.extract-seeds-strawberry.name",
+    "kind": "combine",
+    "category": "materials",
+    "ingredients": [{ "item": "base:strawberry" }],
+    "tools": [{ "tag": "base:tool-knife" }],
+    "durationMin": 5,
+    "results": [{ "item": "base:seeds-strawberry", "count": 3 }],
+    "xp": [{ "skill": "base:farming", "amount": 1 }]
   }
 ]

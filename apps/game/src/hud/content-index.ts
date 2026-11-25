@@ -313,11 +313,13 @@ export function buildHudContentIndex(files: readonly PackFile[]): HudContentInde
           ...(durabilityMax !== undefined ? { durabilityMax } : {}),
           ...(equipSlots.length ? { equipSlots } : {}),
           ...(isObj(i.clothing) ? { clothing: clothingOf(i.clothing) } : {}),
-          // Fishing rod: right click fishes at the water (sim `useItem` → `fish`).
+          // Fishing rod: right click fishes at the water (sim `useItem` → `fish`); a water
+          // vessel fills there (`fillVessel`, farming).
           ...(kind === 'food' ||
           kind === 'drink' ||
           kind === 'medical' ||
-          tags.includes('base:fishing-rod')
+          tags.includes('base:fishing-rod') ||
+          isObj(i.waterVessel)
             ? { usable: true }
             : {}),
           ...(isObj(i.medical) && Array.isArray(i.medical.effects)

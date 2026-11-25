@@ -60,6 +60,12 @@ export const ACTION_KINDS: readonly ActionKind[] = [
   'coverWindow',
   'uncoverWindow',
   'fish',
+  'dig',
+  'plant',
+  'waterPlot',
+  'harvest',
+  'clearPlot',
+  'fillVessel',
 ];
 export const actionKindIndex = (k: ActionKind): number => ACTION_KINDS.indexOf(k);
 export const MAX_QUEUED_ACTIONS = 8;

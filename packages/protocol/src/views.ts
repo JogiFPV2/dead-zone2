@@ -195,6 +195,10 @@ export interface ItemView {
   fuelMaxL?: number;
   /** Clothing colours (hex: primary, optional secondary); absent = the garment's own colour. */
   tint?: string[];
+  /** Water vessel (`item.waterVessel`, protocol 53): litres inside (0.01), capacity, dirty water. */
+  waterL?: number;
+  waterMaxL?: number;
+  waterDirty?: boolean;
   /**
    * Part of a `combine` recipe the player knows (carried items only): recipe ids and whether
    * one of them can be done right now (all parts, tools, skills at hand).
@@ -364,6 +368,8 @@ export interface StorageMarkerView {
 
 /** Radius (tiles) of `SimViewPatch.groundPiles`. */
 export const GROUND_PILE_MARKER_TILES = 24;
+/** Dug plots sent to the client (`SimViewPatch.farmPlots`) within this many tiles (protocol 53). */
+export const FARM_PLOT_VIEW_TILES = 40;
 
 export interface GroundPileView {
   id: ContainerId;
@@ -559,7 +565,28 @@ export interface FurnitureView {
    * litres left now (mains water + `refillFromMains` = always full), capacity and quality.
    */
   waterTank?: WaterTankView;
+  /** A dug plot (`typeId` `plot`, protocol 53): the crop and how it is doing. */
+  plot?: FarmPlotView;
   actions: FurnitureActionView[];
+}
+
+/**
+ * A dug plot (protocol 53, docs 9.86) at tile (`x`, `y`) on floor `z`. `stage`: 0 bare soil,
+ * 1 seed, 2 sprout, 3 young plant, 4 ripe (harvest). `water`: `wet` grows, `dry` waits for
+ * water, `wilted` needs water soon, `dead` = withered / frozen (clear it).
+ */
+export interface FarmPlotView {
+  x: number;
+  y: number;
+  z: number;
+  /** Crop id (`worldSettings.farming.crops[].id`); absent = bare soil. */
+  crop?: string;
+  /** Item the crop gives (`harvest`), for the name / icon. */
+  harvest?: string;
+  stage: 0 | 1 | 2 | 3 | 4;
+  /** Growth 0..1 (0.01). */
+  growth: number;
+  water: 'wet' | 'dry' | 'wilted' | 'dead';
 }
 
 export interface WaterTankView {
@@ -582,6 +609,8 @@ export interface SimViewPatch {
    * full list when it changes; opening still needs reach (`nearby`).
    */
   groundPiles?: GroundPileView[];
+  /** Dug plots within `FARM_PLOT_VIEW_TILES` of the player, full list when any changes (protocol 53). */
+  farmPlots?: FarmPlotView[];
   /**
    * World storage within `STORAGE_MARKER_TILES` of the player, full list when any changes (fill
    * after taking / putting, searched).

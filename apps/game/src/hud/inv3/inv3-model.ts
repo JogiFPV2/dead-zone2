@@ -114,6 +114,8 @@ const kindRank = (def: HudItemDef | undefined): number => {
 
 /** „Stan” of one item: durability, freshness, fill (drinks), uses, or none. */
 export function itemState(it: ItemView, def: HudItemDef | undefined): InvState | undefined {
+  // Water vessel (farming): litres inside.
+  if (it.waterMaxL !== undefined) return { kind: 'fill', value: it.waterL ?? 0, max: it.waterMaxL };
   if (it.condition !== undefined && def?.durabilityMax)
     return { kind: 'condition', value: it.condition, max: def.durabilityMax };
   if (it.freshness && def?.kind !== 'drink') return { kind: 'freshness', value: it.freshness };
@@ -181,6 +183,15 @@ export function tooltipV3(
         ? [{ label: 'Napełnij', value: 'dystrybutor · 1,5', unit: 'l/s' }]
         : [];
     return { ...base, stats: [...extra, ...base.stats, ...after], actions: TIP_ACTIONS };
+  }
+  if (it.waterMaxL !== undefined) {
+    const l = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
+    const water = {
+      label: it.waterDirty ? 'Woda (brudna)' : 'Woda',
+      value: `${l(it.waterL ?? 0)} / ${l(it.waterMaxL)}`,
+      unit: 'l',
+    };
+    return { ...base, stats: [water, ...base.stats], actions: TIP_ACTIONS };
   }
   if (!def?.ranged) return { ...base, actions: TIP_ACTIONS };
   const r = def.ranged;
