@@ -49,9 +49,9 @@ describe('mobile view store', () => {
     };
     expect(createMobileViewStore(bad, old).get('bigMapZoom')).toBe(0.5);
   });
-  it('touch zoom range 0.6–2.0; desktop unchanged 0.6–1.6', () => {
-    expect([TOUCH_ZOOM_LIMITS.min, TOUCH_ZOOM_LIMITS.max]).toEqual([0.6, 2]);
-    expect([DEFAULT_ZOOM_LIMITS.min, DEFAULT_ZOOM_LIMITS.max]).toEqual([0.6, 1.6]);
-    expect(clampTouchZoom(3)).toBe(2);
+  it('touch zoom range 0.6–6, same as desktop (close-up ~4 m, Paweł 25.11)', () => {
+    expect([TOUCH_ZOOM_LIMITS.min, TOUCH_ZOOM_LIMITS.max]).toEqual([0.6, 6]);
+    expect([DEFAULT_ZOOM_LIMITS.min, DEFAULT_ZOOM_LIMITS.max]).toEqual([0.6, 6]);
+    expect(clampTouchZoom(8)).toBe(6);
   });
 });
