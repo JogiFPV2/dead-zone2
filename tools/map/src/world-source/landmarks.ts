@@ -1,4 +1,4 @@
-import type { BuildingKind, OsmBuilding, OsmMap } from '../osm/types.js';
+import type { BuildingKind, BuildingType, OsmBuilding, OsmMap } from '../osm/types.js';
 
 /**
  * Landmarks of `?map=stw2` (Paweł 25.11: „charakterystyczne miejsca mają być rozpoznawalne”).
@@ -138,6 +138,11 @@ export interface BuildingFix {
   /** What the building is (for the reader). */
   note: string;
   kind?: BuildingKind;
+  /**
+   * Catalogue type: the renderer keeps the fixed skin of catalogue types (school, hospital…), so a
+   * building whose wall colour we set must not be one (`kostka` takes the colour).
+   */
+  type?: BuildingType;
   levels?: number;
   colour?: string;
   roofColour?: string;
@@ -147,6 +152,12 @@ export interface BuildingFix {
   /** Tall single storey (church nave): gets a tower when it is a church. */
   tall?: 1 | 0;
 }
+
+/**
+ * Plastered walls: the renderer tints the `plaster` skin with the building's wall colour; office
+ * and school walls keep a fixed skin, so a fix with `colour` needs this wall.
+ */
+const PLASTER = 'base:plaster-wall';
 
 /** Wooden log walls (St Florian, 1802, larch / pine logs, dark brown). */
 const LOG = '#6b4a32';
@@ -163,9 +174,55 @@ export const STW2_BUILDINGS: Readonly<Record<number, BuildingFix>> = {
     roofShape: 'gabled',
     tall: 0,
   },
-  // Dom Gościnny „Hutnik” (art déco, 1938–48): two storeys, flat roof on pillars (Wikipedia,
-  // szlak COP).
-  359173119: { note: 'Hotel Hutnik (art déco)', kind: 'office', levels: 2, roofShape: 'flat' },
+  // Hotel Hutnik (zdjęcie z Google Maps, 25.11): trzy kondygnacje, tynk w kolorze przybrudzonego
+  // różu, płaski dach z okapem, galeria na filarach wzdłuż frontu, neon HUTNIK na dachu.
+  359173119: {
+    note: 'Hotel Hutnik',
+    kind: 'office',
+    wall: PLASTER,
+    levels: 3,
+    colour: '#b7a0a2',
+    roofShape: 'flat',
+  },
+  // Dawna Dyrekcja HSW, dziś Urząd Miasta (Kwiatkowskiego 1; zdjęcie z Google Maps, 25.11):
+  // modernizm lat 30., trzy kondygnacje, jasnobrązowe płyty między pilastrami z ciemnej cegły
+  // klinkierowej, zegar na narożnym ryzalicie, płaski dach.
+  550251793: {
+    note: 'Urząd Miasta, dawna Dyrekcja HSW',
+    kind: 'office',
+    type: 'kostka',
+    wall: PLASTER,
+    levels: 3,
+    colour: '#a7805f',
+    roofShape: 'flat',
+  },
+  // MDK (zdjęcie z Google Maps, 25.11): jasnoszary tynk; bryła z STW2_SPLITS.
+  291332391: { note: 'Miejski Dom Kultury', type: 'kostka', wall: PLASTER, colour: '#e2dfd7' },
+  // MB Szkaplerznej (1898–1907, zdjęcie z Google Maps, 25.11): neogotyk z czerwonej cegły, jedna
+  // wieża w fasadzie z zegarem i ciemnym, ostrym hełmem.
+  291346795: {
+    note: 'Kościół MB Szkaplerznej',
+    wall: 'base:brick-wall',
+    colour: '#9a4b37',
+    roofColour: '#3b3836',
+  },
+  // Kapucyni (poł. XVIII w., zdjęcie z Google Maps, 25.11): biały tynk, barokowy szczyt fasady,
+  // bez wieży (tylko sygnaturka), klasztor obok tak samo biały, ciemny dach z lukarnami.
+  291349371: {
+    note: 'Kościół Zwiastowania Pańskiego (Kapucyni)',
+    wall: PLASTER,
+    colour: '#e9e5dc',
+    roofColour: '#3f4042',
+    tall: 0,
+  },
+  3869084: {
+    note: 'Klasztor Kapucynów',
+    wall: PLASTER,
+    kind: 'office',
+    levels: 2,
+    colour: '#e9e5dc',
+    roofColour: '#3f4042',
+  },
   // Relation 2732840: a plain building (building=yes, address only) taken for a church.
   2732840: { note: 'Budynek przy Siedlanowskiego 3', kind: 'shop' },
   // Former synagogue in Rozwadów (1910): a prayer house, not a house.
@@ -310,6 +367,7 @@ function fixBuilding(b: OsmBuilding): OsmBuilding {
 function fixWith(b: OsmBuilding, f: BuildingFix): OsmBuilding {
   const out: OsmBuilding = { ...b };
   if (f.kind) out.kind = f.kind;
+  if (f.type) out.type = f.type;
   if (f.levels) out.levels = f.levels;
   if (f.colour) out.colour = f.colour;
   if (f.roofColour) out.roofColour = f.roofColour;
