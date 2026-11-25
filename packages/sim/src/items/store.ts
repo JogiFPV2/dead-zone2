@@ -48,6 +48,10 @@ export interface ItemInstance {
   buildingId?: number;
   /** Burnt cooked food (`crafting.burn`, docs 9.52); absent = not burnt. */
   burnt?: true;
+  /** Water vessel (`waterVessel`, farming/vessels.ts): litres inside; absent = empty. */
+  waterL?: number;
+  /** The vessel's water is dirty (river, pond, tainted tank); absent = clean. */
+  waterDirty?: true;
 }
 
 /**
@@ -175,6 +179,10 @@ export interface ItemStore {
    * left, only tanks that are not full; undefined when none (older saves = all full).
    */
   waterTanks?: Map<string, number> | undefined;
+  /**
+   * Dug plots (farming/farming.ts): `x,y,z` → plot state; undefined when none (older saves).
+   */
+  farm?: Map<string, FarmPlot> | undefined;
   /** Mains power (fridges, TVs, stoves, pumps); goes off on `powerOffDay` (items/utilities.ts). */
   powered: boolean;
   /** Mains water (taps); goes off on `waterOffDay`. */
@@ -184,6 +192,18 @@ export interface ItemStore {
   waterOffDay: number;
   /** Bumped on any change (views and carry-load recompute). Not state. */
   version: number;
+}
+
+/** A dug plot (farming/farming.ts). Minutes are absolute game minutes. */
+export interface FarmPlot {
+  /** Crop id (`farming.crops[].id`); absent = bare soil. */
+  crop?: string;
+  /** Minutes grown so far (counted only while the soil is wet; f32). */
+  growth: number;
+  /** Last watering or rain (absolute game minute). */
+  watered: number;
+  /** Withered or frozen: no growth, harvest nothing, clear it. */
+  dead?: true;
 }
 
 export const tileKey = (x: number, y: number, z: number): string => `${x},${y},${z}`;
@@ -388,7 +408,8 @@ export function unequipEverywhere(st: ItemStore, itemId: number): void {
 
 /** Full weight of an item: stack × weight + contents (no bag reduction). */
 export function itemWeight(st: ItemStore, item: ItemInstance): number {
-  const w = defOf(st, item).weightKg * item.count;
+  // Water in a vessel weighs 1 kg per litre.
+  const w = defOf(st, item).weightKg * item.count + (item.waterL ?? 0);
   return item.inner ? w + containerWeight(st, item.inner) : w;
 }
 

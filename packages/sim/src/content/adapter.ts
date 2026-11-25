@@ -3,6 +3,7 @@ import type {
   CraftingSettings,
   LightingSettings,
   WaterSettings,
+  FarmingSettings,
 } from '@deadzone/content';
 
 /**
@@ -136,6 +137,8 @@ export interface ContentIndex {
   simLod: ContentBundle['worldSettings']['simLod'] | undefined;
   /** `worldSettings.water` (tank drink, bottle fill; optional for older bundles, docs 9.59). */
   water: WaterSettings | undefined;
+  /** `worldSettings.farming` (digging, planting, watering, harvest; absent = no farming). */
+  farming: FarmingSettings | undefined;
   /** `worldSettings.vehicles` (vehicle gameplay; optional for older bundles). */
   vehicles: ContentBundle['worldSettings']['vehicles'] | undefined;
   /** `worldSettings.utilities` (mains power / water shutoff; optional for older bundles). */
@@ -317,6 +320,7 @@ export function compileContent(content: SimContent): ContentIndex {
       .movement,
     simLod: (content.worldSettings as { simLod?: ContentBundle['worldSettings']['simLod'] }).simLod,
     water: (content.worldSettings as { water?: WaterSettings }).water,
+    farming: (content.worldSettings as unknown as { farming?: FarmingSettings }).farming,
     vehicles: (content.worldSettings as { vehicles?: ContentBundle['worldSettings']['vehicles'] })
       .vehicles,
     utilities: (

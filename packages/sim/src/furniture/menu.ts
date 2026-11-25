@@ -22,6 +22,14 @@ import { switchKeyOf } from '../ai/state.js';
 import { setCurtains, setLight } from './lighting.js';
 import { objectHasTag, waterAction } from '../survival/hygiene.js';
 import { tankOf, tankView, type Fixture } from './water.js';
+import {
+  farmActions,
+  farmEntryKind,
+  fillVesselActs,
+  PLOT_N,
+  type FarmAct,
+} from '../farming/menu.js';
+import { plotAt, plotView } from '../farming/farming.js';
 import { applyItemCommand } from '../items/commands.js';
 import { activeHandOf, canReach, containerInReach, playerItems } from '../items/inventory.js';
 import { searchSecMin } from '../items/search.js';
@@ -126,6 +134,13 @@ function timed(
     p.durationMin !== undefined ? { durationMin: Math.round(p.durationMin * 1000) / 1000 } : {};
   return entry(id, p.reason, { ...dur, ...extra }, () => startAction(w, eid, a));
 }
+
+/** A farming entry (farming/menu.ts) with the menu's labels. */
+const farmAct = (a: FarmAct): Act => {
+  const out: Act = { ...a, labelPl: a.labelPl ?? furnitureActionPl(a.id) };
+  if (a.reason && out.reasonPl === undefined) out.reasonPl = furnitureReasonPl(a.reason);
+  return out;
+};
 
 const header = (cmd: UseFurnitureCommand) => ({
   tick: cmd.tick,
@@ -461,6 +476,12 @@ function objectActions(
       water('bath', 'bath');
     }
   }
+  // Water vessels for watering plots (farming, protocol 53): at any tap, shower, bath or tank.
+  const mains =
+    isTap ||
+    (!!hy &&
+      (objectHasTag(w, obj.contentId, hy.showerTag) || objectHasTag(w, obj.contentId, hy.bathTag)));
+  if (tank || mains) out.push(...fillVesselActs(w, eid, fixture).map(farmAct));
   // Light switch: turns the powered lamps of its room on / off (docs 9.53).
   if (def && def.tags.includes(st.content.lighting.switchTag)) {
     typeId ??= 'light-switch';
@@ -601,6 +622,31 @@ function candidates(w: SimWorld, grid: TileGrid, eid: number): Candidate[] {
           build: (cmd) => {
             const acts = edgeActions(w, grid, eid, key, kind, cmd);
             return { furnitureId: key, typeId, x: c.x, y: c.y, z, actions: acts, acts };
+          },
+        });
+      }
+      // Dug plot / diggable soil (farming, protocol 53): one entry per tile.
+      const fk = farmEntryKind(w, eid, tx, ty, z);
+      if (fk) {
+        const id = objectFurnitureId(tx, ty, z, PLOT_N);
+        out.push({
+          id,
+          x: tx + 0.5,
+          y: ty + 0.5,
+          z,
+          build: () => {
+            const acts = farmActions(w, eid, tx, ty, z).map(farmAct);
+            const plot = plotAt(w, tx, ty, z);
+            return {
+              furnitureId: id,
+              typeId: fk,
+              x: tx + 0.5,
+              y: ty + 0.5,
+              z,
+              ...(plot ? { plot: plotView(w, `${tx},${ty},${z}`, plot) } : {}),
+              actions: acts,
+              acts,
+            };
           },
         });
       }

@@ -1,0 +1,112 @@
+{
+  "farming": {
+    "digTag": "base:tool-dig",
+    "soilFloors": ["base:grass", "base:dirt"],
+    "digMin": 20,
+    "plantMin": 5,
+    "waterMin": 1,
+    "harvestMin": 5,
+    "clearMin": 5,
+    "fillMin": 0.5,
+    "waterPerPlotL": 0.25,
+    "moistMin": 1440,
+    "wiltMin": 2880,
+    "dieMin": 5760,
+    "season": {
+      "fromDay": 91,
+      "toDay": 304
+    },
+    "frostC": 0,
+    "snowKill": 0.2,
+    "skill": "base:farming",
+    "yieldPerLevel": 0.25,
+    "xp": {
+      "dig": 1,
+      "plant": 1,
+      "water": 0.5,
+      "harvest": 5
+    },
+    "crops": [
+      {
+        "id": "potato",
+        "plant": ["base:potato"],
+        "harvest": "base:potato",
+        "yield": {
+          "min": 3,
+          "max": 6
+        },
+        "growDays": 6
+      },
+      {
+        "id": "carrot",
+        "plant": ["base:seeds-carrot"],
+        "harvest": "base:carrot",
+        "yield": {
+          "min": 3,
+          "max": 5
+        },
+        "growDays": 5
+      },
+      {
+        "id": "cabbage",
+        "plant": ["base:seeds-cabbage"],
+        "harvest": "base:cabbage",
+        "yield": {
+          "min": 1,
+          "max": 2
+        },
+        "growDays": 7
+      },
+      {
+        "id": "onion",
+        "plant": ["base:seeds-onion"],
+        "harvest": "base:onion",
+        "yield": {
+          "min": 2,
+          "max": 4
+        },
+        "growDays": 5
+      },
+      {
+        "id": "tomato",
+        "plant": ["base:seeds-tomato"],
+        "harvest": "base:tomato",
+        "yield": {
+          "min": 3,
+          "max": 6
+        },
+        "growDays": 6
+      },
+      {
+        "id": "cucumber",
+        "plant": ["base:seeds-cucumber"],
+        "harvest": "base:cucumber",
+        "yield": {
+          "min": 2,
+          "max": 4
+        },
+        "growDays": 4
+      },
+      {
+        "id": "beans",
+        "plant": ["base:seeds-beans"],
+        "harvest": "base:green-beans",
+        "yield": {
+          "min": 2,
+          "max": 4
+        },
+        "growDays": 4
+      },
+      {
+        "id": "strawberry",
+        "plant": ["base:seeds-strawberry"],
+        "harvest": "base:strawberry",
+        "yield": {
+          "min": 2,
+          "max": 4
+        },
+        "growDays": 3
+      }
+    ]
+  }
+}

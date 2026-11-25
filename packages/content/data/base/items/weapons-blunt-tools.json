@@ -96,7 +96,7 @@
     "name": "item.base.shovel.name",
     "kind": "weapon_melee",
     "weightKg": 2,
-    "tags": ["base:tool-shovel"],
+    "tags": ["base:tool-shovel", "base:tool-dig"],
     "melee": {
       "category": "blunt",
       "skill": "base:blunt",

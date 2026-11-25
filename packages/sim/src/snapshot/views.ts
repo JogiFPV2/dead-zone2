@@ -5,6 +5,7 @@ import { lightLevelAt, playerVisibility, stealthOf } from '../ai/light.js';
 import { sensedZombiesPatch, worldMapPatch } from '../map/player-map.js';
 import { targetView } from '../combat/target.js';
 import { furnitureActionsView } from '../furniture/menu.js';
+import { farmPlotViews } from '../farming/farming.js';
 import { furnitureMovesView } from '../physics/furniture.js';
 import type { TileGrid } from '../world/grid.js';
 import { vehicleStateViews } from '../vehicles/views.js';
@@ -208,6 +209,7 @@ export class ViewTracker {
   private readonly invContainers = new Map<number, string>();
   private openKey = '';
   private pilesKey = '';
+  private plotsKey = '';
   private storagesKey = '';
   private charactersKey = '';
   private storagesVersion = -1;
@@ -525,6 +527,15 @@ export class ViewTracker {
       if (pilesKey !== this.pilesKey) {
         this.pilesKey = pilesKey;
         patch.groundPiles = piles;
+      }
+    }
+    // Dug plots (protocol 53): twice a second (growth and water change slowly).
+    if (w.tick % 10 === 0 || this.plotsKey === '') {
+      const plots = farmPlotViews(w, eid);
+      const key = JSON.stringify(plots);
+      if (key !== this.plotsKey) {
+        if (this.plotsKey !== '' || plots.length > 0) patch.farmPlots = plots;
+        this.plotsKey = key;
       }
     }
     // Storage fill: on item changes, else twice a second (walking brings new ones into range).

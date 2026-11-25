@@ -128,6 +128,11 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
     v.fuelL = Math.round((item.fuelL ?? 0) * 10) / 10;
     v.fuelMaxL = fuel.canCapacityL;
   }
+  if (def.waterVessel) {
+    v.waterL = Math.round((item.waterL ?? 0) * 100) / 100;
+    v.waterMaxL = def.waterVessel.capacityL;
+    if (item.waterDirty) v.waterDirty = true;
+  }
   const slots: EquipSlot[] = [];
   for (const p of st.players.values()) {
     for (const [slot, other] of p.slots) if (other === id) slots.push(slot);

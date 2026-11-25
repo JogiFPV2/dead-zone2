@@ -263,6 +263,9 @@ export function applyItemCommand(
       if (kind === 'vhs') return startAction(w, eid, newAction('watch', { item: item.id }));
       if (defOf(st, item).tags.includes(FISHING_ROD_TAG))
         return startAction(w, eid, newAction('fish', { item: item.id }));
+      // Water vessel at open water: fill it (dirty water, farming/vessels.ts).
+      if (defOf(st, item).waterVessel)
+        return startAction(w, eid, newAction('fillVessel', { item: item.id }));
       if (kind === 'medical') {
         const def = defOf(st, item);
         // Pills against sickness (`reduce_sickness` only, docs 9.66): taken at once, no part.

@@ -24,6 +24,7 @@ export * from './survival/index.js';
 export * from './crafting-settings.js';
 export * from './lighting-settings.js';
 export * from './water-settings.js';
+export * from './farming-settings.js';
 export * from './water-poisoning.js';
 export * from './vision-settings.js';
 export * from './weather-settings.js';

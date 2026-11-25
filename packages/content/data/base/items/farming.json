@@ -1,0 +1,163 @@
+[
+  {
+    "id": "base:hoe",
+    "name": "item.base.hoe.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.5,
+    "tags": ["base:tool-dig"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 9,
+        "max": 15
+      },
+      "rangeTiles": 1.5,
+      "attacksPerSec": 0.85,
+      "staminaCost": 4.5,
+      "knockback": 0.6,
+      "maxTargets": 1,
+      "twoHanded": true,
+      "hitNoise": {
+        "radiusTiles": 5,
+        "volume": 0.45
+      },
+      "durability": {
+        "max": 70,
+        "lossChancePerUse": 0.1
+      }
+    }
+  },
+  {
+    "id": "base:garden-rake",
+    "name": "item.base.garden-rake.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.2,
+    "tags": ["base:tool-dig"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 6,
+        "max": 11
+      },
+      "rangeTiles": 1.6,
+      "attacksPerSec": 0.9,
+      "staminaCost": 4,
+      "knockback": 0.5,
+      "maxTargets": 1,
+      "twoHanded": true,
+      "hitNoise": {
+        "radiusTiles": 5,
+        "volume": 0.4
+      },
+      "durability": {
+        "max": 50,
+        "lossChancePerUse": 0.12
+      }
+    }
+  },
+  {
+    "id": "base:watering-can",
+    "name": "item.base.watering-can.name",
+    "kind": "misc",
+    "weightKg": 0.6,
+    "tags": ["base:water-vessel"],
+    "waterVessel": {
+      "capacityL": 5
+    },
+    "lootCategory": "tool"
+  },
+  {
+    "id": "base:bucket",
+    "name": "item.base.bucket.name",
+    "kind": "misc",
+    "weightKg": 0.9,
+    "tags": ["base:water-vessel"],
+    "waterVessel": {
+      "capacityL": 10
+    },
+    "lootCategory": "tool"
+  },
+  {
+    "id": "base:glass",
+    "name": "item.base.glass.name",
+    "kind": "misc",
+    "weightKg": 0.2,
+    "tags": ["base:water-vessel"],
+    "waterVessel": {
+      "capacityL": 0.25
+    },
+    "lootCategory": "cookware"
+  },
+  {
+    "id": "base:seeds-carrot",
+    "name": "item.base.seeds-carrot.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-cabbage",
+    "name": "item.base.seeds-cabbage.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-onion",
+    "name": "item.base.seeds-onion.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-tomato",
+    "name": "item.base.seeds-tomato.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-cucumber",
+    "name": "item.base.seeds-cucumber.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-beans",
+    "name": "item.base.seeds-beans.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:seeds-strawberry",
+    "name": "item.base.seeds-strawberry.name",
+    "kind": "misc",
+    "weightKg": 0.01,
+    "tags": ["base:seeds"],
+    "maxStack": 50,
+    "harmless": true,
+    "lootCategory": "household"
+  }
+]

@@ -81,6 +81,7 @@
       "max": 3
     },
     "entries": [
+      { "item": "base:glass", "weight": 4 },
       {
         "item": "base:kitchen-knife",
         "weight": 5
@@ -253,7 +254,12 @@
       {
         "item": "base:soda",
         "weight": 1
-      }
+      },
+      { "item": "base:tomato", "weight": 3 },
+      { "item": "base:cucumber", "weight": 3 },
+      { "item": "base:strawberry", "weight": 2 },
+      { "item": "base:green-beans", "weight": 1 },
+      { "item": "base:onion", "weight": 2 }
     ]
   },
   {

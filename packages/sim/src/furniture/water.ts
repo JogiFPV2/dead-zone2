@@ -65,7 +65,7 @@ const EPS = 1e-4;
 export type Fixture = [number, number, number, number];
 const keyOf = (f: Fixture): string => f.join(',');
 
-interface Tank {
+export interface Tank {
   capacityL: number;
   quality: 'clean' | 'tainted';
   refillFromMains: boolean;
@@ -86,7 +86,7 @@ export function tankLitres(w: SimWorld, f: Fixture, tank: Tank): number {
   return st.waterTanks?.get(keyOf(f)) ?? tank.capacityL;
 }
 
-function setTankLitres(w: SimWorld, f: Fixture, tank: Tank, litres: number): void {
+export function setTankLitres(w: SimWorld, f: Fixture, tank: Tank, litres: number): void {
   const st = w.items!;
   const k = keyOf(f);
   if (litres >= tank.capacityL - EPS || (tank.refillFromMains && st.water)) {
@@ -138,11 +138,15 @@ function inReach(
   return dx * dx + dy * dy <= r * r;
 }
 
-/** Water source of the fixture: its tank, or a tap on mains (unlimited while it runs). */
-function sourceOf(
+/**
+ * Water source of the fixture: its tank, or a tap on mains (unlimited while it runs). With
+ * `anyMains` a shower or bath also counts as a tap (filling a vessel, farming/vessels.ts).
+ */
+export function sourceOf(
   w: SimWorld,
   eid: number,
   a: ActionState,
+  anyMains = false,
 ): { litres: number; quality: 'clean' | 'tainted'; tank?: Tank } | CommandRejectReason {
   const st = w.items;
   const f = a.fixture;
@@ -155,8 +159,9 @@ function sourceOf(
     const litres = tankLitres(w, f, tank);
     return litres > EPS ? { litres, quality: tank.quality, tank } : 'no-water';
   }
-  const tap = w.survival?.content.survival.hygiene.tapTag;
-  if (!tap || !objectHasTag(w, obj.contentId, tap)) return 'no-station';
+  const hy = w.survival?.content.survival.hygiene;
+  const tags = hy ? (anyMains ? [hy.tapTag, hy.showerTag, hy.bathTag] : [hy.tapTag]) : [];
+  if (!tags.some((t) => objectHasTag(w, obj.contentId, t))) return 'no-station';
   return st.water ? { litres: Infinity, quality: 'clean' } : 'no-water';
 }
 
