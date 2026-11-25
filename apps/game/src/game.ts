@@ -1720,8 +1720,7 @@ if (import.meta.env.DEV && boot.wear?.length) {
         const i = toWear.findIndex((w) => w.itemId === it.def);
         const w = toWear[i];
         const slot = (w?.slot ?? hudContent.items.get(it.def)?.equipSlots?.[0]) as
-          | EquipSlot
-          | undefined;
+          EquipSlot | undefined;
         if (!w || it.equipped?.length || !slot) continue;
         toWear.splice(i, 1);
         sim.send(stamper.stamp({ type: 'equip', item: it.id, slot }));

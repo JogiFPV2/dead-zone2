@@ -4,7 +4,6 @@ import {
   HemisphereLight,
   OrthographicCamera,
   Scene,
-  SkinnedMesh,
   Vector3,
   WebGLRenderer,
 } from 'three';
@@ -100,6 +99,6 @@ for (const id of Object.keys(GARMENTS)) {
   renderer.render(scene, cam);
   out[id] = renderer.domElement.toDataURL('image/png');
   scene.remove(object);
-  (mesh as SkinnedMesh).geometry.dispose();
+  mesh.geometry.dispose();
 }
 (window as unknown as { __icons: Record<string, string> }).__icons = out;

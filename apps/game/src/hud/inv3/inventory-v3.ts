@@ -731,6 +731,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
     const name = div('dz-i3__nm');
     name.append(iconEl(r, 24), h('span', 'dz-i3__nm-t', r.name));
     if (r.hand) name.append(h('span', 'dz-i3__hand', r.hand));
+    if (r.worn) name.append(h('span', 'dz-i3__worn', 'ZAŁOŻONE'));
     if (r.combine) name.append(svgEl(linkIcon(11).outerHTML, 'dz-i3__cb'));
     row.append(
       chev,
@@ -755,6 +756,7 @@ export function createInventoryV3(opts: InventoryV3Options): InventoryWindow {
       t.append(dot);
     }
     if (r.hand) t.append(h('span', 'dz-i3__hand dz-i3__hand--tile', r.hand));
+    if (r.worn) t.append(h('span', 'dz-i3__worn dz-i3__worn--tile', 'Z'));
     if (r.combine) t.append(svgEl(linkIcon(11).outerHTML, 'dz-i3__cb dz-i3__cb--tile'));
     bindItem(t, side, r, true);
     return t;

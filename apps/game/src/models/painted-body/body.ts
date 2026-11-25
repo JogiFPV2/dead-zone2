@@ -713,7 +713,7 @@ function frozenBind(bp: BindPose): BindPose {
   return {
     root: bp.root,
     bones: bp.bones,
-    index: bp.index,
+    index: (b) => bp.index(b),
     at: (name) => {
       const v = at.get(name);
       if (!v) throw new Error(`no bone ${name}`);

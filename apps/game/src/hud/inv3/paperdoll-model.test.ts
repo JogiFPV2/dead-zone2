@@ -24,14 +24,14 @@ const defs: HudItemDef[] = [
     maxStack: 1,
     weightKg: 1,
     equipSlots: ['back'],
-  } as HudItemDef,
+  },
   {
     id: 'base:crowbar',
     kind: 'weapon_melee',
     maxStack: 1,
     weightKg: 1.6,
     equipSlots: ['hand_primary', 'hand_secondary'],
-  } as HudItemDef,
+  },
 ];
 const content: HudContentIndex = {
   ...EMPTY_HUD_CONTENT,

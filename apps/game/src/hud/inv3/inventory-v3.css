@@ -521,6 +521,19 @@
   color: #111417;
   font: 700 9px/13px var(--font-family-mono);
 }
+.dz-i3__worn {
+  padding: 0 3px;
+  border-radius: 2px;
+  border: 1px solid var(--acc-hi);
+  color: var(--acc-hi);
+  font: 700 8px/11px var(--font-family-mono);
+  letter-spacing: 0.04em;
+}
+.dz-i3__worn--tile {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+}
 .dz-i3__cb {
   display: inline-flex;
   color: var(--acc-hi);

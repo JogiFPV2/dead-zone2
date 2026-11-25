@@ -1,6 +1,6 @@
+import type { BufferGeometry } from 'three';
 import {
   BoxGeometry,
-  BufferGeometry,
   Color,
   CylinderGeometry,
   Float32BufferAttribute,
