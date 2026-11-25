@@ -174,6 +174,129 @@ export const STW2_BUILDINGS: Readonly<Record<number, BuildingFix>> = {
   359594171: { note: 'Pałac Lubomirskich (Muzeum Regionalne)', kind: 'office', levels: 2 },
 };
 
+/**
+ * A building drawn as two parts with their own fixes (OSM maps one outline, the real building has
+ * wings of different height). `cut`: a line through two outline corners (stw2 world metres);
+ * `left` / `right`: the parts on each side of the directed line (x0, y0) → (x1, y1).
+ */
+export interface BuildingSplit {
+  note: string;
+  cut: readonly [number, number, number, number];
+  left: BuildingFix;
+  right: BuildingFix;
+}
+
+export const STW2_SPLITS: Readonly<Record<number, BuildingSplit>> = {
+  // Miejski Dom Kultury (dawny ZDK Huty, 1952, proj. H. Szwemin-Pater): „bryła złożona z trzech
+  // części usytuowanych liniowo”, rzut odwróconego T; skrzydło frontowe trójkondygnacyjne (kasy,
+  // hol, westybul), za nim dwukondygnacyjna sala widowiskowa na 750 osób z zapleczem (G. Stojak,
+  // journals.ur.edu.pl, art. 8996). Front = szersze wschodnie skrzydło od placu (paved) przy
+  // 1 Sierpnia; cięcie przez wewnętrzne narożniki skrzydła.
+  291332391: {
+    note: 'Miejski Dom Kultury',
+    cut: [17027.0, 20628.8, 17040.0, 20655.1],
+    left: { note: 'MDK: sala widowiskowa i zaplecze', kind: 'gym', levels: 2 },
+    right: { note: 'MDK: skrzydło frontowe', kind: 'office', levels: 3 },
+  },
+};
+
+/** Id of the second part of a split building (above every OSM way id). */
+export const splitPartId = (id: number) => id * 10 + 1;
+/** Gid of the second part (above every tile gid). */
+export const splitPartGid = (gid: number) => 2_000_000 + gid;
+
+/** Tile ring coordinates (dm, `world = raw / 10 + 3072`). */
+const RAW = (w: number) => (w - 3072) * 10;
+
+/**
+ * Closed ring clipped to one side of a line (Sutherland–Hodgman on a half plane). `side` +1: left
+ * of the directed line. Returns the closed ring and the edge indexes lying on the cut.
+ */
+export function clipRing(
+  ring: readonly number[],
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  side: 1 | -1,
+): { ring: number[]; cutEdges: number[] } {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.hypot(dx, dy) || 1;
+  // Signed distance; corners within 5 units (0.5 m) of the line lie on it (OSM corners of a
+  // straight wall are rarely exactly collinear).
+  const f = (x: number, y: number) => {
+    const d = (side * (dx * (y - ay) - dy * (x - ax))) / len;
+    return Math.abs(d) < 5 ? 0 : d;
+  };
+  // `e`: the source edge (vertex i starts edge i; a crossing lies on edge i); `v`: a vertex.
+  const pts: { x: number; y: number; e: number; v: boolean }[] = [];
+  const n = ring.length / 2 - 1; // closed: last == first
+  for (let i = 0; i < n; i++) {
+    const px = ring[i * 2]!;
+    const py = ring[i * 2 + 1]!;
+    const qx = ring[i * 2 + 2]!;
+    const qy = ring[i * 2 + 3]!;
+    const fp = f(px, py);
+    const fq = f(qx, qy);
+    if (fp >= 0) pts.push({ x: px, y: py, e: i, v: true });
+    if (fp * fq < 0) {
+      const t = fp / (fp - fq);
+      pts.push({ x: px + (qx - px) * t, y: py + (qy - py) * t, e: i, v: false });
+    }
+  }
+  const out: number[] = [];
+  const cutEdges: number[] = [];
+  pts.forEach((p, k) => {
+    out.push(Math.round(p.x), Math.round(p.y));
+    const q = pts[(k + 1) % pts.length]!;
+    // Along the source outline: q ends p's edge (next vertex) or is a crossing on it.
+    const along = q.v ? q.e === (p.e + 1) % n : q.e === p.e;
+    if (!along) cutEdges.push(k);
+  });
+  if (pts.length) out.push(out[0]!, out[1]!);
+  return { ring: out, cutEdges };
+}
+
+function splitBuilding(b: OsmBuilding): OsmBuilding[] {
+  const sp = STW2_SPLITS[b.osmId ?? b.id];
+  if (!sp || b.rings.length !== 1) return [b];
+  const [x0, y0, x1, y1] = sp.cut.map(RAW) as [number, number, number, number];
+  const osmId = b.osmId ?? b.id;
+  // Outer `noWall` indexes do not survive the clip (MDK has none): both parts draw all walls.
+  const base: OsmBuilding = { ...b };
+  delete base.noWall;
+  const L = clipRing(b.rings[0]!, x0, y0, x1, y1, 1);
+  const R = clipRing(b.rings[0]!, x0, y0, x1, y1, -1);
+  // The shared wall belongs to the taller part (the lower one would leave a hole above its roof).
+  const lowerLeft = (sp.left.levels ?? b.levels) < (sp.right.levels ?? b.levels);
+  const part = (
+    f: BuildingFix,
+    c: { ring: number[]; cutEdges: number[] },
+    noWall: boolean,
+    extra: Partial<OsmBuilding>,
+  ) =>
+    fixWith(
+      {
+        ...base,
+        osmId,
+        rings: [c.ring],
+        ...(noWall && c.cutEdges.length ? { noWall: c.cutEdges } : {}),
+        ...extra,
+      },
+      f,
+    );
+  return [
+    // The taller part keeps the building's ids: it is the main part, whose look (palette type
+    // from its kind and floors) both parts wear; the lower one skips the shared wall.
+    part(lowerLeft ? sp.right : sp.left, lowerLeft ? R : L, false, {}),
+    part(lowerLeft ? sp.left : sp.right, lowerLeft ? L : R, true, {
+      id: splitPartId(b.id),
+      ...(b.gid !== undefined ? { gid: splitPartGid(b.gid) } : {}),
+    }),
+  ];
+}
+
 /** Building ids replaced by a mark (their OSM way is the mark's outline). */
 const MARK_WAYS: ReadonlySet<number> = new Set(
   STW2_MARKS.filter((k) => k.osm.startsWith('w')).map((k) => Number(k.osm.slice(1))),
@@ -181,7 +304,10 @@ const MARK_WAYS: ReadonlySet<number> = new Set(
 
 function fixBuilding(b: OsmBuilding): OsmBuilding {
   const f = STW2_BUILDINGS[b.osmId ?? b.id];
-  if (!f) return b;
+  return f ? fixWith(b, f) : b;
+}
+
+function fixWith(b: OsmBuilding, f: BuildingFix): OsmBuilding {
   const out: OsmBuilding = { ...b };
   if (f.kind) out.kind = f.kind;
   if (f.levels) out.levels = f.levels;
@@ -202,7 +328,10 @@ export function applyLandmarks(map: OsmMap, mapId: string | undefined): OsmMap {
   if (mapId !== 'stw2') return map;
   return {
     ...map,
-    buildings: map.buildings.filter((b) => !MARK_WAYS.has(b.osmId ?? b.id)).map(fixBuilding),
+    buildings: map.buildings
+      .filter((b) => !MARK_WAYS.has(b.osmId ?? b.id))
+      .flatMap(splitBuilding)
+      .map(fixBuilding),
   };
 }
 

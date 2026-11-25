@@ -347,7 +347,14 @@ export class PlanChunkGenerator {
     if (l === undefined) {
       const ib = this.ibs.get(gid);
       l = null;
-      if (ib) {
+      // A part of a split building (`landmarks.ts` STW2_SPLITS) wears the look of its main part.
+      const main =
+        ib && ib.b.osmId !== undefined && ib.b.osmId !== ib.b.id ? this.mainPart(ib) : undefined;
+      if (main) {
+        if (!this.ibs.has(main.gid)) this.ibs.set(main.gid, main);
+        this.lookOf(main.gid, main.b.levels);
+        l = this.looks.get(main.gid) ?? null;
+      } else if (ib) {
         const pairs = new Set<string>();
         const bb = ib.box;
         const N = NEIGHBOUR_M;
@@ -380,6 +387,15 @@ export class PlanChunkGenerator {
     const meta: Partial<GenBuildingMeta> & { pair?: string } = { ...l };
     delete meta.pair;
     return { ...meta, ...(h ? { heightM: h } : {}) };
+  }
+
+  /** The main part (id = OSM id) of a split building next to its part `ib`. */
+  private mainPart(ib: IBuilding): IBuilding | undefined {
+    for (const j of this.index.buildings.query(ib.box)) {
+      const o = this.index.buildings.items[j]!;
+      if (o.b.id === ib.b.osmId) return o;
+    }
+    return undefined;
   }
 
   /** Union of raw building fills on a raster (cars and trees keep off buildings). */
