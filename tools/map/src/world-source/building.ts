@@ -429,6 +429,7 @@ export function solveBuilding(
     fp,
     rnd: idHash(ib.b.id, 3),
     nextRoomId: 1,
+    ...(ib.b.wall ? { wall: ib.b.wall } : {}),
     doorScore: (x, y, side) => {
       const nx = side === 'e' ? x + 1 : side === 'w' ? x - 1 : x;
       const ny = side === 's' ? y + 1 : side === 'n' ? y - 1 : y;

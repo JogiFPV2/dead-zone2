@@ -56,9 +56,9 @@ import {
   type Skin,
 } from './modules.js';
 import { blokFacade, type BlokInfo } from './blok-facade.js';
-import { outlineRoof, pitchedRoof } from './roof.js';
+import { outlineRoof, pitchedRoof, type Footprint } from './roof.js';
 import { churchTower } from './church-tower.js';
-import { bldKind, bldV2 } from './bld-v2.js';
+import { bldKind, bldNoTower, bldV2 } from './bld-v2.js';
 import { railingGeometry, slabGeometry, stairsGeometry } from './levels.js';
 import { MapTiles } from './tiles.js';
 import { WindowPanes } from './window-panes.js';
@@ -117,6 +117,27 @@ export interface SharedTownBatch {
 }
 
 /** New shared batch on the kit material (empty; grows with the levels). */
+/** Tile bounding box (inclusive) of a flat [x, z, …] outline. */
+function outlineBox(o: readonly number[]): Footprint | undefined {
+  if (o.length < 6) return undefined;
+  let x0 = Infinity;
+  let z0 = Infinity;
+  let x1 = -Infinity;
+  let z1 = -Infinity;
+  for (let i = 0; i + 1 < o.length; i += 2) {
+    x0 = Math.min(x0, o[i]!);
+    x1 = Math.max(x1, o[i]!);
+    z0 = Math.min(z0, o[i + 1]!);
+    z1 = Math.max(z1, o[i + 1]!);
+  }
+  return {
+    x0: Math.floor(x0),
+    z0: Math.floor(z0),
+    x1: Math.max(Math.floor(x0), Math.ceil(x1) - 1),
+    z1: Math.max(Math.floor(z0), Math.ceil(z1) - 1),
+  };
+}
+
 export function sharedTownBatch(kit: TownKit, name: string): SharedTownBatch {
   const mesh = new BatchedMesh(64, 4096, 8192, kit.material);
   mesh.name = name;
@@ -374,11 +395,15 @@ export class TownStructures {
     if (bldV2()) {
       const towers = new Set<BuildingId>();
       for (const r of layout.roofs) {
-        if (towers.has(r.building) || bldKind(r.building) !== 'church') continue;
+        if (towers.has(r.building) || bldKind(r.building) !== 'church' || bldNoTower(r.building))
+          continue;
         towers.add(r.building);
         const o = this.opts.outlineOf?.(r.building);
         if (o && range.z !== o.floors - 1) continue;
-        const fp = this.opts.footprintOf?.(r.building) ?? r.footprint;
+        // Whole footprint: a non-rectangular (outlined) building has no `footprintOf`, and the
+        // part in this chunk (`r.footprint`) put one tower into every chunk it crosses.
+        const fp =
+          this.opts.footprintOf?.(r.building) ?? (o && outlineBox(o.outline)) ?? r.footprint;
         const mx = Math.floor((fp.x0 + fp.x1 + 1) / 2 / CHUNK_SIZE);
         const mz = Math.floor((fp.z0 + fp.z1 + 1) / 2 / CHUNK_SIZE);
         if (

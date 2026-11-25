@@ -68,6 +68,19 @@ export { columnFootprintIssues, type ColumnFootprintIssue } from './footprint-ch
 export { surfaceIssues } from '../footprint-check.js';
 export { chunkLamps, LAMP_SPACING, type GenLamp } from './lamps.js';
 export {
+  applyLandmarks,
+  chunkMarks,
+  ENGINE_HALF,
+  ENGINE_HALF_W,
+  markBlockers,
+  STW2_BUILDINGS,
+  STW2_MARKS,
+  type BuildingFix,
+  type GenMark,
+  type LandmarkMark,
+  type MarkKind,
+} from './landmarks.js';
+export {
   buildingLook,
   clampColour,
   ESTATE_CELL,

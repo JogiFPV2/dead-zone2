@@ -1,6 +1,7 @@
 import { CHUNK_SIZE } from '@deadzone/content';
 import type { OsmMap, OsmPlace } from '../osm/types.js';
 import { PlanChunkGenerator } from './generator.js';
+import { applyLandmarks } from './landmarks.js';
 import { GENERATOR_REV, type WorldPlanInput } from './plan.js';
 import {
   OSM_ROTATION_DEG,
@@ -418,7 +419,9 @@ export class OsmTiles {
     const file = this.files.get(key)!;
     p = this.fetchTile(file).then((m) => {
       const t0 = performance.now();
-      this.generator.index.addFeatures(straightenOsmMap(m, this.manifest.rotationDeg));
+      this.generator.index.addFeatures(
+        straightenOsmMap(applyLandmarks(m, this.manifest.id), this.manifest.rotationDeg),
+      );
       this.loaded.add(key);
       this.stats.tiles++;
       this.stats.ms += performance.now() - t0;

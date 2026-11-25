@@ -1,6 +1,7 @@
 import { pickSpecies, type TreeHabitat } from './tree-species.js';
 import { deckRailingEdge } from './deck-railing.js';
 import { chunkLamps, type GenLamp } from './lamps.js';
+import { chunkMarks, markBlockers, type GenMark } from './landmarks.js';
 import { clearingMask } from './clearing.js';
 import { coverZones } from './cover.js';
 import { chunkInfra, type GenInfra } from './infra.js';
@@ -175,6 +176,8 @@ export interface GenColumn {
   infra?: GenInfra;
   /** Street lamps (OSM `street_lamp` + evenly along carriageways; render only, world metres). */
   lamps?: GenLamp[];
+  /** Landmark structures (chimneys, water towers, silos, belfries, the Ty2 engine; world m). */
+  marks?: GenMark[];
 }
 
 export const VEHICLE_TYPE = 'base:sedan';
@@ -691,6 +694,8 @@ export class PlanChunkGenerator {
     if (infra) out.infra = infra;
     const lamps = chunkLamps(this.index, cx * C, cy * C, C);
     if (lamps.length) out.lamps = lamps;
+    const marks = chunkMarks(this.id, cx, cy, C);
+    if (marks.length) out.marks = marks;
     // Dense cover: scrub / hedges → bushes, woods → cover (open ground only).
     const cls = new Uint8Array(CT);
     let anyCover = false;
@@ -721,6 +726,7 @@ export class PlanChunkGenerator {
         }
       return true;
     });
+    feet.push(...markBlockers(marks, X0, Y0, C));
     if (feet.length) ground.blockers = feet;
     const roads = this.vectorRoads(X0, Y0);
     if (roads.length) out.roads = roads;

@@ -573,6 +573,25 @@ if (genWorld && !stressWorld) {
     })
     .catch((e: unknown) => console.error('Infra models failed to load', e));
 }
+// stw2 landmarks: chimneys, water towers, silos, belfries, the Ty2 engine (procedural models).
+if (genWorld && !stressWorld) {
+  void import('./world/landmarks/mark-layer.js')
+    .then(({ MarkLayer }) => {
+      const layer = new MarkLayer();
+      worldRoot.add(layer.root);
+      const loaded = streaming.streamer.loaded;
+      streaming.lod.addNearLayer({
+        loadChunk: (cx, cy, z) => {
+          if (z === 0) layer.loadChunk(cx, cy, loaded.column(cx, cy)?.marks);
+          return { bytes: 0, triangles: 0 };
+        },
+        unloadChunk: (cx, cy, z) => {
+          if (z === 0) layer.unloadChunk(cx, cy);
+        },
+      });
+    })
+    .catch((e: unknown) => console.error('Landmark models failed to load', e));
+}
 // Realistic style: Designer's blocks, houses, bin shelters and bushes per near chunk (one
 // InstancedMesh per model); shelled buildings hide their kit pieces until the cutaway opens them.
 const realMap = realStyle && townKit && !stressWorld ? realStyle.mapLayer() : undefined;
