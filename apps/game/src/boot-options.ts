@@ -46,6 +46,8 @@ export interface BootOptions {
   weather?: WeatherKind | 'auto' | 'off';
   /** Dev `?give=base:kitchen-knife,base:canned-beans*3`: items put into the inventory at start. */
   give: { itemId: string; count: number }[];
+  /** Dev `?wear=base:jacket,base:jeans`: items given and put on at start (clothes, bags). */
+  wear?: string[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
   stats: { stat: DebugStat; value: number }[];
   /** Dev `?wound=forearm_l:laceration,hand_r:scratch`: wounds at start (character window). */
@@ -216,6 +218,7 @@ export function parseBootOptions(search: string, storedStyle?: RenderStyle): Boo
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
     ...(isWeatherParam(q.get('weather')) ? { weather: q.get('weather') as WeatherKind } : {}),
     give: parseGiveParam(q.get('give')),
+    ...(q.get('wear') ? { wear: parseGiveParam(q.get('wear')).map((g) => g.itemId) } : {}),
     cars: parseCarParam(q.get('car')),
     pumps: parseTileListParam(q.get('pump')),
     ...(q.get('tv') !== null ? { tvs: parseTileListParam(q.get('tv')) } : {}),

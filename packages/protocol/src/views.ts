@@ -193,6 +193,8 @@ export interface ItemView {
   /** Gas can (`worldSettings.vehicles.fuel.canItem`): litres inside (0.1) and the capacity. */
   fuelL?: number;
   fuelMaxL?: number;
+  /** Clothing colours (hex: primary, optional secondary); absent = the garment's own colour. */
+  tint?: string[];
   /**
    * Part of a `combine` recipe the player knows (carried items only): recipe ids and whether
    * one of them can be done right now (all parts, tools, skills at hand).

@@ -5,9 +5,9 @@ import type { HashWriter } from '../core/hash.js';
 import { hashString32 } from '../core/rng.js';
 import type { SimWorld } from '../core/world.js';
 import { addPieces } from '../items/actions.js';
-import { playerItems, stableIdOf } from '../items/inventory.js';
+import { equip, playerItems, stableIdOf } from '../items/inventory.js';
 import { resetPlayerMap } from '../map/player-map.js';
-import type { ItemStore } from '../items/store.js';
+import { createItem, type ItemStore, type PlayerItems } from '../items/store.js';
 import { learnRecipe, progressOf, SKILL_MAX } from '../progress/skills.js';
 import { refreshModifiers } from '../systems/moodles.js';
 
@@ -186,6 +186,7 @@ export function applyCharacter(w: SimWorld, eid: number, ch: CharacterState): vo
       const def = c.itemIndex.get(it.item);
       if (def !== undefined) addPieces(st, def, p.inventory, it.count, minute);
     }
+    dressFromAppearance(st, p, ch, minute);
   }
   if (w.survival) refreshModifiers(w, w.survival, eid);
   st.version++;
@@ -195,6 +196,35 @@ export function applyCharacter(w: SimWorld, eid: number, ch: CharacterState): vo
     playerId: w.c.Player.id[eid] ?? 0,
     character: ch,
   });
+}
+
+/**
+ * Puts on the clothes chosen in the creator (Paweł 25.11): each appearance part with an `item`
+ * becomes that clothing item, worn in its slot, in the creator's colours.
+ */
+function dressFromAppearance(
+  st: ItemStore,
+  p: PlayerItems,
+  ch: CharacterState,
+  minute: number,
+): void {
+  const c = st.content;
+  for (const slot of Object.keys(ch.appearance.parts).sort()) {
+    const choice = ch.appearance.parts[slot]!;
+    const part = c.appearanceParts.get(choice.part);
+    const def = part?.item === undefined ? undefined : c.itemIndex.get(part.item);
+    const d = def === undefined ? undefined : c.items[def];
+    if (!part || def === undefined || d?.kind !== 'clothing') continue;
+    const item = createItem(st, def, p.inventory, 1, minute);
+    const tint: string[] = [];
+    for (const t of part.tints) {
+      const id = choice.colors[t.channel];
+      const hex = c.palettes.get(t.palette)?.colors.find((x) => x.id === id)?.hex;
+      if (hex !== undefined) tint[t.channel === 'primary' ? 0 : 1] = hex;
+    }
+    if (tint[0] !== undefined) item.tint = tint[1] === undefined ? [tint[0]] : [tint[0], tint[1]];
+    equip(st, p, item, d.clothing.slot);
+  }
 }
 
 /** `newCharacter`: once per player. Returns a reject reason and detail (first problem). */

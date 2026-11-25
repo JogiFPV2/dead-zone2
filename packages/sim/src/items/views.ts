@@ -120,6 +120,7 @@ function itemView(st: ItemStore, id: number, minute: number, marks?: Marks): Ite
   }
   if (item.inner) v.container = item.inner;
   if (item.burnt) v.burnt = true;
+  if (item.tint) v.tint = [...item.tint];
   if (item.buildingId !== undefined) v.buildingId = item.buildingId;
   if (item.placed) v.placed = true;
   if (item.vehicle !== undefined) v.vehicle = item.vehicle;

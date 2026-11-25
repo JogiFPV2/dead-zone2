@@ -18,8 +18,32 @@ export interface BodySpec {
   top: string;
   topTrim: string;
   sleeve: number;
-  /** Jacket over a shirt of colour `under` (zip, collar); `long` = a coat to the knees. */
-  jacket?: { under: string; long?: boolean };
+  /**
+   * Jacket over a shirt of colour `under` (zip, collar); `long` = a coat to the knees;
+   * `sleeveless` = a vest: the sleeves are the shirt's (`under`, `sleeve` long).
+   */
+  jacket?: { under: string; long?: boolean; sleeveless?: boolean };
+  /**
+   * Cut of the upper garment (without a jacket): `shirt` collar, placket and breast pockets (the
+   * default), `tee` crew neck, `tank` undershirt, `pullover` rib collar (sweater, hoodie).
+   */
+  topCut?: 'shirt' | 'tee' | 'tank' | 'pullover';
+  /** Hood on the back of the neck (hoodie). */
+  hood?: boolean;
+  /** Trouser length: 1 to the ankle (default), ~0.5 shorts to the knee, ~0.1 briefs; skin below. */
+  legLength?: number;
+  /** Shoe shaft above the ankle (m): boots, wellies; 0 / absent = low shoes. */
+  boot?: number;
+  /** No shoes: bare feet. */
+  barefoot?: boolean;
+  /** Gloves colour (hands and wrists); absent = bare hands. */
+  gloves?: string;
+  /** Worn on the head. */
+  hat?: { kind: 'beanie' | 'cap' | 'hardhat'; color: string };
+  /** Glasses (frame colour). */
+  glasses?: string;
+  /** Mask over the mouth and nose (colour). */
+  mask?: string;
   /** Tie (office shirt). */
   tie?: string;
   trousers: string;
@@ -95,6 +119,9 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
   const beltY = hipsY + 0.07;
   const hemY = spec.jacket ? beltY - 0.1 : beltY + 0.015;
   const upper = spec.jacket ? under : top;
+  const cut = spec.topCut ?? 'shirt';
+  const legLen = Math.min(1, Math.max(0.06, spec.legLength ?? 1));
+  const hands = spec.gloves ? col(spec.gloves) : skin;
   // Trousers seat to belt, belt band, shirt / jacket up to the shoulders.
   mb.loft(
     [
@@ -181,6 +208,37 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
         one('Chest'),
       );
     }
+  } else if (cut === 'tee' || cut === 'tank' || cut === 'pullover') {
+    // Crew neck / rib collar band (no placket); the undershirt has a deep neck.
+    const neck = cut === 'tank' ? 0.07 : 0.035;
+    mb.loft(
+      [
+        torso(neckY - neck - 0.012, cut === 'tank' ? 0.1 : 0.074, 0.064, trim),
+        torso(neckY - neck + 0.006, cut === 'tank' ? 0.095 : 0.07, 0.06, trim),
+      ],
+      16,
+    );
+    if (spec.hood) {
+      // Hood lying on the back of the neck and shoulders.
+      mb.loft(
+        [
+          { ...torso(neckY - 0.06, 0.13, 0.03, top), c: v3(0, neckY - 0.06, cz - 0.085 * k) },
+          { ...torso(neckY + 0.0, 0.11, 0.035, top), c: v3(0, neckY, cz - 0.09 * k) },
+          { ...torso(neckY + 0.04, 0.07, 0.025, top), c: v3(0, neckY + 0.04, cz - 0.08 * k) },
+        ],
+        14,
+        true,
+        true,
+      );
+      // Kangaroo pocket.
+      mb.box(
+        v3(0, at('Abdomen').y + 0.03, cz + 0.104 * k),
+        [X, Y, Z],
+        [0.075, 0.045, 0.006],
+        trim,
+        one('Abdomen'),
+      );
+    }
   } else {
     if (spec.tie)
       mb.box(
@@ -207,8 +265,8 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
       one('Chest'),
     );
   }
-  // Breast pockets with flaps.
-  for (const s of [-1, 1]) {
+  // Breast pockets with flaps (shirts and jackets).
+  for (const s of spec.jacket || cut === 'shirt' ? [-1, 1] : []) {
     const c = v3(s * 0.1 * k, chestY - 0.03, cz + 0.11 * k + (spec.jacket ? 0.016 : 0.004));
     mb.box(c, [X, Y, Z], [0.034, 0.04, 0.005], trim, one('Chest'));
     mb.box(c.clone().setY(c.y + 0.036), [X, Y, Z], [0.037, 0.01, 0.008], trim, one('Chest'));
@@ -327,6 +385,80 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
     one('Head'),
   );
 
+  // ---- Worn on the head: hat, glasses, mask.
+  if (spec.hat) {
+    const hc = col(spec.hat.color);
+    const r = (dy: number, a: number, b: number): Ring => head(dy, a, b, 0, hc);
+    if (spec.hat.kind === 'beanie')
+      mb.loft(
+        [
+          r(0.105, 0.085, 0.093),
+          r(0.135, 0.087, 0.095),
+          r(0.14, 0.083, 0.091),
+          r(0.19, 0.08, 0.088),
+          r(0.228, 0.06, 0.068),
+          r(0.25, 0.028, 0.034),
+        ],
+        16,
+        true,
+        true,
+      );
+    else {
+      const hard = spec.hat.kind === 'hardhat';
+      const g = hard ? 0.01 : 0;
+      mb.loft(
+        [
+          r(0.125, 0.083 + g, 0.091 + g),
+          r(0.18, 0.08 + g, 0.088 + g),
+          r(0.222, 0.06 + g, 0.067 + g),
+          r(0.245 + g, 0.03, 0.035),
+        ],
+        16,
+        true,
+        true,
+      );
+      if (hard)
+        // Brim all round.
+        mb.loft([r(0.118, 0.112, 0.12), r(0.13, 0.112, 0.12)], 16, true, true);
+      // Peak forward.
+      mb.box(
+        v3(0, headY + (hard ? 0.124 : 0.13), hz + 0.005 + (hard ? 0.115 : 0.125)),
+        [X, Y, Z],
+        [hard ? 0.06 : 0.07, 0.005, hard ? 0.03 : 0.05],
+        hc,
+        one('Head'),
+      );
+    }
+  }
+  if (spec.glasses) {
+    const gc = col(spec.glasses);
+    for (const s of [-1, 1]) {
+      mb.box(
+        v3(s * 0.033, headY + 0.1, fz + 0.006),
+        [X, Y, Z],
+        [0.022, 0.015, 0.003],
+        gc,
+        one('Head'),
+      );
+      mb.box(
+        v3(s * 0.08, headY + 0.105, hz + 0.04),
+        [X, Y, Z],
+        [0.003, 0.004, 0.05],
+        gc,
+        one('Head'),
+      );
+    }
+    mb.box(v3(0, headY + 0.104, fz + 0.008), [X, Y, Z], [0.012, 0.003, 0.003], gc, one('Head'));
+  }
+  if (spec.mask)
+    mb.box(
+      v3(0, headY + 0.058, fz + 0.006),
+      [X, Y, Z],
+      [0.052, 0.034, 0.012],
+      col(spec.mask),
+      one('Head'),
+    );
+
   // ---- Arms (T-pose along ±x): shoulder cap, sleeve to `sleeve`, skin below, hands.
   for (const s of [-1, 1] as const) {
     const side = s > 0 ? 'L' : 'R';
@@ -354,41 +486,46 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
       return { c, u, a: r(t) + grow, v, b: r(t) * 0.9 + grow, w: armW(t), color: stain(color, c) };
     };
     const sl = Math.max(0.12, Math.min(1, spec.sleeve));
+    // A vest's sleeves are the shirt under it.
+    const sleeveCol = spec.jacket?.sleeveless ? under : top;
     const torn = spec.zombie ? 0.03 * (hash(s, spec.zombie.seed, 3) - 0.5) : 0;
     const rings: Ring[] = [
       {
-        ...ring(0, top, 0.002),
+        ...ring(0, sleeveCol, 0.002),
         c: sh
           .clone()
           .addScaledVector(ax, -0.05)
           .setY(sh.y - 0.025),
       },
-      ring(0, top, 0.01),
-      ring(Math.min(0.3, sl * 0.5), top, 0.008),
+      ring(0, sleeveCol, 0.01),
+      ring(Math.min(0.3, sl * 0.5), sleeveCol, 0.008),
     ];
-    if (sl > 0.55) rings.push(ring(0.5, top, 0.008));
-    rings.push(ring(sl + torn - 0.03, top, 0.01), ring(sl + torn, top, 0.012));
+    if (sl > 0.55) rings.push(ring(0.5, sleeveCol, 0.008));
+    rings.push(ring(sl + torn - 0.03, sleeveCol, 0.01), ring(sl + torn, sleeveCol, 0.012));
     // Cuff edge back to skin.
     rings.push(ring(sl + torn, skin), ring(Math.min(1, sl + torn + 0.02), skin));
     if (sl + torn < 0.5) rings.push(ring(0.5, skin));
-    rings.push(ring(0.97, skin), ring(1, skin));
+    if (spec.gloves && sl + torn < 0.9)
+      rings.push(ring(0.9, skin), ring(0.9, hands, 0.006), ring(0.97, hands, 0.004));
+    else rings.push(ring(0.97, skin));
+    rings.push(ring(1, hands));
     mb.loft(rings, 12, true, false);
     // Hand: palm block and finger block (bends with the middle finger), thumb.
     const hw: Weights = one(`Wrist${side}`);
     const palm = wr.clone().addScaledVector(ax, 0.045);
-    mb.box(palm, [ax, Y, Z], [0.05, 0.02, 0.048], skin, hw);
+    mb.box(palm, [ax, Y, Z], [0.05, 0.02, 0.048], hands, hw);
     mb.box(
       wr.clone().addScaledVector(ax, 0.12),
       [ax, Y, Z],
       [0.042, 0.017, 0.045],
-      skin,
+      hands,
       mix(`Wrist${side}`, `Middle2${side}`, 0.7),
     );
     mb.box(
       wr.clone().addScaledVector(ax, 0.05).addScaledVector(Z, 0.05),
       [ax, Y, Z],
       [0.03, 0.013, 0.014],
-      skin,
+      hands,
       mix(`Wrist${side}`, `Thumb2${side}`, 0.6),
     );
   }
@@ -429,36 +566,72 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
         color: stain(color, c),
       };
     };
-    mb.loft(
-      [
-        {
-          ...ring(0, trousers, 0.004),
-          c: hip
-            .clone()
-            .setY(hip.y + 0.04)
-            .setX(hip.x * 0.7),
-        },
-        ring(0.05, trousers, 0.004),
-        ring(0.25, trousers, 0.003),
-        ring(0.5, trousers, 0.004),
-        ring(0.75, trousers, 0.006),
-        ring(0.93, trousers, 0.01),
-        ring(0.93, trousers, 0.016),
-        ring(0.99, trousers, 0.016),
-        ring(0.99, trousers, 0.004),
-      ],
-      14,
-      false,
-      true,
-    );
-    // Side thigh pockets (cargo).
-    mb.box(
-      along(0.3).addScaledVector(X, s * (r(0.3) + 0.003)),
-      [X, Y, Z],
-      [0.004, 0.05, 0.04],
-      trousers.clone().multiplyScalar(0.85),
-      one(`UpperLeg${side}`),
-    );
+    const top0: Ring = {
+      ...ring(0, trousers, 0.004),
+      c: hip
+        .clone()
+        .setY(hip.y + 0.04)
+        .setX(hip.x * 0.7),
+    };
+    // Boots: trousers tucked in (no turn-up), the shaft drawn over them below.
+    const shaft = spec.barefoot ? 0 : (spec.boot ?? 0);
+    const legRings: Ring[] =
+      legLen >= 0.95
+        ? shaft > 0.03
+          ? [
+              top0,
+              ring(0.05, trousers, 0.004),
+              ring(0.25, trousers, 0.003),
+              ring(0.5, trousers, 0.004),
+              ring(0.75, trousers, 0.002),
+              ring(0.99, trousers, -0.004),
+            ]
+          : [
+              top0,
+              ring(0.05, trousers, 0.004),
+              ring(0.25, trousers, 0.003),
+              ring(0.5, trousers, 0.004),
+              ring(0.75, trousers, 0.006),
+              ring(0.93, trousers, 0.01),
+              ring(0.93, trousers, 0.016),
+              ring(0.99, trousers, 0.016),
+              ring(0.99, trousers, 0.004),
+            ]
+        : [
+            // Shorts / briefs: a hem at `legLen`, bare leg below to the ankle.
+            top0,
+            ...[0.05, 0.25].filter((t) => t < legLen - 0.03).map((t) => ring(t, trousers, 0.004)),
+            ring(legLen, trousers, 0.008),
+            ring(legLen, skin, -0.004),
+            ...[0.25, 0.5, 0.75].filter((t) => t > legLen + 0.03).map((t) => ring(t, skin, -0.006)),
+            ring(0.99, skin, -0.012),
+          ];
+    mb.loft(legRings, 14, false, true);
+    // Boot shaft from the shoe up the shin.
+    if (shaft > 0) {
+      const shin = (h: number, grow: number): Ring => {
+        const c = ankle.clone().lerp(knee, Math.min(0.9, h / ankle.distanceTo(knee)));
+        return {
+          c,
+          u: Z,
+          a: 0.056 * k + grow,
+          v: X,
+          b: 0.058 * k + grow,
+          w: mix(`LowerLeg${side}`, `Foot${side}`, h < 0.03 ? 0.5 : 0),
+          color: shoes,
+        };
+      };
+      mb.loft([shin(-0.02, 0.014), shin(shaft, 0.018), shin(shaft, 0.006)], 12, false, true);
+    }
+    // Side thigh pockets (cargo, long trousers only).
+    if (legLen >= 0.95)
+      mb.box(
+        along(0.3).addScaledVector(X, s * (r(0.3) + 0.003)),
+        [X, Y, Z],
+        [0.004, 0.05, 0.04],
+        trousers.clone().multiplyScalar(0.85),
+        one(`UpperLeg${side}`),
+      );
     // Shoe: heel to toe along +z, a sole slab, a toe cap.
     const fw = one(`Foot${side}`);
     const shoe = (z: number, a: number, h: number, y0: number, c: Color): Ring => ({
@@ -471,19 +644,34 @@ export function buildBody(bp: BindPose, spec: BodySpec): MeshBuilder {
       color: c,
       n: 3,
     });
-    mb.loft(
-      [
-        shoe(-0.07, 0.042, 0.09, 0.02, shoes),
-        shoe(-0.02, 0.048, 0.1, 0.02, shoes),
-        shoe(0.05, 0.05, 0.075, 0.02, shoes),
-        shoe(0.11, 0.048, 0.055, 0.02, shoes),
-        shoe(0.15, 0.04, 0.045, 0.02, shoes),
-      ],
-      12,
-      true,
-      true,
-    );
-    mb.box(v3(foot.x, 0.012, foot.z + 0.04), [X, Y, Z], [0.05, 0.012, 0.112], sole, fw);
+    if (spec.barefoot) {
+      // Bare foot: a slimmer foot shape in skin, toes at the front.
+      mb.loft(
+        [
+          shoe(-0.06, 0.036, 0.08, 0.0, skin),
+          shoe(-0.01, 0.04, 0.08, 0.0, skin),
+          shoe(0.06, 0.042, 0.055, 0.0, skin),
+          shoe(0.13, 0.038, 0.035, 0.0, skin),
+        ],
+        12,
+        true,
+        true,
+      );
+    } else {
+      mb.loft(
+        [
+          shoe(-0.07, 0.042, 0.09, 0.02, shoes),
+          shoe(-0.02, 0.048, 0.1, 0.02, shoes),
+          shoe(0.05, 0.05, 0.075, 0.02, shoes),
+          shoe(0.11, 0.048, 0.055, 0.02, shoes),
+          shoe(0.15, 0.04, 0.045, 0.02, shoes),
+        ],
+        12,
+        true,
+        true,
+      );
+      mb.box(v3(foot.x, 0.012, foot.z + 0.04), [X, Y, Z], [0.05, 0.012, 0.112], sole, fw);
+    }
   }
   return mb;
 }
@@ -507,10 +695,47 @@ export function rebuildCharacter(root: Object3D, spec: BodySpec): SkinnedMesh {
       holder ??= m.parent ?? undefined;
     }
   });
-  const bp = poseToBind(glbScene(root, holder ?? root));
+  const bp = frozenBind(poseToBind(glbScene(root, holder ?? root)));
   const mesh = attachSkinned(bp, buildBody(bp, spec).build(), bodyMaterial(), 'painted-body');
+  mesh.userData.paintedBind = bp;
   for (const m of old) m.removeFromParent();
   return mesh;
+}
+
+/** Bind positions read once (the skeleton moves with the clips afterwards). */
+function frozenBind(bp: BindPose): BindPose {
+  const at = new Map<string, Vector3>();
+  for (const b of bp.bones) at.set(b.name, bp.at(b.name));
+  return {
+    root: bp.root,
+    bones: bp.bones,
+    index: bp.index,
+    at: (name) => {
+      const v = at.get(name);
+      if (!v) throw new Error(`no bone ${name}`);
+      return v.clone();
+    },
+  };
+}
+
+/**
+ * Dresses an already rebuilt character (`rebuildCharacter`) in `spec` while it animates: swaps
+ * the body geometry (same bones, same bind), also under its outline hull. False = no painted
+ * body on `root`.
+ */
+export function redressCharacter(root: Object3D, spec: BodySpec): boolean {
+  const mesh = root.getObjectByName('painted-body') as SkinnedMesh | undefined;
+  const bp = mesh?.userData.paintedBind as BindPose | undefined;
+  if (!mesh || !bp) return false;
+  const old = mesh.geometry;
+  const geometry = buildBody(bp, spec).build();
+  mesh.geometry = geometry;
+  for (const c of mesh.children) {
+    const h = c as SkinnedMesh;
+    if (h.isSkinnedMesh && h.geometry === old) h.geometry = geometry;
+  }
+  old.dispose();
+  return true;
 }
 
 /**

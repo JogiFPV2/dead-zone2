@@ -26,6 +26,30 @@
         "weight": 3
       },
       {
+        "item": "base:sweater",
+        "weight": 2
+      },
+      {
+        "item": "base:sweatpants",
+        "weight": 2
+      },
+      {
+        "item": "base:sneakers",
+        "weight": 1
+      },
+      {
+        "item": "base:beanie",
+        "weight": 1
+      },
+      {
+        "item": "base:baseball-cap",
+        "weight": 1
+      },
+      {
+        "item": "base:glasses",
+        "weight": 1
+      },
+      {
         "item": "base:hoodie",
         "weight": 3
       },
@@ -288,6 +312,26 @@
       {
         "item": "base:gloves",
         "weight": 3
+      },
+      {
+        "item": "base:work-boots",
+        "weight": 1
+      },
+      {
+        "item": "base:work-pants",
+        "weight": 1
+      },
+      {
+        "item": "base:work-jacket",
+        "weight": 1
+      },
+      {
+        "item": "base:rubber-boots",
+        "weight": 1
+      },
+      {
+        "item": "base:dust-mask",
+        "weight": 1
       },
       {
         "item": "base:lockpick",

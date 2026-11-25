@@ -14,7 +14,14 @@ import {
 } from 'three';
 import { findClip } from '../models/character-rig.js';
 import { ModelKit, ZOMBIE_MODELS } from '../models/model-kit.js';
-import { rebuildCharacter, SURVIVOR, ZOMBIE_BODIES } from '../models/painted-body/body.js';
+import {
+  rebuildCharacter,
+  redressCharacter,
+  SURVIVOR,
+  ZOMBIE_BODIES,
+  type BodySpec,
+} from '../models/painted-body/body.js';
+import { dressedBody, type WornClothes } from '../models/painted-body/wardrobe.js';
 import { PLAYER_HEIGHT } from '../player/player-view.js';
 import { addHulls, setHullSize } from '../render/style-materials.js';
 
@@ -59,7 +66,49 @@ setHullSize(2, W, H);
 
 const kit = await ModelKit.create(renderer);
 if (!kit) throw new Error('no models');
-const specs = [SURVIVOR, ...ZOMBIE_BODIES];
+/** `?outfits=1`: the survivor in outfits from worn items (wardrobe.ts), dressed after the build. */
+const BASE = { skin: SURVIVOR.skin, hair: SURVIVOR.hair, hairStyle: 'short' as const };
+const OUTFITS: WornClothes[] = [
+  {},
+  {
+    torso_inner: { def: 'base:t-shirt' },
+    legs: { def: 'base:jeans' },
+    feet: { def: 'base:sneakers' },
+  },
+  {
+    torso_inner: { def: 'base:flannel-shirt' },
+    torso_outer: { def: 'base:work-jacket' },
+    legs: { def: 'base:work-pants' },
+    feet: { def: 'base:work-boots' },
+    hands: { def: 'base:gloves' },
+    head: { def: 'base:hard-hat' },
+  },
+  {
+    torso_outer: { def: 'base:hoodie', tint: ['#5b5e3a'] },
+    legs: { def: 'base:sweatpants' },
+    feet: { def: 'base:sneakers' },
+    head: { def: 'base:beanie' },
+    face: { def: 'base:glasses' },
+  },
+  {
+    torso_inner: { def: 'base:t-shirt' },
+    torso_outer: { def: 'base:raincoat' },
+    legs: { def: 'base:jeans' },
+    feet: { def: 'base:rubber-boots' },
+    head: { def: 'base:baseball-cap' },
+  },
+  {
+    torso_inner: { def: 'base:flannel-shirt' },
+    torso_outer: { def: 'base:vest' },
+    legs: { def: 'base:shorts' },
+    feet: { def: 'base:hiking-boots' },
+    face: { def: 'base:dust-mask' },
+  },
+];
+const outfits = q.get('outfits') === '1';
+const specs: BodySpec[] = outfits
+  ? OUTFITS.map((w) => dressedBody(BASE, w))
+  : [SURVIVOR, ...ZOMBIE_BODIES];
 const clipName = q.get('clip') ?? 'Idle';
 const t = Number(q.get('t') ?? 0.3);
 const turn = Number(q.get('turn') ?? 0);
@@ -82,7 +131,10 @@ const backs = q.get('back') === '1' ? [1] : q.get('back') === 'both' ? [0, 1] : 
 for (const [i, spec] of specs.entries()) {
   for (const back of backs) {
     const { object, clips } = await kit.character(ZOMBIE_MODELS[0]!, PLAYER_HEIGHT);
-    rebuildCharacter(object, spec);
+    if (outfits) {
+      rebuildCharacter(object, SURVIVOR);
+      redressCharacter(object, spec);
+    } else rebuildCharacter(object, spec);
     object.traverse((m) => {
       if ((m as Mesh).isMesh) (m as Mesh).castShadow = true;
     });

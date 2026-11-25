@@ -189,7 +189,16 @@ import {
   ktx2For,
   ZOMBIE_MODELS,
 } from './models/model-kit.js';
-import { rebuildCharacter, SURVIVOR, ZOMBIE_BODIES } from './models/painted-body/body.js';
+import {
+  rebuildCharacter,
+  redressCharacter,
+  SURVIVOR,
+  ZOMBIE_BODIES,
+} from './models/painted-body/body.js';
+import { dressedBody } from './models/painted-body/wardrobe.js';
+import { baseLookOf, dressKey, wornClothesOf } from './player/painted-dress.js';
+import { basePaletteHex } from './creator/palettes.js';
+import type { Object3D } from 'three';
 import { brighten, lightReal, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
@@ -961,6 +970,8 @@ sim.onSnapshot(({ tick, buf }) => {
     // Dev `?give=` / `?stat=`: starting items and stats (debug commands, need `init.dev`).
     if (import.meta.env.DEV) {
       for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
+      for (const id of boot.wear ?? [])
+        sim.send(stamper.stamp({ type: 'debugGiveItem', itemId: id, count: 1 }));
       for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
       for (const wd of boot.wounds) sim.send(stamper.stamp({ type: 'debugWound', ...wd }));
       const p0 = readEntity(buf, 0);
@@ -1611,7 +1622,11 @@ void ModelKit.create(renderer).then(async (kit) => {
     const p = await kit.character(characterModels(real ? 'real' : 'default').player, PLAYER_HEIGHT);
     // Preview of the new painted bodies (Paweł 24.11, to accept before they replace the models).
     const newBodies = !real && new URLSearchParams(location.search).get('body') === 'painted';
-    if (newBodies) rebuildCharacter(p.object, SURVIVOR);
+    if (newBodies) {
+      rebuildCharacter(p.object, SURVIVOR);
+      paintedPlayer = p.object;
+      redressPainted();
+    }
     // Vertex-coloured bodies: no emissive (three.js would not tint it by the vertex colour).
     if (real || newBodies) lightReal(p.object);
     else brighten(p.object);
@@ -1664,6 +1679,44 @@ void ModelKit.create(renderer).then(async (kit) => {
 });
 let dressPlayer: ((look: RenderLook) => void) | undefined;
 let dressed = false;
+/**
+ * New painted body of the player (`?body=painted`): dressed in what is worn in the inventory
+ * (Paweł 25.11), redressed when the worn clothes or the character change.
+ */
+let paintedPlayer: Object3D | undefined;
+let paintedKey = '';
+function redressPainted(): void {
+  if (!paintedPlayer) return;
+  const s = gameState.get();
+  const base = s.characterProfile ? baseLookOf(s.characterProfile, basePaletteHex) : undefined;
+  const worn = wornClothesOf(s.inventory);
+  const key = dressKey(base, worn);
+  if (key === paintedKey) return;
+  paintedKey = key;
+  redressCharacter(
+    paintedPlayer,
+    dressedBody(base ?? { skin: SURVIVOR.skin, hair: SURVIVOR.hair, hairStyle: 'short' }, worn),
+  );
+}
+gameState.subscribe((next, prev) => {
+  if (next.inventory !== prev.inventory || next.characterProfile !== prev.characterProfile)
+    redressPainted();
+});
+// Dev `?wear=`: put the given items on (their first equip slot), once each.
+if (import.meta.env.DEV && boot.wear?.length) {
+  const toWear = new Set(boot.wear);
+  gameState.subscribe((next) => {
+    const inv = next.inventory;
+    if (!inv || toWear.size === 0) return;
+    for (const c of Object.values(inv.containers))
+      for (const it of c.items) {
+        const slot = hudContent.items.get(it.def)?.equipSlots?.[0];
+        if (!toWear.has(it.def) || it.equipped?.length || !slot) continue;
+        toWear.delete(it.def);
+        sim.send(stamper.stamp({ type: 'equip', item: it.id, slot }));
+      }
+  });
+}
 function dressFromProfile(): void {
   const profile = gameState.get().characterProfile;
   if (dressed || !profile || !dressPlayer) return;

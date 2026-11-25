@@ -48,6 +48,11 @@ export interface ItemInstance {
   buildingId?: number;
   /** Burnt cooked food (`crafting.burn`, docs 9.52); absent = not burnt. */
   burnt?: true;
+  /**
+   * Clothing colours (hex `#rrggbb`: primary, optional secondary), e.g. the creator's choice for
+   * the clothes a new character starts in; absent = the garment's own colour.
+   */
+  tint?: string[];
 }
 
 /**
