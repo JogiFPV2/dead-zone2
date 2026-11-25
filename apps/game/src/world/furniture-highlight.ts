@@ -20,10 +20,10 @@ import {
 /** Warm light, close to the door glow. */
 export const HIGHLIGHT_COLOR = 0xffd98a;
 /** Outline width (m, view space). */
-export const OUTLINE_WIDTH_M = 0.022;
+export const OUTLINE_WIDTH_M = 0.055;
 /** Peak opacity of the outline and of the additive tint. */
-const OUTLINE_ALPHA = 0.9;
-const TINT_ALPHA = 0.22;
+const OUTLINE_ALPHA = 1;
+const TINT_ALPHA = 0.32;
 /** Pulse period (s). */
 const PULSE_SEC = 1.6;
 
