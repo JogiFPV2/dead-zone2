@@ -229,6 +229,33 @@ describe('furniture menu (useFurniture): doors', () => {
     expect(s.world.openings.states.has(DOOR)).toBe(false);
   });
 
+  it('toggleDoor lock: from inside without a key, from outside rejected (no-key)', () => {
+    const s = sim(INSIDE);
+    const d = driver(s);
+    d.cmd({ type: 'toggleDoor', tx: 20, ty: 25, side: 'w', lock: true });
+    expect(doorState(s)).toBe(OS.locked);
+    d.cmd({ type: 'toggleDoor', tx: 20, ty: 25, side: 'w', lock: true });
+    expect(doorState(s)).toBe(OS.closed);
+    const o = sim(OUTSIDE);
+    const r = o.enqueue({
+      type: 'toggleDoor',
+      tx: 20,
+      ty: 25,
+      side: 'w',
+      lock: true,
+      tick: o.tick,
+      playerId: 0,
+      seq: 0,
+    });
+    o.step();
+    const rej = [
+      ...(r.ok ? [] : [r.reason]),
+      ...eventsOf(o.drainEvents(), 'commandRejected').map((e) => e.reason),
+    ];
+    expect(rej).toEqual(['no-key']);
+    expect(doorState(o)).toBe(OS.closed);
+  });
+
   it('a key to this building (loot `buildingKey` → buildingId) unlocks from outside', () => {
     const s = sim(OUTSIDE, { locks: { exteriorLockedChance: 1 } });
     const d = driver(s);

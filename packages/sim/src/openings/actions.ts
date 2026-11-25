@@ -25,6 +25,7 @@ import {
   unpackKey,
 } from './state.js';
 import { floorZ } from '../world/levels.js';
+import { doorBuilding, insideOf } from '../furniture/locks.js';
 
 type OpeningCommand = Extract<
   Command,
@@ -225,6 +226,10 @@ export function applyOpeningCommand(
   let next: number;
   if (cmd.lock) {
     if (!isDoorLike(kind) || state === OS.open) return 'invalid-state';
+    // A building door's lock turns without a key only from inside (Paweł 25.11); from outside
+    // it takes the building key (`useKey`). Doors / gates of no building lock as before.
+    if (kind === OpeningKind.door && doorBuilding(w, key) > 0 && !insideOf(w, eid, key))
+      return 'no-key';
     next = state === OS.locked ? OS.closed : OS.locked;
   } else {
     if (state === OS.locked) return 'locked';

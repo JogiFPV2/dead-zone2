@@ -22,6 +22,8 @@ export type PromptVM =
       title: string;
       items: string[];
       sel: number;
+      /** Indices of entries that cannot be used now (greyed; picking one says why). */
+      disabled?: number[];
     }
   | {
       mode: 'search';
@@ -145,7 +147,7 @@ export function createInteractPrompt(): InteractPrompt {
           ...vm.items.map((label, i) => {
             const row = document.createElement('button');
             row.type = 'button';
-            row.className = `dz-ip__menu-item${i === vm.sel ? ' dz-ip__menu-item--sel' : ''}`;
+            row.className = `dz-ip__menu-item${i === vm.sel ? ' dz-ip__menu-item--sel' : ''}${vm.disabled?.includes(i) ? ' dz-ip__menu-item--off' : ''}`;
             row.append(span('dz-ip__key', String(i + 1)), span('', label));
             row.addEventListener('click', () => api.onMenu?.(i, 'pick'));
             row.addEventListener('mouseenter', () => api.onMenu?.(i, 'hover'));

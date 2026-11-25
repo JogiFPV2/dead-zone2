@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { INITIAL_GAME_STATE, type GameState } from '../../state/game-state.js';
 import { InteractController, SPOT_NAME } from './interact-controller.js';
 import { TAP_MS } from './interact-hold.js';
-import type { DoorTarget } from '../../world/door-target.js';
+import type { DoorTarget, EdgeAction } from '../../world/door-target.js';
 import type { CoverChoice } from '../window-cover-items.js';
 
 const fridge: NearbyContainerView = {
@@ -16,7 +16,12 @@ const fridge: NearbyContainerView = {
   searched: false,
 };
 
-function setup(nearby: NearbyContainerView[], door?: DoorTarget, covers: CoverChoice[] = []) {
+function setup(
+  nearby: NearbyContainerView[],
+  door?: DoorTarget,
+  covers: CoverChoice[] = [],
+  edge: EdgeAction[] = [],
+) {
   const calls: string[] = [];
   let state: GameState = { ...INITIAL_GAME_STATE, nearby };
   let held = true;
@@ -31,6 +36,8 @@ function setup(nearby: NearbyContainerView[], door?: DoorTarget, covers: CoverCh
           : `${cmd} ${d.tx},${d.ty}${item === undefined ? '' : ` #${item}`}`,
       ),
     coverItems: () => covers,
+    edgeActions: () => edge,
+    useEdgeAction: (d: DoorTarget, id: string) => calls.push(`use ${id} ${d.tx},${d.ty}`),
     toast: (text) => calls.push(`toast ${text}`),
     held: () => held,
     interrupted: () => false,
@@ -260,5 +267,49 @@ describe('InteractController', () => {
     });
     t.c.choose(3);
     expect(t.calls).toEqual(['uncoverWindow 2,3']);
+  });
+
+  it('door locks (Paweł 25.11): inside the lock turns without a key, outside the key entry', () => {
+    const inside: EdgeAction[] = [
+      { id: 'open', labelPl: 'Otwórz', enabled: true },
+      { id: 'lock', labelPl: 'Zamknij na zamek', enabled: true },
+      { id: 'knock', labelPl: 'Zapukaj', enabled: true },
+    ];
+    const t = setup([], door(0.6), [], inside);
+    t.c.press(0);
+    expect(t.c.frame(TAP_MS, 0)).toMatchObject({
+      mode: 'menu',
+      items: ['Zamknij na zamek', 'Zabarykaduj'],
+    });
+    t.c.choose(0);
+    expect(t.calls).toEqual(['use lock 2,3']);
+
+    // Outside without the key: the entry is greyed and says why when picked.
+    const outside: EdgeAction[] = [
+      {
+        id: 'unlock-key',
+        labelPl: 'Otwórz kluczem',
+        enabled: false,
+        reasonPl: 'Brak klucza do tego budynku',
+      },
+    ];
+    const u = setup([], door(0.6, 'locked'), [], outside);
+    u.c.press(0);
+    expect(u.c.frame(TAP_MS, 0)).toMatchObject({
+      items: ['Otwórz kluczem', 'Wyważ', 'Zabarykaduj'],
+      disabled: [0],
+    });
+    u.c.choose(0);
+    expect(u.calls).toEqual(['toast Brak klucza do tego budynku']);
+  });
+
+  it('focus: the container F acts on (its furniture lights up), not when a door wins', () => {
+    expect(setup([fridge]).c.focus()).toBe(fridge);
+    expect(setup([{ ...fridge, kind: 'ground' }]).c.focus()).toBeUndefined();
+    expect(setup([fridge], door(0.5)).c.focus()).toBeUndefined();
+    expect(setup([fridge], door(1.2)).c.focus()).toBe(fridge);
+    const t = setup([fridge]);
+    t.setState({ action: { kind: 'search', startTick: 0, endTick: 70, container: 5, queued: 0 } });
+    expect(t.c.focus()).toBe(fridge);
   });
 });
