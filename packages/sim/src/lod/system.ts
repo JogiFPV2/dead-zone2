@@ -43,6 +43,8 @@ export function lodSystem(w: SimWorld, grid: TileGrid): void {
   const ai = w.ai;
   if (!lod || !ai) return;
   intakeNoises(w, lod);
+  // Chunks that were not loaded yet: run the area update again (it is idempotent).
+  if (lod.lootRetryAt !== undefined && w.tick >= lod.lootRetryAt) lod.playerKey = '';
   updateArea(w, lod, grid);
   if (w.tick % COLLAPSE_EVERY === 0) collapseFar(w, lod);
   spawnPending(w, lod, grid);
@@ -93,6 +95,9 @@ function rectDist(
   }
   return best;
 }
+
+/** Ticks between checks for chunk columns of a lazy world that were not loaded yet (1 s). */
+const LOOT_RETRY_TICKS = 20;
 
 /** Activates / deactivates cells and loot chunks when a player changed chunk or an interest changed. */
 function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
@@ -164,10 +169,17 @@ function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
     w.chunkWatch.skip.add(colKey(cx0 + (i % lod.wChunks), cy0 + Math.floor(i / lod.wChunks)));
   releaseChunks(w, lod, release);
   const spawn = new Set<number>();
+  let waiting = false;
   for (const p of ps) {
     for (let cy = Math.max(cy0, p.cy - p.r); cy <= Math.min(cy1, p.cy + p.r); cy++) {
       for (let cx = Math.max(cx0, p.cx - p.r); cx <= Math.min(cx1, p.cx + p.r); cx++) {
         const i = chunkIndex(lod, cx, cy);
+        // Lazy world still loading this column (OSM tiles): no storage / stairs from an empty
+        // placeholder; the area is checked again shortly (`LOOT_RETRY_TICKS`).
+        if (w.map.ready && !w.map.ready(cx, cy)) {
+          waiting = true;
+          continue;
+        }
         registerStairs(lod, grid, i);
         if (lod.chunkLoot[i] === ChunkLoot.none) spawn.add(i);
       }
@@ -179,6 +191,7 @@ function updateArea(w: SimWorld, lod: LodWorld, grid: TileGrid): void {
     keepLive.push(i);
   }
   lod.liveChunks = keepLive.sort((a, b) => a - b);
+  lod.lootRetryAt = waiting ? w.tick + LOOT_RETRY_TICKS : undefined;
   syncChunkZones(w, lod);
 }
 

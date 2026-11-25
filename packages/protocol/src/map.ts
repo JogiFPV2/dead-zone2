@@ -234,6 +234,8 @@ export interface SimMap {
   getChunk(cx: number, cy: number, z: number): SimChunk | undefined;
   /** All chunks (world storage is created from their objects); optional for plain maps. */
   listChunks?(): readonly SimChunkAddress[];
+  /** Lazy worlds: false while chunk column (cx, cy) is not loaded yet (`WorldSource.ready`). */
+  ready?(cx: number, cy: number): boolean;
   /** Manifest zones (optional). */
   readonly zones?: readonly SimZone[] | undefined;
   /**

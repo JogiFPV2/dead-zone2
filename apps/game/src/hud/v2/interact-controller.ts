@@ -7,8 +7,10 @@ import {
   doorVerb,
   doorWins,
   edgeKey,
+  lockOptions,
   openingMenu,
   openingPrimary,
+  type EdgeAction,
   COVER_PICK_LABEL,
   OPENING_ACTION_TITLES,
   type DoorTarget,
@@ -47,6 +49,10 @@ export interface InteractHost {
   door(): DoorTarget | undefined;
   /** Sends the sim command `cmd` (`toggleDoor`, `barricade` …) for this edge (`item`: coverWindow). */
   opening(door: DoorTarget, cmd: OpeningCmd, item?: number): void;
+  /** The sim's context-menu entries of this edge (door locks); undefined = none known. */
+  edgeActions?(door: DoorTarget): readonly EdgeAction[] | undefined;
+  /** Runs one entry of the sim's edge menu (`useFurniture`). */
+  useEdgeAction?(door: DoorTarget, actionId: string): void;
   /** Carried items that can cover a window (the „Zasłoń…” picker). */
   coverItems?(): readonly CoverChoice[];
   /** Short message (picker with nothing to hang). */
@@ -107,6 +113,14 @@ export class InteractController {
     const o = m?.options[i];
     if (!m || !o) return false;
     this.menu = undefined;
+    if (o.disabled) {
+      this.host.toast?.(o.disabled);
+      return true;
+    }
+    if (o.cmd === 'furniture') {
+      if (o.action) this.host.useEdgeAction?.(m.door, o.action);
+      return true;
+    }
     if (o.cmd === 'coverWindow' && o.item === undefined) {
       // „Zasłoń…”: second step, which carried item to hang.
       const items = this.host.coverItems?.() ?? [];
@@ -135,8 +149,32 @@ export class InteractController {
     this.menu = undefined;
   }
 
+  /** Menu entries at `door`: the timed actions plus the sim's lock entries. */
+  private menuOf(door: DoorTarget) {
+    return openingMenu(door, lockOptions(this.host.edgeActions?.(door)));
+  }
+
+  /**
+   * The container the F key acts on now (its furniture is highlighted, Paweł 25.11): the one
+   * being searched, else the nearest world storage in reach unless a door / window wins.
+   */
+  focus(): NearbyContainerView | undefined {
+    const h = this.host;
+    const s = h.state();
+    if (!h.player() || h.windowOpen() || s.container || this.menu) return undefined;
+    if (s.action) {
+      const id = s.action.kind === 'search' ? s.action.container : undefined;
+      const c = id === undefined ? undefined : s.nearby.find((n) => n.id === id);
+      return c?.kind === 'world' ? c : undefined;
+    }
+    const c = this.nearest();
+    if (!c || c.kind !== 'world') return undefined;
+    const door = h.door();
+    return door && doorWins(door, true) ? undefined : c;
+  }
+
   private openMenu(door: DoorTarget): boolean {
-    const options = openingMenu(door);
+    const options = this.menuOf(door);
     if (!options.length) return false;
     this.menu = { door, options, sel: 0 };
     return true;
@@ -215,6 +253,11 @@ export class InteractController {
           title: this.menu.title ?? doorVerb(door),
           items: this.menu.options.map((o) => o.label),
           sel: this.menu.sel,
+          ...(this.menu.options.some((o) => o.disabled)
+            ? {
+                disabled: this.menu.options.flatMap((o, i) => (o.disabled ? [i] : [])),
+              }
+            : {}),
         };
       }
     }
@@ -269,7 +312,7 @@ export class InteractController {
       const dc = doorCentre(door);
       const at = h.project(dc.x, dc.y, door.z, DOOR_ANCHOR_HEIGHT);
       if (!at) return { mode: 'hidden' };
-      const more = openingMenu(door).length > 0;
+      const more = this.menuOf(door).length > 0;
       return {
         mode: 'prompt',
         ...at,

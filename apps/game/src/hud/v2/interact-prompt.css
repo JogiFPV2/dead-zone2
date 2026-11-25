@@ -198,3 +198,8 @@
 .dz-ip__menu-item--sel .dz-ip__key {
   border-color: var(--color-accent-base);
 }
+
+/* Entry not possible now (door lock without the key): greyed, picking it says why. */
+.dz-ip__menu-item--off {
+  opacity: 0.5;
+}

@@ -116,6 +116,11 @@ export interface LodWorld {
   liveChunks: number[];
   /** Derived: player chunk positions at the last area update ('' = recompute). */
   playerKey: string;
+  /**
+   * Tick of the next area check while chunks in reach were not loaded yet (lazy worlds;
+   * derived, not saved: after a load the area is rebuilt anyway).
+   */
+  lootRetryAt?: number | undefined;
   /** Spawn floor loot / scattered loot in new chunks (sim option `floorLoot`; not state). */
   readonly floorLoot: boolean;
 }

@@ -103,14 +103,52 @@ export function nearestDoor(
 export const doorWins = (door: DoorTarget | undefined, hasContainer: boolean): boolean =>
   door !== undefined && (!hasContainer || door.dist < DOOR_FIRST_TILES);
 
-/** A sim command on an opening edge. */
-export type OpeningCmd = 'toggleDoor' | OpeningActionType | 'coverWindow' | 'uncoverWindow';
+/**
+ * A sim command on an opening edge; `furniture` = an entry of the sim's edge context menu
+ * (`useFurniture`, `OpeningOption.action`), used for the door locks.
+ */
+export type OpeningCmd =
+  'toggleDoor' | OpeningActionType | 'coverWindow' | 'uncoverWindow' | 'furniture';
 
 export interface OpeningOption {
   cmd: OpeningCmd;
   label: string;
   /** `coverWindow` from the item picker: the carried item instance to hang. */
   item?: number;
+  /** `furniture`: the sim's action id (`lock`, `unlock-key` …). */
+  action?: string;
+  /** Not possible now: the Polish reason, shown as a toast when picked („Brak klucza…”). */
+  disabled?: string;
+}
+
+/** An entry of the sim's edge context menu (`FurnitureActionView`, the fields used here). */
+export interface EdgeAction {
+  id: string;
+  labelPl: string;
+  enabled: boolean;
+  reasonPl?: string;
+}
+
+/**
+ * Door lock entries of the sim's edge menu, in this order: from inside `Otwórz zamek` /
+ * `Zamknij na zamek` (no key needed), from outside `Otwórz kluczem` / `Zamknij kluczem` (the
+ * building key; without it the entry stays, disabled, and says why). Paweł 25.11.
+ */
+export const LOCK_ACTIONS = ['unlock', 'lock', 'unlock-key', 'lock-key'] as const;
+
+export function lockOptions(actions: readonly EdgeAction[] | undefined): OpeningOption[] {
+  const out: OpeningOption[] = [];
+  for (const id of LOCK_ACTIONS) {
+    const a = actions?.find((x) => x.id === id);
+    if (!a) continue;
+    out.push({
+      cmd: 'furniture',
+      label: a.labelPl,
+      action: a.id,
+      ...(a.enabled ? {} : { disabled: a.reasonPl ?? 'Niedostępne teraz' }),
+    });
+  }
+  return out;
 }
 
 /** Menu entry that opens the cover item picker (`coverWindow` without an item). */
@@ -132,9 +170,13 @@ export function openingPrimary(t: DoorTarget): OpeningOption | undefined {
   return opt('toggleDoor', 'Otwórz');
 }
 
-/** Hold F (or a tap without a main use): the timed actions that fit the edge's state. */
-export function openingMenu(t: DoorTarget): OpeningOption[] {
+/**
+ * Hold F (or a tap without a main use): the timed actions that fit the edge's state. `locks` =
+ * the door lock entries (`lockOptions`), first on a door without planks.
+ */
+export function openingMenu(t: DoorTarget, locks: readonly OpeningOption[] = []): OpeningOption[] {
   const out = timedMenu(t);
+  if (t.kind !== 'window' && t.barricade === 0 && t.state !== 'open') out.unshift(...locks);
   // Window covers (protocol 47): any window state, planks or not; one cover per window. Last, so
   // the numbers of the older entries stay.
   if (t.kind === 'window') {
@@ -186,6 +228,8 @@ export const OPENING_ACTION_TITLES: Readonly<Record<string, string>> = {
   barricade: 'Barykadowanie',
   removeBarricade: 'Zdejmowanie deski',
   forceDoor: 'Wyważanie',
+  useKey: 'Klucz w zamku',
+  pickLock: 'Otwieranie wytrychem',
   coverWindow: 'Zasłanianie',
   uncoverWindow: 'Zdejmowanie',
 };
