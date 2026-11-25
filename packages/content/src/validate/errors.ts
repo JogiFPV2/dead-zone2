@@ -26,6 +26,7 @@ export type ContentErrorCode =
   | 'vhs_duplicate_skill'
   | 'palette_duplicate_color'
   | 'appearance_palette_kind'
+  | 'appearance_item'
   | 'appearance_slot_empty'
   | 'creation_cost_invalid'
   | 'creation_default_invalid'

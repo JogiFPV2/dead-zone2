@@ -143,6 +143,12 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
     h.u32(0x6e70_0004).u32(worn.length);
     for (const id of worn) h.u32(id).u32(st.items.get(id)!.wear!);
   }
+  // Clothing colours (only when there are any: older goldens stay valid).
+  const tinted = iids.filter((id) => st.items.get(id)!.tint !== undefined);
+  if (tinted.length > 0) {
+    h.u32(0x6e70_0007).u32(tinted.length);
+    for (const id of tinted) h.u32(id).u32(hashString32(st.items.get(id)!.tint!.join(',')));
+  }
   if (st.pumps.size > 0) {
     h.u32(0x6e70_0003).u32(st.pumps.size);
     for (const k of [...st.pumps.keys()].sort()) {

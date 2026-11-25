@@ -40,6 +40,11 @@ export const AppearancePartSchema = z.strictObject({
     }),
   bodyTypes: TagListSchema,
   icon: z.string().optional(),
+  /**
+   * Ubranie (przedmiot `kind: clothing`), które postać ma na sobie od startu, gdy wybierze tę
+   * część w kreatorze (Paweł 25.11: ubrania z kreatora to prawdziwe przedmioty, do zdjęcia).
+   */
+  item: ContentIdSchema.optional(),
   ext: ExtSchema,
 });
 

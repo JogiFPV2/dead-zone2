@@ -20,6 +20,7 @@ import { PoseTracker, newPose, type WeaponClass } from '../anim/pose.js';
 import type { WeaponInfo } from '../weapons/weapon-kinds.js';
 import type { WeaponModels } from '../weapons/weapon-models.js';
 import { createWeaponMounts, type WeaponMounts } from './weapon-mount.js';
+import { WornGear, type GearSpec } from './worn-gear.js';
 import type { Grip } from '../weapons/grip.js';
 import { createGripSockets, showSocketAxes, type GripSockets } from '../weapons/grip-sockets.js';
 import {
@@ -188,6 +189,24 @@ export class PlayerView {
     // Mounts are placed from the first animated pose (clips rescale some bones vs. bind pose).
     this.mounts = undefined;
     this.held = this.slung = undefined;
+    this.gear.dispose();
+    this.gear = new WornGear();
+    if (this.gearSpec) this.gear.set(this.gearSpec.spec, this.gearSpec.models);
+  }
+
+  /** Bags and hand items drawn on the body (`player/worn-gear.ts`). */
+  private gear = new WornGear();
+  private gearSpec: { spec: GearSpec; models: WeaponModels } | undefined;
+
+  /** What the character carries on the body: worn bags, items in the hands (per frame is fine). */
+  setGear(spec: GearSpec, models: WeaponModels): void {
+    this.gearSpec = { spec, models };
+    this.gear.set(spec, models);
+  }
+
+  /** Gear drawn now by slot (dev hook, tests). */
+  debugGear(): Record<string, string> {
+    return this.gear.drawn();
   }
 
   /**
@@ -376,6 +395,8 @@ export class PlayerView {
     if (!this.mounts) {
       this.root.updateMatrixWorld(true);
       this.mounts = createWeaponMounts(this.rig.object);
+      this.gear.poolHands = this.animV2;
+      this.gear.attach(this.rig.object, this.mounts?.back);
       if (this.animV2) {
         this.sockets = createGripSockets(this.rig.object);
         if (this.sockets && this.showSockets) showSocketAxes(this.sockets);

@@ -67,13 +67,17 @@ export function lightReal(o: Object3D, instanced = false): void {
 export async function loadZombieTemplates(
   kit: ModelKit,
   ids: readonly string[] = ZOMBIE_MODELS,
+  /** Replaces the model's body before tinting (new painted bodies). */
+  rebuild?: (o: Object3D, index: number) => void,
 ): Promise<{ object: Object3D; clips: AnimationClip[] }[]> {
   const out: { object: Object3D; clips: AnimationClip[] }[] = [];
   const baked = ids !== ZOMBIE_MODELS;
   for (const id of ids) {
     try {
       const t = await kit.character(id, PLAYER_HEIGHT);
+      rebuild?.(t.object, out.length);
       if (baked) lightReal(t.object, true);
+      else if (rebuild) brighten(t.object);
       else tintZombie(t.object);
       out.push(t);
     } catch (e) {

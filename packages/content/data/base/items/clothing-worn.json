@@ -1,0 +1,430 @@
+[
+  {
+    "id": "base:flannel-shirt",
+    "name": "item.base.flannel-shirt.name",
+    "kind": "clothing",
+    "weightKg": 0.35,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_inner",
+      "insulation": 0.2,
+      "protection": {
+        "scratch": 0.05,
+        "bite": 0.01
+      },
+      "durability": {
+        "max": 35,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:track-jacket",
+    "name": "item.base.track-jacket.name",
+    "kind": "clothing",
+    "weightKg": 0.5,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.3,
+      "protection": {
+        "scratch": 0.08,
+        "bite": 0.02
+      },
+      "durability": {
+        "max": 40,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:work-jacket",
+    "name": "item.base.work-jacket.name",
+    "kind": "clothing",
+    "weightKg": 1.1,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.45,
+      "waterResistance": 0.2,
+      "protection": {
+        "scratch": 0.25,
+        "bite": 0.08
+      },
+      "durability": {
+        "max": 70,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:sweater",
+    "name": "item.base.sweater.name",
+    "kind": "clothing",
+    "weightKg": 0.6,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.4,
+      "protection": {
+        "scratch": 0.08,
+        "bite": 0.02
+      },
+      "durability": {
+        "max": 35,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:vest",
+    "name": "item.base.vest.name",
+    "kind": "clothing",
+    "weightKg": 0.5,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.2,
+      "waterResistance": 0.1,
+      "protection": {
+        "scratch": 0.15,
+        "bite": 0.05
+      },
+      "durability": {
+        "max": 50,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:raincoat",
+    "name": "item.base.raincoat.name",
+    "kind": "clothing",
+    "weightKg": 0.9,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "torso_outer",
+      "insulation": 0.25,
+      "waterResistance": 0.9,
+      "protection": {
+        "scratch": 0.12,
+        "bite": 0.03
+      },
+      "durability": {
+        "max": 45,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:cargo-pants",
+    "name": "item.base.cargo-pants.name",
+    "kind": "clothing",
+    "weightKg": 0.85,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.25,
+      "waterResistance": 0.05,
+      "protection": {
+        "scratch": 0.18,
+        "bite": 0.06
+      },
+      "durability": {
+        "max": 65,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:shorts",
+    "name": "item.base.shorts.name",
+    "kind": "clothing",
+    "weightKg": 0.3,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.05,
+      "protection": {
+        "scratch": 0.02,
+        "bite": 0
+      },
+      "durability": {
+        "max": 30,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:work-pants",
+    "name": "item.base.work-pants.name",
+    "kind": "clothing",
+    "weightKg": 0.9,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.3,
+      "waterResistance": 0.1,
+      "protection": {
+        "scratch": 0.22,
+        "bite": 0.08
+      },
+      "durability": {
+        "max": 75,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:sweatpants",
+    "name": "item.base.sweatpants.name",
+    "kind": "clothing",
+    "weightKg": 0.5,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.25,
+      "protection": {
+        "scratch": 0.05,
+        "bite": 0.01
+      },
+      "durability": {
+        "max": 35,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:chinos",
+    "name": "item.base.chinos.name",
+    "kind": "clothing",
+    "weightKg": 0.55,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "legs",
+      "insulation": 0.2,
+      "protection": {
+        "scratch": 0.08,
+        "bite": 0.02
+      },
+      "durability": {
+        "max": 40,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:sneakers",
+    "name": "item.base.sneakers.name",
+    "kind": "clothing",
+    "weightKg": 0.7,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "feet",
+      "insulation": 0.1,
+      "waterResistance": 0.1,
+      "protection": {
+        "scratch": 0.2,
+        "bite": 0.05
+      },
+      "durability": {
+        "max": 50,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:boots",
+    "name": "item.base.boots.name",
+    "kind": "clothing",
+    "weightKg": 1.0,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "feet",
+      "insulation": 0.2,
+      "waterResistance": 0.4,
+      "protection": {
+        "scratch": 0.3,
+        "bite": 0.1
+      },
+      "durability": {
+        "max": 70,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:work-boots",
+    "name": "item.base.work-boots.name",
+    "kind": "clothing",
+    "weightKg": 1.3,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "feet",
+      "insulation": 0.25,
+      "waterResistance": 0.5,
+      "protection": {
+        "scratch": 0.4,
+        "bite": 0.15
+      },
+      "durability": {
+        "max": 90,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:hiking-boots",
+    "name": "item.base.hiking-boots.name",
+    "kind": "clothing",
+    "weightKg": 1.1,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "feet",
+      "insulation": 0.3,
+      "waterResistance": 0.6,
+      "protection": {
+        "scratch": 0.35,
+        "bite": 0.1
+      },
+      "durability": {
+        "max": 80,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:rubber-boots",
+    "name": "item.base.rubber-boots.name",
+    "kind": "clothing",
+    "weightKg": 1.2,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "feet",
+      "insulation": 0.15,
+      "waterResistance": 1.0,
+      "protection": {
+        "scratch": 0.3,
+        "bite": 0.1
+      },
+      "durability": {
+        "max": 60,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:beanie",
+    "name": "item.base.beanie.name",
+    "kind": "clothing",
+    "weightKg": 0.1,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "head",
+      "insulation": 0.15,
+      "protection": {
+        "scratch": 0.02,
+        "bite": 0
+      },
+      "durability": {
+        "max": 25,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:baseball-cap",
+    "name": "item.base.baseball-cap.name",
+    "kind": "clothing",
+    "weightKg": 0.1,
+    "tags": ["base:clothing-rippable", "base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "head",
+      "insulation": 0.03,
+      "waterResistance": 0.1,
+      "protection": {
+        "scratch": 0.02,
+        "bite": 0
+      },
+      "durability": {
+        "max": 25,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "id": "base:hard-hat",
+    "name": "item.base.hard-hat.name",
+    "kind": "clothing",
+    "weightKg": 0.4,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "head",
+      "insulation": 0.02,
+      "waterResistance": 0.6,
+      "protection": {
+        "scratch": 0.3,
+        "bite": 0.1
+      },
+      "durability": {
+        "max": 100,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:glasses",
+    "name": "item.base.glasses.name",
+    "kind": "clothing",
+    "weightKg": 0.03,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "face",
+      "insulation": 0,
+      "durability": {
+        "max": 20,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "id": "base:dust-mask",
+    "name": "item.base.dust-mask.name",
+    "kind": "clothing",
+    "weightKg": 0.03,
+    "tags": ["base:clothing"],
+    "harmless": true,
+    "clothing": {
+      "slot": "face",
+      "insulation": 0,
+      "protection": {
+        "scratch": 0.02,
+        "bite": 0
+      },
+      "durability": {
+        "max": 10,
+        "repairable": false
+      }
+    }
+  }
+]

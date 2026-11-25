@@ -193,6 +193,8 @@ export interface ItemView {
   /** Gas can (`worldSettings.vehicles.fuel.canItem`): litres inside (0.1) and the capacity. */
   fuelL?: number;
   fuelMaxL?: number;
+  /** Clothing colours (hex: primary, optional secondary); absent = the garment's own colour. */
+  tint?: string[];
   /** Water vessel (`item.waterVessel`, protocol 53): litres inside (0.01), capacity, dirty water. */
   waterL?: number;
   waterMaxL?: number;
