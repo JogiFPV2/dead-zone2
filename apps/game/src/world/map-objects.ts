@@ -17,6 +17,7 @@ import type { ChunkData, ChunkRange, ChunkSource } from './chunk.js';
 import { CHUNK_SIZE, NO_BUILDING, type BuildingId } from './chunk.js';
 import { NO_CUTAWAY, isLevelHidden, type Cutaway } from './cutaway.js';
 import { MarkerBatch, animateMarker } from './ground-piles.js';
+import { makeHighlight, pulseHighlight } from './furniture-highlight.js';
 import {
   FURNITURE_SETTLE_MS,
   FURNITURE_TWEEN_MS,
@@ -201,6 +202,10 @@ export class MapObjects {
   readonly moves = new FurnitureMoves();
   /** Loaded chunks by `cx,cy,z` (a moved piece may land in another loaded chunk). */
   private readonly loaded = new Map<string, ChunkData>();
+  private highlightKey = '';
+  private highlightObj: Obj | undefined;
+  /** Piece lit for the F key (`setHighlight`) and its view. */
+  private highlighted: { obj: Obj; view: Object3D; pose: string } | undefined;
 
   /** Without a range, chunks come one by one via `loadChunk` (streaming). */
   constructor(source?: ChunkSource, range?: ChunkRange) {
@@ -234,6 +239,8 @@ export class MapObjects {
     }
     this.relift(`${cx},${cy},${z}`);
     this.instancesDirty = true;
+    // The F highlight looks its piece up again (it may have just come in).
+    this.highlightKey = '-';
     // Markers / searched shades for the new objects on the next update.
     this.lastNearby = undefined;
   }
@@ -942,6 +949,63 @@ export class MapObjects {
       delete o.xray;
       if (o.slots) setSlotsVisible(o.slots, !o.hidden && !this.hiddenKinds.has(o.contentId));
     }
+  }
+
+  /**
+   * Lights up the piece the F key acts on (Paweł 25.11): the map object covering tile
+   * (tx, ty, z) gets an outline and a warm tint (`furniture-highlight.ts`); undefined = none.
+   * Cheap when the target stays the same (call it every frame).
+   */
+  setHighlight(t: { x: number; y: number; z: number } | undefined, nowMs: number): void {
+    // Same tile as last frame: the same piece (objects only change with chunk loads / moves,
+    // which the pose / membership check below catches on the next new target).
+    const tk = t ? `${t.x},${t.y},${t.z}` : '';
+    if (
+      tk !== this.highlightKey ||
+      (this.highlightObj !== undefined && !this.objects.includes(this.highlightObj))
+    ) {
+      this.highlightKey = tk;
+      // The piece standing on the floor wins over a lamp / TV on its top (`lift`).
+      this.highlightObj = t
+        ? (objectAtTile(
+            this.objects.filter((ob) => ob.lift === 0 && ob.z === t.z),
+            this.footprints,
+            t.x,
+            t.y,
+            t.z,
+          ) ?? objectAtTile(this.objects, this.footprints, t.x, t.y, t.z))
+        : undefined;
+    }
+    const o = this.highlightObj;
+    const want = o && !o.hidden && !o.moving && !this.hiddenKinds.has(o.contentId) ? o : undefined;
+    const cur = this.highlighted;
+    const pose = want
+      ? `${want.mesh.position.x},${want.mesh.position.y},${want.mesh.position.z},${want.mesh.rotation.y}`
+      : '';
+    if (cur && (cur.obj !== want || cur.pose !== pose)) {
+      this.root.remove(cur.view);
+      this.highlighted = undefined;
+    }
+    if (want && !this.highlighted) {
+      const clone =
+        this.fittedModel(want.contentId, want.height, this.fpOf(want)) ?? boxClone(want.mesh);
+      clone.position.set(
+        want.mesh.position.x,
+        want.mesh.position.y - want.height / 2,
+        want.mesh.position.z,
+      );
+      clone.rotation.y = want.mesh.rotation.y;
+      const view = makeHighlight(clone);
+      this.root.add(view);
+      this.highlighted = { obj: want, view, pose };
+    }
+    if (this.highlighted) pulseHighlight(nowMs);
+  }
+
+  /** The highlighted piece's anchor tile (tests, dev). */
+  get highlightedAt(): { tx: number; ty: number; z: number } | undefined {
+    const o = this.highlighted?.obj;
+    return o && { tx: o.tx, ty: o.ty, z: o.z };
   }
 
   get count(): number {

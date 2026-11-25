@@ -31,13 +31,17 @@ export interface GridAlignStats {
   fitted: number;
   /** Left at an angle (collision whatever the fit): zigzag on the grid. */
   jagged: number;
-  /** Off the grid but not rectilinear (round / odd outlines; never turned). */
+  /** Off the grid but not rectilinear (round / odd outlines; turned only with `all`). */
   irregular: number;
+  /** `all`: turned as part of a group of touching neighbours. */
+  grouped?: number;
 }
 
 /** Scales tried (whole size first), shifts (tiles) within the plot. */
 const SCALES = [1, 0.95, 0.9, 0.85];
 const SHIFT = 3;
+/** `all`: scales of the last pass (buildings that fit neither alone nor in a group). */
+const LAST_SCALES = [0.8, 0.75, 0.7];
 const SHIFTS: [number, number][] = (() => {
   const out: [number, number][] = [];
   for (let dy = -SHIFT; dy <= SHIFT; dy++)
@@ -93,10 +97,23 @@ function flatten(
   });
 }
 
+/** Options of `alignBuildingsToGrid`. */
+export interface GridAlignOptions {
+  /**
+   * stw2 (Paweł 25.11: every building at one angle, as in Project Zomboid): odd outlines are turned
+   * too (by their dominant direction), and buildings left at an angle after the single pass are
+   * turned in groups (touching neighbours, e.g. terraced rows, as one block about its centre).
+   */
+  all?: boolean;
+  /** Building ids left exactly as they are (e.g. ones cut by a fixed line in `landmarks.ts`). */
+  keep?: ReadonlySet<number>;
+}
+
 export function alignBuildingsToGrid(
   map: OsmMap,
   deg = OSM_ROTATION_DEG,
   stats?: GridAlignStats,
+  opts: GridAlignOptions = {},
 ): OsmMap {
   const st = straightenOsmMap(map, deg);
   const idx = new PlanIndex({ features: st } as unknown as WorldPlanInput);
@@ -104,19 +121,21 @@ export function alignBuildingsToGrid(
   const indexOf = new Map<OsmBuilding, number>(st.buildings.map((b, i) => [b, i]));
   /** Final world-frame outline (tiles) of every building decided so far. */
   const current: Rings[] = st.buildings.map((b) => b.rings.map(dmToTiles));
-  const out: OsmBuilding[] = [...map.buildings];
+  const changed = new Set<number>();
   const s: GridAlignStats = { offGrid: 0, turned: 0, fitted: 0, jagged: 0, irregular: 0 };
-  st.buildings.forEach((b, i) => {
-    const rings = current[i]!;
-    const outer = rings[0];
-    if (!outer || outer.length < 10) return;
-    const o = ringOrientation(Array.from(outer));
-    if (Math.abs(o.deg) <= SQUARE_TOLERANCE_DEG) return;
-    if (o.share < 0.98) {
-      s.irregular++;
-      return;
-    }
-    s.offGrid++;
+
+  /**
+   * Turn a unit (one building or a group) by −deg about its centre onto the axes, shrunk / shifted
+   * within its plot when needed, so it covers no road, rail, water or other building.
+   * Returns 'turned' | 'fitted' | undefined (nothing fits; outlines unchanged).
+   */
+  const place = (
+    members: readonly number[],
+    angle: number,
+    scales: readonly number[] = SCALES,
+    grow = 0,
+  ): 'turned' | 'fitted' | undefined => {
+    const rings = members.flatMap((i) => current[i]!);
     const bb = bbox(rings);
     const P = 6;
     const x0 = Math.floor(bb.x0) - P;
@@ -126,11 +145,12 @@ export function alignBuildingsToGrid(
     const n = w * h;
     const own = new Uint8Array(n);
     let ownN = 0;
-    fillRings(rings, x0, y0, w, h, (j) => {
-      own[j] = 1;
-      ownN++;
-    });
-    if (!ownN) return;
+    for (const i of members)
+      fillRings(current[i]!, x0, y0, w, h, (j) => {
+        if (!own[j]) ownN++;
+        own[j] = 1;
+      });
+    if (!ownN) return undefined;
     // Plot: bounding box of the original footprint (tiles).
     let px0 = w;
     let py0 = h;
@@ -145,6 +165,7 @@ export function alignBuildingsToGrid(
       px1 = Math.max(px1, x);
       py1 = Math.max(py1, y);
     }
+    const mine = new Set(members);
     const blocked = new Uint8Array(n);
     const q = { x0, y0, x1: x0 + w, y1: y0 + h };
     for (const k of idx.roads.query(q)) {
@@ -159,50 +180,138 @@ export function alignBuildingsToGrid(
     }
     for (const k of idx.buildings.query(q)) {
       const j0 = indexOf.get(idx.buildings.items[k]!.b);
-      if (j0 === undefined || j0 === i) continue;
+      if (j0 === undefined || mine.has(j0)) continue;
       fillRings(current[j0]!, x0, y0, w, h, (j) => (blocked[j] = 1));
     }
     const c = { x: (bb.x0 + bb.x1) / 2, y: (bb.y0 + bb.y1) / 2 };
-    let found: Rings | undefined;
-    let fitted = false;
-    for (const sc of SCALES) {
+    for (const sc of scales) {
       for (const [dx, dy] of SHIFTS) {
-        const cand = flatten(rings, o.deg, c, sc, dx, dy);
+        const cand = members.map((i) => flatten(current[i]!, angle, c, sc, dx, dy));
         let ok = true;
         let cnt = 0;
-        fillRings(cand, x0, y0, w, h, (j) => {
+        const hit = (j: number) => {
           if (!ok) return;
           cnt++;
           const x = j % w;
           const y = (j - x) / w;
-          if (x < px0 || x > px1 || y < py0 || y > py1 || (blocked[j] && !own[j])) ok = false;
-        });
+          if (
+            x < px0 - grow ||
+            x > px1 + grow ||
+            y < py0 - grow ||
+            y > py1 + grow ||
+            (blocked[j] && !own[j])
+          )
+            ok = false;
+        };
+        for (const r of cand) if (ok) fillRings(r, x0, y0, w, h, hit);
         if (!ok || cnt < ownN * 0.7) continue;
-        found = cand;
-        fitted = sc !== 1 || dx !== 0 || dy !== 0;
-        break;
+        members.forEach((i, k) => {
+          current[i] = cand[k]!;
+          changed.add(i);
+        });
+        return sc !== 1 || dx !== 0 || dy !== 0 ? 'fitted' : 'turned';
       }
-      if (found) break;
     }
-    if (!found) {
+    return undefined;
+  };
+
+  const left: number[] = [];
+  st.buildings.forEach((b, i) => {
+    if (opts.keep?.has(b.id)) return;
+    const outer = current[i]![0];
+    if (!outer || outer.length < 10) return;
+    const o = ringOrientation(Array.from(outer));
+    if (Math.abs(o.deg) <= SQUARE_TOLERANCE_DEG) return;
+    if (o.share < 0.98) {
+      s.irregular++;
+      if (!opts.all) return;
+    } else s.offGrid++;
+    const r = place([i], o.deg);
+    if (r) s[r]++;
+    else {
       s.jagged++;
-      return;
+      left.push(i);
     }
-    if (fitted) s.fitted++;
-    else s.turned++;
-    current[i] = found;
-    out[i] = {
-      ...map.buildings[i]!,
-      rings: found.map((r) => {
-        const raw: number[] = [];
-        for (let k = 0; k + 1 < r.length; k += 2) {
-          const p = unrotatePt(rot, r[k]!, r[k + 1]!);
-          raw.push(Math.round(p.x * 10), Math.round(p.y * 10));
-        }
-        return raw;
-      }),
-    };
   });
+
+  // stw2: the buildings still at an angle, in groups of touching / near neighbours (≤ 1 m).
+  const last: number[] = [];
+  if (opts.all && left.length) {
+    const parent = new Map<number, number>(left.map((i) => [i, i]));
+    const find = (i: number): number => {
+      let r = i;
+      while (parent.get(r) !== r) r = parent.get(r)!;
+      parent.set(i, r);
+      return r;
+    };
+    const boxes = new Map(left.map((i) => [i, bbox(current[i]!)]));
+    for (const i of left) {
+      const b = boxes.get(i)!;
+      for (const k of idx.buildings.query({
+        x0: b.x0 - 1,
+        y0: b.y0 - 1,
+        x1: b.x1 + 1,
+        y1: b.y1 + 1,
+      })) {
+        const j = indexOf.get(idx.buildings.items[k]!.b);
+        if (j === undefined || j === i || !parent.has(j)) continue;
+        const a = find(i);
+        const z = find(j);
+        if (a !== z) parent.set(Math.max(a, z), Math.min(a, z));
+      }
+    }
+    const groups = new Map<number, number[]>();
+    for (const i of left) {
+      const r = find(i);
+      groups.set(r, [...(groups.get(r) ?? []), i]);
+    }
+    for (const members of groups.values()) {
+      // Angle of the group: its largest member's.
+      let big = members[0]!;
+      let area = -1;
+      for (const i of members) {
+        const b = boxes.get(i)!;
+        const a = (b.x1 - b.x0) * (b.y1 - b.y0);
+        if (a > area) {
+          area = a;
+          big = i;
+        }
+      }
+      const o = ringOrientation(Array.from(current[big]![0]!));
+      const r = place(members, o.deg);
+      if (!r) {
+        if (members.length > 1) for (const i of members) last.push(i);
+        else last.push(members[0]!);
+        continue;
+      }
+      s.jagged -= members.length;
+      s.grouped = (s.grouped ?? 0) + members.length;
+    }
+    // Last resort: each one alone, allowed 3 m past its plot (a long thin building at 45° does
+    // not fit its own bounding box) and shrunk further (down to 70 %); never onto a road / neighbour.
+    for (const i of last) {
+      const o = ringOrientation(Array.from(current[i]![0]!));
+      if (!place([i], o.deg, [1, ...SCALES.slice(1), ...LAST_SCALES], 3)) continue;
+      s.jagged--;
+      s.grouped = (s.grouped ?? 0) + 1;
+    }
+  }
+
+  const out: OsmBuilding[] = map.buildings.map((b, i) =>
+    changed.has(i)
+      ? {
+          ...b,
+          rings: current[i]!.map((r) => {
+            const raw: number[] = [];
+            for (let k = 0; k + 1 < r.length; k += 2) {
+              const p = unrotatePt(rot, r[k]!, r[k + 1]!);
+              raw.push(Math.round(p.x * 10), Math.round(p.y * 10));
+            }
+            return raw;
+          }),
+        }
+      : b,
+  );
   if (stats) Object.assign(stats, s);
   return { ...map, buildings: out };
 }

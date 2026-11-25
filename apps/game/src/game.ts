@@ -78,7 +78,13 @@ import { installSnowCover, setSnowCover, snowCoverNow } from './world/weather/sn
 import { genLampsOf } from './world/gen/gen-lamps.js';
 import { simToWorld } from './sim/coords.js';
 import { SnapshotBuffer } from './sim/interpolate.js';
-import type { ActionView, CharacterView, EquipSlot, ItemId } from '@deadzone/protocol';
+import type {
+  ActionView,
+  CharacterView,
+  EquipSlot,
+  FurnitureView,
+  ItemId,
+} from '@deadzone/protocol';
 import { SnapshotEntityKind, TARGET_MAX_TILES } from '@deadzone/protocol';
 import { SAVE_VERSION, TICK_MS } from '@deadzone/sim';
 import type { CloudPlay } from './account/cloud-play.js';
@@ -1551,6 +1557,7 @@ input.on('reload', () => {
 const groundPiles = new GroundPiles();
 worldRoot.add(groundPiles.root);
 const { mapObjects } = streaming;
+if (import.meta.env.DEV) (globalThis as { __dzMapObjects?: unknown }).__dzMapObjects = mapObjects;
 // Furniture pushed / pulled / turned (protocol 37): the model slides to its new tiles (the chunk
 // is not rebuilt for it, sim-sync.ts), the mover's body steps with it.
 simWorker?.onEvents((events) => {
@@ -1808,7 +1815,7 @@ const doorInReach = (x: number, y: number, z: number): DoorTarget | undefined =>
   nearestDoor(targetEdges(), (e) => openings.info(e.tx, e.ty, e.z, e.side), x, y, z);
 /** Sim command on an opening edge (`toggleDoor`, `barricade`, `forceDoor` …). */
 const openingCommand = (door: DoorTarget, cmd: OpeningCmd, item?: number): void => {
-  if (cmd === 'coverWindow' && item === undefined) return;
+  if (cmd === 'furniture' || (cmd === 'coverWindow' && item === undefined)) return;
   const at = { tx: door.tx, ty: door.ty, side: door.side };
   const c =
     cmd === 'coverWindow'
@@ -1856,6 +1863,19 @@ const interactProject = (
     y: ((1 - projected.y) / 2) * container.clientHeight,
   };
 };
+/** The sim's context-menu entry of a door / gate / window edge (`furnitureActions`), if in reach. */
+function edgeMenuOf(door: DoorTarget): FurnitureView | undefined {
+  const c = doorCentre(door);
+  return gameState
+    .get()
+    .furniture.find(
+      (v) =>
+        v.contentId === undefined &&
+        v.z === door.z &&
+        Math.abs(v.x - c.x) < 0.01 &&
+        Math.abs(v.y - c.y) < 0.01,
+    );
+}
 const interaction = new InteractController({
   state: () => gameState.get(),
   player: () => snapshots.sample(performance.now(), TICK_MS),
@@ -1864,6 +1884,11 @@ const interaction = new InteractController({
     return p ? doorInReach(p.x, p.y, p.z) : undefined;
   },
   opening: openingCommand,
+  edgeActions: (door) => edgeMenuOf(door)?.actions,
+  useEdgeAction(door, actionId) {
+    const v = edgeMenuOf(door);
+    if (v) sendBody({ type: 'useFurniture', furnitureId: v.furnitureId, actionId });
+  },
   coverItems: () =>
     coverChoices(gameState.get().inventory, (d) => !!hudContent.items.get(d)?.windowCover),
   toast: (text) => hud.toast(text),
@@ -2672,6 +2697,9 @@ renderer.setAnimationLoop((time) => {
   vehicleView.update(nowMs, dt);
   groundPiles.update(gs.groundPiles, gs.nearby, time);
   mapObjects.update(gs.nearby, time);
+  // The piece F would search / open now lights up (Paweł 25.11).
+  const focus = interaction.focus();
+  mapObjects.setHighlight(focus && { x: focus.x, y: focus.y, z: focus.z }, time);
   if (!inventory.open) loot.update();
   workshop.update();
   character.update();
