@@ -24,6 +24,12 @@ export interface WorldSource {
    * `woda`, `wojsko`, `ruiny`); undefined = `defaultZombiesPerChunk`.
    */
   chunkKind?(cx: number, cy: number): string | undefined;
+  /**
+   * Lazily loaded worlds (OSM tiles fetched in the background): false while the data of chunk
+   * column (cx, cy) is not in yet, so `getChunk` there is a placeholder (undefined) that must
+   * not be cached or acted on (world storage, stairs). Absent = always ready.
+   */
+  ready?(cx: number, cy: number): boolean;
   /** Migration hook: saves made with generator version `v` load unchanged (the generator still produces identical chunks for them). */
   acceptsGeneratorVersion?(v: number): boolean;
   /** Global palettes and zones, as on `SimMap`. */
@@ -112,7 +118,11 @@ export function simMapFromWorldSource(src: WorldSource, cacheChunks = 1024): Sim
       let c = cur.get(key);
       if (c === undefined) {
         c = old.get(key);
-        if (c === undefined) c = src.getChunk(cx, cy, z) ?? null;
+        if (c === undefined) {
+          // Data not loaded yet: answer without caching, so the chunk comes once it is in.
+          if (src.ready && !src.ready(cx, cy)) return src.getChunk(cx, cy, z);
+          c = src.getChunk(cx, cy, z) ?? null;
+        }
         if (cur.size >= half) {
           old = cur;
           cur = new Map();
@@ -121,6 +131,7 @@ export function simMapFromWorldSource(src: WorldSource, cacheChunks = 1024): Sim
       }
       return c ?? undefined;
     },
+    ...(src.ready ? { ready: (cx: number, cy: number) => src.ready!(cx, cy) } : {}),
     ...(src.zones ? { zones: src.zones } : {}),
     ...(src.edgeKinds ? { edgeKinds: src.edgeKinds } : {}),
     ...(src.floorTiles ? { floorTiles: src.floorTiles } : {}),

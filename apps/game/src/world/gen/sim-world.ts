@@ -59,6 +59,16 @@ export function generatorWorldSource(
         ? { ...chunk, trees: simTrees(col!.trees, col!.treeSpecies) }
         : chunk;
     },
+    // OSM tiles still loading: the sim must not cache the empty placeholder or spawn storage.
+    ...(tiles
+      ? {
+          ready: (cx: number, cy: number) => {
+            if (tiles.ready(cx, cy)) return true;
+            void tiles.ensure(cx, cy);
+            return false;
+          },
+        }
+      : {}),
     chunkKind: (cx, cy) => gen.chunkKind(cx, cy),
     edgeKinds: EDGE_PALETTE.map((e) => (e ? e.kind : null)),
     floorTiles: TILE_PALETTE.map((t) => t),
