@@ -1,7 +1,7 @@
 import { clamp, type ZoomLimits } from '../../camera/zoom.js';
 
-/** Phone camera zoom: 0.6× – 2.0× (desktop keeps DEFAULT_ZOOM_LIMITS, 0.6× – 1.6×). */
-export const TOUCH_ZOOM_LIMITS: ZoomLimits = { min: 0.6, max: 2.0, step: 1.12 };
+/** Phone camera zoom: 0.6× – 6× (same as desktop, DEFAULT_ZOOM_LIMITS). */
+export const TOUCH_ZOOM_LIMITS: ZoomLimits = { min: 0.6, max: 6, step: 1.12 };
 
 /** Phone view state in its own localStorage keys (mobile HUD spec). */
 export const MOBILE_VIEW_KEYS = {

@@ -8,26 +8,9 @@ import {
   type RenderLook,
 } from './appearance-map.js';
 import { CharacterAssembly } from './character-builder.js';
+import { basePaletteHex } from './palettes.js';
 
-interface PaletteJson {
-  id: string;
-  colors: { id: string; hex: string }[];
-}
-
-/** Base palettes (small JSON; the full pack only loads in the worker / creator). */
-const PALETTE_FILES = import.meta.glob<PaletteJson[]>(
-  '../../../../packages/content/data/base/palettes/*.json',
-  { import: 'default', eager: true },
-);
-const PALETTES = new Map(
-  Object.values(PALETTE_FILES)
-    .flat()
-    .map((p) => [p.id, new Map(p.colors.map((c) => [c.id, c.hex]))]),
-);
-
-export function basePaletteHex(palette: string, color: string | undefined): string | undefined {
-  return color === undefined ? undefined : PALETTES.get(palette)?.get(color);
-}
+export { basePaletteHex };
 
 /** Render look of a created character (`view.characterProfile`, e.g. after loading a save). */
 export const lookOfProfile = (p: CharacterProfileView): RenderLook =>

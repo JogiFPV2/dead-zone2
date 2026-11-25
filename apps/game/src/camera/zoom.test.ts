@@ -18,10 +18,10 @@ describe('zoomFromWheel', () => {
     expect(zoomFromWheel(0.6, 1000, limits)).toBe(0.5);
   });
 
-  it('defaults to 0.6×–1.6× of the default zoom', () => {
+  it('defaults to 0.6×–6× of the default zoom', () => {
     expect(DEFAULT_ZOOM_LIMITS.min).toBe(0.6);
-    expect(DEFAULT_ZOOM_LIMITS.max).toBe(1.6);
-    expect(zoomFromWheel(1, -100_000)).toBe(1.6);
+    expect(DEFAULT_ZOOM_LIMITS.max).toBe(6);
+    expect(zoomFromWheel(1, -100_000)).toBe(6);
     expect(zoomFromWheel(1, 100_000)).toBe(0.6);
   });
 });

@@ -3,7 +3,12 @@ import { CAMERA_DISTANCE, isometricOffset } from '../camera/isometric.js';
 import { createWorldLighting, type LampDef } from '../lighting/index.js';
 import { CharacterRig } from '../models/character-rig.js';
 import { ModelKit, PLAYER_MODEL, ZOMBIE_MODELS } from '../models/model-kit.js';
+import { rebuildCharacter, SURVIVOR, ZOMBIE_BODIES } from '../models/painted-body/body.js';
 import { tintZombie } from '../models/zombie-views.js';
+
+/** Preview of the new painted bodies (`?body=painted`, Paweł 24.11, before they become default). */
+const NEW_BODIES =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('body') === 'painted';
 import { PLAYER_HEIGHT } from '../player/player-view.js';
 import { simToWorld } from '../sim/coords.js';
 import type { ChunkRange } from '../world/chunk.js';
@@ -213,6 +218,7 @@ export async function createMenuScene(
       try {
         const p = await kit.character(PLAYER_MODEL, PLAYER_HEIGHT);
         if (disposed) return;
+        if (NEW_BODIES) rebuildCharacter(p.object, SURVIVOR);
         addHulls(p.object);
         scene.add(p.object);
         const { x, y, heading } = MENU_STAGING[osm.map]?.player ?? osm.player;
@@ -241,7 +247,9 @@ export async function createMenuScene(
       try {
         const t = await kit.character(ZOMBIE_MODELS[model] ?? ZOMBIE_MODELS[0]!, PLAYER_HEIGHT);
         if (disposed) return;
-        tintZombie(t.object);
+        if (NEW_BODIES)
+          rebuildCharacter(t.object, ZOMBIE_BODIES[actors.length % ZOMBIE_BODIES.length]!);
+        else tintZombie(t.object);
         addHulls(t.object);
         scene.add(t.object);
         actors.push({
