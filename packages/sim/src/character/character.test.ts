@@ -166,6 +166,23 @@ describe('character creator: in the sim', () => {
     });
   });
 
+  it('starts in the clothes chosen in the creator, worn and in its colours (Paweł 25.11)', () => {
+    const s = sim();
+    send(s, { type: 'newCharacter', character: carpenter() });
+    s.step();
+    const inv = s.getInventory()!;
+    const worn = (slot: 'torso_outer' | 'legs' | 'feet') => {
+      const id = inv.equipped[slot];
+      return inv.containers?.flatMap((c) => c.items).find((i) => i.id === id);
+    };
+    expect(worn('torso_outer')).toMatchObject({ def: 'base:hoodie', tint: ['#28324a', '#2f3133'] });
+    expect(worn('legs')?.def).toBe('base:jeans');
+    // Jeans without a chosen colour: the palette's first colour (filled by the check).
+    expect(worn('legs')?.tint).toHaveLength(1);
+    expect(worn('feet')).toMatchObject({ def: 'base:boots', tint: ['#2f3133'] });
+    expect(inv.equipped.head).toBeUndefined();
+  });
+
   it('invalid character: invalid-character with detail', () => {
     const s = sim();
     send(s, { type: 'newCharacter', character: carpenter({ skills: { 'base:aiming': 3 } }) });

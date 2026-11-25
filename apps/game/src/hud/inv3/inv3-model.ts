@@ -57,6 +57,8 @@ export interface InvRowVM {
   weightKg: number;
   state?: InvState;
   hand?: 'P' | 'L';
+  /** Worn on the body (clothes, a worn bag; not hands). */
+  worn?: boolean;
   /** Group (same def, different state): children rows, collapsed by default. */
   children?: InvRowVM[];
   /** Items behind the row (group: all of them). */
@@ -246,6 +248,9 @@ export function itemRowV3(
     weightKg: it.weightKg,
     ...(state ? { state } : {}),
     ...(hand ? { hand } : {}),
+    ...(it.equipped?.some((e) => e !== 'hand_primary' && e !== 'hand_secondary')
+      ? { worn: true }
+      : {}),
     itemIds: [it.id],
     tooltip: tooltipV3(
       it,

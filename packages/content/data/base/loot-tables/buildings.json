@@ -401,6 +401,22 @@
         "weight": 4
       },
       {
+        "item": "base:sweatpants",
+        "weight": 3
+      },
+      {
+        "item": "base:shorts",
+        "weight": 3
+      },
+      {
+        "item": "base:sneakers",
+        "weight": 2
+      },
+      {
+        "item": "base:baseball-cap",
+        "weight": 1
+      },
+      {
         "item": "base:vhs-fitness-workout",
         "weight": 1,
         "rarity": "rare"

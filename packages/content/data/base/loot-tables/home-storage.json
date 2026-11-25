@@ -33,6 +33,86 @@
         "weight": 4
       },
       {
+        "item": "base:flannel-shirt",
+        "weight": 3
+      },
+      {
+        "item": "base:track-jacket",
+        "weight": 2
+      },
+      {
+        "item": "base:sweater",
+        "weight": 3
+      },
+      {
+        "item": "base:vest",
+        "weight": 1
+      },
+      {
+        "item": "base:raincoat",
+        "weight": 1
+      },
+      {
+        "item": "base:cargo-pants",
+        "weight": 2
+      },
+      {
+        "item": "base:work-pants",
+        "weight": 1
+      },
+      {
+        "item": "base:work-jacket",
+        "weight": 1
+      },
+      {
+        "item": "base:work-boots",
+        "weight": 1
+      },
+      {
+        "item": "base:hard-hat",
+        "weight": 1
+      },
+      {
+        "item": "base:dust-mask",
+        "weight": 1
+      },
+      {
+        "item": "base:shorts",
+        "weight": 2
+      },
+      {
+        "item": "base:sweatpants",
+        "weight": 3
+      },
+      {
+        "item": "base:chinos",
+        "weight": 2
+      },
+      {
+        "item": "base:sneakers",
+        "weight": 3
+      },
+      {
+        "item": "base:boots",
+        "weight": 2
+      },
+      {
+        "item": "base:hiking-boots",
+        "weight": 1
+      },
+      {
+        "item": "base:rubber-boots",
+        "weight": 1
+      },
+      {
+        "item": "base:beanie",
+        "weight": 2
+      },
+      {
+        "item": "base:baseball-cap",
+        "weight": 2
+      },
+      {
         "item": "base:sheet",
         "weight": 3
       },

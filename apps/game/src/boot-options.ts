@@ -46,6 +46,11 @@ export interface BootOptions {
   weather?: WeatherKind | 'auto' | 'off';
   /** Dev `?give=base:kitchen-knife,base:canned-beans*3`: items put into the inventory at start. */
   give: { itemId: string; count: number }[];
+  /**
+   * Dev `?wear=base:jacket,base:jeans,base:flashlight@hand_secondary`: items given and put on at
+   * start (their first equip slot, or `@slot`).
+   */
+  wear?: { itemId: string; slot?: string }[];
   /** Dev `?stat=hunger:60,stress:40`: survival stats set at start (HUD testing). */
   stats: { stat: DebugStat; value: number }[];
   /** Dev `?wound=forearm_l:laceration,hand_r:scratch`: wounds at start (character window). */
@@ -145,6 +150,16 @@ export function parseGiveParam(value: string | null): { itemId: string; count: n
     .map((m) => ({ itemId: m[1] ?? '', count: Math.min(99, Math.max(1, Number(m[2] ?? 1))) }));
 }
 
+/** `id[@slot]` list for the dev `?wear=` param. */
+export function parseWearParam(value: string | null): { itemId: string; slot?: string }[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((part) => /^([a-z0-9-]+:[a-z0-9-]+)(?:@([a-z_]+))?$/.exec(part.trim()))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => ({ itemId: m[1] ?? '', ...(m[2] ? { slot: m[2] } : {}) }));
+}
+
 const NUM = /^-?\d+(?:\.\d+)?$/;
 
 /** `x,y[,headingDeg[,fuelL[,flags]]]` list (`;`), see `BootOptions.cars`; at most 8 cars. */
@@ -216,6 +231,7 @@ export function parseBootOptions(search: string, storedStyle?: RenderStyle): Boo
     timescale: Math.max(0, Math.min(1440, Number(q.get('timescale')) || 0)),
     ...(isWeatherParam(q.get('weather')) ? { weather: q.get('weather') as WeatherKind } : {}),
     give: parseGiveParam(q.get('give')),
+    ...(q.get('wear') ? { wear: parseWearParam(q.get('wear')) } : {}),
     cars: parseCarParam(q.get('car')),
     pumps: parseTileListParam(q.get('pump')),
     ...(q.get('tv') !== null ? { tvs: parseTileListParam(q.get('tv')) } : {}),

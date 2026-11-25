@@ -75,10 +75,155 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 .dz-i3__panel--own {
-  left: 18px;
+  left: 226px;
+  width: 512px;
 }
 .dz-i3__panel--box {
   right: 18px;
+  width: 512px;
+}
+/* Character drawing (Paweł 25.11): left of the player panel, places of the worn things. */
+.dz-pd {
+  position: absolute;
+  top: 45px;
+  left: 18px;
+  width: 200px;
+  height: 605px;
+  box-sizing: border-box;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(21, 25, 28, 0.9);
+  border: 1px solid rgba(91, 100, 105, 0.48);
+  border-radius: 5px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.dz-pd__head {
+  font: 700 13px var(--font-family-mono);
+  letter-spacing: 0.07em;
+  height: 22px;
+  color: var(--acc-hi);
+}
+.dz-pd__fig {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.dz-pd__svg {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  height: 94%;
+  transform: translateX(-50%);
+  color: #3a4247;
+}
+.dz-pd__slot {
+  position: absolute;
+  width: 84px;
+  height: 46px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1px dashed var(--bd);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.72);
+  cursor: default;
+}
+.dz-pd__slot--L {
+  left: 0;
+}
+.dz-pd__slot--R {
+  right: 0;
+}
+.dz-pd__slot[data-filled] {
+  border-style: solid;
+  border-color: #6b767c;
+  cursor: grab;
+}
+.dz-pd__slot[data-drop='ok'] {
+  border: 1px solid var(--acc);
+  background: rgba(224, 162, 58, 0.18);
+}
+.dz-pd__ic {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dz-pd__ic img {
+  max-width: 26px;
+  max-height: 26px;
+}
+.dz-pd__slot:not([data-filled]) .dz-pd__ic {
+  display: none;
+}
+.dz-pd__t {
+  max-width: 80px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 500 10px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-pd__slot[data-filled] .dz-pd__t {
+  color: var(--color-text-primary);
+}
+.dz-pd__stats {
+  display: grid;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.dz-pd__st {
+  display: grid;
+  grid-template-columns: 70px 1fr 34px;
+  align-items: center;
+  gap: 6px;
+  font: 500 10px var(--font-family-mono);
+  color: var(--muted);
+}
+.dz-pd__st b {
+  text-align: right;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+.dz-pd__bar {
+  height: 4px;
+  background: #2c3337;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dz-pd__bar i {
+  display: block;
+  height: 100%;
+  background: var(--acc);
+}
+.dz-pd__hint {
+  margin-top: 5px;
+  font: 400 10px var(--font-family-sans);
+  color: var(--dim);
+}
+.dz-pd__ghost {
+  position: fixed;
+  z-index: 2147483001;
+  width: 84px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--acc, #e0a23a);
+  border-radius: 4px;
+  background: rgba(14, 17, 19, 0.9);
+  pointer-events: none;
+}
+.dz-pd__ghost[data-off='true'] {
+  border-color: #c8553d;
 }
 .dz-i3__head {
   display: flex;
@@ -375,6 +520,19 @@
   background: #9aa3a7;
   color: #111417;
   font: 700 9px/13px var(--font-family-mono);
+}
+.dz-i3__worn {
+  padding: 0 3px;
+  border-radius: 2px;
+  border: 1px solid var(--acc-hi);
+  color: var(--acc-hi);
+  font: 700 8px/11px var(--font-family-mono);
+  letter-spacing: 0.04em;
+}
+.dz-i3__worn--tile {
+  position: absolute;
+  left: 3px;
+  top: 3px;
 }
 .dz-i3__cb {
   display: inline-flex;

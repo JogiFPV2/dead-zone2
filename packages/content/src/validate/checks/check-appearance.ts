@@ -34,9 +34,19 @@ export function checkAppearance(index: ContentIndex, where: SourceRef, sink: Err
     });
   }
   const slots = new Set<string>();
+  const items = index.map('item');
   for (const def of index.map('appearancePart').values()) {
     const part = def.data;
     slots.add(part.slot);
+    // Ubranie z kreatora: istniejący przedmiot `clothing`.
+    if (part.item !== undefined && items.get(part.item)?.data.kind !== 'clothing')
+      sink.add({
+        code: 'appearance_item',
+        message: `„${def.id}”: „${part.item}” nie jest ubraniem (kind: clothing)`,
+        pack: def.source.pack,
+        file: def.source.file,
+        path: formatJsonPath([...def.source.path, 'item']),
+      });
     part.tints.forEach((t, i) => {
       const kind = palettes.get(t.palette)?.data.kind;
       if (kind && kind !== SLOT_PALETTE[part.slot])

@@ -4,6 +4,7 @@
     "name": "appearance.base.shoes-sneakers.name",
     "slot": "shoes",
     "modelRef": "char/shoes-sneakers",
+    "item": "base:sneakers",
     "tints": [
       { "channel": "primary", "palette": "base:cloth" },
       { "channel": "secondary", "palette": "base:cloth" }
@@ -14,6 +15,7 @@
     "name": "appearance.base.shoes-boots.name",
     "slot": "shoes",
     "modelRef": "char/shoes-boots",
+    "item": "base:boots",
     "tints": [{ "channel": "primary", "palette": "base:cloth" }]
   },
   {
@@ -21,6 +23,7 @@
     "name": "appearance.base.shoes-work-boots.name",
     "slot": "shoes",
     "modelRef": "char/shoes-work-boots",
+    "item": "base:work-boots",
     "tints": [{ "channel": "primary", "palette": "base:cloth" }]
   },
   {
@@ -28,6 +31,7 @@
     "name": "appearance.base.shoes-hiking.name",
     "slot": "shoes",
     "modelRef": "char/shoes-hiking",
+    "item": "base:hiking-boots",
     "tints": [
       { "channel": "primary", "palette": "base:cloth" },
       { "channel": "secondary", "palette": "base:cloth" }

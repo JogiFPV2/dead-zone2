@@ -7,9 +7,9 @@ export interface ZoomLimits {
 
 /**
  * Ortho `camera.zoom` limits around the default view (zoom 1 = VIEW_HEIGHT world units tall):
- * 0.6× (wider, ~40 m tall) to 1.6× (closer, ~15 m tall).
+ * 0.6× (wider, ~40 m tall) to 6× (closer, ~4 m tall: the character fills half the screen, Paweł 25.11).
  */
-export const DEFAULT_ZOOM_LIMITS: ZoomLimits = { min: 0.6, max: 1.6, step: 1.12 };
+export const DEFAULT_ZOOM_LIMITS: ZoomLimits = { min: 0.6, max: 6, step: 1.12 };
 
 /** Half-life of the smooth zoom towards the wheel target. */
 export const ZOOM_HALF_LIFE_MS = 70;

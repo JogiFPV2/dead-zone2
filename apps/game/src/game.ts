@@ -195,7 +195,19 @@ import {
   PILE_MODEL,
   characterModels,
   ktx2For,
+  ZOMBIE_MODELS,
 } from './models/model-kit.js';
+import {
+  rebuildCharacter,
+  redressCharacter,
+  SURVIVOR,
+  ZOMBIE_BODIES,
+} from './models/painted-body/body.js';
+import { dressedBody } from './models/painted-body/wardrobe.js';
+import { baseLookOf, carriedItem, dressKey, wornClothesOf } from './player/painted-dress.js';
+import type { HandItem } from './player/worn-gear.js';
+import { basePaletteHex } from './creator/palettes.js';
+import type { Object3D } from 'three';
 import { brighten, lightReal, loadZombieTemplates } from './models/zombie-views.js';
 import { InstancedZombies } from './models/instanced-zombies.js';
 import { PLAYER_HEIGHT } from './player/player-view.js';
@@ -204,7 +216,13 @@ import { buildWeaponIndex, type WeaponInfo } from './weapons/weapon-kinds.js';
 import { WeaponModels } from './weapons/weapon-models.js';
 import { animV2Enabled } from './anim/contract.js';
 import type { HeldCategory } from './weapons/grip-sockets.js';
-import { HeldItemPool, buildHeldIndex, devHeld, heldHands } from './weapons/held-items.js';
+import {
+  GRIP_CATEGORY,
+  HeldItemPool,
+  buildHeldIndex,
+  devHeld,
+  heldHands,
+} from './weapons/held-items.js';
 import { devHoldWeapon, weaponLoadout } from './weapons/loadout.js';
 import { MENU_TRACK } from './menu/track.js';
 import { PauseController } from './pause/pause-controller.js';
@@ -973,6 +991,8 @@ sim.onSnapshot(({ tick, buf }) => {
     // Dev `?give=` / `?stat=`: starting items and stats (debug commands, need `init.dev`).
     if (import.meta.env.DEV) {
       for (const g of boot.give) sim.send(stamper.stamp({ type: 'debugGiveItem', ...g }));
+      for (const w of boot.wear ?? [])
+        sim.send(stamper.stamp({ type: 'debugGiveItem', itemId: w.itemId, count: 1 }));
       for (const st of boot.stats) sim.send(stamper.stamp({ type: 'debugStat', ...st }));
       for (const wd of boot.wounds) sim.send(stamper.stamp({ type: 'debugWound', ...wd }));
       const p0 = readEntity(buf, 0);
@@ -1636,13 +1656,21 @@ void ModelKit.create(renderer).then(async (kit) => {
   try {
     const real = realStyle !== undefined;
     const p = await kit.character(characterModels(real ? 'real' : 'default').player, PLAYER_HEIGHT);
-    if (real) lightReal(p.object);
+    // Preview of the new painted bodies (Paweł 24.11, to accept before they replace the models).
+    const newBodies = !real && new URLSearchParams(location.search).get('body') === 'painted';
+    if (newBodies) {
+      rebuildCharacter(p.object, SURVIVOR);
+      paintedPlayer = p.object;
+      redressPainted();
+    }
+    // Vertex-coloured bodies: no emissive (three.js would not tint it by the vertex colour).
+    if (real || newBodies) lightReal(p.object);
     else brighten(p.object);
     addHulls(p.object);
     markCharacter(p.object);
     player.setModel(p.object, p.clips);
     // The creator's parts are Quaternius meshes: the realistic body keeps its baked outfit.
-    if (!real)
+    if (!real && !newBodies)
       dressPlayer = (look) => {
         void import('./creator/player-look.js')
           .then((m) =>
@@ -1671,9 +1699,13 @@ void ModelKit.create(renderer).then(async (kit) => {
       worldRoot.add(animalViews.root);
     })
     .catch((e: unknown) => console.warn('animal models', e));
+  const newZombies = !realStyle && new URLSearchParams(location.search).get('body') === 'painted';
   const templates = await loadZombieTemplates(
     kit,
-    characterModels(realStyle ? 'real' : 'default').zombies,
+    newZombies
+      ? ZOMBIE_BODIES.map(() => ZOMBIE_MODELS[0]!)
+      : characterModels(realStyle ? 'real' : 'default').zombies,
+    newZombies ? (o, i) => rebuildCharacter(o, ZOMBIE_BODIES[i]!) : undefined,
   );
   if (templates.length) {
     zombieViews = await InstancedZombies.create(templates, crowd);
@@ -1683,6 +1715,47 @@ void ModelKit.create(renderer).then(async (kit) => {
 });
 let dressPlayer: ((look: RenderLook) => void) | undefined;
 let dressed = false;
+/**
+ * New painted body of the player (`?body=painted`): dressed in what is worn in the inventory
+ * (Paweł 25.11), redressed when the worn clothes or the character change.
+ */
+let paintedPlayer: Object3D | undefined;
+let paintedKey = '';
+function redressPainted(): void {
+  if (!paintedPlayer) return;
+  const s = gameState.get();
+  const base = s.characterProfile ? baseLookOf(s.characterProfile, basePaletteHex) : undefined;
+  const worn = wornClothesOf(s.inventory);
+  const key = dressKey(base, worn);
+  if (key === paintedKey) return;
+  paintedKey = key;
+  redressCharacter(
+    paintedPlayer,
+    dressedBody(base ?? { skin: SURVIVOR.skin, hair: SURVIVOR.hair, hairStyle: 'short' }, worn),
+  );
+}
+gameState.subscribe((next, prev) => {
+  if (next.inventory !== prev.inventory || next.characterProfile !== prev.characterProfile)
+    redressPainted();
+});
+// Dev `?wear=`: put the given items on (`@slot` or their first equip slot), once each.
+if (import.meta.env.DEV && boot.wear?.length) {
+  const toWear = [...boot.wear];
+  gameState.subscribe((next) => {
+    const inv = next.inventory;
+    if (!inv || toWear.length === 0) return;
+    for (const c of Object.values(inv.containers))
+      for (const it of c.items) {
+        const i = toWear.findIndex((w) => w.itemId === it.def);
+        const w = toWear[i];
+        const slot = (w?.slot ?? hudContent.items.get(it.def)?.equipSlots?.[0]) as
+          EquipSlot | undefined;
+        if (!w || it.equipped?.length || !slot) continue;
+        toWear.splice(i, 1);
+        sim.send(stamper.stamp({ type: 'equip', item: it.id, slot }));
+      }
+  });
+}
 function dressFromProfile(): void {
   const profile = gameState.get().characterProfile;
   if (dressed || !profile || !dressPlayer) return;
@@ -2431,6 +2504,31 @@ renderer.setAnimationLoop((time) => {
       );
     }
     player.setWeapons(hand, back, weaponModels);
+    {
+      // Worn bags and hand items on the body (Paweł 25.11): bag on the back, fanny pack on the
+      // belt, anything in the left hand, a non-weapon item in the right hand.
+      const inv = gameState.get().inventory;
+      const c = characters.get(phys.localId);
+      const defOf = (slot: 'back' | 'belt') => {
+        const id = inv?.equipped[slot];
+        return id === undefined ? undefined : carriedItem(inv, id)?.def;
+      };
+      const handItem = (id: string | null | undefined): HandItem | undefined => {
+        if (!id) return undefined;
+        const weapon = weaponIndex.get(id);
+        const category = weapon?.grip ? GRIP_CATEGORY[weapon.grip] : heldIndex.get(id);
+        return category ? { id, category, ...(weapon ? { weapon } : {}) } : undefined;
+      };
+      player.setGear(
+        {
+          back: defOf('back'),
+          belt: defOf('belt'),
+          left: c?.twoHanded ? undefined : handItem(loadout.left),
+          right: hand ? undefined : handItem(c?.equippedPrimary),
+        },
+        weaponModels,
+      );
+    }
     if (heldPool) {
       // Hands from the sim: a non-weapon item in the right hand (`equippedPrimary`), the left
       // hand's item (`equippedSecondary`, protocol 48); dev `?held=R,L` overrides.
