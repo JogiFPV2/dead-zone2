@@ -97,7 +97,8 @@ describe('katalog receptur i książek w data/base', () => {
       }
       return seen;
     };
-    const lit = (await books()).map((i) => i.id);
+    // Gry i zabawki (`format: game`: karty, kostka Rubika) to nie druk — księgarnia ich nie musi mieć.
+    const lit = (await books()).filter((i) => i.literature.format !== 'game').map((i) => i.id);
     const bookstore = reach('base:bookstore');
     for (const id of lit) expect(bookstore.has(id), id).toBe(true);
     for (const t of ['base:living-room', 'base:bedroom', 'base:school']) {

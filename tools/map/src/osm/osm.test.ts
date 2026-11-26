@@ -193,10 +193,14 @@ describe('new building types', () => {
       fp(60, 40, () => true),
     );
     const rooms = Object.values(res.building.rooms);
-    expect(rooms.map((r) => r.type)).toContain('base:room-warehouse');
+    // The hall is a production hall (huta, zakład) or a store, by the building's own roll.
+    const hall = rooms
+      .map((r) => r.type)
+      .find((t) => t === 'base:room-factory' || t === 'base:room-warehouse');
+    expect(hall).toBeDefined();
     // Hall + office strip: office, staff kitchen (socjal) and WC.
     expect(rooms.map((r) => r.type).sort()).toEqual(
-      ['base:room-bathroom', 'base:room-kitchen', 'base:room-office', 'base:room-warehouse'].sort(),
+      ['base:room-bathroom', 'base:room-kitchen', 'base:room-office', hall].sort(),
     );
     // Gate: two doors side by side on the same wall.
     const [a, b] = res.doors;

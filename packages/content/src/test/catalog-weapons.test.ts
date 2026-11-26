@@ -62,7 +62,8 @@ describe('katalog broni', () => {
     expect(count('pistol')).toBeGreaterThanOrEqual(2);
     expect(count('revolver')).toBe(2);
     expect(count('shotgun')).toBe(2);
-    expect(count('rifle')).toBe(2);
+    // Myśliwski, karabin szturmowy + wiatrówka i kusza (cicha broń na śrut / bełty).
+    expect(count('rifle')).toBe(4);
     expect(
       has(b, ['pump-shotgun', 'double-barrel-shotgun', 'hunting-rifle', 'assault-rifle']),
     ).toEqual([]);
@@ -70,6 +71,11 @@ describe('katalog broni', () => {
       ofKind(b, 'ammo_box').map((x) => x.kind === 'ammo_box' && x.ammoBox.ammo),
     );
     for (const g of guns) {
+      // Wiatrówka i kusza (`base:ranged-quiet`): ciche, śrut i bełty luzem, bez pudełek.
+      if (g.tags.includes('base:ranged-quiet')) {
+        expect(g.ranged.shotNoise.radiusTiles, g.id).toBeLessThan(10);
+        continue;
+      }
       expect(boxed.has(g.ranged.ammo), `${g.id}: pudełko ${g.ranged.ammo}`).toBe(true);
       expect(g.ranged.shotNoise.radiusTiles, g.id).toBeGreaterThan(30);
     }

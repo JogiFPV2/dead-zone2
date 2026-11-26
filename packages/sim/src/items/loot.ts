@@ -6,10 +6,13 @@ import { roomAt } from '../openings/state.js';
 import {
   addContainer,
   createItem,
+  fullUses,
   groundPile,
+  maxCondition,
   stackLimit,
   tileKey,
   type ItemContainer,
+  type ItemInstance,
   type ItemStore,
 } from './store.js';
 
@@ -43,6 +46,8 @@ export function createChunkContainers(
     const onTile = st.worldByTile.get(key) ?? [];
     const roomId = chunk?.room?.[tileIndex(obj.x, obj.y)] ?? 0;
     const roomType = roomId ? chunk?.rooms?.[String(roomId)] : undefined;
+    const building = roomId ? (chunk?.roomBuildings?.[String(roomId)] ?? 0) : 0;
+    const profile = buildingProfile(st, seed, building);
     const t = st.content.containerTypes[type]!;
     const c = addContainer(st, {
       kind: 'world',
@@ -57,10 +62,72 @@ export function createChunkContainers(
       // Loot depends on the seed and the position only (docs 2.2 "RNG pochodne").
       lootKey: deriveSeed(seed, 'loot', x, y, addr.z, t.id, onTile.length),
       lootDone: false,
+      ...(profile === undefined ? {} : { profile }),
     });
     onTile.push(c.id);
     st.worldByTile.set(key, onTile);
   }
+}
+
+/**
+ * Building profile (`worldSettings.loot.buildingProfiles`): one per building, from the world seed
+ * and the map-global building id, so every storage of a house shares it. Undefined outside
+ * buildings or without profiles in the content.
+ */
+export function buildingProfile(st: ItemStore, seed: number, building: number): number | undefined {
+  const list = st.content.loot.buildingProfiles ?? [];
+  if (building <= 0 || list.length === 0) return undefined;
+  return Rng.fromSeed(deriveSeed(seed, 'building-profile', building)).pickWeighted(
+    list.map((p) => p.weight),
+  );
+}
+
+type BuildingProfileDef = NonNullable<ItemStore['content']['loot']['buildingProfiles']>[number];
+
+const profileOf = (st: ItemStore, c: ItemContainer): BuildingProfileDef | undefined =>
+  c.profile === undefined ? undefined : st.content.loot.buildingProfiles?.[c.profile];
+
+/**
+ * All drops of a storage's first search: the table (scaled by the building profile's
+ * `chancePct` / `rollsAdd`), then each matching profile `extra` with its own derived RNG.
+ */
+function rollStorage(
+  st: ItemStore,
+  c: ItemContainer,
+  table: LootTableDef | undefined,
+  out: (def: number, count: number) => void,
+): void {
+  const prof = profileOf(st, c);
+  if (table) {
+    const mod = prof ? { chancePct: prof.chancePct, rollsAdd: prof.rollsAdd } : undefined;
+    rollTable(st, table, Rng.fromSeed(c.lootKey), 0, out, mod);
+  }
+  if (!prof || c.type < 0) return;
+  const typeId = st.content.containerTypes[c.type]!.id;
+  prof.extra.forEach((x, i) => {
+    if (!x.containers.includes(typeId)) return;
+    if (x.rooms.length > 0 && (!c.roomType || !x.rooms.includes(c.roomType))) return;
+    const extra = st.content.lootTableById.get(x.table);
+    const rng = Rng.fromSeed(deriveSeed(c.lootKey, 'profile-extra', i));
+    if (extra && rng.chance(x.chance)) rollTable(st, extra, rng, 1, out);
+  });
+}
+
+/**
+ * Wear of found loot (`worldSettings.loot.wear`): with `wornChance` an item with durability gets
+ * `minPct`–`maxPct` % of it, medicine and drinks with several uses a part of them used up.
+ */
+export function wearLoot(st: ItemStore, item: ItemInstance, rng: Rng): void {
+  const w = st.content.loot.wear;
+  if (!w || w.wornChance <= 0) return;
+  const def = st.content.items[item.def]!;
+  const maxC = maxCondition(def);
+  const uses = def.kind === 'medical' || def.kind === 'drink' ? fullUses(def) : 0;
+  if (maxC <= 0 && uses <= 1) return;
+  if (!rng.chance(w.wornChance)) return;
+  const pct = rng.int(w.minPct, w.maxPct);
+  if (maxC > 0) item.condition = Math.max(1, Math.round((maxC * pct) / 100));
+  if (uses > 1) item.uses = Math.max(1, Math.round((uses * pct) / 100));
 }
 
 /**
@@ -128,24 +195,25 @@ export function generateLoot(
   c.lootDone = true;
   st.version++;
   const table = lootTableFor(st, c);
-  if (!table) return;
-  const rng = Rng.fromSeed(c.lootKey);
+  if (!table && c.profile === undefined) return;
   const drops = new Map<number, number>();
   const order: number[] = [];
-  rollTable(st, table, rng, 0, (def, count) => {
+  rollStorage(st, c, table, (def, count) => {
     if (!drops.has(def)) order.push(def);
     drops.set(def, (drops.get(def) ?? 0) + count);
   });
+  // Own derived RNG, so wear never changes what is found.
+  const wear = Rng.fromSeed(deriveSeed(c.lootKey, 'wear'));
   for (const def of order) {
     let left = drops.get(def) ?? 0;
     const maxStack = stackLimit(st, st.content.items[def]!);
     while (left > 0) {
       const n = Math.min(left, maxStack);
-      createItem(st, def, c.id, n, worldStartMinute);
+      wearLoot(st, createItem(st, def, c.id, n, worldStartMinute), wear);
       left -= n;
     }
   }
-  if (table.buildingKey && keys) addBuildingKey(st, c, table.buildingKey, worldStartMinute, keys);
+  if (table?.buildingKey && keys) addBuildingKey(st, c, table.buildingKey, worldStartMinute, keys);
 }
 
 /** What a loot roll needs to hand out building keys (map rooms, `openings.locks`). */
@@ -212,9 +280,9 @@ function addBuildingKey(
  */
 export function previewLootWeight(st: ItemStore, c: ItemContainer): number {
   const table = lootTableFor(st, c);
-  if (!table) return 0;
+  if (!table && c.profile === undefined) return 0;
   let kg = 0;
-  rollTable(st, table, Rng.fromSeed(c.lootKey), 0, (def, count) => {
+  rollStorage(st, c, table, (def, count) => {
     kg += st.content.items[def]!.weightKg * count;
   });
   return kg;
@@ -226,11 +294,14 @@ function rollTable(
   rng: Rng,
   depth: number,
   out: (def: number, count: number) => void,
+  /** Building profile on the storage's own table (top level only). */
+  mod?: { chancePct: number; rollsAdd: number },
 ): void {
   if (depth > MAX_TABLE_DEPTH) return;
-  if (!rng.chance(table.chance)) return;
+  const chance = mod ? Math.min(1, (table.chance * mod.chancePct) / 100) : table.chance;
+  if (!rng.chance(chance)) return;
   const weights = table.entries.map((e) => lootWeight(st, e.weight, e.rarity));
-  const rolls = rng.int(table.rolls.min, table.rolls.max);
+  const rolls = Math.max(0, rng.int(table.rolls.min, table.rolls.max) + (mod?.rollsAdd ?? 0));
   for (let r = 0; r < rolls; r++) {
     const i = rng.pickWeighted(weights);
     const e = table.entries[i];
@@ -299,6 +370,13 @@ export function scatterFloorLootChunk(
       : tables[rng.int(0, tables.length - 1)];
     if (!rng.chance(room ? FLOOR_LOOT.roomChance : FLOOR_LOOT.outdoorChance) || !table) continue;
     if (!room && !outdoor) continue;
+    // Rooms: `worldSettings.loot.floorRoomItems` items (no extra draw when min = max).
+    const r = st.content.loot.floorRoomItems ?? { min: 1, max: 1 };
+    const n = room && r.max > r.min ? rng.int(r.min, r.max) : room ? r.min : 1;
+    for (let k = 0; k < n; k++) placeFloorItem(table, tiles);
+  }
+
+  function placeFloorItem(table: LootTableDef, tiles: number[]): void {
     const i = tiles[rng.int(0, tiles.length - 1)]!;
     const x = addr.cx * CHUNK_SIZE + (i % CHUNK_SIZE);
     const y = addr.cy * CHUNK_SIZE + Math.floor(i / CHUNK_SIZE);
@@ -312,10 +390,11 @@ export function scatterFloorLootChunk(
           rng.pickWeighted(nested.entries.map((n) => lootWeight(st, n.weight, n.rarity)))
         ];
     }
-    if (!e || !('item' in e)) continue;
+    if (!e || !('item' in e)) return;
     const def = st.content.itemIndex.get(e.item);
-    if (def === undefined) continue;
+    if (def === undefined) return;
     const count = Math.min(Math.max(1, e.count.min), stackLimit(st, st.content.items[def]!));
-    createItem(st, def, groundPile(st, x, y, addr.z).id, count, worldStartMinute);
+    const item = createItem(st, def, groundPile(st, x, y, addr.z).id, count, worldStartMinute);
+    wearLoot(st, item, Rng.fromSeed(deriveSeed(seed, 'floor-wear', item.id)));
   }
 }

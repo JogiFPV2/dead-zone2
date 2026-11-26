@@ -141,7 +141,7 @@ describe('loot model', () => {
 
   it('row: freshness tone and stack tooltip actions', () => {
     const r = lootRow(fridge.items[1]!, EMPTY_HUD_CONTENT);
-    expect(r).toMatchObject({ name: 'Apple', freshness: 'rotten', count: 2, sub: 'Zepsute' });
+    expect(r).toMatchObject({ name: 'Jabłko', freshness: 'rotten', count: 2, sub: 'Zepsute' });
     expect(r.tooltip.actions?.map((a) => a.key)).toEqual(['LPM', 'Ctrl+LPM']);
   });
 

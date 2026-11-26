@@ -1,0 +1,412 @@
+[
+  {
+    "id": "base:luncheon-meat",
+    "name": "item.base.luncheon-meat.name",
+    "kind": "food",
+    "weightKg": 0.3,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 750,
+        "proteinG": 40,
+        "fatG": 62,
+        "carbsG": 4,
+        "hunger": -25,
+        "unhappiness": 3
+      },
+      "portions": 2,
+      "eatMin": 2,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      },
+      "openWith": "base:tool-can-opener"
+    }
+  },
+  {
+    "id": "base:pate",
+    "name": "item.base.pate.name",
+    "kind": "food",
+    "weightKg": 0.16,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 420,
+        "proteinG": 20,
+        "fatG": 36,
+        "carbsG": 6,
+        "hunger": -15,
+        "unhappiness": 2
+      },
+      "portions": 1,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      }
+    }
+  },
+  {
+    "id": "base:sardines",
+    "name": "item.base.sardines.name",
+    "kind": "food",
+    "weightKg": 0.17,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 350,
+        "proteinG": 35,
+        "fatG": 22,
+        "hunger": -15,
+        "unhappiness": 2
+      },
+      "portions": 1,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      }
+    }
+  },
+  {
+    "id": "base:pickled-cucumbers",
+    "name": "item.base.pickled-cucumbers.name",
+    "kind": "food",
+    "weightKg": 0.9,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 100,
+        "carbsG": 20,
+        "hunger": -10,
+        "thirst": -4,
+        "unhappiness": -3
+      },
+      "portions": 4,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      }
+    }
+  },
+  {
+    "id": "base:jam",
+    "name": "item.base.jam.name",
+    "kind": "food",
+    "weightKg": 0.3,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 750,
+        "carbsG": 185,
+        "hunger": -10,
+        "unhappiness": -8
+      },
+      "portions": 4,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      }
+    }
+  },
+  {
+    "id": "base:honey",
+    "name": "item.base.honey.name",
+    "kind": "food",
+    "weightKg": 0.4,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 1220,
+        "carbsG": 330,
+        "hunger": -12,
+        "unhappiness": -10
+      },
+      "portions": 6,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:compote",
+    "name": "item.base.compote.name",
+    "kind": "drink",
+    "weightKg": 0.95,
+    "tags": [],
+    "drink": {
+      "perUse": {
+        "calories": 80,
+        "carbsG": 20,
+        "thirst": -15,
+        "unhappiness": -3
+      },
+      "uses": 4,
+      "drinkMin": 0.4,
+      "spoilage": {
+        "freshMin": 1576800,
+        "rottenMin": 2628000
+      }
+    }
+  },
+  {
+    "id": "base:rusks",
+    "name": "item.base.rusks.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 1000,
+        "proteinG": 30,
+        "fatG": 15,
+        "carbsG": 185,
+        "hunger": -25,
+        "unhappiness": 5
+      },
+      "portions": 4,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:wafers",
+    "name": "item.base.wafers.name",
+    "kind": "food",
+    "weightKg": 0.1,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 530,
+        "fatG": 30,
+        "carbsG": 60,
+        "hunger": -10,
+        "unhappiness": -8,
+        "boredom": -3
+      },
+      "portions": 2,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:chocolate",
+    "name": "item.base.chocolate.name",
+    "kind": "food",
+    "weightKg": 0.1,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 540,
+        "proteinG": 6,
+        "fatG": 30,
+        "carbsG": 58,
+        "hunger": -10,
+        "unhappiness": -12,
+        "stress": -3
+      },
+      "portions": 2,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:candy",
+    "name": "item.base.candy.name",
+    "kind": "food",
+    "weightKg": 0.1,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 390,
+        "carbsG": 97,
+        "hunger": -3,
+        "unhappiness": -8
+      },
+      "portions": 5,
+      "eatMin": 0.5
+    }
+  },
+  {
+    "id": "base:coffee",
+    "name": "item.base.coffee.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "unhappiness": -4,
+        "stress": -2
+      },
+      "portions": 20,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:tea",
+    "name": "item.base.tea.name",
+    "kind": "food",
+    "weightKg": 0.1,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "unhappiness": -3,
+        "stress": -3
+      },
+      "portions": 20,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:orangeade",
+    "name": "item.base.orangeade.name",
+    "kind": "drink",
+    "weightKg": 0.5,
+    "tags": [],
+    "drink": {
+      "perUse": {
+        "calories": 100,
+        "carbsG": 25,
+        "thirst": -12,
+        "unhappiness": -5
+      },
+      "uses": 2,
+      "drinkMin": 0.4,
+      "spoilage": {
+        "freshMin": 388800,
+        "rottenMin": 777600
+      }
+    }
+  },
+  {
+    "id": "base:pudding-mix",
+    "name": "item.base.pudding-mix.name",
+    "kind": "food",
+    "weightKg": 0.06,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 230,
+        "carbsG": 55,
+        "hunger": -5,
+        "unhappiness": 5
+      },
+      "portions": 1,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:instant-noodles",
+    "name": "item.base.instant-noodles.name",
+    "kind": "food",
+    "weightKg": 0.07,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 320,
+        "proteinG": 6,
+        "fatG": 12,
+        "carbsG": 45,
+        "hunger": -15
+      },
+      "portions": 1,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:lard",
+    "name": "item.base.lard.name",
+    "kind": "food",
+    "weightKg": 0.25,
+    "tags": ["base:food-canned"],
+    "food": {
+      "nutrition": {
+        "calories": 2200,
+        "fatG": 245,
+        "hunger": -20,
+        "unhappiness": 10
+      },
+      "portions": 5,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 129600,
+        "rottenMin": 259200
+      }
+    }
+  },
+  {
+    "id": "base:groats",
+    "name": "item.base.groats.name",
+    "kind": "food",
+    "weightKg": 1.0,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 3400,
+        "proteinG": 130,
+        "fatG": 30,
+        "carbsG": 700,
+        "hunger": -55,
+        "unhappiness": 15
+      },
+      "portions": 10,
+      "eatMin": 2
+    }
+  },
+  {
+    "id": "base:powdered-milk",
+    "name": "item.base.powdered-milk.name",
+    "kind": "food",
+    "weightKg": 0.5,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 2500,
+        "proteinG": 130,
+        "fatG": 130,
+        "carbsG": 190,
+        "hunger": -20,
+        "unhappiness": 5
+      },
+      "portions": 10,
+      "eatMin": 1
+    }
+  },
+  {
+    "id": "base:apple",
+    "name": "item.base.apple.name",
+    "kind": "food",
+    "weightKg": 0.2,
+    "tags": ["base:fruit"],
+    "food": {
+      "nutrition": {
+        "calories": 95,
+        "carbsG": 25,
+        "hunger": -6,
+        "thirst": -3,
+        "unhappiness": -2
+      },
+      "portions": 1,
+      "eatMin": 1,
+      "spoilage": {
+        "freshMin": 20160,
+        "rottenMin": 40320
+      }
+    }
+  },
+  {
+    "id": "base:dried-mushrooms",
+    "name": "item.base.dried-mushrooms.name",
+    "kind": "food",
+    "weightKg": 0.05,
+    "tags": ["base:food-dry"],
+    "food": {
+      "nutrition": {
+        "calories": 100,
+        "proteinG": 10,
+        "carbsG": 15,
+        "hunger": -4,
+        "unhappiness": -2
+      },
+      "portions": 1,
+      "eatMin": 1
+    }
+  }
+]

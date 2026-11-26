@@ -10,11 +10,19 @@
     "entries": [
       {
         "item": "base:rag",
-        "weight": 6
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:bandage",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:lighter",
@@ -22,20 +30,36 @@
       },
       {
         "item": "base:matches",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:canned-beans",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:water-bottle",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:battery",
         "weight": 2,
-        "rarity": "uncommon"
+        "rarity": "uncommon",
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:kitchen-knife",
@@ -61,6 +85,45 @@
         "table": "base:ammo-boxes",
         "weight": 1,
         "rarity": "rare"
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 3
+      },
+      {
+        "item": "base:chewing-gum",
+        "weight": 2
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 2
+      },
+      {
+        "item": "base:candy",
+        "weight": 2
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 1
+      },
+      {
+        "item": "base:switchblade",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:walkman",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 2
       }
     ],
     "buildingKey": 0.1

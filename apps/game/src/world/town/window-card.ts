@@ -38,6 +38,8 @@ const BY_ROOM: Readonly<Record<string, CardCategory>> = {
   'room-warehouse': 'magazyn',
   'room-garage': 'magazyn',
   'room-gym': 'magazyn',
+  'room-factory': 'magazyn',
+  'room-fire-station': 'magazyn',
   'room-hall': 'klatka',
   'room-police': 'salon',
 };

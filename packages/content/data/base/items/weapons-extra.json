@@ -1,0 +1,367 @@
+[
+  {
+    "id": "base:air-rifle",
+    "name": "item.base.air-rifle.name",
+    "kind": "weapon_ranged",
+    "weightKg": 2.8,
+    "tags": ["base:firearm-air", "base:ranged-quiet"],
+    "ranged": {
+      "category": "rifle",
+      "skill": "base:aiming",
+      "ammo": "base:airgun-pellet",
+      "feed": {
+        "type": "internal",
+        "capacity": 1
+      },
+      "damage": {
+        "min": 3,
+        "max": 6
+      },
+      "rangeTiles": 15,
+      "accuracy": 0.6,
+      "shotsPerSec": 1,
+      "reloadSec": 1.5,
+      "twoHanded": true,
+      "shotNoise": {
+        "radiusTiles": 6,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 500,
+        "lossChancePerUse": 0.02
+      }
+    }
+  },
+  {
+    "id": "base:airgun-pellet",
+    "name": "item.base.airgun-pellet.name",
+    "kind": "ammo",
+    "weightKg": 0.0005,
+    "maxStack": 500,
+    "tags": ["base:ammo"],
+    "ammo": {
+      "caliber": "4.5mm"
+    }
+  },
+  {
+    "id": "base:crossbow",
+    "name": "item.base.crossbow.name",
+    "kind": "weapon_ranged",
+    "weightKg": 3.0,
+    "tags": ["base:firearm-crossbow", "base:ranged-quiet"],
+    "ranged": {
+      "category": "rifle",
+      "skill": "base:aiming",
+      "ammo": "base:crossbow-bolt",
+      "feed": {
+        "type": "internal",
+        "capacity": 1
+      },
+      "damage": {
+        "min": 25,
+        "max": 40
+      },
+      "rangeTiles": 18,
+      "accuracy": 0.6,
+      "shotsPerSec": 0.4,
+      "reloadSec": 4,
+      "twoHanded": true,
+      "shotNoise": {
+        "radiusTiles": 4,
+        "volume": 0.15
+      },
+      "durability": {
+        "max": 300,
+        "lossChancePerUse": 0.03
+      }
+    }
+  },
+  {
+    "id": "base:crossbow-bolt",
+    "name": "item.base.crossbow-bolt.name",
+    "kind": "ammo",
+    "weightKg": 0.03,
+    "maxStack": 20,
+    "tags": ["base:ammo"],
+    "ammo": {
+      "caliber": "bolt"
+    }
+  },
+  {
+    "id": "base:brass-knuckles",
+    "name": "item.base.brass-knuckles.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.25,
+    "tags": [],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 5,
+        "max": 9
+      },
+      "rangeTiles": 0.6,
+      "attacksPerSec": 2.0,
+      "staminaCost": 1.2,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 300,
+        "lossChancePerUse": 0.03
+      },
+      "critChance": 0.1
+    }
+  },
+  {
+    "id": "base:police-baton",
+    "name": "item.base.police-baton.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.6,
+    "tags": [],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 8,
+        "max": 13
+      },
+      "rangeTiles": 1.0,
+      "attacksPerSec": 1.4,
+      "staminaCost": 2.5,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 200,
+        "lossChancePerUse": 0.05
+      },
+      "knockback": 0.5
+    }
+  },
+  {
+    "id": "base:pepper-spray",
+    "name": "item.base.pepper-spray.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.15,
+    "tags": [],
+    "melee": {
+      "category": "improvised",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 0,
+        "max": 1
+      },
+      "rangeTiles": 1.5,
+      "attacksPerSec": 1.0,
+      "staminaCost": 0.5,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 8,
+        "lossChancePerUse": 1
+      },
+      "knockback": 2,
+      "maxTargets": 3
+    },
+    "lootCategory": "weapon"
+  },
+  {
+    "id": "base:bayonet",
+    "name": "item.base.bayonet.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.4,
+    "tags": ["base:tool-knife"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": {
+        "min": 9,
+        "max": 15
+      },
+      "rangeTiles": 0.8,
+      "attacksPerSec": 1.6,
+      "staminaCost": 1.8,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 150,
+        "lossChancePerUse": 0.1
+      },
+      "critChance": 0.12
+    }
+  },
+  {
+    "id": "base:switchblade",
+    "name": "item.base.switchblade.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.15,
+    "tags": ["base:tool-knife"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": {
+        "min": 6,
+        "max": 11
+      },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 1.9,
+      "staminaCost": 1.3,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 80,
+        "lossChancePerUse": 0.15
+      },
+      "critChance": 0.15
+    }
+  },
+  {
+    "id": "base:scythe",
+    "name": "item.base.scythe.name",
+    "kind": "weapon_melee",
+    "weightKg": 2.2,
+    "tags": ["base:tool-scythe"],
+    "melee": {
+      "category": "blade_long",
+      "skill": "base:blade-long",
+      "damage": {
+        "min": 15,
+        "max": 28
+      },
+      "rangeTiles": 1.8,
+      "attacksPerSec": 0.7,
+      "staminaCost": 6,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 80,
+        "lossChancePerUse": 0.12
+      },
+      "twoHanded": true,
+      "maxTargets": 3
+    }
+  },
+  {
+    "id": "base:sickle",
+    "name": "item.base.sickle.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.4,
+    "tags": ["base:tool-sickle"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": {
+        "min": 7,
+        "max": 12
+      },
+      "rangeTiles": 0.8,
+      "attacksPerSec": 1.5,
+      "staminaCost": 2,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 70,
+        "lossChancePerUse": 0.12
+      }
+    }
+  },
+  {
+    "id": "base:pitchfork",
+    "name": "item.base.pitchfork.name",
+    "kind": "weapon_melee",
+    "weightKg": 1.8,
+    "tags": ["base:tool-pitchfork"],
+    "melee": {
+      "category": "spear",
+      "skill": "base:spear",
+      "damage": {
+        "min": 12,
+        "max": 19
+      },
+      "rangeTiles": 1.9,
+      "attacksPerSec": 0.85,
+      "staminaCost": 4.5,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 90,
+        "lossChancePerUse": 0.1
+      },
+      "twoHanded": true,
+      "maxTargets": 2
+    }
+  },
+  {
+    "id": "base:flare",
+    "name": "item.base.flare.name",
+    "kind": "lure",
+    "weightKg": 0.3,
+    "tags": ["base:lure"],
+    "lootCategory": "tool",
+    "maxStack": 5,
+    "lure": {
+      "noise": {
+        "radiusTiles": 40,
+        "volume": 0.7
+      },
+      "durationSec": 60,
+      "trigger": {
+        "type": "timer",
+        "delaySec": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      "lingerSec": {
+        "min": 30,
+        "max": 60
+      },
+      "placeable": true,
+      "consumedOnUse": true
+    }
+  },
+  {
+    "id": "base:firecrackers",
+    "name": "item.base.firecrackers.name",
+    "kind": "lure",
+    "weightKg": 0.1,
+    "tags": ["base:lure"],
+    "lootCategory": "household",
+    "maxStack": 10,
+    "lure": {
+      "noise": {
+        "radiusTiles": 35,
+        "volume": 1
+      },
+      "durationSec": 8,
+      "trigger": {
+        "type": "timer",
+        "delaySec": {
+          "min": 3,
+          "max": 8
+        }
+      },
+      "lingerSec": {
+        "min": 15,
+        "max": 30
+      },
+      "placeable": true,
+      "consumedOnUse": true
+    }
+  }
+]

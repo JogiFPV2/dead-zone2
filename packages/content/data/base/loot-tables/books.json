@@ -4,12 +4,49 @@
     "rooms": ["base:room-bookstore"],
     "containers": ["base:bookshelf"],
     "chance": 0.9,
-    "rolls": { "min": 2, "max": 4 },
+    "rolls": {
+      "min": 2,
+      "max": 4
+    },
     "entries": [
-      { "table": "base:skill-books", "weight": 6 },
-      { "table": "base:recipe-magazines", "weight": 4 },
-      { "item": "base:carpentry-for-beginners", "weight": 1, "rarity": "uncommon" },
-      { "table": "base:vhs-tapes", "weight": 1, "rarity": "uncommon" }
+      {
+        "table": "base:skill-books",
+        "weight": 6
+      },
+      {
+        "table": "base:recipe-magazines",
+        "weight": 4
+      },
+      {
+        "item": "base:carpentry-for-beginners",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "table": "base:vhs-tapes",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 3
+      },
+      {
+        "item": "base:comic",
+        "weight": 4
+      },
+      {
+        "item": "base:area-map",
+        "weight": 3
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 2
+      },
+      {
+        "item": "base:rubiks-cube",
+        "weight": 1
+      }
     ]
   },
   {
@@ -17,38 +54,149 @@
     "rooms": [],
     "containers": [],
     "chance": 1,
-    "rolls": { "min": 1, "max": 1 },
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
     "entries": [
-      { "item": "base:carpentry-vol-1", "weight": 6 },
-      { "item": "base:carpentry-vol-2", "weight": 4 },
-      { "item": "base:carpentry-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:carpentry-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:carpentry-vol-5", "weight": 1, "rarity": "rare" },
-      { "item": "base:cooking-vol-1", "weight": 6 },
-      { "item": "base:cooking-vol-2", "weight": 4 },
-      { "item": "base:cooking-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:cooking-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:cooking-vol-5", "weight": 1, "rarity": "rare" },
-      { "item": "base:first-aid-vol-1", "weight": 6 },
-      { "item": "base:first-aid-vol-2", "weight": 4 },
-      { "item": "base:first-aid-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:first-aid-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:first-aid-vol-5", "weight": 1, "rarity": "rare" },
-      { "item": "base:tailoring-vol-1", "weight": 6 },
-      { "item": "base:tailoring-vol-2", "weight": 4 },
-      { "item": "base:tailoring-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:tailoring-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:tailoring-vol-5", "weight": 1, "rarity": "rare" },
-      { "item": "base:metalworking-vol-1", "weight": 6 },
-      { "item": "base:metalworking-vol-2", "weight": 4 },
-      { "item": "base:metalworking-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:metalworking-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:metalworking-vol-5", "weight": 1, "rarity": "rare" },
-      { "item": "base:electrical-vol-1", "weight": 6 },
-      { "item": "base:electrical-vol-2", "weight": 4 },
-      { "item": "base:electrical-vol-3", "weight": 3, "rarity": "uncommon" },
-      { "item": "base:electrical-vol-4", "weight": 2, "rarity": "rare" },
-      { "item": "base:electrical-vol-5", "weight": 1, "rarity": "rare" }
+      {
+        "item": "base:carpentry-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:carpentry-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:carpentry-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:carpentry-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:carpentry-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:cooking-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:cooking-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:cooking-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:cooking-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:cooking-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:first-aid-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:first-aid-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:first-aid-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:first-aid-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:first-aid-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:tailoring-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:tailoring-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:tailoring-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:tailoring-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:tailoring-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:metalworking-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:metalworking-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:metalworking-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:metalworking-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:metalworking-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:electrical-vol-1",
+        "weight": 6
+      },
+      {
+        "item": "base:electrical-vol-2",
+        "weight": 4
+      },
+      {
+        "item": "base:electrical-vol-3",
+        "weight": 3,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:electrical-vol-4",
+        "weight": 2,
+        "rarity": "rare"
+      },
+      {
+        "item": "base:electrical-vol-5",
+        "weight": 1,
+        "rarity": "rare"
+      }
     ]
   },
   {
@@ -56,15 +204,39 @@
     "rooms": [],
     "containers": [],
     "chance": 1,
-    "rolls": { "min": 1, "max": 1 },
+    "rolls": {
+      "min": 1,
+      "max": 1
+    },
     "entries": [
-      { "item": "base:mag-backyard-survival", "weight": 3 },
-      { "item": "base:mag-home-cooking", "weight": 3 },
-      { "item": "base:mag-woodshop", "weight": 3 },
-      { "item": "base:mag-metal-shop", "weight": 2 },
-      { "item": "base:mag-circuit-hobbyist", "weight": 2 },
-      { "item": "base:mag-field-medicine", "weight": 2 },
-      { "item": "base:mag-angler", "weight": 2 }
+      {
+        "item": "base:mag-backyard-survival",
+        "weight": 3
+      },
+      {
+        "item": "base:mag-home-cooking",
+        "weight": 3
+      },
+      {
+        "item": "base:mag-woodshop",
+        "weight": 3
+      },
+      {
+        "item": "base:mag-metal-shop",
+        "weight": 2
+      },
+      {
+        "item": "base:mag-circuit-hobbyist",
+        "weight": 2
+      },
+      {
+        "item": "base:mag-field-medicine",
+        "weight": 2
+      },
+      {
+        "item": "base:mag-angler",
+        "weight": 2
+      }
     ]
   }
 ]

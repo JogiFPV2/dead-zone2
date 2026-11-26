@@ -56,7 +56,119 @@
     "search": {
       "searchSec": 3.5,
       "spotRadiusTiles": 1.5
-    }
+    },
+    "wear": {
+      "wornChance": 0.7,
+      "minPct": 15,
+      "maxPct": 95
+    },
+    "floorRoomItems": {
+      "min": 1,
+      "max": 3
+    },
+    "buildingProfiles": [
+      {
+        "id": "base:profile-normal",
+        "weight": 55
+      },
+      {
+        "id": "base:profile-looted",
+        "weight": 15,
+        "chancePct": 35,
+        "rollsAdd": -1
+      },
+      {
+        "id": "base:profile-hoarder",
+        "weight": 6,
+        "extra": [
+          {
+            "table": "base:profile-hoarder",
+            "containers": ["base:kitchen-cabinet"],
+            "rooms": ["base:room-kitchen"]
+          }
+        ]
+      },
+      {
+        "id": "base:profile-handyman",
+        "weight": 6,
+        "extra": [
+          {
+            "table": "base:profile-handyman",
+            "containers": ["base:tool-chest", "base:metal-shelf", "base:crate"],
+            "rooms": ["base:room-garage"],
+            "chance": 0.9
+          }
+        ]
+      },
+      {
+        "id": "base:profile-hunter",
+        "weight": 4,
+        "extra": [
+          {
+            "table": "base:profile-hunter",
+            "containers": ["base:wardrobe", "base:wooden-chest"],
+            "rooms": [
+              "base:room-bedroom",
+              "base:room-living-room",
+              "base:room-garage",
+              "base:room-hall"
+            ],
+            "chance": 0.8
+          }
+        ]
+      },
+      {
+        "id": "base:profile-angler",
+        "weight": 4,
+        "extra": [
+          {
+            "table": "base:profile-angler",
+            "containers": ["base:crate", "base:metal-shelf", "base:wooden-chest"],
+            "rooms": ["base:room-garage"],
+            "chance": 0.8
+          }
+        ]
+      },
+      {
+        "id": "base:profile-nurse",
+        "weight": 4,
+        "extra": [
+          {
+            "table": "base:profile-nurse",
+            "containers": ["base:bathroom-cabinet"],
+            "rooms": ["base:room-bathroom"]
+          }
+        ]
+      },
+      {
+        "id": "base:profile-drunk",
+        "weight": 4,
+        "extra": [
+          {
+            "table": "base:profile-drunk",
+            "containers": ["base:kitchen-cabinet", "base:fridge", "base:fridge-freezer"],
+            "rooms": ["base:room-kitchen"]
+          }
+        ]
+      },
+      {
+        "id": "base:profile-gardener",
+        "weight": 2,
+        "extra": [
+          {
+            "table": "base:profile-gardener",
+            "containers": [
+              "base:crate",
+              "base:metal-shelf",
+              "base:tool-chest",
+              "base:wooden-chest"
+            ],
+            "rooms": ["base:room-garage"],
+            "chance": 0.9
+          }
+        ]
+      }
+    ]
   },
   "crafting": {
     "nearbyRadiusTiles": 3

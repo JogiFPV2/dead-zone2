@@ -47,6 +47,7 @@ export const BASE_FOOTPRINTS: Readonly<Record<string, Footprint>> = {
   'base:metal-shelf': { w: 2, h: 1 },
   'base:shop-counter': { w: 2, h: 1 },
   'base:sofa': { w: 2, h: 1 },
+  'base:tent': { w: 2, h: 2 },
 };
 
 /** Base pack footprint of `contentId` (1×1 when not in `BASE_FOOTPRINTS`). */
@@ -273,8 +274,26 @@ export const ROOM_KITS: Record<string, KitItem[]> = {
     // Meeting table in bigger offices.
     K('base:table', 0, 1, 20, { seats: { id: CHAIR, min: 2, max: 4, per: 6 } }),
     K('base:dresser', 0, 1, 14),
+    // Aneks kuchenny w większych biurach (kawa, herbata, ciastka).
+    K('base:kitchen-cabinet', 0, 1, 18),
   ],
   'base:room-ruin': [K('base:crate', 0, 1, 10)],
+  // Kościół: ławki, skrzynia z zakrystii (świece, zapałki).
+  'base:room-church': [K('base:bench', 2, 8, 12), K('base:wooden-chest', 0, 1, 30)],
+  // Hala produkcyjna (huta, zakład): regały, skrzynie, warsztaty i szafki narzędziowe.
+  'base:room-factory': [
+    K('base:metal-shelf', 1, 4, 10, TALL),
+    K('base:crate', 1, 4, 12),
+    K('base:workbench', 0, 2, 60),
+    K('base:tool-chest', 0, 2, 40),
+    K('base:locker', 0, 3, 30, TALL),
+  ],
+  // Remiza: garaż wozów z regałami sprzętu i szafkami strażaków.
+  'base:room-fire-station': [
+    K('base:metal-shelf', 1, 3, 10, TALL),
+    K('base:locker', 1, 4, 14, TALL),
+    K('base:bench', 0, 2, 30),
+  ],
 };
 
 /** Room types whose building gets a dumpster by an outer wall; benches by the main door. */

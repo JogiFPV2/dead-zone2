@@ -24,7 +24,8 @@ export const LiteratureItemSchema = z.strictObject({
   ...itemBaseShape,
   kind: z.literal('literature'),
   literature: z.strictObject({
-    format: z.enum(['book', 'magazine', 'newspaper', 'comic', 'map']),
+    /** `game`: gra albo zabawka (karty, kostka Rubika, walkman) — „czytanie” to granie. */
+    format: z.enum(['book', 'magazine', 'newspaper', 'comic', 'map', 'game']),
     readMin: GameMinutesSchema,
     skillBook: SkillBookSchema.optional(),
     /** Receptury odblokowane po przeczytaniu (magazyny). */

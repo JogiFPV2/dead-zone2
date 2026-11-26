@@ -23,7 +23,11 @@
       },
       {
         "item": "base:plastic-bag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:screwdriver",
@@ -51,6 +55,46 @@
         "table": "base:recipe-magazines",
         "weight": 1,
         "rarity": "uncommon"
+      },
+      {
+        "item": "base:paper",
+        "weight": 4,
+        "count": {
+          "min": 5,
+          "max": 30
+        }
+      },
+      {
+        "item": "base:scissors",
+        "weight": 3
+      },
+      {
+        "item": "base:comic",
+        "weight": 2
+      },
+      {
+        "item": "base:rubiks-cube",
+        "weight": 2
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
+      },
+      {
+        "item": "base:whistle",
+        "weight": 2
+      },
+      {
+        "item": "base:area-map",
+        "weight": 2
+      },
+      {
+        "item": "base:chewing-gum",
+        "weight": 2
+      },
+      {
+        "item": "base:stapler",
+        "weight": 2
       }
     ]
   },
@@ -94,7 +138,11 @@
       },
       {
         "item": "base:metal-pipe",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:brick",
@@ -153,7 +201,11 @@
       },
       {
         "item": "base:log",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:scrap-metal",
@@ -165,11 +217,19 @@
       },
       {
         "item": "base:wire",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:duct-tape",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:mechanical-part",
@@ -202,8 +262,100 @@
         "weight": 1,
         "rarity": "uncommon"
       },
-      { "item": "base:metal-sheet", "weight": 3, "count": { "min": 1, "max": 2 } },
-      { "item": "base:electronics-scrap", "weight": 2, "count": { "min": 1, "max": 4 } }
+      {
+        "item": "base:metal-sheet",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:electronics-scrap",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:barbed-wire",
+        "weight": 3
+      },
+      {
+        "item": "base:sandbag",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:plywood",
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:cement",
+        "weight": 3
+      },
+      {
+        "item": "base:chain",
+        "weight": 3
+      },
+      {
+        "item": "base:rope",
+        "weight": 3
+      },
+      {
+        "item": "base:padlock",
+        "weight": 2
+      },
+      {
+        "item": "base:grease",
+        "weight": 2
+      },
+      {
+        "item": "base:welding-rods",
+        "weight": 2,
+        "count": {
+          "min": 5,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:tin-snips",
+        "weight": 1
+      },
+      {
+        "item": "base:hacksaw",
+        "weight": 1
+      },
+      {
+        "item": "base:hand-drill",
+        "weight": 1
+      },
+      {
+        "item": "base:pitchfork",
+        "weight": 1
+      },
+      {
+        "item": "base:flare",
+        "weight": 1
+      },
+      {
+        "item": "base:police-baton",
+        "weight": 1,
+        "rarity": "rare"
+      },
+      {
+        "table": "base:stash-tools",
+        "weight": 1,
+        "rarity": "very_rare"
+      }
     ]
   },
   {
@@ -222,7 +374,11 @@
       },
       {
         "item": "base:plastic-bag",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:duffel-bag",
@@ -230,11 +386,19 @@
       },
       {
         "item": "base:garbage-bag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:water-bottle",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:baseball-bat",
@@ -271,11 +435,19 @@
       },
       {
         "item": "base:mechanical-part",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:wire",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:gas-can",
@@ -292,6 +464,35 @@
       {
         "item": "base:engine-parts",
         "weight": 1
+      },
+      {
+        "item": "base:rope",
+        "weight": 2
+      },
+      {
+        "item": "base:flare",
+        "weight": 3
+      },
+      {
+        "item": "base:chain",
+        "weight": 1
+      },
+      {
+        "item": "base:tent",
+        "weight": 1
+      },
+      {
+        "item": "base:camping-stove",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:water-jug",
+        "weight": 1
+      },
+      {
+        "item": "base:tourniquet",
+        "weight": 1
       }
     ]
   },
@@ -307,7 +508,11 @@
     "entries": [
       {
         "item": "base:bandage",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:lighter",
@@ -315,11 +520,19 @@
       },
       {
         "item": "base:matches",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:water-bottle",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:flashlight",
@@ -334,6 +547,30 @@
         "table": "base:handguns",
         "weight": 1,
         "rarity": "rare"
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 3
+      },
+      {
+        "item": "base:chewing-gum",
+        "weight": 2
+      },
+      {
+        "item": "base:adhesive-plaster",
+        "weight": 2
+      },
+      {
+        "item": "base:pocket-knife",
+        "weight": 1
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 1
+      },
+      {
+        "item": "base:candle",
+        "weight": 1
       }
     ]
   }
