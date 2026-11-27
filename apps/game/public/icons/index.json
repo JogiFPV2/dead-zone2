@@ -278,5 +278,22 @@
   "base:vest": "vest.png",
   "base:work-boots": "work-boots.png",
   "base:work-jacket": "work-jacket.png",
-  "base:work-pants": "work-pants.png"
+  "base:work-pants": "work-pants.png",
+  "base:hoe": "hoe.png",
+  "base:garden-rake": "garden-rake.png",
+  "base:watering-can": "watering-can.png",
+  "base:bucket": "bucket.png",
+  "base:glass": "glass.png",
+  "base:seeds-carrot": "seeds-carrot.png",
+  "base:seeds-cabbage": "seeds-cabbage.png",
+  "base:seeds-onion": "seeds-onion.png",
+  "base:seeds-tomato": "seeds-tomato.png",
+  "base:seeds-cucumber": "seeds-cucumber.png",
+  "base:seeds-beans": "seeds-beans.png",
+  "base:seeds-strawberry": "seeds-strawberry.png",
+  "base:tomato": "tomato.png",
+  "base:cucumber": "cucumber.png",
+  "base:onion": "onion.png",
+  "base:green-beans": "green-beans.png",
+  "base:strawberry": "strawberry.png"
 }

@@ -10,3 +10,4 @@ zaslona.glb: derived from "Curtains Double" by Quaternius, https://poly.pizza/m/
 kurtka.glb: derived from "Jacket" by Polygonal Mind, https://poly.pizza/m/eeKk3ObCbf, CC0 1.0 (texture removed, flat olive #5F6B3C).
 koc.glb, plandeka.glb: original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Built by build_cover.py (Python, 26.10.2026).
 wedka.glb: original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Built by build_wedka.py (Python + numpy, 23.11.2026).
+uprawa-*.glb (motyka, grabie, konewka, wiadro, szklanka, nasiona-*, pomidor, ogorek, cebula, fasolka, truskawka): original work for Deadzone, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Built by icons/build/farming.mjs (Node + gltf-transform, 25.11.2026).
