@@ -50,7 +50,6 @@ export const ITEM_EXCEPTIONS: readonly ItemException[] = [
     { at, item: 'base:duct-tape', reason: 'spożywczy ma drobną chemię i taśmę' },
     { at, item: 'base:painkillers', reason: 'leki bez recepty przy kasie' },
     { at, item: 'base:vitamins', reason: 'witaminy na półce spożywczego' },
-    { at, item: 'base:mag-home-cooking', reason: 'gazety kulinarne przy kasie' },
   ]),
   {
     at: 'base:shop-counter',

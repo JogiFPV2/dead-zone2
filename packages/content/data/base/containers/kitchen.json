@@ -6,7 +6,7 @@
     "capacityKg": 25,
     "defaultLootTable": "base:kitchen",
     "lootAccepts": ["food-canned", "drink"],
-    "placeIn": ["base:room-kitchen"]
+    "placeIn": ["base:room-kitchen", "base:room-office"]
   },
   {
     "id": "base:kitchen-counter",

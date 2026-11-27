@@ -292,15 +292,15 @@ function roomType(kind: BuildingKind, z: number, i: number, n: number, levels: n
     case 'gym':
       return R(i === 0 ? 'gym' : i % 2 ? 'bathroom' : 'gym');
     case 'church':
-      return R('hall');
+      return R('church');
     case 'police':
       return R(i % 4 === 3 ? 'office' : 'police');
     case 'fire-station':
-      return R(z === 0 && i % 2 === 0 ? 'garage' : 'office');
+      return R(z === 0 && i % 2 === 0 ? 'fire-station' : 'office');
     case 'fuel':
       return R('gas-station');
     case 'industrial':
-      return R(i % 4 === 3 ? 'office' : 'warehouse');
+      return R(i % 4 === 3 ? 'office' : i % 4 === 1 ? 'warehouse' : 'factory');
     case 'garage':
     case 'shed':
       return R('garage');
@@ -786,8 +786,12 @@ function industrialHall(inp: InteriorInput, split = true): InteriorResult | unde
   let nextRoomId = inp.nextRoomId;
   const rooms: BuildingInput['rooms'] = {};
   [...halls].sort().forEach((c, i) => {
-    // Every third section of a split hall is a workshop.
-    const type = halls.size > 1 && i % 3 === 1 ? R('garage') : R('warehouse');
+    // Every third section of a split hall is a workshop, the rest production halls and stores
+    // (loot: base:room-factory = huta / zakład, base:room-warehouse = magazyn).
+    const type =
+      halls.size > 1
+        ? R(i % 3 === 1 ? 'garage' : i % 3 === 2 ? 'warehouse' : 'factory')
+        : R(inp.rnd < 0.55 ? 'factory' : 'warehouse');
     rooms[c] = { id: nextRoomId++, type, floor: 'base:concrete' };
   });
   if (present.has('A')) rooms.A = { id: nextRoomId++, type: R('office'), floor: 'base:concrete' };

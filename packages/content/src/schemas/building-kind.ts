@@ -12,7 +12,7 @@ import { z } from 'zod';
  *
  * Generator ma rodzaje, których nie da się odróżnić po pomieszczeniach: `block` i `kostka` wychodzą
  * jako `house`, `station` jako `shop`, `fire-station` jako `office`, `shed` jako `garage`; `church`
- * (sama `base:room-hall`) nie ma rodzaju i dostaje `exteriorLockedChance`.
+ * (sama `base:room-church`) nie ma rodzaju i dostaje `exteriorLockedChance`.
  */
 export const BUILDING_KIND_ROOMS = [
   ['hospital', ['base:room-hospital']],
@@ -26,8 +26,8 @@ export const BUILDING_KIND_ROOMS = [
   ['fuel', ['base:room-gas-station']],
   ['gym', ['base:room-gym']],
   ['house', ['base:room-living-room', 'base:room-kitchen', 'base:room-bedroom']],
-  ['office', ['base:room-office']],
-  ['industrial', ['base:room-warehouse']],
+  ['office', ['base:room-office', 'base:room-fire-station']],
+  ['industrial', ['base:room-warehouse', 'base:room-factory']],
   ['garage', ['base:room-garage']],
   ['ruin', ['base:room-ruin']],
 ] as const;

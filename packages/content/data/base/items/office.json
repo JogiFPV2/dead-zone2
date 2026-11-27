@@ -1,0 +1,97 @@
+[
+  {
+    "id": "base:stapler",
+    "name": "item.base.stapler.name",
+    "kind": "misc",
+    "weightKg": 0.3,
+    "tags": [],
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:scissors",
+    "name": "item.base.scissors.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.1,
+    "tags": ["base:tool-scissors"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": {
+        "min": 3,
+        "max": 6
+      },
+      "rangeTiles": 0.6,
+      "attacksPerSec": 1.7,
+      "staminaCost": 1.2,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 40,
+        "lossChancePerUse": 0.2
+      }
+    },
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:paper",
+    "name": "item.base.paper.name",
+    "kind": "misc",
+    "weightKg": 0.005,
+    "tags": ["base:paper"],
+    "lootCategory": "household",
+    "maxStack": 100,
+    "harmless": true
+  },
+  {
+    "id": "base:calculator",
+    "name": "item.base.calculator.name",
+    "kind": "misc",
+    "weightKg": 0.15,
+    "tags": ["base:electronics"],
+    "lootCategory": "electronics",
+    "harmless": false
+  },
+  {
+    "id": "base:typewriter",
+    "name": "item.base.typewriter.name",
+    "kind": "misc",
+    "weightKg": 9.0,
+    "tags": [],
+    "lootCategory": "household",
+    "improvisedWeapon": {
+      "damage": {
+        "min": 8,
+        "max": 14
+      },
+      "rangeTiles": 0.8,
+      "attackSpeed": 0.4,
+      "durability": 15,
+      "breakChancePct": 20,
+      "twoHanded": true
+    }
+  },
+  {
+    "id": "base:mug",
+    "name": "item.base.mug.name",
+    "kind": "misc",
+    "weightKg": 0.3,
+    "tags": ["base:water-vessel"],
+    "lootCategory": "household",
+    "waterVessel": {
+      "capacityL": 0.3
+    }
+  },
+  {
+    "id": "base:kettle",
+    "name": "item.base.kettle.name",
+    "kind": "misc",
+    "weightKg": 1.0,
+    "tags": ["base:water-vessel"],
+    "lootCategory": "household",
+    "waterVessel": {
+      "capacityL": 1.5
+    }
+  }
+]

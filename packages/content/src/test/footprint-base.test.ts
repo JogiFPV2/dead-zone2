@@ -12,6 +12,7 @@ const SIZES: Record<string, { w: number; h: number }> = {
   'base:bed': { w: 1, h: 2 },
   'base:double-bed': { w: 2, h: 2 },
   'base:table': { w: 2, h: 1 },
+  'base:tent': { w: 2, h: 2 },
 };
 
 describe('footprint mebli w paczce bazowej', () => {

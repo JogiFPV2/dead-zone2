@@ -41,6 +41,8 @@ export function hashItems(st: ItemStore, h: HashWriter): void {
       .u32(c.lootDone ? 1 : 0);
     h.u32(c.roomType ? hashString32(c.roomType) : 0);
     if (c.kind === 'corpse') h.u32(c.lootTable ? hashString32(c.lootTable) : 0);
+    // Only with a building profile (older goldens unchanged).
+    if (c.profile !== undefined) h.u32(0x7072_6f66).u32(c.profile);
     h.u32(c.searchedBy.length);
     for (const sid of c.searchedBy) h.u32(sid);
     h.u32(c.items.length);

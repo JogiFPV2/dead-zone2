@@ -4446,6 +4446,12 @@
       "rot": 3
     },
     {
+      "contentId": "base:kitchen-cabinet",
+      "x": -43,
+      "y": -15,
+      "rot": 1
+    },
+    {
       "contentId": "base:metal-shelf",
       "x": 12,
       "y": -15,
@@ -8135,6 +8141,13 @@
       "y": -13,
       "z": 2,
       "rot": 0
+    },
+    {
+      "contentId": "base:kitchen-cabinet",
+      "x": -24,
+      "y": -13,
+      "z": 2,
+      "rot": 3
     },
     {
       "contentId": "base:dresser",

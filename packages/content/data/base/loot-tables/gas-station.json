@@ -11,11 +11,19 @@
     "entries": [
       {
         "item": "base:water-bottle",
-        "weight": 6
+        "weight": 6,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:canned-beans",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:plastic-bag",
@@ -46,7 +54,11 @@
       },
       {
         "item": "base:bandage",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:carpentry-for-beginners",
@@ -91,11 +103,19 @@
       },
       {
         "item": "base:soda",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:beer",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:juice",
@@ -109,10 +129,75 @@
         "item": "base:painkillers",
         "weight": 1
       },
-      { "item": "base:lighter", "weight": 3 },
-      { "item": "base:matches", "weight": 2 },
-      { "item": "base:battery", "weight": 3, "count": { "min": 1, "max": 4 } },
-      { "item": "base:flashlight", "weight": 1, "rarity": "uncommon" }
+      {
+        "item": "base:lighter",
+        "weight": 3
+      },
+      {
+        "item": "base:matches",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      {
+        "item": "base:battery",
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:flashlight",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "item": "base:flare",
+        "weight": 2
+      },
+      {
+        "item": "base:candle",
+        "weight": 1
+      },
+      {
+        "item": "base:cigarettes",
+        "weight": 4
+      },
+      {
+        "item": "base:chewing-gum",
+        "weight": 2
+      },
+      {
+        "item": "base:chocolate",
+        "weight": 3
+      },
+      {
+        "item": "base:candy",
+        "weight": 2
+      },
+      {
+        "item": "base:orangeade",
+        "weight": 3
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:area-map",
+        "weight": 3
+      },
+      {
+        "item": "base:lamp-oil",
+        "weight": 1
+      },
+      {
+        "item": "base:rope",
+        "weight": 1
+      }
     ]
   }
 ]

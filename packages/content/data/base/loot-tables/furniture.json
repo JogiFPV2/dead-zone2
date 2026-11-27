@@ -23,6 +23,22 @@
       {
         "item": "base:carpentry-for-beginners",
         "weight": 1
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:comic",
+        "weight": 3
+      },
+      {
+        "item": "base:area-map",
+        "weight": 2
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
       }
     ]
   },
@@ -45,7 +61,11 @@
       },
       {
         "item": "base:battery",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
       },
       {
         "item": "base:flashlight",
@@ -53,7 +73,11 @@
       },
       {
         "item": "base:matches",
-        "weight": 1
+        "weight": 1,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:lighter",
@@ -65,7 +89,52 @@
       },
       {
         "item": "base:pen",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      {
+        "item": "base:paper",
+        "weight": 4,
+        "count": {
+          "min": 2,
+          "max": 20
+        }
+      },
+      {
+        "item": "base:stapler",
+        "weight": 2
+      },
+      {
+        "item": "base:scissors",
+        "weight": 2
+      },
+      {
+        "item": "base:calculator",
+        "weight": 2
+      },
+      {
+        "item": "base:mug",
+        "weight": 1
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:wristwatch",
+        "weight": 1
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
+      },
+      {
+        "item": "base:walkie-talkie",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ],
     "buildingKey": 0.1
@@ -81,11 +150,19 @@
     "entries": [
       {
         "item": "base:sheet",
-        "weight": 4
+        "weight": 4,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:rag",
-        "weight": 3
+        "weight": 3,
+        "count": {
+          "min": 1,
+          "max": 3
+        }
       },
       {
         "item": "base:hoodie",
@@ -101,11 +178,19 @@
       },
       {
         "item": "base:thread",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 2
+        }
       },
       {
         "item": "base:nails",
-        "weight": 2
+        "weight": 2,
+        "count": {
+          "min": 3,
+          "max": 15
+        }
       },
       {
         "item": "base:hammer",
@@ -118,6 +203,52 @@
       {
         "table": "base:skill-books",
         "weight": 1
+      },
+      {
+        "item": "base:candle",
+        "weight": 2,
+        "count": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "item": "base:oil-lamp",
+        "weight": 1
+      },
+      {
+        "item": "base:newspaper",
+        "weight": 2
+      },
+      {
+        "item": "base:playing-cards",
+        "weight": 1
+      },
+      {
+        "item": "base:sleeping-bag",
+        "weight": 1
+      },
+      {
+        "item": "base:padlock",
+        "weight": 1
+      },
+      {
+        "item": "base:rope",
+        "weight": 1
+      },
+      {
+        "item": "base:compass",
+        "weight": 1
+      },
+      {
+        "item": "base:binoculars",
+        "weight": 1,
+        "rarity": "uncommon"
+      },
+      {
+        "table": "base:stash-camping",
+        "weight": 1,
+        "rarity": "very_rare"
       }
     ]
   }

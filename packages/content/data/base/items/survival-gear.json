@@ -1,0 +1,221 @@
+[
+  {
+    "id": "base:candle",
+    "name": "item.base.candle.name",
+    "kind": "tool",
+    "weightKg": 0.1,
+    "tags": ["base:light"],
+    "tool": {},
+    "lootCategory": "household",
+    "maxStack": 10,
+    "harmless": true,
+    "light": {
+      "radiusTiles": 3,
+      "intensity": 0.5,
+      "color": "#ffc070",
+      "coneDeg": 360
+    }
+  },
+  {
+    "id": "base:oil-lamp",
+    "name": "item.base.oil-lamp.name",
+    "kind": "tool",
+    "weightKg": 0.9,
+    "tags": ["base:light"],
+    "tool": {},
+    "lootCategory": "household",
+    "light": {
+      "radiusTiles": 6,
+      "intensity": 0.75,
+      "color": "#ffd080",
+      "coneDeg": 360,
+      "batteryTag": "base:lamp-oil",
+      "batteryLifeMin": 720
+    }
+  },
+  {
+    "id": "base:lamp-oil",
+    "name": "item.base.lamp-oil.name",
+    "kind": "misc",
+    "weightKg": 1.0,
+    "tags": ["base:lamp-oil"],
+    "lootCategory": "household"
+  },
+  {
+    "id": "base:camping-stove",
+    "name": "item.base.camping-stove.name",
+    "kind": "placeable",
+    "weightKg": 1.5,
+    "tags": [],
+    "lootCategory": "sport",
+    "placeable": {
+      "station": {
+        "id": "base:station-fire",
+        "level": 2
+      },
+      "cooking": {
+        "burners": "gas"
+      }
+    }
+  },
+  {
+    "id": "base:gas-cartridge",
+    "name": "item.base.gas-cartridge.name",
+    "kind": "misc",
+    "weightKg": 0.35,
+    "tags": ["base:gas-cartridge"],
+    "lootCategory": "sport",
+    "maxStack": 5
+  },
+  {
+    "id": "base:thermos",
+    "name": "item.base.thermos.name",
+    "kind": "misc",
+    "weightKg": 0.5,
+    "tags": ["base:water-vessel"],
+    "lootCategory": "household",
+    "waterVessel": {
+      "capacityL": 1.0
+    }
+  },
+  {
+    "id": "base:canteen",
+    "name": "item.base.canteen.name",
+    "kind": "misc",
+    "weightKg": 0.3,
+    "tags": ["base:water-vessel"],
+    "lootCategory": "sport",
+    "waterVessel": {
+      "capacityL": 0.75
+    }
+  },
+  {
+    "id": "base:water-jug",
+    "name": "item.base.water-jug.name",
+    "kind": "misc",
+    "weightKg": 1.0,
+    "tags": ["base:water-vessel"],
+    "lootCategory": "household",
+    "waterVessel": {
+      "capacityL": 10
+    }
+  },
+  {
+    "id": "base:mess-tin",
+    "name": "item.base.mess-tin.name",
+    "kind": "tool",
+    "weightKg": 0.4,
+    "tags": ["base:cookware", "base:cooking-pot", "base:water-vessel"],
+    "tool": {},
+    "waterVessel": {
+      "capacityL": 1
+    }
+  },
+  {
+    "id": "base:pocket-knife",
+    "name": "item.base.pocket-knife.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.1,
+    "tags": ["base:tool-knife", "base:tool-screwdriver"],
+    "melee": {
+      "category": "blade_short",
+      "skill": "base:blade-short",
+      "damage": {
+        "min": 3,
+        "max": 6
+      },
+      "rangeTiles": 0.6,
+      "attacksPerSec": 1.8,
+      "staminaCost": 1.2,
+      "hitNoise": {
+        "radiusTiles": 2,
+        "volume": 0.2
+      },
+      "durability": {
+        "max": 60,
+        "lossChancePerUse": 0.2
+      }
+    },
+    "lootCategory": "tool"
+  },
+  {
+    "id": "base:sleeping-bag",
+    "name": "item.base.sleeping-bag.name",
+    "kind": "placeable",
+    "weightKg": 1.8,
+    "tags": [],
+    "lootCategory": "fabric",
+    "placeable": {
+      "sleepSurface": "sofa"
+    }
+  },
+  {
+    "id": "base:sleeping-mat",
+    "name": "item.base.sleeping-mat.name",
+    "kind": "placeable",
+    "weightKg": 0.6,
+    "tags": [],
+    "lootCategory": "sport",
+    "placeable": {
+      "sleepSurface": "sofa"
+    }
+  },
+  {
+    "id": "base:tent",
+    "name": "item.base.tent.name",
+    "kind": "placeable",
+    "weightKg": 3.5,
+    "tags": [],
+    "lootCategory": "sport",
+    "placeable": {
+      "sleepSurface": "bed",
+      "footprint": {
+        "w": 2,
+        "h": 2
+      }
+    }
+  },
+  {
+    "id": "base:compass",
+    "name": "item.base.compass.name",
+    "kind": "misc",
+    "weightKg": 0.05,
+    "tags": [],
+    "lootCategory": "sport",
+    "harmless": true
+  },
+  {
+    "id": "base:binoculars",
+    "name": "item.base.binoculars.name",
+    "kind": "misc",
+    "weightKg": 0.6,
+    "tags": [],
+    "lootCategory": "sport"
+  },
+  {
+    "id": "base:wristwatch",
+    "name": "item.base.wristwatch.name",
+    "kind": "misc",
+    "weightKg": 0.05,
+    "tags": [],
+    "lootCategory": "electronics",
+    "harmless": true
+  },
+  {
+    "id": "base:walkie-talkie",
+    "name": "item.base.walkie-talkie.name",
+    "kind": "misc",
+    "weightKg": 0.4,
+    "tags": ["base:electronics"],
+    "lootCategory": "electronics"
+  },
+  {
+    "id": "base:whistle",
+    "name": "item.base.whistle.name",
+    "kind": "misc",
+    "weightKg": 0.02,
+    "tags": [],
+    "lootCategory": "sport",
+    "harmless": true
+  }
+]

@@ -1,0 +1,145 @@
+[
+  {
+    "id": "base:pliers",
+    "name": "item.base.pliers.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.3,
+    "tags": ["base:tool-pliers"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 3,
+        "max": 6
+      },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 1.5,
+      "staminaCost": 1.5,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 200,
+        "lossChancePerUse": 0.05
+      }
+    }
+  },
+  {
+    "id": "base:hacksaw",
+    "name": "item.base.hacksaw.name",
+    "kind": "tool",
+    "weightKg": 0.5,
+    "tags": ["base:tool-saw-metal"],
+    "tool": {
+      "durability": {
+        "max": 100
+      }
+    }
+  },
+  {
+    "id": "base:tin-snips",
+    "name": "item.base.tin-snips.name",
+    "kind": "tool",
+    "weightKg": 0.4,
+    "tags": ["base:tool-snips"],
+    "tool": {
+      "durability": {
+        "max": 120
+      }
+    }
+  },
+  {
+    "id": "base:hand-drill",
+    "name": "item.base.hand-drill.name",
+    "kind": "tool",
+    "weightKg": 1.2,
+    "tags": ["base:tool-drill"],
+    "tool": {
+      "durability": {
+        "max": 150
+      }
+    }
+  },
+  {
+    "id": "base:chain",
+    "name": "item.base.chain.name",
+    "kind": "material",
+    "weightKg": 2.0,
+    "tags": ["base:chain"],
+    "improvisedWeapon": {
+      "damage": {
+        "min": 5,
+        "max": 10
+      },
+      "rangeTiles": 1.1,
+      "attackSpeed": 0.8,
+      "durability": 80,
+      "breakChancePct": 5
+    }
+  },
+  {
+    "id": "base:padlock",
+    "name": "item.base.padlock.name",
+    "kind": "misc",
+    "weightKg": 0.3,
+    "tags": ["base:padlock"],
+    "lootCategory": "tool"
+  },
+  {
+    "id": "base:rope",
+    "name": "item.base.rope.name",
+    "kind": "material",
+    "weightKg": 1.0,
+    "tags": ["base:rope"]
+  },
+  {
+    "id": "base:glue",
+    "name": "item.base.glue.name",
+    "kind": "material",
+    "weightKg": 0.1,
+    "tags": ["base:glue"],
+    "maxStack": 5
+  },
+  {
+    "id": "base:grease",
+    "name": "item.base.grease.name",
+    "kind": "material",
+    "weightKg": 0.3,
+    "tags": ["base:lubricant"]
+  },
+  {
+    "id": "base:welding-rods",
+    "name": "item.base.welding-rods.name",
+    "kind": "material",
+    "weightKg": 0.03,
+    "tags": ["base:welding-rod"],
+    "maxStack": 50
+  },
+  {
+    "id": "base:cold-chisel",
+    "name": "item.base.cold-chisel.name",
+    "kind": "weapon_melee",
+    "weightKg": 0.5,
+    "tags": ["base:tool-chisel"],
+    "melee": {
+      "category": "blunt",
+      "skill": "base:blunt",
+      "damage": {
+        "min": 5,
+        "max": 9
+      },
+      "rangeTiles": 0.7,
+      "attacksPerSec": 1.4,
+      "staminaCost": 1.8,
+      "hitNoise": {
+        "radiusTiles": 3,
+        "volume": 0.3
+      },
+      "durability": {
+        "max": 300,
+        "lossChancePerUse": 0.05
+      }
+    }
+  }
+]

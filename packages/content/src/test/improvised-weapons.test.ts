@@ -18,6 +18,8 @@ const COUNTERPARTS: Record<string, string> = {
   'base:camping-lantern': 'base:hammer',
   'base:welding-torch': 'base:crowbar',
   'base:glass-shards': 'base:kitchen-knife',
+  'base:typewriter': 'base:sledgehammer',
+  'base:chain': 'base:metal-pipe',
   'base:gas-can': 'base:crowbar',
   'base:radio': 'base:hammer',
   // improwizowana broń z katalogu
